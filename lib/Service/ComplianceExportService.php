@@ -3,6 +3,9 @@
 /**
  * Compliance Export Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Backs the REQ-RAP-005 Compliance Export API surface — the manifest
  * entry `BookkeepingComplianceExport` (form binding) and the
  * `ComplianceExportController` (GET /api/audit/export) both call this
@@ -14,9 +17,8 @@
  * OpenRegister's audit-trail-immutable channel per ADR-022. This
  * service is a READ-FILTER-RENDER pipeline; logging of the export
  * request itself (per REQ-RAP-005 scenario 3 — "Export audit trail
- * is itself audited") is performed by the controller via the OR
- * audit-trail API so the export operation is captured on the same
- * chain it queries.
+ * is itself audited") is performed by the controller as a structured
+ * app-log entry.
  *
  * The service also supports REQ-RAP-009 (GDPR / AVG subject-access
  * filtering): when called with `scope=subject` and an `actorFilter`,
@@ -34,16 +36,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Db\AuditTrailMapper;
+use OCA\OpenRegister\Db\ListQuery;
+use OCA\OpenRegister\Db\RegisterMapper;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -65,7 +68,23 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */
-class ComplianceExportService {
+class ComplianceExportService implements ComplianceExportServiceInterface {
+
+	/**
+	 * The export's columns, in order.
+	 *
+	 * @var array<int,string>
+	 */
+	private const EXPORT_HEADERS = [
+		'timestamp',
+		'objectType',
+		'objectId',
+		'action',
+		'actor',
+		'fields_changed',
+		'beforeValue',
+		'afterValue',
+	];
 
 	/**
 	 * PII field names that MUST be stripped before rendering per
@@ -89,25 +108,11 @@ class ComplianceExportService {
 	];
 
 	/**
-	 * Default scope when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const SCOPE_ALL = 'all';
-
-	/**
 	 * GDPR subject-access scope per REQ-RAP-009.
 	 *
 	 * @var string
 	 */
 	public const SCOPE_SUBJECT = 'subject';
-
-	/**
-	 * Default format when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const FORMAT_CSV = 'csv';
 
 	/**
 	 * JSON output format.
@@ -120,7 +125,7 @@ class ComplianceExportService {
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container DI container — OR's
-	 *                                      ObjectService is fetched
+	 *                                      audit-trail mappers are fetched
 	 *                                      lazily so unit tests can
 	 *                                      swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR
@@ -179,6 +184,47 @@ class ComplianceExportService {
 	): array {
 		$this->assertDateRange(from: $from, to: $to);
 
+		$this->assertExportOptions(scope: $scope, format: $format);
+
+		if ($scope === self::SCOPE_SUBJECT && $actorFilter === null) {
+			$actorFilter = $this->currentUserId();
+		}
+
+		$rows = $this->exportRows(
+			events: $this->queryAuditTrail(from: $from, to: $to),
+			scope: $scope,
+			actorFilter: $actorFilter,
+		);
+
+		$generatedAt = date(format: 'c');
+		$generatedBy = $this->currentUserId();
+
+		return [
+			'from' => $from,
+			'to' => $to,
+			'scope' => $scope,
+			'format' => $format,
+			'actorFilter' => $actorFilter,
+			'generatedAt' => $generatedAt,
+			'generatedBy' => $generatedBy,
+			'eventCount' => count($rows),
+			'headers' => self::EXPORT_HEADERS,
+			'rows' => $rows,
+		];
+
+	}//end generateExport()
+
+	/**
+	 * Refuse a scope or format the export does not know.
+	 *
+	 * @param string $scope  The requested scope.
+	 * @param string $format The requested format.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When either is unknown.
+	 */
+	private function assertExportOptions(string $scope, string $format): void {
 		if ($scope !== self::SCOPE_ALL && $scope !== self::SCOPE_SUBJECT) {
 			throw new RuntimeException(message: 'Invalid scope (must be all or subject)');
 		}
@@ -187,14 +233,21 @@ class ComplianceExportService {
 			throw new RuntimeException(message: 'Invalid format (must be csv or json)');
 		}
 
-		if ($scope === self::SCOPE_SUBJECT && $actorFilter === null) {
-			$actorFilter = $this->currentUserId();
-		}
+	}//end assertExportOptions()
 
-		$rawEvents = $this->queryAuditTrail(from: $from, to: $to);
-
+	/**
+	 * Render the events as export rows; a subject export with an actor keeps
+	 * only that actor's events.
+	 *
+	 * @param array<int,mixed> $events      The audit-trail events.
+	 * @param string           $scope       The export scope.
+	 * @param string|null      $actorFilter The actor a subject export is narrowed to.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function exportRows(array $events, string $scope, ?string $actorFilter): array {
 		$rows = [];
-		foreach ($rawEvents as $event) {
+		foreach ($events as $event) {
 			if (is_array($event) === false) {
 				continue;
 			}
@@ -209,32 +262,9 @@ class ComplianceExportService {
 			$rows[] = $this->renderRow(event: $event);
 		}
 
-		$generatedAt = date(format: 'c');
-		$generatedBy = $this->currentUserId();
+		return $rows;
 
-		return [
-			'from' => $from,
-			'to' => $to,
-			'scope' => $scope,
-			'format' => $format,
-			'actorFilter' => $actorFilter,
-			'generatedAt' => $generatedAt,
-			'generatedBy' => $generatedBy,
-			'eventCount' => count($rows),
-			'headers' => [
-				'timestamp',
-				'objectType',
-				'objectId',
-				'action',
-				'actor',
-				'fields_changed',
-				'beforeValue',
-				'afterValue',
-			],
-			'rows' => $rows,
-		];
-
-	}//end generateExport()
+	}//end exportRows()
 
 	/**
 	 * Render the in-memory export as a single CSV blob (RFC 4180).
@@ -298,12 +328,10 @@ class ComplianceExportService {
 	}//end stripPii()
 
 	/**
-	 * Query the OR audit-trail API (lazily resolved) for events in [from, to].
+	 * Read the OpenRegister audit trail of this app's register in [from, to].
 	 *
-	 * The query intentionally targets the audit-trail endpoint that the
-	 * BookkeepingAuditTrail manifest page already consumes; this keeps
-	 * the pipeline aligned with the UI's view and avoids divergent
-	 * filter semantics.
+	 * The mappers are resolved lazily so the app still boots when
+	 * OpenRegister is absent; the export is then empty and the reason logged.
 	 *
 	 * @param string $from ISO date YYYY-MM-DD.
 	 * @param string $to ISO date YYYY-MM-DD.
@@ -312,65 +340,64 @@ class ComplianceExportService {
 	 */
 	private function queryAuditTrail(string $from, string $to): array {
 		try {
-			$auditService = $this->container->get('OCA\OpenRegister\Service\AuditTrailService');
-		} catch (\Throwable $e) {
-			$this->logger->info(
-				'ComplianceExportService: OR AuditTrailService not resolvable — returning empty result',
-				['exception' => $e->getMessage()]
+			$registerMapper = $this->container->get(RegisterMapper::class);
+			$auditTrailMapper = $this->container->get(AuditTrailMapper::class);
+			$registerId = $registerMapper->find($this->register())->getId();
+			$entries = $auditTrailMapper->findEvery(
+				new ListQuery(filters: ['register' => $registerId], sort: ['created' => 'ASC'])
 			);
-			return [];
-		}
-
-		try {
-			if (method_exists($auditService, 'findInRange') === true) {
-				// @phpstan-ignore-next-line - cross-app OR AuditTrailService; method exists at runtime
-				$rows = $auditService->findInRange(
-					$this->register(),
-					$from . 'T00:00:00Z',
-					$to . 'T23:59:59Z'
-				);
-			} elseif (method_exists($auditService, 'findAll') === true) {
-				$rows = $auditService->findAll(
-					[
-						'filters' => [
-							'register' => $this->register(),
-							'created' => ['>=' => $from . 'T00:00:00Z', '<=' => $to . 'T23:59:59Z'],
-						],
-					]
-				);
-			} else {
-				$this->logger->warning(
-					'ComplianceExportService: OR AuditTrailService has no findInRange/findAll method'
-				);
-				return [];
-			}//end if
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ComplianceExportService: failed to query OR audit-trail',
 				['exception' => $e->getMessage()]
 			);
 			return [];
-		}//end try
+		}
 
+		$start = $from . 'T00:00:00';
+		$end = $to . 'T23:59:59';
 		$result = [];
-		foreach ((array)$rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
+		foreach ($entries as $entry) {
+			$event = $this->eventOf(entry: $entry->jsonSerialize());
+			$created = substr((string)($event['created'] ?? ''), 0, 19);
+			if ($created < $start || $created > $end) {
 				continue;
 			}
 
-			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-				$result[] = (array)$row->jsonSerialize();
-				continue;
-			}
-
-			if (is_object($row) === true) {
-				$result[] = json_decode((string)json_encode($row), true) ?? [];
-			}
+			$result[] = $event;
 		}
 
 		return $result;
 	}//end queryAuditTrail()
+
+	/**
+	 * Shape one serialised audit-trail entry as an export event.
+	 *
+	 * The entry stores what changed as `changed[field] = {old, new}`; the
+	 * export compares a before and an after snapshot, so the pairs are split.
+	 *
+	 * @param array<string,mixed> $entry The serialised audit-trail entry.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function eventOf(array $entry): array {
+		$before = [];
+		$after = [];
+		foreach ((array)($entry['changed'] ?? []) as $field => $change) {
+			if (is_array($change) === false || array_key_exists('new', $change) === false) {
+				continue;
+			}
+
+			$before[$field] = ($change['old'] ?? null);
+			$after[$field] = $change['new'];
+		}
+
+		$entry['objectId'] = ($entry['objectUuid'] ?? ($entry['object'] ?? ''));
+		$entry['before'] = $before;
+		$entry['after'] = $after;
+
+		return $entry;
+	}//end eventOf()
 
 	/**
 	 * Convert one OR audit-trail event into the PII-filtered export row.
@@ -383,19 +410,7 @@ class ComplianceExportService {
 		$before = $this->stripPii(value: ($event['before'] ?? ($event['beforeValue'] ?? [])));
 		$after = $this->stripPii(value: ($event['after'] ?? ($event['afterValue'] ?? [])));
 
-		$fieldsChanged = [];
-		if (is_array($before) === true && is_array($after) === true) {
-			$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
-			foreach ($keys as $key) {
-				if (in_array($key, self::PII_FIELDS, true) === true) {
-					continue;
-				}
-
-				if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
-					$fieldsChanged[] = (string)$key;
-				}
-			}
-		}
+		$fieldsChanged = $this->changedFields(before: $before, after: $after);
 
 		return [
 			'timestamp' => (string)($event['created'] ?? ($event['timestamp'] ?? '')),
@@ -409,6 +424,46 @@ class ComplianceExportService {
 		];
 
 	}//end renderRow()
+
+	/**
+	 * The non-PII fields whose value differs between before and after.
+	 *
+	 * @param mixed $before The PII-stripped before value.
+	 * @param mixed $after  The PII-stripped after value.
+	 *
+	 * @return list<string>
+	 */
+	private function changedFields(mixed $before, mixed $after): array {
+		if (is_array($before) === false || is_array($after) === false) {
+			return [];
+		}
+
+		return $this->differingKeys(before: $before, after: $after);
+	}//end changedFields()
+
+	/**
+	 * The non-PII keys whose value differs between two arrays.
+	 *
+	 * @param array<string,mixed> $before The before value.
+	 * @param array<string,mixed> $after  The after value.
+	 *
+	 * @return list<string>
+	 */
+	private function differingKeys(array $before, array $after): array {
+		$fieldsChanged = [];
+		$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
+		foreach ($keys as $key) {
+			if (in_array($key, self::PII_FIELDS, true) === true) {
+				continue;
+			}
+
+			if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
+				$fieldsChanged[] = (string)$key;
+			}
+		}
+
+		return $fieldsChanged;
+	}//end differingKeys()
 
 	/**
 	 * Validate the [from, to] window — both dates required, ISO format,
@@ -459,7 +514,7 @@ class ComplianceExportService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

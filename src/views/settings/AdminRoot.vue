@@ -1,3 +1,5 @@
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <template>
 	<CnAdminSettingsShell
 		appId="shillinq"
@@ -73,7 +75,7 @@ export default {
 	 * the app's catalogue.
 	 *
 	 * @return {{cnTranslate: Function}}
-	 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	provide() {
 		return {
@@ -140,7 +142,7 @@ export default {
 		 * that widget above the link.
 		 *
 		 * @return {Array<{id: string, name: string, description: string, linkLabel: string, href: string, widget?: object}>}
-		 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
+		 * @spec openspec/specs/app-administration/spec.md
 		 */
 		pageSections() {
 			return [

@@ -301,7 +301,8 @@ final class PaymentRequestWebhookControllerTest extends TestCase {
 	}//end testUnparseableEventReturns400()
 
 	/**
-	 * A Stripe payment_intent.succeeded with a "t=..,v1=<sig>" header is accepted
+	 * A Stripe payment_intent.succeeded with a current "t=..,v1=<sig>" header,
+	 * signed over "<t>.<body>", is accepted
 	 * and mapped to the authorized outcome (mirrors the Mollie happy path for the
 	 * other supported gateway).
 	 *
@@ -330,7 +331,8 @@ final class PaymentRequestWebhookControllerTest extends TestCase {
 			)
 			->willReturn(['result' => PaymentReconciliationService::RESULT_APPLIED, 'schema' => 'PaymentRequest']);
 
-		$header = 't=1700000000,v1=' . $this->sign(body: $body);
+		$timestamp = (string)time();
+		$header = 't=' . $timestamp . ',v1=' . $this->sign(body: $timestamp . '.' . $body);
 		$controller = $this->makeController(rawBody: $body, signatureValue: $header, recon: $recon);
 		$response = $controller->handle(gateway: 'stripe');
 

@@ -97,6 +97,33 @@ class CcmRuleEngineTest extends TestCase {
 	}//end testUnknownOperatorFailsValidation()
 
 	/**
+	 * Characterisation: every structural refusal of validateDsl() carries its
+	 * own message, and nested valid expressions validate.
+	 *
+	 * @return void
+	 */
+	public function testValidationRefusalMessages(): void {
+		$cases = [
+			'Unknown DSL operator: nope' => ['nope' => 1],
+			'A DSL node must contain exactly one operator key.' => ['all-of' => [['nope' => 1, 'x' => 2]]],
+			'Operator "not" requires a single sub-expression.' => ['not' => 'x'],
+			'Compound operator "any-of" requires an array of sub-expressions.' => ['any-of' => 'x'],
+			'Compound operator "none-of" sub-expressions must be objects.' => ['none-of' => ['x']],
+		];
+		foreach ($cases as $message => $dsl) {
+			try {
+				$this->engine->validateDsl($dsl);
+				self::fail('Expected a refusal for ' . $message);
+			} catch (\InvalidArgumentException $e) {
+				self::assertSame($message, $e->getMessage());
+			}
+		}
+
+		self::assertTrue($this->engine->validateDsl(['not' => ['all-of' => [['event-matches' => 'x'], ['not' => []]]]]));
+
+	}//end testValidationRefusalMessages()
+
+	/**
 	 * A node with more than one operator key fails validation.
 	 *
 	 * @return void
@@ -393,6 +420,29 @@ class CcmRuleEngineTest extends TestCase {
 		self::assertFalse($this->fire($logic, $clean));
 
 	}//end testSeedSoD01FiresOnConflict()
+
+	/**
+	 * Characterisation: time-is-within reads the upstream-resolved window flag,
+	 * an empty none-of never fires, a non-empty any-of without a match is false,
+	 * and an unknown operator reaching evaluate() fails closed with a warning.
+	 *
+	 * @return void
+	 */
+	public function testWindowFlagEmptyCompoundsAndUnknownLeaf(): void {
+		$within = ['time-is-within' => ['posted_at', 'last-day-of-period']];
+		self::assertTrue($this->fire($within, ['fields' => ['posted_at_within_window' => 1]]));
+		self::assertFalse($this->fire($within, ['fields' => ['posted_at' => '2026-01-31']]));
+		self::assertFalse($this->fire(['none-of' => []], ['fields' => []]));
+		self::assertFalse($this->fire(['any-of' => [['field-equals' => ['a', 'x']]]], ['fields' => ['a' => 'y']]));
+		self::assertFalse($this->fire(['not' => ['field-equals' => ['a', 'y']]], ['fields' => ['a' => 'y']]));
+
+		$this->logger->expects(self::once())
+			->method('warning')
+			->with('CcmRuleEngine: unknown operator at evaluation: bogus-op');
+		$result = $this->engine->evaluate(['tree' => ['all-of' => [['bogus-op' => ['x']]]]], ['fields' => []]);
+		self::assertSame(['fired' => false, 'diagnostics' => []], $result);
+
+	}//end testWindowFlagEmptyCompoundsAndUnknownLeaf()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

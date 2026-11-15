@@ -3,6 +3,9 @@
 /**
  * Integration tests for the slice-11 audit-trail export (REQ-PO3W-010).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Exercises the full PO → approval → GRN → invoice → match → exception →
  * resolution → GR/IR → payment lifecycle end-to-end and asserts that the
  * audit-trail export captures every transition with the correct actor +
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

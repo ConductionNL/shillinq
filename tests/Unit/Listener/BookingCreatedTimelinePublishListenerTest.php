@@ -3,6 +3,9 @@
 /**
  * Unit tests for the BookingCreatedTimelinePublishListener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 07 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Verifies the listener's contract:
  *
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
@@ -343,4 +343,70 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase {
 
 	}//end testNonAppointmentSchemaIsIgnored()
 
+	/**
+	 * The log lines: a missing appointmentId is warned about, an unparseable
+	 * createdAt falls back to now with a debug line, a publish logs at debug,
+	 * and an entity without schema or payload is ignored.
+	 *
+	 * @return void
+	 */
+	public function testTheLogLinesAndSkippedEntities(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
+		$logger = $this->recordingLogger();
+		$listener = new BookingCreatedTimelinePublishListener(pipelinq: $adapter, retryQueue: $queue, schemaResolver: $this->resolver(' Shillinq/Appointment '), logger: $logger);
+
+		$listener->handle(new ObjectCreatedEvent($this->appointmentEntity(['pipelinqContactId' => 'pl-1', 'appointmentId' => '  '])));
+		$listener->handle(new ObjectCreatedEvent($this->appointmentEntity(['pipelinqContactId' => ' pl-1 ', 'appointmentId' => ' b-1 ', 'createdAt' => 'not a date'])));
+		$noSchema = new ObjectEntity();
+		$noSchema->setObject(['pipelinqContactId' => 'pl-1', 'appointmentId' => 'b-2']);
+		$listener->handle(new ObjectCreatedEvent($noSchema));
+
+		self::assertCount(1, $publishCalls);
+		self::assertSame(['b-1', 'pl-1'], [$publishCalls[0]->externalId(), $publishCalls[0]->contactId()]);
+		self::assertSame(
+			[
+				['warning', 'BookingCreatedTimelinePublishListener: missing appointmentId — skipping publish', ['app' => 'shillinq']],
+				['debug', 'BookingCreatedTimelinePublishListener: createdAt unparseable, falling back to now'],
+				['debug', 'BookingCreatedTimelinePublishListener: published', ['app' => 'shillinq', 'externalId' => 'b-1', 'contactId' => 'pl-1']],
+			],
+			array_map(
+				static fn (array $r): array => ($r['message'] === 'BookingCreatedTimelinePublishListener: createdAt unparseable, falling back to now') ? [$r['level'], $r['message']] : [$r['level'], $r['message'], $r['context']],
+				$logger->records
+			)
+		);
+
+	}//end testTheLogLinesAndSkippedEntities()
+	/**
+	 * Only a created object is published; an error while building the event
+	 * is logged and never reaches the booking commit.
+	 *
+	 * @return void
+	 */
+	public function testOtherEventsAreIgnoredAndErrorsAreLogged(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
+		$logger = $this->recordingLogger();
+		$resolver = $this->createStub(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willThrowException(new \RuntimeException('schema table gone'));
+
+		$listener = new BookingCreatedTimelinePublishListener(
+			pipelinq: $adapter,
+			retryQueue: $queue,
+			schemaResolver: $resolver,
+			logger: $logger
+		);
+
+		$listener->handle(new \OCP\EventDispatcher\Event());
+		self::assertSame([], $logger->records);
+
+		$listener->handle(new ObjectCreatedEvent($this->appointmentEntity(['appointmentId' => 'booking-1'])));
+
+		self::assertSame([], $publishCalls);
+		self::assertSame([], $enqueueCalls);
+		self::assertCount(1, $logger->records);
+		self::assertSame('BookingCreatedTimelinePublishListener: publish errored', $logger->records[0]['message']);
+	}//end testOtherEventsAreIgnoredAndErrorsAreLogged()
 }//end class

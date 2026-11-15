@@ -31,13 +31,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -90,15 +90,15 @@ class BbvAllocationValidationListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param ListenerSchemaResolver $schemaResolver  Matches the BBV schemas in shillinq's register.
-	 * @param ContainerInterface     $container       DI container for the lazy ObjectService.
-	 * @param SettingsService        $settingsService Resolves the register slug.
+	 * @param ListenerSchemaResolverInterface $schemaResolver  Matches the BBV schemas in shillinq's register.
+	 * @param ObjectServiceInterface $objectService   Reads the sibling records.
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger          Logger.
 	 */
 	public function __construct(
-		private readonly ListenerSchemaResolver $schemaResolver,
-		private readonly ContainerInterface $container,
-		private readonly SettingsService $settingsService,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
+		private readonly ObjectServiceInterface $objectService,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -113,6 +113,30 @@ class BbvAllocationValidationListener implements IEventListener {
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.7
 	 */
 	public function handle(Event $event): void {
+		$entity = $this->writtenEntity(event: $event);
+
+		if ($entity === null) {
+			return;
+		}
+
+		$error = $this->refusalFor(entity: $entity);
+
+		if ($error !== null) {
+			$event->setErrors(['message' => $error]);
+			$event->stopPropagation();
+		}
+	}//end handle()
+
+	/**
+	 * The object being created or updated, or null for another event.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.7
+	 */
+	private function writtenEntity(Event $event): mixed {
 		$entity = null;
 		if ($event instanceof ObjectCreatingEvent === true) {
 			$entity = $event->getObject();
@@ -122,10 +146,19 @@ class BbvAllocationValidationListener implements IEventListener {
 			$entity = $event->getNewObject();
 		}
 
-		if ($entity === null) {
-			return;
-		}
+		return $entity;
+	}//end writtenEntity()
 
+	/**
+	 * Why a programme or mapping write is refused, or null; a failed sibling lookup refuses.
+	 *
+	 * @param mixed $entity The object being written.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.7
+	 */
+	private function refusalFor(mixed $entity): string|null {
 		$data = $entity->getObject();
 		$self = (string)($entity->getUuid() ?? ($data['id'] ?? ''));
 		try {
@@ -140,11 +173,8 @@ class BbvAllocationValidationListener implements IEventListener {
 			$error = self::MESSAGE_UNCHECKED;
 		}
 
-		if ($error !== null) {
-			$event->setErrors(['message' => $error]);
-			$event->stopPropagation();
-		}
-	}//end handle()
+		return $error;
+	}//end refusalFor()
 
 	/**
 	 * Why a programme may not be saved, or null.
@@ -185,27 +215,56 @@ class BbvAllocationValidationListener implements IEventListener {
 	 * @return string|null
 	 */
 	private function mappingRefusal(array $data, string $self): ?string {
-		$administrationId = (string)($data['administrationId'] ?? '');
-		$account = trim((string)($data['glAccountNumber'] ?? ''));
-		if ($account === '') {
+		if (trim((string)($data['glAccountNumber'] ?? '')) === '') {
 			return null;
 		}
 
-		$accounts = $this->others(
-			schema: 'Account',
-			filters: ['administrationId' => $administrationId, 'accountNumber' => $account],
-			self: ''
-		);
-		if ($accounts === []) {
+		if ($this->mappedAccountExists(data: $data) === false) {
 			return self::MESSAGE_UNKNOWN_ACCOUNT;
 		}
 
+		if ($this->allocatedTotal(data: $data, self: $self) > self::MAX_ALLOCATION) {
+			return self::MESSAGE_OVER_ALLOCATED;
+		}
+
+		return null;
+	}//end mappingRefusal()
+
+	/**
+	 * Whether the mapping's GL account exists in its administration.
+	 *
+	 * @param array<string, mixed> $data The mapping as it would be saved.
+	 *
+	 * @return bool
+	 */
+	private function mappedAccountExists(array $data): bool {
+		$accounts = $this->others(
+			schema: 'Account',
+			filters: [
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'accountNumber' => trim((string)($data['glAccountNumber'] ?? '')),
+			],
+			self: ''
+		);
+		return $accounts !== [];
+	}//end mappedAccountExists()
+
+	/**
+	 * The mapping's allocation plus that of every other mapping of the same
+	 * account and fiscal year in its administration.
+	 *
+	 * @param array<string, mixed> $data The mapping as it would be saved.
+	 * @param string               $self Its id, empty on create.
+	 *
+	 * @return float
+	 */
+	private function allocatedTotal(array $data, string $self): float {
 		$total = (float)($data['allocationPercentage'] ?? 0);
 		$siblings = $this->others(
 			schema: 'BudgetBBVMapping',
 			filters: [
-				'administrationId' => $administrationId,
-				'glAccountNumber' => $account,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'glAccountNumber' => trim((string)($data['glAccountNumber'] ?? '')),
 				'fiscalYear' => ($data['fiscalYear'] ?? null),
 			],
 			self: $self
@@ -214,12 +273,8 @@ class BbvAllocationValidationListener implements IEventListener {
 			$total += (float)($sibling['allocationPercentage'] ?? 0);
 		}
 
-		if ($total > self::MAX_ALLOCATION) {
-			return self::MESSAGE_OVER_ALLOCATED;
-		}
-
-		return null;
-	}//end mappingRefusal()
+		return $total;
+	}//end allocatedTotal()
 
 	/**
 	 * The rows matching the filters, except the record itself.
@@ -234,8 +289,8 @@ class BbvAllocationValidationListener implements IEventListener {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function others(string $schema, array $filters, string $self): array {
-		$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
-			->setRegister($this->settingsService->getRegisterSlug())
+		$rows = $this->objectService
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema($schema)
 			->findAll(
 				['filters' => array_filter($filters, static fn ($v): bool => $v !== null && $v !== ''), 'limit' => 1000],

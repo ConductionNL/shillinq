@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\VendorPerformanceAggregationJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\VendorPerformanceAggregation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -49,9 +49,9 @@ final class VendorPerformanceAggregationJobTest extends TestCase {
 	/**
 	 * Mock settings service.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Mock aggregation service.
@@ -83,7 +83,7 @@ final class VendorPerformanceAggregationJobTest extends TestCase {
 		parent::setUp();
 		$this->timeFactory = $this->createMock(ITimeFactory::class);
 		$this->timeFactory->method('getDateTime')->willReturn(new \DateTime('2026-06-15'));
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
 		$this->aggregation = $this->createMock(VendorPerformanceAggregation::class);
 		$this->container = $this->createMock(ContainerInterface::class);

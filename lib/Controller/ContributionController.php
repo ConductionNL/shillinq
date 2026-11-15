@@ -29,8 +29,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\ContributionRaiseService;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,8 +52,8 @@ class ContributionController extends Controller {
 	 *
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
-	 * @param ContributionRaiseService $raiser The raise.
-	 * @param PaymentActionAuthorizer $authorizer The payment action matrix.
+	 * @param ContributionRaiseServiceInterface $raiser The raise.
+	 * @param PaymentActionAuthorizerInterface $authorizer The payment action matrix.
 	 * @param IUserSession $userSession The calling user.
 	 * @param LoggerInterface $logger Logger.
 	 *
@@ -62,8 +62,8 @@ class ContributionController extends Controller {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly ContributionRaiseService $raiser,
-		private readonly PaymentActionAuthorizer $authorizer,
+		private readonly ContributionRaiseServiceInterface $raiser,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -88,13 +88,24 @@ class ContributionController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_REQUEST) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_REQUEST) === false) {
 			return new JSONResponse(
 				['error' => 'Raising school contributions needs the payment.request action.'],
 				Http::STATUS_FORBIDDEN
 			);
 		}
 
+		return $this->raiseResponse(payload: $this->requestPayload());
+	}//end raise()
+
+	/**
+	 * The request parameters without route parameters and framework keys.
+	 *
+	 * @return array<string,mixed> The payload.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
+	 */
+	private function requestPayload(): array {
 		$payload = [];
 		foreach ($this->request->getParams() as $key => $value) {
 			// Route parameters and framework keys start with an underscore.
@@ -103,6 +114,19 @@ class ContributionController extends Controller {
 			}
 		}
 
+		return $payload;
+	}//end requestPayload()
+
+	/**
+	 * Raise the contributions and map the outcome onto a response.
+	 *
+	 * @param array<string,mixed> $payload The raise payload.
+	 *
+	 * @return JSONResponse 200 with a result per recipient, 400, 403 or 500.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
+	 */
+	private function raiseResponse(array $payload): JSONResponse {
 		try {
 			$result = $this->raiser->raise(payload: $payload);
 		} catch (InvalidArgumentException $e) {
@@ -120,5 +144,5 @@ class ContributionController extends Controller {
 		}//end try
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end raise()
+	}//end raiseResponse()
 }//end class

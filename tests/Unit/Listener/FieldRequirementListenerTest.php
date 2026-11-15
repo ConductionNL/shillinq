@@ -25,13 +25,13 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\AppInfo\FieldRequirementRegistration;
+use OCA\Shillinq\Listener\Registration\FieldRequirementRegistration;
 use OCA\Shillinq\Listener\FieldRequirementListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Platform\FieldRequirements;
 use OCA\Shillinq\Service\Platform\ObjectApiRequest;
 use OCA\Shillinq\Service\Platform\SchemaDefinitions;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -159,7 +159,7 @@ class FieldRequirementListenerTest extends TestCase {
 	 * @return FieldRequirements
 	 */
 	private function requirements(): FieldRequirements {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new FieldRequirements($this->store, $settings, $this->definitions(), $this->l10n());
@@ -568,7 +568,7 @@ class FieldRequirementListenerTest extends TestCase {
 		$this->assertContains([ObjectCreatingEvent::class, FieldRequirementListener::class], $listeners);
 		$this->assertContains([ObjectUpdatingEvent::class, FieldRequirementListener::class], $listeners);
 
-		$app = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$app = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php') . (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ListenerRegistrar.php');
 		$this->assertStringContainsString('(new FieldRequirementRegistration())->register(context: $context);', $app);
 
 	}//end testTheAppWiresTheListenerOnBothPreSaveEvents()
