@@ -3,6 +3,9 @@
 /**
  * Conflict Detection Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Per-resource booking-overlap detection for the bookings-resource-calendar
  * change (REQ-004). Reads existing non-cancelled Booking records for a
  * resource and returns the subset whose time window overlaps a proposed
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-4
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,6 +40,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use LogicException;
+use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -59,18 +60,13 @@ use RuntimeException;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class ConflictDetectionService {
-
-	/**
-	 * Minimum booking duration in minutes (REQ-007 of bookings-resource-calendar).
-	 */
-	public const MIN_DURATION_MINUTES = 15;
+class ConflictDetectionService implements ConflictDetectionServiceInterface {
 
 	/**
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param TransactionalGuard $guard Transaction / row-lock facade (production-wired with IDBConnection).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 *
@@ -78,7 +74,7 @@ class ConflictDetectionService {
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly TransactionalGuard $guard,
 		private readonly LoggerInterface $logger,
 	) {
@@ -116,7 +112,7 @@ class ConflictDetectionService {
 		}
 
 		$window = $this->proposedWindow(start: $proposedStart, end: $proposedEnd);
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->warning('Shillinq: conflict detection skipped, OpenRegister unavailable');
 			return [];
 		}
@@ -160,7 +156,7 @@ class ConflictDetectionService {
 	private function loadBookings(string $resourceId): mixed {
 		try {
 			return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService')
-				->setRegister($this->settings->getRegisterSlug())
+				->setRegister($this->registerLocation->getRegisterSlug())
 				->setSchema('Booking')
 				->findAll(['filters' => ['resource' => $resourceId], 'limit' => 1000]);
 		} catch (\Throwable $e) {

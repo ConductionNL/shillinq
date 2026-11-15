@@ -4,6 +4,9 @@
  * Unit tests for PurchaseOrderApprovalService (slice 11 of
  * bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers REQ-PO3W-010 (audit-trail capture — approver identity +
  * decidedAt):
  *  - recordApprovalDecision() stamps the authenticated user as the
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

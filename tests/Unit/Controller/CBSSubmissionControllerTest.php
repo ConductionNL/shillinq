@@ -41,6 +41,7 @@ use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -528,4 +529,66 @@ class CBSSubmissionControllerTest extends TestCase {
 		$this->assertSame(['cbs-001', 'cbs-002'], $ids);
 	}//end testIndexByAdminSeesAllAdministrations()
 
+	/**
+	 * Every outcome of show() and generate() before the read: user, id,
+	 * existence, administration access (with the admin bypass), and for
+	 * generate() the draft-only rule.
+	 *
+	 * @return array<string, array{0: string, 1: ?string, 2: string, 3: array<int, string>, 4: bool, 5: string, 6: int, 7: ?array<string, mixed>}>
+	 */
+	public static function showAndGenerateOutcomes(): array {
+		$cases = [];
+		foreach (['show', 'generate'] as $method) {
+			$cases[$method . ' anonymous'] = [$method, null, 'cbs-001', ['adm-1'], false, 'draft', Http::STATUS_UNAUTHORIZED, ['error' => 'authentication required', 'message' => 'Authentication required']];
+			$cases[$method . ' empty id'] = [$method, 'alice', '', ['adm-1'], false, 'draft', Http::STATUS_BAD_REQUEST, ['error' => 'missing field', 'message' => 'id is required']];
+			$cases[$method . ' malformed id'] = [$method, 'alice', 'cbs 001!', ['adm-1'], false, 'draft', Http::STATUS_BAD_REQUEST, ['error' => 'invalid id', 'message' => 'id must be a valid identifier']];
+			$cases[$method . ' missing'] = [$method, 'alice', 'cbs-404', ['adm-1'], false, 'draft', Http::STATUS_NOT_FOUND, ['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found']];
+			$cases[$method . ' foreign'] = [$method, 'mallory', 'cbs-001', ['adm-2'], false, 'draft', Http::STATUS_FORBIDDEN, ['error' => 'cbs-submission-forbidden', 'message' => 'Not authorized to access this CBS submission']];
+			$cases[$method . ' admin on foreign'] = [$method, 'admin', 'cbs-001', [], true, 'draft', Http::STATUS_OK, null];
+			$cases[$method . ' member'] = [$method, 'alice', 'cbs-001', ['adm-1'], false, 'draft', Http::STATUS_OK, null];
+		}
+
+		$cases['generate not draft'] = ['generate', 'alice', 'cbs-001', ['adm-1'], false, 'validated', Http::STATUS_CONFLICT, ['error' => 'conflict', 'message' => 'Only draft submissions may be regenerated']];
+		$cases['show not draft'] = ['show', 'alice', 'cbs-001', ['adm-1'], false, 'validated', Http::STATUS_OK, null];
+
+		return $cases;
+
+	}//end showAndGenerateOutcomes()
+
+	/**
+	 * show() and generate() answer each outcome with its status and body.
+	 *
+	 * @param string             $method     The action.
+	 * @param string|null        $uid        The caller, null for anonymous.
+	 * @param string             $id         The submission id.
+	 * @param array<int, string> $accessible The caller's administrations.
+	 * @param bool               $isAdmin    Whether the caller is a Nextcloud admin.
+	 * @param string             $state      The stored submission's status.
+	 * @param int                $status     The expected HTTP status.
+	 * @param array|null         $body       The expected body; null to skip.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('showAndGenerateOutcomes')]
+	public function testShowAndGenerateOutcomes(string $method, ?string $uid, string $id, array $accessible, bool $isAdmin, string $state, int $status, ?array $body): void {
+		$this->fakeObjectService->records['CBSSubmission'][0]['status'] = $state;
+		$this->exportService->method('generateSubmission')->willReturn(['submission' => ['id' => 'cbs-001'], 'lines' => []]);
+		$controller = $this->buildController(
+			$this->buildUserSession($uid),
+			$this->buildAdministrationContext($accessible),
+			isAdmin: $isAdmin,
+		);
+
+		$response = $controller->{$method}($id);
+
+		$this->assertSame($status, $response->getStatus());
+		if ($body !== null) {
+			$this->assertSame($body, $response->getData());
+		}
+
+		if ($method === 'generate' && $status === Http::STATUS_OK) {
+			$this->assertSame(['submission' => ['id' => 'cbs-001'], 'lines' => []], $response->getData());
+		}
+
+	}//end testShowAndGenerateOutcomes()
 }//end class

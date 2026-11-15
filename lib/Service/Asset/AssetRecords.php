@@ -30,8 +30,9 @@ namespace OCA\Shillinq\Service\Asset;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -39,19 +40,19 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
-class AssetRecords {
+class AssetRecords implements AssetRecordsInterface {
 
 	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param ObjectTransitionRunner $transitions   Runs declared transitions.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 	) {
 	}//end __construct()
 

@@ -35,18 +35,20 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentPlan;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Bank\ManualMatchService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanBankMatcherInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 
 /**
  * Plan candidates for bank lines, and booking a line to a plan.
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
-class PaymentPlanBankMatcher {
+class PaymentPlanBankMatcher implements PaymentPlanBankMatcherInterface {
 	/**
 	 * The confirming actor of a match made on arrival.
 	 *
@@ -58,15 +60,15 @@ class PaymentPlanBankMatcher {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
-	 * @param ManualMatchService     $matches       Writes the confirmed match.
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param ManualMatchServiceInterface     $matches       Writes the confirmed match.
 	 * @param PaymentPlanService     $plans         Receives the payment.
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
-		private readonly ManualMatchService $matches,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly ManualMatchServiceInterface $matches,
 		private readonly PaymentPlanService $plans,
 		private readonly LoggerInterface $logger,
 	) {
@@ -193,7 +195,7 @@ class PaymentPlanBankMatcher {
 			return [];
 		}
 
-		$rows = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('PaymentPlan')
+		$rows = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('PaymentPlan')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'lifecycleState' => 'active'], 'limit' => 5000]);
 		$plans = [];
 		foreach ($rows as $row) {
@@ -216,7 +218,7 @@ class PaymentPlanBankMatcher {
 	 */
 	private function customerIban(array $plan): string {
 		$customer = ObjectIdentifier::findOne(
-			scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('CustomerMaster'),
+			scoped: $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('CustomerMaster'),
 			id: (string)($plan['customerId'] ?? '')
 		);
 		return $this->normaliseIban(iban: (string)($customer['iban'] ?? ''));

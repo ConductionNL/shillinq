@@ -3,6 +3,9 @@
 /**
  * Shillinq RenameCommitmentSchemas Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renames the seven Dutch commitment-cluster schema slugs to their English
  * names IN PLACE, before the register import runs.
  *
@@ -47,9 +50,6 @@
  *
  * Upgrade-only by placement: Nextcloud runs post-migration steps only when
  * `$previousVersion !== ''`, and a fresh install has no legacy slugs to move.
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V.
  *
  * @category Repair
  * @package  OCA\Shillinq\Repair
@@ -330,8 +330,22 @@ class RenameCommitmentSchemas implements IRepairStep {
 	 * @return array<int, string> Schema ids, as strings for a portable IN().
 	 */
 	private function ownSchemaIds(): array {
+		$ids = [];
+		foreach ($this->registerSchemaLists() as $row) {
+			array_push($ids, ...self::schemaIdsIn(row: $row));
+		}
+
+		return array_values(array_unique($ids));
+	}//end ownSchemaIds()
+
+	/**
+	 * The raw `schemas` column of every shillinq register.
+	 *
+	 * @return array<int, mixed> One JSON array per register, or none (logged) when they cannot be read.
+	 */
+	private function registerSchemaLists(): array {
 		try {
-			$rows = $this->db->executeQuery(
+			return $this->db->executeQuery(
 				'SELECT schemas FROM `*PREFIX*openregister_registers` WHERE slug LIKE ?',
 				[self::REGISTER_SLUG_PREFIX . '%']
 			)->fetchAll(\PDO::FETCH_COLUMN);
@@ -342,21 +356,28 @@ class RenameCommitmentSchemas implements IRepairStep {
 			);
 			return [];
 		}
+	}//end registerSchemaLists()
+
+	/**
+	 * The non-empty scalar schema ids in one register's `schemas` JSON array.
+	 *
+	 * @param mixed $row The raw `schemas` column.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function schemaIdsIn(mixed $row): array {
+		$decoded = json_decode((string)$row, true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
 
 		$ids = [];
-		foreach ($rows as $row) {
-			$decoded = json_decode((string)$row, true);
-			if (is_array($decoded) === false) {
-				continue;
-			}
-
-			foreach ($decoded as $id) {
-				if (is_scalar($id) === true && (string)$id !== '') {
-					$ids[] = (string)$id;
-				}
+		foreach ($decoded as $id) {
+			if (is_scalar($id) === true && (string)$id !== '') {
+				$ids[] = (string)$id;
 			}
 		}
 
-		return array_values(array_unique($ids));
-	}//end ownSchemaIds()
+		return $ids;
+	}//end schemaIdsIn()
 }//end class

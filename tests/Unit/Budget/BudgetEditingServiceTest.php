@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Budget;
 
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Budget\BudgetEditingService;
-use OCA\Shillinq\Budget\BudgetEditRefusedException;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
 use PHPUnit\Framework\TestCase;
 
 /**

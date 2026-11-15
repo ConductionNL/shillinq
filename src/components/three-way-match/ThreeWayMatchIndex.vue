@@ -280,30 +280,36 @@ export default {
 				const rows = response.data?.results || response.data || []
 				this.matches = Array.isArray(rows) ? rows : []
 
-				// Pre-fetch invoice headers for the supplier + amount columns.
-				// One bulk call when the OR API supports an `id IN (..)` filter;
-				// otherwise we fall back to silent best-effort.
-				const invoiceIds = [
-					...new Set(this.matches.map((m) => m.invoiceId).filter(Boolean)),
-				]
-				for (const id of invoiceIds) {
-					try {
-						const inv = await axios.get(
-							generateUrl(
-								`/apps/openregister/api/objects/${REGISTER_SLUG}/SupplierInvoice/${id}`,
-							),
-						)
-						this.invoices[id] = inv.data || null
-					} catch (e) {
-						this.invoices[id] = null
-					}
-				}
+				await this.prefetchInvoices()
 			} catch (e) {
 				this.error =
 					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load three-way matches')
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Pre-fetch the invoice headers for the supplier + amount columns, one
+		 * per distinct invoice; an unreadable invoice is kept as null
+		 * (silent best-effort).
+		 */
+		async prefetchInvoices() {
+			const invoiceIds = [
+				...new Set(this.matches.map((m) => m.invoiceId).filter(Boolean)),
+			]
+			for (const id of invoiceIds) {
+				try {
+					const inv = await axios.get(
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/SupplierInvoice/${id}`,
+						),
+					)
+					this.invoices[id] = inv.data || null
+				} catch (e) {
+					this.invoices[id] = null
+				}
 			}
 		},
 
@@ -325,14 +331,7 @@ export default {
 				// record; otherwise reload the whole list as a safety net.
 				const updated = response.data
 				if (updated && updated.id) {
-					const i = this.matches.findIndex(
-						(m) => m.id === match.id || m.id === updated.id,
-					)
-					if (i >= 0) {
-						this.matches.splice(i, 1, updated)
-					} else {
-						this.matches.unshift(updated)
-					}
+					this.replaceMatch(match, updated)
 				} else {
 					await this.loadMatches()
 				}
@@ -342,6 +341,23 @@ export default {
 					|| this.t('shillinq', 'Re-evaluation failed')
 			} finally {
 				this.reevaluating = ''
+			}
+		},
+
+		/**
+		 * Put a re-evaluated record in place of its row, or first when it is new.
+		 *
+		 * @param {object} match The row that was re-evaluated.
+		 * @param {object} updated The record the engine returned.
+		 */
+		replaceMatch(match, updated) {
+			const i = this.matches.findIndex(
+				(m) => m.id === match.id || m.id === updated.id,
+			)
+			if (i >= 0) {
+				this.matches.splice(i, 1, updated)
+			} else {
+				this.matches.unshift(updated)
 			}
 		},
 

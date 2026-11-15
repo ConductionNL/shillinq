@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\TaxNotificationService;
+use OCA\Shillinq\Kernel\Contracts\TaxNotificationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -42,12 +42,12 @@ class TaxDeadlineReminderJob extends TimedJob {
 	 * Construct the job with a daily interval.
 	 *
 	 * @param ITimeFactory $time The Nextcloud time factory.
-	 * @param TaxNotificationService $notificationService The deadline reminder dispatcher.
+	 * @param TaxNotificationServiceInterface $notificationService The deadline reminder dispatcher.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly TaxNotificationService $notificationService,
+		private readonly TaxNotificationServiceInterface $notificationService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

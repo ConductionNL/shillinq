@@ -31,24 +31,15 @@ use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\VatNumberCheckInterface;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\ViesService;
 use Psr\Log\LoggerInterface;
 
 /**
  * Validates a record's VAT number through VIES and keeps the outcome on the record.
  */
-class VatNumberCheck {
-
-	/**
-	 * The records a person can check, by route type: schema and the field holding the number.
-	 *
-	 * @var array<string,array{schema:string,field:string}>
-	 */
-	public const RECORDS = [
-		'customer' => ['schema' => 'CustomerMaster', 'field' => 'vatId'],
-		'supplier' => ['schema' => 'Payee', 'field' => 'vatNumber'],
-	];
+class VatNumberCheck implements VatNumberCheckInterface {
 
 	/**
 	 * The VIES member state prefixes (Greece is EL, Northern Ireland XI).
@@ -65,7 +56,7 @@ class VatNumberCheck {
 	 *
 	 * @param ViesService            $vies          The VIES client and evidence store.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      For the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 *
 	 * @return void
@@ -73,7 +64,7 @@ class VatNumberCheck {
 	public function __construct(
 		private readonly ViesService $vies,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -140,8 +131,7 @@ class VatNumberCheck {
 	 */
 	public function checkSellerOnArrival(array $invoice): ?array {
 		$number = $this->vies->canonicalVatId(vatId: (string)($invoice['sellerVatId'] ?? ''));
-		$prefix = substr($number, 0, 2);
-		if (strlen($number) < 4 || $prefix === 'NL' || in_array($prefix, self::EU_PREFIXES, true) === false) {
+		if (self::isForeignEuVatId(number: $number) === false) {
 			return null;
 		}
 
@@ -170,6 +160,18 @@ class VatNumberCheck {
 		}
 
 	}//end checkSellerOnArrival()
+
+	/**
+	 * Whether a canonical VAT number is one of another EU member state.
+	 *
+	 * @param string $number The canonical VAT number.
+	 *
+	 * @return bool
+	 */
+	private static function isForeignEuVatId(string $number): bool {
+		$prefix = substr($number, 0, 2);
+		return (strlen($number) < 4 || $prefix === 'NL' || in_array($prefix, self::EU_PREFIXES, true) === false) === false;
+	}//end isForeignEuVatId()
 
 	/**
 	 * Map a VIES outcome onto the record's status enum.

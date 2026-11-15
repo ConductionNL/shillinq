@@ -3,6 +3,9 @@
 /**
  * Standards Policy Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Resolves which accounting/reporting framework wins when an administration is
  * subject to several at once (REQ-ASP-003). An administrator declares the
  * applicable frameworks and their order of precedence via the
@@ -39,12 +42,13 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StandardsPolicyServiceInterface;
 use Throwable;
 
 /**
  * Resolves the precedence-winning accounting framework from the StandardsPolicy.
  */
-class StandardsPolicyService {
+class StandardsPolicyService implements StandardsPolicyServiceInterface {
 
 	/**
 	 * OpenRegister register slug the StandardsPolicy object lives in.
@@ -276,10 +280,7 @@ class StandardsPolicyService {
 	 */
 	private function loadFrameworks(?string $administrationId): array {
 		try {
-			$filters = [];
-			if ($administrationId !== null) {
-				$filters['administrationId'] = $administrationId;
-			}
+			$filters = $this->policyFilters(administrationId: $administrationId);
 
 			$rows = $this->objectService
 				->setRegister(self::REGISTER_SLUG)
@@ -294,6 +295,33 @@ class StandardsPolicyService {
 			return [];
 		}
 
+		return $this->firstPolicyFrameworks(rows: $rows);
+	}//end loadFrameworks()
+
+	/**
+	 * The StandardsPolicy filters, scoped to the administration when one is given.
+	 *
+	 * @param string|null $administrationId Optional administration scope.
+	 *
+	 * @return array<string, string>
+	 */
+	private function policyFilters(string|null $administrationId): array {
+		$filters = [];
+		if ($administrationId !== null) {
+			$filters['administrationId'] = $administrationId;
+		}
+
+		return $filters;
+	}//end policyFilters()
+
+	/**
+	 * The frameworks of the first policy row, or an empty list.
+	 *
+	 * @param mixed $rows The findAll() result.
+	 *
+	 * @return array<int, array<string, mixed>> The frameworks list (possibly empty).
+	 */
+	private function firstPolicyFrameworks(mixed $rows): array {
 		if (empty($rows) === true) {
 			return [];
 		}
@@ -302,7 +330,7 @@ class StandardsPolicyService {
 		$frameworks = ($policy['frameworks'] ?? []);
 
 		return is_array($frameworks) === true ? $frameworks : [];
-	}//end loadFrameworks()
+	}//end firstPolicyFrameworks()
 
 	/**
 	 * Normalise an ObjectService row (ObjectEntity or array) to a plain array.

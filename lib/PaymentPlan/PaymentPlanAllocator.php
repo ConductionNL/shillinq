@@ -34,8 +34,8 @@ namespace OCA\Shillinq\PaymentPlan;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -60,14 +60,14 @@ class PaymentPlanAllocator {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
-	 * @param ObjectTransitionRunner $transitions   Runs the declared transitions.
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param ObjectTransitionRunnerInterface $transitions   Runs the declared transitions.
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -314,7 +314,7 @@ class PaymentPlanAllocator {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

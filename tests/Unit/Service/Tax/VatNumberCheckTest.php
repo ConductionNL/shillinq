@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Tax;
 use DomainException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCA\Shillinq\Service\ViesService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -223,7 +223,7 @@ class VatNumberCheckTest extends TestCase {
 		$clients->method('newClient')->willReturn($client);
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$logger = $this->createMock(LoggerInterface::class);
 

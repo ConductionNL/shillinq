@@ -28,7 +28,7 @@ use OCA\Shillinq\Service\Import\ImportPipelineService;
 use OCA\Shillinq\Service\Import\ImportPosting;
 use OCA\Shillinq\Service\Import\ImportPostingPayloads;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -63,14 +63,14 @@ final class ImportPipelineServiceTest extends TestCase {
 
 		$logger = $this->createMock(LoggerInterface::class);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$this->store = new InMemoryObjectServiceStub(findAllRendersEntities: true);
 		$posting     = new ImportPosting(
 			objectService: $this->store,
 			transitions: new ObjectTransitionRunner(container: $container),
 			payloads: new ImportPostingPayloads(),
-			settings: $settings,
+			registerLocation: $settings,
 			logger: $logger
 		);
 
