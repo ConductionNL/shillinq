@@ -33,6 +33,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Webshop;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
@@ -848,7 +850,10 @@ class WebshopOrderInvoicer {
 			}
 		}
 
-		$saved = $this->objectService->saveObject(object: $customer, register: $this->register(), schema: 'CustomerMaster');
+		$saved = $this->objectService->saveObject(
+			object: $customer,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'CustomerMaster'))
+		);
 		$id = ObjectIdentifier::resolve(saved: $saved);
 		if ($id === '') {
 			throw new RuntimeException('The web shop buyer was saved as a customer but OpenRegister answered without an id.');
@@ -926,7 +931,10 @@ class WebshopOrderInvoicer {
 	 * @throws RuntimeException When the save answers without an id.
 	 */
 	private function writeInvoice(array $invoice): string {
-		$saved = $this->objectService->saveObject(object: $invoice, register: $this->register(), schema: 'ARInvoice');
+		$saved = $this->objectService->saveObject(
+			object: $invoice,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ARInvoice'))
+		);
 		$id = ObjectIdentifier::resolve(saved: $saved);
 		if ($id === '') {
 			throw new RuntimeException('The web shop invoice was saved but OpenRegister answered without an id.');
@@ -945,7 +953,10 @@ class WebshopOrderInvoicer {
 	 */
 	private function saveOrder(array $order, string $orderId): void {
 		unset($order['@self']);
-		$this->objectService->saveObject(object: $order, register: $this->register(), schema: 'WebshopOrder', uuid: $orderId);
+		$this->objectService->saveObject(
+			object: $order,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'WebshopOrder'), uuid: $orderId)
+		);
 	}//end saveOrder()
 
 	/**

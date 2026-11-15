@@ -27,6 +27,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Pins windows over every start, the administration lookup paths and the
@@ -73,6 +74,7 @@ final class FiscalYearContextGoldenTest extends TestCase {
 			}
 
 			public function find(string $id, mixed ...$rest): mixed {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				$this->events[] = ['find', $id];
 				$found = ($this->byUuid[$id] ?? new \RuntimeException('not a uuid'));
 				if ($found instanceof \Throwable) {

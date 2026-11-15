@@ -38,6 +38,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Issuing, validating, redeeming, revoking and sending appointment
@@ -277,7 +278,9 @@ class ConfirmationTokenServiceTest extends TestCase {
 			 * @param boolean $_rbac    Whether RBAC applies.
 			 * @return mixed
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac=true): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if ($this->test->storeFails === true) {
 					throw new RuntimeException('store down');
 				}

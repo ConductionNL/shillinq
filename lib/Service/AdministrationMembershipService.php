@@ -29,6 +29,8 @@ namespace OCA\Shillinq\Service;
 use DomainException;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationMembershipServiceInterface;
 use OCP\IAppConfig;
@@ -111,10 +113,9 @@ class AdministrationMembershipService implements AdministrationMembershipService
 
 		$saved = $this->objectService->saveObject(
 			object: $membership,
-			register: $this->register(),
-			schema: 'AdministrationMembership',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'AdministrationMembership')),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 
 		$serialised = $saved->jsonSerialize();
