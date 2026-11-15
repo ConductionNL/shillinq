@@ -50,25 +50,64 @@ export function buildRaiseRequest(form) {
 	const request = {
 		administrationId: form.administrationId,
 		customerId: form.customerId,
-		orderReference: String(form.order?.value ?? ''),
-		orderLabel: String(form.order?.label ?? ''),
+		...orderFields(form.order),
 	}
-	const value = parseAmount(form.value)
-	if (form.mode === 'amount') {
-		request.amount = value
-	} else {
-		request.percentage = value
-	}
+	request[shareKey(form.mode)] = parseAmount(form.value)
 	if (form.invoiceDate) {
 		request.invoiceDate = form.invoiceDate
 	}
-	if (form.order && form.order.shillinq !== true) {
-		request.orderVatBreakdown = VAT_RATES.map((rate) => ({
-			rate: rate / 100,
-			net: parseAmount(form.rates?.[rate]),
-		})).filter((entry) => Number.isFinite(entry.net) && entry.net > 0)
+	if (isOutsideOrder(form.order)) {
+		request.orderVatBreakdown = orderVatBreakdown(form.rates)
 	}
 	return request
+}
+
+/**
+ * The request key the typed value goes under.
+ *
+ * @param {string} mode The dialog mode, 'amount' or 'percentage'.
+ * @return {string}
+ */
+function shareKey(mode) {
+	return mode === 'amount' ? 'amount' : 'percentage'
+}
+
+/**
+ * The order's reference and label as the request names them.
+ *
+ * @param {object|null|undefined} order The picked order.
+ * @return {{orderReference: string, orderLabel: string}}
+ */
+function orderFields(order) {
+	return {
+		orderReference: String(order?.value ?? ''),
+		orderLabel: String(order?.label ?? ''),
+	}
+}
+
+/**
+ * Whether an order was picked that shillinq does not hold, so its VAT
+ * breakdown goes along.
+ *
+ * @param {object|null|undefined} order The picked order.
+ * @return {boolean}
+ */
+function isOutsideOrder(order) {
+	return Boolean(order) && order.shillinq !== true
+}
+
+/**
+ * The net per VAT rate of an order shillinq does not hold: rates with a
+ * positive typed net only.
+ *
+ * @param {object|undefined} rates Typed nets by VAT rate in percent.
+ * @return {Array<{rate: number, net: number}>}
+ */
+function orderVatBreakdown(rates) {
+	return VAT_RATES.map((rate) => ({
+		rate: rate / 100,
+		net: parseAmount(rates?.[rate]),
+	})).filter((entry) => Number.isFinite(entry.net) && entry.net > 0)
 }
 
 /**

@@ -85,7 +85,7 @@ final class PaymentBlockServiceTest extends TestCase {
 		$object = $this->saved[0]['object'];
 		self::assertFalse($object['paymentBlocked']);
 		self::assertSame('IBAN change under verification', $object['paymentBlockReason']);
-		self::assertSame('IBAN verified by phone', $object['paymentReleaseReason']);
+		self::assertSame('IBAN verified by phone', $object['paymentBlockReleaseReason']);
 		self::assertSame('bram', $object['paymentReleasedBy']);
 	}//end testAnotherUserReleasesWithAReason()
 

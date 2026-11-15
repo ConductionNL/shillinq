@@ -26,8 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Notification;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ScheduledReportDeliveryInterface;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
@@ -57,7 +57,7 @@ class ScheduledReportNotifier implements INotifier {
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function getID(): string {
-		return Application::APP_ID . '-scheduled-reports';
+		return AppIdentity::APP_ID . '-scheduled-reports';
 
 	}//end getID()
 
@@ -69,7 +69,7 @@ class ScheduledReportNotifier implements INotifier {
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function getName(): string {
-		return $this->l10nFactory->get(Application::APP_ID)->t('Scheduled reports');
+		return $this->l10nFactory->get(AppIdentity::APP_ID)->t('Scheduled reports');
 
 	}//end getName()
 
@@ -87,16 +87,16 @@ class ScheduledReportNotifier implements INotifier {
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$subject = $notification->getSubject();
-		if ($notification->getApp() !== Application::APP_ID
-			|| in_array($subject, [ScheduledReportDelivery::SUBJECT_READY, ScheduledReportDelivery::SUBJECT_FAILED], true) === false
+		if ($notification->getApp() !== AppIdentity::APP_ID
+			|| in_array($subject, [ScheduledReportDeliveryInterface::SUBJECT_READY, ScheduledReportDeliveryInterface::SUBJECT_FAILED], true) === false
 		) {
 			throw new UnknownNotificationException();
 		}
 
-		$l          = $this->l10nFactory->get(Application::APP_ID, $languageCode);
+		$l          = $this->l10nFactory->get(AppIdentity::APP_ID, $languageCode);
 		$parameters = $notification->getSubjectParameters();
 		$name       = (string)($parameters['name'] ?? '');
-		if ($subject === ScheduledReportDelivery::SUBJECT_READY) {
+		if ($subject === ScheduledReportDeliveryInterface::SUBJECT_READY) {
 			$notification->setParsedSubject($l->t('%1$s for %2$s is ready', [$name, (string)($parameters['period'] ?? '')]));
 			return $notification;
 		}

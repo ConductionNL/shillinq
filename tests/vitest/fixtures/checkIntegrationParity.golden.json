@@ -1,0 +1,147 @@
+{
+	"every rule passes": {
+		"status": 0,
+		"stdout": [
+			"",
+			"✓ integration parity: 7 server leaf face(s), 9 JS registration(s), 1 OpenRegister schema declaration file(s) — all rules pass (assertions run per rule: R1:6 R2:13 R3:1 R4:6 R5:4 R6:4)"
+		],
+		"stderr": [
+			""
+		]
+	},
+	"R1 incomplete render pairs": {
+		"status": 1,
+		"stdout": [
+			""
+		],
+		"stderr": [
+			"",
+			"",
+			"Assertions run per rule: R1:8 R2:17 R3:1 R4:6 R5:4 R6:4",
+			"integration parity gate FAILED — 3 violation(s) over 9 server leaf face(s), 11 JS registration(s), 1 OpenRegister schema declaration file(s):",
+			"✗ [R1 render-pair] registerIntegration id \"leaf-comp\" (src/leaves/component.js) declares renderMode \"component\" but is missing the required `widget` key — an incomplete render pair renders nothing on its surface (ADR-019 AD-11/AD-13, ADR-066 decision 7).",
+			"✗ [R1 render-pair] registerIntegration id \"leaf-comp2\" (src/leaves/component.js) declares renderMode \"component\" but is missing the required `tab` key — an incomplete render pair renders nothing on its surface (ADR-019 AD-11/AD-13, ADR-066 decision 7).",
+			"✗ [R1 render-pair] registerIntegration id \"leaf-mount\" (src/leaves/mount.js) declares renderMode \"mount\" but is missing the required `unmount` key — an incomplete render pair renders nothing on its surface (ADR-019 AD-11/AD-13, ADR-066 decision 7)."
+		]
+	},
+	"R2 correlation failures": {
+		"status": 1,
+		"stdout": [
+			""
+		],
+		"stderr": [
+			"",
+			"",
+			"Assertions run per rule: R1:7 R2:18 R3:1 R4:6 R5:5 R6:4",
+			"integration parity gate FAILED — 7 violation(s) over 13 server leaf face(s), 11 JS registration(s), 1 OpenRegister schema declaration file(s):",
+			"✗ [R2 id-correlation] a LeafDescriptor in lib/Leaf/Nested.php declares no statically-readable `id` — a leaf whose id cannot be read cannot be correlated with its JS half.",
+			"✗ [R2 id-correlation] a LeafDescriptor in lib/Leaf/NoId.php declares no statically-readable `id` — a leaf whose id cannot be read cannot be correlated with its JS half.",
+			"✗ [R2 id-correlation] registerIntegration id \"leaf-orphan\" (src/leaves/orphan.js) has NO matching server-side face in lib/** (neither a `new LeafDescriptor(id: 'leaf-orphan')` nor an IntegrationProvider whose getId() returns 'leaf-orphan') — orphan registration: it mounts on window.OCA.OpenRegister.integrations but is invisible to the openregister.integrations.leaves capability.",
+			"✗ [R2 id-correlation] server leaf \"leaf-hidden\" (LeafDescriptor, lib/Leaf/Hidden.php) is a data provider that NOTHING in src/** names: no registration under that id, and not one literal occurrence of it. Nothing in this app's frontend can reach the data it serves. Either register a surface for it, or read it from the panel that does.",
+			"✗ [R2 id-correlation] server leaf \"leaf-nested\" (LeafDescriptor, lib/Leaf/Nested.php) is a data provider that NOTHING in src/** names: no registration under that id, and not one literal occurrence of it. Nothing in this app's frontend can reach the data it serves. Either register a surface for it, or read it from the panel that does.",
+			"✗ [R2 id-correlation] server leaf \"leaf-phantom\" (LeafDescriptor, lib/Leaf/Phantom.php) has NO matching registerIntegration({ id: 'leaf-phantom' }) in src/** — phantom leaf: the openregister.integrations.leaves capability advertises a surface that never mounts.",
+			"✗ [R2 id-correlation] server leaf \"prov-lonely\" (IntegrationProvider, lib/Leaf/Lonely.php) is a data provider that NOTHING in src/** names: no registration under that id, and not one literal occurrence of it. Nothing in this app's frontend can reach the data it serves. Either register a surface for it, or read it from the panel that does."
+		]
+	},
+	"R3 renderMode mismatch": {
+		"status": 0,
+		"stdout": [
+			"",
+			"✓ integration parity: 8 server leaf face(s), 10 JS registration(s), 1 OpenRegister schema declaration file(s) — all rules pass (assertions run per rule: R1:7 R2:15 R3:1 R4:6 R5:4 R6:4)"
+		],
+		"stderr": [
+			""
+		]
+	},
+	"R4 metadata mismatch": {
+		"status": 0,
+		"stdout": [
+			"",
+			"✓ integration parity: 7 server leaf face(s), 9 JS registration(s), 1 OpenRegister schema declaration file(s) — all rules pass (assertions run per rule: R1:6 R2:13 R3:1 R4:6 R5:4 R6:4)"
+		],
+		"stderr": [
+			""
+		]
+	},
+	"R5 spread sources": {
+		"status": 1,
+		"stdout": [
+			""
+		],
+		"stderr": [
+			"",
+			"",
+			"Assertions run per rule: R1:6 R2:13 R3:1 R4:6 R5:6 R6:4",
+			"integration parity gate FAILED — 3 violation(s) over 7 server leaf face(s), 12 JS registration(s), 1 OpenRegister schema declaration file(s):",
+			"✗ [R5 spread-source] registerIntegration in src/leaves/spreads.js declares neither an `id` nor a spread of a descriptor — it registers a leaf with no identity.",
+			"✗ [R5 spread-source] registerIntegration in src/leaves/spreads.js spreads `...localIntegration` imported from \"./local.js\", not from the leaf-owning package @conduction/nextcloud-vue — an override must extend the descriptor it overrides, or the id it registers under is not the one it thinks.",
+			"✗ [R5 spread-source] registerIntegration in src/leaves/spreads.js spreads `...missingIntegration`, which is not imported in that file — the spread of an undefined binding registers a leaf with no id."
+		]
+	},
+	"R6 offlineConfig failures": {
+		"status": 1,
+		"stdout": [
+			""
+		],
+		"stderr": [
+			"",
+			"",
+			"Assertions run per rule: R1:7 R2:14 R3:1 R4:3 R5:4 R6:6",
+			"integration parity gate FAILED — 5 violation(s) over 7 server leaf face(s), 10 JS registration(s), 1 OpenRegister schema declaration file(s):",
+			"✗ [R2 id-correlation] server leaf \"prov-c\" (IntegrationProvider, lib/Leaf/ProvC.php) is a data provider that NOTHING in src/** names: no registration under that id, and not one literal occurrence of it. Nothing in this app's frontend can reach the data it serves. Either register a surface for it, or read it from the panel that does.",
+			"✗ [R6 offlineConfig] leaf offlineConfig.assigneeField = \"missing\" (src/leaves/provider.js) is not a property of schema \"planned-item\" as declared in lib/Settings/** — the leaf would filter/display on a property that does not exist. Declared properties: assignee, date, title",
+			"✗ [R6 offlineConfig] leaf offlineConfig.plannedSchema = \"absent\" (src/leaves/second.js) names a schema this repo does not declare in lib/Settings/** — the leaf would query a schema that does not exist. Declared slugs: planned-item, reference",
+			"✗ [R6 offlineConfig] leaf offlineConfig.resultSchema = \"nope\" (src/leaves/provider.js) names a schema this repo does not declare in lib/Settings/** — the leaf would query a schema that does not exist. Declared slugs: planned-item, reference",
+			"✗ [R6 offlineConfig] leaf offlineConfig.templateRefField = \"x\" (src/leaves/provider.js) is not a property of schema \"planned-item\" as declared in lib/Settings/** — the leaf would filter/display on a property that does not exist. Declared properties: assignee, date, title"
+		]
+	},
+	"R6 without schema files": {
+		"status": 1,
+		"stdout": [
+			""
+		],
+		"stderr": [
+			"",
+			"",
+			"Assertions run per rule: R1:7 R2:14 R3:1 R4:6 R5:4 R6:0",
+			"integration parity gate FAILED — 2 violation(s) over 7 server leaf face(s), 10 JS registration(s), 0 OpenRegister schema declaration file(s):",
+			"✗ [R6 offlineConfig] registerIntegration in src/leaves/provider.js supplies an `offlineConfig` naming OpenRegister schemas, but this repo declares no register/schema JSON under lib/Settings/** to check it against — the mapping cannot be verified.",
+			"✗ [R6 offlineConfig] registerIntegration in src/leaves/zz-config.js supplies an `offlineConfig` naming OpenRegister schemas, but this repo declares no register/schema JSON under lib/Settings/** to check it against — the mapping cannot be verified."
+		]
+	},
+	"comments, quotes and unbalanced text": {
+		"status": 1,
+		"stdout": [
+			""
+		],
+		"stderr": [
+			"",
+			"",
+			"Assertions run per rule: R1:7 R2:15 R3:1 R4:10 R5:4 R6:4",
+			"integration parity gate FAILED — 1 violation(s) over 9 server leaf face(s), 10 JS registration(s), 1 OpenRegister schema declaration file(s):",
+			"✗ [R2 id-correlation] a LeafDescriptor in lib/Leaf/Open.php declares no statically-readable `id` — a leaf whose id cannot be read cannot be correlated with its JS half."
+		]
+	},
+	"nothing to check": {
+		"status": 1,
+		"stdout": [
+			"",
+			"✓ integration parity: 0 server leaf face(s), 0 JS registration(s), 0 OpenRegister schema declaration file(s) — all rules pass (assertions run per rule: R1:0 R2:0 R3:0 R4:0 R5:0 R6:0)"
+		],
+		"stderr": [
+			"",
+			"✗ integration parity: every rule had ZERO subject matter, yet gate-24 selected this repo as one that registers leaves. That contradiction means this checker failed to read what the gate can see — a pass here would be a pass over nothing."
+		]
+	},
+	"no lib and no src": {
+		"status": 1,
+		"stdout": [
+			"",
+			"✓ integration parity: 0 server leaf face(s), 0 JS registration(s), 0 OpenRegister schema declaration file(s) — all rules pass (assertions run per rule: R1:0 R2:0 R3:0 R4:0 R5:0 R6:0)"
+		],
+		"stderr": [
+			"",
+			"✗ integration parity: every rule had ZERO subject matter, yet gate-24 selected this repo as one that registers leaves. That contradiction means this checker failed to read what the gate can see — a pass here would be a pass over nothing."
+		]
+	}
+}

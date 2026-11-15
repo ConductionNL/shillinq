@@ -21,8 +21,10 @@ import { generateUrl } from '@nextcloud/router'
 import { createApp, h, reactive } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
+import AdministrationScopedIndex from './views/AdministrationScopedIndex.vue'
 import appIcons from './icons.js'
 import { registerContractLeaf } from './integrations/registerContractLeaf.js'
+import { registerFinancialDocumentsLeaf } from './integrations/registerFinancialDocumentsLeaf.js'
 import { registerPaymentRequestsLeaf } from './integrations/registerPaymentRequestsLeaf.js'
 import manifestShell from './manifest.d.shell.json'
 import bundledManifest from './manifest.json'
@@ -70,6 +72,7 @@ registerLeafIntegrations()
 // is a no-op: first one wins (ADR-019 AD-13).
 registerPaymentRequestsLeaf()
 registerContractLeaf()
+registerFinancialDocumentsLeaf()
 
 // Register the app's MDI icon set + lib translations once at bootstrap.
 // registerIcons() merges the given map into the lib's ICON_MAP registry;
@@ -290,7 +293,10 @@ tryLoadTranslations()
 // shapes, and Vue caches resolved component metadata on the object it is
 // handed — which throws against a frozen source map. Cloning yields
 // extensible objects without changing the resolved values.
-const pageTypesProp = { ...defaultPageTypes }
+// ledger-multi-administration REQ-LMA-002: `index` pages over schemas that
+// carry `administrationId` list the active administration only; every other
+// index page renders as the library's.
+const pageTypesProp = { ...defaultPageTypes, index: AdministrationScopedIndex }
 const registryProp = { ...registry }
 
 // Flat `{ name: component }` map of every registry component, derived from

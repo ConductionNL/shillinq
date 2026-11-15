@@ -74,7 +74,30 @@
             "description": "Dutch KvK number (8 digits).",
             "nullable": true,
             "example": "24502797",
-            "title": "KvK Number"
+            "title": "KvK Number",
+            "x-openregister-property-source": {
+              "provider": "kvk",
+              "mode": "default",
+              "config": {
+                "fill": {
+                  "name": "naam",
+                  "tradingName": "handelsnamen[0].naam",
+                  "address.street": "_embedded.hoofdvestiging.adressen[0].straatnaam",
+                  "address.houseNumber": {
+                    "join": [
+                      "_embedded.hoofdvestiging.adressen[0].huisnummer",
+                      "_embedded.hoofdvestiging.adressen[0].huisletter",
+                      "_embedded.hoofdvestiging.adressen[0].huisnummerToevoeging"
+                    ]
+                  },
+                  "address.postcode": "_embedded.hoofdvestiging.adressen[0].postcode",
+                  "address.city": "_embedded.hoofdvestiging.adressen[0].plaats",
+                  "address.country": {
+                    "value": "NL"
+                  }
+                }
+              }
+            }
           },
           "vatNumber": {
             "type": "string",
@@ -173,12 +196,6 @@
             "description": "When the payment block was set. Written by the block endpoint.",
             "title": "Payment blocked at"
           },
-          "paymentReleaseReason": {
-            "type": "string",
-            "nullable": true,
-            "description": "Why the last payment block was released. Written by the block endpoint.",
-            "title": "Payment release reason"
-          },
           "paymentReleasedBy": {
             "type": "string",
             "nullable": true,
@@ -191,6 +208,12 @@
             "nullable": true,
             "description": "When the last payment block was released. Written by the block endpoint.",
             "title": "Payment released at"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
           },
           "dunningPolicyRef": {
             "type": "string",
@@ -515,12 +538,6 @@
             "description": "When the payment block was set. Written by the block endpoint.",
             "title": "Payment blocked at"
           },
-          "paymentReleaseReason": {
-            "type": "string",
-            "nullable": true,
-            "description": "Why the last payment block was released. Written by the block endpoint.",
-            "title": "Payment release reason"
-          },
           "paymentReleasedBy": {
             "type": "string",
             "nullable": true,
@@ -533,6 +550,12 @@
             "nullable": true,
             "description": "When the last payment block was released. Written by the block endpoint.",
             "title": "Payment released at"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
           },
           "writeOffReason": {
             "type": "string",
@@ -558,6 +581,12 @@
             "description": "FK to the administration owning this AP invoice.",
             "example": "adm-1",
             "title": "Administration ID"
+          },
+          "supplierInvoiceId": {
+            "type": "string",
+            "description": "UUID of the SupplierInvoice this transaction was written for by the hand-over to accounts payable. The supplier invoice's pay guard accepts only a transaction that names the invoice itself.",
+            "nullable": true,
+            "title": "Supplier invoice ID"
           }
         },
         "x-openregister-lifecycle": {

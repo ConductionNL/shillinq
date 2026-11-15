@@ -266,4 +266,53 @@ final class RevenueControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
 	}//end testForeignAdministrationReturns404AndNeverReachesTheService()
+	/**
+	 * The refusal bodies in check order, the 401 body, the trimmed scope
+	 * passed on, and the failure body with its log context.
+	 *
+	 * @return void
+	 */
+	public function testBodiesCheckOrderAndFailureLog(): void {
+		$params = [];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$cases = [
+			[['period_end' => 'x'], 'administration_id is required'],
+			[['administration_id' => 'a/b'], 'period_end is required'],
+			[['administration_id' => 'a/b', 'period_end' => 'x'], 'administration_id must be a valid administration identifier'],
+			[['administration_id' => 'adm-1', 'period_end' => '2026-3-31'], 'period_end must be an ISO date (YYYY-MM-DD)'],
+		];
+		foreach ($cases as [$given, $error]) {
+			$params = $given;
+			self::assertSame(['error' => $error], $this->controller->cutoff()->getData());
+		}
+
+		$this->canAccess = false;
+		$params = ['administration_id' => 'adm-1', 'period_end' => '2026-03-31'];
+		self::assertSame(['error' => 'Administration not found'], $this->controller->cutoff()->getData());
+		$this->canAccess = true;
+
+		$params = ['administration_id' => ' adm-1 ', 'period_end' => ' 2026-03-31 '];
+		$this->service->method('compute')->with('adm-1', '2026-03-31')->willThrowException(new \RuntimeException('boom'));
+		$this->logger->expects($this->once())->method('error')->with(
+			'RevenueController: failed to compute revenue cut-off',
+			['administrationId' => 'adm-1', 'periodEnd' => '2026-03-31', 'exception' => 'boom']
+		);
+		self::assertSame(['error' => 'Failed to compute revenue cut-off'], $this->controller->cutoff()->getData());
+
+		$anonymous = $this->createMock(IUserSession::class);
+		$anonymous->method('getUser')->willReturn(null);
+		$controller = new RevenueController(
+			request: $this->request,
+			cutoffService: $this->service,
+			userSession: $anonymous,
+			context: $this->context,
+			logger: $this->logger,
+		);
+		self::assertSame(['error' => 'Authentication required'], $controller->cutoff()->getData());
+
+	}//end testBodiesCheckOrderAndFailureLog()
 }//end class

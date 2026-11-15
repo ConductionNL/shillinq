@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\PaymentRun\PaymentBlockService;
 use OCA\Shillinq\PaymentRun\PaymentBlockWriteScope;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -51,12 +51,12 @@ class PaymentBlockLockListener implements IEventListener {
 	 * Construct the listener.
 	 *
 	 * @param PaymentBlockWriteScope $scope          Open while the block service writes.
-	 * @param ListenerSchemaResolver $schemaResolver Matches the written schema.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Matches the written schema.
 	 * @param LoggerInterface        $logger         Logger.
 	 */
 	public function __construct(
 		private readonly PaymentBlockWriteScope $scope,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

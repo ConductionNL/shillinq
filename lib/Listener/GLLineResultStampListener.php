@@ -3,6 +3,9 @@
 /**
  * GL Line Result Stamp Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Keeps the result stamps on ledger lines current (reporting-segment-results
  * REQ-RSR-002). Three moments change them:
  *
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,8 +40,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\GlLineResultStampsInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -58,13 +58,13 @@ class GLLineResultStampListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param GlLineResultStamps     $stamps         Writes the stamps.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves an entity's schema slug.
+	 * @param GlLineResultStampsInterface     $stamps         Writes the stamps.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves an entity's schema slug.
 	 * @param LoggerInterface        $logger         Logger.
 	 */
 	public function __construct(
-		private readonly GlLineResultStamps $stamps,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly GlLineResultStampsInterface $stamps,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 

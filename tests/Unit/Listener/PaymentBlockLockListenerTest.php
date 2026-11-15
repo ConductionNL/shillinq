@@ -26,7 +26,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\PaymentBlockLockListener;
 use OCA\Shillinq\PaymentRun\PaymentBlockWriteScope;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -138,7 +138,7 @@ final class PaymentBlockLockListenerTest extends TestCase {
 	 * @return PaymentBlockLockListener
 	 */
 	private function listener(PaymentBlockWriteScope $scope, bool $matches=true): PaymentBlockLockListener {
-		$resolver = $this->createMock(ListenerSchemaResolver::class);
+		$resolver = $this->createMock(ListenerSchemaResolverInterface::class);
 		$resolver->method('matchesSchema')->willReturn($matches);
 
 		return new PaymentBlockLockListener(scope: $scope, schemaResolver: $resolver, logger: new NullLogger());

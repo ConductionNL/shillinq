@@ -77,55 +77,78 @@ final class SmsReminderDispatcher {
 	public function dispatch(array $channel, array $recipient, array $variables): SmsSendResult {
 		// 1. Eligibility gate.
 		if ($this->optOutPolicy->isSendAllowed($channel, $recipient) === false) {
-			return new SmsSendResult(
-				SmsSendResult::STATUS_SKIPPED,
-				null,
-				$this->optOutPolicy->skipReason($channel, $recipient)
-			);
+			return self::skipped(reason: $this->optOutPolicy->skipReason($channel, $recipient));
 		}
 
 		// 2. Resolve the recipient number (recipient first, then channel fallback).
 		$rawNumber = $this->resolveRawNumber(channel: $channel, recipient: $recipient);
 		if ($rawNumber === '') {
-			return new SmsSendResult(
-				SmsSendResult::STATUS_SKIPPED,
-				null,
-				'no recipient phone number and no channel fallback'
-			);
+			return self::skipped(reason: 'no recipient phone number and no channel fallback');
 		}
 
 		// 3. Validate / normalize to E.164 (NL-focused per the channel format).
 		$e164 = $this->normalizer->toE164($rawNumber, 'NL');
 		if ($e164 === null) {
-			return new SmsSendResult(
-				SmsSendResult::STATUS_FAILED,
-				null,
-				'recipient phone number failed E.164/NL validation'
-			);
+			return self::failed(reason: 'recipient phone number failed E.164/NL validation');
 		}
 
-		// 4. Render the template.
-		$body = $this->renderer->render((string)($channel['messageTemplate'] ?? ''), $variables);
+		return $this->renderAndSend(channel: $channel, reminder: new SmsReminder(e164: $e164, variables: $variables));
+	}//end dispatch()
+
+	/**
+	 * Render the template (step 4) and send it via the provider adapter (step 5).
+	 *
+	 * @param array<string, mixed> $channel  The SMS channel object.
+	 * @param SmsReminder          $reminder The validated number and the booking variables.
+	 *
+	 * @return SmsSendResult
+	 */
+	private function renderAndSend(array $channel, SmsReminder $reminder): SmsSendResult {
+		$body = $this->renderer->render((string)($channel['messageTemplate'] ?? ''), $reminder->variables);
 		if ($body === '') {
-			return new SmsSendResult(
-				SmsSendResult::STATUS_FAILED,
-				null,
-				'rendered message body is empty'
-			);
+			return self::failed(reason: 'rendered message body is empty');
 		}
 
-		// 5. Send via the provider adapter.
 		$connectorId = (string)($channel['providerConfig']['connectorId'] ?? '');
 		if ($connectorId === '') {
-			return new SmsSendResult(
-				SmsSendResult::STATUS_FAILED,
-				null,
-				'channel has no provider connector configured'
-			);
+			return self::failed(reason: 'channel has no provider connector configured');
 		}
 
-		return $this->adapter->send($connectorId, $e164, $body, $this->resolveSenderId(channel: $channel));
-	}//end dispatch()
+		return $this->adapter->send($connectorId, $reminder->e164, $body, $this->resolveSenderId(channel: $channel));
+
+	}//end renderAndSend()
+
+	/**
+	 * A skipped outcome with its reason.
+	 *
+	 * @param string $reason Why nothing was sent (PII-free).
+	 *
+	 * @return SmsSendResult
+	 */
+	private static function skipped(string $reason): SmsSendResult {
+		return new SmsSendResult(
+			SmsSendResult::STATUS_SKIPPED,
+			null,
+			$reason
+		);
+
+	}//end skipped()
+
+	/**
+	 * A failed outcome with its reason.
+	 *
+	 * @param string $reason Why sending failed (PII-free).
+	 *
+	 * @return SmsSendResult
+	 */
+	private static function failed(string $reason): SmsSendResult {
+		return new SmsSendResult(
+			SmsSendResult::STATUS_FAILED,
+			null,
+			$reason
+		);
+
+	}//end failed()
 
 	/**
 	 * Resolve the raw recipient number: the recipient's own number if present,

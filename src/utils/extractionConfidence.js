@@ -132,15 +132,28 @@ export function hasKnownExtractionId(record) {
  */
 export function glAccountSuggestionSummary(response) {
 	const suggestion = response?.suggestion
-	if (!suggestion || typeof suggestion !== 'object') {
-		return null
-	}
+	const code = isSuggestion(suggestion) ? String(suggestion.code ?? '').trim() : ''
+	return code ? suggestionSummary(suggestion, code) : null
+}
 
-	const code = String(suggestion.code ?? '').trim()
-	if (!code) {
-		return null
-	}
+/**
+ * Whether a proxy suggestion is an object.
+ *
+ * @param {unknown} suggestion The suggestion.
+ * @return {boolean}
+ */
+function isSuggestion(suggestion) {
+	return Boolean(suggestion) && typeof suggestion === 'object'
+}
 
+/**
+ * The renderable summary of a suggestion with a code.
+ *
+ * @param {object} suggestion The suggestion.
+ * @param {string} code Its trimmed code.
+ * @return {{code: string, label: string, confidence: number|null, rationale: string, source: string}}
+ */
+function suggestionSummary(suggestion, code) {
 	return {
 		code,
 		label: String(suggestion.label ?? ''),

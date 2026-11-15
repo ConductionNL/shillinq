@@ -31,6 +31,8 @@ namespace OCA\Shillinq\PaymentRun;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Util\ObjectIdentifier;
+use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * Blocks and releases payment of one invoice or supplier.
@@ -54,7 +56,7 @@ class PaymentBlockService {
 		'paymentBlockReason',
 		'paymentBlockedBy',
 		'paymentBlockedAt',
-		'paymentReleaseReason',
+		'paymentBlockReleaseReason',
 		'paymentReleasedBy',
 		'paymentReleasedAt',
 	];
@@ -106,8 +108,17 @@ class PaymentBlockService {
 			return ['status' => 400, 'error' => 'reason-required'];
 		}
 
-		$entity = $this->objectService->find(id: $id, register: self::REGISTER, schema: $schema, _rbac: false, _multitenancy: false);
-		if ($entity === null) {
+		try {
+			$entity = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister(self::REGISTER)->setSchema($schema),
+				id: $id,
+				named: ['_rbac' => false, '_multitenancy' => false]
+			);
+		} catch (DoesNotExistException $miss) {
+			$entity = null;
+		}
+
+		if (is_object($entity) === false) {
 			return ['status' => 404, 'error' => 'not-found'];
 		}
 
@@ -165,7 +176,7 @@ class PaymentBlockService {
 			'paymentBlockReason' => $reason,
 			'paymentBlockedBy' => $actor,
 			'paymentBlockedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-			'paymentReleaseReason' => null,
+			'paymentBlockReleaseReason' => null,
 			'paymentReleasedBy' => null,
 			'paymentReleasedAt' => null,
 		];
@@ -183,7 +194,7 @@ class PaymentBlockService {
 	private function releaseFields(string $actor, string $reason): array {
 		return [
 			'paymentBlocked' => false,
-			'paymentReleaseReason' => $reason,
+			'paymentBlockReleaseReason' => $reason,
 			'paymentReleasedBy' => $actor,
 			'paymentReleasedAt' => gmdate('Y-m-d\TH:i:s\Z'),
 		];

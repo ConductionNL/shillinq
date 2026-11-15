@@ -74,32 +74,74 @@ final class TimezoneResolver {
 	 * @return string The chosen IANA timezone identifier — always one that
 	 *                PHP's DateTimeZone accepts. Defaults to UTC.
 	 */
-	public function resolve(?string $customerUserId, ?string $explicitOverride = null): string {
+	public function resolve(string|null $customerUserId, string|null $explicitOverride = null): string {
 		if ($explicitOverride !== null && $this->isValidTimezone(tz: $explicitOverride) === true) {
 			return $explicitOverride;
 		}
 
-		if ($customerUserId !== null && $customerUserId !== '') {
-			try {
-				$tz = $this->config->getUserValue($customerUserId, 'core', 'timezone', '');
-				if ($tz !== '' && $this->isValidTimezone(tz: $tz) === true) {
-					return $tz;
-				}
-			} catch (Throwable $e) {
-				$this->logger->debug(
-					'TimezoneResolver: unable to read core/timezone for user '
-					. $customerUserId . ': ' . $e->getMessage()
-				);
-			}
+		$userTimezone = $this->userTimezone(customerUserId: $customerUserId);
+		if ($userTimezone !== null) {
+			return $userTimezone;
 		}
 
+		return $this->serverTimezone();
+	}//end resolve()
+
+	/**
+	 * The customer's own valid `core/timezone` setting, or null when there is
+	 * no customer user, no valid setting, or it cannot be read (debug-logged).
+	 *
+	 * @param string|null $customerUserId Nextcloud user ID of the customer, or null.
+	 *
+	 * @return string|null
+	 */
+	private function userTimezone(string|null $customerUserId): string|null {
+		if ($customerUserId === null || $customerUserId === '') {
+			return null;
+		}
+
+		$tz = $this->readUserTimezone(customerUserId: $customerUserId);
+		if ($tz !== '' && $this->isValidTimezone(tz: $tz) === true) {
+			return $tz;
+		}
+
+		return null;
+	}//end userTimezone()
+
+	/**
+	 * The raw `core/timezone` user setting, or '' when it is unset or cannot
+	 * be read (debug-logged, fail-soft).
+	 *
+	 * @param string $customerUserId Nextcloud user ID of the customer.
+	 *
+	 * @return string
+	 */
+	private function readUserTimezone(string $customerUserId): string {
+		try {
+			return $this->config->getUserValue($customerUserId, 'core', 'timezone', '');
+		} catch (Throwable $e) {
+			$this->logger->debug(
+				'TimezoneResolver: unable to read core/timezone for user '
+				. $customerUserId . ': ' . $e->getMessage()
+			);
+		}
+
+		return '';
+	}//end readUserTimezone()
+
+	/**
+	 * The server's valid default timezone, or UTC.
+	 *
+	 * @return string
+	 */
+	private function serverTimezone(): string {
 		$serverDefault = date_default_timezone_get();
 		if ($serverDefault !== '' && $this->isValidTimezone(tz: $serverDefault) === true) {
 			return $serverDefault;
 		}
 
 		return 'UTC';
-	}//end resolve()
+	}//end serverTimezone()
 
 	/**
 	 * Whether a string is a valid IANA timezone identifier.
