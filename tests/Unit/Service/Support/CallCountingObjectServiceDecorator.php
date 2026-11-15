@@ -38,8 +38,8 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Service\Object\LockRequest;
-use OCA\OpenRegister\Service\Object\UnlockRequest;
+use OCA\OpenRegister\Kernel\Contracts\Value\LockRequest;
+use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
 use OCP\IUser;
 
 /**

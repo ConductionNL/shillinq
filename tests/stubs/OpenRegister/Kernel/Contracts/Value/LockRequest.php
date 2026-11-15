@@ -1,7 +1,7 @@
 <?php
 
 /**
- * LockRequest stub mirroring OCA\OpenRegister\Service\Object\LockRequest (openregister #9095).
+ * LockRequest stub mirroring OCA\OpenRegister\Kernel\Contracts\Value\LockRequest on openregister main.
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -13,10 +13,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Object;
+namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
 /**
- * Stub for OCA\OpenRegister\Service\Object\LockRequest used by shillinq tests.
+ * Stub for OCA\OpenRegister\Kernel\Contracts\Value\LockRequest used by shillinq tests.
  */
 final class LockRequest {
 	/**

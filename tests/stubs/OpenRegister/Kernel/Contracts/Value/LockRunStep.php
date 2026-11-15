@@ -1,7 +1,7 @@
 <?php
 
 /**
- * LockRunStep stub mirroring OCA\OpenRegister\Service\Object\LockRunStep on openregister main.
+ * LockRunStep stub mirroring OCA\OpenRegister\Kernel\Contracts\Value\LockRunStep on openregister main.
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -13,10 +13,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Object;
+namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
 /**
- * Stub for OCA\OpenRegister\Service\Object\LockRunStep used by shillinq tests.
+ * Stub for OCA\OpenRegister\Kernel\Contracts\Value\LockRunStep used by shillinq tests.
  */
 final class LockRunStep {
 	/**
