@@ -3,6 +3,9 @@
 /**
  * Landed Cost Allocation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Capitalises a receipt's landed costs (freight + import duties + insurance)
  * into the unit cost of the goods received, so both COGS and the
  * balance-sheet inventory value reflect the true acquisition cost per
@@ -40,20 +43,18 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\LandedCostAllocationServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Pro-rata landed-cost capitalisation into unit cost + balanced GL (ADR-031 exception).
@@ -62,7 +63,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class LandedCostAllocationService {
+class LandedCostAllocationService implements LandedCostAllocationServiceInterface {
 
 	/**
 	 * App-config key for the inventory asset account (RGS 3.5 default '1300').
@@ -121,6 +122,55 @@ class LandedCostAllocationService {
 		string $basis = 'value',
 		string $postingDate = '',
 	): array {
+		$refusal = $this->allocationRefusal(administrationId: $administrationId, receiptReference: $receiptReference, landedCostCents: $landedCostCents);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$moves = $this->receiptLines(administrationId: $administrationId, receiptReference: $receiptReference);
+		if ($moves === []) {
+			return [
+				'allocated' => false,
+				'message' => 'no receipt lines found for reference ' . $receiptReference,
+			];
+		}
+
+		$weights = $this->weights(moves: $moves, basis: $basis);
+		$shares = $this->largestRemainder(total: $landedCostCents, weights: $weights);
+
+		$lines = $this->landedLines(moves: $moves, shares: $shares);
+
+		$adjustment = $this->landedAdjustment(administrationId: $administrationId, receiptReference: $receiptReference, landedCostCents: $landedCostCents);
+		$adjustment->postingDate = $this->postingDate(postingDate: $postingDate, moves: $moves);
+		$adjustment->periodId = $this->periodId(postingDate: $this->postingDate(postingDate: $postingDate, moves: $moves));
+		$posting = $this->poster->postAdjustment(posting: $adjustment);
+
+		$this->bumpValuations(administrationId: $administrationId, lines: $lines);
+
+		return [
+			'allocated' => true,
+			'basis' => $this->normalisedBasis(basis: $basis),
+			'receiptReference' => $receiptReference,
+			'lines' => $lines,
+			'posting' => $posting,
+			'totalAllocatedCents' => array_sum($shares),
+			'message' => 'landed cost allocated',
+		];
+
+	}//end allocate()
+
+	/**
+	 * Refuse an allocation that misses its scope or has nothing to allocate.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $receiptReference Receipt document reference.
+	 * @param int    $landedCostCents  Total landed cost in integer cents.
+	 *
+	 * @return array<string,mixed>|null The refusal envelope, or null when the allocation may proceed.
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	private function allocationRefusal(string $administrationId, string $receiptReference, int $landedCostCents): array|null {
 		if ($administrationId === '' || $receiptReference === '') {
 			return [
 				'allocated' => false,
@@ -135,72 +185,97 @@ class LandedCostAllocationService {
 			];
 		}
 
-		$moves = $this->receiptLines(
-			administrationId: $administrationId,
-			receiptReference: $receiptReference
-		);
-		if ($moves === []) {
-			return [
-				'allocated' => false,
-				'message' => 'no receipt lines found for reference ' . $receiptReference,
-			];
-		}
+		return null;
+	}//end allocationRefusal()
 
-		$weights = $this->weights(moves: $moves, basis: $basis);
-		$shares = $this->largestRemainder(total: $landedCostCents, weights: $weights);
-
+	/**
+	 * Build the allocation result line for every receipt line.
+	 *
+	 * @param array<int,array<string,mixed>> $moves  The receipt lines.
+	 * @param array<int,int>                 $shares Per-line allocated cents.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	private function landedLines(array $moves, array $shares): array {
 		$lines = [];
 		foreach ($moves as $index => $move) {
-			$qty = (float)($move['quantity'] ?? 0);
-			$origUnit = (float)($move['unitCost'] ?? 0);
-			$origValCents = (int)round(($qty * $origUnit) * 100);
-			$shareCents = (int)($shares[$index] ?? 0);
-
-			$landedUnit = $origUnit;
-			if ($qty > 0) {
-				$landedUnit = round((($origValCents + $shareCents) / 100) / $qty, 4);
-			}
-
-			$lines[] = [
-				'moveId' => (string)($move['id'] ?? ($move['@self']['id'] ?? '')),
-				'itemId' => (string)($move['itemId'] ?? ''),
-				'quantity' => round($qty, 2),
-				'originalUnitCost' => round($origUnit, 4),
-				'allocatedCents' => $shareCents,
-				'landedUnitCost' => $landedUnit,
-			];
+			$lines[] = $this->landedLine(move: $move, shareCents: (int)($shares[$index] ?? 0));
 		}
 
-		$posting = $this->poster->post(
-			administrationId: $administrationId,
-			debitAccount: $this->inventoryAccount(),
-			creditAccount: $this->landedCostClearingAccount(),
-			amountCents: $landedCostCents,
-			journalCode: 'LAND',
-			description: $this->describe(receiptReference: $receiptReference, landedCostCents: $landedCostCents),
-			sourceReference: $receiptReference,
-			postingDate: $this->postingDate(postingDate: $postingDate, moves: $moves),
-			periodId: $this->periodId(postingDate: $this->postingDate(postingDate: $postingDate, moves: $moves))
-		);
+		return $lines;
+	}//end landedLines()
 
-		$this->bumpValuations(administrationId: $administrationId, lines: $lines);
+	/**
+	 * Build the allocation result line for one receipt line.
+	 *
+	 * @param array<string,mixed> $move       The receipt line.
+	 * @param int                 $shareCents The cents allocated to it.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	private function landedLine(array $move, int $shareCents): array {
+		$qty = (float)($move['quantity'] ?? 0);
+		$origUnit = (float)($move['unitCost'] ?? 0);
+		$origValCents = (int)round(($qty * $origUnit) * 100);
 
+		$landedUnit = $origUnit;
+		if ($qty > 0) {
+			$landedUnit = round((($origValCents + $shareCents) / 100) / $qty, 4);
+		}
+
+		return [
+			'moveId' => (string)($move['id'] ?? ($move['@self']['id'] ?? '')),
+			'itemId' => (string)($move['itemId'] ?? ''),
+			'quantity' => round($qty, 2),
+			'originalUnitCost' => round($origUnit, 4),
+			'allocatedCents' => $shareCents,
+			'landedUnitCost' => $landedUnit,
+		];
+	}//end landedLine()
+
+	/**
+	 * The capitalisation posting for a receipt, without its dates.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $receiptReference Receipt document reference.
+	 * @param int    $landedCostCents  Total landed cost in integer cents.
+	 *
+	 * @return GlAdjustmentPosting
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	private function landedAdjustment(string $administrationId, string $receiptReference, int $landedCostCents): GlAdjustmentPosting {
+		$adjustment = new GlAdjustmentPosting(administrationId: $administrationId, journalCode: 'LAND');
+		$adjustment->debitAccount = $this->inventoryAccount();
+		$adjustment->creditAccount = $this->landedCostClearingAccount();
+		$adjustment->amountCents = $landedCostCents;
+		$adjustment->description = $this->describe(receiptReference: $receiptReference, landedCostCents: $landedCostCents);
+		$adjustment->sourceReference = $receiptReference;
+
+		return $adjustment;
+	}//end landedAdjustment()
+
+	/**
+	 * The allocation basis as reported: 'quantity', otherwise 'value'.
+	 *
+	 * @param string $basis Requested basis.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	private function normalisedBasis(string $basis): string {
 		$normalisedBasis = 'value';
 		if ($basis === 'quantity') {
 			$normalisedBasis = 'quantity';
 		}
 
-		return [
-			'allocated' => true,
-			'basis' => $normalisedBasis,
-			'receiptReference' => $receiptReference,
-			'lines' => $lines,
-			'posting' => $posting,
-			'totalAllocatedCents' => array_sum($shares),
-			'message' => 'landed cost allocated',
-		];
-
-	}//end allocate()
+		return $normalisedBasis;
+	}//end normalisedBasis()
 
 	/**
 	 * Build the allocation weights per line.
@@ -245,17 +320,27 @@ class LandedCostAllocationService {
 
 		// Degenerate: zero total weight — split as evenly as possible.
 		if ($sumWeights <= 0) {
-			$base = intdiv($total, $count);
-			$remainder = ($total - ($base * $count));
-			$shares = array_fill_keys(array_keys($weights), $base);
-			$keys = array_keys($weights);
-			for ($i = 0; $i < $remainder; $i++) {
-				$shares[$keys[$i]]++;
-			}
-
-			return $shares;
+			return $this->evenSplit(total: $total, weights: $weights);
 		}
 
+		[$shares, $remainders, $allocated] = $this->floorShares(total: $total, weights: $weights, sumWeights: $sumWeights);
+
+		$shares = $this->handOutLeftover(shares: $shares, remainders: $remainders, leftover: ($total - $allocated));
+
+		ksort($shares);
+		return $shares;
+	}//end largestRemainder()
+
+	/**
+	 * The floor share and remainder per line of a weighted split.
+	 *
+	 * @param int            $total      Total integer cents to distribute.
+	 * @param array<int,int> $weights    Per-line weights.
+	 * @param int            $sumWeights Sum of the weights (positive).
+	 *
+	 * @return array{0:array<int,int>,1:array<int,int>,2:int} Shares, remainders and the cents allocated so far.
+	 */
+	private function floorShares(int $total, array $weights, int $sumWeights): array {
 		$shares = [];
 		$remainders = [];
 		$allocated = 0;
@@ -267,8 +352,40 @@ class LandedCostAllocationService {
 			$allocated += $floor;
 		}
 
-		$leftover = ($total - $allocated);
-		// Hand the leftover cents to the lines with the largest remainders.
+		return [$shares, $remainders, $allocated];
+	}//end floorShares()
+
+	/**
+	 * Split a total as evenly as possible over the weight keys.
+	 *
+	 * @param int            $total   Total integer cents to distribute.
+	 * @param array<int,int> $weights Per-line weights (only the keys are used).
+	 *
+	 * @return array<int,int> Per-line integer shares summing to $total.
+	 */
+	private function evenSplit(int $total, array $weights): array {
+		$count = count($weights);
+		$base = intdiv($total, $count);
+		$remainder = ($total - ($base * $count));
+		$shares = array_fill_keys(array_keys($weights), $base);
+		$keys = array_keys($weights);
+		for ($i = 0; $i < $remainder; $i++) {
+			$shares[$keys[$i]]++;
+		}
+
+		return $shares;
+	}//end evenSplit()
+
+	/**
+	 * Hand the leftover cents to the lines with the largest remainders.
+	 *
+	 * @param array<int,int> $shares     Floor shares per line.
+	 * @param array<int,int> $remainders Remainder per line.
+	 * @param int            $leftover   Cents still to hand out.
+	 *
+	 * @return array<int,int> The shares with the leftover handed out.
+	 */
+	private function handOutLeftover(array $shares, array $remainders, int $leftover): array {
 		arsort($remainders);
 		foreach (array_keys($remainders) as $index) {
 			if ($leftover <= 0) {
@@ -279,9 +396,8 @@ class LandedCostAllocationService {
 			$leftover--;
 		}
 
-		ksort($shares);
 		return $shares;
-	}//end largestRemainder()
+	}//end handOutLeftover()
 
 	/**
 	 * Bump each affected InventoryValuation snapshot's unitCost / totalValue by
@@ -302,29 +418,41 @@ class LandedCostAllocationService {
 			}
 
 			try {
-				$valuation = $this->activeValuation(administrationId: $administrationId, itemId: $itemId);
-				if ($valuation === null) {
-					continue;
-				}
-
-				$qty = (float)($valuation['quantity'] ?? 0);
-				$totalCents = (int)round(((float)($valuation['totalValue'] ?? 0)) * 100);
-				$newTotalCents = ($totalCents + $shareCents);
-				$valuation['totalValue'] = round(($newTotalCents / 100), 2);
-				if ($qty > 0) {
-					$valuation['unitCost'] = round(($newTotalCents / 100) / $qty, 4);
-				}
-
-				$this->saveValuation(data: $valuation);
+				$this->bumpValuation(administrationId: $administrationId, itemId: $itemId, shareCents: $shareCents);
 			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'LandedCostAllocationService: failed to bump valuation snapshot',
-					['itemId' => $itemId, 'exception' => $e->getMessage()]
-				);
-			}//end try
+				$this->logger->warning('LandedCostAllocationService: failed to bump valuation snapshot', ['itemId' => $itemId, 'exception' => $e->getMessage()]);
+			}
 		}//end foreach
 
 	}//end bumpValuations()
+
+	/**
+	 * Bump one item's active InventoryValuation snapshot by its landed-cost share.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $itemId           The item.
+	 * @param int    $shareCents       The cents allocated to it.
+	 *
+	 * @return void
+	 *
+	 * @throws \Throwable When loading or saving the snapshot fails.
+	 */
+	private function bumpValuation(string $administrationId, string $itemId, int $shareCents): void {
+		$valuation = $this->activeValuation(administrationId: $administrationId, itemId: $itemId);
+		if ($valuation === null) {
+			return;
+		}
+
+		$qty = (float)($valuation['quantity'] ?? 0);
+		$totalCents = (int)round(((float)($valuation['totalValue'] ?? 0)) * 100);
+		$newTotalCents = ($totalCents + $shareCents);
+		$valuation['totalValue'] = round(($newTotalCents / 100), 2);
+		if ($qty > 0) {
+			$valuation['unitCost'] = round(($newTotalCents / 100) / $qty, 4);
+		}
+
+		$this->saveValuation(data: $valuation);
+	}//end bumpValuation()
 
 	/**
 	 * Load the inbound receipt lines for a receipt reference.
@@ -470,7 +598,7 @@ class LandedCostAllocationService {
 	private function inventoryAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_INVENTORY_ACCOUNT,
 				self::DEFAULT_INVENTORY_ACCOUNT
 			)
@@ -490,7 +618,7 @@ class LandedCostAllocationService {
 	private function landedCostClearingAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_LANDED_COST_CLEARING_ACCOUNT,
 				self::DEFAULT_LANDED_COST_CLEARING_ACCOUNT
 			)
@@ -541,7 +669,7 @@ class LandedCostAllocationService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

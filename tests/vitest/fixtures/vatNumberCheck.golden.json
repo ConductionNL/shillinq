@@ -1,0 +1,3370 @@
+{
+	"0 0 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 0 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 0 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 0 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 0 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 0 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 0 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 0 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 0 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 0 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 0 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 1 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 1 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 1 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 1 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 2 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 2 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 2 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 2 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 3 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 3 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 3 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 3 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 4 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 4 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 4 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 4 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 5 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 5 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 5 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 5 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"0 6 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 6 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"0 6 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"0 6 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/from-path"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 valid customer": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 valid supplier": {
+		"result": {
+			"value": {
+				"status": "valid",
+				"vatId": "NL1",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showSuccess",
+				"VAT number NL1 is valid (checked on )."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 invalid customer": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 invalid supplier": {
+		"result": {
+			"value": {
+				"status": "invalid",
+				"vatId": "NL2"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"VAT number NL2 is not valid according to VIES."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 unreachableKnown customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 unreachableKnown supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL3",
+				"lastValidAt": "not a date"
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached. VAT number NL3 was last valid on ."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 unreachableNew customer": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 unreachableNew supplier": {
+		"result": {
+			"value": {
+				"status": "unreachable",
+				"vatId": "NL4",
+				"lastValidAt": null
+			}
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showWarning",
+				"VIES cannot be reached, and VAT number NL4 has not been confirmed before."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"1 0 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"1 0 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"Not your administration"
+			]
+		]
+	},
+	"1 0 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/customer/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 0 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/vat-number-checks/supplier/c-1"
+			],
+			[
+				"showError",
+				"The VAT number could not be checked."
+			]
+		]
+	},
+	"1 1 valid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 valid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 invalid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 invalid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 unreachableKnown customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 unreachableKnown supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 unreachableNew customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 unreachableNew supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 1 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 valid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 valid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 invalid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 invalid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 unreachableKnown customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 unreachableKnown supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 unreachableNew customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 unreachableNew supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 2 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 valid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 valid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 invalid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 invalid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 unreachableKnown customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 unreachableKnown supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 unreachableNew customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 unreachableNew supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 3 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 valid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 valid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 invalid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 invalid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 unreachableKnown customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 unreachableKnown supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 unreachableNew customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 unreachableNew supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 4 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 valid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 valid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 invalid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 invalid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 unreachableKnown customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 unreachableKnown supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 unreachableNew customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 unreachableNew supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 5 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 valid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 valid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 invalid customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 invalid supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 unreachableKnown customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 unreachableKnown supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 unreachableNew customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 unreachableNew supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 refusedWithReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 refusedWithReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 refusedEmptyReason customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 refusedEmptyReason supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 networkError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 networkError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 nullError customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 nullError supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 noData customer": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	},
+	"1 6 noData supplier": {
+		"result": {
+			"value": null
+		},
+		"calls": []
+	}
+}

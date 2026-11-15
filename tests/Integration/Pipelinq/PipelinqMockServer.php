@@ -4,6 +4,9 @@
  * In-process pipelinq API mock used by the customer-bridge integration
  * test scaffold.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reused by every member of the bookings-pipelinq-customer-bridge
  * chain that needs a deterministic pipelinq HTTP surface (Contact
  * read in member 03, klantbeeld read in member 04, timeline publish
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

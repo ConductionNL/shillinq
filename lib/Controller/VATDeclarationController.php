@@ -3,6 +3,9 @@
 /**
  * VAT Declaration Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BTW-rubriek read-only API for the bookkeeping-vat-btw-filing
  * change (issue #127). Exposes the declarations belonging to one
  * VAT return:
@@ -28,17 +31,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -54,6 +54,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
 class VATDeclarationController extends Controller {
+	use AdministrationScopedListing;
+
 	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
 	/**
@@ -62,17 +64,17 @@ class VATDeclarationController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param ContainerInterface $container DI container for OR's ObjectService.
 	 * @param IUserSession $session User session for the authentication guard.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -97,40 +99,25 @@ class VATDeclarationController extends Controller {
 		// ADR-005 / REQ-MA-001. VATDeclaration carries administrationId; the
 		// scope is the caller's memberships, one query per administration.
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$declarations = [];
-			foreach ($this->context->accessibleAdministrationIds() as $administrationId) {
-				$declarations = array_merge(
-					$declarations,
-					$objectService
-						->setRegister(register: 'shillinq')
-						->setSchema(schema: 'VATDeclaration')
-						->findAll(
-							[
-								'filters' => [
-									'returnId' => $returnId,
-									'administrationId' => $administrationId,
-								],
-							]
-						)
-				);
-			}
+			$declarations = $this->scopedRows(schema: 'VATDeclaration', filter: ['returnId' => $returnId]);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'VATDeclarationController: failed to list declarations',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
+			return $this->listFailed(returnId: $returnId, e: $e);
+		}
 
-			return new JSONResponse(['error' => 'Failed to list declarations'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
-
-		return new JSONResponse(
-			[
-				'data' => $declarations,
-				'total' => count($declarations),
-			],
-			Http::STATUS_OK
-		);
-
+		return self::listed(rows: $declarations);
 	}//end listByReturn()
+
+	/**
+	 * Log a failed listing and answer 500 without detail.
+	 *
+	 * @param string     $returnId The VATReturn id.
+	 * @param \Throwable $e        The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function listFailed(string $returnId, \Throwable $e): JSONResponse {
+		$this->logger->error('VATDeclarationController: failed to list declarations', ['returnId' => $returnId, 'exception' => $e->getMessage()]);
+
+		return new JSONResponse(['error' => 'Failed to list declarations'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end listFailed()
 }//end class

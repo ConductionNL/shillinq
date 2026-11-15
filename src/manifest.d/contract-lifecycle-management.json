@@ -46,11 +46,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Contract",
-				"search": {
-					"enabled": true,
-					"fields": ["contractNumber", "title", "tags"],
-					"description": "Repository search through OpenRegister's _search over contract number, title and tags. There is no app-local search endpoint."
-				},
+				"search": true,
 				"columns": [
 					{"key": "contractNumber", "label": "Contract #", "sortable": true},
 					{"key": "title", "label": "Title", "sortable": true},
@@ -174,6 +170,18 @@
 										"objectId": ":id",
 										"description": "Nextcloud Files references. They link rather than store, and open in the Files viewer."
 									}
+								}
+							]
+						},
+						{
+							"id": "talk",
+							"label": "Chat",
+							"icon": "ChatOutline",
+							"order": 85,
+							"widgets": [
+								{
+									"type": "integration",
+									"integrationId": "talk"
 								}
 							]
 						},

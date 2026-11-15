@@ -18,7 +18,7 @@ This specification defines the requirements for bookkeeping iv3 reporting in the
 @e2e exclude unbuilt UI: IV3 reporting pages not yet implemented
 
 
-### REQ-IV3-001: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations
+### Requirement: REQ-IV3-001: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations
 
 The system SHALL satisfy this requirement: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations.
 
@@ -50,7 +50,7 @@ IV3-bestand specificaties (current revision).
 - **WHEN** the IV3 workflow's visibility predicate evaluates
 - **THEN** the workflow MUST be skipped for that administration.
 
-### REQ-IV3-002: The `Iv3Export` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-IV3-002: The `Iv3Export` schema SHALL declare a fixed minimum field set
 
 The system SHALL satisfy this requirement: The `Iv3Export` schema SHALL declare a fixed minimum field set.
 
@@ -79,7 +79,7 @@ payload and `xmlAttachmentUri` as the serialised distribution).
   "2026.1"`, `buckets: {...}`, `state: "generated"` is created
 - **THEN** validation MUST pass.
 
-### REQ-IV3-003: The `buckets` field SHALL be derived from aggregations over GL postings filtered by BBV `iv3Bucket`
+### Requirement: REQ-IV3-003: The `buckets` field SHALL be derived from aggregations over GL postings filtered by BBV `iv3Bucket`
 
 The `buckets` object MUST be populated via `x-openregister-aggregations`
 over `GLLine` (T1) joined with `BbvAccountMapping` (T3
@@ -103,7 +103,7 @@ SUM of `debit - credit`. Per ADR-031, no `Iv3AggregationService`.
 - **THEN** Q2 postings MUST NOT appear in the result — the
   aggregation filter MUST use only closed-period IDs.
 
-### REQ-IV3-004: The IV3 XML SHALL be generated via OR's mapping/transformation engine, not a PHP renderer
+### Requirement: REQ-IV3-004: The IV3 XML SHALL be generated via OR's mapping/transformation engine, not a PHP renderer
 
 The IV3 XML payload MUST be generated via OR's mapping/transformation
 engine (per ADR-022 mappings abstraction) configured with the CBS
@@ -133,7 +133,7 @@ shortfall.
   it MUST carry an ADR-031 exception annotation linking back to
   design.md.
 
-### REQ-IV3-005: The `Iv3Export` lifecycle SHALL be declarative per ADR-031
+### Requirement: REQ-IV3-005: The `Iv3Export` lifecycle SHALL be declarative per ADR-031
 
 The system SHALL satisfy this requirement: The `Iv3Export` lifecycle SHALL be declarative per ADR-031.
 
@@ -156,7 +156,7 @@ Per ADR-031 anti-pattern list, shillinq MUST NOT author an
 - **WHEN** the operator tries to skip `validated` and trigger `submit`
 - **THEN** the transition MUST fail.
 
-### REQ-IV3-006: Submission to CBS SHALL be an OR `ScheduledWorkflow` consuming the `cbs-iv3` OpenConnector source
+### Requirement: REQ-IV3-006: Submission to CBS SHALL be an OR `ScheduledWorkflow` consuming the `cbs-iv3` OpenConnector source
 
 The submission MUST be expressed as an OR `ScheduledWorkflow` (per
 ADR-031 §"Background jobs that orchestrate external systems")
@@ -179,7 +179,7 @@ October), operator-configurable. shillinq MUST NOT author a
   URLs in `lib/`
 - **THEN** no matches SHALL exist.
 
-### REQ-IV3-007: IV3 exports SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-IV3-007: IV3 exports SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry `Overheid >
 IV3-rapportages` with a `type: index` page binding to `Iv3Export`
@@ -195,7 +195,7 @@ state, and lifecycle history. Visibility MUST be predicated on
   `state`, the bucket table, AND a link to the docudesk XML
   attachment.
 
-### REQ-IV3-008: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call
+### Requirement: REQ-IV3-008: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call
 
 The system SHALL satisfy this requirement: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call.
 
@@ -215,7 +215,7 @@ PHP class — documented as an ADR-031 exception.
 - **THEN** the transition MUST fail with a "schema validation
   failed" error naming the missing bucket.
 
-### REQ-IV3-009: Audit trail and retention SHALL be consumed from OR's abstractions
+### Requirement: REQ-IV3-009: Audit trail and retention SHALL be consumed from OR's abstractions
 
 Every `Iv3Export` operation MUST be audited via OR's
 audit-trail-immutable (ADR-022). Retention MUST be declared via
