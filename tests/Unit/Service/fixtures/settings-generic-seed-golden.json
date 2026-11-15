@@ -1,0 +1,1925 @@
+{
+    "btw containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: BTW tariffs seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "btw existing": {
+        "result": {
+            "success": true,
+            "message": "BTW tariffs seeded successfully.",
+            "seeded": 5,
+            "skipped": 5
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "high"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "low"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "low",
+                        "label": "Laag tarief",
+                        "rate": 0.09,
+                        "description": "Laag tarief (9%)",
+                        "category": "verlaagd",
+                        "ratePercentage": 9,
+                        "rgsAccountHint": "WBeBoL",
+                        "reverseCharge": false,
+                        "effectiveFrom": "2019-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
+                        "section": "1b"
+                    },
+                    "register": "shillinq",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "zero"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "exempt"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "exempt",
+                        "label": "Vrijgesteld",
+                        "rate": 0,
+                        "description": "Vrijgesteld van BTW",
+                        "category": "exempt",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"
+                    },
+                    "register": "shillinq",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "reverse-charge"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "reverse-charge-supply"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "reverse-charge-supply",
+                        "label": "Verlegd (levering)",
+                        "rate": 0,
+                        "description": "Levering of dienst waarbij de BTW naar de afnemer is verlegd",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 2",
+                        "section": "1e"
+                    },
+                    "register": "shillinq",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "intra-eu-supply"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "export"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "export",
+                        "label": "Uitvoer buiten de EU",
+                        "rate": 0,
+                        "description": "Levering naar een land buiten de EU",
+                        "category": "nul",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.2",
+                        "section": "3a"
+                    },
+                    "register": "shillinq",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "intra-eu-acquisition"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "import-non-eu"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "import-non-eu",
+                        "label": "Invoer van buiten de EU",
+                        "rate": 0,
+                        "description": "Levering of dienst van buiten de EU, BTW verlegd naar u",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": true,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 3 en art. 23",
+                        "section": "4a"
+                    },
+                    "register": "shillinq",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "runAsSystem": "end"
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BTW tariffs seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 5
+                }
+            }
+        ]
+    },
+    "btw fresh": {
+        "result": {
+            "success": true,
+            "message": "BTW tariffs seeded successfully.",
+            "seeded": 10,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "high"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "high",
+                        "label": "Hoog tarief",
+                        "rate": 0.21,
+                        "description": "Hoog tarief (21%)",
+                        "category": "standard",
+                        "ratePercentage": 21,
+                        "rgsAccountHint": "WBeBoB",
+                        "reverseCharge": false,
+                        "effectiveFrom": "2012-10-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 1",
+                        "section": "1a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "low"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "low",
+                        "label": "Laag tarief",
+                        "rate": 0.09,
+                        "description": "Laag tarief (9%)",
+                        "category": "verlaagd",
+                        "ratePercentage": 9,
+                        "rgsAccountHint": "WBeBoL",
+                        "reverseCharge": false,
+                        "effectiveFrom": "2019-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
+                        "section": "1b"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "zero"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "zero",
+                        "label": "Nultarief",
+                        "rate": 0,
+                        "description": "Nultarief (0%)",
+                        "category": "nul",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": "WBeBoN",
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II",
+                        "section": "1e"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "exempt"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "exempt",
+                        "label": "Vrijgesteld",
+                        "rate": 0,
+                        "description": "Vrijgesteld van BTW",
+                        "category": "exempt",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "reverse-charge"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "reverse-charge",
+                        "label": "Verlegd",
+                        "rate": 0,
+                        "description": "BTW verlegd naar de afnemer (verleggingsregeling)",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": "WBeBoV",
+                        "reverseCharge": true,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 5 (verleggingsregeling)",
+                        "section": "2a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "reverse-charge-supply"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "reverse-charge-supply",
+                        "label": "Verlegd (levering)",
+                        "rate": 0,
+                        "description": "Levering of dienst waarbij de BTW naar de afnemer is verlegd",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 2",
+                        "section": "1e"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "intra-eu-supply"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "intra-eu-supply",
+                        "label": "Intracommunautaire levering",
+                        "rate": 0,
+                        "description": "Levering of dienst naar een ondernemer in een ander EU-land",
+                        "category": "nul",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1993-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.6",
+                        "section": "3b"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "export"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "export",
+                        "label": "Uitvoer buiten de EU",
+                        "rate": 0,
+                        "description": "Levering naar een land buiten de EU",
+                        "category": "nul",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.2",
+                        "section": "3a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "intra-eu-acquisition"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "intra-eu-acquisition",
+                        "label": "Verwerving uit de EU",
+                        "rate": 0,
+                        "description": "Levering of dienst uit een ander EU-land, BTW verlegd naar u",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": true,
+                        "effectiveFrom": "1993-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 17a en art. 12 lid 3",
+                        "section": "4b"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "import-non-eu"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "import-non-eu",
+                        "label": "Invoer van buiten de EU",
+                        "rate": 0,
+                        "description": "Levering of dienst van buiten de EU, BTW verlegd naar u",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": true,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 3 en art. 23",
+                        "section": "4a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "runAsSystem": "end"
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BTW tariffs seeded",
+                "context": {
+                    "seeded": 10,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "btw noSystem": {
+        "result": {
+            "success": true,
+            "message": "BTW tariffs seeded successfully.",
+            "seeded": 10,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "high"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "high",
+                        "label": "Hoog tarief",
+                        "rate": 0.21,
+                        "description": "Hoog tarief (21%)",
+                        "category": "standard",
+                        "ratePercentage": 21,
+                        "rgsAccountHint": "WBeBoB",
+                        "reverseCharge": false,
+                        "effectiveFrom": "2012-10-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 1",
+                        "section": "1a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "low"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "low",
+                        "label": "Laag tarief",
+                        "rate": 0.09,
+                        "description": "Laag tarief (9%)",
+                        "category": "verlaagd",
+                        "ratePercentage": 9,
+                        "rgsAccountHint": "WBeBoL",
+                        "reverseCharge": false,
+                        "effectiveFrom": "2019-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
+                        "section": "1b"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "zero"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "zero",
+                        "label": "Nultarief",
+                        "rate": 0,
+                        "description": "Nultarief (0%)",
+                        "category": "nul",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": "WBeBoN",
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II",
+                        "section": "1e"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "exempt"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "exempt",
+                        "label": "Vrijgesteld",
+                        "rate": 0,
+                        "description": "Vrijgesteld van BTW",
+                        "category": "exempt",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "reverse-charge"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "reverse-charge",
+                        "label": "Verlegd",
+                        "rate": 0,
+                        "description": "BTW verlegd naar de afnemer (verleggingsregeling)",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": "WBeBoV",
+                        "reverseCharge": true,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 5 (verleggingsregeling)",
+                        "section": "2a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "reverse-charge-supply"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "reverse-charge-supply",
+                        "label": "Verlegd (levering)",
+                        "rate": 0,
+                        "description": "Levering of dienst waarbij de BTW naar de afnemer is verlegd",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 2",
+                        "section": "1e"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "intra-eu-supply"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "intra-eu-supply",
+                        "label": "Intracommunautaire levering",
+                        "rate": 0,
+                        "description": "Levering of dienst naar een ondernemer in een ander EU-land",
+                        "category": "nul",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1993-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.6",
+                        "section": "3b"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "export"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "export",
+                        "label": "Uitvoer buiten de EU",
+                        "rate": 0,
+                        "description": "Levering naar een land buiten de EU",
+                        "category": "nul",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": false,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.2",
+                        "section": "3a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "intra-eu-acquisition"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "intra-eu-acquisition",
+                        "label": "Verwerving uit de EU",
+                        "rate": 0,
+                        "description": "Levering of dienst uit een ander EU-land, BTW verlegd naar u",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": true,
+                        "effectiveFrom": "1993-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 17a en art. 12 lid 3",
+                        "section": "4b"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "import-non-eu"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "import-non-eu",
+                        "label": "Invoer van buiten de EU",
+                        "rate": 0,
+                        "description": "Levering of dienst van buiten de EU, BTW verlegd naar u",
+                        "category": "verleggingsregeling",
+                        "ratePercentage": 0,
+                        "rgsAccountHint": null,
+                        "reverseCharge": true,
+                        "effectiveFrom": "1969-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 12 lid 3 en art. 23",
+                        "section": "4a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BTW tariffs seeded",
+                "context": {
+                    "seeded": 10,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "btw saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "high"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "high",
+                        "label": "Hoog tarief",
+                        "rate": 0.21,
+                        "description": "Hoog tarief (21%)",
+                        "category": "standard",
+                        "ratePercentage": 21,
+                        "rgsAccountHint": "WBeBoB",
+                        "reverseCharge": false,
+                        "effectiveFrom": "2012-10-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 1",
+                        "section": "1a"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "VatTariff"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "code": "low"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "code": "low",
+                        "label": "Laag tarief",
+                        "rate": 0.09,
+                        "description": "Laag tarief (9%)",
+                        "category": "verlaagd",
+                        "ratePercentage": 9,
+                        "rgsAccountHint": "WBeBoL",
+                        "reverseCharge": false,
+                        "effectiveFrom": "2019-01-01",
+                        "effectiveTo": null,
+                        "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
+                        "section": "1b"
+                    },
+                    "register": "books",
+                    "schema": "VatTariff"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: BTW tariffs seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "btw unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    },
+    "defaultAdministration containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: Default administration seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "defaultAdministration existing": {
+        "result": {
+            "success": true,
+            "message": "Default administration seeded successfully.",
+            "seeded": 0,
+            "skipped": 1,
+            "administrationCode": "ADM-001",
+            "membership": {
+                "granted": false,
+                "reason": "no authenticated user"
+            }
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "Administration"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationCode": "ADM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "runAsSystem": "end"
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: Default administration seeded",
+                "context": {
+                    "seeded": 0,
+                    "skipped": 1
+                }
+            }
+        ]
+    },
+    "defaultAdministration fresh": {
+        "result": {
+            "success": true,
+            "message": "Default administration seeded successfully.",
+            "seeded": 1,
+            "skipped": 0,
+            "administrationCode": "ADM-001",
+            "membership": {
+                "granted": false,
+                "reason": "no authenticated user"
+            }
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Administration"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationCode": "ADM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "administrationCode": "ADM-001",
+                        "name": "Standaard administratie",
+                        "legalForm": "bv",
+                        "kvkNumber": null,
+                        "fiscalYearStartMonth": 1,
+                        "fiscalYearStartDay": 1,
+                        "nonCalendarFiscalYear": false,
+                        "presentationCurrency": "EUR",
+                        "functionalCurrency": "EUR",
+                        "vatRegime": "standard",
+                        "vatFilingFrequency": "quarter",
+                        "consolidationMethod": "niet_consolideren",
+                        "status": "actief",
+                        "backupSchedule": "dagelijks",
+                        "dataRetentionYears": 7,
+                        "defaultLanguage": "nl"
+                    },
+                    "register": "books",
+                    "schema": "Administration"
+                }
+            },
+            {
+                "runAsSystem": "end"
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: Default administration seeded",
+                "context": {
+                    "seeded": 1,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "defaultAdministration noSystem": {
+        "result": {
+            "success": true,
+            "message": "Default administration seeded successfully.",
+            "seeded": 1,
+            "skipped": 0,
+            "administrationCode": "ADM-001",
+            "membership": {
+                "granted": false,
+                "reason": "no authenticated user"
+            }
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Administration"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationCode": "ADM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "administrationCode": "ADM-001",
+                        "name": "Standaard administratie",
+                        "legalForm": "bv",
+                        "kvkNumber": null,
+                        "fiscalYearStartMonth": 1,
+                        "fiscalYearStartDay": 1,
+                        "nonCalendarFiscalYear": false,
+                        "presentationCurrency": "EUR",
+                        "functionalCurrency": "EUR",
+                        "vatRegime": "standard",
+                        "vatFilingFrequency": "quarter",
+                        "consolidationMethod": "niet_consolideren",
+                        "status": "actief",
+                        "backupSchedule": "dagelijks",
+                        "dataRetentionYears": 7,
+                        "defaultLanguage": "nl"
+                    },
+                    "register": "books",
+                    "schema": "Administration"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: Default administration seeded",
+                "context": {
+                    "seeded": 1,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "defaultAdministration saveFails": {
+        "result": {
+            "success": true,
+            "message": "Default administration seeded successfully.",
+            "seeded": 1,
+            "skipped": 0,
+            "administrationCode": "ADM-001",
+            "membership": {
+                "granted": false,
+                "reason": "no authenticated user"
+            }
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Administration"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationCode": "ADM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "administrationCode": "ADM-001",
+                        "name": "Standaard administratie",
+                        "legalForm": "bv",
+                        "kvkNumber": null,
+                        "fiscalYearStartMonth": 1,
+                        "fiscalYearStartDay": 1,
+                        "nonCalendarFiscalYear": false,
+                        "presentationCurrency": "EUR",
+                        "functionalCurrency": "EUR",
+                        "vatRegime": "standard",
+                        "vatFilingFrequency": "quarter",
+                        "consolidationMethod": "niet_consolideren",
+                        "status": "actief",
+                        "backupSchedule": "dagelijks",
+                        "dataRetentionYears": 7,
+                        "defaultLanguage": "nl"
+                    },
+                    "register": "books",
+                    "schema": "Administration"
+                }
+            },
+            {
+                "runAsSystem": "end"
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: Default administration seeded",
+                "context": {
+                    "seeded": 1,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "defaultAdministration unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    },
+    "rj270 containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RJ-270 stages seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "rj270 existing": {
+        "result": {
+            "success": true,
+            "message": "RJ-270 stages seeded successfully.",
+            "seeded": 2,
+            "skipped": 2
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "initiation"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "execution"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "execution",
+                        "label": "Uitvoering",
+                        "labelEn": "Execution",
+                        "description": "Project is in active execution. The majority of deliverables are in progress. Percentage-of-completion: 10–85%.",
+                        "completionRangeLow": 10,
+                        "completionRangeHigh": 85,
+                        "recognitionStage": "execution",
+                        "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: cost-to-cost or output-based percentage drives recognised revenue."
+                    },
+                    "register": "shillinq",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "closeout"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "complete"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "complete",
+                        "label": "Afgerond",
+                        "labelEn": "Complete",
+                        "description": "Project is fully delivered and accepted by the customer. All deliverables signed off. Percentage-of-completion: 100%.",
+                        "completionRangeLow": 100,
+                        "completionRangeHigh": 100,
+                        "recognitionStage": "complete",
+                        "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: 100% completion — full contract value may be recognised."
+                    },
+                    "register": "shillinq",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "runAsSystem": "end"
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RJ-270 stages seeded",
+                "context": {
+                    "seeded": 2,
+                    "skipped": 2
+                }
+            }
+        ]
+    },
+    "rj270 fresh": {
+        "result": {
+            "success": true,
+            "message": "RJ-270 stages seeded successfully.",
+            "seeded": 4,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "initiation"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "initiation",
+                        "label": "Initiatie",
+                        "labelEn": "Initiation",
+                        "description": "Project is in the initiation phase. Contract signed; work not yet substantially commenced. Percentage-of-completion: 0–10%.",
+                        "completionRangeLow": 0,
+                        "completionRangeHigh": 10,
+                        "recognitionStage": "initiation",
+                        "statutoryNote": "RJ 270 §3.2: revenue recognised only to the extent of recoverable costs in early stages."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "execution"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "execution",
+                        "label": "Uitvoering",
+                        "labelEn": "Execution",
+                        "description": "Project is in active execution. The majority of deliverables are in progress. Percentage-of-completion: 10–85%.",
+                        "completionRangeLow": 10,
+                        "completionRangeHigh": 85,
+                        "recognitionStage": "execution",
+                        "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: cost-to-cost or output-based percentage drives recognised revenue."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "closeout"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "closeout",
+                        "label": "Afronding",
+                        "labelEn": "Closeout",
+                        "description": "Project deliverables are substantially complete; closeout activities and final acceptance in progress. Percentage-of-completion: 85–99%.",
+                        "completionRangeLow": 85,
+                        "completionRangeHigh": 99,
+                        "recognitionStage": "closeout",
+                        "statutoryNote": "RJ 270 §3.2: final acceptance not yet signed; retain small uncompleted portion unrealised."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "complete"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "complete",
+                        "label": "Afgerond",
+                        "labelEn": "Complete",
+                        "description": "Project is fully delivered and accepted by the customer. All deliverables signed off. Percentage-of-completion: 100%.",
+                        "completionRangeLow": 100,
+                        "completionRangeHigh": 100,
+                        "recognitionStage": "complete",
+                        "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: 100% completion — full contract value may be recognised."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "runAsSystem": "end"
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RJ-270 stages seeded",
+                "context": {
+                    "seeded": 4,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "rj270 noSystem": {
+        "result": {
+            "success": true,
+            "message": "RJ-270 stages seeded successfully.",
+            "seeded": 4,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "initiation"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "initiation",
+                        "label": "Initiatie",
+                        "labelEn": "Initiation",
+                        "description": "Project is in the initiation phase. Contract signed; work not yet substantially commenced. Percentage-of-completion: 0–10%.",
+                        "completionRangeLow": 0,
+                        "completionRangeHigh": 10,
+                        "recognitionStage": "initiation",
+                        "statutoryNote": "RJ 270 §3.2: revenue recognised only to the extent of recoverable costs in early stages."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "execution"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "execution",
+                        "label": "Uitvoering",
+                        "labelEn": "Execution",
+                        "description": "Project is in active execution. The majority of deliverables are in progress. Percentage-of-completion: 10–85%.",
+                        "completionRangeLow": 10,
+                        "completionRangeHigh": 85,
+                        "recognitionStage": "execution",
+                        "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: cost-to-cost or output-based percentage drives recognised revenue."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "closeout"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "closeout",
+                        "label": "Afronding",
+                        "labelEn": "Closeout",
+                        "description": "Project deliverables are substantially complete; closeout activities and final acceptance in progress. Percentage-of-completion: 85–99%.",
+                        "completionRangeLow": 85,
+                        "completionRangeHigh": 99,
+                        "recognitionStage": "closeout",
+                        "statutoryNote": "RJ 270 §3.2: final acceptance not yet signed; retain small uncompleted portion unrealised."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "complete"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "complete",
+                        "label": "Afgerond",
+                        "labelEn": "Complete",
+                        "description": "Project is fully delivered and accepted by the customer. All deliverables signed off. Percentage-of-completion: 100%.",
+                        "completionRangeLow": 100,
+                        "completionRangeHigh": 100,
+                        "recognitionStage": "complete",
+                        "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: 100% completion — full contract value may be recognised."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RJ-270 stages seeded",
+                "context": {
+                    "seeded": 4,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "rj270 saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": [
+            {
+                "runAsSystem": "start"
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "initiation"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "initiation",
+                        "label": "Initiatie",
+                        "labelEn": "Initiation",
+                        "description": "Project is in the initiation phase. Contract signed; work not yet substantially commenced. Percentage-of-completion: 0–10%.",
+                        "completionRangeLow": 0,
+                        "completionRangeHigh": 10,
+                        "recognitionStage": "initiation",
+                        "statutoryNote": "RJ 270 §3.2: revenue recognised only to the extent of recoverable costs in early stages."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "RJ270Stage"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "stageId": "execution"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "stageId": "execution",
+                        "label": "Uitvoering",
+                        "labelEn": "Execution",
+                        "description": "Project is in active execution. The majority of deliverables are in progress. Percentage-of-completion: 10–85%.",
+                        "completionRangeLow": 10,
+                        "completionRangeHigh": 85,
+                        "recognitionStage": "execution",
+                        "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: cost-to-cost or output-based percentage drives recognised revenue."
+                    },
+                    "register": "books",
+                    "schema": "RJ270Stage"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RJ-270 stages seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "rj270 unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    },
+    "taakvelden containerFails": {
+        "result": {
+            "success": false,
+            "message": "Seed file not found: bbv-task_fields-2024.json"
+        },
+        "calls": [],
+        "log": []
+    },
+    "taakvelden existing": {
+        "result": {
+            "success": false,
+            "message": "Seed file not found: bbv-task_fields-2024.json"
+        },
+        "calls": [],
+        "log": []
+    },
+    "taakvelden fresh": {
+        "result": {
+            "success": false,
+            "message": "Seed file not found: bbv-task_fields-2024.json"
+        },
+        "calls": [],
+        "log": []
+    },
+    "taakvelden noSystem": {
+        "result": {
+            "success": false,
+            "message": "Seed file not found: bbv-task_fields-2024.json"
+        },
+        "calls": [],
+        "log": []
+    },
+    "taakvelden saveFails": {
+        "result": {
+            "success": false,
+            "message": "Seed file not found: bbv-task_fields-2024.json"
+        },
+        "calls": [],
+        "log": []
+    },
+    "taakvelden unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    }
+}

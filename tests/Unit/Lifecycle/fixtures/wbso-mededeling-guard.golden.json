@@ -1,0 +1,138 @@
+{
+    "noObject": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "noDecisionNumber": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "noRealised": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "zeroRealised": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:WbsoBeschikking",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "decisionNumber": "B-1"
+                    }
+                }
+            }
+        ]
+    },
+    "atCeiling": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:WbsoBeschikking",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "decisionNumber": "B-1"
+                    }
+                }
+            }
+        ]
+    },
+    "overCeiling": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:WbsoBeschikking",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "decisionNumber": "B-1"
+                    }
+                }
+            }
+        ]
+    },
+    "expired": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:WbsoBeschikking",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "decisionNumber": "B-1"
+                    }
+                }
+            }
+        ]
+    },
+    "otherAdministrationRow": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:WbsoBeschikking",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "decisionNumber": "B-1"
+                    }
+                }
+            }
+        ]
+    },
+    "noDecision": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:WbsoBeschikking",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "decisionNumber": "B-1"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "WbsoMededelingGuard: submit check failed — denying submit transition (fail-closed)",
+                {
+                    "mededelingId": "wm-1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:WbsoBeschikking",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "decisionNumber": "B-1"
+                    }
+                }
+            }
+        ]
+    }
+}

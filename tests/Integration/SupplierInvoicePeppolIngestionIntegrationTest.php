@@ -4,6 +4,9 @@
  * Peppol UBL Invoice -> SupplierInvoice integration test for member 05 of
  * the bookkeeping-purchase-order-3way chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires {@see PeppolInboundUblInvoiceListener} on top of
  * {@see SupplierInvoiceService} with an in-memory OpenRegister ObjectService
  * stub, then dispatches a real {@see ObjectCreatedEvent} carrying a
@@ -29,10 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md#tests
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
 
 declare(strict_types=1);

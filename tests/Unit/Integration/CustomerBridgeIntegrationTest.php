@@ -3,6 +3,9 @@
 /**
  * Integration tests for the bookings-pipelinq customer-bridge chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 10 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Exercises the full chain (slices 02-09) end-to-end against the
  * slice-01 {@see PipelinqMockServer} so the tests confirm that:
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-10-integration-e2e-tests/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -59,11 +59,11 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\Shillinq\Tests\Integration\Pipelinq\PipelinqMockServer;
 use OCP\Http\Client\IClientService;
@@ -723,7 +723,7 @@ final class CustomerBridgeIntegrationTest extends TestCase {
 
 		self::assertNotNull($contactException, 'Contact read must propagate transport error when no cache');
 		self::assertSame(
-			'OCA\\Shillinq\\Service\\Pipelinq\\PipelinqTransportException',
+			'OCA\\Shillinq\\Kernel\\Exception\\PipelinqTransportException',
 			$contactException::class
 		);
 

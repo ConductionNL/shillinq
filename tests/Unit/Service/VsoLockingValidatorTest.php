@@ -108,4 +108,95 @@ final class VsoLockingValidatorTest extends TestCase {
 		$this->assertFalse($val->isYearLocked('adm-x', 2026));
 
 	}//end testContainerFailureFailsSoftToUnlocked()
+	/**
+	 * A fake ObjectService returning the given rows and recording the schema.
+	 *
+	 * @param mixed  $rows    What findAll returns.
+	 * @param object &$filters Captures the last filters passed to findAll.
+	 *
+	 * @return object
+	 */
+	private function objectService(mixed $rows, ?array &$filters = null): object {
+		return new class($rows, $filters) {
+			/**
+			 * @param mixed      $rows    Rows to return.
+			 * @param array|null $filters Capture.
+			 */
+			public function __construct(private mixed $rows, private ?array &$filters) {
+			}
+			public function setRegister(string $r): self {
+				return $this;
+			}
+			public function setSchema(string $s): self {
+				return $this;
+			}
+			public function findAll(array $config = []): mixed {
+				$this->filters = ($config['filters'] ?? []);
+				return $this->rows;
+			}
+		};
+	}//end objectService()
+
+	/**
+	 * The validator over the given ObjectService and configured register.
+	 *
+	 * @param object $objectService The OR ObjectService double.
+	 * @param string $register      The configured register value.
+	 *
+	 * @return VsoLockingValidator
+	 */
+	private function validator(object $objectService, string $register = 'shillinq'): VsoLockingValidator {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn($register);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($objectService);
+
+		return new VsoLockingValidator($container, $appConfig, $this->createMock(LoggerInterface::class));
+	}//end validator()
+
+	/**
+	 * A row carrying vso_locked true locks the year, and the lookup is scoped.
+	 *
+	 * @return void
+	 */
+	public function testALockedRowLocksTheYear(): void {
+		$val = $this->validator($this->objectService([['vso_locked' => true]], $filters));
+
+		$this->assertTrue($val->isYearLocked('adm-x', 2026));
+		$this->assertSame(
+			['administrationId' => 'adm-x', 'financialYear' => 2026, 'vso_locked' => true],
+			$filters
+		);
+	}//end testALockedRowLocksTheYear()
+
+	/**
+	 * No row, a row without the flag, and a non-array row all read as unlocked.
+	 *
+	 * @return void
+	 */
+	public function testNoLockingRowReadsAsUnlocked(): void {
+		$this->assertFalse($this->validator($this->objectService([]))->isYearLocked('adm-x', 2026));
+		$this->assertFalse($this->validator($this->objectService([['vso_locked' => false], 'not-an-array']))->isYearLocked('adm-x', 2026));
+	}//end testNoLockingRowReadsAsUnlocked()
+
+	/**
+	 * A non-array find result reads as unlocked.
+	 *
+	 * @return void
+	 */
+	public function testANonArrayResultReadsAsUnlocked(): void {
+		$this->assertFalse($this->validator($this->objectService(null))->isYearLocked('adm-x', 2026));
+	}//end testANonArrayResultReadsAsUnlocked()
+
+	/**
+	 * An empty configured register still resolves (the default), so the lookup runs.
+	 *
+	 * @return void
+	 */
+	public function testEmptyRegisterConfigStillRunsTheLookup(): void {
+		$val = $this->validator($this->objectService([['vso_locked' => true]]), register: '');
+
+		$this->assertTrue($val->isYearLocked('adm-x', 2026));
+	}//end testEmptyRegisterConfigStillRunsTheLookup()
+
 }//end class

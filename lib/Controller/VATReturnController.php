@@ -3,6 +3,9 @@
 /**
  * VAT Return Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BTW-aangifte HTTP API for the bookkeeping-vat-btw-filing
  * change (issue #127). Exposes the seven endpoints declared in
  * tasks.md:
@@ -42,18 +45,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\VATReturnService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -66,6 +66,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * HTTP API for VAT returns (REQ-VAT-001 .. REQ-VAT-012).
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
@@ -80,23 +82,23 @@ class VATReturnController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param VATReturnService $service The VAT return service.
+	 * @param VATReturnServiceInterface $service The VAT return service.
 	 * @param ContainerInterface $container DI container for OR's ObjectService.
 	 * @param IUserSession $session User session (for actor identity).
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly VATReturnService $service,
+		private readonly VATReturnServiceInterface $service,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -113,15 +115,34 @@ class VATReturnController extends Controller {
 		}
 
 		$filters = $this->buildListFilters();
-		$page = max(1, (int)$this->request->getParam('_page', 1));
-		$limit = max(1, min(200, (int)$this->request->getParam('_limit', 25)));
+		$page    = max(1, (int)$this->request->getParam('_page', 1));
+		$limit   = max(1, min(200, (int)$this->request->getParam('_limit', 25)));
 
-		// ADR-005 / REQ-MA-001. The administrationId filter used to be OPTIONAL,
-		// so omitting it listed every tenant's statutory VAT returns. The scope
-		// is now always the caller's memberships; an explicit administrationId
-		// may only NARROW it, never widen it.
+		$scope = $this->listScope();
+		if ($scope instanceof JSONResponse) {
+			return $scope;
+		}
+
+		$all = $this->returnsIn(scope: $scope, filters: $filters);
+		if ($all === null) {
+			return new JSONResponse(['error' => 'Failed to list VAT returns'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return $this->pageResponse(all: $all, page: $page, limit: $limit);
+
+	}//end index()
+
+	/**
+	 * ADR-005 / REQ-MA-001. The administrationId filter used to be OPTIONAL,
+	 * so omitting it listed every tenant's statutory VAT returns. The scope
+	 * is now always the caller's memberships; an explicit administrationId
+	 * may only NARROW it, never widen it.
+	 *
+	 * @return array<int, string>|JSONResponse The administrations to list, or a 404 for a foreign one.
+	 */
+	private function listScope(): array|JSONResponse {
 		$requested = trim((string)$this->request->getParam('administrationId', ''));
-		$scope = $this->context->accessibleAdministrationIds();
+		$scope     = $this->context->accessibleAdministrationIds();
 		if ($requested !== '') {
 			if ($this->context->canAccess(administrationId: $requested) === false) {
 				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
@@ -130,6 +151,18 @@ class VATReturnController extends Controller {
 			$scope = [$requested];
 		}
 
+		return $scope;
+	}//end listScope()
+
+	/**
+	 * The VAT returns of every administration in scope, or null when the lookup fails.
+	 *
+	 * @param array<int, string>   $scope   The administrations to list.
+	 * @param array<string, mixed> $filters The list filters.
+	 *
+	 * @return array<int, mixed>|null
+	 */
+	private function returnsIn(array $scope, array $filters): array|null {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$all = [];
@@ -143,31 +176,30 @@ class VATReturnController extends Controller {
 				);
 			}
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'VATReturnController: failed to list VAT returns',
-				['exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(['error' => 'Failed to list VAT returns'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			$this->logger->error('VATReturnController: failed to list VAT returns', ['exception' => $e->getMessage()]);
+			return null;
 		}
 
-		$total = count($all);
-		$pages = max(1, (int)ceil($total / $limit));
+		return $all;
+	}//end returnsIn()
+
+	/**
+	 * One page of the list.
+	 *
+	 * @param array<int, mixed> $all   Every listed VAT return.
+	 * @param int               $page  The page, from 1.
+	 * @param int               $limit The page size.
+	 *
+	 * @return JSONResponse
+	 */
+	private function pageResponse(array $all, int $page, int $limit): JSONResponse {
+		$total  = count($all);
+		$pages  = max(1, (int)ceil($total / $limit));
 		$offset = (($page - 1) * $limit);
-		$slice = array_slice($all, $offset, $limit);
+		$slice  = array_slice($all, $offset, $limit);
 
-		return new JSONResponse(
-			[
-				'data' => $slice,
-				'total' => $total,
-				'page' => $page,
-				'pages' => $pages,
-				'limit' => $limit,
-			],
-			Http::STATUS_OK
-		);
-
-	}//end index()
+		return new JSONResponse(['data' => $slice, 'total' => $total, 'page' => $page, 'pages' => $pages, 'limit' => $limit], Http::STATUS_OK);
+	}//end pageResponse()
 
 	/**
 	 * Return one VAT return by id (with declarations + lines).
@@ -297,6 +329,55 @@ class VATReturnController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function update(string $returnId): JSONResponse {
+		$refusal = $this->refuseReturnRequest(returnId: $returnId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$notes = (string)$this->request->getParam('notes', '');
+
+		try {
+			return $this->updateAccessibleDraft(returnId: $returnId, notes: $notes);
+		} catch (\Throwable $e) {
+			return $this->returnActionFailed(action: 'update', returnId: $returnId, e: $e);
+		}
+	}//end update()
+
+	/**
+	 * Save the notes on an accessible draft return.
+	 *
+	 * @param string $returnId The VATReturn id.
+	 * @param string $notes    The new notes.
+	 *
+	 * @return JSONResponse
+	 */
+	private function updateAccessibleDraft(string $returnId, string $notes): JSONResponse {
+		// See show(): find() yields `?ObjectEntity`, so the previous
+		// `is_array()` test rejected every existing record as "not found".
+		$vatReturn = $this->service->findReturn(returnId: $returnId);
+		if ($this->mayAccessReturn(vatReturn: $vatReturn) === false) {
+			return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		if ((string)($vatReturn['statusCode'] ?? '') !== 'draft') {
+			return new JSONResponse(['error' => 'Only draft returns can be edited; rebase first'], Http::STATUS_CONFLICT);
+		}
+
+		$vatReturn['notes'] = $notes;
+		$objectService      = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$saved = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->saveObject($vatReturn);
+
+		return new JSONResponse(['data' => $saved], Http::STATUS_OK);
+	}//end updateAccessibleDraft()
+
+	/**
+	 * Refuse a request on one return when nobody is logged in or the id is malformed.
+	 *
+	 * @param string $returnId The VATReturn id.
+	 *
+	 * @return JSONResponse|null The 401/400 refusal, or null when the request may proceed.
+	 */
+	private function refuseReturnRequest(string $returnId): JSONResponse|null {
 		if ($this->session->getUser() === null) {
 			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
 		}
@@ -305,37 +386,56 @@ class VATReturnController extends Controller {
 			return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$notes = (string)$this->request->getParam('notes', '');
+		return null;
+	}//end refuseReturnRequest()
 
-		try {
-			// See show(): find() yields `?ObjectEntity`, so the previous
-			// `is_array()` test rejected every existing record as "not found".
-			$vatReturn = $this->service->findReturn(returnId: $returnId);
-			if ($this->mayAccessReturn(vatReturn: $vatReturn) === false) {
-				return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
-			}
+	/**
+	 * Log an unexpected failure of an action on one return and answer 500.
+	 *
+	 * @param string     $action   The action verb, as in "failed to <action> VAT return".
+	 * @param string     $returnId The VATReturn id.
+	 * @param \Throwable $e        The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function returnActionFailed(string $action, string $returnId, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'VATReturnController: failed to ' . $action . ' VAT return',
+			['returnId' => $returnId, 'exception' => $e->getMessage()]
+		);
 
-			if ((string)($vatReturn['statusCode'] ?? '') !== 'draft') {
-				return new JSONResponse(['error' => 'Only draft returns can be edited; rebase first'], Http::STATUS_CONFLICT);
-			}
+		return new JSONResponse(['error' => 'Failed to ' . $action . ' VAT return'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end returnActionFailed()
 
-			$vatReturn['notes'] = $notes;
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$saved = $objectService
-				->setRegister(register: 'shillinq')
-				->setSchema(schema: 'BtwAangifte')
-				->saveObject($vatReturn);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'VATReturnController: failed to update VAT return',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
+	/**
+	 * Log a refused state change of one return and answer 409 with its translated message.
+	 *
+	 * @param string            $action   The action, as in "VATReturnController.<action> failed".
+	 * @param string            $returnId The VATReturn id.
+	 * @param \RuntimeException $e        The refusal.
+	 * @param string            $message  The translated message.
+	 *
+	 * @return JSONResponse
+	 */
+	private function returnActionConflict(string $action, string $returnId, \RuntimeException $e, string $message): JSONResponse {
+		$this->logger->error(
+			'VATReturnController.' . $action . ' failed',
+			['returnId' => $returnId, 'exception' => $e]
+		);
 
-			return new JSONResponse(['error' => 'Failed to update VAT return'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
+		return new JSONResponse(['message' => $message, 'error' => 'vat-return-' . $action . '-failed'], Http::STATUS_CONFLICT);
+	}//end returnActionConflict()
 
-		return new JSONResponse(['data' => $saved], Http::STATUS_OK);
-	}//end update()
+	/**
+	 * Whether the caller may act on the return, as found by id.
+	 *
+	 * @param string $returnId The VATReturn id.
+	 *
+	 * @return bool
+	 */
+	private function mayAccessReturnId(string $returnId): bool {
+		return $this->mayAccessReturn(vatReturn: $this->service->findReturn(returnId: $returnId));
+	}//end mayAccessReturnId()
 
 	/**
 	 * Submit a VAT return (REQ-VAT-005).
@@ -350,12 +450,9 @@ class VATReturnController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function submit(string $returnId): JSONResponse {
-		if ($this->session->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		if ($this->validId(id: $returnId) === false) {
-			return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
+		$refusal = $this->refuseReturnRequest(returnId: $returnId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$userId = $this->resolveUserId();
@@ -364,28 +461,16 @@ class VATReturnController extends Controller {
 			// ADR-005 / REQ-MA-001 — filing another tenant's statutory return.
 			// $userId below is stamped as the actor but was never compared to
 			// anything, so it authorised nothing on its own.
-			if ($this->mayAccessReturn(vatReturn: $this->service->findReturn(returnId: $returnId)) === false) {
+			if ($this->mayAccessReturnId(returnId: $returnId) === false) {
 				return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
 			}
 
 			$vatReturn = $this->service->submitReturn(returnId: $returnId, userId: $userId);
 		} catch (\RuntimeException $e) {
-			$this->logger->error(
-				'VATReturnController.submit failed',
-				['returnId' => $returnId, 'exception' => $e]
-			);
-
-			return new JSONResponse(
-				['message' => $this->l10n->t('Unable to submit VAT return'), 'error' => 'vat-return-submit-failed'],
-				Http::STATUS_CONFLICT,
-			);
+			$message = $this->l10n->t('Unable to submit VAT return');
+			return $this->returnActionConflict(action: 'submit', returnId: $returnId, e: $e, message: $message);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'VATReturnController: failed to submit VAT return',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(['error' => 'Failed to submit VAT return'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->returnActionFailed(action: 'submit', returnId: $returnId, e: $e);
 		}
 
 		return new JSONResponse(['data' => $vatReturn], Http::STATUS_OK);
@@ -404,12 +489,9 @@ class VATReturnController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function rebase(string $returnId): JSONResponse {
-		if ($this->session->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		if ($this->validId(id: $returnId) === false) {
-			return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
+		$refusal = $this->refuseReturnRequest(returnId: $returnId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$userId = $this->resolveUserId();
@@ -417,28 +499,16 @@ class VATReturnController extends Controller {
 		try {
 			// ADR-005 / REQ-MA-001 — reverting another tenant's SUBMITTED
 			// statutory filing back to draft.
-			if ($this->mayAccessReturn(vatReturn: $this->service->findReturn(returnId: $returnId)) === false) {
+			if ($this->mayAccessReturnId(returnId: $returnId) === false) {
 				return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
 			}
 
 			$vatReturn = $this->service->rebaseReturn(returnId: $returnId, userId: $userId);
 		} catch (\RuntimeException $e) {
-			$this->logger->error(
-				'VATReturnController.rebase failed',
-				['returnId' => $returnId, 'exception' => $e]
-			);
-
-			return new JSONResponse(
-				['message' => $this->l10n->t('Unable to rebase VAT return'), 'error' => 'vat-return-rebase-failed'],
-				Http::STATUS_CONFLICT,
-			);
+			$message = $this->l10n->t('Unable to rebase VAT return');
+			return $this->returnActionConflict(action: 'rebase', returnId: $returnId, e: $e, message: $message);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'VATReturnController: failed to rebase VAT return',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(['error' => 'Failed to rebase VAT return'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->returnActionFailed(action: 'rebase', returnId: $returnId, e: $e);
 		}
 
 		return new JSONResponse(['data' => $vatReturn], Http::STATUS_OK);
@@ -455,41 +525,44 @@ class VATReturnController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $returnId): JSONResponse {
-		if ($this->session->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		if ($this->validId(id: $returnId) === false) {
-			return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
+		$refusal = $this->refuseReturnRequest(returnId: $returnId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
-			// See show(): find() yields `?ObjectEntity`, so the previous
-			// `is_array()` test masked every existing record as 404 — which
-			// meant a SUBMITTED return answered 404 instead of the 409 the
-			// "only draft returns can be deleted" rule is supposed to give.
-			$vatReturn = $this->service->findReturn(returnId: $returnId);
-			if ($this->mayAccessReturn(vatReturn: $vatReturn) === false) {
-				return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			if ((string)($vatReturn['statusCode'] ?? '') !== 'draft') {
-				return new JSONResponse(['error' => 'Only draft returns can be deleted'], Http::STATUS_CONFLICT);
-			}
-
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject($returnId);
+			return $this->deleteAccessibleDraft(returnId: $returnId);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'VATReturnController: failed to delete VAT return',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
+			return $this->returnActionFailed(action: 'delete', returnId: $returnId, e: $e);
+		}
+	}//end destroy()
 
-			return new JSONResponse(['error' => 'Failed to delete VAT return'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
+	/**
+	 * Delete an accessible draft return.
+	 *
+	 * @param string $returnId The VATReturn id.
+	 *
+	 * @return JSONResponse
+	 */
+	private function deleteAccessibleDraft(string $returnId): JSONResponse {
+		// See show(): find() yields `?ObjectEntity`, so the previous
+		// `is_array()` test masked every existing record as 404 — which
+		// meant a SUBMITTED return answered 404 instead of the 409 the
+		// "only draft returns can be deleted" rule is supposed to give.
+		$vatReturn = $this->service->findReturn(returnId: $returnId);
+		if ($this->mayAccessReturn(vatReturn: $vatReturn) === false) {
+			return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		if ((string)($vatReturn['statusCode'] ?? '') !== 'draft') {
+			return new JSONResponse(['error' => 'Only draft returns can be deleted'], Http::STATUS_CONFLICT);
+		}
+
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject($returnId);
 
 		return new JSONResponse(['data' => ['id' => $returnId, 'deleted' => true]], Http::STATUS_OK);
-	}//end destroy()
+	}//end deleteAccessibleDraft()
 
 	/**
 	 * Require an administrationId that is well-formed AND one of the caller's (ADR-005).
@@ -547,16 +620,22 @@ class VATReturnController extends Controller {
 			return new JSONResponse(['error' => 'regime must be one of standard | kor | reverse-charge'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($periodYear < 2020 || $periodYear > 2099 || $periodNumber < 1) {
-			return new JSONResponse(['error' => 'periodYear / periodNumber must be valid'], Http::STATUS_BAD_REQUEST);
-		}
+		return $this->validatePeriodNumber(period: $period, periodYear: $periodYear, periodNumber: $periodNumber);
+	}//end validateCreatePeriod()
 
-		if ($period === 'quarter' && $periodNumber > 4) {
-			return new JSONResponse(['error' => 'periodNumber must be 1..4 for quarter'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($period === 'month' && $periodNumber > 12) {
-			return new JSONResponse(['error' => 'periodNumber must be 1..12 for month'], Http::STATUS_BAD_REQUEST);
+	/**
+	 * Validate the period's year and number, and refuse future periods.
+	 *
+	 * @param string $period       quarter | month | year.
+	 * @param int    $periodYear   Fiscal year.
+	 * @param int    $periodNumber Period within the year.
+	 *
+	 * @return JSONResponse|null A 400 response when invalid, null when acceptable.
+	 */
+	private function validatePeriodNumber(string $period, int $periodYear, int $periodNumber): JSONResponse|null {
+		$error = self::periodNumberError(period: $period, periodYear: $periodYear, periodNumber: $periodNumber);
+		if ($error !== '') {
+			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
 		}
 
 		if ($this->isPeriodInFuture(periodYear: $periodYear, periodNumber: $periodNumber, period: $period) === true) {
@@ -564,7 +643,44 @@ class VATReturnController extends Controller {
 		}
 
 		return null;
-	}//end validateCreatePeriod()
+	}//end validatePeriodNumber()
+
+	/**
+	 * The error for an out-of-range year or period number, or '' when they are valid.
+	 *
+	 * @param string $period       quarter | month | year.
+	 * @param int    $periodYear   Fiscal year.
+	 * @param int    $periodNumber Period within the year.
+	 *
+	 * @return string
+	 */
+	private static function periodNumberError(string $period, int $periodYear, int $periodNumber): string {
+		if ($periodYear < 2020 || $periodYear > 2099 || $periodNumber < 1) {
+			return 'periodYear / periodNumber must be valid';
+		}
+
+		return self::periodRangeError(period: $period, periodNumber: $periodNumber);
+	}//end periodNumberError()
+
+	/**
+	 * The error for a period number beyond the quarters or months of a year, or '' when it fits.
+	 *
+	 * @param string $period       quarter | month | year.
+	 * @param int    $periodNumber Period within the year.
+	 *
+	 * @return string
+	 */
+	private static function periodRangeError(string $period, int $periodNumber): string {
+		if ($period === 'quarter' && $periodNumber > 4) {
+			return 'periodNumber must be 1..4 for quarter';
+		}
+
+		if ($period === 'month' && $periodNumber > 12) {
+			return 'periodNumber must be 1..12 for month';
+		}
+
+		return '';
+	}//end periodRangeError()
 
 	/**
 	 * Whether the caller may act on a loaded VAT return (ADR-005 IDOR guard).

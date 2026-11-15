@@ -1,0 +1,777 @@
+{
+    "reads": [
+        {
+            "writesBefore": 0,
+            "schema": "Account",
+            "query": {
+                "filters": {
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 0,
+            "schema": "FiscalPeriod",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 0,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "slug": "td-P2026-0200-NL"
+                }
+            }
+        },
+        {
+            "writesBefore": 1,
+            "schema": "FiscalPeriod",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 1,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "slug": "td-P2026-0300-DE"
+                }
+            }
+        },
+        {
+            "writesBefore": 2,
+            "schema": "FiscalPeriod",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 2,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "slug": "td-P2026-0500-BE"
+                }
+            }
+        },
+        {
+            "writesBefore": 3,
+            "schema": "TaxLossCarryForward",
+            "query": {
+                "filters": {
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 3,
+            "schema": "FiscalPeriod",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 6,
+            "schema": "FiscalPeriod",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 7,
+            "schema": "TaxLossCarryForward",
+            "query": {
+                "filters": {
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 7,
+            "schema": "FiscalPeriod",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 7,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 8,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "category": "provisions",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 10,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "category": "other",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 10,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "slug": "dtm-P2026-NL-other"
+                }
+            }
+        },
+        {
+            "writesBefore": 11,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 11,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 11,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "category": "provisions",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 11,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "slug": "dtm-P2026-NL-provisions"
+                }
+            }
+        },
+        {
+            "writesBefore": 12,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "category": "leases",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 12,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "slug": "dtm-P2026-NL-leases"
+                }
+            }
+        },
+        {
+            "writesBefore": 13,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "category": "fixed-assets",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 13,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "slug": "dtm-P2026-NL-fixed-assets"
+                }
+            }
+        },
+        {
+            "writesBefore": 14,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "category": "other",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 14,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "slug": "dtm-P2026-NL-other"
+                }
+            }
+        },
+        {
+            "writesBefore": 15,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "NL",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 15,
+            "schema": "TaxProvision",
+            "query": {
+                "filters": {
+                    "slug": "tp-P2026-NL"
+                }
+            }
+        },
+        {
+            "writesBefore": 16,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "DE",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 16,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "DE",
+                    "category": "provisions",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 16,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "slug": "dtm-P2026-DE-provisions"
+                }
+            }
+        },
+        {
+            "writesBefore": 17,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "DE",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 17,
+            "schema": "TaxProvision",
+            "query": {
+                "filters": {
+                    "slug": "tp-P2026-DE"
+                }
+            }
+        },
+        {
+            "writesBefore": 18,
+            "schema": "TemporaryDifference",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "BE",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 18,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "BE",
+                    "category": "leases",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 18,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "slug": "dtm-P2026-BE-leases"
+                }
+            }
+        },
+        {
+            "writesBefore": 19,
+            "schema": "DeferredTaxMovement",
+            "query": {
+                "filters": {
+                    "periodId": "P2026",
+                    "jurisdiction": "BE",
+                    "administrationId": "adm-1"
+                }
+            }
+        },
+        {
+            "writesBefore": 19,
+            "schema": "TaxProvision",
+            "query": {
+                "filters": {
+                    "slug": "tp-P2026-BE"
+                }
+            }
+        }
+    ],
+    "writes": [
+        {
+            "schema": "TemporaryDifference",
+            "object": {
+                "slug": "td-P2026-0200-NL",
+                "periodId": "P2026",
+                "jurisdiction": "NL",
+                "accountNumber": "0200",
+                "category": "fixed-assets",
+                "commercialCarryingAmount": 100010,
+                "taxCarryingAmount": 40000,
+                "temporaryDifference": 60010,
+                "type": "taxable",
+                "reversalPattern": "long-term",
+                "expectedReversalYear": null,
+                "taxRate": 2500,
+                "deferredTaxBalance": 15003,
+                "notes": null,
+                "administrationId": "adm-1",
+                "id": "obj-1"
+            }
+        },
+        {
+            "schema": "TemporaryDifference",
+            "object": {
+                "slug": "td-P2026-0300-DE",
+                "periodId": "P2026",
+                "jurisdiction": "DE",
+                "accountNumber": "0300",
+                "category": "provisions",
+                "commercialCarryingAmount": 10000,
+                "taxCarryingAmount": 30050,
+                "temporaryDifference": -20050,
+                "type": "deductible",
+                "reversalPattern": "long-term",
+                "expectedReversalYear": null,
+                "taxRate": 3000,
+                "deferredTaxBalance": -6015,
+                "notes": null,
+                "administrationId": "adm-1",
+                "id": "obj-2"
+            }
+        },
+        {
+            "schema": "TemporaryDifference",
+            "object": {
+                "slug": "td-P2026-0500-BE",
+                "periodId": "P2026",
+                "jurisdiction": "BE",
+                "accountNumber": "0500",
+                "category": "leases",
+                "commercialCarryingAmount": 7000,
+                "taxCarryingAmount": 0,
+                "temporaryDifference": 7000,
+                "type": "taxable",
+                "reversalPattern": "long-term",
+                "expectedReversalYear": null,
+                "taxRate": 0,
+                "deferredTaxBalance": 0,
+                "notes": null,
+                "administrationId": "adm-1",
+                "id": "obj-3"
+            }
+        },
+        {
+            "schema": "TaxLossCarryForward",
+            "object": {
+                "id": "l-2",
+                "administrationId": "adm-1",
+                "jurisdiction": "NL",
+                "remainingAmount": 0,
+                "originatingYear": 2019,
+                "dtaRecognised": 200,
+                "dtaRecoverabilityRationale": "Budget 2027",
+                "utilisedAmount": 40000
+            }
+        },
+        {
+            "schema": "TaxLossCarryForward",
+            "object": {
+                "id": "l-5",
+                "administrationId": "adm-1",
+                "remainingAmount": 0,
+                "originatingYear": 2020,
+                "applicableRegime": "pre-2022",
+                "utilisedAmount": 100
+            }
+        },
+        {
+            "schema": "TaxLossCarryForward",
+            "object": {
+                "id": "l-1",
+                "administrationId": "adm-1",
+                "jurisdiction": "NL",
+                "remainingAmount": 20075,
+                "utilisedAmount": 10025,
+                "originatingYear": 2021,
+                "applicableRegime": "2022-onwards",
+                "dtaRecognised": 500
+            }
+        },
+        {
+            "schema": "TaxLossCarryForward",
+            "object": {
+                "id": "l-6",
+                "administrationId": "adm-1",
+                "jurisdiction": "DE",
+                "remainingAmount": 650,
+                "originatingYear": 2020,
+                "utilisedAmount": 250
+            }
+        },
+        {
+            "schema": "TemporaryDifference",
+            "object": {
+                "id": "td-a",
+                "slug": "td-old-a",
+                "periodId": "P2026",
+                "administrationId": "adm-1",
+                "jurisdiction": "NL",
+                "category": "provisions",
+                "temporaryDifference": 100000,
+                "taxRate": 2500,
+                "expectedReversalYear": 2027,
+                "deferredTaxBalance": 25000
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "id": "m-1",
+                "slug": "dtm-old-1",
+                "periodId": "P2026",
+                "administrationId": "adm-1",
+                "jurisdiction": "NL",
+                "category": "provisions",
+                "openingBalance": 5000,
+                "reversedInPeriod": 300,
+                "rateChangeAdjustment": 5007,
+                "acquiredViaBusinessCombination": 11,
+                "translationAdjustment": 13,
+                "recognisedInOCI": 17,
+                "linkedJournalEntries": [
+                    "je-1"
+                ]
+            }
+        },
+        {
+            "schema": "TemporaryDifference",
+            "object": {
+                "id": "td-e",
+                "slug": "td-old-e",
+                "periodId": "P2026",
+                "administrationId": "adm-1",
+                "jurisdiction": "NL",
+                "temporaryDifference": -10000,
+                "taxRate": 2500,
+                "expectedReversalYear": 2029,
+                "deferredTaxBalance": -2500
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "slug": "dtm-P2026-NL-other",
+                "openingBalance": 0,
+                "originatedInPeriod": 0,
+                "reversedInPeriod": 0,
+                "acquiredViaBusinessCombination": 0,
+                "translationAdjustment": 0,
+                "recognisedInPL": -500,
+                "recognisedInOCI": 0,
+                "closingBalance": -500,
+                "linkedJournalEntries": [],
+                "periodId": "P2026",
+                "jurisdiction": "NL",
+                "category": "other",
+                "rateChangeAdjustment": -500,
+                "administrationId": "adm-1",
+                "id": "obj-4"
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "slug": "dtm-P2026-NL-provisions",
+                "periodId": "P2026",
+                "jurisdiction": "NL",
+                "category": "provisions",
+                "openingBalance": 5000,
+                "originatedInPeriod": 20000,
+                "reversedInPeriod": 300,
+                "rateChangeAdjustment": 5007,
+                "acquiredViaBusinessCombination": 11,
+                "translationAdjustment": 13,
+                "recognisedInPL": 25318,
+                "recognisedInOCI": 17,
+                "closingBalance": 30348,
+                "linkedJournalEntries": [
+                    "je-1"
+                ],
+                "administrationId": "adm-1",
+                "id": "obj-5"
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "slug": "dtm-P2026-NL-leases",
+                "periodId": "P2026",
+                "jurisdiction": "NL",
+                "category": "leases",
+                "openingBalance": 0,
+                "originatedInPeriod": 12500,
+                "reversedInPeriod": 0,
+                "rateChangeAdjustment": 0,
+                "acquiredViaBusinessCombination": 0,
+                "translationAdjustment": 0,
+                "recognisedInPL": 12500,
+                "recognisedInOCI": 0,
+                "closingBalance": 12500,
+                "linkedJournalEntries": [],
+                "administrationId": "adm-1",
+                "id": "obj-6"
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "slug": "dtm-P2026-NL-fixed-assets",
+                "periodId": "P2026",
+                "jurisdiction": "NL",
+                "category": "fixed-assets",
+                "openingBalance": 0,
+                "originatedInPeriod": 29003,
+                "reversedInPeriod": 0,
+                "rateChangeAdjustment": 0,
+                "acquiredViaBusinessCombination": 0,
+                "translationAdjustment": 0,
+                "recognisedInPL": 29003,
+                "recognisedInOCI": 0,
+                "closingBalance": 29003,
+                "linkedJournalEntries": [],
+                "administrationId": "adm-1",
+                "id": "obj-7"
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "slug": "dtm-P2026-NL-other",
+                "openingBalance": 0,
+                "originatedInPeriod": -8500,
+                "reversedInPeriod": 0,
+                "acquiredViaBusinessCombination": 0,
+                "translationAdjustment": 0,
+                "recognisedInPL": -9000,
+                "recognisedInOCI": 0,
+                "closingBalance": -9000,
+                "linkedJournalEntries": [],
+                "periodId": "P2026",
+                "jurisdiction": "NL",
+                "category": "other",
+                "rateChangeAdjustment": -500,
+                "administrationId": "adm-1",
+                "id": "obj-4"
+            }
+        },
+        {
+            "schema": "TaxProvision",
+            "object": {
+                "slug": "tp-P2026-NL",
+                "periodId": "P2026",
+                "jurisdiction": "NL",
+                "currentTaxPayable": 0,
+                "currentTaxPrepaid": 0,
+                "dtaTotal": 9000,
+                "dtlTotal": 71851,
+                "netDtaDtlPosition": 62851,
+                "presentationOnBalanceSheet": "gross",
+                "linkedVpbReturn": null,
+                "administrationId": "adm-1",
+                "id": "obj-8"
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "slug": "dtm-P2026-DE-provisions",
+                "periodId": "P2026",
+                "jurisdiction": "DE",
+                "category": "provisions",
+                "openingBalance": 0,
+                "originatedInPeriod": -6015,
+                "reversedInPeriod": 0,
+                "rateChangeAdjustment": 0,
+                "acquiredViaBusinessCombination": 0,
+                "translationAdjustment": 0,
+                "recognisedInPL": -6015,
+                "recognisedInOCI": 0,
+                "closingBalance": -6015,
+                "linkedJournalEntries": [],
+                "administrationId": "adm-1",
+                "id": "obj-9"
+            }
+        },
+        {
+            "schema": "TaxProvision",
+            "object": {
+                "id": "tp-x",
+                "slug": "tp-P2026-DE",
+                "periodId": "P2026",
+                "administrationId": "adm-1",
+                "jurisdiction": "DE",
+                "linkedVpbReturn": null,
+                "currentTaxPayable": 0,
+                "currentTaxPrepaid": 0,
+                "dtaTotal": 6015,
+                "dtlTotal": 0,
+                "netDtaDtlPosition": -6015,
+                "presentationOnBalanceSheet": "gross"
+            }
+        },
+        {
+            "schema": "DeferredTaxMovement",
+            "object": {
+                "slug": "dtm-P2026-BE-leases",
+                "periodId": "P2026",
+                "jurisdiction": "BE",
+                "category": "leases",
+                "openingBalance": 0,
+                "originatedInPeriod": 0,
+                "reversedInPeriod": 0,
+                "rateChangeAdjustment": 0,
+                "acquiredViaBusinessCombination": 0,
+                "translationAdjustment": 0,
+                "recognisedInPL": 0,
+                "recognisedInOCI": 0,
+                "closingBalance": 0,
+                "linkedJournalEntries": [],
+                "administrationId": "adm-1",
+                "id": "obj-10"
+            }
+        },
+        {
+            "schema": "TaxProvision",
+            "object": {
+                "slug": "tp-P2026-BE",
+                "periodId": "P2026",
+                "jurisdiction": "BE",
+                "currentTaxPayable": 0,
+                "currentTaxPrepaid": 0,
+                "dtaTotal": 0,
+                "dtlTotal": 0,
+                "netDtaDtlPosition": 0,
+                "presentationOnBalanceSheet": "gross",
+                "linkedVpbReturn": null,
+                "administrationId": "adm-1",
+                "id": "obj-11"
+            }
+        }
+    ],
+    "log": [
+        [
+            "warning",
+            "Deferred-tax DTA recognised without recoverability rationale (REQ-DT-004)",
+            {
+                "app": "shillinq",
+                "administrationId": "adm-1",
+                "jurisdiction": "NL",
+                "originatingYear": 2021,
+                "dtaRecognised": 500
+            }
+        ],
+        [
+            "warning",
+            "Deferred-tax DTA recognised without recoverability rationale (REQ-DT-004)",
+            {
+                "app": "shillinq",
+                "administrationId": "adm-1",
+                "jurisdiction": "NL",
+                "originatingYear": 2022,
+                "dtaRecognised": 1
+            }
+        ]
+    ]
+}

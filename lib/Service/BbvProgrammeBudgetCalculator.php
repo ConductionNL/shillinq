@@ -3,6 +3,9 @@
 /**
  * BBV Provincie Programme Budget Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The arithmetic half of the provincies-BBV Compliance Dashboard (#866/#862):
  * everything REQ-BBC-001..003 says about combining budget, commitment and GL
  * spend into per-programme rows, the four KPI totals, the traffic light, the
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
