@@ -39,6 +39,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Drives the full trigger pipeline: load triggers, recipients, opt-out,
@@ -157,7 +158,10 @@ final class BookingNotificationServiceTriggersTest extends TestCase {
 			}
 		);
 		$objectService->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null): ObjectEntityStub {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntityStub {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				unset($object['sentAt']);
 				$this->saves[] = [(string)$register, (string)$schema, $object];
 				return new ObjectEntityStub(payload: $object);

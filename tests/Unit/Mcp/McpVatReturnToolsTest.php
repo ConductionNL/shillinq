@@ -39,6 +39,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * The tools and VATReturnController run against the same session,
@@ -202,7 +203,8 @@ class McpVatReturnToolsTest extends TestCase {
 				return $this;
 			}
 
-			public function deleteObject(string $id): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$id = $deletion->uuid;
 				$this->calls[] = 'delete:' . $id;
 				return true;
 			}
