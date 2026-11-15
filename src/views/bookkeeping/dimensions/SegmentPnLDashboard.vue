@@ -407,28 +407,34 @@ export default {
 				})
 				this.rows = this.normaliseRows(data, segment)
 			} catch (error) {
-				const status = error?.response?.status
-				if (status === 404 || status === 501) {
-					// Older OR builds without the aggregation endpoint —
-					// keep the dashboard navigable instead of breaking.
-					this.errorMessage = this.t(
-						'shillinq',
-						'Aggregation endpoint unavailable on this OpenRegister build. Upgrade OR to read segment P&L roll-ups.',
-					)
-				} else if (status === 401 || status === 403) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Permission required to read segment P&L data.',
-					)
-				} else {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Failed to load segment P&L.',
-					)
-				}
+				this.errorMessage = this.segmentLoadError(error)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The message of a failed segment load, by HTTP status. Older OR builds
+		 * without the aggregation endpoint keep the dashboard navigable.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 */
+		segmentLoadError(error) {
+			const status = error?.response?.status
+			if (status === 404 || status === 501) {
+				return this.t(
+					'shillinq',
+					'Aggregation endpoint unavailable on this OpenRegister build. Upgrade OR to read segment P&L roll-ups.',
+				)
+			}
+			if (status === 401 || status === 403) {
+				return this.t(
+					'shillinq',
+					'Permission required to read segment P&L data.',
+				)
+			}
+			return this.t('shillinq', 'Failed to load segment P&L.')
 		},
 
 		/**
@@ -515,6 +521,15 @@ export default {
 			if (!this.rows.length) {
 				return
 			}
+			this.downloadCsv(this.segmentCsv())
+		},
+
+		/**
+		 * The rows as CSV: a header, then one line per segment.
+		 *
+		 * @return {string}
+		 */
+		segmentCsv() {
 			const header = [
 				'segment',
 				'name',
@@ -535,7 +550,16 @@ export default {
 				]
 				lines.push(cells.join(','))
 			}
-			const blob = new Blob([lines.join('\n') + '\n'], {
+			return lines.join('\n') + '\n'
+		},
+
+		/**
+		 * Download CSV text as `segment-pnl-<segment>-<date>.csv`.
+		 *
+		 * @param {string} text The CSV text.
+		 */
+		downloadCsv(text) {
+			const blob = new Blob([text], {
 				type: 'text/csv;charset=utf-8',
 			})
 			const url = URL.createObjectURL(blob)

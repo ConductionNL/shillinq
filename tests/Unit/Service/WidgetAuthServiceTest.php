@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\WidgetAuthService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -51,9 +52,9 @@ class WidgetAuthServiceTest extends TestCase {
 	/**
 	 * SettingsService stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Cache factory stub.
@@ -98,7 +99,7 @@ class WidgetAuthServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->cacheFactory = $this->createMock(ICacheFactory::class);
 		$this->time = $this->createMock(ITimeFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -223,5 +224,215 @@ class WidgetAuthServiceTest extends TestCase {
 		self::assertFalse($result['valid']);
 
 	}//end testValidateApiKeyRejectsEmptyInputs()
+
+	/**
+	 * Key lookups run for anonymous widget callers against an admin-only
+	 * schema, so they must not be filtered by the caller's group grants.
+	 *
+	 * @return void
+	 */
+	public function testKeyLookupBypassesObjectRbac(): void {
+		$objectService = new class {
+			/**
+			 * @var array<int,bool>
+			 */
+			public array $rbacFlags = [];
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * @param array<string,mixed> $config Query.
+			 * @param bool                $_rbac  Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = [], bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
+				return [['businessId' => 'salon-001', 'status' => 'active']];
+			}//end findAll()
+		};
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
+		$this->container->method('get')->willReturn($objectService);
+
+		self::assertNotNull(actual: $this->service->findActiveKeyByBusinessId(businessId: 'salon-001'));
+		self::assertNotNull(actual: $this->service->findKeyByBusinessId(businessId: 'salon-001'));
+		self::assertSame(expected: [false, false], actual: $objectService->rbacFlags);
+
+	}//end testKeyLookupBypassesObjectRbac()
+
+	/**
+	 * A store holding one active key for salon-001, but only in the 'finance' register.
+	 *
+	 * @param string $hash The stored key hash.
+	 *
+	 * @return object The store double.
+	 */
+	private function financeKeyStore(string $hash): object {
+		return new class($hash) {
+			/**
+			 * The register selected through the fluent setter.
+			 *
+			 * @var string
+			 */
+			public string $register = '';
+
+			/**
+			 * @param string $hash The stored key hash.
+			 */
+			public function __construct(private string $hash) {
+			}//end __construct()
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				$this->register = $register;
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * @param array<string,mixed> $config Query.
+			 * @param bool                $_rbac  Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = [], bool $_rbac = true): array {
+				if ($this->register !== 'finance') {
+					return [];
+				}
+
+				return [['businessId' => 'salon-001', 'status' => 'active', 'apiKeyHash' => $this->hash]];
+			}//end findAll()
+		};
+
+	}//end financeKeyStore()
+
+	/**
+	 * A key is accepted only when it is looked up in the configured register,
+	 * and refused when the configured register does not hold it.
+	 *
+	 * @return void
+	 */
+	public function testValidateApiKeyLooksUpTheConfiguredRegister(): void {
+		$plaintext = 'bk_live_register_pin';
+		$this->container->method('get')->willReturn($this->financeKeyStore($this->service->hashKey($plaintext)));
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturnOnConsecutiveCalls('finance', 'shillinq');
+
+		$allowed = $this->service->validateApiKey(businessId: 'salon-001', apiKey: $plaintext);
+		$refused = $this->service->validateApiKey(businessId: 'salon-001', apiKey: $plaintext);
+
+		self::assertTrue($allowed['valid']);
+		self::assertSame(['valid' => false, 'error' => 'Invalid or missing API key'], $refused);
+
+	}//end testValidateApiKeyLooksUpTheConfiguredRegister()
+
+	/**
+	 * Revoking a key replaces the stored WidgetAccessKey under its uuid with
+	 * status `revoked`, through ObjectService::saveObject().
+	 *
+	 * @return void
+	 */
+	public function testRevokeApiKeyPersistsTheRevokedStatus(): void {
+		$objectService = new class {
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			public array $saved = [];
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * @param array<string,mixed> $config Query.
+			 * @param bool                $_rbac  Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = [], bool $_rbac = true): array {
+				return [['id' => 'key-uuid-1', 'businessId' => 'salon-001', 'status' => 'active', 'administrationId' => 'adm-1']];
+			}//end findAll()
+
+			/**
+			 * @param array<string,mixed> $object   Payload.
+			 * @param string|null         $register Register slug.
+			 * @param string|null         $schema   Schema slug.
+			 * @param string|null         $uuid     Uuid of the object to replace.
+			 * @param bool                $_rbac    Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(
+				array $object,
+				?string $register = null,
+				?string $schema = null,
+				?string $uuid = null,
+				bool $_rbac = true,
+			): array {
+				$this->saved[] = ['schema' => $schema, 'uuid' => $uuid, 'object' => $object];
+				return $object;
+			}//end saveObject()
+		};
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
+		$this->container->method('get')->willReturn($objectService);
+
+		$result = $this->service->revokeApiKey(businessId: 'salon-001', actor: 'admin');
+
+		self::assertTrue(condition: $result['success']);
+		$keyWrites = array_values(
+			array_filter(
+				$objectService->saved,
+				static fn (array $write): bool => $write['schema'] === 'WidgetAccessKey'
+			)
+		);
+		self::assertCount(expectedCount: 1, haystack: $keyWrites);
+		self::assertSame(expected: 'key-uuid-1', actual: $keyWrites[0]['uuid']);
+		self::assertSame(expected: 'revoked', actual: $keyWrites[0]['object']['status']);
+
+	}//end testRevokeApiKeyPersistsTheRevokedStatus()
 
 }//end class

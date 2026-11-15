@@ -3,6 +3,9 @@
 /**
  * Lot Expiry Alert Job.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Daily background job that scans InventoryLot records and generates
  * ExpiryAlert records for lots approaching their expiryDate (at configurable
  * thresholds — default 30 and 7 days) and for lots that have crossed their
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -38,7 +38,8 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -54,6 +55,7 @@ use Throwable;
  * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
 class LotExpiryAlertJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Daily interval in seconds (24h).
@@ -81,13 +83,13 @@ class LotExpiryAlertJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for job scheduling and current-time reads.
-	 * @param SettingsService $settings Resolves the active OR register slug.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService lookup.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -98,6 +100,21 @@ class LotExpiryAlertJob extends TimedJob {
 		$this->timeFactory = $time;
 
 	}//end __construct()
+
+	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
 
 	/**
 	 * Sweep all active/quarantined InventoryLot records and raise alerts.
@@ -111,8 +128,8 @@ class LotExpiryAlertJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+	private function runAsJob($argument): void {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('LotExpiryAlertJob: OpenRegister not available, skipping.');
 			return;
 		}
@@ -120,7 +137,7 @@ class LotExpiryAlertJob extends TimedJob {
 		try {
 			$today = $this->todayDate();
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$activeLots = $objectService
 				->setRegister($registerSlug)
@@ -153,7 +170,7 @@ class LotExpiryAlertJob extends TimedJob {
 			);
 		}//end try
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Inspect one lot and raise any missing threshold or expired alerts.
@@ -170,45 +187,11 @@ class LotExpiryAlertJob extends TimedJob {
 			$lot = $this->toArray(object: $record);
 			$lotId = (string)($lot['id'] ?? ($lot['uuid'] ?? ''));
 			$expiry = (string)($lot['expiryDate'] ?? '');
-			$adminId = (string)($lot['administrationId'] ?? '');
 			if ($lotId === '' || $expiry === '') {
 				return 0;
 			}
 
-			$daysUntil = $this->daysBetween(earlier: $today, later: $expiry);
-			$raised = 0;
-
-			if ($daysUntil < 0) {
-				// Past expiry — alertType=expired (idempotent on lotId+alertType).
-				$raised += $this->ensureAlert(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					lotId: $lotId,
-					administrationId: $adminId,
-					alertType: 'expired',
-					daysBeforeExpiry: null,
-					today: $today,
-				);
-				return $raised;
-			}
-
-			foreach (self::DEFAULT_THRESHOLDS as $thresholdDays) {
-				if ($daysUntil > $thresholdDays) {
-					continue;
-				}
-
-				$raised += $this->ensureAlert(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					lotId: $lotId,
-					administrationId: $adminId,
-					alertType: 'approaching_expiry',
-					daysBeforeExpiry: $thresholdDays,
-					today: $today,
-				);
-			}
-
-			return $raised;
+			return $this->raiseAlerts(lot: $lot, objectService: $objectService, registerSlug: $registerSlug, today: $today);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'LotExpiryAlertJob: skip lot: ' . $e->getMessage()
@@ -217,6 +200,72 @@ class LotExpiryAlertJob extends TimedJob {
 		}//end try
 
 	}//end checkLotForAlerts()
+
+	/**
+	 * Raise the expired alert of a lot past expiry, else its approaching-expiry alerts.
+	 *
+	 * @param array<string,mixed> $lot           The lot (has an id and an expiryDate).
+	 * @param mixed               $objectService OR ObjectService (loose-typed).
+	 * @param string              $registerSlug  Register slug.
+	 * @param string              $today         Today's date in YYYY-MM-DD.
+	 *
+	 * @return int Number of new alerts inserted.
+	 */
+	private function raiseAlerts(array $lot, mixed $objectService, string $registerSlug, string $today): int {
+		$lotId = (string)($lot['id'] ?? ($lot['uuid'] ?? ''));
+		$adminId = (string)($lot['administrationId'] ?? '');
+		$daysUntil = $this->daysBetween(earlier: $today, later: (string)($lot['expiryDate'] ?? ''));
+
+		if ($daysUntil < 0) {
+			// Past expiry — alertType=expired (idempotent on lotId+alertType).
+			return $this->ensureAlert(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				lotId: $lotId,
+				administrationId: $adminId,
+				alertType: 'expired',
+				daysBeforeExpiry: null,
+				today: $today,
+			);
+		}
+
+		return $this->approachingAlerts(lot: $lot, objectService: $objectService, registerSlug: $registerSlug, today: $today);
+	}//end raiseAlerts()
+
+	/**
+	 * Raise an approaching-expiry alert for every threshold the lot is within.
+	 *
+	 * @param array<string,mixed> $lot           The lot (has an id and an expiryDate, not yet expired).
+	 * @param mixed               $objectService OR ObjectService (loose-typed).
+	 * @param string              $registerSlug  Register slug.
+	 * @param string              $today         Today's date in YYYY-MM-DD.
+	 *
+	 * @return int Number of new alerts inserted.
+	 */
+	private function approachingAlerts(array $lot, mixed $objectService, string $registerSlug, string $today): int {
+		$lotId = (string)($lot['id'] ?? ($lot['uuid'] ?? ''));
+		$adminId = (string)($lot['administrationId'] ?? '');
+		$daysUntil = $this->daysBetween(earlier: $today, later: (string)($lot['expiryDate'] ?? ''));
+		$raised = 0;
+
+		foreach (self::DEFAULT_THRESHOLDS as $thresholdDays) {
+			if ($daysUntil > $thresholdDays) {
+				continue;
+			}
+
+			$raised += $this->ensureAlert(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				lotId: $lotId,
+				administrationId: $adminId,
+				alertType: 'approaching_expiry',
+				daysBeforeExpiry: $thresholdDays,
+				today: $today,
+			);
+		}
+
+		return $raised;
+	}//end approachingAlerts()
 
 	/**
 	 * Insert one alert if no equivalent one exists already (idempotent on uniqueness key).

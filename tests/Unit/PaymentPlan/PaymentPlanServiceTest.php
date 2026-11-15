@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
 

@@ -62,6 +62,35 @@ final class ImportPostingPayloads {
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function openingEntry(array $batch, array $journal): ?array {
+		$lines = $this->openingLines(journal: $journal);
+
+		if (count($lines) < 2) {
+			return null;
+		}
+
+		$source = $this->importSource(batch: $batch);
+
+		return $this->entry(
+			batch: $batch,
+			prefix: 'IMP-',
+			description: sprintf('Opening balance from the %s import', $source),
+			lines: $lines
+		);
+
+	}//end openingEntry()
+
+	/**
+	 * One opening line per side of each balance.
+	 *
+	 * @param array<string,mixed> $journal The dry-run's opening journal.
+	 *
+	 * @return list<array<string,mixed>> The lines.
+	 *
+	 * @throws DomainException When a line's account has no mapping.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function openingLines(array $journal): array {
 		$lines = [];
 		foreach (($journal['lines'] ?? []) as $line) {
 			$account = trim((string)($line['targetAccount'] ?? ''));
@@ -77,23 +106,26 @@ final class ImportPostingPayloads {
 			}
 		}
 
-		if (count($lines) < 2) {
-			return null;
-		}
+		return $lines;
+	}//end openingLines()
 
+	/**
+	 * The batch's source system, defaulting to the auditfile.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @return string The source system.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function importSource(array $batch): string {
 		$source = trim((string)($batch['sourceSystem'] ?? ''));
 		if ($source === '') {
 			$source = 'auditfile';
 		}
 
-		return $this->entry(
-			batch: $batch,
-			prefix: 'IMP-',
-			description: sprintf('Opening balance from the %s import', $source),
-			lines: $lines
-		);
-
-	}//end openingEntry()
+		return $source;
+	}//end importSource()
 
 	/**
 	 * The reversing entry of a posted opening entry: the same lines, sides swapped.
@@ -142,10 +174,7 @@ final class ImportPostingPayloads {
 		}
 
 		$name = trim((string)($relation['name'] ?? ''));
-		$code = trim((string)($relation['code'] ?? ''));
-		if ($code === '') {
-			$code = 'IMP-' . substr(hash('sha256', $name . '|' . $email), 0, 8);
-		}
+		$code = $this->customerCode(relation: $relation, name: $name, email: $email);
 
 		$customer = [
 			'customerId' => $code,
@@ -154,6 +183,42 @@ final class ImportPostingPayloads {
 			'administrationId' => $administrationId,
 			'lifecycleState' => 'active',
 		];
+
+		return $this->withOptionalCustomerFields(customer: $customer, relation: $relation);
+
+	}//end customer()
+
+	/**
+	 * The relation's code, or a stable code derived from its name and email.
+	 *
+	 * @param array<string,mixed> $relation The staged relation.
+	 * @param string $name The trimmed name.
+	 * @param string $email The trimmed email.
+	 *
+	 * @return string The customer code.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function customerCode(array $relation, string $name, string $email): string {
+		$code = trim((string)($relation['code'] ?? ''));
+		if ($code === '') {
+			$code = 'IMP-' . substr(hash('sha256', $name . '|' . $email), 0, 8);
+		}
+
+		return $code;
+	}//end customerCode()
+
+	/**
+	 * Copy the relation's non-empty KvK number, VAT id and telephone.
+	 *
+	 * @param array<string,mixed> $customer The CustomerMaster payload.
+	 * @param array<string,mixed> $relation The staged relation.
+	 *
+	 * @return array<string,mixed> The payload.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function withOptionalCustomerFields(array $customer, array $relation): array {
 		$optional = ['kvkNumber' => 'kvk', 'vatId' => 'vat', 'telephone' => 'phone'];
 		foreach ($optional as $field => $source) {
 			$value = trim((string)($relation[$source] ?? ''));
@@ -163,8 +228,7 @@ final class ImportPostingPayloads {
 		}
 
 		return $customer;
-
-	}//end customer()
+	}//end withOptionalCustomerFields()
 
 	/**
 	 * Whether a staged relation is a customer.

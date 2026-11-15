@@ -1,0 +1,377 @@
+{
+	"fetchSettings full": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"headers": {
+						"requesttoken": "tok-1"
+					}
+				},
+				"loading": true
+			}
+		],
+		"result": {
+			"openregisters": true,
+			"isAdmin": true,
+			"register": "r"
+		},
+		"errors": [],
+		"state": {
+			"settings": {
+				"openregisters": true,
+				"isAdmin": true,
+				"register": "r"
+			},
+			"loading": false,
+			"hasOpenRegisters": true,
+			"isAdmin": true
+		}
+	},
+	"fetchSettings flagsOff": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"headers": {
+						"requesttoken": "tok-1"
+					}
+				},
+				"loading": true
+			}
+		],
+		"result": {
+			"openregisters": 0,
+			"isAdmin": ""
+		},
+		"errors": [],
+		"state": {
+			"settings": {
+				"openregisters": 0,
+				"isAdmin": ""
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"fetchSettings nullBody": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"headers": {
+						"requesttoken": "tok-1"
+					}
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [],
+		"state": {
+			"settings": null,
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"fetchSettings emptyBody": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"headers": {
+						"requesttoken": "tok-1"
+					}
+				},
+				"loading": true
+			}
+		],
+		"result": {},
+		"errors": [],
+		"state": {
+			"settings": {},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"fetchSettings refused": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"headers": {
+						"requesttoken": "tok-1"
+					}
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [],
+		"state": {
+			"settings": {
+				"before": true
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"fetchSettings throws": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"headers": {
+						"requesttoken": "tok-1"
+					}
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [
+			[
+				"Failed to fetch settings:",
+				"Error: network down"
+			]
+		],
+		"state": {
+			"settings": {
+				"before": true
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"fetchSettings badJson": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"headers": {
+						"requesttoken": "tok-1"
+					}
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [
+			[
+				"Failed to fetch settings:",
+				"SyntaxError: bad json"
+			]
+		],
+		"state": {
+			"settings": {
+				"before": true
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"saveSettings full": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"requesttoken": "tok-1"
+					},
+					"body": "{\"register\":\"x\",\"n\":1}"
+				},
+				"loading": true
+			}
+		],
+		"result": {
+			"openregisters": true,
+			"isAdmin": true,
+			"register": "r"
+		},
+		"errors": [],
+		"state": {
+			"settings": {
+				"openregisters": true,
+				"isAdmin": true,
+				"register": "r"
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"saveSettings flagsOff": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"requesttoken": "tok-1"
+					},
+					"body": "{\"register\":\"x\",\"n\":1}"
+				},
+				"loading": true
+			}
+		],
+		"result": {
+			"openregisters": 0,
+			"isAdmin": ""
+		},
+		"errors": [],
+		"state": {
+			"settings": {
+				"openregisters": 0,
+				"isAdmin": ""
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"saveSettings nullBody": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"requesttoken": "tok-1"
+					},
+					"body": "{\"register\":\"x\",\"n\":1}"
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [],
+		"state": {
+			"settings": null,
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"saveSettings emptyBody": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"requesttoken": "tok-1"
+					},
+					"body": "{\"register\":\"x\",\"n\":1}"
+				},
+				"loading": true
+			}
+		],
+		"result": {},
+		"errors": [],
+		"state": {
+			"settings": {},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"saveSettings refused": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"requesttoken": "tok-1"
+					},
+					"body": "{\"register\":\"x\",\"n\":1}"
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [],
+		"state": {
+			"settings": {
+				"before": true
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"saveSettings throws": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"requesttoken": "tok-1"
+					},
+					"body": "{\"register\":\"x\",\"n\":1}"
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [
+			[
+				"Failed to save settings:",
+				"Error: network down"
+			]
+		],
+		"state": {
+			"settings": {
+				"before": true
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	},
+	"saveSettings badJson": {
+		"calls": [
+			{
+				"url": "/index.php/apps/shillinq/api/settings",
+				"init": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"requesttoken": "tok-1"
+					},
+					"body": "{\"register\":\"x\",\"n\":1}"
+				},
+				"loading": true
+			}
+		],
+		"result": null,
+		"errors": [
+			[
+				"Failed to save settings:",
+				"SyntaxError: bad json"
+			]
+		],
+		"state": {
+			"settings": {
+				"before": true
+			},
+			"loading": false,
+			"hasOpenRegisters": false,
+			"isAdmin": false
+		}
+	}
+}

@@ -3,6 +3,9 @@
 /**
  * Payroll SBR/XBRL Conversion Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Converts a VOORBEREID LHAfdracht aggregate into an SBR/XBRL instance payload
  * (REQ-PAY-011) ready for hand-off to the bookkeeping-loonaangifte-sbr app for
  * Digipoort submission. This service NEVER submits to Digipoort itself; it
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

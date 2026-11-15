@@ -30,10 +30,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Vat;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Standards\Checks\VatReturnChecks;
 use OCA\Shillinq\Standards\RuleEngine;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -259,7 +260,7 @@ class VatReturnCheckService {
 		];
 		$numbers = [];
 		foreach ($accounts as $kind => [$key, $default]) {
-			$configured = trim($this->appConfig->getValueString(Application::APP_ID, $key, ''));
+			$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $key, ''));
 			if ($configured === '') {
 				$configured = $default;
 			}
@@ -279,10 +280,11 @@ class VatReturnCheckService {
 	 * @return array<string,mixed>|null
 	 */
 	private function row(string $schema, string $id): ?array {
-		$found = $this->objectService
-			->setRegister($this->register())
-			->setSchema($schema)
-			->find($id);
+		// ObjectIdentifier::findScoped: an object of another schema is a miss.
+		$found = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema($schema),
+			id: $id
+		);
 		if ($found === null) {
 			return null;
 		}
@@ -336,7 +338,7 @@ class VatReturnCheckService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

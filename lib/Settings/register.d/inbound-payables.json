@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "inbound-payable-from-another-app",
+    "adr": "ADR-037 modular register fragment, ADR-107 money hands off to shillinq",
+    "description": "InboundPayable: money another app owes someone and asks shillinq to pay out (an Awb penalty for a late decision, a subsidy advance, a deposit to return). The app raises it with PayableRaisedEvent; finance approves it (expense against the payables account), pays it (payables against the bank) or rejects it, the app may withdraw it while it is still requested (PayableCancelRequestedEvent), and each step is posted to the app's callback URL, signed with the app's secret (REQ-IPY-001 to REQ-IPY-004, decision 192)."
+  },
+  "components": {
+    "schemas": {
+      "InboundPayable": {
+        "slug": "InboundPayable",
+        "icon": "CashFast",
+        "version": "0.2.0",
+        "title": "Payable from another app",
+        "description": "Money another app owes a payee and asks finance to pay out.",
+        "x-spec": "openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every step of a payout is recorded: who raised it, who approved, paid or rejected it, and whether the app heard back."
+        },
+        "type": "object",
+        "required": ["sourceApp", "amount", "currency", "payee", "reference", "state", "requestedAt"],
+        "properties": {
+          "sourceApp": {"type": "string", "title": "Raised by", "description": "The app that owes the money and raised the payable."},
+          "category": {"type": "string", "title": "Category", "description": "The kind of payout in the raising app's words, used to find the expense account."},
+          "amount": {"type": "number", "exclusiveMinimum": 0, "title": "Amount", "description": "How much to pay out."},
+          "currency": {"type": "string", "default": "EUR", "title": "Currency", "description": "The currency of the amount."},
+          "payee": {
+            "type": "object",
+            "title": "Payee",
+            "description": "Who gets the money and on which account.",
+            "required": ["name", "iban"],
+            "properties": {
+              "name": {"type": "string", "title": "Name", "description": "The account holder's name."},
+              "iban": {"type": "string", "title": "IBAN", "description": "The account the money goes to, without spaces, in capitals."}
+            }
+          },
+          "reference": {"type": "string", "minLength": 6, "title": "Reference", "description": "The raising app's reference for the payout; one per app."},
+          "description": {"type": "string", "title": "Description", "description": "What the payout is for, as the payee reads it."},
+          "correlationId": {"type": "string", "title": "Correlation", "description": "The raising app's own id for the object the payout belongs to."},
+          "administrationId": {"type": "string", "title": "Administration", "description": "The administration that books the payout."},
+          "dueOn": {"type": "string", "format": "date", "title": "Pay by", "description": "The latest date the payout should reach the payee."},
+          "callbackUrl": {"type": "string", "title": "Callback", "description": "Where shillinq posts each step, signed with the app's secret."},
+          "state": {
+            "type": "string",
+            "enum": ["requested", "approved", "paid", "rejected", "cancelled"],
+            "x-enum-labels": {"requested": "Requested", "approved": "Approved", "paid": "Paid", "rejected": "Rejected", "cancelled": "Withdrawn"},
+            "default": "requested",
+            "title": "State",
+            "description": "Requested until finance approves or rejects it or the app withdraws it, approved until it is paid."
+          },
+          "requestedAt": {"type": "string", "format": "date-time", "title": "Raised at", "description": "When the app raised the payable."},
+          "approvedAt": {"type": "string", "format": "date-time", "title": "Approved at", "description": "When finance approved it."},
+          "paidOn": {"type": "string", "format": "date", "title": "Paid on", "description": "The date the money left the bank."},
+          "bankReference": {"type": "string", "title": "Bank reference", "description": "The reference of the bank payment."},
+          "rejectedReason": {"type": "string", "title": "Reason for rejecting", "description": "Why finance rejected the payable."},
+          "cancelledAt": {"type": "string", "format": "date-time", "title": "Withdrawn at", "description": "When the raising app withdrew the payable."},
+          "cancelledReason": {"type": "string", "title": "Reason for withdrawing", "description": "Why the raising app withdrew the payable."},
+          "journalEntryIds": {"type": "array", "items": {"type": "string"}, "title": "Bookings", "description": "The journal entries of the approval and the payment."},
+          "callbackDeliveredAt": {"type": "string", "format": "date-time", "title": "App told at", "description": "When the last step reached the app's callback."},
+          "callbackError": {"type": "string", "title": "Callback problem", "description": "Why the last step did not reach the app, if it did not."}
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        }
+      }
+    }
+  }
+}

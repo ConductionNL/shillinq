@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add `legalBasis` (regulation identifier, article, effective date) to `feeSchedule` and refuse an entry without it.
 - [x] 1.2 Carry the basis onto every request raised from the schedule.
-- [ ] 1.3 Show the basis beside the amount in the administration screen.
+- [x] 1.3 Show the basis beside the amount in the administration screen. Done 9 Oct 2026: Government > Fee schedules (`src/manifest.d/fee-schedules.json`), regulation, article and date in force right after the amount; tests/vitest/feeSchedulePage.spec.js.
 - [x] 1.4 PHPUnit on the refusal and on the carry-over.
 
 ## 2. The fee per channel

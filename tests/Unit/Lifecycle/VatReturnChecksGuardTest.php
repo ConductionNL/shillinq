@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\Shillinq\AppInfo\LedgerPostingRegistration;
+use OCA\Shillinq\Lifecycle\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
 use OCA\Shillinq\Service\Vat\VatReturnCheckService;

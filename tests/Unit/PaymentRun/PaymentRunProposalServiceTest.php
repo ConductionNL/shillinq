@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\PaymentRun\PaymentRunProposalService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
@@ -49,10 +49,10 @@ class PaymentRunProposalServiceTest extends TestCase {
 	private function service(): PaymentRunProposalService {
 		$this->saved = [];
 		$store = new InMemoryObjectServiceStub(PaymentRunFixture::records(), $this->saved);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-		return new PaymentRunProposalService($store, $settings, new PaymentBlockChecker($store, $settings));
+		return new PaymentRunProposalService($store, $settings, new PaymentBlockChecker($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])));
 
 	}//end service()
 
@@ -178,4 +178,42 @@ class PaymentRunProposalServiceTest extends TestCase {
 		$this->assertSame([], $this->saved);
 
 	}//end testNothingDueWritesNoRun()
+
+	/**
+	 * Golden: the full result and everything written, for run-dated and
+	 * due-dated proposals and an empty one. Regenerate with
+	 * PAYMENT_PROPOSAL_GOLDEN_WRITE=1.
+	 *
+	 * @return void
+	 */
+	public function testProposalsMatchGolden(): void {
+		$golden = __DIR__.'/fixtures/payment-run-proposal.golden.json';
+		$actual = [];
+		$cases = [
+			['2026-10-01', '2026-09-30', PaymentRunProposalService::DATES_RUN],
+			['2026-10-01', '2026-09-29', PaymentRunProposalService::DATES_DUE],
+			['2026-08-01', '2026-08-01', PaymentRunProposalService::DATES_DUE],
+		];
+		foreach ($cases as [$due, $execution, $dates]) {
+			$result = $this->service()->propose(
+				administrationId: PaymentRunFixture::ADMIN,
+				dueOnOrBefore: $due,
+				debtorAccountIban: 'NL91ABNA0417164300',
+				executionDate: $execution,
+				lineDates: $dates
+			);
+			$actual[$due.'|'.$execution.'|'.$dates] = ['result' => $result, 'saved' => $this->saved];
+		}
+
+		if (getenv('PAYMENT_PROPOSAL_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, json_encode($actual, (JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION))."\n");
+		}
+
+		$expected = json_decode((string) file_get_contents($golden), true, 512, JSON_THROW_ON_ERROR);
+		$this->assertSame(
+			expected: json_encode($expected, JSON_PRESERVE_ZERO_FRACTION),
+			actual: json_encode($actual, JSON_PRESERVE_ZERO_FRACTION)
+		);
+
+	}//end testProposalsMatchGolden()
 }//end class

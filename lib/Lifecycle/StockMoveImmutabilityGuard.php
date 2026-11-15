@@ -3,6 +3,9 @@
 /**
  * Stock Move Immutability Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path guard enforcing two related rules on
  * `StockMove`:
  *
@@ -36,16 +39,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-10
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -64,6 +64,20 @@ use Psr\Log\LoggerInterface;
  *     verification of each branch.
  */
 class StockMoveImmutabilityGuard {
+	/**
+	 * Fields a locked move may not change (REQ-SM-003).
+	 *
+	 * @var array<int,string>
+	 */
+	private const LOAD_BEARING_FIELDS = [
+		'quantity',
+		'unitCost',
+		'movementType',
+		'itemId',
+		'sourceLocationId',
+		'destinationLocationId',
+	];
+
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
@@ -101,32 +115,16 @@ class StockMoveImmutabilityGuard {
 				return true;
 			}
 
-			$loadBearing = [
-				'quantity',
-				'unitCost',
-				'movementType',
-				'itemId',
-				'sourceLocationId',
-				'destinationLocationId',
-			];
-			foreach ($loadBearing as $field) {
-				$before = ($current[$field] ?? null);
-				if (array_key_exists($field, $proposed) === true) {
-					$after = $proposed[$field];
-				} else {
-					$after = $before;
-				}
-
-				if ($before !== $after) {
-					$this->logger->info(
-						'StockMoveImmutabilityGuard: edit denied — move is locked',
-						[
-							'movementNumber' => ($current['movementNumber'] ?? null),
-							'field' => $field,
-						]
-					);
-					return false;
-				}
+			$field = $this->changedLoadBearingField(current: $current, proposed: $proposed);
+			if ($field !== null) {
+				$this->logger->info(
+					'StockMoveImmutabilityGuard: edit denied — move is locked',
+					[
+						'movementNumber' => ($current['movementNumber'] ?? null),
+						'field' => $field,
+					]
+				);
+				return false;
 			}
 
 			return true;
@@ -142,6 +140,31 @@ class StockMoveImmutabilityGuard {
 		}//end try
 
 	}//end rejectLockedEdit()
+
+	/**
+	 * The first load-bearing field the proposal changes; an absent key keeps its value.
+	 *
+	 * @param array<string,mixed> $current Current persisted StockMove.
+	 * @param array<string,mixed> $proposed Proposed updated StockMove.
+	 *
+	 * @return string|null The changed field, or null when none changed.
+	 */
+	private function changedLoadBearingField(array $current, array $proposed): string|null {
+		foreach (self::LOAD_BEARING_FIELDS as $field) {
+			$before = ($current[$field] ?? null);
+			$after = $before;
+			if (array_key_exists($field, $proposed) === true) {
+				$after = $proposed[$field];
+			}
+
+			if ($before !== $after) {
+				return $field;
+			}
+		}
+
+		return null;
+
+	}//end changedLoadBearingField()
 
 	/**
 	 * Predicate for the `cancel` transition per REQ-SM-003. A draft move is
@@ -169,42 +192,7 @@ class StockMoveImmutabilityGuard {
 				return false;
 			}
 
-			$moveId = (string)($move['id'] ?? '');
-			$administrationId = (string)($move['administrationId'] ?? '');
-			if ($moveId === '' || $administrationId === '') {
-				return false;
-			}
-
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$register = $this->register();
-			$existing = $objectService
-				->setRegister($register)
-				->setSchema('StockMove')
-				->findAll(
-					[
-						'filters' => [
-							'offsetOfMoveId' => $moveId,
-							'administrationId' => $administrationId,
-						],
-					]
-				);
-
-			if (is_array($existing) === false) {
-				$existing = [];
-			}
-
-			if (count($existing) > 0) {
-				$this->logger->info(
-					'StockMoveImmutabilityGuard: cancel denied — offset already exists',
-					[
-						'movementNumber' => ($move['movementNumber'] ?? null),
-						'offsetCount' => count($existing),
-					]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->postedMoveCancellable(move: $move);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'StockMoveImmutabilityGuard: canCancel failed — denying transition (fail-closed)',
@@ -219,12 +207,73 @@ class StockMoveImmutabilityGuard {
 	}//end canCancel()
 
 	/**
+	 * A posted move is cancellable only while no offset move exists for it.
+	 *
+	 * @param array<string,mixed> $move The posted StockMove.
+	 *
+	 * @return bool True when no offset exists yet.
+	 */
+	private function postedMoveCancellable(array $move): bool {
+		$moveId = (string)($move['id'] ?? '');
+		$administrationId = (string)($move['administrationId'] ?? '');
+		if ($moveId === '' || $administrationId === '') {
+			return false;
+		}
+
+		$existing = $this->offsetMoves(moveId: $moveId, administrationId: $administrationId);
+		if (count($existing) > 0) {
+			$this->logger->info(
+				'StockMoveImmutabilityGuard: cancel denied — offset already exists',
+				[
+					'movementNumber' => ($move['movementNumber'] ?? null),
+					'offsetCount' => count($existing),
+				]
+			);
+			return false;
+		}
+
+		return true;
+
+	}//end postedMoveCancellable()
+
+	/**
+	 * The offset moves already recorded for a move in its administration.
+	 *
+	 * @param string $moveId The move id.
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return array<int|string,mixed> The offset moves; empty on a non-array answer.
+	 */
+	private function offsetMoves(string $moveId, string $administrationId): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->register();
+		$existing = $objectService
+			->setRegister($register)
+			->setSchema('StockMove')
+			->findAll(
+				[
+					'filters' => [
+						'offsetOfMoveId' => $moveId,
+						'administrationId' => $administrationId,
+					],
+				]
+			);
+
+		if (is_array($existing) === false) {
+			return [];
+		}
+
+		return $existing;
+
+	}//end offsetMoves()
+
+	/**
 	 * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
 	 *
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -3,6 +3,9 @@
 /**
  * Payment Action App Grant
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The app half of `PaymentActionAuthorizer`. A consuming app sometimes has to
  * ask for money with nobody signed in who may: larpinq accepts a registration
  * when a player signs up for a free place, or when its daily job moves the
@@ -32,15 +35,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAppGrantInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 
@@ -49,7 +50,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
  */
-final class PaymentActionAppGrant {
+final class PaymentActionAppGrant implements PaymentActionAppGrantInterface {
 	/**
 	 * The app-config key mapping an action to the apps that carry it.
 	 *

@@ -10,7 +10,7 @@
  * FxRate index grid.
  *
  * Per ADR-005 / ADR-004 the endpoint is admin-gated via
- * `#[AuthorizedAdminSetting(Application::class)]` — only admins authorised
+ * `#[AuthorizedAdminSetting(AdminSettings::class)]` — only admins authorised
  * for the shillinq settings section can read the cron metadata (the rate
  * grid itself follows the standard OR register read RBAC).
  *
@@ -36,9 +36,10 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\BackgroundJob\FxRateImportJob;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
+use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -73,7 +74,7 @@ class FxRateAdminController extends Controller {
 		private readonly TreasuryRateAdapterInterface $adapter,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -91,41 +92,60 @@ class FxRateAdminController extends Controller {
 	 *
 	 * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-14
 	 */
-	#[AuthorizedAdminSetting(Application::class)]
+	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function status(): JSONResponse {
-		$jobClass = FxRateImportJob::class;
+		$jobClass     = FxRateImportJob::class;
 		$lastRunEpoch = $this->resolveLastRunEpoch(jobClass: $jobClass);
-		$dormant = $this->isAdapterDormant();
-
-		if ($lastRunEpoch !== null) {
-			$iso = (new DateTimeImmutable('@' . $lastRunEpoch))
-				->setTimezone(new DateTimeZone('UTC'))
-				->format(DateTimeInterface::ATOM);
-		} else {
-			$iso = null;
-		}
-
-		$statusKey = 'ok';
-		if ($lastRunEpoch === null) {
-			$statusKey = 'never-ran';
-		}
-
-		if ($dormant === true) {
-			// Dormant overrides last-run because no real rates flow even if the tick fires.
-			$statusKey = 'dormant';
-		}
+		$dormant      = $this->isAdapterDormant();
 
 		return new JSONResponse(
 			[
 				'jobClass' => $jobClass,
-				'lastRunAt' => $iso,
+				'lastRunAt' => self::isoTime(epoch: $lastRunEpoch),
 				'lastRunEpoch' => $lastRunEpoch,
 				'adapterDormant' => $dormant,
 				'interval' => 86400,
-				'status' => $statusKey,
+				'status' => self::statusKey(lastRunEpoch: $lastRunEpoch, dormant: $dormant),
 			]
 		);
 	}//end status()
+
+	/**
+	 * The epoch as an ISO-8601 UTC timestamp, or null.
+	 *
+	 * @param int|null $epoch Epoch seconds.
+	 *
+	 * @return string|null
+	 */
+	private static function isoTime(int|null $epoch): string|null {
+		if ($epoch === null) {
+			return null;
+		}
+
+		return (new DateTimeImmutable('@' . $epoch))
+			->setTimezone(new DateTimeZone('UTC'))
+			->format(DateTimeInterface::ATOM);
+	}//end isoTime()
+
+	/**
+	 * The UI badge: dormant overrides last-run because no real rates flow even if the tick fires.
+	 *
+	 * @param int|null $lastRunEpoch The last run, null when it never ran.
+	 * @param bool     $dormant      Whether the adapter is a log-only stub.
+	 *
+	 * @return string
+	 */
+	private static function statusKey(int|null $lastRunEpoch, bool $dormant): string {
+		if ($dormant === true) {
+			return 'dormant';
+		}
+
+		if ($lastRunEpoch === null) {
+			return 'never-ran';
+		}
+
+		return 'ok';
+	}//end statusKey()
 
 	/**
 	 * Look up the last-run epoch from the NC IJobList by exact job class.
@@ -135,9 +155,9 @@ class FxRateAdminController extends Controller {
 	 *
 	 * @param class-string $jobClass The job FQCN.
 	 *
-	 * @return ?int Epoch seconds of the last successful tick.
+	 * @return int|null Epoch seconds of the last successful tick.
 	 */
-	private function resolveLastRunEpoch(string $jobClass): ?int {
+	private function resolveLastRunEpoch(string $jobClass): int|null {
 		try {
 			$iterator = $this->jobList->getJobsIterator($jobClass, null, 0);
 		} catch (Throwable $e) {
@@ -148,20 +168,30 @@ class FxRateAdminController extends Controller {
 			return null;
 		}
 
-		$best = null;
-		foreach ($iterator as $job) {
-			if (($job instanceof IJob) === false) {
-				continue;
-			}
+		return self::latestRun(jobs: $iterator);
+	}//end resolveLastRunEpoch()
 
-			$lr = (int)$job->getLastRun();
-			if ($lr > 0 && ($best === null || $lr > $best)) {
-				$best = $lr;
+	/**
+	 * The latest positive last run of the listed jobs, or null when none ran.
+	 *
+	 * @param iterable<mixed> $jobs The listed jobs.
+	 *
+	 * @return int|null
+	 */
+	private static function latestRun(iterable $jobs): int|null {
+		$best = 0;
+		foreach ($jobs as $job) {
+			if ($job instanceof IJob) {
+				$best = max($best, (int)$job->getLastRun());
 			}
 		}
 
-		return $best;
-	}//end resolveLastRunEpoch()
+		if ($best > 0) {
+			return $best;
+		}
+
+		return null;
+	}//end latestRun()
 
 	/**
 	 * Whether the TreasuryRate adapter is a log-only stub.

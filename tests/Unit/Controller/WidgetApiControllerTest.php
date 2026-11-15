@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\WidgetApiController;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SlotService;
 use OCA\Shillinq\Service\WidgetAuthService;
 use OCA\Shillinq\Service\WidgetService;
@@ -68,9 +68,9 @@ class WidgetApiControllerTest extends TestCase {
 	/**
 	 * Settings stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Container stub.
@@ -103,7 +103,7 @@ class WidgetApiControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->auth = $this->createMock(WidgetAuthService::class);
 		$this->slots = $this->createMock(SlotService::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->widgetService = $this->createMock(WidgetService::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -121,7 +121,7 @@ class WidgetApiControllerTest extends TestCase {
 			auth: $this->auth,
 			widgetService: $this->widgetService,
 			slots: $this->slots,
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			container: $this->container,
 			logger: $this->logger,
 		);
@@ -179,7 +179,7 @@ class WidgetApiControllerTest extends TestCase {
 		$this->auth->method('validateApiKey')->willReturn(
 			[
 				'valid' => true,
-				'key' => ['rateLimit' => 100],
+				'key' => ['rateLimit' => 100, 'administrationId' => 'adm-salon'],
 			]
 		);
 		$this->auth->method('consumeRateLimit')->willReturn(
@@ -210,7 +210,7 @@ class WidgetApiControllerTest extends TestCase {
 			]
 		);
 
-		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100]]);
+		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100, 'administrationId' => 'adm-salon']]);
 		$this->auth->method('consumeRateLimit')->willReturn(
 			['allowed' => true, 'remaining' => 99, 'retryAfter' => 60]
 		);
@@ -246,7 +246,7 @@ class WidgetApiControllerTest extends TestCase {
 			]
 		);
 
-		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100]]);
+		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100, 'administrationId' => 'adm-salon']]);
 		$this->auth->method('consumeRateLimit')->willReturn(
 			['allowed' => true, 'remaining' => 99, 'retryAfter' => 60]
 		);
@@ -287,7 +287,7 @@ class WidgetApiControllerTest extends TestCase {
 			]
 		);
 
-		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100]]);
+		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100, 'administrationId' => 'adm-salon']]);
 		$this->auth->method('consumeRateLimit')->willReturn(
 			['allowed' => true, 'remaining' => 99, 'retryAfter' => 60]
 		);
@@ -321,7 +321,7 @@ class WidgetApiControllerTest extends TestCase {
 			]
 		);
 
-		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100]]);
+		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100, 'administrationId' => 'adm-salon']]);
 		$this->auth->method('consumeRateLimit')->willReturn(
 			['allowed' => true, 'remaining' => 99, 'retryAfter' => 60]
 		);
@@ -354,7 +354,7 @@ class WidgetApiControllerTest extends TestCase {
 		$this->auth->method('validateApiKey')->willReturn(
 			[
 				'valid' => true,
-				'key' => ['rateLimit' => 100],
+				'key' => ['rateLimit' => 100, 'administrationId' => 'adm-salon'],
 			]
 		);
 		$this->auth->method('consumeRateLimit')->willReturn(
@@ -418,6 +418,7 @@ class WidgetApiControllerTest extends TestCase {
 						'name' => 'Haircut',
 						'status' => 'active',
 						'isPublic' => true,
+						'administrationId' => 'adm-salon',
 					],
 					[
 						'serviceId' => 'svc-internal',
@@ -458,6 +459,7 @@ class WidgetApiControllerTest extends TestCase {
 						'isPublic' => true,
 						'basePrice' => 150,
 						'priceVisible' => false,
+						'administrationId' => 'adm-salon',
 					],
 				]
 			)
@@ -468,6 +470,105 @@ class WidgetApiControllerTest extends TestCase {
 		self::assertArrayNotHasKey('price', $service);
 
 	}//end testServicesOmitsPriceWhenPriceVisibleIsFalse()
+
+	/**
+	 * A widget booking lands in the administration of the key that made it,
+	 * never in the instance-wide default administration.
+	 *
+	 * @return void
+	 */
+	public function testAppointmentsBookIntoTheKeysAdministration(): void {
+		$this->authoriseWidgetCaller();
+
+		$captured = null;
+		$this->widgetService->method('createAppointment')
+			->willReturnCallback(
+				function (string $administrationId, array $payload) use (&$captured): array {
+					$captured = $administrationId;
+					return ['code' => 201, 'appointmentId' => 'apt-1', 'status' => 'pending_confirmation', 'confirmationMessage' => 'ok'];
+				}
+			);
+
+		$response = $this->makeController()->appointments(
+			serviceId: 'svc-001',
+			resourceId: 'res-001',
+			startTime: '2026-05-21T10:00:00Z',
+			endTime: '2026-05-21T10:30:00Z',
+			customerName: 'Anna de Wit',
+			email: 'anna@example.com',
+		);
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame('adm-salon', $captured);
+
+	}//end testAppointmentsBookIntoTheKeysAdministration()
+
+	/**
+	 * A key that names no administration books nowhere: the caller is
+	 * refused and the write path is never reached.
+	 *
+	 * @return void
+	 */
+	public function testAKeyWithoutAnAdministrationIsRefused(): void {
+		$this->request->method('getParam')->willReturnMap([['businessId', '', 'salon-001']]);
+		$this->request->method('getHeader')->willReturnMap([['Authorization', 'Bearer bk_live_valid']]);
+		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100]]);
+		$this->auth->method('consumeRateLimit')->willReturn(['allowed' => true, 'remaining' => 99]);
+		$this->widgetService->expects(self::never())->method('createAppointment');
+
+		$response = $this->makeController()->appointments(
+			serviceId: 'svc-001',
+			resourceId: 'res-001',
+			startTime: '2026-05-21T10:00:00Z',
+			endTime: '2026-05-21T10:30:00Z',
+			customerName: 'Anna de Wit',
+			email: 'anna@example.com',
+		);
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testAKeyWithoutAnAdministrationIsRefused()
+
+	/**
+	 * The catalogue lists only the services of the key's administration.
+	 *
+	 * @return void
+	 */
+	public function testServicesListsOnlyTheKeysAdministration(): void {
+		$this->authoriseWidgetCaller();
+		$this->container->method('get')->willReturn(
+			$this->catalogueStub(
+				[
+					['serviceId' => 'svc-salon', 'name' => 'Haircut', 'status' => 'active', 'isPublic' => true, 'administrationId' => 'adm-salon'],
+					['serviceId' => 'svc-other', 'name' => 'Massage', 'status' => 'active', 'isPublic' => true, 'administrationId' => 'adm-other'],
+					['serviceId' => 'svc-none', 'name' => 'Unscoped', 'status' => 'active', 'isPublic' => true],
+				]
+			)
+		);
+
+		$ids = array_column($this->makeController()->services()->getData()['services'], 'serviceId');
+
+		self::assertSame(['svc-salon'], $ids);
+
+	}//end testServicesListsOnlyTheKeysAdministration()
+
+	/**
+	 * Availability is asked for the service within the key's administration.
+	 *
+	 * @return void
+	 */
+	public function testSlotsScopeTheServiceToTheKeysAdministration(): void {
+		$this->authoriseWidgetCaller();
+		$this->widgetService->expects(self::once())
+			->method('isPubliclyBookable')
+			->with('svc-001', 'adm-salon')
+			->willReturn(false);
+
+		$response = $this->makeController()->slots(serviceId: 'svc-001', resourceId: 'res-001', date: '2026-05-22');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testSlotsScopeTheServiceToTheKeysAdministration()
 
 	/**
 	 * A booking the write path refuses as not-bookable surfaces as HTTP 404

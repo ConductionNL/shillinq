@@ -2,14 +2,14 @@
 
 ## 1. Decide the split
 
-- [ ] 1.1 Write `design.md` choosing between the derived-cost-line shape and
+- [x] 1.1 Write `design.md` choosing between the derived-cost-line shape and
       the opaque-allocation shape described in `proposal.md`. Record why.
-- [ ] 1.2 Confirm ADR-107 is promoted from Proposed to Accepted, or record
+- [x] 1.2 Confirm ADR-107 is promoted from Proposed to Accepted, or record
       that this change proceeds on a Proposed ADR and why that is safe.
 
 ## 2. Prove there is nothing to migrate
 
-- [ ] 2.1 Add an `occ` command that counts `UrenRegistratie` rows with a
+- [x] 2.1 Add an `occ` command that counts `UrenRegistratie` rows with a
       non-null `subjectApp`. Report per administration.
 - [ ] 2.2 Run it on the dev instance and on every reachable install. Record
       the counts in `design.md`. A non-zero count reopens task 1.

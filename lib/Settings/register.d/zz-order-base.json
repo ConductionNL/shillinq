@@ -90,9 +90,49 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Payment is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "OrderLine": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "version": "0.1.0",
         "slug": "OrderLine",
         "title": "Order Line",

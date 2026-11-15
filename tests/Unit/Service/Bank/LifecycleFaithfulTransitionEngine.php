@@ -71,8 +71,9 @@ final class LifecycleFaithfulTransitionEngine {
 	 */
 	public function transition(string $objectId, string $action, array $data = []): object {
 		foreach ($this->schemas as $schema) {
+			// A uuid missed in a schema is retried without it, so the answer can be another schema's row.
 			$entity = $this->store->find($objectId, schema: $schema);
-			if ($entity === null) {
+			if ($entity === null || $entity->getSchema() !== $schema) {
 				continue;
 			}
 

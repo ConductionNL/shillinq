@@ -3,6 +3,9 @@
 /**
  * Unit tests for BudgetScenarioController::promote().
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## Why this file exists
  *
  * `BudgetScenarioController::promote()` wraps the whole promotion in
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

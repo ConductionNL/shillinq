@@ -3,6 +3,9 @@
 /**
  * Default PipelinqAdminNotifier binding — logs the alert at ERROR.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * The giant's auth-error decision requires an admin alert when the
  * pipelinq token is rejected (HTTP 401) — but the canonical NC
@@ -26,17 +29,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 
 /**
  * ERROR-level logging fallback for the admin-notifier port.
@@ -65,12 +66,13 @@ final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier {
 	 * @param TimelineEventDto $event The event whose publish was rejected.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
 	public function notifyAuthFailure(TimelineEventDto $event): void {
 		$this->logger->error(
 			'Invalid pipelinq API token; check config',
 			[
-				'app' => Application::APP_ID,
+				'app' => AppIdentity::APP_ID,
 				'configKey' => PipelinqContactAdapter::CONFIG_KEY_TOKEN,
 				'type' => $event->type(),
 				'externalId' => $event->externalId(),

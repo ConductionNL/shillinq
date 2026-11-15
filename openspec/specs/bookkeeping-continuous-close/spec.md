@@ -22,7 +22,7 @@ This specification defines the requirements for bookkeeping continuous close in 
 
 @e2e exclude pure backend: soft-close flux logic — not browser-testable
 
-### REQ-CLS-001: Period lifecycle SHALL enforce stage transitions and posting restrictions per stage
+### Requirement: REQ-CLS-001: Period lifecycle SHALL enforce stage transitions and posting restrictions per stage
 
 The system MUST support a period lifecycle with five stages:
 - **open** — default state; all posting allowed
@@ -57,7 +57,7 @@ override privilege.
 - **WHEN** any user attempts to post any transaction
 - **THEN** the system MUST refuse with reason "Period is locked"
 
-### REQ-CLS-002: Nightly soft-close job SHALL execute per administratie and complete by 07:00 local with full trial balance
+### Requirement: REQ-CLS-002: Nightly soft-close job SHALL execute per administratie and complete by 07:00 local with full trial balance
 
 The system MUST execute a nightly soft-close job per administratie that:
 1. Executes all configured auto-accrual rules (per REQ-CLS-003)
@@ -96,7 +96,7 @@ business hours (separate, non-blocking).
 - **AND** soft-close MUST halt (partial postings rolled back)
 - **AND** job returns failure status to n8n for retry
 
-### REQ-CLS-003: Auto-accrual rules SHALL be configurable with 5 calculation methods and 3 reversal patterns
+### Requirement: REQ-CLS-003: Auto-accrual rules SHALL be configurable with 5 calculation methods and 3 reversal patterns
 
 `AutoAccrualRule` register MUST declare:
 
@@ -141,7 +141,7 @@ per IAS 8.
 - **THEN** posting MUST be: DR 6010-accruals EUR 1,370 (100,000 × 0.05 / 365) CR 2110-accrued-interest EUR 1,370
 - **AND** no reversal (interest accrues daily; no reversal pattern)
 
-### REQ-CLS-004: Close-checklist template SHALL be reusable per administratie type with task dependencies and SLA
+### Requirement: REQ-CLS-004: Close-checklist template SHALL be reusable per administratie type with task dependencies and SLA
 
 `CloseChecklistTemplate` register MUST declare a reusable list of
 close tasks per administratie type. `CloseChecklistInstance` MUST
@@ -192,7 +192,7 @@ Each task definition MUST carry:
 - **THEN** system MUST send escalation alert to task owner + period owner
 - **AND** flag task as "overdue" in UI
 
-### REQ-CLS-005: Flux analysis SHALL run post-soft-close, computing variance vs budget/PY/PP/forecast with materiality-driven routing
+### Requirement: REQ-CLS-005: Flux analysis SHALL run post-soft-close, computing variance vs budget/PY/PP/forecast with materiality-driven routing
 
 Post-soft-close, the system MUST execute a `FluxRun` that:
 1. Scope: per administratie, or per segment, or per cost centre (operator choice)
@@ -237,7 +237,7 @@ Materiality thresholds per `MaterialityPolicy` register:
 - **THEN** variance is +1000% above threshold → "highly-material"
 - **AND** escalated to tax officer for explanation regardless of auto-explanation
 
-### REQ-CLS-006: Material flux items above materiality threshold SHALL receive rule-based auto-explanation or owner escalation with 24-hour SLA
+### Requirement: REQ-CLS-006: Material flux items above materiality threshold SHALL receive rule-based auto-explanation or owner escalation with 24-hour SLA
 
 The system SHALL satisfy this requirement: Material flux items above materiality threshold SHALL receive rule-based auto-explanation or owner escalation with 24-hour SLA.
 
@@ -279,7 +279,7 @@ For each `FluxItem` classified as "material" or above:
 - **AND** escalate to logistics manager with text "Variance +EUR 8K partially explained by volume increase; please explain remaining +EUR 4K"
 - **AND** SLA: 24 hours
 
-### REQ-CLS-007: Flux narrative SHALL aggregate owner-explained variances, ranked by absolute variance, exportable to PDF/Markdown/JSON
+### Requirement: REQ-CLS-007: Flux narrative SHALL aggregate owner-explained variances, ranked by absolute variance, exportable to PDF/Markdown/JSON
 
 The system SHALL satisfy this requirement: Flux narrative SHALL aggregate owner-explained variances, ranked by absolute variance, exportable to PDF/Markdown/JSON.
 
@@ -306,7 +306,7 @@ or unexplained), the system MUST generate a `FluxNarrative` that:
 
 **Export**: PDF rendered with company letterhead, period, CFO signature line; Markdown for email; JSON for board-pack embed.
 
-### REQ-CLS-008: Comparative dashboards SHALL display current vs budget/prior-period/prior-year at administratie/segment/consolidated level with drill-down
+### Requirement: REQ-CLS-008: Comparative dashboards SHALL display current vs budget/prior-period/prior-year at administratie/segment/consolidated level with drill-down
 
 The system MUST provide dashboards (to be implemented; spec defines contract):
 
@@ -323,7 +323,7 @@ Metrics: absolute variance, percentage variance, materiality flag, explanation s
 - **WHEN** the operator drills from administratie to segment to GL account
 - **THEN** the system MUST reach the underlying transactions within two clicks and display absolute variance, percentage variance, materiality flag and explanation status
 
-### REQ-CLS-009: Close-quality KPIs SHALL track time-to-close, post-close adjustments, audit-correction ratio, and SLA compliance over 12 periods
+### Requirement: REQ-CLS-009: Close-quality KPIs SHALL track time-to-close, post-close adjustments, audit-correction ratio, and SLA compliance over 12 periods
 
 The system MUST collect and publish `CloseMetrics` per administratie, tracked over 12 periods:
 
@@ -345,7 +345,7 @@ Trend over 12 months; dashboard to be implemented separately.
 - Flux-SLA compliance: 95% (1 of 20 material items missed 24-hour SLA)
 - Unexplained flux items: 1 (freight variance, owner unresponsive)
 
-### REQ-CLS-010: All automated postings (accruals, reversals, FX, depreciation) SHALL be auditable to rule, source data, user, timestamp, and reversible
+### Requirement: REQ-CLS-010: All automated postings (accruals, reversals, FX, depreciation) SHALL be auditable to rule, source data, user, timestamp, and reversible
 
 The system SHALL satisfy this requirement: All automated postings (accruals, reversals, FX, depreciation) SHALL be auditable to rule, source data, user, timestamp, and reversible.
 
