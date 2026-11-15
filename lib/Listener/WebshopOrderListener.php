@@ -95,6 +95,9 @@ class WebshopOrderListener implements IEventListener {
 
 			// REQ-SWO-004: a payment status sent later as an update of the order settles its invoice.
 			$this->invoicer->settle(order: $order, orderId: $orderId);
+
+			// REQ-SWO-005: a refund or cancellation sent later credits it.
+			$this->invoicer->credit(order: $order, orderId: $orderId, today: gmdate('Y-m-d'));
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'WebshopOrderListener: the web shop order could not be invoiced',

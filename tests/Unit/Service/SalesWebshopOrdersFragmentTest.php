@@ -84,6 +84,8 @@ final class SalesWebshopOrdersFragmentTest extends TestCase {
 		$this->assertSame(['channelId', 'shopOrderId', 'orderedAt', 'buyer', 'currency', 'lines', 'totals', 'payment'], $order['required']);
 		$this->assertSame(['business', 'consumer'], $order['properties']['buyer']['properties']['type']['enum']);
 		$this->assertSame(['paid', 'pending', 'refunded', 'cancelled'], $order['properties']['payment']['properties']['status']['enum']);
+		$this->assertSame(['line', 'quantity'], array_keys($order['properties']['payment']['properties']['refundedLines']['items']['properties']));
+		$this->assertSame('boolean', $order['properties']['payment']['properties']['refundedShipping']['type']);
 		$this->assertSame(['sku', 'description', 'quantity', 'unitPrice', 'vatRate'], array_keys($order['properties']['lines']['items']['properties']));
 		$this->assertSame(['net', 'vat', 'gross'], array_keys($order['properties']['totals']['properties']));
 		$this->assertTrue($order['x-openregister-audit-trail']['enabled']);
@@ -144,7 +146,7 @@ final class SalesWebshopOrdersFragmentTest extends TestCase {
 
 		$invoice = $schemas['ARInvoice'];
 		$this->assertSame(
-			['channelId', 'shopOrderId', 'orderId', 'buyerName', 'paymentReference', 'vatRoute', 'vatMention'],
+			['channelId', 'shopOrderId', 'orderId', 'buyerName', 'paymentReference', 'vatRoute', 'vatMention', 'refundStatus'],
 			array_keys($invoice['properties']['webshop']['properties'])
 		);
 		$this->assertSame(['domestic', 'oss', 'icp'], $invoice['properties']['webshop']['properties']['vatRoute']['enum']);

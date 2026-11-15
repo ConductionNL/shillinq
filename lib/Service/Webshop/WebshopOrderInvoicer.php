@@ -209,6 +209,194 @@ class WebshopOrderInvoicer {
 	}//end settle()
 
 	/**
+	 * Credit a refunded or cancelled order (REQ-SWO-005).
+	 *
+	 * An invoiced order whose payment status becomes refunded or cancelled
+	 * gets one ARInvoice of type credit-note referencing the original invoice:
+	 * for the whole invoice, or, when the shop names the refunded lines in
+	 * `payment.refundedLines` (and `payment.refundedShipping`), for those
+	 * lines and quantities only. The order keeps the credit note's id and
+	 * moves to credited, so it is credited once.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param string              $orderId Its id.
+	 * @param string              $today   The credit note date (Y-m-d).
+	 *
+	 * @return string credited, or skipped (not invoiced, not refunded or cancelled, already credited, invoice gone, nothing to credit).
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public function credit(array $order, string $orderId, string $today): string {
+		$invoiceId = (string)($order['arInvoiceId'] ?? '');
+		$status    = (string)($order['payment']['status'] ?? '');
+		if ($orderId === '' || $invoiceId === '' || ($order['intakeState'] ?? '') !== 'invoiced'
+			|| in_array($status, ['refunded', 'cancelled'], true) === false
+			|| trim((string)($order['creditNoteId'] ?? '')) !== ''
+		) {
+			return 'skipped';
+		}
+
+		$invoice = $this->record(schema: 'ARInvoice', id: $invoiceId);
+		if ($invoice === null) {
+			return 'skipped';
+		}
+
+		$credit = self::creditNote(order: $order, invoice: $invoice, today: $today);
+		if ($credit === null) {
+			return 'skipped';
+		}
+
+		$creditId = $this->writeInvoice(invoice: $credit);
+		$this->saveOrder(order: ['creditNoteId' => $creditId] + $order, orderId: $orderId);
+		$this->transitions->run(objectId: $orderId, action: 'credit');
+
+		return 'credited';
+	}//end credit()
+
+	/**
+	 * The credit note of a refunded order, or null when no line is refunded.
+	 *
+	 * A refund that names no lines credits the whole invoice, its totals
+	 * negated. A partial refund credits the named order lines (`line`, the
+	 * 1-based position in the order, with an optional `quantity`) and the
+	 * shipping line when `refundedShipping` is true, each at its invoiced net
+	 * price and VAT rate.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param array<string,mixed> $invoice Its invoice.
+	 * @param string              $today   The credit note date (Y-m-d).
+	 *
+	 * @return array<string,mixed>|null The ARInvoice payload of the credit note.
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public static function creditNote(array $order, array $invoice, string $today): ?array {
+		$credited = self::creditedLines(order: $order, invoice: $invoice);
+		if ($credited['lines'] === []) {
+			return null;
+		}
+
+		$number = (string)($invoice['invoiceNumber'] ?? '');
+		$state  = 'issued';
+		if ((string)($invoice['lifecycleState'] ?? 'draft') === 'draft') {
+			$state = 'draft';
+		}
+
+		$credit = [
+			'invoiceNumber' => $number . '-C',
+			'invoiceType' => 'credit-note',
+			'lifecycleState' => $state,
+			'administrationId' => (string)($invoice['administrationId'] ?? ''),
+			'periodId' => substr($today, 0, 7),
+			'customerId' => (string)($invoice['customerId'] ?? ''),
+			'invoiceDate' => $today,
+			'dueDate' => $today,
+			'currency' => (string)($invoice['currency'] ?? 'EUR'),
+			'netAmount' => (0 - $credited['netCents']) / 100.0,
+			'vatAmount' => (0 - $credited['vatCents']) / 100.0,
+			'grossAmount' => (0 - ($credited['netCents'] + $credited['vatCents'])) / 100.0,
+			'precedingInvoiceReferences' => [['reference' => $number, 'issueDate' => (string)($invoice['invoiceDate'] ?? '')]],
+			'invoiceLines' => $credited['lines'],
+		];
+		foreach (['buyerName', 'ossContext'] as $key) {
+			if (($invoice[$key] ?? null) !== null) {
+				$credit[$key] = $invoice[$key];
+			}
+		}
+
+		if (is_array($invoice['vatBreakdown'] ?? null) === true) {
+			$credit['vatBreakdown'] = array_map(
+				static fn (array $group): array => ['taxableAmount' => (0 - $credited['netCents']) / 100.0, 'taxAmount' => 0.0] + $group,
+				array_values(array_filter((array)$invoice['vatBreakdown'], 'is_array'))
+			);
+		}
+
+		$webshop = (array)($invoice['webshop'] ?? []);
+		$webshop['refundStatus'] = (string)($order['payment']['status'] ?? '');
+		$credit['webshop'] = $webshop;
+
+		return $credit;
+	}//end creditNote()
+
+	/**
+	 * The negated invoice lines a refund credits, with their net and VAT cents.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param array<string,mixed> $invoice Its invoice.
+	 *
+	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int}
+	 */
+	private static function creditedLines(array $order, array $invoice): array {
+		$invoiceLines = array_values(array_filter((array)($invoice['invoiceLines'] ?? []), 'is_array'));
+		$payment      = (array)($order['payment'] ?? []);
+		$named        = array_values(array_filter((array)($payment['refundedLines'] ?? []), 'is_array'));
+		$wanted       = [];
+		if ($named === [] && ($payment['refundedShipping'] ?? false) !== true) {
+			foreach ($invoiceLines as $line) {
+				$wanted[] = [$line, (float)($line['quantity'] ?? 1)];
+			}
+
+			$whole = [
+				'netCents' => (int)round((float)($invoice['netAmount'] ?? 0) * 100),
+				'vatCents' => (int)round((float)($invoice['vatAmount'] ?? 0) * 100),
+			];
+			return ['lines' => self::negatedLines(wanted: $wanted)['lines']] + $whole;
+		}
+
+		$orderLineCount = count((array)($order['lines'] ?? []));
+		foreach ($named as $refund) {
+			$position = (int)($refund['line'] ?? 0);
+			$line     = $invoiceLines[$position - 1] ?? null;
+			if ($position < 1 || $position > $orderLineCount || $line === null) {
+				continue;
+			}
+
+			$quantity = min((float)($line['quantity'] ?? 1), (float)($refund['quantity'] ?? ($line['quantity'] ?? 1)));
+			if ($quantity > 0.0) {
+				$wanted[] = [$line, $quantity];
+			}
+		}
+
+		$shipping = $invoiceLines[$orderLineCount] ?? null;
+		if (($payment['refundedShipping'] ?? false) === true && $shipping !== null) {
+			$wanted[] = [$shipping, (float)($shipping['quantity'] ?? 1)];
+		}
+
+		return self::negatedLines(wanted: $wanted);
+	}//end creditedLines()
+
+	/**
+	 * Negated credit note lines for [invoice line, credited quantity] pairs.
+	 *
+	 * @param array<int,array{0: array<string,mixed>, 1: float}> $wanted The lines and quantities to credit.
+	 *
+	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int}
+	 */
+	private static function negatedLines(array $wanted): array {
+		$lines = [];
+		$net   = 0;
+		$vat   = 0;
+		foreach ($wanted as [$line, $quantity]) {
+			$invoiced = (float)($line['quantity'] ?? 1);
+			$netCents = (int)round((float)($line['netAmount'] ?? 0) * 100);
+			if ($invoiced > 0.0 && $quantity < $invoiced) {
+				$netCents = (int)round($netCents * $quantity / $invoiced);
+			}
+
+			$net += $netCents;
+			$vat += (int)round($netCents * (float)($line['vatRate'] ?? 0) / 100);
+			$lines[] = [
+				'lineId' => (string)(count($lines) + 1),
+				'quantity' => $quantity,
+				'netAmount' => (0 - $netCents) / 100.0,
+				'netPrice' => (0 - (float)($line['netPrice'] ?? 0)),
+			] + $line;
+		}
+
+		return ['lines' => $lines, 'netCents' => $net, 'vatCents' => $vat];
+	}//end negatedLines()
+
+	/**
 	 * The receipt journal entry of a paid order: debit the clearing account,
 	 * credit receivables, for the invoice's gross amount.
 	 *

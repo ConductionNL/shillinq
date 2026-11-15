@@ -96,6 +96,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114215000",
             "versionsSha256": "2815777691bdaa23b1648846b8a510a9705fdb43e349fb9c9d142fa44b60b94a"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115010000",
+            "versionsSha256": "3a5c0db4a729b80a7f39f24d6292627d434c46237dca940497298405241ba962"
         }
     ],
     "versions": {
@@ -616,7 +620,7 @@
         "schema:WbsoBeschikking": "0.1.0",
         "schema:WbsoMededeling": "0.1.0",
         "schema:WebshopChannel": "0.1.0",
-        "schema:WebshopOrder": "0.2.0",
+        "schema:WebshopOrder": "0.3.0",
         "schema:Werkgever": "0.1.0",
         "schema:Werknemer": "0.1.0",
         "schema:WidgetAccessKey": "0.1.0",

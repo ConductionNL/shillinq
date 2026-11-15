@@ -653,6 +653,137 @@ final class WebshopOrderInvoicerTest extends TestCase {
 	}//end testTheListenerSettlesAnUpdatedPaidOrder()
 
 	/**
+	 * Invoice an order, put its invoice in the store as issued, forget the
+	 * saves and transitions, and return the order as invoiced.
+	 *
+	 * @param array<string,mixed> $order The order.
+	 *
+	 * @return array<string,mixed> The order, invoiced, its arInvoiceId set.
+	 */
+	private function invoicedThrough(array $order): array {
+		$this->seedChannel();
+		self::assertSame('invoiced', $this->invoicer()->handle(order: $order, orderId: self::ORDER, today: '2026-11-12'));
+		$invoice = $this->savesOf(schema: 'ARInvoice')[0][1];
+		$this->store['ARInvoice'] = [['id' => 'inv-1', 'lifecycleState' => 'issued'] + $invoice];
+		$this->saves = [];
+		$this->transitionsRun = [];
+
+		return ['intakeState' => 'invoiced', 'arInvoiceId' => 'inv-1'] + $order;
+	}//end invoicedThrough()
+
+	/**
+	 * The spec scenario: the customer returns the tea, and a credit note of
+	 * EUR 22.85 referencing the invoice is written; the order is credited (REQ-SWO-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public function testARefundedOrderIsCreditedInFull(): void {
+		$order = $this->invoicedThrough(order: self::order());
+		$order['payment'] = ['status' => 'refunded'] + $order['payment'];
+
+		self::assertSame('credited', $this->invoicer()->credit(order: $order, orderId: self::ORDER, today: '2026-11-20'));
+
+		$credits = $this->savesOf(schema: 'ARInvoice');
+		self::assertCount(1, $credits);
+		$credit = $credits[0][1];
+		self::assertNull($credits[0][2]);
+		$number = $this->store['ARInvoice'][0]['invoiceNumber'];
+		self::assertSame(['credit-note', 'issued', 'cm-consumers', 'J. Bakker', '2026-11-20'], [$credit['invoiceType'], $credit['lifecycleState'], $credit['customerId'], $credit['buyerName'], $credit['invoiceDate']]);
+		self::assertSame($number . '-C', $credit['invoiceNumber']);
+		self::assertSame([['reference' => $number, 'issueDate' => '2026-11-12']], $credit['precedingInvoiceReferences']);
+		self::assertSame([-20.96, -1.89, -22.85], [$credit['netAmount'], $credit['vatAmount'], $credit['grossAmount']]);
+		self::assertSame([-16.42, -4.54], array_column($credit['invoiceLines'], 'netAmount'));
+		self::assertSame([2.0, 1.0], array_column($credit['invoiceLines'], 'quantity'));
+		self::assertSame('refunded', $credit['webshop']['refundStatus']);
+		self::assertSame('arinvoice-1', $this->savesOf(schema: 'WebshopOrder')[0][1]['creditNoteId']);
+		self::assertSame([[self::ORDER, 'credit']], $this->transitionsRun);
+	}//end testARefundedOrderIsCreditedInFull()
+
+	/**
+	 * A partial refund credits only the lines and quantities the shop names, at their invoiced price and rate.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public function testAPartialRefundCreditsTheNamedLines(): void {
+		$order = $this->invoicedThrough(order: self::order(overrides: [
+			'lines' => [
+				['description' => 'Earl Grey los 250 g', 'quantity' => 2, 'unitPrice' => 8.95, 'vatRate' => 9],
+				['description' => 'Teapot', 'quantity' => 1, 'unitPrice' => 30.0, 'vatRate' => 21],
+			],
+			'totals' => ['gross' => 52.85],
+		]));
+		$order['payment'] = ['status' => 'cancelled', 'refundedLines' => [['line' => 1, 'quantity' => 1], ['line' => 7]], 'refundedShipping' => false];
+
+		self::assertSame('credited', $this->invoicer()->credit(order: $order, orderId: self::ORDER, today: '2026-11-20'));
+
+		$credit = $this->savesOf(schema: 'ARInvoice')[0][1];
+		self::assertSame(['Earl Grey los 250 g'], array_column($credit['invoiceLines'], 'itemName'));
+		self::assertSame([[1.0, -8.21, 9.0]], array_map(null, array_column($credit['invoiceLines'], 'quantity'), array_column($credit['invoiceLines'], 'netAmount'), array_column($credit['invoiceLines'], 'vatRate')));
+		self::assertSame([-8.21, -0.74, -8.95], [$credit['netAmount'], $credit['vatAmount'], $credit['grossAmount']]);
+		self::assertSame('cancelled', $credit['webshop']['refundStatus']);
+
+		$this->saves = [];
+		$order['payment'] = ['status' => 'refunded', 'refundedLines' => [], 'refundedShipping' => true];
+		$this->invoicer()->credit(order: $order, orderId: self::ORDER, today: '2026-11-20');
+		$shipping = $this->savesOf(schema: 'ARInvoice')[0][1];
+		self::assertSame(['Shipping'], array_column($shipping['invoiceLines'], 'itemName'));
+		self::assertSame(-4.95, $shipping['grossAmount']);
+	}//end testAPartialRefundCreditsTheNamedLines()
+
+	/**
+	 * Only an invoiced, refunded or cancelled order whose invoice exists is credited, and only once.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public function testOnlyARefundedInvoicedOrderIsCreditedAndOnlyOnce(): void {
+		$order = $this->invoicedThrough(order: self::order());
+		$refunded = ['payment' => ['status' => 'refunded']] + $order;
+		$cases = [
+			'paid' => $order,
+			'pending' => ['payment' => ['status' => 'pending']] + $order,
+			'already credited' => ['creditNoteId' => 'crn-1'] + $refunded,
+			'not invoiced' => ['intakeState' => 'refused'] + $refunded,
+			'invoice gone' => ['arInvoiceId' => 'missing'] + $refunded,
+			'nothing named' => ['payment' => ['status' => 'refunded', 'refundedLines' => [['line' => 9]]]] + $order,
+		];
+		foreach ($cases as $case => $candidate) {
+			self::assertSame('skipped', $this->invoicer()->credit(order: $candidate, orderId: self::ORDER, today: '2026-11-20'), $case);
+		}
+
+		self::assertSame([], $this->saves);
+		self::assertSame([], $this->transitionsRun);
+	}//end testOnlyARefundedInvoicedOrderIsCreditedAndOnlyOnce()
+
+	/**
+	 * A refund sent later as an update of the order credits its invoice.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public function testTheListenerCreditsARefundedOrder(): void {
+		$order = $this->invoicedThrough(order: self::order());
+		$entity = new ObjectEntity();
+		$entity->setUuid(self::ORDER);
+		$entity->setObject(['payment' => ['status' => 'refunded']] + $order);
+
+		$resolver = $this->createMock(ListenerSchemaResolverInterface::class);
+		$resolver->method('matchesSchema')->willReturn(true);
+
+		(new WebshopOrderListener(invoicer: $this->invoicer(), schemaResolver: $resolver, logger: $this->createStub(LoggerInterface::class)))
+			->handle(new ObjectUpdatedEvent($entity));
+
+		self::assertSame('credit-note', $this->savesOf(schema: 'ARInvoice')[0][1]['invoiceType']);
+		self::assertSame([[self::ORDER, 'credit']], $this->transitionsRun);
+	}//end testTheListenerCreditsARefundedOrder()
+
+	/**
 	 * Another schema's object is ignored, and a failing invoicer is logged rather than thrown.
 	 *
 	 * @return void

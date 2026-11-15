@@ -11,7 +11,7 @@
             "WebshopOrder": {
                 "slug": "WebshopOrder",
                 "icon": "CartArrowDown",
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "title": "Web shop order",
                 "description": "One order as a web shop sent it, written by integriq's shop connector into register shillinq. The schema is the intake contract (docs/integrations/webshop-order-intake.md). Shillinq turns a received order into one issued ARInvoice, once per channel and shop order number.",
                 "x-schema-org": "schema:Order",
@@ -283,6 +283,32 @@
                                 "type": "string",
                                 "description": "The payment provider's id, kept on the invoice for the payout match.",
                                 "title": "Provider payment id"
+                            },
+                            "refundedLines": {
+                                "type": "array",
+                                "description": "For a partial refund: the order lines refunded, each by its 1-based position in lines and the quantity refunded (the whole line when absent). Absent or empty with refundedShipping false credits the whole order.",
+                                "title": "Refunded lines",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "line": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "description": "The refunded line's 1-based position in lines.",
+                                            "title": "Line"
+                                        },
+                                        "quantity": {
+                                            "type": "number",
+                                            "description": "The quantity refunded; the whole line when absent.",
+                                            "title": "Quantity"
+                                        }
+                                    }
+                                }
+                            },
+                            "refundedShipping": {
+                                "type": "boolean",
+                                "description": "For a partial refund: whether the shipping charge is refunded too.",
+                                "title": "Shipping refunded"
                             }
                         }
                     },
@@ -454,6 +480,15 @@
                                 "type": "string",
                                 "description": "The mention a reverse-charged invoice carries, Btw verlegd.",
                                 "title": "VAT mention"
+                            },
+                            "refundStatus": {
+                                "type": "string",
+                                "enum": [
+                                    "refunded",
+                                    "cancelled"
+                                ],
+                                "description": "On a credit note written for a web shop order: whether the shop refunded or cancelled it.",
+                                "title": "Refund status"
                             }
                         }
                     },
