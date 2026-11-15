@@ -90,16 +90,16 @@
             "versionsSha256": "b6318eb2982bdafd95228b4a6fe1ac17be097fc52db71fea64dbda0373762cfb"
         },
         {
-            "appVersion": "0.5.7-unstable.20261114200000",
-            "versionsSha256": "c5e802ed35c370efc551ed630309d7df0ba5a69eec336ce3b0a4c6f84219e5b0"
-        },
-        {
-            "appVersion": "0.5.7-unstable.20261114201000",
-            "versionsSha256": "4de43b3c51ccaf4f5e9db93e2bd21a296c7f7b22a0b0ff7507c95995980031fb"
-        },
-        {
             "appVersion": "0.5.7-unstable.20261114220000",
-            "versionsSha256": "8bd2ba0c5065496e3d5e3f5d819dcf9d8fb3dce7e77f199bc89501569aa03248"
+            "versionsSha256": "94596f1823024c3830be1bfa8322089ee4e2ceae5d0fde26ab6f201083276819"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115143000",
+            "versionsSha256": "2303fe6a1ccfdbc18ddaf7c055585ddeb3ca704b6707542074eb2ad053979ff4"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115190000",
+            "versionsSha256": "a69b0174c0a928ab94eac8e974c32e11d5df2ffacb10b0961f9332270bb548e5"
         }
     ],
     "versions": {
@@ -115,10 +115,11 @@
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
-        "schema:Administration": "0.2.0",
+        "schema:Administration": "0.3.0",
         "schema:AdministrationBackupRun": "0.1.0",
         "schema:AdministrationMembership": "0.1.0",
-        "schema:AdministrationMigration": "0.1.0",
+        "schema:AdministrationMigration": "0.2.0",
+        "schema:AdministrationTemplate": "0.1.0",
         "schema:AlertLog": "0.1.0",
         "schema:AlgemeenBelangBesluit": "0.1.0",
         "schema:AllocationRule": "0.1.0",
@@ -376,8 +377,8 @@
         "schema:InventoryVarianceReason": "0.1.0",
         "schema:Investering": "0.1.0",
         "schema:InvesteringsAftrek": "0.1.0",
-        "schema:InvesteringsaftrekClaim": "0.1.0",
-        "schema:InvestmentAsset": "0.1.0",
+        "schema:InvesteringsaftrekClaim": "0.2.0",
+        "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
         "schema:IossImport": "0.1.0",
