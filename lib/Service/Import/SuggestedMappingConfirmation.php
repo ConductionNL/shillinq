@@ -27,6 +27,8 @@ namespace OCA\Shillinq\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -105,7 +107,13 @@ class SuggestedMappingConfirmation {
 			$id = (string)($mapping['id'] ?? '');
 			unset($mapping['@self'], $mapping['id']);
 			$mapping['confirmed'] = true;
-			$this->objectService->saveObject(object: $mapping, register: $register, schema: 'ImportMapping', uuid: $id);
+			// OpenRegister main's saveObject() takes the target in ObjectSaveOptions; the
+			// interface stub phpstan scans still declares the older named arguments.
+			$this->objectService->saveObject(
+				object: $mapping,
+				// @phpstan-ignore argument.unknown (the scanned stub predates the options form.)
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'ImportMapping'), uuid: $id)
+			);
 			$confirmed++;
 		}
 

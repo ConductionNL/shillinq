@@ -24,11 +24,12 @@ namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Import\ImportBatchNotFoundException;
 use OCA\Shillinq\Service\Import\SuggestedMappingConfirmation;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\MainApiObjectService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -56,6 +57,8 @@ final class SuggestedMappingConfirmationTest extends TestCase {
 		self::assertSame(1, $count);
 		self::assertCount(1, $this->saved);
 		self::assertSame('m-1', $this->saved[0]['uuid']);
+		self::assertSame(expected: 'shillinq', actual: $this->saved[0]['register']);
+		self::assertSame(expected: 'ImportMapping', actual: $this->saved[0]['schema']);
 		self::assertTrue($this->saved[0]['object']['confirmed']);
 		self::assertSame('1000', $this->saved[0]['object']['targetAccount']);
 
@@ -99,7 +102,7 @@ final class SuggestedMappingConfirmationTest extends TestCase {
 		$entity = $this->createMock(ObjectEntityInterface::class);
 		$entity->method('jsonSerialize')->willReturn($batch);
 		$entity->method('getObject')->willReturn($batch);
-		$objects = $this->createMock(ObjectServiceInterface::class);
+		$objects = $this->createMock(MainApiObjectService::class);
 		$objects->method('find')->willReturn($entity);
 		$objects->method('setRegister')->willReturnSelf();
 		$objects->method('setSchema')->willReturnSelf();
@@ -111,8 +114,15 @@ final class SuggestedMappingConfirmationTest extends TestCase {
 			]
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend, $register, $schema, ?string $uuid): ObjectEntityInterface {
-				$this->saved[] = ['object' => $object, 'uuid' => $uuid];
+			function (array $object, mixed ...$rest): ObjectEntityInterface {
+				$options = array_values(array: array_filter(array: $rest, callback: static fn ($arg): bool => $arg instanceof ObjectSaveOptions))[0] ?? null;
+				self::assertInstanceOf(expected: ObjectSaveOptions::class, actual: $options);
+				$this->saved[] = [
+					'object'   => $object,
+					'uuid'     => $options->uuid,
+					'register' => $options->target->register,
+					'schema'   => $options->target->schema,
+				];
 				return $this->createMock(ObjectEntityInterface::class);
 			}
 		);
