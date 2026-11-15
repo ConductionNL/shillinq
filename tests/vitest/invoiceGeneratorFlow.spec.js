@@ -79,10 +79,13 @@ describe('what each billing model asks for', () => {
 		expect(actual).toEqual(expected)
 	})
 
-	it('renders the rate card and the id lists for time and materials', async () => {
+	it('renders the rate card and the hours and expense lists, not id fields, for time and materials', async () => {
 		const html = await render({}, { rateCards: [{ id: 'rc-1', name: 'Standard' }] })
 		expect(html).toContain('rc-1')
-		expect(html.match(/<textarea/g)).toHaveLength(3)
+		// Only the notes field is a textarea: hours and expenses are ticked, never typed.
+		expect(html.match(/<textarea/g)).toHaveLength(1)
+		expect(html).toContain('data-testid="billable-hours"')
+		expect(html).toContain('data-testid="billable-expenses"')
 		expect(html).not.toContain('invoice-generator__totals')
 	})
 
@@ -120,29 +123,25 @@ describe('what each billing model asks for', () => {
 })
 
 describe('the request', () => {
-	it('splits the id lists, converts the fee to cents and sends readings only for usage', () => {
+	it('sends the ticked hours, converts the fee to cents and sends readings only for usage', () => {
 		const self = instance({
 			form: { customerId: 'c1' },
-			timeIdsRaw: ' t1, t2 ,,t3 ',
-			expenseIdsRaw: '',
+			timeEntryIds: ['t1', 't3'],
 			fixedFeeEuros: '12.345',
 			meterReadingIds: ['r1'],
 		})
 		expect(self.payload).toMatchObject({
 			customerId: 'c1',
 			billingModel: 't_and_m',
-			timeEntryIds: ['t1', 't2', 't3'],
+			timeEntryIds: ['t1', 't3'],
 			expenseIds: [],
+			expenseItemRefs: [],
 			fixedFeeCents: 1235,
 			meterReadingIds: [],
 		})
 		self.form.billingModel = 'usage'
 		expect(self.payload.meterReadingIds).toEqual(['r1'])
-	})
-
-	it('reads no ids from a non-string', () => {
-		expect(instance().parseIds(null)).toEqual([])
-		expect(instance().parseIds(['a'])).toEqual([])
+		expect(self.payload.timeEntryIds).toEqual([])
 	})
 
 	it('reloads the readings when the usage query changes', () => {

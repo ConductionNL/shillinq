@@ -21,7 +21,7 @@
 
 ## 4. Page
 
-- [ ] 4.1 Replace the two id textareas in `InvoiceGenerator.vue` with tick lists fed by the billable-work endpoint, including the unavailable-hours message and a disbursement toggle per expense (REQ-STEB-001, REQ-STEB-002, REQ-STEB-003). Verify: Vitest for the payload built from ticked rows; Playwright for the seeded Het Anker invoice.
+- [x] 4.1 Replace the two id textareas in `InvoiceGenerator.vue` with tick lists fed by the billable-work endpoint, including the unavailable-hours message and a disbursement toggle per expense (REQ-STEB-001, REQ-STEB-002, REQ-STEB-003). Verify: Vitest for the payload built from ticked rows; Playwright for the seeded Het Anker invoice. (`InvoiceGenerator.vue`: hours and pass-through expense tick lists from `invoiceApi.billableWork()`, the unavailable-hours message, a disbursement toggle per ticked expense; the request carries `timeEntryIds` and `expenseItemRefs`. `invoiceGeneratorTickLists.spec.js`. The Playwright run on the seeded Het Anker invoice needs a live instance and was not run.)
 
 ## 5. Docs
 

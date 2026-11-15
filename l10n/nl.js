@@ -1031,7 +1031,6 @@ OC.L10N.register(
         "Expense": "Onkost",
         "Expense Claims": "Onkostendeclaraties",
         "Expense Disputed": "Onkosten betwist",
-        "Expense IDs (comma-separated)": "Onkosten-IDs (komma-gescheiden)",
         "Expense Invoiced": "Onkosten gefactureerd",
         "Expense No Settlement Mode": "Onkosten zonder afhandelmodus",
         "Expense Reimbursed": "Onkosten vergoed",
@@ -2838,7 +2837,6 @@ OC.L10N.register(
         "Time & Materials": "T&M (uren + materialen)",
         "Time Registration": "Urenregistratie",
         "Time entry": "Urenpost",
-        "Time entry IDs (comma-separated)": "Uren-IDs (komma-gescheiden)",
         "Time tracking": "Urenregistratie",
         "Timesheet quarter": "Urenstaat kwartaal",
         "Timezone": "Tijdzone",
@@ -7070,7 +7068,19 @@ OC.L10N.register(
         "XBRL file downloaded.": "XBRL-bestand gedownload.",
         "The XBRL file could not be downloaded.": "Het XBRL-bestand kon niet worden gedownload.",
         "Download the filing's XBRL instance, in any state.": "Download de XBRL-instantie van deze aangifte, in elke status.",
-        "Parts": "Onderdelen"
+        "Parts": "Onderdelen",
+        "Hours to bill": "Te factureren uren",
+        "Hours are not available: the hours app is not connected.": "Uren zijn niet beschikbaar: de urenapp is niet gekoppeld.",
+        "Choose a project to list its unbilled hours.": "Kies een project om de nog niet gefactureerde uren te tonen.",
+        "Every approved hour in this period is already on an invoice.": "Alle goedgekeurde uren in deze periode staan al op een factuur.",
+        "Ticked hours: EUR {amount}": "Aangevinkte uren: EUR {amount}",
+        "Pass-through expenses to bill": "Door te belasten kosten om te factureren",
+        "This customer has no pass-through expenses that are not on an invoice yet.": "Deze klant heeft geen door te belasten kosten die nog niet op een factuur staan.",
+        "Disbursement, outside the VAT base": "Verschot, buiten de btw-grondslag",
+        "The billable hours and expenses could not be loaded.": "De factureerbare uren en kosten konden niet worden geladen.",
+        "{date} {person}: {hours} hours": "{date} {person}: {hours} uur",
+        "{date} {person}: {hours} hours at EUR {rate}, EUR {amount}": "{date} {person}: {hours} uur à EUR {rate}, EUR {amount}",
+        "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}": "{date} {description}: kosten EUR {cost}, opslag EUR {markup}, EUR {amount}"
     },
     "nplurals=2; plural=(n != 1);"
 )
