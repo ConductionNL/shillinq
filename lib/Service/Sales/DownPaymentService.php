@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Sales;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -328,7 +329,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 			'deductions' => $deductions,
 		];
 
-		$this->scoped(schema: 'ARInvoice')->patchObject((string)$invoice['id'], $patch);
+		$this->scoped(schema: 'ARInvoice')->patchObject(new ObjectPatch(objectId: (string)$invoice['id'], data: $patch));
 		return array_merge($invoice, $patch);
 
 	}//end deductOnto()
@@ -477,7 +478,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 			$group = (array)($downPayment['downPayment'] ?? []);
 			$group['deductedOnInvoiceId'] = (string)($invoice['id'] ?? '');
 			$group['deductedOnInvoiceNumber'] = (string)($invoice['invoiceNumber'] ?? '');
-			$this->scoped(schema: 'ARInvoice')->patchObject((string)$downPayment['id'], ['downPayment' => $group]);
+			$this->scoped(schema: 'ARInvoice')->patchObject(new ObjectPatch(objectId: (string)$downPayment['id'], data: ['downPayment' => $group]));
 		}
 
 	}//end stampDeductions()
