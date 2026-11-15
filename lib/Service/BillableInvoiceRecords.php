@@ -100,8 +100,41 @@ final class BillableInvoiceRecords {
 			'posted' => false,
 			'obligationId' => null,
 			'notes' => $request->notes,
-		];
+		] + $this->itemRefsOf(lineDrafts: $draft->lineDrafts);
 	}//end invoicePayload()
+
+	/**
+	 * `expenseItemRefs` of the invoice: the pass-through items billed on it,
+	 * each with its schema, id, claim and disbursement flag; nothing when it
+	 * bills none.
+	 *
+	 * @param array<int,array<string,mixed>> $lineDrafts The line drafts.
+	 *
+	 * @return array<string,list<array{schema:string,id:string,claimId:string,disbursement:bool}>>
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	private function itemRefsOf(array $lineDrafts): array {
+		$refs = [];
+		foreach ($lineDrafts as $line) {
+			if (isset($line['recharge']) === false || is_array($line['recharge']) === false) {
+				continue;
+			}
+
+			$refs[] = [
+				'schema' => (string)($line['recharge']['schema'] ?? ''),
+				'id' => (string)($line['sourceId'] ?? ''),
+				'claimId' => (string)($line['recharge']['claimId'] ?? ''),
+				'disbursement' => ($line['recharge']['vatTreatment'] ?? '') === BillingModelEngine::VAT_DISBURSEMENT,
+			];
+		}
+
+		if ($refs === []) {
+			return [];
+		}
+
+		return ['expenseItemRefs' => $refs];
+	}//end itemRefsOf()
 
 
 	/**
@@ -136,8 +169,35 @@ final class BillableInvoiceRecords {
 			'vatRate' => (float)$line['vatRate'],
 			'vatAmount' => round($vatCents / 100, 2),
 			'modelSpecificFields' => $line['modelSpecificFields'] ?? null,
-		];
+		] + $this->rechargeOf(line: $line);
 	}//end linePayload()
+
+	/**
+	 * `recharge` of a recharged item's line, without the engine's own keys;
+	 * nothing for any other line.
+	 *
+	 * @param array<string,mixed> $line One line draft.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	private function rechargeOf(array $line): array {
+		if (isset($line['recharge']) === false || is_array($line['recharge']) === false) {
+			return [];
+		}
+
+		return [
+			'recharge' => [
+				'costAmount' => $line['recharge']['costAmount'] ?? null,
+				'markupRuleId' => $line['recharge']['markupRuleId'] ?? null,
+				'markupRate' => $line['recharge']['markupRate'] ?? null,
+				'markupAmount' => $line['recharge']['markupAmount'] ?? null,
+				'vatTreatment' => $line['recharge']['vatTreatment'] ?? null,
+				'vatMention' => $line['recharge']['vatMention'] ?? null,
+			],
+		];
+	}//end rechargeOf()
 
 
 	/**

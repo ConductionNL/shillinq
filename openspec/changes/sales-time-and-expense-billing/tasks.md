@@ -15,9 +15,9 @@
 
 ## 3. Lines
 
-- [ ] 3.1 Let `loadExpenses()` take item references, pass the locked markup into `BillingModelEngine::expenseLine()`, add `recharge` to `BillableInvoiceLine` and `expenseItemRefs` to `BillableInvoice` (REQ-STEB-003). Verify: PHPUnit for the EUR 42.80 train receipt becoming EUR 47.08.
-- [ ] 3.2 Apply the main-supply VAT rate to recharge lines and the disbursement treatment when an item is marked so (REQ-STEB-003). Verify: PHPUnit for a 9 percent receipt billed at 21 percent and a disbursement at 0 percent with the mention.
-- [ ] 3.3 Take `markInvoiced` on a pass-through claim once every pass-through item sits on a posted invoice (REQ-STEB-002). Verify: PHPUnit for a claim billed in two invoices.
+- [x] 3.1 Let `loadExpenses()` take item references, pass the locked markup into `BillingModelEngine::expenseLine()`, add `recharge` to `BillableInvoiceLine` and `expenseItemRefs` to `BillableInvoice` (REQ-STEB-003). Verify: PHPUnit for the EUR 42.80 train receipt becoming EUR 47.08. (`lib/Service/Billing/PassThroughBilling.php`: `expenseRows` reads each ticked item in the administration for the customer and locks an unlocked one once; `InvoiceGenerationRequest.expenseItemRefs`; `loadExpenses()` takes them; `BillingModelEngine::expenseLine()` bills cost plus the locked markup with a `recharge` record; `BillableInvoice.expenseItemRefs` and `BillableInvoiceLine.recharge` (both schemas 0.2.0); dedup counts item refs and refuses an item whose claim an older invoice billed whole. `BillingModelEngineRechargeTest`, `PassThroughBillingTest`, `InvoiceGenerationRechargeTest` (EUR 42.80 becomes EUR 47.08).)
+- [x] 3.2 Apply the main-supply VAT rate to recharge lines and the disbursement treatment when an item is marked so (REQ-STEB-003). Verify: PHPUnit for a 9 percent receipt billed at 21 percent and a disbursement at 0 percent with the mention. (`BillingModelEngine::rechargeLine()`: the first service line's rate, else 21; a disbursement at 0 with `vatTreatment: disbursement` and the mention. Tests: the 9 percent receipt at 21, the extract at 0 with the mention.)
+- [x] 3.3 Take `markInvoiced` on a pass-through claim once every pass-through item sits on a posted invoice (REQ-STEB-002). Verify: PHPUnit for a claim billed in two invoices. (`PassThroughBilling::markBilledClaims()`, called by `postInvoice()`: a posted claim whose pass-through items all sit on posted invoices takes `markInvoiced`; a refusal is logged. `PassThroughBillingTest::testAClaimBilledInTwoInvoicesIsMarkedInvoicedAfterTheSecond`.)
 
 ## 4. Page
 
