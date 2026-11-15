@@ -24,12 +24,12 @@ namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Import\ImportBatchNotFoundException;
 use OCA\Shillinq\Service\Import\SuggestedMappingConfirmation;
 use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Tests\Unit\Service\Support\MainApiObjectService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -102,7 +102,7 @@ final class SuggestedMappingConfirmationTest extends TestCase {
 		$entity = $this->createMock(ObjectEntityInterface::class);
 		$entity->method('jsonSerialize')->willReturn($batch);
 		$entity->method('getObject')->willReturn($batch);
-		$objects = $this->createMock(MainApiObjectService::class);
+		$objects = $this->createMock(ObjectServiceInterface::class);
 		$objects->method('find')->willReturn($entity);
 		$objects->method('setRegister')->willReturnSelf();
 		$objects->method('setSchema')->willReturnSelf();

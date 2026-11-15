@@ -44,6 +44,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * The service over an in-memory store with every collaborator a double.
@@ -133,7 +134,7 @@ final class PaymentPlanServiceFailuresTest extends TestCase {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $id): array {
-		$entity = $this->store->find(id: $id, schema: 'PaymentPlan');
+		$entity = $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'PaymentPlan'));
 		$this->assertNotNull($entity);
 		return $entity->getObject();
 

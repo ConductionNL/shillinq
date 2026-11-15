@@ -44,6 +44,8 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
 use OCP\IAppConfig;
@@ -533,8 +535,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 
 		$this->objectService->saveObject(
 			object: $posting,
-			register: $this->register(),
-			schema: 'AutoAccrualPosting',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'AutoAccrualPosting'))
 		);
 
 	}//end persistAccrualPosting()
@@ -795,8 +796,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 
 		$this->objectService->saveObject(
 			object: $record,
-			register: $this->register(),
-			schema: 'PeriodStatus',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'PeriodStatus'))
 		);
 
 	}//end markSoftClosed()
@@ -826,8 +826,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 		try {
 			$this->objectService->saveObject(
 				object: $alert,
-				register: $this->register(),
-				schema: 'ContinuousCloseAlert',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ContinuousCloseAlert'))
 			);
 		} catch (\Throwable $persistError) {
 			$this->logger->error(
