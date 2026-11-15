@@ -33,6 +33,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
+
 /**
  * Channel-adapter port — one method per dispatch.
  *

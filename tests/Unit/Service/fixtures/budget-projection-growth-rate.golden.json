@@ -1,0 +1,38 @@
+{
+    "steady": {
+        "rate": 0.10000000000000002,
+        "validSteps": 3
+    },
+    "withOutliers": {
+        "rate": 0.03921245421245423,
+        "validSteps": 6
+    },
+    "flatZero": {
+        "rate": 0.0,
+        "validSteps": 3
+    },
+    "fromNothing": {
+        "reason": "insufficient-data",
+        "validSteps": 2
+    },
+    "signFlip": {
+        "reason": "insufficient-data",
+        "validSteps": 2
+    },
+    "toZero": {
+        "reason": "insufficient-data",
+        "validSteps": 2
+    },
+    "negatives": {
+        "reason": "insufficient-data",
+        "validSteps": 2
+    },
+    "tooShort": {
+        "reason": "insufficient-data",
+        "validSteps": 0
+    },
+    "empty": {
+        "reason": "insufficient-data",
+        "validSteps": 0
+    }
+}

@@ -3,6 +3,9 @@
 /**
  * Purchase Order Approval Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 11 of the bookkeeping-purchase-order-3way chain — records
  * approver identities + decision timestamps on a PurchaseOrder's
  * approval chain so the audit-trail export (REQ-PO3W-010) can show,
@@ -13,8 +16,8 @@
  * user (NEVER the request body) as `userId`, the supplied decision and
  * the deterministic ISO `decidedAt` timestamp on the next pending
  * approval-chain entry. When the chain becomes fully approved the PO
- * lifecycleState is advanced to `approved`; a `rejected` decision sends
- * it to `rejected`. The state-machine itself stays in OR — this service
+ * statusCode is advanced to `approved`; a `rejected` decision sends
+ * it to `cancelled`, the schema's terminal state (#1753). The state-machine itself stays in OR — this service
  * only writes the canonical record so OR's audit-trail-immutable
  * abstraction captures it.
  *
@@ -39,21 +42,21 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalServiceInterface;
+use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\PurchaseOrderApprovalEntry;
 
 /**
  * Slice 11 — records approver identity + decidedAt on the next pending
@@ -62,34 +65,13 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * Public method:
  *  - recordApprovalDecision(): stamp userId + decision + decidedAt on
- *    the next pending entry; advance lifecycleState to approved when
- *    the chain is fully approved or rejected when a single rejection
+ *    the next pending entry; advance statusCode to approved when
+ *    the chain is fully approved or cancelled when a single rejection
  *    is recorded.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
  */
-class PurchaseOrderApprovalService {
-
-	/**
-	 * Decision enum values mirror the slice-01 PurchaseOrder.approvalChain.decision enum.
-	 *
-	 * @var string
-	 */
-	public const DECISION_APPROVED = 'approved';
-
-	/**
-	 * Decision rejected — terminal: the PO advances to lifecycleState=rejected.
-	 *
-	 * @var string
-	 */
-	public const DECISION_REJECTED = 'rejected';
-
-	/**
-	 * Decision delegated — chains the slot to another role; not advanced here.
-	 *
-	 * @var string
-	 */
-	public const DECISION_DELEGATED = 'delegated';
+class PurchaseOrderApprovalService implements PurchaseOrderApprovalServiceInterface {
 
 	/**
 	 * Schema slug for PurchaseOrder records (slice 01).
@@ -127,6 +109,7 @@ class PurchaseOrderApprovalService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ApprovalActivityEmitter|null $activityEmitter Optional emitter for
 	 *                                                      approval activity events.
+	 * @param ServerWriteAuthority $writeAuthority Grants the approve transition for the decision save.
 	 *
 	 * @return void
 	 */
@@ -137,6 +120,7 @@ class PurchaseOrderApprovalService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
+		private readonly ServerWriteAuthority $writeAuthority = new ServerWriteAuthority(),
 	) {
 
 	}//end __construct()
@@ -148,8 +132,8 @@ class PurchaseOrderApprovalService {
 	 * authenticated user session (NEVER from the request body), the
 	 * `decision` from the (validated) input and a deterministic
 	 * `decidedAt` ISO timestamp. When the chain becomes fully approved
-	 * the PO lifecycleState advances to `approved`; any rejection
-	 * advances it to `rejected`. Delegated does not advance the
+	 * the PO statusCode advances to `approved`; any rejection
+	 * advances it to `cancelled`. Delegated does not advance the
 	 * lifecycle (the slot remains pending under a different role —
 	 * outside slice 11 scope).
 	 *
@@ -158,7 +142,7 @@ class PurchaseOrderApprovalService {
 	 *  - the poId is re-loaded from OR so a forged POST cannot pivot to
 	 *    a cross-tenant record;
 	 *  - the decision is validated against {@see ALLOWED_DECISIONS};
-	 *  - the PO must currently be in `pending_approval` — calling on an
+	 *  - the PO must currently be in `draft` (waiting for its chain) — calling on an
 	 *    already-approved or terminated PO throws a RuntimeException;
 	 *  - the chain must carry at least one pending entry — calling on
 	 *    a fully-signed chain throws a RuntimeException.
@@ -182,141 +166,329 @@ class PurchaseOrderApprovalService {
 		string $decision,
 		?string $comment = null,
 	): array {
-		$this->assertAccess(administrationId: $administrationId);
-		if ($purchaseOrderId === '') {
-			throw new RuntimeException('Purchase order not found');
-		}
+		$approval = new ApprovalDecision();
+		$approval->administrationId = $administrationId;
+		$approval->purchaseOrderId  = $purchaseOrderId;
+		$approval->decision         = $decision;
+		$approval->comment          = $comment;
 
-		if (in_array($decision, self::ALLOWED_DECISIONS, true) === false) {
-			throw new RuntimeException('Invalid approval decision');
-		}
-
-		$purchaseOrder = $this->loadPurchaseOrder(
-			administrationId: $administrationId,
-			purchaseOrderId: $purchaseOrderId
-		);
-
-		$lifecycleState = (string)($purchaseOrder['lifecycleState'] ?? '');
-		if ($lifecycleState !== 'pending_approval') {
-			throw new RuntimeException('Purchase order is not pending approval');
-		}
-
-		$chain = (array)($purchaseOrder['approvalChain'] ?? []);
-		if ($chain === []) {
-			throw new RuntimeException('Approval chain is empty');
-		}
-
-		$decidedAt = $this->nowIso();
-		$userId = $this->currentUserId();
-		$signed = false;
-		foreach ($chain as $index => $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			if ((string)($entry['decision'] ?? '') !== 'pending') {
-				continue;
-			}
-
-			$entry['userId'] = $userId;
-			$entry['decision'] = $decision;
-			$entry['decidedAt'] = $decidedAt;
-			if ($comment !== null) {
-				$trimmed = trim($comment);
-				if ($trimmed !== '') {
-					$entry['comment'] = $trimmed;
-				}
-			}
-
-			$chain[$index] = $entry;
-			$signed = true;
-			break;
-		}//end foreach
-
-		if ($signed === false) {
-			throw new RuntimeException('Approval chain is fully signed');
-		}
-
-		$purchaseOrder['approvalChain'] = $chain;
-		$purchaseOrder['lifecycleState'] = $this->nextLifecycleState(
-			decision: $decision,
-			chain: $chain,
-			current: $lifecycleState
-		);
-
-		$saved = $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder);
-
-		// Emit a Nextcloud Activity event per REQ-RAP-006 so the
-		// BookkeepingActivityFeed manifest entry surfaces the decision
-		// in the user-facing timeline. The emitter is optional (nullable)
-		// so unit tests don't have to wire IActivityManager; production
-		// DI always provides it via ApplicationServer.
-		if ($this->activityEmitter !== null) {
-			$summary = sprintf('Purchase order %s', (string)($purchaseOrder['poNumber'] ?? $purchaseOrderId));
-			if ($decision === self::DECISION_APPROVED) {
-				$this->activityEmitter->emitApprovalApproved(
-					objectType:  self::SCHEMA_PURCHASE_ORDER,
-					objectId:    $purchaseOrderId,
-					actorUid:    $userId,
-					summaryHint: $summary,
-					comment:     (string)($comment ?? '')
-				);
-			} elseif ($decision === self::DECISION_REJECTED) {
-				$this->activityEmitter->emitApprovalRejected(
-					objectType:  self::SCHEMA_PURCHASE_ORDER,
-					objectId:    $purchaseOrderId,
-					actorUid:    $userId,
-					summaryHint: $summary,
-					reason:      (string)($comment ?? '')
-				);
-			}
-		}
-
-		return $saved;
+		return $this->recordDecision(approval: $approval);
 	}//end recordApprovalDecision()
 
 	/**
-	 * Determine the next PO lifecycleState after a decision.
+	 * Check, sign, save and announce one decision.
 	 *
-	 * - rejected → rejected (terminal for this slice; cancels payment chain)
+	 * @param ApprovalDecision $approval The decision asked for.
+	 *
+	 * @return array<string,mixed> The updated PurchaseOrder record.
+	 *
+	 * @throws \RuntimeException When a check refuses the decision.
+	 */
+	private function recordDecision(ApprovalDecision $approval): array {
+		$purchaseOrder = $this->decidablePurchaseOrder(approval: $approval);
+
+		$approval->decidedAt = $this->nowIso();
+		$approval->userId    = $this->currentUserId();
+		$purchaseOrder       = $this->applyDecision(purchaseOrder: $purchaseOrder, approval: $approval);
+
+		$saved = $this->writeAuthority->during(
+			purpose: PurchaseOrderApprovalGuard::PURPOSE,
+			objectId: $approval->purchaseOrderId,
+			work: fn (): array => $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder)
+		);
+
+		$this->emitDecisionActivity(purchaseOrder: $purchaseOrder, approval: $approval);
+
+		return $saved;
+	}//end recordDecision()
+
+	/**
+	 * The purchase order the decision is for, once the tenant, the input and
+	 * the order's own state allow a decision.
+	 *
+	 * @param ApprovalDecision $approval The decision asked for.
+	 *
+	 * @return array<string,mixed> The loaded PurchaseOrder record.
+	 *
+	 * @throws \RuntimeException When the tenant, the input or the order refuses.
+	 */
+	private function decidablePurchaseOrder(ApprovalDecision $approval): array {
+		$this->assertAccess(administrationId: $approval->administrationId);
+		$this->assertDecisionInput(approval: $approval);
+
+		$purchaseOrder = $this->loadPurchaseOrder(
+			administrationId: $approval->administrationId,
+			purchaseOrderId: $approval->purchaseOrderId
+		);
+		$this->assertAwaitingApproval(purchaseOrder: $purchaseOrder);
+
+		return $purchaseOrder;
+	}//end decidablePurchaseOrder()
+
+	/**
+	 * Refuse an empty purchase order id or a decision outside the enum.
+	 *
+	 * @param ApprovalDecision $approval The decision asked for.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the input is unusable.
+	 */
+	private function assertDecisionInput(ApprovalDecision $approval): void {
+		if ($approval->purchaseOrderId === '') {
+			throw new RuntimeException('Purchase order not found');
+		}
+
+		if (in_array($approval->decision, self::ALLOWED_DECISIONS, true) === false) {
+			throw new RuntimeException('Invalid approval decision');
+		}
+	}//end assertDecisionInput()
+
+	/**
+	 * Refuse a purchase order that is not waiting for its chain.
+	 *
+	 * A PO waiting for approval is in the schema's `draft` state (#1753); a
+	 * draft with an empty chain has nothing to sign.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The loaded PurchaseOrder record.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the order is not pending or its chain is empty.
+	 */
+	private function assertAwaitingApproval(array $purchaseOrder): void {
+		if ((string)($purchaseOrder['statusCode'] ?? '') !== 'draft') {
+			throw new RuntimeException('Purchase order is not pending approval');
+		}
+
+		if ((array)($purchaseOrder['approvalChain'] ?? []) === []) {
+			throw new RuntimeException('Approval chain is empty');
+		}
+	}//end assertAwaitingApproval()
+
+	/**
+	 * The purchase order with the decision signed into its chain and its
+	 * statusCode advanced.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The loaded PurchaseOrder record.
+	 * @param ApprovalDecision    $approval      The checked decision.
+	 *
+	 * @return array<string,mixed> The record to save.
+	 *
+	 * @throws \RuntimeException When no entry is left to sign.
+	 */
+	private function applyDecision(array $purchaseOrder, ApprovalDecision $approval): array {
+		$chain = $this->signNextPending(chain: (array)($purchaseOrder['approvalChain'] ?? []), approval: $approval);
+
+		$purchaseOrder['approvalChain'] = $chain;
+		$purchaseOrder['statusCode']    = $this->nextLifecycleState(
+			decision: $approval->decision,
+			chain: $chain,
+			current: (string)($purchaseOrder['statusCode'] ?? '')
+		);
+
+		return $purchaseOrder;
+	}//end applyDecision()
+
+	/**
+	 * The chain with its first pending entry signed.
+	 *
+	 * @param array<int|string,mixed> $chain    The approval chain.
+	 * @param ApprovalDecision        $approval The checked decision.
+	 *
+	 * @return array<int|string,mixed> The signed chain.
+	 *
+	 * @throws \RuntimeException When every entry is already signed.
+	 */
+	private function signNextPending(array $chain, ApprovalDecision $approval): array {
+		foreach ($chain as $index => $entry) {
+			if (is_array($entry) === false || self::isPendingEntry(entry: $entry) === false) {
+				continue;
+			}
+
+			$chain[$index] = $this->signedEntry(entry: $entry, approval: $approval);
+			return $chain;
+		}
+
+		throw new RuntimeException('Approval chain is fully signed');
+	}//end signNextPending()
+
+	/**
+	 * One pending entry, signed.
+	 *
+	 * An entry written before #1716 carries status/signedAt/signedBy; signing
+	 * it moves it onto the one shape the schema declares. A comment is kept
+	 * trimmed, and only when something is left.
+	 *
+	 * @param array<string,mixed> $entry    The pending entry.
+	 * @param ApprovalDecision    $approval The checked decision.
+	 *
+	 * @return array<string,mixed> The signed entry.
+	 */
+	private function signedEntry(array $entry, ApprovalDecision $approval): array {
+		unset($entry['status'], $entry['signedAt'], $entry['signedBy']);
+		$entry['userId']    = $approval->userId;
+		$entry['decision']  = $approval->decision;
+		$entry['decidedAt'] = $approval->decidedAt;
+
+		$trimmed = trim((string)$approval->comment);
+		if ($trimmed !== '') {
+			$entry['comment'] = $trimmed;
+		}
+
+		return $entry;
+	}//end signedEntry()
+
+	/**
+	 * Emit the Nextcloud Activity event for the decision (REQ-RAP-006), so the
+	 * BookkeepingActivityFeed manifest entry surfaces it in the user-facing
+	 * timeline. The emitter is optional so unit tests don't have to wire
+	 * IActivityManager; production DI always provides it. A delegation emits
+	 * nothing.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The saved PurchaseOrder record.
+	 * @param ApprovalDecision    $approval      The recorded decision.
+	 *
+	 * @return void
+	 */
+	private function emitDecisionActivity(array $purchaseOrder, ApprovalDecision $approval): void {
+		if ($this->activityEmitter === null) {
+			return;
+		}
+
+		$summary = sprintf('Purchase order %s', (string)($purchaseOrder['poNumber'] ?? $approval->purchaseOrderId));
+		if ($approval->decision === self::DECISION_APPROVED) {
+			$this->emitApproved(approval: $approval, summary: $summary);
+			return;
+		}
+
+		if ($approval->decision === self::DECISION_REJECTED) {
+			$this->emitRejected(approval: $approval, summary: $summary);
+		}
+	}//end emitDecisionActivity()
+
+	/**
+	 * Emit the approved activity event.
+	 *
+	 * @param ApprovalDecision $approval The recorded decision.
+	 * @param string           $summary  The purchase order label.
+	 *
+	 * @return void
+	 */
+	private function emitApproved(ApprovalDecision $approval, string $summary): void {
+		$this->activityEmitter?->emitApprovalApproved(
+			objectType:  self::SCHEMA_PURCHASE_ORDER,
+			objectId:    $approval->purchaseOrderId,
+			actorUid:    $approval->userId,
+			summaryHint: $summary,
+			comment:     (string)($approval->comment ?? '')
+		);
+	}//end emitApproved()
+
+	/**
+	 * Emit the rejected activity event, the comment as its reason.
+	 *
+	 * @param ApprovalDecision $approval The recorded decision.
+	 * @param string           $summary  The purchase order label.
+	 *
+	 * @return void
+	 */
+	private function emitRejected(ApprovalDecision $approval, string $summary): void {
+		$this->activityEmitter?->emitApprovalRejected(
+			objectType:  self::SCHEMA_PURCHASE_ORDER,
+			objectId:    $approval->purchaseOrderId,
+			actorUid:    $approval->userId,
+			summaryHint: $summary,
+			reason:      (string)($approval->comment ?? '')
+		);
+	}//end emitRejected()
+
+	/**
+	 * Whether an approval-chain entry still waits for its approver.
+	 *
+	 * The chain has one shape, the one `PurchaseOrder.approvalChain` declares:
+	 * `userId`, `decision`, `decidedAt`, `comment`. An entry written before
+	 * #1716 carries `status: pending` instead of a decision, and still counts
+	 * as pending so a purchase order created then can be approved.
+	 *
+	 * @param array<string,mixed> $entry One approval-chain entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	public static function isPendingEntry(array $entry): bool {
+		$decision = (string)($entry['decision'] ?? '');
+		if ($decision !== '') {
+			return $decision === self::DECISION_PENDING;
+		}
+
+		return (string)($entry['status'] ?? '') === self::DECISION_PENDING;
+	}//end isPendingEntry()
+
+	/**
+	 * Whether an approval-chain entry is approved and stamped with its time.
+	 *
+	 * The send check and the Peppol transmission read this, so they read what
+	 * recordApprovalDecision() writes (#1716).
+	 *
+	 * @param mixed $entry One approval-chain entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 */
+	public static function isApprovedEntry(mixed $entry): bool {
+		return PurchaseOrderApprovalEntry::isApproved(entry: $entry);
+	}//end isApprovedEntry()
+
+	/**
+	 * Determine the next PO statusCode after a decision.
+	 *
+	 * - rejected → cancelled (the schema's terminal state; the chain entry keeps the rejection)
 	 * - approved + every chain entry approved → approved
-	 * - approved + chain still has pending entries → pending_approval
-	 * - delegated → pending_approval (the slot is re-routed; outside this slice)
+	 * - approved + chain still has pending entries → draft
+	 * - delegated → draft (the slot is re-routed; outside this slice)
 	 *
 	 * @param string $decision The decision recorded.
 	 * @param array<int,mixed> $chain The updated approval chain.
-	 * @param string $current Current lifecycle (always `pending_approval`).
+	 * @param string $current Current statusCode (always `draft`).
 	 *
 	 * @return string
 	 */
 	private function nextLifecycleState(string $decision, array $chain, string $current): string {
 		if ($decision === self::DECISION_REJECTED) {
-			return 'rejected';
+			return 'cancelled';
 		}
 
 		if ($decision === self::DECISION_DELEGATED) {
 			return $current;
 		}
 
-		$fullyApproved = true;
-		foreach ($chain as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$entryDecision = (string)($entry['decision'] ?? '');
-			if ($entryDecision !== self::DECISION_APPROVED) {
-				$fullyApproved = false;
-				break;
-			}
-		}
-
-		if ($fullyApproved === true) {
+		if ($this->isFullyApproved(chain: $chain) === true) {
 			return 'approved';
 		}
 
 		return $current;
 	}//end nextLifecycleState()
+
+	/**
+	 * Whether every entry of the chain is approved; a malformed entry is
+	 * skipped.
+	 *
+	 * @param array<int|string,mixed> $chain The approval chain.
+	 *
+	 * @return bool
+	 */
+	private function isFullyApproved(array $chain): bool {
+		foreach ($chain as $entry) {
+			if (is_array($entry) === true && (string)($entry['decision'] ?? '') !== self::DECISION_APPROVED) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end isFullyApproved()
 
 	/**
 	 * Load a PurchaseOrder by id, scoped to the administration so a
@@ -449,7 +621,7 @@ class PurchaseOrderApprovalService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

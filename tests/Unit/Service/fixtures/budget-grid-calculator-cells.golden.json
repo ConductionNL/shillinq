@@ -1,0 +1,992 @@
+{
+    "monthCrossYear": {
+        "g-income": {
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": -50000,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2027-01:true": {
+                "budget": 100000,
+                "actual": -120050,
+                "deviation": -220050,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-01:false": {
+                "budget": 100000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:true": {
+                "budget": 110000,
+                "actual": 0,
+                "deviation": -110000,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-02:false": {
+                "budget": 110000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-03:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 210000,
+                "actual": -120050,
+                "deviation": -330050,
+                "favorable": false
+            }
+        },
+        "g-costs": {
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2027-01:true": {
+                "budget": 0,
+                "actual": 90000,
+                "deviation": -90000,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-01:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:true": {
+                "budget": 50000,
+                "actual": 45025,
+                "deviation": 4975,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-02:false": {
+                "budget": 50000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-03:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 50000,
+                "actual": 135025,
+                "deviation": -85025,
+                "favorable": false
+            }
+        },
+        "g-wages": {
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2027-01:true": {
+                "budget": 80000,
+                "actual": 90000,
+                "deviation": -10000,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-01:false": {
+                "budget": 80000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-02:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:true": {
+                "budget": 80000,
+                "actual": 0,
+                "deviation": 80000,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-03:false": {
+                "budget": 80000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 160000,
+                "actual": 90000,
+                "deviation": 70000,
+                "favorable": true
+            }
+        },
+        "g-rent": {
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2027-01:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-01:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:true": {
+                "budget": 0,
+                "actual": 45025,
+                "deviation": -45025,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-02:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-03:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 0,
+                "actual": 45025,
+                "deviation": -45025,
+                "favorable": false
+            }
+        },
+        "g-balance": {
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2027-01:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-01:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:true": {
+                "budget": 5000,
+                "actual": 7500,
+                "deviation": 2500,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:false": {
+                "budget": 5000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 5000,
+                "actual": 7500,
+                "deviation": 2500,
+                "favorable": null
+            }
+        },
+        "missing": {
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2027-01:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-01:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-02:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-03:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null
+            }
+        }
+    },
+    "quarter": {
+        "g-income": {
+            "2027-Q1:true": {
+                "budget": 210000,
+                "actual": -120050,
+                "deviation": -330050,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-Q1:false": {
+                "budget": 210000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-Q2:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 210000,
+                "actual": 0,
+                "deviation": -210000,
+                "favorable": false
+            }
+        },
+        "g-costs": {
+            "2027-Q1:true": {
+                "budget": 50000,
+                "actual": 135025,
+                "deviation": -85025,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-Q1:false": {
+                "budget": 50000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-Q2:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 50000,
+                "actual": 0,
+                "deviation": 50000,
+                "favorable": true
+            }
+        },
+        "g-wages": {
+            "2027-Q1:true": {
+                "budget": 160000,
+                "actual": 90000,
+                "deviation": 70000,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-Q1:false": {
+                "budget": 160000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-Q2:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 160000,
+                "actual": 0,
+                "deviation": 160000,
+                "favorable": true
+            }
+        },
+        "g-rent": {
+            "2027-Q1:true": {
+                "budget": 0,
+                "actual": 45025,
+                "deviation": -45025,
+                "favorable": false,
+                "hasBudget": true
+            },
+            "2027-Q1:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true,
+                "hasBudget": true
+            },
+            "2027-Q2:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": true
+            }
+        },
+        "g-balance": {
+            "2027-Q1:true": {
+                "budget": 5000,
+                "actual": 7500,
+                "deviation": 2500,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q1:false": {
+                "budget": 5000,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 5000,
+                "actual": 0,
+                "deviation": -5000,
+                "favorable": null
+            }
+        },
+        "missing": {
+            "2027-Q1:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q1:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:true": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "2027-Q2:false": {
+                "budget": 0,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": true
+            },
+            "TOTAAL": {
+                "budget": 0,
+                "actual": 0,
+                "deviation": 0,
+                "favorable": null
+            }
+        }
+    },
+    "unbudgeted": {
+        "g-income": {
+            "2026-10:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-10:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": -50000,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "TOTAAL": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null
+            }
+        },
+        "g-costs": {
+            "2026-10:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-10:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "TOTAAL": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null
+            }
+        },
+        "g-wages": {
+            "2026-10:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-10:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "TOTAAL": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null
+            }
+        },
+        "g-rent": {
+            "2026-10:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-10:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "TOTAAL": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null
+            }
+        },
+        "g-balance": {
+            "2026-10:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-10:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "TOTAAL": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null
+            }
+        },
+        "missing": {
+            "2026-10:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-10:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-11:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:true": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "2026-12:false": {
+                "budget": null,
+                "actual": null,
+                "deviation": null,
+                "favorable": null,
+                "hasBudget": false
+            },
+            "TOTAAL": {
+                "budget": null,
+                "actual": 0,
+                "deviation": null,
+                "favorable": null
+            }
+        }
+    }
+}

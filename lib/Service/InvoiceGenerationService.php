@@ -27,12 +27,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Service\Usage\BilledReadings;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Drafting, validation, and GL posting of BillableInvoice rows.
@@ -42,8 +45,10 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
-class InvoiceGenerationService {
+class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	/**
 	 * Wire collaborators for invoice drafting and posting.
 	 *
@@ -56,6 +61,7 @@ class InvoiceGenerationService {
 	 * @param VATCalculationService $vat VAT totaller.
 	 * @param UsageRatingCalculator $usageRating Meter-quantity rating (usage model).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param BilledReadings $billedReadings Refuses an unbillable reading and marks billed ones invoiced.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -67,6 +73,7 @@ class InvoiceGenerationService {
 		private readonly VATCalculationService $vat,
 		private readonly UsageRatingCalculator $usageRating,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly BilledReadings $billedReadings,
 	) {
 	}//end __construct()
 
@@ -88,7 +95,36 @@ class InvoiceGenerationService {
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	public function draftInvoice(InvoiceGenerationRequest $request): array {
-		// 1. Deduplicate source IDs.
+		$this->assertNoInvoicedSources(request: $request);
+
+		$draft = new InvoiceDraft();
+		$draft->request       = $request;
+		$draft->currency      = $this->invoiceCurrency(request: $request);
+		$draft->lineDrafts    = $this->records()->withStatutoryVatRates(lineDrafts: $this->lineDraftsFor(draft: $draft));
+		$draft->totals        = $this->vat->calculateVAT($draft->lineDrafts);
+		$draft->invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
+		$draft->invoiceId     = $this->saveDraftHeader(draft: $draft);
+
+		foreach ($draft->lineDrafts as $line) {
+			$this->saveObject(schema: 'BillableInvoiceLine', data: $this->records()->linePayload(draft: $draft, line: $line));
+		}
+
+		$this->billedReadings->markInvoiced(lineDrafts: $draft->lineDrafts, invoiceId: $draft->invoiceId);
+		$this->logDrafted(draft: $draft);
+
+		return $this->fetchInvoice(invoiceId: $draft->invoiceId);
+}//end draftInvoice()
+
+	/**
+	 * Refuse a request whose time entries or expenses are already invoiced.
+	 *
+	 * @param InvoiceGenerationRequest $request The request.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When a source id is already invoiced.
+	 */
+	private function assertNoInvoicedSources(InvoiceGenerationRequest $request): void {
 		$dedup = $this->deduper->deduplicateSourceIds(
 			administrationId: $request->administrationId,
 			timeEntryIds: $request->timeEntryIds,
@@ -102,120 +138,72 @@ class InvoiceGenerationService {
 				)
 			);
 		}
+	}//end assertNoInvoicedSources()
 
-		// 2. Resolve time entries → BillingModelEngine input shape. Every
-		// referenced id below (timeEntryIds/expenseIds/meterReadingIds/
-		// milestoneId) is client-supplied on the request — loadTimeEntries()/
-		// loadExpenses() (and, via driveModel(), loadMeterReadings()/
-		// loadMilestone()) each scope their lookup to
-		// $request->administrationId so a cross-tenant id can never resolve
-		// (REQ-001).
-		$timeEntries = $this->loadTimeEntries(ids: $request->timeEntryIds, rateCardId: $request->rateCardId, administrationId: $request->administrationId);
-		$expenses = $this->loadExpenses(ids: $request->expenseIds, administrationId: $request->administrationId);
-		$hoursLogged = array_sum(array_column($timeEntries, 'hours'));
+	/**
+	 * Resolve the request's time entries and expenses onto the draft and run
+	 * its billing model.
+	 *
+	 * Every referenced id (timeEntryIds/expenseIds/meterReadingIds/
+	 * milestoneId) is client-supplied on the request — loadTimeEntries()/
+	 * loadExpenses() (and, via driveModel(), loadMeterReadings()/
+	 * loadMilestone()) each scope their lookup to the request's
+	 * administrationId so a cross-tenant id can never resolve (REQ-001).
+	 *
+	 * @param InvoiceDraft $draft The draft.
+	 *
+	 * @return array<int,array<string,mixed>> Line drafts.
+	 */
+	private function lineDraftsFor(InvoiceDraft $draft): array {
+		$request = $draft->request;
+		$draft->timeEntries = $this->loadTimeEntries(
+			ids: $request->timeEntryIds,
+			rateCardId: $request->rateCardId,
+			administrationId: $request->administrationId,
+			currency: $draft->currency
+		);
+		$draft->expenses    = $this->loadExpenses(ids: $request->expenseIds, administrationId: $request->administrationId);
+		$draft->hoursLogged = array_sum(array_column($draft->timeEntries, 'hours'));
 
-		// 3. Drive the model.
-		$lineDrafts = $this->driveModel(request: $request, timeEntries: $timeEntries, expenses: $expenses, hoursLogged: $hoursLogged);
+		return $this->driveModel(draft: $draft);
+	}//end lineDraftsFor()
 
-		// 4. Total with VAT — clamp any per-line rate to the four statutory
-		// Dutch rates (21 / 9 / 6 / 0) before totalling so a stray rate
-		// from a fixture / migration doesn't slip through (REQ-ITE-009).
-		foreach ($lineDrafts as &$_line) {
-			$_rate = (float)($_line['vatRate'] ?? BillingModelEngine::DEFAULT_VAT_RATE);
-			if ($this->vat->isValidRate($_rate) === false) {
-				$_line['vatRate'] = BillingModelEngine::DEFAULT_VAT_RATE;
-			}
-		}
-
-		unset($_line);
-
-		$totals = $this->vat->calculateVAT($lineDrafts);
-		$invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
-		$dueDate = $this->addDays(isoDate: $request->toDate, days: 30);
-
-		$invoice = [
-			'administrationId' => $request->administrationId,
-			'invoiceNumber' => $invoiceNumber,
-			'billingModel' => $request->billingModel,
-			'customerId' => $request->customerId,
-			'projectId' => $request->projectId,
-			'invoiceDate' => $request->toDate,
-			'dueDate' => $dueDate,
-			'timeEntryIds' => $request->timeEntryIds,
-			'expenseIds' => $request->expenseIds,
-			'meterReadingIds' => $request->meterReadingIds,
-			'rateCardId' => $request->rateCardId,
-			'retainerScheduleId' => $request->retainerScheduleId,
-			'lineItemsByModel' => $this->summariseLineItemsByModel(lineDrafts: $lineDrafts),
-			'summary' => [
-				'netAmount' => round($totals['netCents'] / 100, 2),
-				'vatAmount' => round($totals['vatCents'] / 100, 2),
-				'grossAmount' => round($totals['grossCents'] / 100, 2),
-				'currency' => 'EUR',
-				'breakdown' => $this->breakdownInEuros(breakdown: $totals['breakdown']),
-			],
-			'netAmount' => round($totals['netCents'] / 100, 2),
-			'vatAmount' => round($totals['vatCents'] / 100, 2),
-			'grossAmount' => round($totals['grossCents'] / 100, 2),
-			'currency' => 'EUR',
-			'paymentTerms' => 'net 30',
-			'status' => 'draft',
-			'posted' => false,
-			'obligationId' => null,
-			'notes' => $request->notes,
-		];
-
-		$persisted = $this->saveObject(schema: 'BillableInvoice', data: $invoice);
+	/**
+	 * Save the draft BillableInvoice and answer its id.
+	 *
+	 * @param InvoiceDraft $draft The totalled draft.
+	 *
+	 * @return string The saved invoice's id.
+	 *
+	 * @throws RuntimeException When the save returns no identifier.
+	 */
+	private function saveDraftHeader(InvoiceDraft $draft): string {
+		$persisted = $this->saveObject(schema: 'BillableInvoice', data: $this->records()->invoicePayload(draft: $draft));
 		$invoiceId = (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? ''));
 		if ($invoiceId === '') {
 			throw new RuntimeException('BillableInvoice save did not return an identifier.');
 		}
 
-		// 5. Persist lines.
-		foreach ($lineDrafts as $line) {
-			if (isset($line['billableUnits']) === true) {
-				$billableUnits = (float)$line['billableUnits'];
-			} else {
-				$billableUnits = null;
-			}
+		return $invoiceId;
+	}//end saveDraftHeader()
 
-			$vatAmount = round(
-				$this->vat->vatOnNet(
-					netCents: (int)$line['costAmountCents'],
-					rate: (float)$line['vatRate']
-				) / 100,
-				2
-			);
-
-			$linePayload = [
-				'administrationId' => $request->administrationId,
-				'invoiceId' => $invoiceId,
-				'lineNumber' => (int)$line['lineNumber'],
-				'sourceType' => (string)$line['sourceType'],
-				'sourceId' => $line['sourceId'] ?? null,
-				'description' => (string)$line['description'],
-				'billableUnits' => $billableUnits,
-				'rateApplied' => $line['rateApplied'] ?? null,
-				'markup' => (float)($line['markup'] ?? 0),
-				'costAmount' => round(((int)$line['costAmountCents']) / 100, 2),
-				'vatRate' => (float)$line['vatRate'],
-				'vatAmount' => $vatAmount,
-				'modelSpecificFields' => $line['modelSpecificFields'] ?? null,
-			];
-			$this->saveObject(schema: 'BillableInvoiceLine', data: $linePayload);
-		}//end foreach
-
+	/**
+	 * Log the drafted invoice.
+	 *
+	 * @param InvoiceDraft $draft The saved draft.
+	 *
+	 * @return void
+	 */
+	private function logDrafted(InvoiceDraft $draft): void {
 		$this->logger->info(
 			sprintf(
 				'BillableInvoice %s drafted (%s lines, gross €%.2f)',
-				$invoiceNumber,
-				count($lineDrafts),
-				($totals['grossCents'] / 100)
+				$draft->invoiceNumber,
+				count($draft->lineDrafts),
+				($draft->totals['grossCents'] / 100)
 			)
 		);
-
-		return $this->fetchInvoice(invoiceId: $invoiceId);
-	}//end draftInvoice()
+	}//end logDrafted()
 
 	/**
 	 * Validate an invoice for duplicate source ids + billing-model consistency.
@@ -227,6 +215,28 @@ class InvoiceGenerationService {
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
 	 */
 	public function validateInvoice(array $invoice): array {
+		$errors = array_merge(
+			$this->conflictErrors(invoice: $invoice),
+			$this->billingModelErrors(invoice: $invoice)
+		);
+
+		return [
+			'valid' => (count($errors) === 0),
+			'errors' => $errors,
+		];
+
+	}//end validateInvoice()
+
+	/**
+	 * The conflicts of the invoice's time entries and expenses with other invoices.
+	 *
+	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
+	 *
+	 * @return array<int,string> One message per conflicting invoice.
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 */
+	private function conflictErrors(array $invoice): array {
 		$errors = [];
 		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
 		$admin = (string)($invoice['administrationId'] ?? '');
@@ -257,6 +267,20 @@ class InvoiceGenerationService {
 			}
 		}
 
+		return $errors;
+	}//end conflictErrors()
+
+	/**
+	 * The fields the invoice's billing model requires but the invoice lacks.
+	 *
+	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
+	 *
+	 * @return array<int,string> One message per missing field.
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 */
+	private function billingModelErrors(array $invoice): array {
+		$errors = [];
 		$model = (string)($invoice['billingModel'] ?? '');
 		if ($model === 't_and_m' && empty($invoice['rateCardId']) === true) {
 			$errors[] = 'rateCardId is required for t_and_m model.';
@@ -266,12 +290,8 @@ class InvoiceGenerationService {
 			$errors[] = sprintf('retainerScheduleId is required for %s model.', $model);
 		}
 
-		return [
-			'valid' => (count($errors) === 0),
-			'errors' => $errors,
-		];
-
-	}//end validateInvoice()
+		return $errors;
+	}//end billingModelErrors()
 
 	/**
 	 * Post a draft invoice — transitions to posted, creates a stub Obligation,
@@ -284,69 +304,11 @@ class InvoiceGenerationService {
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
 	 */
 	public function postInvoice(array $invoice): array {
-		$status = (string)($invoice['status'] ?? '');
-		if ($status === 'posted') {
-			throw new RuntimeException('Invoice is already posted.');
-		}
+		$this->assertPostable(invoice: $invoice);
 
-		if ($status === 'cancelled') {
-			throw new RuntimeException('Cancelled invoices cannot be posted.');
-		}
+		$obligationId = $this->saveObligation(invoice: $invoice);
+		$this->saveJournal(invoice: $invoice);
 
-		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
-		$admin = (string)($invoice['administrationId'] ?? '');
-
-		$validation = $this->validateInvoice(invoice: $invoice);
-		if ($validation['valid'] === false) {
-			throw new RuntimeException('Invoice failed validation: ' . implode('; ', $validation['errors']));
-		}
-
-		$netCents = (int)round(((float)($invoice['netAmount'] ?? 0)) * 100);
-		$vatCents = (int)round(((float)($invoice['vatAmount'] ?? 0)) * 100);
-		$grossCents = (int)round(((float)($invoice['grossAmount'] ?? 0)) * 100);
-
-		// Create Obligation stub (consumed by accounts-receivable-core).
-		$obligation = [
-			'administrationId' => $admin,
-			'obligationNumber' => 'OBL-' . ((string)($invoice['invoiceNumber'] ?? $invoiceId)),
-			'invoiceId' => $invoiceId,
-			'customerId' => (string)($invoice['customerId'] ?? ''),
-			'amount' => round($grossCents / 100, 2),
-			'currency' => (string)($invoice['currency'] ?? 'EUR'),
-			'dueDate' => (string)($invoice['dueDate'] ?? ''),
-			'status' => 'open',
-		];
-
-		$obligationId = null;
-		try {
-			$persistedObl = $this->saveObject(schema: 'Obligation', data: $obligation);
-			$obligationId = (string)($persistedObl['id'] ?? ($persistedObl['@self']['id'] ?? ''));
-		} catch (\Throwable $e) {
-			$this->logger->warning('Obligation save failed (schema may not be present yet): ' . $e->getMessage());
-		}
-
-		// GL posting: Debit AR, Credit Revenue (by model), Credit VAT Payable.
-		$revenueAccount = $this->revenueAccountFor(billingModel: (string)($invoice['billingModel'] ?? ''));
-		$journal = [
-			'administrationId' => $admin,
-			'description' => sprintf('Invoice %s', (string)($invoice['invoiceNumber'] ?? '')),
-			'journalDate' => (string)($invoice['invoiceDate'] ?? ''),
-			'isBalanced' => true,
-			'invoiceId' => $invoiceId,
-			'postings' => [
-				['accountNumber' => '1130', 'debitCents' => $grossCents, 'creditCents' => 0, 'description' => 'Accounts Receivable'],
-				['accountNumber' => $revenueAccount, 'debitCents' => 0, 'creditCents' => $netCents, 'description' => 'Revenue'],
-				['accountNumber' => '1150', 'debitCents' => 0, 'creditCents' => $vatCents, 'description' => 'VAT Payable'],
-			],
-		];
-
-		try {
-			$this->saveObject(schema: 'GLTransaction', data: $journal);
-		} catch (\Throwable $e) {
-			$this->logger->warning('GL posting failed (continuing): ' . $e->getMessage());
-		}
-
-		// Patch the invoice.
 		$update = array_merge(
 			$invoice,
 			[
@@ -361,13 +323,103 @@ class InvoiceGenerationService {
 			sprintf(
 				'BillableInvoice %s posted (gross €%.2f, obligation %s)',
 				(string)($invoice['invoiceNumber'] ?? ''),
-				$grossCents / 100,
+				$this->records()->centsOf(invoice: $invoice, field: 'grossAmount') / 100,
 				(string)$obligationId
 			)
 		);
 
 		return $persisted;
 	}//end postInvoice()
+
+	/**
+	 * Refuse a posted or cancelled invoice, then one that fails validation.
+	 *
+	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the invoice cannot be posted.
+	 */
+	private function assertPostable(array $invoice): void {
+		$status = (string)($invoice['status'] ?? '');
+		if ($status === 'posted') {
+			throw new RuntimeException('Invoice is already posted.');
+		}
+
+		if ($status === 'cancelled') {
+			throw new RuntimeException('Cancelled invoices cannot be posted.');
+		}
+
+		$validation = $this->validateInvoice(invoice: $invoice);
+		if ($validation['valid'] === false) {
+			throw new RuntimeException('Invoice failed validation: ' . implode('; ', $validation['errors']));
+		}
+	}//end assertPostable()
+
+	/**
+	 * Save the stub Obligation (consumed by accounts-receivable-core) and
+	 * answer its id; a failed save is logged and answers null.
+	 *
+	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
+	 *
+	 * @return string|null The obligation id.
+	 */
+	private function saveObligation(array $invoice): ?string {
+		$invoiceId  = $this->idOf(record: $invoice);
+		$obligation = [
+			'administrationId' => (string)($invoice['administrationId'] ?? ''),
+			'obligationNumber' => 'OBL-' . ((string)($invoice['invoiceNumber'] ?? $invoiceId)),
+			'invoiceId' => $invoiceId,
+			'customerId' => (string)($invoice['customerId'] ?? ''),
+			'amount' => round($this->records()->centsOf(invoice: $invoice, field: 'grossAmount') / 100, 2),
+			'currency' => (string)($invoice['currency'] ?? 'EUR'),
+			'dueDate' => (string)($invoice['dueDate'] ?? ''),
+			'status' => 'open',
+		];
+
+		try {
+			return $this->idOf(record: $this->saveObject(schema: 'Obligation', data: $obligation));
+		} catch (\Throwable $e) {
+			$this->logger->warning('Obligation save failed (schema may not be present yet): ' . $e->getMessage());
+			return null;
+		}
+	}//end saveObligation()
+
+	/**
+	 * Save the GL journal: debit AR, credit Revenue (by model), credit VAT
+	 * Payable; a failed save is logged and posting continues.
+	 *
+	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
+	 *
+	 * @return void
+	 */
+	private function saveJournal(array $invoice): void {
+		try {
+			$this->saveObject(schema: 'GLTransaction', data: $this->records()->journalFor(invoice: $invoice));
+		} catch (\Throwable $e) {
+			$this->logger->warning('GL posting failed (continuing): ' . $e->getMessage());
+		}
+	}//end saveJournal()
+
+	/**
+	 * A record's id, from `id` or `@self.id`.
+	 *
+	 * @param array<string,mixed> $record The record.
+	 *
+	 * @return string
+	 */
+	private function idOf(array $record): string {
+		return (string)($record['id'] ?? ($record['@self']['id'] ?? ''));
+	}//end idOf()
+
+	/**
+	 * The record builder for drafts and posts.
+	 *
+	 * @return BillableInvoiceRecords
+	 */
+	private function records(): BillableInvoiceRecords {
+		return new BillableInvoiceRecords($this->vat);
+	}//end records()
 
 	/**
 	 * Sum the net cents of a line-item array.
@@ -388,108 +440,144 @@ class InvoiceGenerationService {
 	}//end calculateNetAmount()
 
 	/**
-	 * Map billing model → revenue account number.
+	 * Run the request's billing model on the draft's resolved sources.
 	 *
-	 * @param string $billingModel Billing model.
-	 *
-	 * @return string GL account number.
-	 */
-	private function revenueAccountFor(string $billingModel): string {
-		return match ($billingModel) {
-			't_and_m' => '4100',
-			'fixed_fee', 'milestone' => '4200',
-			'retainer' => '4300',
-			'mixed' => '4400',
-			'usage' => '4500',
-			default => '4000',
-		};
-
-	}//end revenueAccountFor()
-
-	/**
-	 * Decide which BillingModelEngine method to invoke.
-	 *
-	 * @param InvoiceGenerationRequest $request Request.
-	 * @param array<int,array<string,mixed>> $timeEntries Resolved time entries.
-	 * @param array<int,array<string,mixed>> $expenses Resolved expenses.
-	 * @param float $hoursLogged Total hours.
+	 * @param InvoiceDraft $draft The draft with its time entries and expenses.
 	 *
 	 * @return array<int,array<string,mixed>> Line drafts.
+	 *
+	 * @throws RuntimeException When the billing model is not supported.
 	 */
-	private function driveModel(
-		InvoiceGenerationRequest $request,
-		array $timeEntries,
-		array $expenses,
-		float $hoursLogged,
-	): array {
-		switch ($request->billingModel) {
-			case 't_and_m':
-				return $this->billingEngine->calculateTAndM(timeEntries: $timeEntries, expenses: $expenses);
-			case 'fixed_fee':
-				if (empty($request->notes) === false) {
-					$fixedFeeDescription = $request->notes;
-				} else {
-					$fixedFeeDescription = 'Fixed-fee engagement';
-				}
-				return $this->billingEngine->calculateFixedFee(
-					flatFeeCents: (int)$request->fixedFeeCents,
-					description: $fixedFeeDescription,
-					expenses: $expenses,
-					timeHourCount: (int)round($hoursLogged)
-				);
-
-			case 'milestone':
-				return $this->billingEngine->calculateMilestone(
-					milestone: $this->loadMilestone(milestoneId: (string)$request->milestoneId, administrationId: $request->administrationId),
-					expenses: $expenses
-				);
-
-			case 'retainer':
-				return $this->billingEngine->calculateRetainer(
-					retainer: $this->retainers->resolveRetainerAmount(
-						scheduleId: (string)$request->retainerScheduleId,
-						invoiceMonth: $request->toDate,
-						administrationId: $request->administrationId
-					),
-					retainerMonth: substr($request->toDate, 0, 7),
-					hoursLogged: $hoursLogged,
-					expenses: $expenses
-				);
-
-			case 'usage':
-				return $this->billingEngine->calculateUsage(
-					ratedReadings: $this->loadMeterReadings(
-						ids: $request->meterReadingIds,
-						defaultRatePlanId: $request->usageRatePlanId,
-						administrationId: $request->administrationId
-					),
-					expenses: $expenses
-				);
-
-			case 'mixed':
-				if (empty($request->notes) === false) {
-					$setupFeeDescription = $request->notes;
-				} else {
-					$setupFeeDescription = 'Setup fee';
-				}
-				return $this->billingEngine->calculateMixed(
-					retainer: $this->retainers->resolveRetainerAmount(
-						scheduleId: (string)$request->retainerScheduleId,
-						invoiceMonth: $request->toDate,
-						administrationId: $request->administrationId
-					),
-					retainerMonth: substr($request->toDate, 0, 7),
-					hoursLogged: $hoursLogged,
-					setupFeeCents: $request->fixedFeeCents,
-					setupFeeDescription: $setupFeeDescription,
-					expenses: $expenses
-				);
-
-			default:
-				throw new RuntimeException(sprintf('Unsupported billing model: %s', $request->billingModel));
-		}//end switch
+	private function driveModel(InvoiceDraft $draft): array {
+		return match ($draft->request->billingModel) {
+			't_and_m' => $this->billingEngine->calculateTAndM(timeEntries: $draft->timeEntries, expenses: $draft->expenses),
+			'fixed_fee' => $this->fixedFeeLines(draft: $draft),
+			'milestone' => $this->milestoneLines(draft: $draft),
+			'retainer' => $this->retainerLines(draft: $draft),
+			'usage' => $this->usageLines(draft: $draft),
+			'mixed' => $this->mixedLines(draft: $draft),
+			default => throw new RuntimeException(sprintf('Unsupported billing model: %s', $draft->request->billingModel)),
+		};
 
 	}//end driveModel()
+
+	/**
+	 * Fixed-fee lines: the flat fee, described by the notes when there are
+	 * any, plus the expenses.
+	 *
+	 * @param InvoiceDraft $draft The draft.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function fixedFeeLines(InvoiceDraft $draft): array {
+		return $this->billingEngine->calculateFixedFee(
+			flatFeeCents: (int)$draft->request->fixedFeeCents,
+			description: $this->notesOr(request: $draft->request, fallback: 'Fixed-fee engagement'),
+			expenses: $draft->expenses,
+			timeHourCount: (int)round($draft->hoursLogged)
+		);
+	}//end fixedFeeLines()
+
+	/**
+	 * Milestone lines: the tenant's milestone plus the expenses.
+	 *
+	 * @param InvoiceDraft $draft The draft.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function milestoneLines(InvoiceDraft $draft): array {
+		$request = $draft->request;
+		return $this->billingEngine->calculateMilestone(
+			milestone: $this->loadMilestone(milestoneId: (string)$request->milestoneId, administrationId: $request->administrationId),
+			expenses: $draft->expenses
+		);
+	}//end milestoneLines()
+
+	/**
+	 * Retainer lines: the month's retainer against the hours logged, plus the
+	 * expenses.
+	 *
+	 * @param InvoiceDraft $draft The draft.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function retainerLines(InvoiceDraft $draft): array {
+		return $this->billingEngine->calculateRetainer(
+			retainer: $this->retainerFor(request: $draft->request),
+			retainerMonth: substr($draft->request->toDate, 0, 7),
+			hoursLogged: $draft->hoursLogged,
+			expenses: $draft->expenses
+		);
+	}//end retainerLines()
+
+	/**
+	 * Usage lines: the tenant's rated meter readings plus the expenses.
+	 *
+	 * @param InvoiceDraft $draft The draft.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function usageLines(InvoiceDraft $draft): array {
+		$request = $draft->request;
+		return $this->billingEngine->calculateUsage(
+			ratedReadings: $this->loadMeterReadings(
+				ids: $request->meterReadingIds,
+				defaultRatePlanId: $request->usageRatePlanId,
+				administrationId: $request->administrationId
+			),
+			expenses: $draft->expenses
+		);
+	}//end usageLines()
+
+	/**
+	 * Mixed lines: the retainer, the setup fee (described by the notes when
+	 * there are any) and the expenses.
+	 *
+	 * @param InvoiceDraft $draft The draft.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function mixedLines(InvoiceDraft $draft): array {
+		return $this->billingEngine->calculateMixed(
+			retainer: $this->retainerFor(request: $draft->request),
+			retainerMonth: substr($draft->request->toDate, 0, 7),
+			hoursLogged: $draft->hoursLogged,
+			setupFeeCents: $draft->request->fixedFeeCents,
+			setupFeeDescription: $this->notesOr(request: $draft->request, fallback: 'Setup fee'),
+			expenses: $draft->expenses
+		);
+	}//end mixedLines()
+
+	/**
+	 * The tenant's retainer amount for the invoice month.
+	 *
+	 * @param InvoiceGenerationRequest $request The request.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function retainerFor(InvoiceGenerationRequest $request): array {
+		return $this->retainers->resolveRetainerAmount(
+			scheduleId: (string)$request->retainerScheduleId,
+			invoiceMonth: $request->toDate,
+			administrationId: $request->administrationId
+		);
+	}//end retainerFor()
+
+	/**
+	 * The request's notes when they are not empty, else the fallback.
+	 *
+	 * @param InvoiceGenerationRequest $request  The request.
+	 * @param string                   $fallback The default description.
+	 *
+	 * @return string
+	 */
+	private function notesOr(InvoiceGenerationRequest $request, string $fallback): string {
+		if (empty($request->notes) === false) {
+			return (string)$request->notes;
+		}
+
+		return $fallback;
+	}//end notesOr()
 
 	/**
 	 * Load time entries and attach rate snapshots.
@@ -503,12 +591,14 @@ class InvoiceGenerationService {
 	 * @param array<int,string> $ids UrenRegistratie ids.
 	 * @param string|null $rateCardId Rate card to resolve against.
 	 * @param string $administrationId Caller's server-resolved administration scope.
+	 * @param string $currency The invoice currency, for an override rate.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
 	 */
-	private function loadTimeEntries(array $ids, ?string $rateCardId, string $administrationId): array {
+	private function loadTimeEntries(array $ids, ?string $rateCardId, string $administrationId, string $currency = 'EUR'): array {
 		if (count($ids) === 0) {
 			return [];
 		}
@@ -520,25 +610,9 @@ class InvoiceGenerationService {
 				continue;
 			}
 
-			$resourceType = (string)($loaded['resourceType'] ?? ($loaded['role'] ?? 'consultant'));
+			$resourceType = $this->resourceTypeOf(loaded: $loaded);
 			$hours = (float)($loaded['hours'] ?? ($loaded['duration'] ?? 0));
-			$date = (string)($loaded['date'] ?? ($loaded['workDate'] ?? date('Y-m-d')));
-
-			if ($rateCardId !== null) {
-				$rate = $this->rateCards->resolveRate(
-					rateCardId: $rateCardId,
-					resourceType: $resourceType,
-					date: $date,
-					administrationId: $administrationId
-				);
-			} else {
-				$rate = [
-					'rateCents' => $this->toCents(value: $loaded['hourlyRateOverride'] ?? 10000),
-					'currency' => 'EUR',
-					'rateCardVersion' => 'override',
-					'effectiveDate' => $date,
-				];
-			}
+			$rate = $this->timeEntryRate(loaded: $loaded, rateCardId: $rateCardId, administrationId: $administrationId, currency: $currency);
 
 			$entries[] = [
 				'timeEntryId' => $id,
@@ -551,6 +625,69 @@ class InvoiceGenerationService {
 
 		return $entries;
 	}//end loadTimeEntries()
+
+	/**
+	 * The rate of one time entry: from the rate card when one is given, else the entry's own override.
+	 *
+	 * @param array<string,mixed> $loaded           The UrenRegistratie record.
+	 * @param string|null         $rateCardId       Rate card to resolve against.
+	 * @param string              $administrationId Caller's server-resolved administration scope.
+	 * @param string              $currency         The invoice currency, for an override rate.
+	 *
+	 * @return array<string,mixed> The applied rate.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function timeEntryRate(array $loaded, string|null $rateCardId, string $administrationId, string $currency): array {
+		$resourceType = $this->resourceTypeOf(loaded: $loaded);
+		$date = (string)($loaded['date'] ?? ($loaded['workDate'] ?? date('Y-m-d')));
+
+		if ($rateCardId !== null) {
+			$rate = $this->rateCards->resolveRate(
+				rateCardId: $rateCardId,
+				resourceType: $resourceType,
+				date: $date,
+				administrationId: $administrationId
+			);
+		} else {
+			$rate = $this->overrideRate(loaded: $loaded, currency: $currency, date: $date);
+		}
+
+		return $rate;
+	}//end timeEntryRate()
+
+	/**
+	 * The resource type a time entry is billed as.
+	 *
+	 * @param array<string,mixed> $loaded The UrenRegistratie record.
+	 *
+	 * @return string The resource type, `consultant` when the entry names none.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function resourceTypeOf(array $loaded): string {
+		return (string)($loaded['resourceType'] ?? ($loaded['role'] ?? 'consultant'));
+	}//end resourceTypeOf()
+
+	/**
+	 * The rate of a time entry billed without a rate card: its own hourly override.
+	 *
+	 * @param array<string,mixed> $loaded   The UrenRegistratie record.
+	 * @param string              $currency The invoice currency.
+	 * @param string              $date     The work date.
+	 *
+	 * @return array<string,mixed> The applied rate.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function overrideRate(array $loaded, string $currency, string $date): array {
+		return [
+			'rateCents' => $this->toCents(value: $loaded['hourlyRateOverride'] ?? 10000),
+			'currency' => $currency,
+			'rateCardVersion' => 'override',
+			'effectiveDate' => $date,
+		];
+	}//end overrideRate()
 
 	/**
 	 * Load expense records into engine input shape.
@@ -620,55 +757,94 @@ class InvoiceGenerationService {
 
 		$rated = [];
 		foreach ($ids as $id) {
-			$reading = $this->findScoped(schema: 'MeterReading', id: $id, administrationId: $administrationId);
-			if ($reading === null) {
+			$line = $this->rateMeterReading(id: $id, defaultRatePlanId: $defaultRatePlanId, administrationId: $administrationId);
+			if ($line === null) {
 				continue;
 			}
 
-			$planId = (string)($reading['ratePlanId'] ?? ($defaultRatePlanId ?? ''));
-			if ($planId === '') {
-				$this->logger->warning(sprintf('MeterReading %s has no ratePlanId; skipping.', $id));
-				continue;
-			}
-
-			$plan = $this->findScoped(schema: 'UsageRatePlan', id: $planId, administrationId: $administrationId);
-			if ($plan === null) {
-				$this->logger->warning(sprintf('UsageRatePlan %s not found for MeterReading %s; skipping.', $planId, $id));
-				continue;
-			}
-
-			$quantity = (float)($reading['quantity'] ?? 0.0);
-			$priced = $this->usageRating->rate(quantity: $quantity, plan: $plan);
-
-			$description = (string)($reading['description'] ?? '');
-			if ($description === '') {
-				$description = sprintf(
-					'%s — %s %s',
-					(string)($plan['name'] ?? 'Metered usage'),
-					rtrim(rtrim(number_format($quantity, 4, '.', ''), '0'), '.'),
-					(string)($plan['unit'] ?? ($reading['unit'] ?? 'units'))
-				);
-			}
-
-			$rated[] = [
-				'readingId' => $id,
-				'meterId' => (string)($reading['meterId'] ?? ''),
-				'resourceType' => (string)($reading['resourceType'] ?? ($plan['resourceType'] ?? '')),
-				'unit' => (string)($plan['unit'] ?? ($reading['unit'] ?? '')),
-				'description' => $description,
-				'billableUnits' => $priced['billableUnits'],
-				'unitPriceCents' => $priced['unitPriceCents'],
-				'costAmountCents' => $priced['costAmountCents'],
-				'vatRate' => $priced['vatRate'],
-				'ratingMethod' => $priced['ratingMethod'],
-				'ratePlanId' => $planId,
-				'periodStart' => (string)($reading['periodStart'] ?? ''),
-				'periodEnd' => (string)($reading['periodEnd'] ?? ''),
-			];
-		}//end foreach
+			$rated[] = $line;
+		}
 
 		return $rated;
 	}//end loadMeterReadings()
+
+	/**
+	 * Load one meter reading and rate it against its UsageRatePlan.
+	 *
+	 * @param string              $id                The MeterReading id.
+	 * @param string|null         $defaultRatePlanId Fallback UsageRatePlan id.
+	 * @param string              $administrationId  Caller's server-resolved administration scope.
+	 *
+	 * @return array<string,mixed>|null The rated line, or null when the reading is not found or (logged) has no usable plan.
+	 *
+	 * @spec openspec/specs/usage-metered-billing/spec.md
+	 */
+	private function rateMeterReading(string $id, string|null $defaultRatePlanId, string $administrationId): array|null {
+		$reading = $this->findScoped(schema: 'MeterReading', id: $id, administrationId: $administrationId);
+		if ($reading === null) {
+			return null;
+		}
+
+		$this->billedReadings->assertBillable(reading: $reading, id: $id);
+
+		$planId = (string)($reading['ratePlanId'] ?? ($defaultRatePlanId ?? ''));
+		if ($planId === '') {
+			$this->logger->warning(sprintf('MeterReading %s has no ratePlanId; skipping.', $id));
+			return null;
+		}
+
+		$plan = $this->findScoped(schema: 'UsageRatePlan', id: $planId, administrationId: $administrationId);
+		if ($plan === null) {
+			$this->logger->warning(sprintf('UsageRatePlan %s not found for MeterReading %s; skipping.', $planId, $id));
+			return null;
+		}
+
+		$quantity = (float)($reading['quantity'] ?? 0.0);
+		$priced = $this->usageRating->rate(quantity: $quantity, plan: $plan);
+
+		$description = $this->meterDescription(reading: $reading, plan: $plan, quantity: $quantity);
+
+		return [
+			'readingId' => $id,
+			'meterId' => (string)($reading['meterId'] ?? ''),
+			'resourceType' => (string)($reading['resourceType'] ?? ($plan['resourceType'] ?? '')),
+			'unit' => (string)($plan['unit'] ?? ($reading['unit'] ?? '')),
+			'description' => $description,
+			'billableUnits' => $priced['billableUnits'],
+			'unitPriceCents' => $priced['unitPriceCents'],
+			'costAmountCents' => $priced['costAmountCents'],
+			'vatRate' => $priced['vatRate'],
+			'ratingMethod' => $priced['ratingMethod'],
+			'ratePlanId' => $planId,
+			'periodStart' => (string)($reading['periodStart'] ?? ''),
+			'periodEnd' => (string)($reading['periodEnd'] ?? ''),
+		];
+	}//end rateMeterReading()
+
+	/**
+	 * The reading's own description, or one built from the plan name, quantity and unit.
+	 *
+	 * @param array<string,mixed> $reading  The MeterReading record.
+	 * @param array<string,mixed> $plan     The UsageRatePlan.
+	 * @param float               $quantity The read quantity.
+	 *
+	 * @return string The description.
+	 *
+	 * @spec openspec/specs/usage-metered-billing/spec.md
+	 */
+	private function meterDescription(array $reading, array $plan, float $quantity): string {
+		$description = (string)($reading['description'] ?? '');
+		if ($description === '') {
+			$description = sprintf(
+				'%s — %s %s',
+				(string)($plan['name'] ?? 'Metered usage'),
+				rtrim(rtrim(number_format($quantity, 4, '.', ''), '0'), '.'),
+				(string)($plan['unit'] ?? ($reading['unit'] ?? 'units'))
+			);
+		}
+
+		return $description;
+	}//end meterDescription()
 
 	/**
 	 * Load milestone metadata or return a stub on lookup failure.
@@ -707,49 +883,6 @@ class InvoiceGenerationService {
 	}//end loadMilestone()
 
 	/**
-	 * Summarise per-source-type counts + totals.
-	 *
-	 * @param array<int,array<string,mixed>> $lineDrafts Line item drafts.
-	 *
-	 * @return array<string,array{count:int,totalCents:int}>
-	 */
-	private function summariseLineItemsByModel(array $lineDrafts): array {
-		$summary = [];
-		foreach ($lineDrafts as $line) {
-			$type = (string)($line['sourceType'] ?? 'manual');
-			if (isset($summary[$type]) === false) {
-				$summary[$type] = ['count' => 0, 'totalCents' => 0];
-			}
-
-			$summary[$type]['count']++;
-			$summary[$type]['totalCents'] += (int)($line['costAmountCents'] ?? 0);
-		}
-
-		return $summary;
-	}//end summariseLineItemsByModel()
-
-	/**
-	 * Format the per-rate breakdown in euros for the summary block.
-	 *
-	 * @param array<int,array{rate:float,netCents:int,vatCents:int,grossCents:int}> $breakdown Cents.
-	 *
-	 * @return array<int,array{rate:float,net:float,vat:float,gross:float}>
-	 */
-	private function breakdownInEuros(array $breakdown): array {
-		$rows = [];
-		foreach ($breakdown as $group) {
-			$rows[] = [
-				'rate' => (float)$group['rate'],
-				'net' => round($group['netCents'] / 100, 2),
-				'vat' => round($group['vatCents'] / 100, 2),
-				'gross' => round($group['grossCents'] / 100, 2),
-			];
-		}
-
-		return $rows;
-	}//end breakdownInEuros()
-
-	/**
 	 * Generate an invoice number scoped to an administration + month.
 	 *
 	 * @param string $administrationId Tenant id.
@@ -772,23 +905,6 @@ class InvoiceGenerationService {
 	}//end generateInvoiceNumber()
 
 	/**
-	 * Add days to an ISO date.
-	 *
-	 * @param string $isoDate Source date.
-	 * @param int $days Days to add.
-	 *
-	 * @return string New ISO date.
-	 */
-	private function addDays(string $isoDate, int $days): string {
-		$ts = strtotime($isoDate);
-		if ($ts === false) {
-			return $isoDate;
-		}
-
-		return date('Y-m-d', ($ts + ($days * 86400)));
-	}//end addDays()
-
-	/**
 	 * Fetch a BillableInvoice by id.
 	 *
 	 * @param string $invoiceId Invoice id.
@@ -805,6 +921,36 @@ class InvoiceGenerationService {
 	}//end fetchInvoice()
 
 	/**
+	 * The invoice currency: the customer's `currency`, else the administration's
+	 * `functionalCurrency`, else EUR (REQ-SID-004).
+	 *
+	 * Both lookups are scoped to the request's administration, so another
+	 * administration's customer never sets it.
+	 *
+	 * @param InvoiceGenerationRequest $request The request.
+	 *
+	 * @return string ISO 4217 code, upper case.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function invoiceCurrency(InvoiceGenerationRequest $request): string {
+		$customer = $this->findScoped(schema: 'CustomerMaster', id: $request->customerId, administrationId: $request->administrationId);
+		$currency = strtoupper(trim((string)($customer['currency'] ?? '')));
+		if ($currency !== '') {
+			return $currency;
+		}
+
+		$administration = $this->find(schema: 'Administration', id: $request->administrationId);
+		$currency       = strtoupper(trim((string)($administration['functionalCurrency'] ?? '')));
+		if ($currency !== '') {
+			return $currency;
+		}
+
+		return 'EUR';
+
+	}//end invoiceCurrency()
+
+	/**
 	 * Find a single record via the real OR ObjectService API.
 	 *
 	 * @param string $schema Schema slug.
@@ -814,7 +960,10 @@ class InvoiceGenerationService {
 	 */
 	private function find(string $schema, string $id): ?array {
 		try {
-			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->find($id);
+			$rs = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->register())->setSchema($schema),
+				id: $id
+			);
 			// ADR-084: find() is declared `: ?ObjectEntityInterface`, so the old
 			// is_array() arm was unreachable by type and this helper returned NULL
 			// for every existing record — every lookup read as "not found".
@@ -830,11 +979,13 @@ class InvoiceGenerationService {
 	}//end find()
 
 	/**
-	 * Find a single record scoped to the caller's administrationId — the id
-	 * AND administrationId are compounded into the query itself (an equality
-	 * filter pair on findAll()) so a cross-tenant id can never resolve, rather
-	 * than being fetched by id alone and then checked. Mirrors
-	 * GoodsReceiptNoteService::findOne()'s pattern (REQ-001).
+	 * Find a single record scoped to the caller's administrationId: the record
+	 * is read by its identity (find(), uuid or slug) and refused when its
+	 * administrationId is not the caller's, so a cross-tenant id never
+	 * resolves (REQ-001). The id is NOT put in a findAll() filter: `filters`
+	 * address JSON properties, `id` is an entity column, and OpenRegister
+	 * matches no row for it at all, so every lookup here read as absent and a
+	 * usage, time or expense invoice drafted with no lines.
 	 *
 	 * Used for every id draftInvoice() resolves that originates on the
 	 * client-supplied request (timeEntryIds/expenseIds/meterReadingIds/
@@ -853,28 +1004,17 @@ class InvoiceGenerationService {
 	 */
 	private function findScoped(string $schema, string $id, string $administrationId): ?array {
 		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(
-					[
-						'filters' => [
-							'id' => $id,
-							'administrationId' => $administrationId,
-						],
-					]
-				);
+			$scoped = $this->objectService->setRegister($this->register())->setSchema($schema);
+			$record = ObjectIdentifier::findOne(scoped: $scoped, id: $id);
 		} catch (\Throwable $e) {
 			return null;
 		}
 
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
+		if ($record === null || (string)($record['administrationId'] ?? '') !== $administrationId) {
+			return null;
 		}
 
-		return null;
+		return $record;
 	}//end findScoped()
 
 	/**
@@ -915,7 +1055,7 @@ class InvoiceGenerationService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

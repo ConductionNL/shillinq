@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 // Define that we're running PHPUnit.
@@ -29,7 +34,50 @@ foreach (spl_autoload_functions() as $loader) {
 		// When run inside a deployed NC tree with OpenRegister installed,
 		// base.php below provides the real classes and this entry is shadowed.
 		$loader[0]->addPsr4('OCA\\OpenRegister\\', __DIR__ . '/stubs/OpenRegister/');
+		// Integriq's connection-registry event (adopt-connection-registry).
+		// ConnectionReportService names it by string and sends it only when
+		// the class exists; the stub mirrors integriq's real constructor.
+		$loader[0]->addPsr4('OCA\\Integriq\\', __DIR__ . '/stubs/Integriq/');
 		break;
+	}
+}
+
+// The published OpenRegister register-slug contracts, loaded from the vendored
+// hydra-gates package.
+//
+// This app used to keep verbatim copies of both files at
+// `tests/stubs/OpenRegister/Contract/`, because ConductionNL/.github#739
+// published them to the package after v1.17.0 was cut, so no tagged release
+// carried them and no constraint could reach them. v1.18.0 carries both, so the
+// copies are gone and the definitions come from vendor.
+//
+// That removes a real drift risk rather than documenting it. The copies were
+// byte identical to the originals apart from seven docblock tags: openregister's
+// `@spec openspec/specs/register-slug-resolution/spec.md` had to become `@link`
+// here, because that spec lives in openregister and gate 46
+// (`spec-anchor-existence`) resolves every `@spec` target against THIS
+// repository. Loading from vendor moves the files out of the gate's scope
+// entirely, so the tags need no rewriting and cannot fall behind.
+//
+// Gate 67 (`openregister-contract-parity`) requires the package copy and
+// openregister's own `lib/Contract/` to be byte identical, so the vendored file
+// is the definition openregister declares.
+//
+// `RegisterSlugResolution` is a CLASS and `RegisterSlugResolverInterface` an
+// INTERFACE, so the guard has to ask both questions. Asking only
+// `interface_exists()` would re-require a file that is already loaded, and a
+// duplicate declaration is a fatal, not a no-op.
+$shillinqContractDir = __DIR__ . '/../vendor/conduction/hydra-gates/hydra-gates/contracts';
+
+foreach (['RegisterSlugResolution', 'RegisterSlugResolverInterface'] as $contract) {
+	$fqcn = '\\OCA\\OpenRegister\\Contract\\' . $contract;
+	if (interface_exists($fqcn) === true || class_exists($fqcn) === true) {
+		continue;
+	}
+
+	$shipped = $shillinqContractDir . '/' . $contract . '.php';
+	if (file_exists($shipped) === true) {
+		require_once $shipped;
 	}
 }
 
@@ -56,6 +104,21 @@ if (class_exists('Doctrine\\DBAL\\ArrayParameterType', false) === false) {
 		. 'class ArrayParameterType { '
 		. 'const INTEGER = 101; const STRING = 102; '
 		. 'const ASCII = 103; const BINARY = 104; }'
+	);
+}
+
+// IQueryBuilder's PARAM_DATE / PARAM_BOOL constants reference
+// Doctrine\DBAL\Types\Types, and PHP resolves every constant of the interface
+// the first time any one of them (e.g. PARAM_STR_ARRAY) is read. Same
+// constant-only stub pattern; values mirror doctrine/dbal.
+if (class_exists('Doctrine\\DBAL\\Types\\Types', false) === false) {
+	eval(
+		'namespace Doctrine\\DBAL\\Types; '
+		. 'class Types { '
+		. "const BOOLEAN = 'boolean'; const DATE_MUTABLE = 'date'; "
+		. "const DATE_IMMUTABLE = 'date_immutable'; const DATETIME_MUTABLE = 'datetime'; "
+		. "const DATETIME_IMMUTABLE = 'datetime_immutable'; const DATETIMETZ_MUTABLE = 'datetimetz'; "
+		. "const DATETIMETZ_IMMUTABLE = 'datetimetz_immutable'; const TIME_MUTABLE = 'time'; }"
 	);
 }
 

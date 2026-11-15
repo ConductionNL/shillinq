@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "description": "APTransaction matchFull and matchPartial record that the bank paid the transaction. They now require APTransactionSettlementGuard, which allows them only while InvoiceSettlementService settles a confirmed ReconciliationMatch. The version is bumped past the last fragment that declares one (checks-vat-bbv-ledger-tail, 0.3.0) so the import writes the change."
+  },
+  "components": {
+    "schemas": {
+      "APTransaction": {
+        "slug": "APTransaction",
+        "version": "0.4.0",
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "matchFull": {
+              "requires": "OCA\\Shillinq\\Lifecycle\\APTransactionSettlementGuard"
+            },
+            "matchPartial": {
+              "requires": "OCA\\Shillinq\\Lifecycle\\APTransactionSettlementGuard"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -28,7 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BbvSeedServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -38,7 +39,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
-class BbvSeedService {
+class BbvSeedService implements BbvSeedServiceInterface {
 	/**
 	 * Catalogue descriptors mapping each seed file to its root array key, target
 	 * schema, and deduplication field.
@@ -92,7 +93,7 @@ class BbvSeedService {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -209,18 +210,9 @@ class BbvSeedService {
 		$registerSlug = $this->getRegisterSlug();
 
 		foreach ($rows as $row) {
-			$dedupValue = ($row[$dedupField] ?? null);
-			if ($dedupValue === null) {
+			$filters = $this->dedupFilters(row: $row, dedupField: $dedupField, secondaryDedupField: $secondaryDedupField);
+			if ($filters === null) {
 				continue;
-			}
-
-			$filters = [$dedupField => $dedupValue];
-
-			if ($secondaryDedupField !== null) {
-				$secondaryValue = ($row[$secondaryDedupField] ?? null);
-				if ($secondaryValue !== null) {
-					$filters[$secondaryDedupField] = $secondaryValue;
-				}
 			}
 
 			$existing = $objectService
@@ -239,4 +231,31 @@ class BbvSeedService {
 
 		return ['seeded' => $seeded, 'skipped' => $skipped];
 	}//end importRows()
+
+	/**
+	 * The dedup filters of a catalogue row, or null when it has no dedup value.
+	 *
+	 * @param array<string, mixed> $row                 Catalogue row.
+	 * @param string               $dedupField          Field used as the dedup key.
+	 * @param string|null          $secondaryDedupField Optional secondary field for the dedup key.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function dedupFilters(array $row, string $dedupField, string|null $secondaryDedupField): array|null {
+		$dedupValue = ($row[$dedupField] ?? null);
+		if ($dedupValue === null) {
+			return null;
+		}
+
+		$filters = [$dedupField => $dedupValue];
+
+		if ($secondaryDedupField !== null) {
+			$secondaryValue = ($row[$secondaryDedupField] ?? null);
+			if ($secondaryValue !== null) {
+				$filters[$secondaryDedupField] = $secondaryValue;
+			}
+		}
+
+		return $filters;
+	}//end dedupFilters()
 }//end class

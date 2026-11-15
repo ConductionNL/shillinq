@@ -102,6 +102,7 @@ import CashMinus from 'vue-material-design-icons/CashMinus.vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
 import CashPlus from 'vue-material-design-icons/CashPlus.vue'
 import CashRefund from 'vue-material-design-icons/CashRefund.vue'
+import CashRegister from 'vue-material-design-icons/CashRegister.vue'
 import CashSync from 'vue-material-design-icons/CashSync.vue'
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
@@ -248,6 +249,7 @@ import Percent from 'vue-material-design-icons/Percent.vue'
 import PercentOutline from 'vue-material-design-icons/PercentOutline.vue'
 import PiggyBankOutline from 'vue-material-design-icons/PiggyBankOutline.vue'
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 import PlusCircle from 'vue-material-design-icons/PlusCircle.vue'
 import Poll from 'vue-material-design-icons/Poll.vue'
 import Pulse from 'vue-material-design-icons/Pulse.vue'
@@ -271,6 +273,7 @@ import ShieldCheckOutline from 'vue-material-design-icons/ShieldCheckOutline.vue
 import ShieldCrownOutline from 'vue-material-design-icons/ShieldCrownOutline.vue'
 import ShieldEditOutline from 'vue-material-design-icons/ShieldEditOutline.vue'
 import ShieldHalfFull from 'vue-material-design-icons/ShieldHalfFull.vue'
+import ShieldLockOutline from 'vue-material-design-icons/ShieldLockOutline.vue'
 import ShieldOutline from 'vue-material-design-icons/ShieldOutline.vue'
 import ShieldPlusOutline from 'vue-material-design-icons/ShieldPlusOutline.vue'
 import ShieldRemoveOutline from 'vue-material-design-icons/ShieldRemoveOutline.vue'
@@ -420,6 +423,7 @@ export default {
 	CashMultiple,
 	CashPlus,
 	CashRefund,
+	CashRegister,
 	CashSync,
 	CertificateOutline,
 	ChartBar,
@@ -566,6 +570,7 @@ export default {
 	PercentOutline,
 	PiggyBankOutline,
 	PlayCircleOutline,
+	Plus,
 	PlusCircle,
 	Poll,
 	Pulse,
@@ -589,6 +594,7 @@ export default {
 	ShieldCrownOutline,
 	ShieldEditOutline,
 	ShieldHalfFull,
+	ShieldLockOutline,
 	ShieldOutline,
 	ShieldPlusOutline,
 	ShieldRemoveOutline,

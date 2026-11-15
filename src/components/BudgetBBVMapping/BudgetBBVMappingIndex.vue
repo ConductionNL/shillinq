@@ -210,6 +210,7 @@
 <script>
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import { useBudgetBBVMappingStore } from '../../store/modules/budgetBBVMappingStore.js'
+import { mappingCriteria, mappingMatches } from './budgetMappingFilters.js'
 
 const SEARCH_DEBOUNCE_MS = 250
 const TYPE_SLUG = 'budgetBBVMapping'
@@ -359,67 +360,8 @@ export default {
 		 * @return {Array<object>} The filtered objects.
 		 */
 		filteredObjects() {
-			const term = (this.searchTermApplied || '').trim().toLowerCase()
-			const after = this.effectiveFromAfter
-				? new Date(this.effectiveFromAfter)
-				: null
-			const before = this.effectiveFromBefore
-				? new Date(this.effectiveFromBefore)
-				: null
-			const allocation = this.parseAllocationBucket(this.allocationBucket)
-			const yearFilter = this.fiscalYearFilter
-				? Number(this.fiscalYearFilter)
-				: null
-
-			return (this.objects || []).filter((row) => {
-				if (term) {
-					const account = String(row.glAccountNumber || '').toLowerCase()
-					const programme = String(row.programmeCode || '').toLowerCase()
-					if (!account.includes(term) && !programme.includes(term)) {
-						return false
-					}
-				}
-				if (yearFilter !== null) {
-					const startYear = row.effectiveFrom
-						? new Date(row.effectiveFrom).getFullYear()
-						: null
-					const endYear = row.effectiveTo
-						? new Date(row.effectiveTo).getFullYear()
-						: null
-					// A mapping matches the fiscal year if its effective
-					// window overlaps Jan 1 → Dec 31 of that year.
-					if (startYear !== null && startYear > yearFilter) {
-						return false
-					}
-					if (endYear !== null && endYear < yearFilter) {
-						return false
-					}
-				}
-				if (allocation) {
-					const value = Number(row.allocationPercentage)
-					if (Number.isNaN(value)) {
-						return false
-					}
-					if (value < allocation.min || value > allocation.max) {
-						return false
-					}
-				}
-				if (after || before) {
-					const eff = row.effectiveFrom
-						? new Date(row.effectiveFrom)
-						: null
-					if (!eff) {
-						return false
-					}
-					if (after && eff < after) {
-						return false
-					}
-					if (before && eff > before) {
-						return false
-					}
-				}
-				return true
-			})
+			const criteria = mappingCriteria(this)
+			return (this.objects || []).filter((row) => mappingMatches(row, criteria))
 		},
 	},
 

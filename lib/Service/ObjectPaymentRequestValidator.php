@@ -1,0 +1,443 @@
+<?php
+
+/**
+ * Object Payment Request Validator
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * A PaymentRequest used to be invoice-shaped: `invoiceReference` was required
+ * and the amount was a calculation over the invoice. Since
+ * `case-payment-requests` a request may instead stand on any object in any
+ * register, so the required set is conditional on `subjectKind` and cannot be
+ * expressed by a flat `required` array in the register fragment. This class is
+ * that conditional shape, plus the uniqueness invariant: at most one `pending`
+ * request per `(subject, requestType)`, so a case cannot quietly collect two
+ * open leges requests that both resolve to a payment link.
+ *
+ * It refuses by throwing, and every refusal names what is missing or what
+ * already exists — a caller that cannot tell which of the two happened cannot
+ * fix either.
+ *
+ * @category Service
+ * @package  OCA\Shillinq\Service
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Service;
+
+use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
+
+/**
+ * Validates the conditional shape and the uniqueness of a PaymentRequest.
+ *
+ * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
+ */
+final class ObjectPaymentRequestValidator implements ObjectPaymentRequestValidatorInterface {
+	/**
+	 * The subject kinds the schema accepts.
+	 *
+	 * @var array<int, string>
+	 */
+	public const SUBJECT_KINDS = ['invoice', 'object'];
+
+	/**
+	 * The request types an object request may carry.
+	 *
+	 * @var array<int, string>
+	 */
+	public const REQUEST_TYPES = ['leges', 'dwangsom', 'deposit', 'other', 'contribution', 'event-fee'];
+
+	/**
+	 * The shortest transfer reference a request may carry (REQ-ORS-002).
+	 *
+	 * @var int
+	 */
+	public const REFERENCE_MIN_LENGTH = 6;
+
+	/**
+	 * The parts a semantic reference (ADR-048) must name.
+	 *
+	 * @var array<int, string>
+	 */
+	public const SUBJECT_PARTS = ['type', 'register', 'schema', 'id'];
+
+	/**
+	 * The parts that decide WHICH object a reference points at.
+	 *
+	 * `type` is deliberately absent. It is the calling app's own word for the
+	 * thing (`case`, `zaak`, `permit`) and two callers can spell it differently
+	 * for the same object; if it were part of the identity, a second pending
+	 * leges request would slip past the uniqueness check by naming the type
+	 * differently, which is exactly the duplicate this class exists to refuse.
+	 *
+	 * @var array<int, string>
+	 */
+	public const IDENTITY_PARTS = ['register', 'schema', 'id'];
+
+	/**
+	 * The parts that decide WHO a beneficiary is.
+	 *
+	 * Unlike the subject, `type` IS part of this identity: a beneficiary may be a
+	 * Nextcloud user with no register or schema, and `learner:alice` must not
+	 * collide with `customer:alice`.
+	 *
+	 * @var array<int, string>
+	 */
+	public const BENEFICIARY_PARTS = ['type', 'register', 'schema', 'id'];
+
+	/**
+	 * Refuse a request that does not satisfy its own subject kind, or that
+	 * duplicates an open request of the same type on the same subject.
+	 *
+	 * @param array<string, mixed> $request The request about to be written.
+	 * @param array<int, array<string, mixed>> $existing Requests already on the same subject.
+	 * @param array<int, array<string, mixed>> $referenceHolders Requests anywhere that carry the same paymentReference.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the shape or the uniqueness is refused.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	public function validate(array $request, array $existing = [], array $referenceHolders = []): void {
+		$subjectKind = (string)($request['subjectKind'] ?? 'invoice');
+		if (in_array($subjectKind, self::SUBJECT_KINDS, true) === false) {
+			throw new InvalidArgumentException(
+				sprintf('Unknown subjectKind "%s"; expected one of %s.', $subjectKind, implode(', ', self::SUBJECT_KINDS))
+			);
+		}
+
+		if ($subjectKind === 'invoice') {
+			$this->assertInvoiceReference(request: $request);
+			return;
+		}
+
+		$this->assertObjectRequest(request: $request);
+		$this->assertNoOpenRequest(request: $request, existing: $existing);
+		$this->assertReference(request: $request, holders: $referenceHolders);
+	}//end validate()
+
+	/**
+	 * Refuse an invoice request without its invoiceReference.
+	 *
+	 * @param array<string, mixed> $request The request about to be written.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the invoiceReference is missing.
+	 */
+	private function assertInvoiceReference(array $request): void {
+		if ((string)($request['invoiceReference'] ?? '') === '') {
+			throw new InvalidArgumentException('A payment request on an invoice needs an invoiceReference.');
+		}
+	}//end assertInvoiceReference()
+
+	/**
+	 * Refuse an object request whose subject, beneficiary, type or amount is
+	 * not well formed, in that order.
+	 *
+	 * @param array<string, mixed> $request The request about to be written.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a part is refused.
+	 */
+	private function assertObjectRequest(array $request): void {
+		$this->assertSubject(subject: ($request['subject'] ?? null));
+		$this->assertBeneficiary(beneficiary: ($request['beneficiary'] ?? null));
+		$this->assertRequestType(requestType: (string)($request['requestType'] ?? ''));
+		$amount = $request['amount'] ?? null;
+		if (is_numeric($amount) === false || (float)$amount <= 0.0) {
+			throw new InvalidArgumentException('A payment request on an object needs its own amount above zero.');
+		}
+	}//end assertObjectRequest()
+
+	/**
+	 * Refuse an unknown object request type.
+	 *
+	 * @param string $requestType The request type as given.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the type is not one of REQUEST_TYPES.
+	 */
+	private function assertRequestType(string $requestType): void {
+		if (in_array($requestType, self::REQUEST_TYPES, true) === false) {
+			throw new InvalidArgumentException(
+				sprintf(
+					'A payment request on an object needs a requestType; expected one of %s, got "%s".',
+					implode(', ', self::REQUEST_TYPES),
+					$requestType
+				)
+			);
+		}
+	}//end assertRequestType()
+
+	/**
+	 * Refuse a transfer reference that is too short to match safely, or that
+	 * another open request already carries, compared without case.
+	 *
+	 * @param array<string, mixed> $request The request about to be written.
+	 * @param array<int, array<string, mixed>> $holders Requests that carry the same reference.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the reference is refused.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	private function assertReference(array $request, array $holders): void {
+		$reference = trim((string)($request['paymentReference'] ?? ''));
+		if ($reference === '') {
+			return;
+		}
+
+		$this->assertReferenceLength(reference: $reference);
+		foreach ($holders as $holder) {
+			if ($this->holdsReference(holder: $holder, request: $request) === true) {
+				throw new InvalidArgumentException(
+					sprintf('The payment reference %s is already on an open request; a reference names one request.', $reference)
+				);
+			}
+		}
+	}//end assertReference()
+
+	/**
+	 * Refuse a reference too short to match a transfer safely.
+	 *
+	 * @param string $reference The trimmed, non-empty reference.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When it is shorter than REFERENCE_MIN_LENGTH.
+	 */
+	private function assertReferenceLength(string $reference): void {
+		if (mb_strlen($reference) < self::REFERENCE_MIN_LENGTH) {
+			throw new InvalidArgumentException(
+				sprintf('A payment reference needs at least %d characters, got "%s".', self::REFERENCE_MIN_LENGTH, $reference)
+			);
+		}
+	}//end assertReferenceLength()
+
+	/**
+	 * Whether another open request carries the request's reference, compared
+	 * without case.
+	 *
+	 * @param array<string, mixed> $holder  A request that carries the same reference.
+	 * @param array<string, mixed> $request The request about to be written.
+	 *
+	 * @return boolean
+	 */
+	private function holdsReference(array $holder, array $request): bool {
+		$reference = trim((string)($request['paymentReference'] ?? ''));
+		$selfId = (string)($request['id'] ?? '');
+		$open = in_array((string)($holder['state'] ?? ''), ['pending', 'authorized'], true);
+		$same = mb_strtolower(trim((string)($holder['paymentReference'] ?? ''))) === mb_strtolower($reference);
+
+		return $open === true && $same === true && ($selfId === '' || (string)($holder['id'] ?? '') !== $selfId);
+	}//end holdsReference()
+
+	/**
+	 * The stable key of a semantic reference, used to compare two subjects.
+	 *
+	 * @param array<string, mixed> $subject The semantic reference.
+	 *
+	 * @return string The key, over register, schema and id in a fixed order.
+	 */
+	public function subjectKey(array $subject): string {
+		$parts = [];
+		foreach (self::IDENTITY_PARTS as $part) {
+			$parts[] = (string)($subject[$part] ?? '');
+		}
+
+		return implode('|', $parts);
+	}//end subjectKey()
+
+	/**
+	 * The stable key of a beneficiary, or an empty string when there is none.
+	 *
+	 * Two requests without a beneficiary compare equal on it, which keeps the
+	 * one-pending-leges-request-per-case rule exactly as it was before the
+	 * beneficiary existed.
+	 *
+	 * @param mixed $beneficiary The beneficiary as stored, or null.
+	 *
+	 * @return string The key, over type, register, schema and id in a fixed order.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-003)
+	 */
+	public function beneficiaryKey(mixed $beneficiary): string {
+		if (is_array($beneficiary) === false || $beneficiary === []) {
+			return '';
+		}
+
+		$parts = [];
+		foreach (self::BENEFICIARY_PARTS as $part) {
+			$parts[] = (string)($beneficiary[$part] ?? '');
+		}
+
+		return implode('|', $parts);
+	}//end beneficiaryKey()
+
+	/**
+	 * Refuse a beneficiary that is present but does not say who it is.
+	 *
+	 * @param mixed $beneficiary The beneficiary as given, or null.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a type or an id is missing.
+	 */
+	private function assertBeneficiary(mixed $beneficiary): void {
+		if ($beneficiary === null || $beneficiary === []) {
+			return;
+		}
+
+		if (is_array($beneficiary) === false || $this->namesTypeAndId(beneficiary: $beneficiary) === false) {
+			throw new InvalidArgumentException('A beneficiary names at least a type and an id.');
+		}
+	}//end assertBeneficiary()
+
+	/**
+	 * Whether a beneficiary says both what it is and which one.
+	 *
+	 * @param array<string, mixed> $beneficiary The beneficiary as given.
+	 *
+	 * @return boolean
+	 */
+	private function namesTypeAndId(array $beneficiary): bool {
+		return (string)($beneficiary['type'] ?? '') !== '' && (string)($beneficiary['id'] ?? '') !== '';
+	}//end namesTypeAndId()
+
+	/**
+	 * Refuse a subject that does not name all four parts of a semantic reference.
+	 *
+	 * @param mixed $subject The subject as given.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a part is missing.
+	 */
+	private function assertSubject(mixed $subject): void {
+		if (is_array($subject) === false || $subject === []) {
+			throw new InvalidArgumentException('A payment request on an object needs a subject.');
+		}
+
+		$missing = $this->missingParts(subject: $subject);
+		if ($missing !== []) {
+			throw new InvalidArgumentException(
+				sprintf('The subject is missing %s; a semantic reference names type, register, schema and id.', implode(', ', $missing))
+			);
+		}
+	}//end assertSubject()
+
+	/**
+	 * The SUBJECT_PARTS a subject leaves empty, in order.
+	 *
+	 * @param array<string, mixed> $subject The subject as given.
+	 *
+	 * @return list<string>
+	 */
+	private function missingParts(array $subject): array {
+		$missing = [];
+		foreach (self::SUBJECT_PARTS as $part) {
+			if ((string)($subject[$part] ?? '') === '') {
+				$missing[] = $part;
+			}
+		}
+
+		return $missing;
+	}//end missingParts()
+
+	/**
+	 * Refuse a second pending request of the same type on the same subject,
+	 * naming the request that already stands.
+	 *
+	 * @param array<string, mixed>             $request  The validated object request (its id is skipped on an update).
+	 * @param array<int, array<string, mixed>> $existing Requests already stored.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When an open request of the same type exists.
+	 */
+	private function assertNoOpenRequest(array $request, array $existing): void {
+		$fingerprint = $this->fingerprint(request: $request);
+		$selfId = (string)($request['id'] ?? '');
+		foreach ($existing as $candidate) {
+			if ($this->isPendingTwin(candidate: $candidate, fingerprint: $fingerprint) === false) {
+				continue;
+			}
+
+			$candidateId = (string)($candidate['id'] ?? '');
+			if ($selfId !== '' && $candidateId === $selfId) {
+				continue;
+			}
+
+			throw $this->duplicateRefusal(requestType: $fingerprint[0], candidateId: $candidateId);
+		}
+	}//end assertNoOpenRequest()
+
+	/**
+	 * What makes two requests the same claim: type, subject key and
+	 * beneficiary key (REQ-SCON-003: one chargeable carries a pending request
+	 * per child).
+	 *
+	 * @param array<string, mixed> $request A validated object request.
+	 *
+	 * @return array{0: string, 1: string, 2: string}
+	 */
+	private function fingerprint(array $request): array {
+		return [
+			(string)($request['requestType'] ?? ''),
+			$this->subjectKey(subject: (array)$request['subject']),
+			$this->beneficiaryKey(beneficiary: ($request['beneficiary'] ?? null)),
+		];
+	}//end fingerprint()
+
+	/**
+	 * Whether a stored request is pending and makes the same claim.
+	 *
+	 * @param array<string, mixed>              $candidate   A stored request.
+	 * @param array{0: string, 1: string, 2: string} $fingerprint The new request's fingerprint.
+	 *
+	 * @return boolean
+	 */
+	private function isPendingTwin(array $candidate, array $fingerprint): bool {
+		return (string)($candidate['state'] ?? 'pending') === 'pending'
+			&& (string)($candidate['requestType'] ?? '') === $fingerprint[0]
+			&& is_array($candidate['subject'] ?? null) === true
+			&& $this->subjectKey(subject: (array)$candidate['subject']) === $fingerprint[1]
+			&& $this->beneficiaryKey(beneficiary: ($candidate['beneficiary'] ?? null)) === $fingerprint[2];
+	}//end isPendingTwin()
+
+	/**
+	 * The refusal naming the request that already stands.
+	 *
+	 * @param string $requestType The request type.
+	 * @param string $candidateId The standing request's id, or ''.
+	 *
+	 * @return InvalidArgumentException
+	 */
+	private function duplicateRefusal(string $requestType, string $candidateId): InvalidArgumentException {
+		$named = '';
+		if ($candidateId !== '') {
+			$named = sprintf(' (%s)', $candidateId);
+		}
+
+		return new InvalidArgumentException(
+			sprintf('A pending %s request already stands on this object%s; settle or void it before raising another.', $requestType, $named)
+		);
+	}//end duplicateRefusal()
+}//end class

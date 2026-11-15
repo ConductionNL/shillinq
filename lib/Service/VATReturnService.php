@@ -3,6 +3,9 @@
 /**
  * VAT Return Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BTW-aangifte preparation engine for the
  * bookkeeping-vat-btw-filing change (issue #127). Composes the
  * declarative VATReturn / VATDeclaration / VATLine schemas (ADR-031,
@@ -38,20 +41,21 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
+use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Service\Vat\VatReturnBox;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Composes VAT returns from GL transactions using the real OpenRegister API.
@@ -67,7 +71,19 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class VATReturnService {
+class VATReturnService implements VATReturnServiceInterface {
+	/**
+	 * The totals a KOR return carries: KOR exempts both collected and paid VAT (REQ-VAT-004).
+	 *
+	 * @var array{totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private const KOR_TOTALS = [
+		'totalVATCollected' => 0.0,
+		'totalVATPaid' => 0.0,
+		'vatBalance' => 0.0,
+		'totalTaxableAmount' => 0.0,
+	];
+
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -145,12 +161,11 @@ class VATReturnService {
 	}//end createReturn()
 
 	/**
-	 * Derive VATLine + VATDeclaration records from GL transactions in the period (REQ-VAT-002).
+	 * Derive VATLine + VATDeclaration records from the booked ledger lines in the period (REQ-VBTW-004).
 	 *
-	 * Scans GLTransaction rows in the administration whose dated entry falls in
-	 * [startDate, endDate]; for each posting that lands on an Account where
-	 * vatApplicable = true, groups by (taxRate, type=collected|paid|reverse-charge)
-	 * and writes one VATLine per posting + one VATDeclaration per group. Totals
+	 * Sums the posted GLLine records of the period per VAT return box and
+	 * amount kind, as booked, and writes one VATDeclaration per box and one
+	 * VATLine per contributing ledger line, both carrying `returnBox`. Totals
 	 * are rolled up into the parent VATReturn.
 	 *
 	 * KOR returns short-circuit to zero totals per REQ-VAT-004.
@@ -164,6 +179,7 @@ class VATReturnService {
 	 * @return array{lineCount:int,totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
 	public function deriveVATLines(
 		string $returnId,
@@ -173,72 +189,48 @@ class VATReturnService {
 		string $regime = 'standard',
 	): array {
 		if ($regime === 'kor') {
-			// KOR exempts both collected and paid VAT (REQ-VAT-004).
-			$this->updateReturnTotals(
-				returnId: $returnId,
-				totalVATCollected: 0.0,
-				totalVATPaid: 0.0,
-				vatBalance: 0.0,
-				totalTaxableAmount: 0.0
-			);
-			return [
-				'lineCount' => 0,
-				'totalVATCollected' => 0.0,
-				'totalVATPaid' => 0.0,
-				'vatBalance' => 0.0,
-				'totalTaxableAmount' => 0.0,
-			];
+			return $this->writeKorTotals(returnId: $returnId);
 		}
 
 		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
-		$declarationsByKey = $scan['declarationsByKey'];
-		$totalVATCollectedCt = $scan['totalVATCollectedCt'];
-		$totalVATPaidCt = $scan['totalVATPaidCt'];
-		$totalTaxableCt = $scan['totalTaxableCt'];
-		$lineNumber = $scan['lineNumber'];
+		$scope = new VatReturnScope(returnId: $returnId, administrationId: $administrationId);
 
-		// Persist declarations + their lines.
-		foreach ($declarationsByKey as $group) {
-			$declarationId = $this->persistDeclaration(
-				returnId: $returnId,
-				administrationId: $administrationId,
-				type: $group['type'],
-				taxRate: $group['taxRate'],
-				totalVATCents: $group['totalVATAmountCents'],
-				totalTaxableCents: $group['totalTaxableCents'],
-				lineCount: $group['lineCount']
-			);
-
-			foreach ($group['pendingLines'] as $line) {
-				$line['returnId'] = $returnId;
-				$line['declarationId'] = $declarationId;
-				$line['administrationId'] = $administrationId;
-				$this->saveObject(schema: 'VATLine', data: $line);
-			}
-		}
-
-		$totalVATCollected = $this->fromCents(cents: $totalVATCollectedCt);
-		$totalVATPaid = $this->fromCents(cents: $totalVATPaidCt);
-		$vatBalance = $this->fromCents(cents: ($totalVATPaidCt - $totalVATCollectedCt));
-		$totalTaxable = $this->fromCents(cents: $totalTaxableCt);
-
-		$this->updateReturnTotals(
-			returnId: $returnId,
-			totalVATCollected: $totalVATCollected,
-			totalVATPaid: $totalVATPaid,
-			vatBalance: $vatBalance,
-			totalTaxableAmount: $totalTaxable
-		);
-
-		return [
-			'lineCount' => $lineNumber,
-			'totalVATCollected' => $totalVATCollected,
-			'totalVATPaid' => $totalVATPaid,
-			'vatBalance' => $vatBalance,
-			'totalTaxableAmount' => $totalTaxable,
-		];
+		return $this->persistScan(scope: $scope, scan: $scan);
 
 	}//end deriveVATLines()
+
+	/**
+	 * Write the zero totals of a KOR return, which exempts both collected and paid VAT (REQ-VAT-004).
+	 *
+	 * @param string $returnId The VATReturn id.
+	 *
+	 * @return array{lineCount:int,totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private function writeKorTotals(string $returnId): array {
+		$this->updateReturnTotals(returnId: $returnId, totals: self::KOR_TOTALS);
+
+		return ['lineCount' => 0] + self::KOR_TOTALS;
+	}//end writeKorTotals()
+
+	/**
+	 * Persist the scanned declarations with their lines and roll the totals up into the return.
+	 *
+	 * @param VatReturnScope $scope The return and administration the rows belong to.
+	 * @param array<string,mixed> $scan The result of scanRubrieken().
+	 *
+	 * @return array{lineCount:int,totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private function persistScan(VatReturnScope $scope, array $scan): array {
+		// Persist declarations + their lines.
+		foreach ($scan['declarationsByKey'] as $group) {
+			$this->persistDeclarationGroup(scope: $scope, group: $group);
+		}
+
+		$totals = $this->scanTotals(scan: $scan);
+		$this->updateReturnTotals(returnId: $scope->returnId, totals: $totals);
+
+		return ['lineCount' => $scan['lineNumber']] + $totals;
+	}//end persistScan()
 
 	/**
 	 * Non-mutating recompute of the GL-derived per-rubriek grouping (REQ-VBTW-013).
@@ -254,9 +246,10 @@ class VATReturnService {
 	 * @param string $startDate Period start (inclusive, ISO-8601).
 	 * @param string $endDate Period end (inclusive, ISO-8601).
 	 *
-	 * @return array<int,array{type:string,taxRate:float,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
+	 * @return array<int,array{type:string,taxRate:float,returnBox:string,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
 	public function computeCurrentDeclarations(string $administrationId, string $startDate, string $endDate): array {
 		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
@@ -265,6 +258,7 @@ class VATReturnService {
 			$result[] = [
 				'type' => $group['type'],
 				'taxRate' => $group['taxRate'],
+				'returnBox' => $group['returnBox'],
 				'totalVATAmount' => $this->fromCents(cents: $group['totalVATAmountCents']),
 				'totalTaxableAmount' => $this->fromCents(cents: $group['totalTaxableCents']),
 				'lineCount' => $group['lineCount'],
@@ -275,15 +269,61 @@ class VATReturnService {
 	}//end computeCurrentDeclarations()
 
 	/**
+	 * The running VAT position of a period per return box, read from the same
+	 * stamped lines a prepared return reads (REQ-VPS-001).
+	 *
+	 * Each box carries its base and VAT as booked so far and the ledger lines
+	 * behind it; the totals carry the VAT collected, the VAT paid and the
+	 * amount payable (collected minus paid; negative is a refund). Because it
+	 * runs the one derivation `deriveVATLines()` runs, the position of a
+	 * closed period equals the return prepared for it.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $startDate Period start (inclusive, ISO-8601).
+	 * @param string $endDate Period end (inclusive, ISO-8601).
+	 *
+	 * @return array{boxes:list<array{returnBox:string,type:string,taxRate:float,base:float,vat:float,lineCount:int,lines:list<array<string,mixed>>}>,totalVATCollected:float,totalVATPaid:float,totalTaxableAmount:float,payable:float}
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+	 */
+	public function positionByBox(string $administrationId, string $startDate, string $endDate): array {
+		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
+
+		$boxes = [];
+		foreach ($scan['declarationsByKey'] as $group) {
+			$boxes[] = [
+				'returnBox' => $group['returnBox'],
+				'type' => $group['type'],
+				'taxRate' => $group['taxRate'],
+				'base' => $this->fromCents(cents: $group['totalTaxableCents']),
+				'vat' => $this->fromCents(cents: $group['totalVATAmountCents']),
+				'lineCount' => $group['lineCount'],
+				'lines' => $group['pendingLines'],
+			];
+		}
+
+		$totals = $this->scanTotals(scan: $scan);
+
+		return [
+			'boxes' => $boxes,
+			'totalVATCollected' => $totals['totalVATCollected'],
+			'totalVATPaid' => $totals['totalVATPaid'],
+			'totalTaxableAmount' => $totals['totalTaxableAmount'],
+			'payable' => $this->fromCents(cents: ($scan['totalVATCollectedCt'] - $scan['totalVATPaidCt'])),
+		];
+	}//end positionByBox()
+
+	/**
 	 * Fetch the persisted (as-filed) `VATDeclaration` rows for a return, grouped
 	 * the same shape `computeCurrentDeclarations()` returns, so callers can diff
 	 * the two directly (REQ-VBTW-013).
 	 *
 	 * @param string $returnId The VATReturn id.
 	 *
-	 * @return array<int,array{type:string,taxRate:float,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
+	 * @return array<int,array{type:string,taxRate:float,returnBox:string,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
 	public function fetchFiledDeclarations(string $returnId): array {
 		$rows = $this->objectService
@@ -296,6 +336,7 @@ class VATReturnService {
 			$result[] = [
 				'type' => (string)($row['type'] ?? ''),
 				'taxRate' => (float)($row['taxRate'] ?? 0.0),
+				'returnBox' => (string)($row['returnBox'] ?? ''),
 				'totalVATAmount' => (float)($row['totalVATAmount'] ?? 0.0),
 				'totalTaxableAmount' => (float)($row['totalTaxableAmount'] ?? 0.0),
 				'lineCount' => (int)($row['lineCount'] ?? 0),
@@ -321,10 +362,39 @@ class VATReturnService {
 	}//end getReturn()
 
 	/**
-	 * Scan GL transactions in the period and group VAT-applicable postings
-	 * into rubriek buckets (type × taxRate). Shared scanning core for
-	 * `deriveVATLines()` (persists) and `computeCurrentDeclarations()`
-	 * (read-only) so the grouping logic exists exactly once.
+	 * The key by which a filed and a current declaration are compared.
+	 *
+	 * A declaration prepared from stamped lines is one per box, so the box is
+	 * its key. A declaration filed before boxes existed has none and keeps its
+	 * old key of type and rate, so a correction check on such a return
+	 * compares the way it did when it was filed.
+	 *
+	 * @param array<string,mixed> $bucket A declaration as computeCurrentDeclarations() or fetchFiledDeclarations() return it.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
+	 */
+	public function declarationKey(array $bucket): string {
+		$box = (string)($bucket['returnBox'] ?? '');
+		if ($box !== '') {
+			return $box;
+		}
+
+		return ((string)($bucket['type'] ?? '')) . ':' . number_format((float)($bucket['taxRate'] ?? 0.0), 2, '.', '');
+	}//end declarationKey()
+
+	/**
+	 * Sum the booked ledger lines of the period per VAT return box (REQ-VBTW-004).
+	 *
+	 * Reads the GLLine records of the administration that carry a box and an
+	 * amount kind, keeps those of a booked transaction posted in the period,
+	 * and adds each line's amount as booked to its box: the base lines to the
+	 * box's base, the VAT lines to its VAT. No VAT is recalculated from a
+	 * rate. A line booked on the opposite side of its box (a credit note)
+	 * lowers the box. Shared core of `deriveVATLines()` (persists) and
+	 * `computeCurrentDeclarations()` (read-only), so the derivation exists
+	 * exactly once.
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param string $startDate Period start (inclusive, ISO-8601).
@@ -333,94 +403,139 @@ class VATReturnService {
 	 * @return array{declarationsByKey:array<string,array<string,mixed>>,totalVATCollectedCt:int,totalVATPaidCt:int,totalTaxableCt:int,lineNumber:int}
 	 */
 	private function scanRubrieken(string $administrationId, string $startDate, string $endDate): array {
-		$accounts = $this->fetchVATAccounts(administrationId: $administrationId);
-		$transactions = $this->fetchGLTransactions(
+		$transactions = $this->fetchBookedTransactions(
 			administrationId: $administrationId,
 			startDate: $startDate,
 			endDate: $endDate
 		);
+		$tariffs = new VatLineStamper(objectService: $this->objectService, register: $this->register());
+		$boxes = new VatReturnBox();
 
 		$declarationsByKey = [];
-		$totalVATCollectedCt = 0;
-		$totalVATPaidCt = 0;
-		$totalTaxableCt = 0;
+		$totals = ['collected' => 0, 'paid' => 0, 'taxable' => 0];
 		$lineNumber = 0;
 
-		foreach ($transactions as $transaction) {
-			$glTransactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
-			foreach ($this->postingsOf(transaction: $transaction) as $posting) {
-				$accountNumber = (string)($posting['accountNumber'] ?? '');
-				if ($accountNumber === '' || isset($accounts[$accountNumber]) === false) {
-					continue;
-				}
+		foreach ($this->fetchStampedLines(administrationId: $administrationId) as $line) {
+			$transactionId = (string)($line['transactionId'] ?? '');
+			if (isset($transactions[$transactionId]) === false) {
+				continue;
+			}
 
-				$account = $accounts[$accountNumber];
-				if (((bool)($account['vatApplicable'] ?? false)) === false) {
-					continue;
-				}
+			$box = (string)$line['vatReturnBox'];
+			$type = $boxes->type(box: $box);
+			$cents = $boxes->bookedCents(line: $line, box: $box);
+			$code = (string)($line['vatTariffCode'] ?? '');
+			$taxRate = ($tariffs->ratePercentage(code: $code) ?? 0.0);
 
-				$taxableAmount = $this->toCents(amount: ($posting['taxableAmount'] ?? $posting['amount'] ?? 0));
-				if ($taxableAmount <= 0) {
-					continue;
-				}
+			[$vatCt, $baseCt] = $this->splitBookedCents(line: $line, cents: $cents);
 
-				$type = $this->resolveLineType(account: $account, posting: $posting);
-				$taxRate = (float)($posting['taxRate'] ?? ($account['vatRate'] ?? 0));
-				if ($taxRate < 0 || $taxRate > 100) {
-					continue;
-				}
+			if (isset($declarationsByKey[$box]) === false) {
+				$declarationsByKey[$box] = $this->emptyDeclaration(type: $type, taxRate: $taxRate, box: $box);
+			}
 
-				$vatAmountCt = (int)round(($taxableAmount * $taxRate) / 100.0);
+			$declarationsByKey[$box]['rates'][number_format($taxRate, 2, '.', '')] = $taxRate;
+			$declarationsByKey[$box]['totalVATAmountCents'] += $vatCt;
+			$declarationsByKey[$box]['totalTaxableCents'] += $baseCt;
+			$declarationsByKey[$box]['lineCount']++;
 
-				$key = $type . ':' . number_format($taxRate, 2, '.', '');
-				if (isset($declarationsByKey[$key]) === false) {
-					$declarationsByKey[$key] = [
-						'type' => $type,
-						'taxRate' => $taxRate,
-						'totalVATAmountCents' => 0,
-						'totalTaxableCents' => 0,
-						'lineCount' => 0,
-						'declarationId' => null,
-					];
-				}
+			$lineNumber++;
+			$totals['taxable'] += $baseCt;
+			$totals[$boxes->totalOf(box: $box)] += $vatCt;
 
-				$declarationsByKey[$key]['totalVATAmountCents'] += $vatAmountCt;
-				$declarationsByKey[$key]['totalTaxableCents'] += $taxableAmount;
-				$declarationsByKey[$key]['lineCount']++;
-
-				$lineNumber++;
-				$totalTaxableCt += $taxableAmount;
-				if ($type === 'collected') {
-					$totalVATCollectedCt += $vatAmountCt;
-				} else {
-					// Paid + reverse-charge both feed deductible VAT.
-					$totalVATPaidCt += $vatAmountCt;
-				}
-
-				$declarationsByKey[$key]['pendingLines'][] = [
-					'lineNumber' => $lineNumber,
-					'glAccountNumber' => $accountNumber,
-					'glAccountName' => ($account['name'] ?? null),
-					'glTransactionId' => $glTransactionId,
-					'type' => $type,
-					'taxableAmount' => $this->fromCents(cents: $taxableAmount),
-					'taxRate' => $taxRate,
-					'vatAmount' => $this->fromCents(cents: $vatAmountCt),
-					'description' => (string)($posting['description'] ?? ($transaction['description'] ?? '')),
-					'reverseChargeApplicable' => ($type === 'reverse-charge'),
-				];
-			}//end foreach
+			$declarationsByKey[$box]['pendingLines'][] = [
+				'lineNumber' => $lineNumber,
+				'returnBox' => $box,
+				'glAccountNumber' => (string)($line['accountNumber'] ?? ''),
+				'glTransactionId' => $transactionId,
+				'type' => $type,
+				'taxableAmount' => $this->fromCents(cents: $baseCt),
+				'taxRate' => $taxRate,
+				'vatAmount' => $this->fromCents(cents: $vatCt),
+				'description' => (string)($line['description'] ?? ($transactions[$transactionId]['description'] ?? '')),
+				'reverseChargeApplicable' => $tariffs->isReverseCharge(code: $code),
+			];
 		}//end foreach
+
+		ksort($declarationsByKey);
+		$declarationsByKey = $this->settleBoxRates(declarationsByKey: $declarationsByKey);
 
 		return [
 			'declarationsByKey' => $declarationsByKey,
-			'totalVATCollectedCt' => $totalVATCollectedCt,
-			'totalVATPaidCt' => $totalVATPaidCt,
-			'totalTaxableCt' => $totalTaxableCt,
+			'totalVATCollectedCt' => $totals['collected'],
+			'totalVATPaidCt' => $totals['paid'],
+			'totalTaxableCt' => $totals['taxable'],
 			'lineNumber' => $lineNumber,
 		];
 
 	}//end scanRubrieken()
+
+	/**
+	 * Split a line's booked cents into its VAT part and its base part by the line's amount kind.
+	 *
+	 * @param array<string,mixed> $line  The stamped GLLine.
+	 * @param int                 $cents The line's booked cents on its box.
+	 *
+	 * @return array{0:int,1:int} [vatCt, baseCt].
+	 *
+	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 */
+	private function splitBookedCents(array $line, int $cents): array {
+		$vatCt = 0;
+		$baseCt = $cents;
+		if ($line['vatAmountKind'] === 'vat') {
+			$vatCt = $cents;
+			$baseCt = 0;
+		}
+
+		return [$vatCt, $baseCt];
+	}//end splitBookedCents()
+
+	/**
+	 * A box's declaration before any line is added to it.
+	 *
+	 * @param string $type    The box's declaration type.
+	 * @param float  $taxRate The first line's tariff rate.
+	 * @param string $box     The VAT return box.
+	 *
+	 * @return array<string,mixed> The empty declaration.
+	 *
+	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 */
+	private function emptyDeclaration(string $type, float $taxRate, string $box): array {
+		return [
+			'type' => $type,
+			'taxRate' => $taxRate,
+			'returnBox' => $box,
+			'rates' => [],
+			'totalVATAmountCents' => 0,
+			'totalTaxableCents' => 0,
+			'lineCount' => 0,
+			'pendingLines' => [],
+		];
+	}//end emptyDeclaration()
+
+	/**
+	 * Set each box's shown rate from the tariffs it collected and drop the collected rates.
+	 *
+	 * @param array<string,array<string,mixed>> $declarationsByKey The declarations per box.
+	 *
+	 * @return array<string,array<string,mixed>> The declarations with a final taxRate and no `rates`.
+	 *
+	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 */
+	private function settleBoxRates(array $declarationsByKey): array {
+		foreach ($declarationsByKey as $box => $group) {
+			// A box of one tariff shows that tariff's rate; a box that mixes tariffs (5b) shows none.
+			$declarationsByKey[$box]['taxRate'] = 0.0;
+			if (count($group['rates']) === 1) {
+				$declarationsByKey[$box]['taxRate'] = (float)current($group['rates']);
+			}
+
+			unset($declarationsByKey[$box]['rates']);
+		}
+
+		return $declarationsByKey;
+	}//end settleBoxRates()
 
 	/**
 	 * Submit a VAT return (REQ-VAT-005) — draft → submitted with non-negative totals.
@@ -575,74 +690,118 @@ class VATReturnService {
 	}//end buildReturnNumber()
 
 	/**
+	 * Persist one scanned declaration group: its VATDeclaration row, then each of its VATLine rows.
+	 *
+	 * @param VatReturnScope $scope The return and administration the rows belong to.
+	 * @param array<string,mixed> $group One entry of the scan's declarationsByKey.
+	 *
+	 * @return void
+	 */
+	private function persistDeclarationGroup(VatReturnScope $scope, array $group): void {
+		$declarationId = $this->persistDeclaration(scope: $scope, group: $group);
+
+		foreach ($group['pendingLines'] as $line) {
+			$line['returnId'] = $scope->returnId;
+			$line['declarationId'] = $declarationId;
+			$line['administrationId'] = $scope->administrationId;
+			$this->saveObject(schema: 'VATLine', data: $line);
+		}
+
+	}//end persistDeclarationGroup()
+
+	/**
 	 * Persist (or upsert) a VATDeclaration row and return its id.
 	 *
-	 * @param string $returnId Parent VATReturn id.
-	 * @param string $administrationId Administration scope.
-	 * @param string $type collected | paid | reverse-charge.
-	 * @param float $taxRate VAT rate %.
-	 * @param int $totalVATCents VAT amount in cents.
-	 * @param int $totalTaxableCents Taxable amount in cents.
-	 * @param int $lineCount Number of underlying VATLine rows.
+	 * @param VatReturnScope $scope The return and administration the declaration belongs to.
+	 * @param array<string,mixed> $group One entry of the scan's declarationsByKey.
 	 *
 	 * @return string The persisted VATDeclaration id.
 	 */
-	private function persistDeclaration(
-		string $returnId,
-		string $administrationId,
-		string $type,
-		float $taxRate,
-		int $totalVATCents,
-		int $totalTaxableCents,
-		int $lineCount,
-	): string {
-		$declarationNumber = sprintf(
-			'VAT-%s-%s-%s',
-			substr(string: $returnId, offset: 0, length: 32),
-			strtoupper(string: $type),
-			str_replace(search: '.', replace: '', subject: number_format(num: $taxRate, decimals: 2, decimal_separator: '.', thousands_separator: ''))
-		);
-
-		$declaration = [
-			'declarationNumber' => $declarationNumber,
-			'returnId' => $returnId,
-			'type' => $type,
-			'taxRate' => $taxRate,
-			'totalVATAmount' => $this->fromCents(cents: $totalVATCents),
-			'totalTaxableAmount' => $this->fromCents(cents: $totalTaxableCents),
-			'lineCount' => $lineCount,
-			'administrationId' => $administrationId,
-		];
-
+	private function persistDeclaration(VatReturnScope $scope, array $group): string {
+		$declaration = $this->declarationRecord(scope: $scope, group: $group);
 		$persisted = $this->saveObject(schema: 'VATDeclaration', data: $declaration);
 
-		return (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $declarationNumber));
+		return (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $declaration['declarationNumber']));
 	}//end persistDeclaration()
+
+	/**
+	 * Build the VATDeclaration row for one scanned group.
+	 *
+	 * The group carries the VAT return box the declaration totals, its type
+	 * (collected | paid | reverse-charge), the box's tariff rate (0 when the box
+	 * mixes tariffs), the VAT and taxable totals in cents and the number of
+	 * underlying VATLine rows.
+	 *
+	 * @param VatReturnScope $scope The return and administration the declaration belongs to.
+	 * @param array<string,mixed> $group One entry of the scan's declarationsByKey.
+	 *
+	 * @return array<string,mixed> The declaration row.
+	 */
+	private function declarationRecord(VatReturnScope $scope, array $group): array {
+		return [
+			'declarationNumber' => $this->declarationNumber(returnId: $scope->returnId, returnBox: $group['returnBox']),
+			'returnId' => $scope->returnId,
+			'returnBox' => $group['returnBox'],
+			'type' => $group['type'],
+			'taxRate' => $group['taxRate'],
+			'totalVATAmount' => $this->fromCents(cents: $group['totalVATAmountCents']),
+			'totalTaxableAmount' => $this->fromCents(cents: $group['totalTaxableCents']),
+			'lineCount' => $group['lineCount'],
+			'administrationId' => $scope->administrationId,
+		];
+	}//end declarationRecord()
+
+	/**
+	 * Build the declarationNumber of a return's box.
+	 *
+	 * @param string $returnId Parent VATReturn id.
+	 * @param string $returnBox The VAT return box.
+	 *
+	 * @return string The declaration number (e.g. VAT-<return>-1A).
+	 */
+	private function declarationNumber(string $returnId, string $returnBox): string {
+		return sprintf(
+			'VAT-%s-%s',
+			substr(string: $returnId, offset: 0, length: 32),
+			strtoupper(string: $returnBox)
+		);
+	}//end declarationNumber()
+
+	/**
+	 * Convert the scan's cent totals to the return totals.
+	 *
+	 * @param array<string,mixed> $scan The result of scanRubrieken().
+	 *
+	 * @return array{totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private function scanTotals(array $scan): array {
+		return [
+			'totalVATCollected' => $this->fromCents(cents: $scan['totalVATCollectedCt']),
+			'totalVATPaid' => $this->fromCents(cents: $scan['totalVATPaidCt']),
+			'vatBalance' => $this->fromCents(cents: ($scan['totalVATPaidCt'] - $scan['totalVATCollectedCt'])),
+			'totalTaxableAmount' => $this->fromCents(cents: $scan['totalTaxableCt']),
+		];
+	}//end scanTotals()
 
 	/**
 	 * Re-write the rolled-up totals on the parent VATReturn.
 	 *
+	 * The totals are the sum of collected VAT, the sum of paid + reverse-charge
+	 * VAT, the balance (totalVATPaid - totalVATCollected) and the sum of
+	 * taxable amounts.
+	 *
 	 * @param string $returnId VATReturn id.
-	 * @param float $totalVATCollected Sum of collected VAT.
-	 * @param float $totalVATPaid Sum of paid + reverse-charge VAT.
-	 * @param float $vatBalance totalVATPaid - totalVATCollected.
-	 * @param float $totalTaxableAmount Sum of taxable amounts.
+	 * @param array{totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float} $totals The totals.
 	 *
 	 * @return void
 	 */
-	private function updateReturnTotals(
-		string $returnId,
-		float $totalVATCollected,
-		float $totalVATPaid,
-		float $vatBalance,
-		float $totalTaxableAmount,
-	): void {
+	private function updateReturnTotals(string $returnId, array $totals): void {
 		$vatReturn = $this->fetchReturn(returnId: $returnId);
 
-		$vatReturn['totalVATCollected'] = $totalVATCollected;
-		$vatReturn['totalVATPaid'] = $totalVATPaid;
-		$vatReturn['vatBalance'] = $vatBalance;
-		$vatReturn['totalTaxableAmount'] = $totalTaxableAmount;
+		$vatReturn['totalVATCollected'] = $totals['totalVATCollected'];
+		$vatReturn['totalVATPaid'] = $totals['totalVATPaid'];
+		$vatReturn['vatBalance'] = $totals['vatBalance'];
+		$vatReturn['totalTaxableAmount'] = $totals['totalTaxableAmount'];
 
 		$this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
 
@@ -703,10 +862,10 @@ class VATReturnService {
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function findReturn(string $returnId): ?array {
-		$found = $this->objectService
-			->setRegister($this->register())
-			->setSchema('BtwAangifte')
-			->find($returnId);
+		$found = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('BtwAangifte'),
+			id: $returnId
+		);
 
 		if ($found === null) {
 			return null;
@@ -732,109 +891,67 @@ class VATReturnService {
 	}//end fetchReturn()
 
 	/**
-	 * Fetch chart-of-accounts where vatApplicable = true, keyed by accountNumber.
-	 *
-	 * @param string $administrationId Administration scope.
-	 *
-	 * @return array<string,array<string,mixed>> accountNumber => Account.
-	 */
-	private function fetchVATAccounts(string $administrationId): array {
-		$accounts = $this->objectService
-			->setRegister($this->register())
-			->setSchema('Account')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-
-		$byNumber = [];
-		foreach ($accounts as $account) {
-			if (((bool)($account['vatApplicable'] ?? false)) === false) {
-				continue;
-			}
-
-			$number = (string)($account['accountNumber'] ?? '');
-			if ($number !== '') {
-				$byNumber[$number] = $account;
-			}
-		}
-
-		return $byNumber;
-	}//end fetchVATAccounts()
-
-	/**
-	 * Fetch GLTransaction rows in the period for the administration.
+	 * The booked GLTransaction rows of the administration posted in the
+	 * period, keyed by id. A reversed transaction stays booked: its reversal
+	 * is a posted transaction of its own that cancels it. A draft is not
+	 * booked.
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param string $startDate Period start (ISO-8601).
 	 * @param string $endDate Period end (ISO-8601).
 	 *
-	 * @return array<int,array<string,mixed>> List of GLTransaction objects.
+	 * @return array<string,array<string,mixed>> GLTransaction by id.
 	 */
-	private function fetchGLTransactions(string $administrationId, string $startDate, string $endDate): array {
+	private function fetchBookedTransactions(string $administrationId, string $startDate, string $endDate): array {
 		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('GLTransaction')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-		$in = [];
+		$booked = [];
 		foreach ($rows as $row) {
-			$date = (string)($row['transactionDate'] ?? ($row['date'] ?? ''));
-			if ($date === '') {
+			$row = $this->normaliseRow(row: $row, context: 'findAll(GLTransaction)');
+			$id = (string)($row['id'] ?? ($row['@self']['id'] ?? ''));
+			$date = substr((string)($row['postingDate'] ?? ''), 0, 10);
+			$state = (string)($row['state'] ?? '');
+			if ($id === '' || $date < $startDate || $date > $endDate || in_array($state, ['posted', 'reversed'], true) === false) {
 				continue;
 			}
 
-			if ($date >= $startDate && $date <= $endDate) {
-				$in[] = $row;
-			}
+			$booked[$id] = $row;
 		}
 
-		return $in;
-	}//end fetchGLTransactions()
+		return $booked;
+	}//end fetchBookedTransactions()
 
 	/**
-	 * Yield individual postings from a GLTransaction; supports either a `lines`
-	 * sub-array or a flat accountNumber + amount.
+	 * The GLLine rows of the administration that carry a VAT return box and
+	 * an amount kind (stamped at posting, or by the backfill).
 	 *
-	 * @param array<string,mixed> $transaction GLTransaction record.
+	 * @param string $administrationId Administration scope.
 	 *
-	 * @return iterable<int,array<string,mixed>> Postings.
+	 * @return array<int,array<string,mixed>> GLLine rows.
 	 */
-	private function postingsOf(array $transaction): iterable {
-		if (isset($transaction['lines']) === true && is_array($transaction['lines']) === true) {
-			foreach ($transaction['lines'] as $line) {
-				if (is_array($line) === true) {
-					yield $line;
-				}
+	private function fetchStampedLines(string $administrationId): array {
+		$rows = $this->objectService
+			->setRegister($this->register())
+			->setSchema('GLLine')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
+
+		$stamped = [];
+		foreach ($rows as $row) {
+			$row = $this->normaliseRow(row: $row, context: 'findAll(GLLine)');
+			if ((string)($row['vatReturnBox'] ?? '') === ''
+				|| in_array(($row['vatAmountKind'] ?? null), ['base', 'vat'], true) === false
+			) {
+				continue;
 			}
 
-			return;
+			$stamped[] = $row;
 		}
 
-		// Flat shape — treat the transaction as a single posting.
-		if (isset($transaction['accountNumber']) === true) {
-			yield $transaction;
-		}
-
-	}//end postingsOf()
-
-	/**
-	 * Decide whether a posting is collected / paid / reverse-charge.
-	 *
-	 * @param array<string,mixed> $account The Account record.
-	 * @param array<string,mixed> $posting The posting.
-	 *
-	 * @return string One of collected | paid | reverse-charge.
-	 */
-	private function resolveLineType(array $account, array $posting): string {
-		if (((bool)($posting['reverseChargeApplicable'] ?? ($account['reverseChargeApplicable'] ?? false))) === true) {
-			return 'reverse-charge';
-		}
-
-		$accountType = (string)($account['accountType'] ?? '');
-		if ($accountType === 'revenue') {
-			return 'collected';
-		}
-
-		return 'paid';
-	}//end resolveLineType()
+		return $stamped;
+	}//end fetchStampedLines()
 
 	/**
 	 * Persist a record via the real OR ObjectService API.
@@ -917,17 +1034,6 @@ class VATReturnService {
 	}//end normaliseRow()
 
 	/**
-	 * Convert a money amount to integer cents.
-	 *
-	 * @param mixed $amount Money amount.
-	 *
-	 * @return int Whole cents.
-	 */
-	private function toCents(mixed $amount): int {
-		return (int)round((float)($amount ?? 0) * 100);
-	}//end toCents()
-
-	/**
 	 * Convert integer cents back to a 2-decimal float.
 	 *
 	 * @param int $cents Whole cents.
@@ -944,7 +1050,7 @@ class VATReturnService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

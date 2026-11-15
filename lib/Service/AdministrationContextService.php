@@ -3,6 +3,9 @@
 /**
  * Administration Context Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Resolves the administratie-aware RBAC context for the authenticated user:
  * the set of administrations the user may access (via AdministrationMembership
  * records), the active administration for the session, and IDOR-safe access
@@ -27,16 +30,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -47,7 +49,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
  */
-class AdministrationContextService {
+class AdministrationContextService implements AdministrationContextServiceInterface {
 	/**
 	 * Roles permitted to post journal entries when the membership does not
 	 * explicitly set mayPostJournalEntries (REQ-MA-003). Read-only roles
@@ -154,30 +156,11 @@ class AdministrationContextService {
 		$memberships = $this->membershipsForUser(userId: $userId);
 		$administrations = [];
 		foreach ($memberships as $membership) {
-			$administrationId = (string)($membership['administrationId'] ?? '');
-			if ($administrationId === '') {
-				continue;
+			$entry = $this->accessibleAdministration(membership: $membership);
+			if ($entry !== null) {
+				$administrations[] = $entry;
 			}
-
-			if ($this->membershipIsCurrentlyValid(membership: $membership) === false) {
-				continue;
-			}
-
-			$administration = $this->findAdministration(administrationId: $administrationId);
-			if ($administration === null) {
-				continue;
-			}
-
-			$administrations[] = [
-				'administrationId' => $administrationId,
-				'administrationCode' => (string)($administration['administrationCode'] ?? ''),
-				'name' => (string)($administration['name'] ?? ''),
-				'status' => (string)($administration['status'] ?? 'actief'),
-				'role' => (string)($membership['role'] ?? 'inkijker'),
-				'mayPostJournalEntries' => $this->resolvePostingRight(membership: $membership),
-				'mayCloseFiscalYear' => (bool)($membership['mayCloseFiscalYear'] ?? false),
-			];
-		}//end foreach
+		}
 
 		$activeId = null;
 		if ($administrations !== []) {
@@ -191,6 +174,41 @@ class AdministrationContextService {
 		];
 
 	}//end buildContext()
+
+	/**
+	 * The context entry of one membership, or null when it gives no current access.
+	 *
+	 * @param array<string,mixed> $membership The AdministrationMembership.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+	 */
+	private function accessibleAdministration(array $membership): array|null {
+		$administrationId = (string)($membership['administrationId'] ?? '');
+		if ($administrationId === '') {
+			return null;
+		}
+
+		if ($this->membershipIsCurrentlyValid(membership: $membership) === false) {
+			return null;
+		}
+
+		$administration = $this->findAdministration(administrationId: $administrationId);
+		if ($administration === null) {
+			return null;
+		}
+
+		return [
+			'administrationId' => $administrationId,
+			'administrationCode' => (string)($administration['administrationCode'] ?? ''),
+			'name' => (string)($administration['name'] ?? ''),
+			'status' => (string)($administration['status'] ?? 'actief'),
+			'role' => (string)($membership['role'] ?? 'inkijker'),
+			'mayPostJournalEntries' => $this->resolvePostingRight(membership: $membership),
+			'mayCloseFiscalYear' => (bool)($membership['mayCloseFiscalYear'] ?? false),
+		];
+	}//end accessibleAdministration()
 
 	/**
 	 * List the administration ids the authenticated user may access.
@@ -211,6 +229,59 @@ class AdministrationContextService {
 			return [];
 		}
 
+		return $this->administrationIdsForUser(userId: $userId);
+	}//end accessibleAdministrationIds()
+
+	/**
+	 * Whether a named user may access an administration, without a session.
+	 *
+	 * A background job runs as nobody; a scheduled report runs on behalf of the
+	 * schedule's owner and must never reach further than that owner could by hand.
+	 *
+	 * @param string $userId           The user.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return bool True when the user holds a currently valid membership.
+	 *
+	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 */
+	public function canUserAccess(string $userId, string $administrationId): bool {
+		if ($userId === '' || $administrationId === '') {
+			return false;
+		}
+
+		return in_array(needle: $administrationId, haystack: $this->administrationIdsForUser(userId: $userId), strict: true);
+	}//end canUserAccess()
+
+	/**
+	 * The administration a named user works in by default: their first valid membership.
+	 *
+	 * A dashboard widget is asked for a user id without a shillinq session, so
+	 * it cannot read the session's active administration.
+	 *
+	 * @param string $userId The user.
+	 *
+	 * @return string|null The administration id, or null when the user has none.
+	 *
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 */
+	public function defaultAdministrationIdForUser(string $userId): ?string {
+		if ($userId === '') {
+			return null;
+		}
+
+		return ($this->administrationIdsForUser(userId: $userId)[0] ?? null);
+
+	}//end defaultAdministrationIdForUser()
+
+	/**
+	 * The administration ids a user holds a currently valid membership for.
+	 *
+	 * @param string $userId The user.
+	 *
+	 * @return array<int,string>
+	 */
+	private function administrationIdsForUser(string $userId): array {
 		$ids = [];
 		foreach ($this->membershipsForUser(userId: $userId) as $membership) {
 			$administrationId = (string)($membership['administrationId'] ?? '');
@@ -226,7 +297,7 @@ class AdministrationContextService {
 		}
 
 		return array_values(array_unique($ids));
-	}//end accessibleAdministrationIds()
+	}//end administrationIdsForUser()
 
 	/**
 	 * Whether the authenticated user may access a given administration (REQ-MA-001).
@@ -269,6 +340,33 @@ class AdministrationContextService {
 
 		return false;
 	}//end canPostJournalEntry()
+
+	/**
+	 * Whether the authenticated user holds a currently valid owner (`eigenaar`) membership.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	public function isOwnerOf(string $administrationId): bool {
+		$userId = $this->currentUserId();
+		if ($userId === null || $administrationId === '') {
+			return false;
+		}
+
+		foreach ($this->membershipsForUser(userId: $userId) as $membership) {
+			if ((string)($membership['administrationId'] ?? '') === $administrationId
+				&& (string)($membership['role'] ?? '') === 'eigenaar'
+				&& $this->membershipIsCurrentlyValid(membership: $membership) === true
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isOwnerOf()
 
 	/**
 	 * Validate a requested active administration and return the id to switch to (REQ-MA-003).
@@ -433,23 +531,9 @@ class AdministrationContextService {
 				->setRegister($this->register())
 				->setSchema('Administration');
 
-			// Primary: the OpenRegister uuid, via the single-object lookup that
-			// actually addresses it.
-			//
-			// ⚠️ Its own try/catch, deliberately. find() THROWS
-			// DoesNotExistException ("Object with identifier 'ADM-001' not found
-			// in any magic table") for anything that is not a uuid — it does not
-			// return null. Letting that reach the outer catch would return null
-			// before the administrationCode fallback below ever runs, which is
-			// exactly the bug this method is being fixed for, reintroduced one
-			// layer down. A miss here is a normal id-space mismatch, not an error.
-			try {
-				$arr = $this->asArray(row: $scoped->find($administrationId));
-				if ($arr !== []) {
-					return $arr;
-				}
-			} catch (\Throwable $notAUuid) {
-				// Fall through to the administrationCode lookup.
+			$byUuid = $this->findAdministrationByUuid(scoped: $scoped, administrationId: $administrationId);
+			if ($byUuid !== null) {
+				return $byUuid;
 			}
 
 			// Fallback: the human administrationCode, which IS a JSON property
@@ -468,6 +552,52 @@ class AdministrationContextService {
 			return null;
 		}
 
+		return $this->firstAdministration(matches: $matches, administrationId: $administrationId);
+	}//end findAdministrationUncached()
+
+	/**
+	 * The administration by its OpenRegister uuid, or null when the id is not one.
+	 *
+	 * @param mixed  $scoped           The ObjectService scoped to the Administration schema.
+	 * @param string $administrationId The administration uuid or administrationCode.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findAdministrationByUuid(mixed $scoped, string $administrationId): array|null {
+		// Primary: the OpenRegister uuid, via the single-object lookup that
+		// actually addresses it.
+		//
+		// ⚠️ Its own try/catch, deliberately. find() THROWS
+		// DoesNotExistException ("Object with identifier 'ADM-001' not found
+		// in any magic table") for anything that is not a uuid — it does not
+		// return null. Letting that reach the outer catch would return null
+		// before the administrationCode fallback below ever runs, which is
+		// exactly the bug this method is being fixed for, reintroduced one
+		// layer down. A miss here is a normal id-space mismatch, not an error.
+		try {
+			$arr = $this->asArray(row: ObjectIdentifier::findScoped(
+				scoped: $scoped,
+				id: $administrationId
+			));
+			if ($arr !== []) {
+				return $arr;
+			}
+		} catch (\Throwable $notAUuid) {
+			// Fall through to the administrationCode lookup.
+		}
+
+		return null;
+	}//end findAdministrationByUuid()
+
+	/**
+	 * The first administrationCode match as an array, or null (logged) when none resolves.
+	 *
+	 * @param iterable<mixed> $matches          The findAll() result.
+	 * @param string          $administrationId The administration uuid or administrationCode.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstAdministration(iterable $matches, string $administrationId): array|null {
 		foreach ($matches as $match) {
 			// OpenRegister's findAll() returns ObjectEntity instances; normalise.
 			$arr = $this->asArray(row: $match);
@@ -485,7 +615,7 @@ class AdministrationContextService {
 		);
 
 		return null;
-	}//end findAdministrationUncached()
+	}//end firstAdministration()
 
 	/**
 	 * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
@@ -527,7 +657,7 @@ class AdministrationContextService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

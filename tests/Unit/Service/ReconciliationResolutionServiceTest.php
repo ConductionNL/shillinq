@@ -172,8 +172,17 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 		$objectService->method('find')->willReturnCallback(
 			static fn (int|string $id): ?ObjectEntityInterface => $fake->find((string)$id)
 		);
-		$objectService->method('updateObject')->willReturnCallback(
+		// patchObject merges; updateObject REPLACES the stored object wholesale
+		// (ObjectServiceInterface::updateObject is PUT semantics), so a partial
+		// payload sent to updateObject answers only what was sent.
+		$objectService->method('patchObject')->willReturnCallback(
 			static fn (string $objectId, array $data): ObjectEntityInterface => $fake->updateObject($objectId, $data)
+		);
+		$objectService->method('updateObject')->willReturnCallback(
+			static function (string $objectId, array $data) use ($fake): ObjectEntityInterface {
+				$fake->updates[] = ['schema' => 'replace', 'id' => $objectId, 'payload' => $data];
+				return (new ObjectEntity())->setObject(array_merge(['id' => $objectId], $data));
+			}
 		);
 
 		return new ReconciliationResolutionService($this->appConfig, $this->logger, $objectService);
@@ -362,4 +371,27 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 
 	}//end testFindThrowableIsTranslatedToOutOfBounds()
 
+	/**
+	 * Classifying a match keeps its other fields: a partial payload goes
+	 * through patchObject, never through updateObject's replace (REQ-BMM-004).
+	 *
+	 * @return void
+	 */
+	public function testResolveKeepsTheMatchFields(): void {
+		$fake = new FakeObjectService([
+			'BankReconciliation' => [
+				'recon-1' => ['reconciliationStatus' => 'open'],
+			],
+			'ReconciliationMatch' => [
+				'match-1' => ['reconId' => 'recon-1', 'bankLineId' => 'L-7', 'matchedAmount' => 12.5],
+			],
+		]);
+
+		$result = $this->svc($fake)->resolveMatch('recon-1', 'match-1', 'timing', 'Betaling onderweg', 'controller');
+
+		self::assertSame('L-7', $result['bankLineId'] ?? null);
+		self::assertSame(12.5, $result['matchedAmount'] ?? null);
+		self::assertSame('timing', $result['resolutionStatus']);
+
+	}//end testResolveKeepsTheMatchFields()
 }//end class

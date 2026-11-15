@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -467,7 +467,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		);
 
 		self::assertSame(18500.00, $po['totalAmount']);
-		self::assertSame('pending_approval', $po['lifecycleState']);
+		self::assertSame('draft', $po['statusCode']);
 		self::assertCount(2, $po['approvalChain']);
 		self::assertSame('inkoper-1', $po['requesterId']);
 		self::assertNotEmpty($po['poNumber']);
@@ -532,21 +532,21 @@ final class PurchaseOrderServiceTest extends TestCase {
 					'id' => 'po-1',
 					'administrationId' => 'adm-1',
 					'poNumber' => 'PO-2026-adm-1-000001',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						[
 							'role' => 'teamleider',
 							'order' => 1,
-							'status' => 'approved',
-							'signedAt' => '2026-06-01T12:00:00+00:00',
-							'signedBy' => 'teamleider-1',
+							'decision' => 'approved',
+							'decidedAt' => '2026-06-01T12:00:00+00:00',
+							'userId' => 'teamleider-1',
 						],
 						[
 							'role' => 'facility_manager',
 							'order' => 2,
-							'status' => 'pending',
-							'signedAt' => '',
-							'signedBy' => '',
+							'decision' => 'pending',
+							'decidedAt' => '',
+							'userId' => '',
 						],
 					],
 				],
@@ -570,9 +570,9 @@ final class PurchaseOrderServiceTest extends TestCase {
 		}
 
 		// Second attempt: both signed.
-		$data['PurchaseOrder'][0]['approvalChain'][1]['status'] = 'approved';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['signedAt'] = '2026-06-02T09:00:00+00:00';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['signedBy'] = 'facility-1';
+		$data['PurchaseOrder'][0]['approvalChain'][1]['decision'] = 'approved';
+		$data['PurchaseOrder'][0]['approvalChain'][1]['decidedAt'] = '2026-06-02T09:00:00+00:00';
+		$data['PurchaseOrder'][0]['approvalChain'][1]['userId'] = 'facility-1';
 
 		$service2 = $this->buildService(
 			data: $data,
@@ -583,8 +583,180 @@ final class PurchaseOrderServiceTest extends TestCase {
 		);
 
 		$po = $service2->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: 'po-1');
-		self::assertSame('sent', $po['lifecycleState']);
+		self::assertSame('sent', $po['statusCode']);
 		self::assertNotEmpty($po['sentAt']);
 
 	}//end testBlockSendUntilApprovedGuard()
+	/**
+	 * Every createPurchaseOrder refusal, in check order, with its message;
+	 * none of them saves.
+	 *
+	 * @return void
+	 */
+	public function testCreateRefusalsRunInOrder(): void {
+		$line  = ['productCode' => 'X', 'quantity' => 1, 'unitPrice' => 100.0, 'vatRate' => 0.21, 'glAccount' => '4400'];
+		$base  = ['supplierId' => 'sup-1', 'costCenter' => 'FAC', 'lines' => [$line]];
+		$cases = [
+			['', 'inkoper-1', $base],
+			['adm-OTHER', 'inkoper-1', $base],
+			['adm-1', '', $base],
+			['adm-1', 'inkoper-1', ['supplierId' => ' '] + $base],
+			['adm-1', 'inkoper-1', ['costCenter' => ''] + $base],
+			['adm-1', 'inkoper-1', ['lines' => []] + $base],
+			['adm-1', 'inkoper-1', ['lines' => ['x']] + $base],
+			['adm-1', 'inkoper-1', ['lines' => [['productCode' => ''] + $line]] + $base],
+			['adm-1', 'inkoper-1', ['lines' => [$line, ['glAccount' => ' '] + $line]] + $base],
+			['adm-1', 'inkoper-1', ['lines' => [['quantity' => 0] + $line]] + $base],
+			['adm-1', 'inkoper-1', ['lines' => [['unitPrice' => -1] + $line]] + $base],
+			['adm-1', 'inkoper-1', ['lines' => [['vatRate' => 1.5] + $line]] + $base],
+			['adm-1', 'inkoper-1', ['lines' => [['unitPrice' => 0] + $line]] + $base],
+			['adm-1', 'inkoper-1', $base],
+			['adm-1', 'inkoper-1', ['frameworkAgreementId' => 'FA-404'] + $base],
+		];
+
+		$messages = [];
+		foreach ($cases as $index => [$administrationId, $userId, $payload]) {
+			$saved         = [];
+			$notifications = [];
+			$data          = [];
+			if ($index === 13) {
+				$data['CostCenter'] = [['administrationId' => 'adm-1', 'code' => 'FAC', 'budgetRemaining' => 99.99]];
+			}
+
+			$service = $this->buildService(data: $data, saved: $saved, userId: $userId, accessibleAdministrations: ['adm-1'], notifications: $notifications);
+			try {
+				$service->createPurchaseOrder($administrationId, $payload);
+				$messages[] = 'accepted';
+			} catch (\RuntimeException $e) {
+				$messages[] = $e->getMessage();
+			}
+
+			self::assertSame([], $saved);
+		}
+
+		self::assertSame(
+			[
+				'administrationId is required',
+				'Administration not found',
+				'Authenticated requester is required',
+				'supplierId is required',
+				'costCenter is required',
+				'Purchase order must have at least one line',
+				'Line item must be an object',
+				'Line 1 is missing productCode',
+				'Line 2 is missing glAccount',
+				'Line 1 must have positive quantity',
+				'Line 1 must have non-negative unitPrice',
+				'Line 1 vatRate must be a fraction between 0 and 1',
+				'Purchase order total must be positive',
+				'Cost center budget exceeded for FAC',
+				'Framework agreement not found.',
+			],
+			$messages
+		);
+
+	}//end testCreateRefusalsRunInOrder()
+
+	/**
+	 * The stored lines (cents rounding, given and automatic line numbers),
+	 * the PO fields, and the framework-agreement drawdown saved after the PO
+	 * and its approval tasks.
+	 *
+	 * @return void
+	 */
+	public function testCreateStoresLinesAndDrawsDown(): void {
+		$saved         = [];
+		$notifications = [];
+		$data          = [
+			'AdministrationMembership' => [['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'tl-1']],
+			'FrameworkAgreement' => [['id' => 'fa-1', 'administrationId' => 'adm-1', 'agreementNumber' => 'FA-1', 'statusCode' => 'active', 'ceilingAmount' => 100000, 'drawnAmount' => 500]],
+			'CostCenter' => [['administrationId' => 'adm-1', 'code' => 'FAC', 'budgetRemaining' => null]],
+		];
+		$service = $this->buildService(data: $data, saved: $saved, userId: 'inkoper-1', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+
+		$po = $service->createPurchaseOrder(
+			'adm-1',
+			[
+				'supplierId' => ' sup-1 ',
+				'costCenter' => ' FAC ',
+				'projectCode' => ' P ',
+				'requisitionId' => ' req-1 ',
+				'frameworkAgreementId' => ' FA-1 ',
+				'notes' => ' rush ',
+				'lines' => [
+					['productCode' => ' A ', 'quantity' => '3', 'unitPrice' => '1.005', 'vatRate' => '0.09', 'glAccount' => ' 4400 ', 'lineNumber' => 7],
+					['productCode' => 'B', 'quantity' => 0.5, 'unitPrice' => 9.99, 'glAccount' => '4410'],
+				],
+			]
+		);
+
+		self::assertSame(
+			[
+				['lineNumber' => 7, 'productCode' => 'A', 'quantity' => 3.0, 'unitPrice' => 1.01, 'lineTotal' => 3.03, 'vatRate' => 0.09, 'vatAmount' => 0.27, 'glAccount' => '4400'],
+				['lineNumber' => 2, 'productCode' => 'B', 'quantity' => 0.5, 'unitPrice' => 9.99, 'lineTotal' => 5.0, 'vatRate' => 0.0, 'vatAmount' => 0.0, 'glAccount' => '4410'],
+			],
+			$po['lines']
+		);
+		self::assertSame(
+			['adm-1', 'sup-1', 'inkoper-1', 'FAC', 'P', 'req-1', 'FA-1', 8.03, 'EUR', 'draft', 'rush'],
+			[$po['administrationId'], $po['supplierId'], $po['requesterId'], $po['costCenter'], $po['projectCode'], $po['requisitionId'], $po['frameworkAgreementId'], $po['totalAmount'], $po['currency'], $po['statusCode'], $po['notes']]
+		);
+		self::assertSame(['PurchaseOrder', 'ApprovalTask', 'FrameworkAgreement'], array_column($saved, 'schema'));
+		self::assertSame(1303, $saved[2]['object']['drawnAmount']);
+
+	}//end testCreateStoresLinesAndDrawsDown()
+	/**
+	 * blockSendUntilApproved refuses an inaccessible tenant, an unknown or
+	 * other-tenant order, an order without a chain and an unsigned chain, each
+	 * without saving; a fully signed order is saved as sent.
+	 *
+	 * @return void
+	 */
+	public function testSendGuardRefusalsAndTheSentSave(): void {
+		$signed = ['decision' => 'approved', 'decidedAt' => '2026-01-02T10:00:00+00:00'];
+		$data   = [
+			'PurchaseOrder' => [
+				['id' => 'po-empty', 'administrationId' => 'adm-1', 'approvalChain' => []],
+				['id' => 'po-open', 'administrationId' => 'adm-1', 'approvalChain' => [$signed, ['decision' => 'pending']]],
+				['id' => 'po-other', 'administrationId' => 'adm-2', 'approvalChain' => [$signed]],
+				['id' => 'po-ok', 'administrationId' => 'adm-1', 'statusCode' => 'approved', 'approvalChain' => [$signed]],
+			],
+		];
+
+		$messages = [];
+		foreach ([['adm-2', 'po-other'], ['adm-1', 'po-missing'], ['adm-1', 'po-other'], ['adm-1', 'po-empty'], ['adm-1', 'po-open']] as [$administrationId, $poId]) {
+			$saved         = [];
+			$notifications = [];
+			$service       = $this->buildService(data: $data, saved: $saved, userId: 'u', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+			try {
+				$service->blockSendUntilApproved($administrationId, $poId);
+				$messages[] = 'accepted';
+			} catch (\RuntimeException $e) {
+				$messages[] = $e->getMessage();
+			}
+
+			self::assertSame([], $saved);
+		}
+
+		self::assertSame(
+			[
+				'Purchase order not found',
+				'Purchase order not found',
+				'Purchase order not found',
+				'Purchase order has no approval chain',
+				'Purchase order cannot be sent: approval chain incomplete',
+			],
+			$messages
+		);
+
+		$saved         = [];
+		$notifications = [];
+		$service       = $this->buildService(data: $data, saved: $saved, userId: 'u', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+		$sent          = $service->blockSendUntilApproved('adm-1', 'po-ok');
+
+		self::assertSame('sent', $sent['statusCode']);
+		self::assertNotSame('', (string)$sent['sentAt']);
+		self::assertSame([['PurchaseOrder', 'po-ok', 'sent']], array_map(static fn (array $row): array => [$row['schema'], $row['object']['id'], $row['object']['statusCode']], $saved));
+
+	}//end testSendGuardRefusalsAndTheSentSave()
 }//end class

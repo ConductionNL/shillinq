@@ -294,17 +294,22 @@ final class AansluitingServiceTest extends TestCase {
 						'administrationId' => 'adm-1',
 					],
 				],
-				'Account' => [
-					['accountNumber' => '4000', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-				],
 				'GLTransaction' => [
 					[
 						'id' => 'gltx-1',
 						'administrationId' => 'adm-1',
-						'transactionDate' => '2026-06-15',
-						'lines' => [
-							['accountNumber' => '4000', 'taxableAmount' => 20000.0, 'taxRate' => 21.0],
-						],
+						'postingDate' => '2026-06-15',
+						'state' => 'posted',
+					],
+				],
+				'GLLine' => [
+					[
+						'id' => 'glline-1', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '8000',
+						'side' => 'credit', 'amount' => 20000.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'base',
+					],
+					[
+						'id' => 'glline-2', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '2110',
+						'side' => 'credit', 'amount' => 4200.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'vat',
 					],
 				],
 				'BtwAangifte' => [
@@ -323,6 +328,7 @@ final class AansluitingServiceTest extends TestCase {
 					[
 						'id' => 'vd-1',
 						'returnId' => 'vatret-1',
+						'returnBox' => '1a',
 						'type' => 'collected',
 						'taxRate' => 21.0,
 						'totalVATAmount' => 4450.0,
@@ -348,9 +354,9 @@ final class AansluitingServiceTest extends TestCase {
 		}
 
 		self::assertArrayHasKey('TOTAL', $byKey);
-		self::assertArrayHasKey('collected:21.00', $byKey);
-		self::assertSame(4200.0, $byKey['collected:21.00']['sourceAAmount']);
-		self::assertSame(4450.0, $byKey['collected:21.00']['sourceBAmount']);
+		self::assertArrayHasKey('1a', $byKey);
+		self::assertSame(4200.0, $byKey['1a']['sourceAAmount']);
+		self::assertSame(4450.0, $byKey['1a']['sourceBAmount']);
 
 	}//end testComputeBtwLedgerAangifteReportsOpenDrift()
 
@@ -374,17 +380,22 @@ final class AansluitingServiceTest extends TestCase {
 						'administrationId' => 'adm-1',
 					],
 				],
-				'Account' => [
-					['accountNumber' => '4000', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-				],
 				'GLTransaction' => [
 					[
 						'id' => 'gltx-1',
 						'administrationId' => 'adm-1',
-						'transactionDate' => '2026-06-15',
-						'lines' => [
-							['accountNumber' => '4000', 'taxableAmount' => 20000.0, 'taxRate' => 21.0],
-						],
+						'postingDate' => '2026-06-15',
+						'state' => 'posted',
+					],
+				],
+				'GLLine' => [
+					[
+						'id' => 'glline-1', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '8000',
+						'side' => 'credit', 'amount' => 20000.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'base',
+					],
+					[
+						'id' => 'glline-2', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '2110',
+						'side' => 'credit', 'amount' => 4200.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'vat',
 					],
 				],
 				'BtwAangifte' => [
@@ -403,6 +414,7 @@ final class AansluitingServiceTest extends TestCase {
 					[
 						'id' => 'vd-1',
 						'returnId' => 'vatret-1',
+						'returnBox' => '1a',
 						'type' => 'collected',
 						'taxRate' => 21.0,
 						'totalVATAmount' => 4450.0,
@@ -684,4 +696,148 @@ final class AansluitingServiceTest extends TestCase {
 		self::assertNull($result['resolvedAt']);
 
 	}//end testReopenTransitionsResolvedToOpen()
+
+	/**
+	 * Characterisation: recomputing an OPEN result keeps its id and carried
+	 * explanation, and the saved record has this exact shape and key order.
+	 *
+	 * @return void
+	 */
+	public function testComputeRecomputesOpenResultRecordShape(): void {
+		$stub = $this->fakeObjectService(
+			[
+				'Aansluiting' => [
+					[
+						'id' => 'aansl-ar-1',
+						'reconciliationType' => 'subledger-gl-control',
+						'controlAccountNumber' => '1300',
+						'subLedgerType' => 'ar',
+						'administrationId' => 'adm-2',
+					],
+				],
+				'AansluitingResult' => [
+					[
+						'@self' => ['id' => 'aanslres-9'],
+						'reconciliationId' => 'aansl-ar-1',
+						'periodId' => '2026-Q2',
+						'status' => 'open',
+						'explainedBy' => 'alice',
+						'explainedAt' => '2026-04-01T00:00:00+00:00',
+						'explanationReasonCode' => 'timing',
+						'explanationReasonText' => 'Late invoice.',
+					],
+				],
+				'GLTransaction' => [
+					['id' => 'gltx-2', 'administrationId' => 'adm-2'],
+				],
+				'GLLine' => [
+					['transactionId' => 'gltx-2', 'accountNumber' => '1300', 'side' => 'debit', 'amount' => 100.5],
+				],
+				'ARInvoice' => [
+					['id' => 'inv-1', 'administrationId' => 'adm-2', 'lifecycleState' => 'issued', 'grossAmount' => 100.0],
+				],
+			]
+		);
+
+		$result = $this->buildService(stub: $stub)->compute(reconciliationId: 'aansl-ar-1', periodId: '2026-Q2');
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', $result['computedAt']);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', $result['resolvedAt']);
+		$result['computedAt'] = '<masked>';
+		$result['resolvedAt'] = '<masked>';
+		self::assertSame(
+			[
+				'reconciliationId' => 'aansl-ar-1',
+				'periodId' => '2026-Q2',
+				'computedAt' => '<masked>',
+				'sourceATotal' => 100.5,
+				'sourceBTotal' => 100.0,
+				'differenceCents' => 50,
+				'withinTolerance' => true,
+				'status' => 'resolved',
+				'lineDeltas' => $result['lineDeltas'],
+				'explainedBy' => 'alice',
+				'explainedAt' => '2026-04-01T00:00:00+00:00',
+				'explanationReasonCode' => 'timing',
+				'explanationReasonText' => 'Late invoice.',
+				'resolvedBy' => 'system',
+				'resolvedAt' => '<masked>',
+				'relatedVatCorrectionId' => null,
+				'administrationId' => 'adm-2',
+				'id' => 'aanslres-9',
+			],
+			$result
+		);
+		self::assertSame(
+			[
+				'bucketKey' => 'TOTAL',
+				'sourceAAmount' => 100.5,
+				'sourceBAmount' => 100.0,
+				'deltaAmount' => 0.5,
+			],
+			$result['lineDeltas'][0]
+		);
+
+	}//end testComputeRecomputesOpenResultRecordShape()
+
+	/**
+	 * Characterisation: skipping a non-open result logs once at info.
+	 *
+	 * @return void
+	 */
+	public function testComputeSkipLogsTheLockedStatus(): void {
+		$stub = $this->fakeObjectService(
+			[
+				'Aansluiting' => [
+					[
+						'id' => 'aansl-ar-1',
+						'reconciliationType' => 'subledger-gl-control',
+					],
+				],
+				'AansluitingResult' => [
+					[
+						'id' => 'aanslres-1',
+						'reconciliationId' => 'aansl-ar-1',
+						'periodId' => '2026-Q2',
+						'status' => 'resolved',
+					],
+				],
+			]
+		);
+		$this->logger->expects(self::once())->method('info')->with(
+			'AansluitingService: skipping recompute of a non-open result; reopen() first',
+			['reconciliationId' => 'aansl-ar-1', 'periodId' => '2026-Q2', 'status' => 'resolved']
+		);
+
+		$result = $this->buildService(stub: $stub)->compute(reconciliationId: 'aansl-ar-1', periodId: '2026-Q2');
+		self::assertSame('aanslres-1', $result['id']);
+
+	}//end testComputeSkipLogsTheLockedStatus()
+
+	/**
+	 * Characterisation: an unknown reconciliation type throws before any save.
+	 *
+	 * @return void
+	 */
+	public function testComputeRejectsAnUnsupportedType(): void {
+		$stub = $this->fakeObjectService(
+			[
+				'Aansluiting' => [
+					[
+						'id' => 'aansl-x',
+						'reconciliationType' => 'bank-gl',
+					],
+				],
+			]
+		);
+
+		try {
+			$this->buildService(stub: $stub)->compute(reconciliationId: 'aansl-x', periodId: '2026-Q2');
+			self::fail('expected a RuntimeException');
+		} catch (\RuntimeException $e) {
+			self::assertSame('Unsupported aansluitingType "bank-gl"', $e->getMessage());
+		}
+
+		self::assertSame([], $stub->dump('AansluitingResult'));
+
+	}//end testComputeRejectsAnUnsupportedType()
 }//end class

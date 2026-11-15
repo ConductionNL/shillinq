@@ -4,6 +4,9 @@
  * Unit tests for MultiPoConsolidationService (slice 07 of
  * bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers REQ-PO3W-007:
  *  - enumerateCandidateTuples() honours the supplier filter, the
  *    product_code filter and the 30-day date-proximity window;
@@ -28,10 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
  */
 
 declare(strict_types=1);
@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -265,6 +266,7 @@ final class MultiPoConsolidationServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 
 		return new MultiPoConsolidationService(

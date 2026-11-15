@@ -3,6 +3,9 @@
 /**
  * Unit tests for ServiceReceiptService.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers member 12 of bookkeeping-purchase-order-3way (REQ-PO3W-011) at the
  * line-confirmation level:
  *  - createServiceReceipt materialises a per-administration receiptNumber
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -593,7 +593,7 @@ final class ServiceReceiptServiceTest extends TestCase {
 		$saved = [];
 		$data = [
 			'PurchaseOrder' => [
-				['id' => 'po-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'sent'],
+				['id' => 'po-1', 'administrationId' => 'adm-1', 'statusCode' => 'sent'],
 			],
 			'PurchaseOrderLine' => [
 				['id' => 'poline-1', 'poId' => 'po-1', 'administrationId' => 'adm-1', 'quantityOrdered' => 3.0, 'unitPrice' => 500000],
@@ -621,14 +621,14 @@ final class ServiceReceiptServiceTest extends TestCase {
 
 		$poSavesAfterFirst = array_values(array_filter($saved, static fn ($r) => $r['schema'] === 'PurchaseOrder'));
 		self::assertNotEmpty($poSavesAfterFirst);
-		self::assertSame('partial_received', end($poSavesAfterFirst)['object']['lifecycleState']);
+		self::assertSame('partial_received', end($poSavesAfterFirst)['object']['statusCode']);
 
 		// Accept the second receipt (2 more of 3 units => 3/3 total) — PO
 		// should move to fully_received.
 		$service->acceptServiceReceipt(administrationId: 'adm-1', receiptId: 'svr-2');
 
 		$poSavesAfterSecond = array_values(array_filter($saved, static fn ($r) => $r['schema'] === 'PurchaseOrder'));
-		self::assertSame('fully_received', end($poSavesAfterSecond)['object']['lifecycleState']);
+		self::assertSame('fully_received', end($poSavesAfterSecond)['object']['statusCode']);
 
 	}//end testAcceptAccumulatesAcrossPeriodicReceipts()
 }//end class

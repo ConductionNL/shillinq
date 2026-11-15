@@ -3,6 +3,9 @@
 /**
  * Financial Dashboard Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side data layer for the Wave-4 financial dashboard endpoints
  * (financial-series + financial-summary). Replaces the client-side
  * useFinancialData.js fetch layer: each schema the dashboard consumes
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,7 +39,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FinancialDashboardServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,7 +50,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
-class FinancialDashboardService {
+class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	/**
 	 * Trailing months used when no explicit from/to range is given
 	 * (mirrors the client widgets' FALLBACK_MONTHS).
@@ -72,6 +73,13 @@ class FinancialDashboardService {
 	];
 
 	/**
+	 * The invoice states that count as invoiced for the top-customers widget.
+	 *
+	 * @var array<int,string>
+	 */
+	private const INVOICED_STATES = ['issued', 'overdue', 'partially-paid', 'paid'];
+
+	/**
 	 * Schemas the KPI summary endpoint consumes (the series schemas plus the
 	 * open AR/AP sources).
 	 *
@@ -84,6 +92,32 @@ class FinancialDashboardService {
 		'hourEntries' => 'UrenRegistratie',
 		'arInvoices' => 'ARInvoice',
 		'apTransactions' => 'APTransaction',
+	];
+
+	/**
+	 * Schemas the dashboard widgets consume (reporting-custom-analysis REQ-RCA-001).
+	 *
+	 * @var array<string,string>
+	 */
+	private const WIDGET_SCHEMAS = [
+		'accounts' => 'Account',
+		'transactions' => 'GLTransaction',
+		'lines' => 'GLLine',
+		'arInvoices' => 'ARInvoice',
+		'customers' => 'CustomerMaster',
+	];
+
+	/**
+	 * Schemas the per-account cash position consumes (REQ-BCON-004).
+	 *
+	 * @var array<string,string>
+	 */
+	private const CASH_SCHEMAS = [
+		'accounts' => 'Account',
+		'transactions' => 'GLTransaction',
+		'lines' => 'GLLine',
+		'bankAccounts' => 'BankAccount',
+		'statements' => 'BankStatement',
 	];
 
 	/**
@@ -117,19 +151,26 @@ class FinancialDashboardService {
 	 */
 	public function series(?string $from, ?string $to, ?DateTimeImmutable $now = null): array {
 		$now = ($now ?? new DateTimeImmutable());
-		$months = $this->resolveMonths(from: $from, to: $to, now: $now);
+		$months = $this->resolveMonths(from: (string)$from, to: (string)$to, now: $now);
 		$data = $this->fetchSchemas(schemas: self::SERIES_SCHEMAS);
-
 		$series = $this->calculator->monthlyFinancialSeries(
-			input: [
-				'accounts' => $data['accounts'],
-				'transactions' => $data['transactions'],
-				'lines' => $data['lines'],
-				'months' => $months,
-			]
+			input: ['accounts' => $data['accounts'], 'transactions' => $data['transactions'], 'lines' => $data['lines'], 'months' => $months]
 		);
 		$billable = $this->calculator->billableSeries(entries: $data['hourEntries'], months: $months);
 
+		return $this->seriesPayload(series: $series, billable: $billable);
+
+	}//end series()
+
+	/**
+	 * The series endpoint payload: months plus the parallel arrays.
+	 *
+	 * @param array<string,mixed> $series   Monthly financial series.
+	 * @param array<string,mixed> $billable Billable-hours series.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function seriesPayload(array $series, array $billable): array {
 		return [
 			'months' => $series['months'],
 			'revenue' => $series['revenue'],
@@ -144,7 +185,7 @@ class FinancialDashboardService {
 			'cashNet' => $series['cashNet'],
 		];
 
-	}//end series()
+	}//end seriesPayload()
 
 	/**
 	 * KPI summary over the resolved month window with previous-period trend
@@ -166,10 +207,9 @@ class FinancialDashboardService {
 	 */
 	public function summary(?string $from, ?string $to, ?DateTimeImmutable $now = null): array {
 		$now = ($now ?? new DateTimeImmutable());
-		$months = $this->resolveMonths(from: $from, to: $to, now: $now);
+		$months = $this->resolveMonths(from: (string)$from, to: (string)$to, now: $now);
 		$previousMonths = $this->previousMonths(months: $months);
 		$data = $this->fetchSchemas(schemas: self::SUMMARY_SCHEMAS);
-
 		$current = $this->calculator->computeRangeKpis(data: $data, months: $months);
 		$previous = $this->calculator->computeRangeKpis(data: $data, months: $previousMonths);
 		$pointInTime = $this->calculator->computeKpis(data: $data, now: $now);
@@ -177,46 +217,59 @@ class FinancialDashboardService {
 		return [
 			'months' => $months,
 			'previousMonths' => $previousMonths,
-			'current' => [
-				'turnover' => $current['turnover'],
-				'margin' => $current['margin'],
-				'marginPct' => $current['marginPct'],
-				'billableHours' => $current['billableHours'],
-				'billablePct' => $current['billablePct'],
-				'openDebtors' => [
-					'count' => $pointInTime['openArCount'],
-					'amount' => $pointInTime['openArAmount'],
-				],
-				'openCreditors' => [
-					'count' => $pointInTime['openApCount'],
-					'amount' => $pointInTime['openApAmount'],
-				],
-				'cashPosition' => $pointInTime['cashPosition'],
-			],
-			'previousPeriod' => [
-				'turnover' => $previous['turnover'],
-				'margin' => $previous['margin'],
-				'marginPct' => $previous['marginPct'],
-				'billableHours' => $previous['billableHours'],
-				'billablePct' => $previous['billablePct'],
-			],
+			'current' => ($this->rangeFigures(kpis: $current) + $this->pointInTimeFigures(kpis: $pointInTime)),
+			'previousPeriod' => $this->rangeFigures(kpis: $previous),
 		];
 
 	}//end summary()
+
+	/**
+	 * The range-driven KPIs of one window.
+	 *
+	 * @param array<string,mixed> $kpis Range KPIs from the calculator.
+	 *
+	 * @return array<string,mixed> turnover, margin, marginPct, billableHours, billablePct.
+	 */
+	private function rangeFigures(array $kpis): array {
+		return [
+			'turnover' => $kpis['turnover'],
+			'margin' => $kpis['margin'],
+			'marginPct' => $kpis['marginPct'],
+			'billableHours' => $kpis['billableHours'],
+			'billablePct' => $kpis['billablePct'],
+		];
+
+	}//end rangeFigures()
+
+	/**
+	 * The point-in-time KPIs, which do not vary by range.
+	 *
+	 * @param array<string,mixed> $kpis Point-in-time KPIs from the calculator.
+	 *
+	 * @return array<string,mixed> openDebtors, openCreditors, cashPosition.
+	 */
+	private function pointInTimeFigures(array $kpis): array {
+		return [
+			'openDebtors' => ['count' => $kpis['openArCount'], 'amount' => $kpis['openArAmount']],
+			'openCreditors' => ['count' => $kpis['openApCount'], 'amount' => $kpis['openApAmount']],
+			'cashPosition' => $kpis['cashPosition'],
+		];
+
+	}//end pointInTimeFigures()
 
 	/**
 	 * Month window for a from/to pair: the months spanned by the range when
 	 * both bounds parse (capped at 60), otherwise the trailing 12 months
 	 * ending at `now` — exactly the client widgets' fallback behaviour.
 	 *
-	 * @param string|null $from Optional ISO-8601 lower bound.
-	 * @param string|null $to Optional ISO-8601 upper bound.
+	 * @param string $from ISO-8601 lower bound, or '' when absent.
+	 * @param string $to ISO-8601 upper bound, or '' when absent.
 	 * @param DateTimeImmutable $now Reference date for the fallback window.
 	 *
 	 * @return array<int,string> Month keys, ascending.
 	 */
-	private function resolveMonths(?string $from, ?string $to, DateTimeImmutable $now): array {
-		if ($from !== null && $from !== '' && $to !== null && $to !== '') {
+	private function resolveMonths(string $from, string $to, DateTimeImmutable $now): array {
+		if ($from !== '' && $to !== '') {
 			$months = $this->calculator->monthsInRange(from: $from, to: $to);
 			if ($months !== []) {
 				return $months;
@@ -249,6 +302,206 @@ class FinancialDashboardService {
 
 		return $previous;
 	}//end previousMonths()
+
+	/**
+	 * The figures the Nextcloud dashboard widgets show, for one administration
+	 * (reporting-custom-analysis REQ-RCA-001). Computed with the same
+	 * calculator as the shillinq dashboard, so the numbers match.
+	 *
+	 * @param string            $administrationId The administration to scope every record to.
+	 * @param DateTimeImmutable $now              The reference date.
+	 *
+	 * @return array<string,mixed> revenue, receivables, cashPosition, resultByMonth, topCustomers.
+	 *
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 */
+	public function widgetFigures(string $administrationId, DateTimeImmutable $now): array {
+		$data = $this->fetchScoped(
+			schemas: self::WIDGET_SCHEMAS,
+			administrationId: $administrationId
+		);
+		$revenue = $this->revenueFigure(data: $data, now: $now);
+		$resultByMonth = $this->resultByMonth(data: $data, now: $now);
+
+		return [
+			'revenue' => $revenue,
+			'receivables' => $this->receivablesFigure(data: $data, now: $now),
+			'cashPosition' => $this->calculator->computeKpis(data: $data, now: $now)['cashPosition'],
+			'resultByMonth' => $resultByMonth,
+			'topCustomers' => $this->topCustomers(data: $data, year: $now->format('Y')),
+		];
+
+	}//end widgetFigures()
+
+	/**
+	 * This month's revenue against the same month last year.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Scoped records.
+	 * @param DateTimeImmutable                            $now  The reference date.
+	 *
+	 * @return array{month:string,thisMonth:mixed,sameMonthLastYear:mixed}
+	 */
+	private function revenueFigure(array $data, DateTimeImmutable $now): array {
+		$thisMonth = $now->format('Y-m');
+		$lastYear = sprintf('%04d-%s', ((int)$now->format('Y') - 1), $now->format('m'));
+		$revenue = $this->calculator->monthlyFinancialSeries(input: $data + ['months' => [$lastYear, $thisMonth]]);
+
+		return ['month' => $thisMonth, 'thisMonth' => $revenue['revenue'][1], 'sameMonthLastYear' => $revenue['revenue'][0]];
+
+	}//end revenueFigure()
+
+	/**
+	 * The result per month over the last six months.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Scoped records.
+	 * @param DateTimeImmutable                            $now  The reference date.
+	 *
+	 * @return array<int,array{month:string,result:mixed}>
+	 */
+	private function resultByMonth(array $data, DateTimeImmutable $now): array {
+		$recent = $this->calculator->monthlyFinancialSeries(input: $data + ['months' => $this->calculator->lastMonths(count: 6, now: $now)]);
+		$resultByMonth = [];
+		foreach ($recent['months'] as $index => $month) {
+			$resultByMonth[] = ['month' => $month, 'result' => $recent['margin'][$index]];
+		}
+
+		return $resultByMonth;
+
+	}//end resultByMonth()
+
+	/**
+	 * Open and overdue receivables, counted and summed.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Scoped records.
+	 * @param DateTimeImmutable                            $now  The reference date.
+	 *
+	 * @return array{count:int,amount:float,overdueCount:int,overdueAmount:float}
+	 */
+	private function receivablesFigure(array $data, DateTimeImmutable $now): array {
+		$openAr = $this->calculator->openArRows(invoices: $data['arInvoices'], customers: $data['customers'], now: $now);
+		$overdue = array_values(array_filter($openAr, static fn (array $row): bool => $row['overdue'] === true));
+
+		return [
+			'count' => count($openAr),
+			'amount' => round(array_sum(array_column($openAr, 'amount')), 2),
+			'overdueCount' => count($overdue),
+			'overdueAmount' => round(array_sum(array_column($overdue, 'amount')), 2),
+		];
+
+	}//end receivablesFigure()
+
+	/**
+	 * The five customers invoiced most in a year, net of VAT; drafts and cancelled invoices do not count.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Scoped records (arInvoices, customers).
+	 * @param string                                       $year The year, YYYY.
+	 *
+	 * @return array<int,array{customerId:string,name:string,revenue:float}>
+	 */
+	private function topCustomers(array $data, string $year): array {
+		$names = $this->customerNames(customers: $data['customers']);
+		$totals = $this->invoicedTotals(invoices: $data['arInvoices'], year: $year);
+		arsort($totals);
+		$top = [];
+		foreach (array_slice($totals, 0, 5, true) as $customerId => $revenue) {
+			$name = ($names[(string)$customerId] ?? '');
+			if ($name === '') {
+				$name = (string)$customerId;
+			}
+
+			$top[] = ['customerId' => (string)$customerId, 'name' => $name, 'revenue' => round($revenue, 2)];
+		}
+
+		return $top;
+
+	}//end topCustomers()
+
+	/**
+	 * Customer display names keyed by every id a customer is known by.
+	 *
+	 * @param array<int,array<string,mixed>> $customers CustomerMaster records.
+	 *
+	 * @return array<string,string>
+	 */
+	private function customerNames(array $customers): array {
+		$names = [];
+		foreach ($customers as $customer) {
+			$name = (string)($customer['legalName'] ?? $customer['tradeName'] ?? '');
+			foreach ([($customer['customerId'] ?? null), ($customer['@self']['id'] ?? null), ($customer['id'] ?? null)] as $id) {
+				if (is_string($id) === true && $id !== '') {
+					$names[$id] = $name;
+				}
+			}
+		}
+
+		return $names;
+
+	}//end customerNames()
+
+	/**
+	 * Net invoiced revenue per customer in a year, over invoiced states only.
+	 *
+	 * @param array<int,array<string,mixed>> $invoices ARInvoice records.
+	 * @param string                         $year     The year, YYYY.
+	 *
+	 * @return array<string,float>
+	 */
+	private function invoicedTotals(array $invoices, string $year): array {
+		$totals = [];
+		foreach ($invoices as $invoice) {
+			if (in_array((string)($invoice['lifecycleState'] ?? ''), self::INVOICED_STATES, true) === false
+				|| str_starts_with((string)($invoice['invoiceDate'] ?? ''), $year) === false
+			) {
+				continue;
+			}
+
+			$customerId = (string)($invoice['customerId'] ?? '');
+			$totals[$customerId] = (($totals[$customerId] ?? 0.0) + (float)($invoice['netAmount'] ?? 0));
+		}
+
+		return $totals;
+
+	}//end invoicedTotals()
+
+	/**
+	 * The cash position per bank account and combined, for one administration (REQ-BCON-004).
+	 *
+	 * @param string $administrationId The administration to scope every record to.
+	 *
+	 * @return array{accounts:array<int,array<string,mixed>>,other:float,total:float}
+	 *
+	 * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
+	 */
+	public function cashPosition(string $administrationId): array {
+		$data = $this->fetchScoped(
+			schemas: self::CASH_SCHEMAS,
+			administrationId: $administrationId
+		);
+
+		return $this->calculator->cashPositionByAccount(data: $data, bankAccounts: $data['bankAccounts'], statements: $data['statements']);
+
+	}//end cashPosition()
+
+	/**
+	 * Fetch every schema in the map and keep only the records of one
+	 * administration.
+	 *
+	 * @param array<string,string> $schemas          Bag key => schema slug.
+	 * @param string               $administrationId The administration to scope every record to.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>> Bag key => that administration's objects.
+	 */
+	private function fetchScoped(array $schemas, string $administrationId): array {
+		$data = $this->fetchSchemas(schemas: $schemas);
+		foreach ($data as $key => $rows) {
+			$data[$key] = array_values(
+				array_filter($rows, static fn (array $row): bool => (string)($row['administrationId'] ?? '') === $administrationId)
+			);
+		}
+
+		return $data;
+
+	}//end fetchScoped()
 
 	/**
 	 * Fetch every schema in the map, keyed by its calculator bag key. Each
@@ -285,21 +538,23 @@ class FinancialDashboardService {
 		}
 
 		try {
-			$records = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema($schema)
-				->findAll([]);
+			$records = $objectService->setRegister($this->getRegisterSlug())->setSchema($schema)->findAll([]);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'FinancialDashboardService: schema fetch failed',
-				[
-					'schema' => $schema,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('FinancialDashboardService: schema fetch failed', ['schema' => $schema, 'exception' => $e->getMessage()]);
 			return [];
 		}
 
+		return $this->rowsOf(records: $records);
+	}//end fetchSchema()
+
+	/**
+	 * The records that normalise to arrays, in order.
+	 *
+	 * @param mixed $records OR records (objects or arrays), as findAll returned them.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function rowsOf(mixed $records): array {
 		$rows = [];
 		foreach ($records as $record) {
 			$row = $this->toArray(record: $record);
@@ -309,7 +564,7 @@ class FinancialDashboardService {
 		}
 
 		return $rows;
-	}//end fetchSchema()
+	}//end rowsOf()
 
 	/**
 	 * Normalise an OR record to an array.
@@ -353,7 +608,7 @@ class FinancialDashboardService {
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

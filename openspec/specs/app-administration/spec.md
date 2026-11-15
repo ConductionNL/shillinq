@@ -20,7 +20,9 @@ Defines the application-administration surface of Shillinq as it ships
 today: the authenticated settings endpoint, forced register-configuration
 re-import, the public health probe, the admin-only metrics endpoint, and
 the generic OpenRegister object store used by the Vue shell.
+
 ## Requirements
+
 ### Requirement: REQ-Admin-001 The system SHALL expose the app's configuration through a settings endpoint
 
 Shillinq MUST provide an authenticated settings surface backed by
@@ -85,7 +87,7 @@ message rather than throwing.
 
 #### Scenario: Operator forces a configuration re-import
 
-@e2e exclude REST API contract: covered by PHPUnit SettingsControllerTest::testLoad — not browser-observable
+@e2e exclude REST API contract: covered by PHPUnit SettingsControllerTest::testLoadReturnsConfigurationResult — not browser-observable
 
 - **GIVEN** OpenRegister is installed and `shillinq_register.json` is present
 - **WHEN** the operator triggers the `load` action
@@ -109,7 +111,7 @@ suitable for liveness probes and uptime monitors.
 
 #### Scenario: Monitor probes health
 
-@e2e exclude REST API liveness probe: HTTP-level check only, no DOM interaction — covered by PHPUnit HealthControllerTest
+@e2e exclude REST API liveness probe: HTTP-level check only, no DOM interaction. The endpoint is no longer served by this app: appinfo/routes.php returns \OCA\OpenRegister\AppHost\Routes::standard(), and the AppHost adoption deleted the app-local health controller and its PHPUnit class. The contract now belongs to OpenRegister's AppHost, and NOTHING in this repository tests it
 
 - **GIVEN** the app is running
 - **WHEN** any client calls the health endpoint
@@ -125,7 +127,7 @@ shape); the endpoint MUST remain reachable only to authorized admins.
 
 #### Scenario: Admin reads metrics
 
-@e2e exclude REST API contract: covered by PHPUnit MetricsControllerTest — not browser-observable
+@e2e exclude REST API contract, not browser-observable. Same as the health probe above: the AppHost adoption removed the app-local metrics controller and its PHPUnit class, and the endpoint is served by \OCA\OpenRegister\AppHost\Routes::standard(). NOTHING in this repository tests it
 
 - **GIVEN** an authorized admin
 - **WHEN** the admin calls the metrics endpoint
@@ -204,3 +206,28 @@ exercises. `max-version` is unchanged (`34`).
   metadata-only, with no schema, route, service, or UI difference
 - @e2e exclude install-time metadata behaviour, covered by CI install on stable31/32/33
 
+### Requirement: A required field can be switched off (REQ-RFS-001)
+
+A `FieldRequirement` SHALL carry an `enabled` field, true by default. A save
+MUST NOT be checked against a requirement with `enabled` false, and a
+requirement without the field SHALL count as switched on. The Required fields
+tab of the admin settings SHALL list the active requirements of the
+administrator's administrations, each titled by its field and record type,
+with a switch that writes `enabled` at once.
+
+#### Scenario: The cost centre check is switched off
+
+- GIVEN cost centre required on supplier invoices in Gemeente Voorbeeld
+- WHEN an administrator switches "Cost Center on Supplier invoice" off on the Required fields tab
+- THEN a bookkeeper's supplier invoice without a cost centre is saved
+- AND the requirement and its reason are kept
+
+@e2e exclude the save check is backend behaviour, covered by FieldRequirementListenerTest::testASwitchedOffRequirementIsNotChecked
+
+#### Scenario: The tab lists the requirements with their switch
+
+- GIVEN two active requirements in Gemeente Voorbeeld, one switched off, and one retired requirement
+- WHEN an administrator opens the Required fields tab
+- THEN two rows are listed, the first switched on and the second off
+
+@e2e exclude list contents are covered by FieldRequirementListenerTest::testTheListHoldsActiveRequirementsSwitchedOnAndOff and FieldRequirementControllerTest; the widget wiring by tests/vitest/adminSettingsTabs.spec.js

@@ -17,7 +17,7 @@
  slice 05; the matching engine in slice 06 owns the move out of
  `received`.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 -->
 <template>
 	<div class="si-detail">
@@ -69,6 +69,11 @@
 						{{ t('shillinq', 'VAT') }}
 						{{ formatMoney(invoice.totalVat) }})
 					</span>
+				</p>
+				<p v-if="invoice.sellerVatId" data-testid="si-seller-vat">
+					{{ t('shillinq', 'Seller VAT number') }}:
+					{{ invoice.sellerVatId }}
+					<span v-if="sellerVatCheck">({{ sellerVatCheck }})</span>
 				</p>
 			</header>
 
@@ -173,6 +178,39 @@
 					}}
 				</p>
 			</section>
+
+			<section
+				v-if="
+					invoice.statusCode === 'approved'
+					&& (invoice.matchedPoIds || []).length > 0
+				"
+				class="si-detail__last-invoice"
+				data-testid="si-detail-last-invoice">
+				<h3>{{ t('shillinq', 'Commitment') }}</h3>
+				<p v-if="invoice.isLastInvoice">
+					{{
+						t(
+							'shillinq',
+							'Marked as the last invoice of its order. The commitment is closed.',
+						)
+					}}
+				</p>
+				<template v-else>
+					<p>
+						{{
+							t(
+								'shillinq',
+								'Is this the last invoice of the order? Then the rest of the commitment goes back to the budget.',
+							)
+						}}
+					</p>
+					<NcButton
+						data-testid="si-detail-mark-last"
+						@click="openLastInvoice">
+						{{ t('shillinq', 'Mark as last invoice') }}
+					</NcButton>
+				</template>
+			</section>
 		</div>
 	</div>
 </template>
@@ -180,11 +218,15 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
+import { spawnDialog } from '@nextcloud/vue/functions/dialog'
+import LastInvoiceModal from '../../modals/LastInvoiceModal.vue'
 
 const REGISTER_SLUG = 'shillinq'
 
 export default {
 	name: 'SupplierInvoiceDetail',
+	components: { NcButton },
 	props: {
 		/**
 		 * SupplierInvoice id from the route.
@@ -205,6 +247,36 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The outcome of the VIES check made when the invoice arrived, in words.
+		 *
+		 * @return {string} The outcome, or empty when the number was not checked.
+		 * @spec openspec/changes/tax-vat-number-check/tasks.md#task-3.1
+		 */
+		sellerVatCheck() {
+			const status = this.invoice && this.invoice.sellerVatIdValidationStatus
+			const date = this.formatDate(
+				this.invoice && this.invoice.sellerVatIdValidatedAt,
+			)
+			if (status === 'valid') {
+				return this.t('shillinq', 'valid, checked on {date}', { date })
+			}
+			if (status === 'invalid') {
+				return this.t('shillinq', 'not valid according to VIES')
+			}
+			if (status === 'vies_outage' && this.invoice.sellerVatIdValidatedAt) {
+				return this.t(
+					'shillinq',
+					'VIES not reachable, last valid on {date}',
+					{ date },
+				)
+			}
+			if (status === 'vies_outage') {
+				return this.t('shillinq', 'VIES not reachable')
+			}
+			return ''
+		},
+
 		isPdfIngestion() {
 			if (!this.invoice) {
 				return false
@@ -265,7 +337,22 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
+		/**
+		 * Open Mark as last invoice and reload the invoice when it closed the commitment.
+		 *
+		 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
+		 */
+		async openLastInvoice() {
+			const closed = await spawnDialog(LastInvoiceModal, {
+				invoiceId: this.id,
+				administrationId: String(this.invoice.administrationId || ''),
+			})
+			if (closed) {
+				await this.loadInvoice()
+			}
+		},
+
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice */
 		async loadInvoice() {
 			this.loading = true
 			try {
@@ -287,7 +374,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice */
 		async loadMatches() {
 			// ThreeWayMatch records are populated by slice 06; gracefully fall
 			// through to the empty state when the lookup isn't available yet.

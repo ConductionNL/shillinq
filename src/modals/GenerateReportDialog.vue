@@ -182,6 +182,107 @@
 					</select>
 				</div>
 
+				<fieldset
+					v-if="scheduling"
+					class="generate-report-dialog__schedule"
+					data-testid="generate-report-schedule">
+					<legend class="generate-report-dialog__label">
+						{{ t('shillinq', 'Schedule') }}
+					</legend>
+					<div class="generate-report-dialog__row">
+						<div class="generate-report-dialog__field">
+							<label
+								class="generate-report-dialog__label"
+								for="schedule-report-frequency">
+								{{ t('shillinq', 'Frequency') }}
+							</label>
+							<select
+								id="schedule-report-frequency"
+								v-model="schedule.frequency"
+								class="generate-report-dialog__control"
+								:disabled="submitting">
+								<option value="weekly">
+									{{ t('shillinq', 'Weekly') }}
+								</option>
+								<option value="monthly">
+									{{ t('shillinq', 'Monthly') }}
+								</option>
+								<option value="quarterly">
+									{{ t('shillinq', 'Quarterly') }}
+								</option>
+							</select>
+						</div>
+						<div class="generate-report-dialog__field">
+							<label
+								class="generate-report-dialog__label"
+								for="schedule-report-run-day">
+								{{ runDayLabel }}
+							</label>
+							<input
+								id="schedule-report-run-day"
+								v-model.number="schedule.runDay"
+								type="number"
+								min="1"
+								:max="schedule.frequency === 'weekly' ? 7 : 28"
+								class="generate-report-dialog__control"
+								:disabled="submitting" />
+						</div>
+						<div class="generate-report-dialog__field">
+							<label
+								class="generate-report-dialog__label"
+								for="schedule-report-period-rule">
+								{{ t('shillinq', 'Period') }}
+							</label>
+							<select
+								id="schedule-report-period-rule"
+								v-model="schedule.periodRule"
+								class="generate-report-dialog__control"
+								:disabled="submitting">
+								<option value="previous-period">
+									{{ t('shillinq', 'Previous period') }}
+								</option>
+								<option value="year-to-date">
+									{{ t('shillinq', 'Year to date') }}
+								</option>
+							</select>
+						</div>
+					</div>
+					<div class="generate-report-dialog__field">
+						<label
+							class="generate-report-dialog__label"
+							for="schedule-report-recipients">
+							{{ t('shillinq', 'Recipients') }}
+						</label>
+						<input
+							id="schedule-report-recipients"
+							v-model="schedule.recipients"
+							type="text"
+							class="generate-report-dialog__control"
+							:disabled="submitting"
+							:placeholder="
+								t('shillinq', 'group:controllers, user:anna')
+							" />
+					</div>
+					<div class="generate-report-dialog__field">
+						<label
+							class="generate-report-dialog__label"
+							for="schedule-report-folder">
+							{{ t('shillinq', 'Folder') }}
+						</label>
+						<input
+							id="schedule-report-folder"
+							v-model="schedule.folderPath"
+							type="text"
+							class="generate-report-dialog__control"
+							:disabled="submitting" />
+					</div>
+				</fieldset>
+				<p
+					v-if="scheduledMessage"
+					class="generate-report-dialog__notice"
+					data-testid="generate-report-scheduled">
+					{{ scheduledMessage }}
+				</p>
 				<p
 					v-if="error"
 					class="generate-report-dialog__error"
@@ -200,6 +301,25 @@
 					{{ t('shillinq', 'Cancel') }}
 				</button>
 				<button
+					v-if="!scheduling"
+					type="button"
+					class="generate-report-dialog__btn"
+					:disabled="submitting"
+					data-testid="generate-report-dialog-schedule"
+					@click="scheduling = true">
+					{{ t('shillinq', 'Schedule this report') }}
+				</button>
+				<button
+					v-else
+					type="button"
+					class="generate-report-dialog__btn generate-report-dialog__btn--primary"
+					:disabled="!canSchedule"
+					data-testid="generate-report-dialog-save-schedule"
+					@click="onSchedule">
+					{{ t('shillinq', 'Save schedule') }}
+				</button>
+				<button
+					v-if="!scheduling"
 					type="button"
 					class="generate-report-dialog__btn generate-report-dialog__btn--primary"
 					:disabled="!canSubmit"
@@ -220,6 +340,7 @@
 import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { schedulePayload } from '../utils/reportSchedule.js'
 
 export default {
 	name: 'GenerateReportDialog',
@@ -253,11 +374,21 @@ export default {
 		},
 	},
 
-	emits: ['close', 'generated'],
+	emits: ['close', 'generated', 'scheduled'],
 	data() {
 		return {
 			submitting: false,
 			error: '',
+			scheduling: false,
+			scheduledMessage: '',
+			schedule: {
+				frequency: 'monthly',
+				runDay: 1,
+				periodRule: 'previous-period',
+				recipients: '',
+				folderPath: '/Shillinq/Reports',
+			},
+
 			form: {
 				administrationId: this.defaultAdministrationId || '',
 				periodType: 'year',
@@ -281,6 +412,31 @@ export default {
 		periodNumberOptions() {
 			const max = this.form.periodType === 'month' ? 12 : 4
 			return Array.from({ length: max }, (_, i) => i + 1)
+		},
+
+		/**
+		 * The label of the run-day field: a weekday for a weekly schedule, a day of the month otherwise.
+		 *
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 */
+		runDayLabel() {
+			return this.schedule.frequency === 'weekly'
+				? this.t('shillinq', 'Weekday (1 Monday to 7 Sunday)')
+				: this.t('shillinq', 'Day of the month')
+		},
+
+		/**
+		 * Whether the schedule form is complete enough to save.
+		 *
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 */
+		canSchedule() {
+			return (
+				!this.submitting
+				&& Boolean(this.form.administrationId)
+				&& Boolean(this.form.format)
+				&& Number(this.schedule.runDay) >= 1
+			)
 		},
 
 		canSubmit() {
@@ -323,32 +479,95 @@ export default {
 			if (!this.canSubmit) {
 				return
 			}
+			await this.submitWith(
+				async () => {
+					const response = await axios.post(
+						generateUrl('/apps/shillinq/api/reporting/generate'),
+						this.generateRequest(),
+					)
+					this.$emit('generated', response.data || {})
+				},
+				() => this.t('shillinq', 'Report generation failed'),
+			)
+		},
+
+		async onSchedule() {
+			if (!this.canSchedule) {
+				return
+			}
+			await this.submitWith(
+				async () => {
+					const payload = this.scheduleRequest()
+					const response = await axios.post(
+						generateUrl(
+							'/apps/openregister/api/objects/shillinq/ReportSchedule',
+						),
+						payload,
+					)
+					this.scheduledMessage = this.t(
+						'shillinq',
+						'Scheduled. The first run is on {date}.',
+						{ date: payload.nextRunAt.slice(0, 10) },
+					)
+					this.$emit('scheduled', response.data || payload)
+				},
+				() => this.t('shillinq', 'The schedule could not be saved'),
+			)
+		},
+
+		/**
+		 * Run a submission with the busy flag set and the error cleared; a
+		 * failure shows the server's error, else the fallback text.
+		 *
+		 * @param {() => Promise<void>} action The request and what follows it.
+		 * @param {() => string} fallback Returns the text for a failure without a server error.
+		 */
+		async submitWith(action, fallback) {
 			this.submitting = true
 			this.error = ''
 			try {
-				const response = await axios.post(
-					generateUrl('/apps/shillinq/api/reporting/generate'),
-					{
-						reportType: this.report.id,
-						administrationId: this.form.administrationId,
-						format: this.form.format,
-						periodType: this.form.periodType,
-						periodYear: this.form.periodYear,
-						periodNumber:
-							this.form.periodType === 'year'
-								? null
-								: this.form.periodNumber,
-						period: this.periodLabel(),
-					},
-				)
-				this.$emit('generated', response.data || {})
+				await action()
 			} catch (e) {
-				this.error =
-					e?.response?.data?.error
-					|| this.t('shillinq', 'Report generation failed')
+				this.error = e?.response?.data?.error || fallback()
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * The report generation request; a year has no period number.
+		 *
+		 * @return {object}
+		 */
+		generateRequest() {
+			return {
+				reportType: this.report.id,
+				administrationId: this.form.administrationId,
+				format: this.form.format,
+				periodType: this.form.periodType,
+				periodYear: this.form.periodYear,
+				periodNumber:
+					this.form.periodType === 'year' ? null : this.form.periodNumber,
+
+				period: this.periodLabel(),
+			}
+		},
+
+		/**
+		 * The ReportSchedule to save, with its first run from now.
+		 *
+		 * @return {object}
+		 */
+		scheduleRequest() {
+			return schedulePayload(
+				this.report,
+				{
+					...this.schedule,
+					administrationId: this.form.administrationId,
+					format: this.form.format,
+				},
+				new Date(),
+			)
 		},
 
 		/**

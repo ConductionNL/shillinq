@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -65,7 +65,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 					'id' => 'po-1',
 					'administrationId' => 'adm-1',
 					'poNumber' => 'PO-2026-adm-1-000003',
-					'lifecycleState' => 'sent',
+					'statusCode' => 'sent',
 				],
 			],
 			'PurchaseOrderLine' => [
@@ -130,7 +130,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 
 		// PO transitions to partial_received because 180 < 200 ordered.
 		$po = $stub->rows('PurchaseOrder')[0];
-		self::assertSame('partial_received', $po['lifecycleState']);
+		self::assertSame('partial_received', $po['statusCode']);
 
 	}//end testAcceptCreditsAcceptedAndSkipsRejected()
 
@@ -145,7 +145,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	public function testRejectedQuantityDoesNotMutateInventory(): void {
 		$stub = $this->buildObjectServiceStub([
 			'PurchaseOrder' => [
-				['id' => 'po-9', 'administrationId' => 'adm-1', 'poNumber' => 'PO-X', 'lifecycleState' => 'sent'],
+				['id' => 'po-9', 'administrationId' => 'adm-1', 'poNumber' => 'PO-X', 'statusCode' => 'sent'],
 			],
 			'PurchaseOrderLine' => [
 				[
@@ -210,7 +210,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	public function testAcceptTransitionsToFullyReceived(): void {
 		$stub = $this->buildObjectServiceStub([
 			'PurchaseOrder' => [
-				['id' => 'po-7', 'administrationId' => 'adm-1', 'poNumber' => 'PO-Y', 'lifecycleState' => 'sent'],
+				['id' => 'po-7', 'administrationId' => 'adm-1', 'poNumber' => 'PO-Y', 'statusCode' => 'sent'],
 			],
 			'PurchaseOrderLine' => [
 				[
@@ -248,7 +248,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 		$service->acceptGRN(administrationId: 'adm-1', grnId: $grnId);
 
 		$po = $stub->rows('PurchaseOrder')[0];
-		self::assertSame('fully_received', $po['lifecycleState']);
+		self::assertSame('fully_received', $po['statusCode']);
 
 	}//end testAcceptTransitionsToFullyReceived()
 
@@ -261,7 +261,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	public function testAcceptEmptyGrnIsHarmless(): void {
 		$stub = $this->buildObjectServiceStub([
 			'PurchaseOrder' => [
-				['id' => 'po-empty', 'administrationId' => 'adm-1', 'lifecycleState' => 'sent'],
+				['id' => 'po-empty', 'administrationId' => 'adm-1', 'statusCode' => 'sent'],
 			],
 			'PurchaseOrderLine' => [
 				['id' => 'poline-empty', 'poId' => 'po-empty', 'administrationId' => 'adm-1', 'quantityOrdered' => 5.0],
@@ -281,9 +281,296 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 
 		self::assertSame('accepted', $accepted['statusCode']);
 		self::assertCount(0, $stub->rows('StockMove'));
-		self::assertSame('sent', $stub->rows('PurchaseOrder')[0]['lifecycleState']);
+		self::assertSame('sent', $stub->rows('PurchaseOrder')[0]['statusCode']);
 
 	}//end testAcceptEmptyGrnIsHarmless()
+
+	/**
+	 * Pins every field of the StockMove credits an accept posts, which lines
+	 * it skips (nothing accepted, no PO line reference, a missing PO line with
+	 * its warning), and the destination location fallback from line to GRN.
+	 *
+	 * @return void
+	 */
+	public function testAcceptPostsEachStockMoveFieldForField(): void {
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$warnings = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(
+			static function (string $message, array $context = []) use (&$warnings): void {
+				$warnings[] = [$message, $context];
+			}
+		);
+		$service = $this->buildServiceWithLogger(stub: $stub, logger: $logger);
+
+		$accepted = $service->acceptGRN(administrationId: 'adm-1', grnId: 'grn-1');
+
+		// Without a transition engine each accepted line is posted directly and
+		// says so (inventory-receipt-cost-layers REQ-IRCL-001); the missing PO
+		// line is still skipped with its own warning.
+		$fallback = 'GoodsReceiptNoteService: StockMove posted without the transition engine; its post listeners did not run';
+		self::assertSame(
+			[
+				[$fallback, ['stockMoveId' => 'obj-1', 'movementNumber' => 'SM-2026-adm-1-000001-LINEA']],
+				[$fallback, ['stockMoveId' => 'obj-2', 'movementNumber' => 'SM-2026-adm-1-000001-LINEB']],
+				['GoodsReceiptNoteService: PO line missing on accept; StockMove skipped', ['poLineId' => 'poline-gone', 'grnId' => 'grn-1']],
+			],
+			$this->sortedByMessage($warnings)
+		);
+
+		self::assertSame('accepted', $accepted['statusCode']);
+		$moves = $stub->rows('StockMove');
+		foreach ($moves as $i => $move) {
+			self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', (string)$move['draftedAt']);
+			self::assertSame($move['draftedAt'], $move['postedAt']);
+			unset($moves[$i]['draftedAt'], $moves[$i]['postedAt']);
+		}
+
+		$expected = static fn (string $number, float $quantity, ?string $destination, string $id): array => [
+			'movementNumber' => $number,
+			'itemId' => 'CHAIR-001',
+			'quantity' => $quantity,
+			'unitCost' => 45.5,
+			'movementType' => 'receipt',
+			'sourceLocationId' => null,
+			'destinationLocationId' => $destination,
+			'referenceDocumentUri' => 'shillinq://purchase-order/po-1',
+			'movementReason' => 'normal',
+			'notes' => 'Receipt for GRN-2026-adm-1-000001 / PO line poline-1',
+			'cancelledAt' => null,
+			'administrationId' => 'adm-1',
+			'locked' => true,
+			'glTransactionId' => null,
+			'offsetOfMoveId' => null,
+			'lifecycleState' => 'posted',
+			'id' => $id,
+		];
+		self::assertSame(
+			[
+				$expected('SM-2026-adm-1-000001-LINEA', 2.5, 'WH-LINE', 'obj-1'),
+				$expected('SM-2026-adm-1-000001-LINEB', 1.0, 'WH-GRN', 'obj-2'),
+			],
+			array_values($moves)
+		);
+		self::assertSame('partial_received', $stub->rows('PurchaseOrder')[0]['statusCode']);
+
+	}//end testAcceptPostsEachStockMoveFieldForField()
+
+	/**
+	 * With the transition engine every accepted line is saved as an unlocked
+	 * draft and posted through the engine, once, and no fallback warning is
+	 * logged (inventory-receipt-cost-layers REQ-IRCL-001).
+	 *
+	 * @return void
+	 */
+	public function testAcceptPostsEachReceiptThroughTheTransitionEngine(): void {
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$transitions = [];
+		$engine = new class ($stub, $transitions) {
+			/**
+			 * Constructor.
+			 *
+			 * @param object            $stub        The register.
+			 * @param array<int, mixed> $transitions Each transition, with the move's state when it ran.
+			 */
+			public function __construct(private object $stub, private array &$transitions) {
+			}
+
+			/**
+			 * Record the transition and post the move.
+			 *
+			 * @param string $id     The move id.
+			 * @param string $action The transition.
+			 *
+			 * @return void
+			 */
+			public function transition(string $id, string $action): void {
+				$row = array_values(array_filter($this->stub->rows('StockMove'), static fn (array $r): bool => $r['id'] === $id))[0];
+				$this->transitions[] = [$id, $action, $row['lifecycleState'], $row['locked'], $row['postedAt']];
+				$row['lifecycleState'] = 'posted';
+				$row['locked'] = true;
+				$this->stub->setSchema('StockMove')->saveObject($row);
+			}
+		};
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturn(true);
+		$container->method('get')->willReturn($engine);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects(self::once())->method('warning')->with(
+			'GoodsReceiptNoteService: PO line missing on accept; StockMove skipped',
+			['poLineId' => 'poline-gone', 'grnId' => 'grn-1']
+		);
+
+		$this->buildServiceWithLogger(stub: $stub, logger: $logger, container: $container)->acceptGRN(administrationId: 'adm-1', grnId: 'grn-1');
+
+		self::assertSame(
+			[['obj-1', 'post', 'draft', false, null], ['obj-2', 'post', 'draft', false, null]],
+			$transitions
+		);
+		self::assertSame(['posted', 'posted'], array_column($stub->rows('StockMove'), 'lifecycleState'));
+
+	}//end testAcceptPostsEachReceiptThroughTheTransitionEngine()
+
+	/**
+	 * Golden for the accept guards: an inaccessible or empty administration,
+	 * a GRN of another administration and a terminal GRN are refused before
+	 * anything is written; the accessible draft is accepted.
+	 *
+	 * @return void
+	 */
+	public function testAcceptRefusesOutsideItsAdministrationAndOnTerminalNotes(): void {
+		$refusals = [
+			['adm-2', 'grn-1', 'Administration not found'],
+			['', 'grn-1', 'administrationId is required'],
+			['adm-1', 'grn-other', 'Goods receipt note not found'],
+			['adm-1', 'grn-done', 'Goods receipt note is in a terminal state'],
+		];
+		foreach ($refusals as [$administrationId, $grnId, $message]) {
+			$stub = $this->buildObjectServiceStub($this->acceptFixture());
+			$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1', 'adm-3']);
+			try {
+				$service->acceptGRN(administrationId: $administrationId, grnId: $grnId);
+				self::fail('Expected a refusal for ' . $grnId . ' in "' . $administrationId . '"');
+			} catch (\RuntimeException $e) {
+				self::assertSame($message, $e->getMessage());
+			}
+
+			self::assertSame([], $stub->rows('StockMove'));
+			self::assertSame('received', $stub->rows('GoodsReceiptNote')[0]['statusCode']);
+		}
+
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1']);
+		self::assertSame('accepted', $service->acceptGRN(administrationId: 'adm-1', grnId: 'grn-1')['statusCode']);
+
+	}//end testAcceptRefusesOutsideItsAdministrationAndOnTerminalNotes()
+
+	/**
+	 * Golden for the photo upload guards: an inaccessible or empty
+	 * administration and a GRN of another administration are refused before
+	 * anything is written; the accessible GRN gets the merged photos.
+	 *
+	 * @return void
+	 */
+	public function testUploadPhotosRefusesOutsideItsAdministration(): void {
+		$refusals = [
+			['adm-2', 'grn-1', 'Administration not found'],
+			['', 'grn-1', 'administrationId is required'],
+			['adm-1', 'grn-other', 'Goods receipt note not found'],
+		];
+		foreach ($refusals as [$administrationId, $grnId, $message]) {
+			$stub = $this->buildObjectServiceStub($this->acceptFixture());
+			$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1', 'adm-3']);
+			try {
+				$service->uploadPhotos(administrationId: $administrationId, grnId: $grnId, photoFileIds: ['file-9']);
+				self::fail('Expected a refusal for ' . $grnId . ' in "' . $administrationId . '"');
+			} catch (\RuntimeException $e) {
+				self::assertSame($message, $e->getMessage());
+			}
+
+			self::assertArrayNotHasKey('photos', $stub->rows('GoodsReceiptNote')[0]);
+			self::assertArrayNotHasKey('photos', $stub->rows('GoodsReceiptNote')[1]);
+		}
+
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1']);
+		$updated = $service->uploadPhotos(administrationId: 'adm-1', grnId: 'grn-1', photoFileIds: ['file-9', 'file-9']);
+		self::assertSame(['file-9'], $updated['photos']);
+
+	}//end testUploadPhotosRefusesOutsideItsAdministration()
+
+	/**
+	 * The records of the accept goldens: one received GRN with five lines, a
+	 * GRN of another administration and a terminal GRN.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	private function acceptFixture(): array {
+		$line = static fn (string $id, string $poLineId, float $accepted, array $extra = []): array => [
+			'id' => $id,
+			'grnId' => 'grn-1',
+			'administrationId' => 'adm-1',
+			'poLineId' => $poLineId,
+			'quantityAccepted' => $accepted,
+		] + $extra;
+
+		return [
+			'PurchaseOrder' => [['id' => 'po-1', 'administrationId' => 'adm-1', 'statusCode' => 'sent']],
+			'PurchaseOrderLine' => [
+				[
+					'id' => 'poline-1',
+					'poId' => 'po-1',
+					'administrationId' => 'adm-1',
+					'productOrServiceCode' => 'CHAIR-001',
+					'quantityOrdered' => 10.0,
+					'unitPrice' => 4550,
+				],
+			],
+			'GoodsReceiptNote' => [
+				[
+					'id' => 'grn-1',
+					'administrationId' => 'adm-1',
+					'grnNumber' => 'GRN-2026-adm-1-000001',
+					'statusCode' => 'received',
+					'poIds' => ['po-1'],
+					'destinationLocationId' => 'WH-GRN',
+				],
+				['id' => 'grn-other', 'administrationId' => 'adm-3', 'statusCode' => 'received'],
+				['id' => 'grn-done', 'administrationId' => 'adm-1', 'statusCode' => 'accepted'],
+			],
+			'GoodsReceiptLine' => [
+				$line('line-a', 'poline-1', 2.5, ['destinationLocationId' => ' WH-LINE ']),
+				$line('line-b', ' poline-1 ', 1.0),
+				$line('line-c', 'poline-1', 0.0),
+				$line('line-d', ' ', 4.0),
+				$line('line-e', 'poline-gone', 3.0),
+			],
+			'StockMove' => [],
+		];
+
+	}//end acceptFixture()
+
+	/**
+	 * Warnings in a stable order: by message, then in the order they came.
+	 *
+	 * @param array<int, array{0: string, 1: array<string, mixed>}> $warnings The warnings.
+	 *
+	 * @return array<int, array{0: string, 1: array<string, mixed>}>
+	 */
+	private function sortedByMessage(array $warnings): array {
+		usort($warnings, static fn (array $a, array $b): int => strcmp($b[0], $a[0]));
+		return $warnings;
+
+	}//end sortedByMessage()
+
+	/**
+	 * Build the service for adm-1 with the given logger.
+	 *
+	 * @param object $stub The ObjectService stub.
+	 * @param LoggerInterface $logger The logger.
+	 * @param ContainerInterface|null $container The container the transition engine comes from, or null for none.
+	 *
+	 * @return GoodsReceiptNoteService
+	 */
+	private function buildServiceWithLogger(object $stub, LoggerInterface $logger, ?ContainerInterface $container = null): GoodsReceiptNoteService {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('currentUserId')->willReturn('warehouse-01');
+		$administrationContext->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-1'
+		);
+
+		return new GoodsReceiptNoteService(
+			appConfig: $appConfig,
+			administrationContext: $administrationContext,
+			logger: $logger,
+			objectService: new DuckObjectServiceAdapter($stub),
+			container: $container,
+		);
+
+	}//end buildServiceWithLogger()
 
 	/**
 	 * The manifest fragment shipped by this slice exposes both Vue pages and

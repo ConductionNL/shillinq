@@ -4,6 +4,9 @@
  * Adapter that lets a duck-typed in-memory ObjectService double satisfy the
  * published ADR-084 contract.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## Why this exists
  *
  * Before ADR-083 a service reached OpenRegister through an untyped
@@ -55,9 +58,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -268,7 +268,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 			$this->unsupported(method: 'find');
 		}
 
-		foreach ($this->findAll() as $row) {
+		foreach ($this->findAll(_rbac: $_rbac, _multitenancy: $_multitenancy) as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
@@ -897,10 +897,11 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 *
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool       $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -912,6 +913,8 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @param ?string $process    A label for the holding process.
 	 * @param ?int    $duration   Lock duration in seconds.
 	 * @param bool    $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
@@ -919,7 +922,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		string $identifier,
 		?string $process = null,
 		?int $duration = null,
-		bool $advisory = false
+		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
 	): array {
 		$this->unsupported(method: 'lockObject');
 
@@ -940,7 +943,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	}//end deleteObjects()
 
 	/**
-	 * Not modelled.
+	 * Forwarded when the double models it; refused otherwise.
 	 *
 	 * @param string $uuid          The object UUID.
 	 * @param array  $filters       Equality filters.
@@ -950,7 +953,15 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function getLogs(string $uuid, array $filters = [], bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->unsupported(method: 'getLogs');
+		return (array)$this->invokeInner(
+			method: 'getLogs',
+			primary: $uuid,
+			named: [
+				'filters'       => $filters,
+				'_rbac'         => $_rbac,
+				'_multitenancy' => $_multitenancy,
+			]
+		);
 
 	}//end getLogs()
 

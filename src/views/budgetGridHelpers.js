@@ -102,3 +102,41 @@ export function favorableState(cell) {
 	}
 	return Boolean(cell.favorable)
 }
+
+/**
+ * The row whose trend chart is open after pressing a row's "View trend"
+ * button: a second press on the open row closes it, any other row replaces
+ * it (one chart at a time, budget-charts REQ-BCH-001).
+ *
+ * @param {string|null} openId The row whose chart is open now, or null.
+ * @param {string} rowId The row whose button was pressed.
+ * @return {string|null} The row whose chart is open next, or null.
+ * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+ */
+export function nextOpenChartRow(openId, rowId) {
+	return openId === rowId ? null : rowId
+}
+
+/**
+ * The BudgetTrendChart props for one grid row: a ledger group by its id, an
+ * account by its number, over the grid's own period range. A computed row
+ * has no chart.
+ *
+ * @param {object} row The grid row.
+ * @param {string|null} administrationId The active administration.
+ * @param {{startPeriod: string, endPeriod: string}} range The grid's period range.
+ * @return {object|null} The chart props, or null for a row without a chart.
+ * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+ */
+export function trendChartProps(row, administrationId, range) {
+	if (row?.kind !== 'ledgerGroup' && row?.kind !== 'account') {
+		return null
+	}
+	return {
+		scope: row.kind,
+		id: row.kind === 'account' ? String(row.accountNumber) : String(row.id),
+		name: row.label,
+		administrationId,
+		range: { from: range.startPeriod, to: range.endPeriod },
+	}
+}

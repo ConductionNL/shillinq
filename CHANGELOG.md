@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Automatic payment reminders (`receivables-automatic-dunning`). A daily job
+  marks issued invoices past their due date as overdue and sends each overdue
+  invoice the stage that is due on its customer's ladder, by email with the
+  invoice attached. Registered post, the collection agency and a customer
+  without an email address become manual stages and notify the
+  `ar-controller` group. **Reminders ship switched off**: nothing is sent
+  until an administrator chooses Switch on reminders on an administration.
+  See `docs/user-guide/bookkeeping/payment-reminders.md`.
+- An app granted `payment.request` in the `paymentActionApps` app config raises a
+  payment request through the leaf with nobody signed in
+  (`PaymentRequestLeafProvider::createAsApp`, shillinq#1836). See
+  `docs/api/payment-request-leaf.md`.
 - Read-only MCP tool surface (`shillinq-mcp-adoption`, ADR-063) — new
   `lib/Settings/register.d/zzz-mcp-tool-surface.json` declares the
   `x-openregister-mcp` dialect on 12 curated schemas (`ARInvoice`,
@@ -144,6 +156,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schema keys, property titles, enums, or descriptions were touched.
 
 ### Fixed
+- A provider capture of a payment request on an object booked nothing live:
+  the receipt was saved as a GLTransaction with inline lines, which the
+  register refuses (`lines` holds GLLine uuids). It is now a JournalEntry
+  posted through `postDirect`, and a refused posting leaves the request in
+  `captured_unapplied` with the reason.
+- Posting to the ledger works end to end (`ledger-posting-path`, #516).
+  A balanced entry now posts from the general ledger page. Before, the
+  ledger rules refused every post, because a draft has no lock, retention
+  date, integrity flag or audit-trail entry. The post now sets those
+  fields itself: locked, kept until 31 December ten years on, and the
+  posting user on the audit trail. Journal entries, sales invoices and
+  purchase invoices post the same way.
+- Allocation rules run when a transaction posts. The three seeded rules
+  arrive paused. Only one runs per posting: "Facility cost
+  fixed-percentage split" (accounts 4800 to 4899), once you set it
+  active. The other two run monthly.
+- Two postings are gone because another path already books them.
+  `StockMove.post` and `Payroll.issue` no longer declare a posting, and
+  the three `InventoryValuation` posting transitions (`postCOGS`,
+  `postReceipt`, `postVariance`) are removed. Stock issues are booked
+  per stock move. Goods receipts and count variances are not booked to
+  the ledger yet.
+- Expense claims still cannot post: their account mapping arrives with
+  `expenses-category-mapping`, and the post is refused by name until then.
 - Register-config log noise on every OpenRegister config import
   (`fix-log-noise-schemas`):
   - All six `x-openregister-widgets` annotations used custom widget types

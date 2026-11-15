@@ -22,7 +22,7 @@ status: done
 This specification defines the requirements for bookkeeping multi currency in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
 ## Requirements
 
-@e2e exclude pending playwright spec: currency balances index/detail pages are declared in src/manifest.d/bookkeeping-multi-currency.json (REQ-MC-005) but no Playwright spec ships in this change; covered by a follow-up tests/e2e/bookkeeping-multi-currency.spec.ts.
+@e2e exclude pending playwright spec: currency balances index/detail pages are declared in src/manifest.d/bookkeeping-multi-currency.json (REQ-MC-005) but no Playwright spec ships in this change; the follow-up Playwright spec for this capability has NOT been written, so nothing covers these scenarios today.
 
 ### REQ-MC-001: Multi-currency bank account management SHALL be declared as `BankAccount.primaryCurrency` extension + `CurrencyBalance` register
 

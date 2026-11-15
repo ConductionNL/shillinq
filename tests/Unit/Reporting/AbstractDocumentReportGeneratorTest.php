@@ -3,6 +3,9 @@
 /**
  * Unit tests for AbstractDocumentReportGenerator's docudesk hand-off.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Proves reports-via-docudesk REQ-RVD-002 (the built ReportSection tree
  * reaches docudesk's adHocData, and the returned bytes come from docudesk
  * verbatim), REQ-RVD-003 (odt/pdf format mapping to docudesk's odf/pdf
@@ -28,9 +31,6 @@
  * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-004
  * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
@@ -41,7 +41,10 @@ namespace OCA\Shillinq\Tests\Unit\Reporting;
 use OCA\Shillinq\Reporting\DocudeskUnavailableException;
 use OCA\Shillinq\Reporting\Generator\AbstractDocumentReportGenerator;
 use OCA\Shillinq\Reporting\ReportSection;
+use OCP\App\IAppManager;
+use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 
 /**
  * A fake docudesk DocumentService recording the call it received.
@@ -100,6 +103,39 @@ final class FakeAdrgTemplateService {
 }//end class
 
 /**
+ * A container that knows nothing.
+ *
+ * The fixture below overrides every seam that would consult the container, so
+ * this exists to satisfy the base's constructor and to make the absence of a
+ * real container explicit: a test that starts asking it for something gets a
+ * NotFound, never a live service off the global server.
+ */
+final class EmptyAdrgContainer implements ContainerInterface {
+
+	/**
+	 * @param string $id The service id.
+	 *
+	 * @return mixed Never returns.
+	 *
+	 * @throws \RuntimeException Always.
+	 */
+	public function get(string $id): mixed {
+		throw new class ('Nothing is registered on the test container: ' . $id)
+			extends \RuntimeException implements \Psr\Container\NotFoundExceptionInterface {
+		};
+	}//end get()
+
+	/**
+	 * @param string $id The service id.
+	 *
+	 * @return bool Always false.
+	 */
+	public function has(string $id): bool {
+		return false;
+	}//end has()
+}//end class
+
+/**
  * A minimal concrete generator exercising the base's default block vocabulary.
  */
 final class FixtureDocumentReportGenerator extends AbstractDocumentReportGenerator {
@@ -122,7 +158,9 @@ final class FixtureDocumentReportGenerator extends AbstractDocumentReportGenerat
 		?FakeAdrgDocumentService $fakeDocumentService = null,
 		?FakeAdrgTemplateService $fakeTemplateService = null,
 		string $configuredId = '',
+		?ContainerInterface $container = null,
 	) {
+		parent::__construct($container ?? new EmptyAdrgContainer());
 		$this->docudeskUp = $docudeskUp;
 		$this->fakeDocumentService = $fakeDocumentService ?? new FakeAdrgDocumentService();
 		$this->fakeTemplateService = $fakeTemplateService ?? new FakeAdrgTemplateService([
@@ -174,6 +212,30 @@ final class FixtureDocumentReportGenerator extends AbstractDocumentReportGenerat
 		$this->loadObjectsCalls++;
 		return [];
 	}//end loadObjects()
+}//end class
+
+/**
+ * A generator that overrides NOTHING the container would answer.
+ *
+ * The fixture above stubs out every resolution seam, which is what makes it a
+ * good test of the block vocabulary and a useless one for the resolution
+ * itself. This subclass keeps the base's real docudeskAvailable(),
+ * documentService(), templateService() and configuredTemplateId(), so the only
+ * way it can render is through the container it was handed.
+ */
+final class ContainerBackedDocumentReportGenerator extends AbstractDocumentReportGenerator {
+
+	public static function reportType(): string {
+		return 'balance-sheet';
+	}//end reportType()
+
+	protected function documentTitle(): string {
+		return 'Balans';
+	}//end documentTitle()
+
+	protected function build(ReportSection $section, array $context): void {
+		$this->addHeading($section, 'Activa');
+	}//end build()
 }//end class
 
 /**
@@ -307,4 +369,156 @@ final class AbstractDocumentReportGeneratorTest extends TestCase {
 
 		$this->assertSame('11111111-1111-1111-1111-111111111111', $documentService->lastCall['templateId']);
 	}//end testConfiguredTemplateIdWinsOverDiscovery()
+
+	/**
+	 * Every resolution the base makes goes through the INJECTED container.
+	 *
+	 * The base used to call \OCP\Server::get(). Outside a booted Nextcloud that
+	 * autowires from scratch and can recurse through a constructor cycle until
+	 * memory runs out; inside one it is a hidden dependency a test cannot reach.
+	 * The doubles registered below exist nowhere else, so this can only pass if
+	 * the app manager, the app config and both document-app services came out of
+	 * the container the generator was constructed with.
+	 *
+	 * It also pins the namespace fallback: the first candidate FQCN
+	 * (`OCA\Filinq\...`, the post-rename name) is not registered, and resolution
+	 * has to fall through to `OCA\DocuDesk\...` rather than read the miss as
+	 * "the app is absent".
+	 *
+	 * @return void
+	 */
+	public function testEveryResolutionGoesThroughTheInjectedContainer(): void {
+		$documentService = new FakeAdrgDocumentService(['content' => 'FROM-THE-CONTAINER']);
+		$templateService = new FakeAdrgTemplateService([
+			['id' => 'tpl-1', 'category' => 'shillinq-balans'],
+		]);
+
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturnCallback(
+			static fn (string $id): bool => $id === 'docudesk'
+		);
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('');
+
+		$asked = [];
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $id) use (&$asked, $appManager, $appConfig, $documentService, $templateService): mixed {
+				$asked[] = $id;
+
+				return match ($id) {
+					IAppManager::class => $appManager,
+					IAppConfig::class => $appConfig,
+					'OCA\\DocuDesk\\Service\\DocumentService' => $documentService,
+					'OCA\\DocuDesk\\Service\\TemplateService' => $templateService,
+					default => throw new \RuntimeException('not registered: ' . $id),
+				};
+			}
+		);
+
+		$generator = new ContainerBackedDocumentReportGenerator($container);
+
+		$file = $generator->generate(['administrationId' => 'admin-1', 'period' => '2026'], 'pdf');
+
+		$this->assertSame('FROM-THE-CONTAINER', $file->content);
+		$this->assertSame('tpl-1', $documentService->lastCall['templateId']);
+		$this->assertContains(IAppManager::class, $asked);
+		$this->assertContains('OCA\\Filinq\\Service\\DocumentService', $asked, 'the post-rename FQCN must be tried first');
+		$this->assertContains('OCA\\DocuDesk\\Service\\DocumentService', $asked, 'and the pre-rename one must be the fallback');
+	}//end testEveryResolutionGoesThroughTheInjectedContainer()
+
+	/**
+	 * A container that cannot produce the document app reads as "docudesk is
+	 * absent", which is the visible outcome, not a silent fallback.
+	 *
+	 * @return void
+	 */
+	public function testAContainerWithoutTheDocumentAppThrowsDocudeskUnavailable(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id): mixed {
+				throw new \RuntimeException('not registered: ' . $id);
+			}
+		);
+
+		$generator = new ContainerBackedDocumentReportGenerator($container);
+
+		$this->expectException(DocudeskUnavailableException::class);
+
+		$generator->generate([], 'pdf');
+	}//end testAContainerWithoutTheDocumentAppThrowsDocudeskUnavailable()
+
+	/**
+	 * Golden: the docudesk call and the outcome for a spread of contexts,
+	 * formats and template sets. Regenerate with ADRG_GOLDEN_WRITE=1.
+	 *
+	 * @return void
+	 */
+	public function testGenerationOutcomesMatchGolden(): void {
+		$golden = __DIR__.'/fixtures/abstract-document-report.golden.json';
+		$context = ['period' => '2026-Q1', 'administrationId' => 'adm-1'];
+		$cases = [
+			'pdfSystemUser' => [$context, 'pdf', [], ['content' => 'BYTES']],
+			'odtNamedUser' => [$context + ['userId' => 'alice'], 'odt', [], ['content' => 'ODT']],
+			'unknownFormat' => [[], 'xyz', [], ['content' => 'X']],
+			'noTemplates' => [$context, 'pdf', [['id' => 'tpl-9', 'category' => 'other']], ['content' => 'X']],
+			'twoTemplates' => [
+				$context,
+				'pdf',
+				[
+					['id' => 'tpl-1', 'category' => 'shillinq-balans'],
+					['@self' => ['id' => 'tpl-2'], 'category' => 'shillinq-balans'],
+					['category' => 'shillinq-balans'],
+				],
+				['content' => 'X'],
+			],
+			'selfIdTemplate' => [$context, 'pdf', [['@self' => ['id' => 'tpl-s'], 'category' => 'shillinq-balans']], ['content' => 'X']],
+			'idlessTemplate' => [$context, 'pdf', [['category' => 'shillinq-balans']], ['content' => 'X']],
+			'emptyContent' => [$context, 'pdf', [], ['content' => '']],
+		];
+
+		$actual = [];
+		foreach ($cases as $name => [$ctx, $format, $templates, $response]) {
+			$documents = new FakeAdrgDocumentService($response);
+			$templateService = null;
+			if ($templates !== []) {
+				$templateService = new FakeAdrgTemplateService($templates);
+			}
+
+			$generator = new FixtureDocumentReportGenerator(true, $documents, $templateService);
+			try {
+				$file = $generator->generate($ctx, $format);
+				$outcome = [
+					'fileName' => $file->fileName,
+					'mimeType' => $file->mimeType,
+					'format' => $file->format,
+					'content' => $file->content,
+				];
+			} catch (\Throwable $e) {
+				$outcome = ['exception' => get_class($e), 'message' => $e->getMessage()];
+			}
+
+			$call = $documents->lastCall;
+			if ($call !== null) {
+				$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $call['options']['adHocData']['meta']['generatedAt']);
+				$call['options']['adHocData']['meta']['generatedAt'] = '<masked>';
+				$call['options']['adHocData']['report']['blocks'][0]['meta'] = preg_replace(
+					'/^Gegenereerd: .*$/',
+					'Gegenereerd: <masked>',
+					$call['options']['adHocData']['report']['blocks'][0]['meta']
+				);
+			}
+
+			$actual[$name] = ['outcome' => $outcome, 'call' => $call, 'loads' => $generator->loadObjectsCalls];
+		}//end foreach
+
+		if (getenv('ADRG_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, json_encode($actual, (JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION))."\n");
+		}
+
+		$expected = json_decode((string) file_get_contents($golden), true, 512, JSON_THROW_ON_ERROR);
+		$this->assertSame(json_encode($expected, JSON_PRESERVE_ZERO_FRACTION), json_encode($actual, JSON_PRESERVE_ZERO_FRACTION));
+
+	}//end testGenerationOutcomesMatchGolden()
 }//end class
