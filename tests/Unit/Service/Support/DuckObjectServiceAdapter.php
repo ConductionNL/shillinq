@@ -4,6 +4,9 @@
  * Adapter that lets a duck-typed in-memory ObjectService double satisfy the
  * published ADR-084 contract.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## Why this exists
  *
  * Before ADR-083 a service reached OpenRegister through an untyped
@@ -55,9 +58,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

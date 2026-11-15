@@ -34,8 +34,8 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\Project\AssignmentHours;
+use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -52,13 +52,13 @@ class AssignmentHoursListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param AssignmentHours        $hours          Sums and writes the hours budget.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves an entity's schema slug.
+	 * @param AssignmentHoursInterface        $hours          Sums and writes the hours budget.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves an entity's schema slug.
 	 * @param LoggerInterface        $logger         Logger.
 	 */
 	public function __construct(
-		private readonly AssignmentHours $hours,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly AssignmentHoursInterface $hours,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -104,7 +104,7 @@ class AssignmentHoursListener implements IEventListener {
 	 * @return void
 	 */
 	private function onHour(?ObjectEntity $entity, ?string $ignoreHourId): void {
-		if ($entity === null || $this->schemaResolver->schemaSlug(entity: $entity) !== AssignmentHours::HOUR_SCHEMA) {
+		if ($entity === null || $this->schemaResolver->schemaSlug(entity: $entity) !== AssignmentHoursInterface::HOUR_SCHEMA) {
 			return;
 		}
 
@@ -129,22 +129,43 @@ class AssignmentHoursListener implements IEventListener {
 		$oldEntity = $event->getOldObject();
 		$old = ($oldEntity?->getObject() ?? []);
 
-		if ($slug === AssignmentHours::ASSIGNMENT_SCHEMA) {
+		if ($slug === AssignmentHoursInterface::ASSIGNMENT_SCHEMA) {
 			// Without the old version there is no telling whether the estimate
 			// changed; the listener's own writes always carry it.
-			if ($oldEntity !== null
-				&& (string)($old['estimatedHours'] ?? '') !== (string)($new['estimatedHours'] ?? '')
-			) {
+			if ($oldEntity !== null && self::estimateChanged(old: $old, new: $new) === true) {
 				$this->hours->rearm(assignmentId: ObjectIdentifier::resolve(saved: $entity));
 			}
 
 			return;
 		}
 
-		if ($slug !== AssignmentHours::HOUR_SCHEMA) {
-			return;
+		if ($slug === AssignmentHoursInterface::HOUR_SCHEMA) {
+			$this->recalculateAssignments(old: $old, new: $new);
 		}
 
+	}//end onUpdated()
+
+	/**
+	 * Whether the assignment's estimated hours changed.
+	 *
+	 * @param array<string, mixed> $old The assignment before the update.
+	 * @param array<string, mixed> $new The assignment after the update.
+	 *
+	 * @return bool
+	 */
+	private static function estimateChanged(array $old, array $new): bool {
+		return (string)($old['estimatedHours'] ?? '') !== (string)($new['estimatedHours'] ?? '');
+	}//end estimateChanged()
+
+	/**
+	 * Recalculate the assignments an hours entry belonged to before and after the update.
+	 *
+	 * @param array<string, mixed> $old The hours entry before the update.
+	 * @param array<string, mixed> $new The hours entry after the update.
+	 *
+	 * @return void
+	 */
+	private function recalculateAssignments(array $old, array $new): void {
 		$assignments = array_unique(
 			array_filter(
 				[
@@ -157,6 +178,5 @@ class AssignmentHoursListener implements IEventListener {
 		foreach ($assignments as $assignmentId) {
 			$this->hours->recalculate(assignmentId: $assignmentId);
 		}
-
-	}//end onUpdated()
+	}//end recalculateAssignments()
 }//end class

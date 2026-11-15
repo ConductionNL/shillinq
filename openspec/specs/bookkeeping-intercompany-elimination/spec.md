@@ -20,7 +20,7 @@ This specification defines the requirements for bookkeeping intercompany elimina
 @e2e exclude pure backend/compliance: intercompany elimination — not browser-testable
 
 
-### REQ-ICE-001: Intercompany-relatie definitie en onderhoud
+### Requirement: REQ-ICE-001: Intercompany-relatie definitie en onderhoud
 
 The system SHALL satisfy this requirement: Intercompany-relatie definitie en onderhoud.
 
@@ -58,7 +58,7 @@ Schema.org annotation: `schema:FinancialProduct` (IC-relatie als transactie-type
 - **WHEN** gebruiker opslaat
 - **THEN** het systeem detecteert het dubbel, weigert de tweede aan te maken, en verwijst naar de bestaande relatie ter wijziging.
 
-### REQ-ICE-002: Auto-detectie intercompany-transacties
+### Requirement: REQ-ICE-002: Auto-detectie intercompany-transacties
 
 The system SHALL satisfy this requirement: Auto-detectie intercompany-transacties.
 
@@ -106,7 +106,7 @@ Schema.org annotation: `schema:FinancialProduct` (transactie).
 - **WHEN** scan loopt
 - **THEN** het systeem registreert detectionMethod **explicitly-marked**, detectionConfidence **high**, en bepaalt counterpartyEntityId + relationId indien aanwezig.
 
-### REQ-ICE-003: Periodieke matching auto-run
+### Requirement: REQ-ICE-003: Periodieke matching auto-run
 
 The system SHALL satisfy this requirement: Periodieke matching auto-run.
 
@@ -150,7 +150,7 @@ Schema.org annotation: `schema:Thing` (match-record).
 - **WHEN** matching opnieuw (re-match) voor dezelfde periode
 - **THEN** het systeem ongedaan maakt eerder gegenereerde matches (mits niet definitief goedgekeurd), her-matched op basis van actuele bron-data, en update alle exception-queue items.
 
-### REQ-ICE-004: Tolerantie-gebaseerde auto-resolve
+### Requirement: REQ-ICE-004: Tolerantie-gebaseerde auto-resolve
 
 The system SHALL satisfy this requirement: Tolerantie-gebaseerde auto-resolve.
 
@@ -191,7 +191,7 @@ Schema.org annotation: `schema:Thing` (rule).
 - **WHEN** ze een override-rule aanmaken voor periode december met toleranceAbsolute €1, toleranceRelative 0.1%
 - **THEN** periode-specifieke rule overschrijft de default; matching voor december gebruikt de strengere tolerantie.
 
-### REQ-ICE-005: Mismatch-classificatie en resolutie
+### Requirement: REQ-ICE-005: Mismatch-classificatie en resolutie
 
 The system SHALL satisfy this requirement: Mismatch-classificatie en resolutie.
 
@@ -235,7 +235,7 @@ Schema.org annotation: `schema:Thing` (exception-record).
 - **WHEN** gebruiker kiest resolutie-actie **source-correction-booking-wizard**
 - **THEN** het systeem opent wizard om de ontbrekende correctie-boeking in de bron-administratie te genereren, toont voorgestelde journaal ter bevestiging, en na bevestiging wordt de boeking in de bron geplaatst. Re-match loopt daarna automatisch.
 
-### REQ-ICE-006: Eliminatie-journaalpost generatie
+### Requirement: REQ-ICE-006: Eliminatie-journaalpost generatie
 
 The system SHALL satisfy this requirement: Eliminatie-journaalpost generatie.
 
@@ -278,7 +278,7 @@ Schema.org annotation: `schema:Thing` (journal-entry).
 - **WHEN** eliminatie wordt gegenereerd
 - **THEN** twee separate journaalposten: één voor hoofdsom (vordering vs schuld), één voor rente (rentebaten vs rentelasten). Beide gelinkt aan dezelfde match.
 
-### REQ-ICE-007: Counterparty-saldo overzicht
+### Requirement: REQ-ICE-007: Counterparty-saldo overzicht
 
 The system SHALL satisfy this requirement: Counterparty-saldo overzicht.
 
@@ -317,7 +317,7 @@ Schema.org annotation: `schema:FinancialProduct` (balance-view).
 - **WHEN** er zich een mismatch voordoet
 - **THEN** beide zien hetzelfde scherm, kunnen comments achterlaten direct in-context (per mismatch een discussiethread), zien wie wat wanneer ge-edit heeft (audit-trail).
 
-### REQ-ICE-008: Cross-period roll-forward en historische audit
+### Requirement: REQ-ICE-008: Cross-period roll-forward en historische audit
 
 The system SHALL satisfy this requirement: Cross-period roll-forward en historische audit.
 
@@ -335,7 +335,7 @@ Het systeem MOET intercompany-saldi van periode tot periode roll-forward consist
 - **WHEN** het systeem deze backdated wijziging detecteert
 - **THEN** het systeem alarmeert dat Q1 en Q2 herberekend moeten worden, blokkeert verdere matching, en biedt wizard om cascade-impact te beheren (re-run Q1, propagate to Q2, etc.).
 
-### REQ-ICE-009: Multi-currency intercompany matching
+### Requirement: REQ-ICE-009: Multi-currency intercompany matching
 
 The system SHALL satisfy this requirement: Multi-currency intercompany matching.
 
@@ -353,7 +353,7 @@ Het systeem MOET intercompany-transacties tussen entiteiten met verschillende fu
 - **WHEN** matching op balansdatum loopt met slotkoers USD/EUR = 0,925
 - **THEN** US-zijde wordt vertaald naar EUR (USD 27.100 × 0,925 = €25.067), mismatchAmount €67 wordt als **fx-translation** gevangen en naar CTA-EV-restpost geboekt per IFRS 21.
 
-### REQ-ICE-010: Performance en schaalbaarheid
+### Requirement: REQ-ICE-010: Performance en schaalbaarheid
 
 The system SHALL satisfy this requirement: Performance en schaalbaarheid.
 

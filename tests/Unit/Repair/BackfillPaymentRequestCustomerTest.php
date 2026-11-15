@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillPaymentRequestCustomer;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -124,7 +124,7 @@ final class BackfillPaymentRequestCustomerTest extends TestCase {
 	 * @return BackfillPaymentRequestCustomer
 	 */
 	private function step(BackfillRequestStore $store): BackfillPaymentRequestCustomer {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new BackfillPaymentRequestCustomer(

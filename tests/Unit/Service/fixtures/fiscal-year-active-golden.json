@@ -1,0 +1,236 @@
+{
+    "uuid-1": {
+        "result": {
+            "administrationId": "uuid-1",
+            "fiscalYear": 2027,
+            "startDate": "2026-04-01",
+            "endDate": "2027-04-01"
+        },
+        "events": [
+            [
+                "canAccess",
+                "uuid-1"
+            ],
+            [
+                "find",
+                "uuid-1"
+            ]
+        ]
+    },
+    "uuid-2": {
+        "result": {
+            "administrationId": "uuid-2",
+            "fiscalYear": 2027,
+            "startDate": "2026-07-01",
+            "endDate": "2027-07-01"
+        },
+        "events": [
+            [
+                "canAccess",
+                "uuid-2"
+            ],
+            [
+                "find",
+                "uuid-2"
+            ]
+        ]
+    },
+    "uuid-3": {
+        "result": {
+            "administrationId": "uuid-3",
+            "fiscalYear": 2027,
+            "startDate": "2026-07-01",
+            "endDate": "2027-07-01"
+        },
+        "events": [
+            [
+                "canAccess",
+                "uuid-3"
+            ],
+            [
+                "find",
+                "uuid-3"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationCode": "uuid-3"
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "uuid-4": {
+        "result": null,
+        "events": [
+            [
+                "canAccess",
+                "uuid-4"
+            ],
+            [
+                "find",
+                "uuid-4"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationCode": "uuid-4"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "warning",
+                "FiscalYearContextService: no Administration matched; fiscal-year scope will be null",
+                {
+                    "administrationId": "uuid-4"
+                }
+            ]
+        ]
+    },
+    "code-1": {
+        "result": {
+            "administrationId": "code-1",
+            "fiscalYear": 2026,
+            "startDate": "2025-10-01",
+            "endDate": "2026-10-01"
+        },
+        "events": [
+            [
+                "canAccess",
+                "code-1"
+            ],
+            [
+                "find",
+                "code-1"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationCode": "code-1"
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "empty": {
+        "result": null,
+        "events": [
+            [
+                "canAccess",
+                "empty"
+            ],
+            [
+                "find",
+                "empty"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationCode": "empty"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "warning",
+                "FiscalYearContextService: no Administration matched; fiscal-year scope will be null",
+                {
+                    "administrationId": "empty"
+                }
+            ]
+        ]
+    },
+    "unknown": {
+        "result": null,
+        "events": [
+            [
+                "canAccess",
+                "unknown"
+            ],
+            [
+                "find",
+                "unknown"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationCode": "unknown"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "warning",
+                "FiscalYearContextService: no Administration matched; fiscal-year scope will be null",
+                {
+                    "administrationId": "unknown"
+                }
+            ]
+        ]
+    },
+    "foreign": {
+        "result": null,
+        "events": [
+            [
+                "canAccess",
+                "foreign"
+            ]
+        ]
+    },
+    "": {
+        "result": null,
+        "events": []
+    },
+    "noStore": {
+        "result": null,
+        "events": [
+            [
+                "canAccess",
+                "uuid-1"
+            ],
+            [
+                "error",
+                "FiscalYearContextService: failed to load administration",
+                {
+                    "administrationId": "uuid-1",
+                    "exception": "no OR"
+                }
+            ]
+        ]
+    },
+    "default": {
+        "result": {
+            "administrationId": "code-1",
+            "fiscalYear": 2026,
+            "startDate": "2025-10-01",
+            "endDate": "2026-10-01"
+        },
+        "events": [
+            [
+                "canAccess",
+                "code-1"
+            ],
+            [
+                "find",
+                "code-1"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationCode": "code-1"
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    }
+}

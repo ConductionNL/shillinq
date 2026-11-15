@@ -4,6 +4,9 @@
  * Filtered in-memory ObjectService stub supporting equality AND `{in: [...]}`
  * filters.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `InMemoryObjectServiceStub` (the fleet-wide default double) only supports
  * strict-equality filters — a `['field' => ['in' => [...]]]` filter (the
  * `SpendAnalyticsService.php:183` precedent
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

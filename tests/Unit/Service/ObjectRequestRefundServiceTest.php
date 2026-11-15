@@ -29,7 +29,7 @@ use OCA\Shillinq\Service\DebtorCreditService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ObjectRequestCommandService;
 use OCA\Shillinq\Service\ObjectRequestRefundService;
-use OCA\Shillinq\Service\RefundStepForbiddenException;
+use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;

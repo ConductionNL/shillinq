@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\DelegateSigningMigrationRepair;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -47,9 +47,9 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settingsService;
+	private RegisterLocation&MockObject $settingsService;
 
 	/**
 	 * Container mock.
@@ -84,7 +84,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->settingsService = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->output = $this->createMock(IOutput::class);
@@ -202,7 +202,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 	 */
 	public function testGetName(): void {
 		$step = new DelegateSigningMigrationRepair(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);
@@ -225,7 +225,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new DelegateSigningMigrationRepair(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);
@@ -253,7 +253,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new DelegateSigningMigrationRepair(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);
@@ -275,7 +275,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new DelegateSigningMigrationRepair(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);
@@ -300,7 +300,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 		$this->output->expects($this->atLeastOnce())->method('warning');
 
 		$step = new DelegateSigningMigrationRepair(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);
@@ -320,7 +320,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new DelegateSigningMigrationRepair(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);

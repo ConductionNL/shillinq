@@ -27,7 +27,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -80,99 +79,85 @@ class RateCardResolver {
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	public function resolveRate(string $rateCardId, string $resourceType, string $date, string $administrationId): array {
+		$query = new RateQuery();
+		$query->rateCardId = $rateCardId;
+		$query->resourceType = $resourceType;
+		$query->date = $date;
+		$query->administrationId = $administrationId;
+
 		// Fail closed on an absent scope: with no administration to scope to
 		// there is no query that can be proven tenant-safe, so no register is
 		// read at all (mirrors AdministrationContextService::canAccess(),
 		// which fails closed on '').
 		if ($administrationId === '') {
-			$this->logger->warning(
-				sprintf(
-					'RateCardResolver: refusing unscoped lookup for %s/%s on %s (no administrationId), falling back to €100/hr',
-					$rateCardId,
-					$resourceType,
-					$date
-				)
-			);
-
-			return $this->fallbackRate(date: $date);
+			return $this->fallbackRate(query: $query, reason: 'refusing unscoped lookup for %s/%s on %s (no administrationId)');
 		}
 
-		$best = $this->pickBestRecord(
-			records: $this->findAll(
-				schema: 'RateRecord',
-				filters: [
-					'rateCardId' => $rateCardId,
-					'resourceType' => $resourceType,
-					'administrationId' => $administrationId,
-				]
-			),
-			date: $date
-		);
-
-		if ($best !== null) {
-			return [
-				'rateCents' => $this->toCents(value: $best['rateCents'] ?? $best['hourlyRate'] ?? 0),
-				'currency' => (string)($best['currency'] ?? 'EUR'),
-				'rateCardVersion' => (string)($best['rateCardVersion'] ?? ($best['version'] ?? 'v1')),
-				'effectiveDate' => (string)($best['effectiveDate'] ?? $date),
-			];
-		}
-
-		$card = $this->findRateCard(rateCardId: $rateCardId, administrationId: $administrationId);
-		if ($card !== null) {
-			return [
-				'rateCents' => $this->toCents(value: $card['defaultHourlyRate'] ?? $card['hourlyRate'] ?? 10000),
-				'currency' => (string)($card['currency'] ?? 'EUR'),
-				'rateCardVersion' => (string)($card['version'] ?? 'v1'),
-				'effectiveDate' => $date,
-			];
-		}
-
-		$this->logger->warning(
-			sprintf(
-				'RateCardResolver: no rate found for %s/%s on %s, falling back to €100/hr',
-				$rateCardId,
-				$resourceType,
-				$date
-			)
-		);
-
-		return $this->fallbackRate(date: $date);
+		return ($this->scopedRate(query: $query) ?? $this->fallbackRate(query: $query, reason: 'no rate found for %s/%s on %s'));
 
 	}//end resolveRate()
 
 	/**
-	 * Pick the latest-effective RateRecord that brackets $date.
+	 * The rate from the newest applicable RateRecord, else from the RateCard
+	 * default, both looked up within the caller's administration; null when
+	 * neither resolves.
 	 *
-	 * Records with a future effectiveDate, or an expiresAt already past, are
-	 * skipped; among the remainder the highest effectiveDate wins.
+	 * @param RateQuery $query The scoped lookup.
 	 *
-	 * @param array<int,array<string,mixed>> $records Candidate RateRecords.
-	 * @param string $date ISO date the rate should apply on.
-	 *
-	 * @return array<string,mixed>|null The winning record, or null when none apply.
+	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}|null
 	 */
-	private function pickBestRecord(array $records, string $date): ?array {
-		$best = null;
-		foreach ($records as $record) {
-			$effective = (string)($record['effectiveDate'] ?? '');
-			$expires = (string)($record['expiresAt'] ?? '');
+	private function scopedRate(RateQuery $query): ?array {
+		$filters = ['rateCardId' => $query->rateCardId, 'resourceType' => $query->resourceType, 'administrationId' => $query->administrationId];
+		$records = $this->findAll(schema: 'RateRecord', filters: $filters);
+		$best = (new EffectiveVersionPicker(endField: 'expiresAt'))->pick(records: $records, date: $query->date);
+		if ($best !== null) {
+			return $this->recordRate(record: $best, date: $query->date);
+		}
 
-			if ($effective !== '' && $effective > $date) {
-				continue;
-			}
+		$card = $this->findRateCard(rateCardId: $query->rateCardId, administrationId: $query->administrationId);
+		if ($card !== null) {
+			return $this->cardRate(card: $card, date: $query->date);
+		}
 
-			if ($expires !== '' && $expires < $date) {
-				continue;
-			}
+		return null;
 
-			if ($best === null || (string)($best['effectiveDate'] ?? '') < $effective) {
-				$best = $record;
-			}
-		}//end foreach
+	}//end scopedRate()
 
-		return $best;
-	}//end pickBestRecord()
+	/**
+	 * The rate snapshot of a RateRecord.
+	 *
+	 * @param array<string,mixed> $record The winning RateRecord.
+	 * @param string              $date   ISO date the rate applies on.
+	 *
+	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}
+	 */
+	private function recordRate(array $record, string $date): array {
+		return [
+			'rateCents' => (new StoredMoney())->cents(value: $record['rateCents'] ?? $record['hourlyRate'] ?? 0),
+			'currency' => (string)($record['currency'] ?? 'EUR'),
+			'rateCardVersion' => (string)($record['rateCardVersion'] ?? ($record['version'] ?? 'v1')),
+			'effectiveDate' => (string)($record['effectiveDate'] ?? $date),
+		];
+
+	}//end recordRate()
+
+	/**
+	 * The rate snapshot of a RateCard's default rate.
+	 *
+	 * @param array<string,mixed> $card The RateCard.
+	 * @param string              $date ISO date the rate applies on.
+	 *
+	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}
+	 */
+	private function cardRate(array $card, string $date): array {
+		return [
+			'rateCents' => (new StoredMoney())->cents(value: $card['defaultHourlyRate'] ?? $card['hourlyRate'] ?? 10000),
+			'currency' => (string)($card['currency'] ?? 'EUR'),
+			'rateCardVersion' => (string)($card['version'] ?? 'v1'),
+			'effectiveDate' => $date,
+		];
+
+	}//end cardRate()
 
 	/**
 	 * Find the RateCard itself, for simple cards that carry a default rate
@@ -189,22 +174,9 @@ class RateCardResolver {
 	 * @return array<string,mixed>|null The card, or null when none is in scope.
 	 */
 	private function findRateCard(string $rateCardId, string $administrationId): ?array {
-		$rateCards = $this->findAll(
-			schema: 'RateCard',
-			filters: [
-				'scheduleId' => $rateCardId,
-				'administrationId' => $administrationId,
-			]
-		);
-
+		$rateCards = $this->findAll(schema: 'RateCard', filters: ['scheduleId' => $rateCardId, 'administrationId' => $administrationId]);
 		if (count($rateCards) === 0) {
-			$rateCards = $this->findAll(
-				schema: 'RateCard',
-				filters: [
-					'id' => $rateCardId,
-					'administrationId' => $administrationId,
-				]
-			);
+			$rateCards = $this->findAll(schema: 'RateCard', filters: ['id' => $rateCardId, 'administrationId' => $administrationId]);
 		}
 
 		if (count($rateCards) === 0) {
@@ -221,35 +193,25 @@ class RateCardResolver {
 	 * fail-closed path so a cross-tenant / unscoped id is indistinguishable
 	 * from an unknown one.
 	 *
-	 * @param string $date ISO date the rate applies on.
+	 * Logs why, then answers the generic snapshot.
+	 *
+	 * @param RateQuery $query  The lookup that did not resolve.
+	 * @param string    $reason Why, as a sprintf format over card, resource type and date.
 	 *
 	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}
 	 */
-	private function fallbackRate(string $date): array {
+	private function fallbackRate(RateQuery $query, string $reason): array {
+		$this->logger->warning(
+			sprintf('RateCardResolver: ' . $reason . ', falling back to €100/hr', $query->rateCardId, $query->resourceType, $query->date)
+		);
+
 		return [
 			'rateCents' => 10000,
 			'currency' => 'EUR',
 			'rateCardVersion' => 'fallback',
-			'effectiveDate' => $date,
+			'effectiveDate' => $query->date,
 		];
 	}//end fallbackRate()
-
-	/**
-	 * Convert a stored money value to integer cents.
-	 *
-	 * Accepts a stored number-of-euros (multipleOf 0.01) or already-integer cents.
-	 *
-	 * @param mixed $value Stored value.
-	 *
-	 * @return int Cents.
-	 */
-	private function toCents(mixed $value): int {
-		if (is_int($value) === true) {
-			return $value;
-		}
-
-		return (int)round((float)$value * 100);
-	}//end toCents()
 
 	/**
 	 * Find all matching records via the real OR ObjectService API (findAll).
@@ -261,35 +223,11 @@ class RateCardResolver {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rs = $svc
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-
-			if (is_array($rs) === true) {
-				return $rs;
-			}
-
-			return [];
+			return (new RegisterRecordFinder(container: $this->container, appConfig: $this->appConfig))->find(schema: $schema, filters: $filters);
 		} catch (\Throwable $e) {
 			$this->logger->error('RateCardResolver findAll failed: ' . $e->getMessage());
 			return [];
 		}
 
 	}//end findAll()
-
-	/**
-	 * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 }//end class

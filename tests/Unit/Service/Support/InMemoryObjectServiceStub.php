@@ -3,6 +3,9 @@
 /**
  * In-memory ObjectService stub for procurement-governance service tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Honours equality filters on findAll and stamps / updates ids on saveObject,
  * mirroring the fluent OpenRegister ObjectService surface the services consume
  * (setRegister -> setSchema -> findAll / saveObject / find).
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/procurement-governance/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

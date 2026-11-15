@@ -346,4 +346,64 @@ final class WbsoDocumentServiceTest extends TestCase {
 		$service->getDocumentsByType(administrationId: 'adm-1', type: 'unknown');
 
 	}//end testFilterRejectsUnknownType()
+
+	/**
+	 * Golden: the archived record, found by number, with an old document date standing in for filedAt.
+	 *
+	 * @return void
+	 */
+	public function testArchiveGolden(): void {
+		$service = $this->buildService([
+			['id' => 'd-9', 'documentNumber' => 'DOC-9', 'status' => 'filed', 'documentDate' => '2015-01-01', 'administrationId' => 'adm-1', 'note' => 'kept'],
+		]);
+
+		$row = $service->archiveDocument(administrationId: 'adm-1', documentId: 'DOC-9', reason: 'retention over');
+
+		self::assertSame(['id', 'documentNumber', 'status', 'documentDate', 'administrationId', 'note', 'archivedAt', 'archivalReason'], array_keys($row));
+		self::assertSame(['d-9', 'archived', 'kept', 'retention over'], [$row['id'], $row['status'], $row['note'], $row['archivalReason']]);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/', $row['archivedAt']);
+
+	}//end testArchiveGolden()
+
+	/**
+	 * Golden: each refusal, in the order the gates run.
+	 *
+	 * @return void
+	 */
+	public function testArchiveRefusalsGolden(): void {
+		$service = $this->buildService([
+			['id' => 'd-1', 'status' => 'draft', 'filedAt' => '2010-01-01T00:00:00+00:00', 'administrationId' => 'adm-1'],
+			['id' => 'd-2', 'status' => 'filed', 'administrationId' => 'adm-1'],
+			['id' => 'd-3', 'status' => 'filed', 'filedAt' => '2010-01-01T00:00:00+00:00', 'administrationId' => 'adm-2'],
+		]);
+
+		$outcome = static function (callable $call): string {
+			try {
+				$call();
+				return 'ok';
+			} catch (\Throwable $e) {
+				return get_class($e).': '.$e->getMessage();
+			}
+		};
+
+		self::assertSame(
+			[
+				'InvalidArgumentException: Document not found',
+				'RuntimeException: Only filed documents can be archived',
+				'RuntimeException: Only filed documents can be archived',
+				'RuntimeException: Documents must have been filed for at least seven years before archival',
+				'InvalidArgumentException: Document not found',
+				'ok',
+			],
+			[
+				$outcome(static fn () => $service->archiveDocument(administrationId: 'adm-1', documentId: 'missing', reason: 'r')),
+				$outcome(static fn () => $service->archiveDocument(administrationId: 'adm-1', documentId: 'd-1', reason: 'r')),
+				$outcome(static fn () => $service->archiveDocument(administrationId: 'adm-1', documentId: 'd-1', reason: 'r', allowEarly: true)),
+				$outcome(static fn () => $service->archiveDocument(administrationId: 'adm-1', documentId: 'd-2', reason: 'r')),
+				$outcome(static fn () => $service->archiveDocument(administrationId: 'adm-1', documentId: 'd-3', reason: 'r', allowEarly: true)),
+				$outcome(static fn () => $service->archiveDocument(administrationId: 'adm-1', documentId: 'd-2', reason: 'r', allowEarly: true)),
+			]
+		);
+
+	}//end testArchiveRefusalsGolden()
 }//end class

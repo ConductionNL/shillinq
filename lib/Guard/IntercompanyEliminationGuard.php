@@ -3,6 +3,9 @@
 /**
  * Intercompany Elimination Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (REQ-GLTAX-002). REQ-MA-004 requires a
  * non-zero afwijking (variance) between the two sides of an intercompany
  * pair to flag the pair for manual review — but nothing computed the
@@ -29,17 +32,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\Service\IntercompanyJournalService;
-use OCA\Shillinq\Service\IntercompanyLinkService;
+use OCA\Shillinq\Kernel\Contracts\IntercompanyJournalServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IntercompanyLinkServiceInterface;
 
 /**
  * Precondition for `eliminate`: the intercompany pair must reconcile.
@@ -56,12 +56,12 @@ class IntercompanyEliminationGuard {
 	/**
 	 * Construct the guard.
 	 *
-	 * @param IntercompanyLinkService $linkService Resolves the counter-side entry.
-	 * @param IntercompanyJournalService $journalService The pure-logic REQ-MA-004 kernel.
+	 * @param IntercompanyLinkServiceInterface $linkService Resolves the counter-side entry.
+	 * @param IntercompanyJournalServiceInterface $journalService The pure-logic REQ-MA-004 kernel.
 	 */
 	public function __construct(
-		private readonly IntercompanyLinkService $linkService,
-		private readonly IntercompanyJournalService $journalService,
+		private readonly IntercompanyLinkServiceInterface $linkService,
+		private readonly IntercompanyJournalServiceInterface $journalService,
 	) {
 
 	}//end __construct()
