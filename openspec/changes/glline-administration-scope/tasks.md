@@ -37,8 +37,11 @@ Every path that creates a `GLLine` must set `administrationId` from the parent
 - [x] Every one of the four already had the parent's `administrationId` in
       scope at the write site (it is set on the `GLTransaction` header a few
       lines above), so no new plumbing was needed.
-- [ ] One unit test per writer asserting the new line carries its parent's
-      `administrationId`. **NOT DONE** — see "Known gaps" below.
+- [x] One unit test per writer asserting the new line carries its parent's
+      `administrationId`. Done 9 Oct 2026: CogsPosterServiceTest,
+      InventoryGlAdjustmentPosterTest, VatSuppletieDetectionServiceTest
+      (prepare) and the new RuleTestDataSeederTest. Negative control: the
+      seeder test fails with the stamp removed.
 
 ## Phase 3 — backfill migrator
 
@@ -107,6 +110,9 @@ Every path that creates a `GLLine` must set `administrationId` from the parent
       surface, so there is no UI to cover and no `data-testid` to locate. Both
       scenarios now carry `@e2e exclude` with that reason. Re-tag them as
       `@e2e glline-administration-scope::…` when a UI consumer lands.
+      (not run: 9 Oct 2026, the UI consumer has landed with
+      spend-analytics-ui's SpendAnalyticsPanel; the Playwright run needs the
+      live instance.)
 
 ## Known gaps
 

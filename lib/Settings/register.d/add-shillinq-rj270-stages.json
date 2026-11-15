@@ -84,6 +84,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a RJ-270 Stage is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }

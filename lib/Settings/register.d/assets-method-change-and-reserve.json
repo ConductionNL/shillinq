@@ -131,18 +131,19 @@
             "release": {"from": ["open"], "to": "released", "label": "Release", "description": "Set by the daily run when the reserve expires with a remainder."}
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {"permissions": ["read"]},
-            "controller": {"permissions": ["read", "update"]},
-            "auditor": {"permissions": ["read"]},
-            "admin": {"permissions": ["create", "read", "update", "delete"]}
-          },
-          "adminScope": {"field": "administrationId", "enforce": true}
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Who formed, applied or released a reinvestment reserve, and when."
+        },
+        "authorization": {
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller"
+          ]
         }
       }
     }

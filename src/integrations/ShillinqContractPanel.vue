@@ -16,7 +16,10 @@
  stop work that is in fact funded (REQ-FPCR-005).
 -->
 <template>
-	<div class="shillinq-contract-panel" data-testid="shillinq-contract-panel">
+	<div
+		v-if="!summarised"
+		class="shillinq-contract-panel"
+		data-testid="shillinq-contract-panel">
 		<NcLoadingIcon v-if="loading" :size="24" />
 
 		<div v-else-if="error" class="shillinq-leaf__error" role="alert">
@@ -24,13 +27,13 @@
 		</div>
 
 		<p
-			v-else-if="contracts.length === 0"
+			v-else-if="contracts.length === 0 && !carded"
 			class="shillinq-leaf__empty"
 			data-testid="shillinq-contract-empty">
 			{{ emptyLabel }}
 		</p>
 
-		<ul v-else class="shillinq-leaf__list">
+		<ul v-else-if="contracts.length > 0" class="shillinq-leaf__list">
 			<li
 				v-for="contract in contracts"
 				:key="contract.id"
@@ -79,10 +82,9 @@ import { NcLoadingIcon } from '@nextcloud/vue'
 import {
 	CONTRACTS_DATA_LEAF,
 	formatAmount,
-	hostIdentity,
-	isResolvable,
-	readLeaf,
 } from './leafApi.js'
+import { leafHostPanelMixin } from './leafHostPanel.js'
+import { leafReportMixin } from './leafReport.js'
 
 /**
  * The contract panel mounted by the `shillinq-contracts-panel` leaf. See the
@@ -95,16 +97,7 @@ export default {
 		NcLoadingIcon,
 	},
 
-	props: {
-		/** OpenRegister register id of the host object. */
-		register: { type: String, default: '' },
-		/** OpenRegister schema id of the host object. */
-		schema: { type: String, default: '' },
-		/** Id of the host object the contract is linked to. */
-		objectId: { type: [String, Number], default: '' },
-		/** Whole registry context, the fallback when the discrete props are absent. */
-		integrationContext: { type: Object, default: () => ({}) },
-	},
+	mixins: [leafReportMixin, leafHostPanelMixin],
 
 	data() {
 		return {
@@ -115,6 +108,24 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * What this leaf reports to a carding host or a "linked" card.
+		 *
+		 * @return {object} The report.
+		 * @spec openspec/specs/leaves-library-card/spec.md#requirement-the-finance-leaves-report-to-the-library-card-and-the-linked-card
+		 */
+		leafReport() {
+			return {
+				count: this.contracts.length,
+				emptyLabel: this.emptyLabel,
+				noun: t('shillinq', 'contract'),
+				rows: this.contracts.map((contract) => ({
+					label: this.titleOf(contract),
+					icon: 'FileDocumentOutline',
+				})),
+			}
+		},
+
 		/** @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006) */
 		emptyLabel() {
 			return t('shillinq', 'This record is not handled under a contract.')
@@ -142,22 +153,12 @@ export default {
 		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 		 */
 		async load() {
-			const identity = hostIdentity(this.$props)
-			if (isResolvable(identity) === false) {
-				this.error = t('shillinq', 'This panel needs a record to stand on.')
-				return
-			}
-
-			this.loading = true
-			this.error = ''
-			try {
-				const envelope = await readLeaf(identity, CONTRACTS_DATA_LEAF)
-				this.contracts = Array.isArray(envelope.items) ? envelope.items : []
-			} catch {
-				this.error = t('shillinq', 'The contract could not be read.')
-			} finally {
-				this.loading = false
-			}
+			await this.readHostLeaf(CONTRACTS_DATA_LEAF, {
+				apply: (envelope) => {
+					this.contracts = Array.isArray(envelope.items) ? envelope.items : []
+				},
+				failedText: () => t('shillinq', 'The contract could not be read.'),
+			})
 		},
 
 		/**
@@ -239,27 +240,11 @@ export default {
 }
 </script>
 
+<style scoped src="./leafPanel.css"></style>
+
 <style scoped>
 .shillinq-contract-panel {
 	padding: 8px;
-}
-
-.shillinq-leaf__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.shillinq-leaf__row {
-	border-bottom: 1px solid var(--color-border);
-	padding: 8px 0;
-}
-
-.shillinq-leaf__row-head {
-	display: flex;
-	justify-content: space-between;
-	gap: 8px;
-	font-weight: bold;
 }
 
 .shillinq-leaf__state {
@@ -276,13 +261,5 @@ export default {
 .shillinq-leaf__empty {
 	color: var(--color-text-maxcontrast);
 	margin: 4px 0;
-}
-
-.shillinq-leaf__error {
-	color: var(--color-error);
-}
-
-.shillinq-leaf__notice {
-	margin-top: 8px;
 }
 </style>

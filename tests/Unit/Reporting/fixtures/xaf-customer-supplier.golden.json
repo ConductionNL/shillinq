@@ -1,0 +1,8 @@
+{
+    "full": "<root>\n <customerSupplier>\n  <custSupID>c-1<\/custSupID>\n  <custSupTp>C<\/custSupTp>\n  <companyName>Ada &amp; Co<\/companyName>\n  <companyIdent>123<\/companyIdent>\n  <taxRegistration>\n   <taxRegIdent>NL1B01<\/taxRegIdent>\n  <\/taxRegistration>\n  <contact>\n   <eMail>a@x.test<\/eMail>\n   <telephone>010<\/telephone>\n  <\/contact>\n <\/customerSupplier>\n<\/root>\n",
+    "legalNameVatId": "<root>\n <customerSupplier>\n  <custSupID>s-1<\/custSupID>\n  <custSupTp>S<\/custSupTp>\n  <companyName>Legal BV<\/companyName>\n  <taxRegistration>\n   <taxRegIdent>NL2B02<\/taxRegIdent>\n  <\/taxRegistration>\n  <contact>\n   <telephone>020<\/telephone>\n  <\/contact>\n <\/customerSupplier>\n<\/root>\n",
+    "tradingNameVatIdLower": "<root>\n <customerSupplier>\n  <custSupID>c-2<\/custSupID>\n  <custSupTp>C<\/custSupTp>\n  <companyName>Trade<\/companyName>\n  <taxRegistration>\n   <taxRegIdent>NL3B03<\/taxRegIdent>\n  <\/taxRegistration>\n  <contact>\n   <eMail>e@x.test<\/eMail>\n  <\/contact>\n <\/customerSupplier>\n<\/root>\n",
+    "tradeNameOnly": "<root>\n <customerSupplier>\n  <custSupID>s-2<\/custSupID>\n  <custSupTp>S<\/custSupTp>\n  <companyName>TN<\/companyName>\n <\/customerSupplier>\n<\/root>\n",
+    "bare": "<root>\n <customerSupplier>\n  <custSupID>c-3<\/custSupID>\n  <custSupTp>C<\/custSupTp>\n  <companyName><\/companyName>\n <\/customerSupplier>\n<\/root>\n",
+    "noId": "<root\/>\n"
+}

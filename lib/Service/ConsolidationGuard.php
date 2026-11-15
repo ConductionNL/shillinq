@@ -29,10 +29,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Guards financial-statement lifecycle transitions.
@@ -65,7 +66,7 @@ class ConsolidationGuard {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -77,9 +78,7 @@ class ConsolidationGuard {
 	 * Guard for BalanceSheet and TrialBalance draft→final transition.
 	 *
 	 * Returns true when the FiscalYear referenced by `fiscalYearId` is closed
-	 * (isClosed === true). If the FiscalYear schema is not available (pre-T2),
-	 * permits the transition with a debug log (T1 deferral pattern mirrors
-	 * AccountBalanceGuard::requireZeroBalance).
+	 * (isClosed === true). An unknown FiscalYear denies the transition.
 	 *
 	 * Fail-closed on unexpected exceptions: returns false and logs an error so
 	 * no transition fires silently during an infrastructure outage (CWE-285).
@@ -105,18 +104,17 @@ class ConsolidationGuard {
 			// findObject() does not exist — it raised an Error that the
 			// \Throwable arm below swallowed into `return false`, so this
 			// guard denied EVERY finalise without ever reading a FiscalYear.
-			$fiscalYear = $this->objectService->find(
-				id: $fiscalYearId,
-				register: $this->getRegisterSlug(),
-				schema: 'FiscalYear'
+			$fiscalYear = ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('FiscalYear'),
+				id: (string)$fiscalYearId
 			);
 
 			if ($fiscalYear === null) {
-				$this->logger->debug(
-					'ConsolidationGuard: FiscalYear schema not present (T1/T2 state) — finalise permitted by default',
+				$this->logger->warning(
+					'ConsolidationGuard: FiscalYear not found, denying finalise (fail-closed)',
 					['fiscalYearId' => $fiscalYearId]
 				);
-				return true;
+				return false;
 			}
 
 			return (($fiscalYear->jsonSerialize()['isClosed'] ?? false) === true);
@@ -134,9 +132,9 @@ class ConsolidationGuard {
 	 * Guard for ConsolidatedReport draft→final transition.
 	 *
 	 * Returns true when all member administrations in the ConsolidationGroup
-	 * have a BalanceSheet with status `final` for the same fiscalYearId. If
-	 * the ConsolidationGroup or BalanceSheet schema is not available, permits
-	 * the transition with a debug log (T1/T2 deferral).
+	 * have a BalanceSheet with status `final` for the same fiscalYearId. An
+	 * unknown group, or a group without member administrations, denies the
+	 * transition.
 	 *
 	 * Fail-closed on unexpected exceptions.
 	 *
@@ -159,49 +157,17 @@ class ConsolidationGuard {
 		}
 
 		try {
-			// ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
-			$consolidationGroup = $this->objectService->find(
-				id: $consolidationGroupId,
-				register: $this->getRegisterSlug(),
-				schema: 'ConsolidationGroup'
-			);
+			$administrationIds = $this->groupAdministrationIds(consolidationGroupId: $consolidationGroupId);
 
-			if ($consolidationGroup === null) {
-				$this->logger->debug(
-					'ConsolidationGuard: ConsolidationGroup not found — finalise permitted by default',
+			if (count($administrationIds) === 0) {
+				$this->logger->warning(
+					'ConsolidationGuard: ConsolidationGroup not found or without members, denying finalise (fail-closed)',
 					['consolidationGroupId' => $consolidationGroupId]
 				);
-				return true;
+				return false;
 			}
 
-			$administrationIds = ($consolidationGroup->jsonSerialize()['administrationIds'] ?? []);
-			if (count($administrationIds) === 0) {
-				return true;
-			}
-
-			foreach ($administrationIds as $administrationId) {
-				$balanceSheets = $this->objectService
-					->setRegister($this->getRegisterSlug())
-					->setSchema('BalanceSheet')
-					->findAll(
-						[
-							'administrationId' => $administrationId,
-							'fiscalYearId' => $fiscalYearId,
-							'status' => 'final',
-							'_limit' => 1,
-						]
-					);
-
-				if (count($balanceSheets) === 0) {
-					$this->logger->warning(
-						'ConsolidationGuard: member administration has no final BalanceSheet — denying consolidation',
-						['administrationId' => $administrationId, 'fiscalYearId' => $fiscalYearId]
-					);
-					return false;
-				}
-			}//end foreach
-
-			return true;
+			return $this->allMembersHaveFinalBalanceSheet(administrationIds: $administrationIds, fiscalYearId: $fiscalYearId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ConsolidationGuard: member finalisation check failed — denying finalise (fail-closed)',
@@ -213,11 +179,74 @@ class ConsolidationGuard {
 	}//end requireAllMembersFinalised()
 
 	/**
+	 * Return the member administration ids of a ConsolidationGroup.
+	 *
+	 * @param mixed $consolidationGroupId The ConsolidationGroup id.
+	 *
+	 * @return array<mixed> The member administration ids (empty when the group is unknown).
+	 *
+	 * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-12
+	 */
+	private function groupAdministrationIds(mixed $consolidationGroupId): array {
+		// ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
+		$consolidationGroup = ObjectIdentifier::findScopedOrThrow(
+			scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('ConsolidationGroup'),
+			id: (string)$consolidationGroupId
+		);
+
+		$administrationIds = [];
+		if ($consolidationGroup !== null) {
+			$administrationIds = (array)($consolidationGroup->jsonSerialize()['administrationIds'] ?? []);
+		}
+
+		return $administrationIds;
+	}//end groupAdministrationIds()
+
+	/**
+	 * Whether every member administration has a final BalanceSheet for the fiscal year.
+	 *
+	 * @param array<mixed> $administrationIds The member administration ids.
+	 * @param mixed $fiscalYearId The fiscal year id.
+	 *
+	 * @return bool True when all member statements are final.
+	 *
+	 * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-12
+	 */
+	private function allMembersHaveFinalBalanceSheet(array $administrationIds, mixed $fiscalYearId): bool {
+		foreach ($administrationIds as $administrationId) {
+			$balanceSheets = $this->objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('BalanceSheet')
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							'fiscalYearId' => $fiscalYearId,
+							'status' => 'final',
+						],
+						'limit' => 1,
+					]
+				);
+
+			if (count($balanceSheets) === 0) {
+				$this->logger->warning(
+					'ConsolidationGuard: member administration has no final BalanceSheet — denying consolidation',
+					['administrationId' => $administrationId, 'fiscalYearId' => $fiscalYearId]
+				);
+				return false;
+			}
+		}//end foreach
+
+		return true;
+	}//end allMembersHaveFinalBalanceSheet()
+
+	/**
 	 * Guard for final→published transition on BalanceSheet, TrialBalance, ConsolidatedReport.
 	 *
 	 * Returns true unconditionally (publication approval is a role-based check
 	 * handled by the RBAC layer — `controller` role only). This method is the
-	 * OR lifecycle hook point; actual role enforcement is via x-openregister-rbac.
+	 * OR lifecycle hook point; the role is enforced by the `publish`
+	 * transition's `authorization` (`{"role": "controller"}`).
 	 *
 	 * Retained as an explicit seam so the implementing cycle can add operator
 	 * sign-off or digital-signature preconditions without schema changes.
@@ -231,7 +260,7 @@ class ConsolidationGuard {
 	 * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-13
 	 */
 	public function requirePublicationApproval(array $statement): bool {
-		// Role-based enforcement (controller only) is declared in x-openregister-rbac.
+		// Role-based enforcement (controller only) is the publish transition's authorization.
 		// This seam is retained for future operator sign-off or digital-signature
 		// preconditions per REQ-FS-007 without requiring schema changes.
 		return true;

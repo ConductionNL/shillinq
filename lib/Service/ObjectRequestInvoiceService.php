@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -40,7 +41,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
  */
-class ObjectRequestInvoiceService {
+class ObjectRequestInvoiceService implements ObjectRequestInvoiceServiceInterface {
 
 	/**
 	 * App config key: request type => VAT rate in percent, as JSON.
@@ -89,19 +90,7 @@ class ObjectRequestInvoiceService {
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function issue(array $request, string $administrationId, string $today): string {
-		if (preg_match('/^[A-Za-z0-9_.\-]{1,64}$/', $administrationId) !== 1) {
-			throw new InvalidArgumentException('An invoice on request needs the administrationId of the administration that bills it.');
-		}
-
-		$debtor = $request['debtor'] ?? null;
-		if (is_array($debtor) === false || $debtor === []) {
-			throw new InvalidArgumentException('An invoice on request needs a debtor: a customerMasterId, or a name and an email.');
-		}
-
-		$gross = round((float)($request['amount'] ?? 0), 2);
-		if ($gross <= 0.0) {
-			throw new InvalidArgumentException('An invoice on request needs an amount above zero.');
-		}
+		$debtor = self::validatedDebtor(request: $request, administrationId: $administrationId);
 
 		$customer = $this->debtors->resolve(debtor: $debtor, administrationId: $administrationId);
 		$invoice = $this->buildInvoice(
@@ -125,6 +114,34 @@ class ObjectRequestInvoiceService {
 
 		return $uuid;
 	}//end issue()
+
+	/**
+	 * The request's debtor, refused when the administration, the debtor or the amount is unusable.
+	 *
+	 * @param array<string, mixed> $request          The payment request.
+	 * @param string               $administrationId The administration that bills it.
+	 *
+	 * @return array<mixed>
+	 *
+	 * @throws InvalidArgumentException When the administrationId, debtor or amount is unusable.
+	 */
+	private static function validatedDebtor(array $request, string $administrationId): array {
+		if (preg_match('/^[A-Za-z0-9_.\-]{1,64}$/', $administrationId) !== 1) {
+			throw new InvalidArgumentException('An invoice on request needs the administrationId of the administration that bills it.');
+		}
+
+		$debtor = $request['debtor'] ?? null;
+		if (is_array($debtor) === false || $debtor === []) {
+			throw new InvalidArgumentException('An invoice on request needs a debtor: a customerMasterId, or a name and an email.');
+		}
+
+		$gross = round((float)($request['amount'] ?? 0), 2);
+		if ($gross <= 0.0) {
+			throw new InvalidArgumentException('An invoice on request needs an amount above zero.');
+		}
+
+		return $debtor;
+	}//end validatedDebtor()
 
 	/**
 	 * The issued ARInvoice payload for a request: one line, gross as asked.
@@ -168,6 +185,7 @@ class ObjectRequestInvoiceService {
 			'grossAmount' => $gross,
 			'lifecycleState' => 'issued',
 			'invoiceType' => 'standard',
+			'linkedObjects' => array_values((array)($request['linkedObjects'] ?? [])),
 			// `invoiceLines` is the line property ARInvoice declares (EN 16931 BG-25).
 			'invoiceLines' => [
 				[

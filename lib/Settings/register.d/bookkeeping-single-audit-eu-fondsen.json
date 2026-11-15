@@ -277,31 +277,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "eu-projectleider": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a EU-project is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_eu_projectleider"
+          ],
+          "read": [
+            "shillinq_eu_projectleider",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_eu_projectleider",
+            "shillinq_controller"
+          ]
         }
       },
       "EligibilityRule": {
@@ -488,30 +480,22 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "eu-projectleider": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Eligibility-rule is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_eu_projectleider",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller"
+          ]
         }
       },
       "SegregatedLedger": {
@@ -641,30 +625,22 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "eu-projectleider": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Gescheiden EU-administratie is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller"
+          ]
         }
       },
       "EuExpenditure": {
@@ -946,37 +922,25 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "eu-projectleider": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "certificeringsautoriteit": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a EU-uitgave is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider",
+            "shillinq_certificeringsautoriteit",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider",
+            "shillinq_certificeringsautoriteit"
+          ]
         }
       },
       "SupportingDocument": {
@@ -1148,32 +1112,24 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "eu-projectleider": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Bewijsstuk is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider"
+          ]
         }
       },
       "IrregularityReport": {
@@ -1374,30 +1330,22 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "eu-projectleider": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Onregelmatigheid-melding is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller"
+          ]
         }
       },
       "AuditTrail": {
@@ -1537,36 +1485,22 @@
           },
           "transitions": {}
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "eu-projectleider": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "certificeringsautoriteit": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Audit-trail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider",
+            "shillinq_certificeringsautoriteit"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_eu_projectleider",
+            "shillinq_certificeringsautoriteit",
+            "shillinq_auditor"
+          ]
         }
       }
     }

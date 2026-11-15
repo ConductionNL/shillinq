@@ -1,5 +1,8 @@
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <template>
 	<CnSettingsSection
+		wide
 		:name="t('shillinq', 'Configuration')"
 		:description="t('shillinq', 'Configure the app settings')">
 		<form @submit.prevent="save">

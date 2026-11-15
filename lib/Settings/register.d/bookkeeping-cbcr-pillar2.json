@@ -249,6 +249,25 @@
           "owner": "openconnector",
           "tier": "T4",
           "status": "DEFERRED — declarative contract only; live BackgroundJob ships with the openconnector cron-watcher apply cycle on a live instance."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CbcrJurisdictionSummary": {
@@ -460,6 +479,25 @@
               "description": "Reopen for correction."
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "Pillar2JurisdictionComputation": {
@@ -940,6 +978,25 @@
               "description": "Reopen for correction."
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "Pillar2SafeHarbour": {
@@ -1010,6 +1067,25 @@
             "description": "Supporting figures for the test (revenue, profit, ETR, SBIE) for the audit trail.",
             "title": "Supporting Calculations"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "QdmttReturn": {
@@ -1183,6 +1259,25 @@
               "description": "Return to draft to correct and resubmit."
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GlobeInformationReturn": {
@@ -1336,6 +1431,25 @@
           "owner": "openconnector",
           "tier": "T4",
           "status": "DEFERRED — declarative contract only; live OESO-GIR-XML renderer + schema validator + jurisdiction-specific submission adapter ship with the openconnector gir-xml apply cycle on a live instance."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CbcrReturn": {
@@ -1546,6 +1660,25 @@
           "owner": "openconnector",
           "tier": "T4",
           "status": "DEFERRED — declarative contract only; live OESO-CBC-XML renderer + Digipoort submission adapter ship with the openconnector cbcr-xml apply cycle on a live instance."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "TaxTreatyOverview": {
@@ -1604,6 +1737,25 @@
             "default": false,
             "title": "Mli Applicability"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },

@@ -72,34 +72,6 @@
             "title": "Description"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
-        },
         "x-openregister-validations": {
           "onCreate": {
             "cogsAccountExists": {
@@ -135,6 +107,24 @@
               "guard": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::accountExists"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_admin"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_admin",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "InventoryValuation": {

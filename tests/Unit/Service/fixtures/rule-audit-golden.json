@@ -1,0 +1,1245 @@
+{
+    "plain": {
+        "report": {
+            "catalogueVersion": "2026-06b",
+            "corpusTotal": 1297,
+            "machineCheckable": 690,
+            "enforceableRules": 612,
+            "coveragePct": 88.7,
+            "types": {
+                "ARInvoice": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 138
+                },
+                "APTransaction": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 33
+                },
+                "GLTransaction": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 44
+                },
+                "Account": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "CashTransaction": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "AmlReport": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "SanctionsScreening": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "CddRecord": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 12
+                },
+                "FundsTransfer": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "TrustLedger": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "CashCount": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 9
+                },
+                "BankReconciliation": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "SaftFile": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 21
+                },
+                "IossImport": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "TravelAgentMargin": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "FinancialStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 153
+                },
+                "EInvoiceMandate": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "SaftExportProfile": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "OssThresholdCounter": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "OssReturn": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "PublicSectorStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 45
+                },
+                "VatReturnFiling": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "EsrsStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 132
+                },
+                "BbvStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 12
+                }
+            },
+            "objectsChecked": 72,
+            "objectsCompliant": 9,
+            "objectsWithViolations": 63,
+            "violationsBySeverity": {
+                "mandatory": 467,
+                "conditional": 156,
+                "recommended": 27
+            },
+            "topViolatedRules": [
+                {
+                    "ruleId": "en16931-br-02",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-03",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-05",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-14",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art226-5",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art226-10",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-cl-03",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art63-tax-point-supply",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art73-taxable-amount",
+                    "count": 6
+                },
+                {
+                    "ruleId": "gl-source-document-traceability",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-13",
+                    "count": 3
+                },
+                {
+                    "ruleId": "gl-sequential-invoice-numbering",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-07",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-16",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-21",
+                    "count": 3
+                }
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "ARInvoice",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "APTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GLTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GLLine",
+                {
+                    "filters": {
+                        "transactionId": "GLTransaction-1"
+                    }
+                }
+            ],
+            [
+                "find",
+                "GLLine",
+                {
+                    "filters": {
+                        "transactionId": "T-1"
+                    }
+                }
+            ],
+            [
+                "find",
+                "GLLine",
+                {
+                    "filters": {
+                        "transactionId": "ser"
+                    }
+                }
+            ],
+            [
+                "find",
+                "Account",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CashTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "AmlReport",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SanctionsScreening",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CddRecord",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "FundsTransfer",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "TrustLedger",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CashCount",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BankReconciliation",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SaftFile",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "IossImport",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "TravelAgentMargin",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "FinancialStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "EInvoiceMandate",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SaftExportProfile",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "OssThresholdCounter",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "OssReturn",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "PublicSectorStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "VatReturnFiling",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "EsrsStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BbvStatement",
+                {
+                    "limit": 10000
+                }
+            ]
+        ]
+    },
+    "jurisdiction": {
+        "report": {
+            "catalogueVersion": "2026-06b",
+            "corpusTotal": 1297,
+            "machineCheckable": 690,
+            "enforceableRules": 612,
+            "coveragePct": 88.7,
+            "types": {
+                "ARInvoice": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 138
+                },
+                "APTransaction": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 33
+                },
+                "GLTransaction": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 44
+                },
+                "Account": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "CashTransaction": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "AmlReport": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "SanctionsScreening": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "CddRecord": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 12
+                },
+                "FundsTransfer": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "TrustLedger": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "CashCount": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 9
+                },
+                "BankReconciliation": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "SaftFile": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 21
+                },
+                "IossImport": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "TravelAgentMargin": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "FinancialStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 153
+                },
+                "EInvoiceMandate": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "SaftExportProfile": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "OssThresholdCounter": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "OssReturn": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "PublicSectorStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 45
+                },
+                "VatReturnFiling": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "EsrsStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 132
+                },
+                "BbvStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 12
+                }
+            },
+            "objectsChecked": 72,
+            "objectsCompliant": 9,
+            "objectsWithViolations": 63,
+            "violationsBySeverity": {
+                "mandatory": 467,
+                "conditional": 156,
+                "recommended": 27
+            },
+            "topViolatedRules": [
+                {
+                    "ruleId": "en16931-br-02",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-03",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-05",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-14",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art226-5",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art226-10",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-cl-03",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art63-tax-point-supply",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art73-taxable-amount",
+                    "count": 6
+                },
+                {
+                    "ruleId": "gl-source-document-traceability",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-13",
+                    "count": 3
+                },
+                {
+                    "ruleId": "gl-sequential-invoice-numbering",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-07",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-16",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-21",
+                    "count": 3
+                }
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "ARInvoice",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "APTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GLTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GLLine",
+                {
+                    "filters": {
+                        "transactionId": "GLTransaction-1"
+                    }
+                }
+            ],
+            [
+                "find",
+                "GLLine",
+                {
+                    "filters": {
+                        "transactionId": "T-1"
+                    }
+                }
+            ],
+            [
+                "find",
+                "GLLine",
+                {
+                    "filters": {
+                        "transactionId": "ser"
+                    }
+                }
+            ],
+            [
+                "find",
+                "Account",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CashTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "AmlReport",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SanctionsScreening",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CddRecord",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "FundsTransfer",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "TrustLedger",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CashCount",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BankReconciliation",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SaftFile",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "IossImport",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "TravelAgentMargin",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "FinancialStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "EInvoiceMandate",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SaftExportProfile",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "OssThresholdCounter",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "OssReturn",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "PublicSectorStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "VatReturnFiling",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "EsrsStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BbvStatement",
+                {
+                    "limit": 10000
+                }
+            ]
+        ]
+    },
+    "failing": {
+        "report": {
+            "catalogueVersion": "2026-06b",
+            "corpusTotal": 1297,
+            "machineCheckable": 690,
+            "enforceableRules": 612,
+            "coveragePct": 88.7,
+            "types": {
+                "ARInvoice": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 138
+                },
+                "APTransaction": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 33
+                },
+                "GLTransaction": {
+                    "checked": 0,
+                    "compliant": 0,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "Account": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "CashTransaction": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "AmlReport": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "SanctionsScreening": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "CddRecord": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 12
+                },
+                "FundsTransfer": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "TrustLedger": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "CashCount": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 9
+                },
+                "BankReconciliation": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "SaftFile": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 21
+                },
+                "IossImport": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "TravelAgentMargin": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "FinancialStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 153
+                },
+                "EInvoiceMandate": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "SaftExportProfile": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
+                "OssThresholdCounter": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 3
+                },
+                "OssReturn": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "PublicSectorStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 45
+                },
+                "VatReturnFiling": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 6
+                },
+                "EsrsStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 132
+                },
+                "BbvStatement": {
+                    "checked": 3,
+                    "compliant": 0,
+                    "withViolations": 3,
+                    "violations": 12
+                }
+            },
+            "objectsChecked": 69,
+            "objectsCompliant": 9,
+            "objectsWithViolations": 60,
+            "violationsBySeverity": {
+                "mandatory": 432,
+                "conditional": 150,
+                "recommended": 24
+            },
+            "topViolatedRules": [
+                {
+                    "ruleId": "en16931-br-02",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-03",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-05",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-14",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art226-5",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art226-10",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-cl-03",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art63-tax-point-supply",
+                    "count": 6
+                },
+                {
+                    "ruleId": "vatdir-art73-taxable-amount",
+                    "count": 6
+                },
+                {
+                    "ruleId": "en16931-br-13",
+                    "count": 3
+                },
+                {
+                    "ruleId": "gl-sequential-invoice-numbering",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-07",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-16",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-21",
+                    "count": 3
+                },
+                {
+                    "ruleId": "en16931-br-22",
+                    "count": 3
+                }
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "ARInvoice",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "APTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GLTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "warning",
+                "RuleAuditService: could not load GLTransaction: down"
+            ],
+            [
+                "find",
+                "Account",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CashTransaction",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "AmlReport",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SanctionsScreening",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CddRecord",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "FundsTransfer",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "TrustLedger",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "CashCount",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BankReconciliation",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SaftFile",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "IossImport",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "TravelAgentMargin",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "FinancialStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "EInvoiceMandate",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "SaftExportProfile",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "OssThresholdCounter",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "OssReturn",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "PublicSectorStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "VatReturnFiling",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "EsrsStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BbvStatement",
+                {
+                    "limit": 10000
+                }
+            ]
+        ]
+    }
+}

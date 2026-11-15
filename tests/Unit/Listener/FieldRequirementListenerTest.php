@@ -25,13 +25,13 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\AppInfo\FieldRequirementRegistration;
+use OCA\Shillinq\Listener\Registration\FieldRequirementRegistration;
 use OCA\Shillinq\Listener\FieldRequirementListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Platform\FieldRequirements;
 use OCA\Shillinq\Service\Platform\ObjectApiRequest;
 use OCA\Shillinq\Service\Platform\SchemaDefinitions;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -159,7 +159,7 @@ class FieldRequirementListenerTest extends TestCase {
 	 * @return FieldRequirements
 	 */
 	private function requirements(): FieldRequirements {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new FieldRequirements($this->store, $settings, $this->definitions(), $this->l10n());
@@ -284,6 +284,75 @@ class FieldRequirementListenerTest extends TestCase {
 		$this->assertSame([], RegisterSchema::errors(slug: 'SupplierInvoice', object: $payload));
 
 	}//end testASaveWithTheFieldGoesThrough()
+
+	/**
+	 * REQ-RFS-001: a requirement switched off asks for nothing until it is switched on again.
+	 *
+	 * @return void
+	 */
+	public function testASwitchedOffRequirementIsNotChecked(): void {
+		$this->store = new InMemoryObjectServiceStub(
+			[
+				'FieldRequirement' => [
+					array_merge(
+						$this->requirement(id: 'fr-1', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'costCenter'),
+						['enabled' => false]
+					),
+				],
+			]
+		);
+		$event = new ObjectCreatingEvent($this->entity('SupplierInvoice', $this->invoice(self::GEMEENTE)));
+		$this->listener($this->request('POST', '/apps/openregister/api/objects/shillinq/SupplierInvoice'))->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+
+		$this->store = new InMemoryObjectServiceStub(
+			[
+				'FieldRequirement' => [
+					array_merge(
+						$this->requirement(id: 'fr-1', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'costCenter'),
+						['enabled' => true]
+					),
+				],
+			]
+		);
+		$event = new ObjectCreatingEvent($this->entity('SupplierInvoice', $this->invoice(self::GEMEENTE)));
+		$this->listener($this->request('POST', '/apps/openregister/api/objects/shillinq/SupplierInvoice'))->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testASwitchedOffRequirementIsNotChecked()
+
+	/**
+	 * REQ-RFS-001: the list holds the active requirements of the given administrations, on and off, each titled by field and record type.
+	 *
+	 * @return void
+	 */
+	public function testTheListHoldsActiveRequirementsSwitchedOnAndOff(): void {
+		$this->store = new InMemoryObjectServiceStub(
+			[
+				'FieldRequirement' => [
+					$this->requirement(id: 'fr-1', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'costCenter'),
+					array_merge(
+						$this->requirement(id: 'fr-2', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'projectCode'),
+						['enabled' => false]
+					),
+					array_merge(
+						$this->requirement(id: 'fr-3', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'description'),
+						['lifecycleState' => 'retired']
+					),
+					$this->requirement(id: 'fr-4', administration: self::VAN_DIJK, schema: 'CustomerMaster', field: 'kvkNumber'),
+				],
+			]
+		);
+
+		$rows = $this->requirements()->listed(administrationIds: [self::GEMEENTE]);
+
+		$this->assertSame(['fr-1' => true, 'fr-2' => false], array_column($rows, 'enabled', 'id'));
+		$this->assertStringContainsString('Cost Center on ', (string)$rows[0]['title']);
+		$this->assertSame([], $this->requirements()->listed(administrationIds: ['']));
+
+	}//end testTheListHoldsActiveRequirementsSwitchedOnAndOff()
 
 	/**
 	 * REQ-PRF-002 scenario: another administration is not affected.
@@ -499,7 +568,7 @@ class FieldRequirementListenerTest extends TestCase {
 		$this->assertContains([ObjectCreatingEvent::class, FieldRequirementListener::class], $listeners);
 		$this->assertContains([ObjectUpdatingEvent::class, FieldRequirementListener::class], $listeners);
 
-		$app = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$app = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php') . (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ListenerRegistrar.php');
 		$this->assertStringContainsString('(new FieldRequirementRegistration())->register(context: $context);', $app);
 
 	}//end testTheAppWiresTheListenerOnBothPreSaveEvents()

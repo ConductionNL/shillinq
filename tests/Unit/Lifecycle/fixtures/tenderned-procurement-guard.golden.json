@@ -1,0 +1,153 @@
+{
+    "gunnen.noSupplier": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "TenderNedProcurementGuard: no awardedSupplier — denying award (REQ-002)",
+                {
+                    "tenderId": "unknown"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "gunnen.zeroValue": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "TenderNedProcurementGuard: contractWaarde must be positive — denying award (REQ-002)",
+                {
+                    "tenderId": "T-2"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "gunnen.ok": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "afronden.noCommitment": {
+        "result": true,
+        "logs": [
+            [
+                "warning",
+                "TenderNedProcurementGuard: no linked Commitment — permitting completion without delivery check",
+                {
+                    "tenderId": "T-3"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "afronden.approved": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:OrderFulfilment",
+            {
+                "findAll": {
+                    "filters": {
+                        "commitmentId": "c-1",
+                        "deliveryType": "eindoplevering"
+                    }
+                }
+            }
+        ]
+    },
+    "afronden.notApproved": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "TenderNedProcurementGuard: no approved eindoplevering — denying completion (REQ-006)",
+                {
+                    "tenderId": "T-1",
+                    "commitmentId": "c-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:OrderFulfilment",
+            {
+                "findAll": {
+                    "filters": {
+                        "commitmentId": "c-1",
+                        "deliveryType": "eindoplevering"
+                    }
+                }
+            }
+        ]
+    },
+    "afronden.none": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "TenderNedProcurementGuard: no approved eindoplevering — denying completion (REQ-006)",
+                {
+                    "tenderId": "T-1",
+                    "commitmentId": "c-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:OrderFulfilment",
+            {
+                "findAll": {
+                    "filters": {
+                        "commitmentId": "c-1",
+                        "deliveryType": "eindoplevering"
+                    }
+                }
+            }
+        ]
+    },
+    "afronden.nonArray": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:OrderFulfilment",
+            {
+                "findAll": {
+                    "filters": {
+                        "commitmentId": "c-1",
+                        "deliveryType": "eindoplevering"
+                    }
+                }
+            }
+        ]
+    },
+    "afronden.lookupDown": {
+        "result": true,
+        "logs": [
+            [
+                "debug",
+                "TenderNedProcurementGuard: OrderFulfilment lookup unavailable (T1 state) — permitting completion",
+                {
+                    "tenderId": "T-1",
+                    "exception": "no OrderFulfilment schema"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:OrderFulfilment",
+            {
+                "findAll": {
+                    "filters": {
+                        "commitmentId": "c-1",
+                        "deliveryType": "eindoplevering"
+                    }
+                }
+            }
+        ]
+    }
+}

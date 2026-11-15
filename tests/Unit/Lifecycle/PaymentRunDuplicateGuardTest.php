@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -345,7 +345,7 @@ class PaymentRunDuplicateGuardTest extends TestCase {
 	 * @return PaymentRunDuplicateGuard
 	 */
 	private function guardOver(array $records): PaymentRunDuplicateGuard {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new PaymentRunDuplicateGuard(

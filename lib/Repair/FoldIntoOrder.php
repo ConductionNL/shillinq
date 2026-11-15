@@ -3,6 +3,9 @@
 /**
  * Shillinq FoldIntoOrder Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent data migration that folds Subsidie, PurchaseOrder and DBAOpdracht
  * rows onto the unified `Order` primitive (abstract-order-primitive change).
  * Each row becomes a genuine `Order` object (orderType=subsidie|purchase|
@@ -43,9 +46,6 @@
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.PHP.DisallowInlineIf
  */
 
@@ -55,8 +55,8 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
@@ -91,13 +91,13 @@ class FoldIntoOrder implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Provides the shillinq register slug.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger for per-row failures.
 	 * @param IGroupManager $groupManager Resolves the admin IUser for OR writes.
 	 * @param ContainerInterface $container DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly LoggerInterface $logger,
 		private readonly IGroupManager $groupManager,
 		private readonly ContainerInterface $container,
@@ -128,7 +128,7 @@ class FoldIntoOrder implements IRepairStep {
 	public function run(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			$admin = $this->resolveAdminUser();
 			if ($admin === null) {
 				$output->warning('Shillinq: FoldIntoOrder — could not resolve an admin user; skipping (re-run after an admin exists).');
@@ -340,6 +340,19 @@ class FoldIntoOrder implements IRepairStep {
 			return [];
 		}
 
+		$data = $this->entityPayload(row: $row);
+
+		return $this->withEntityUuid(row: $row, data: $data);
+	}//end normaliseRow()
+
+	/**
+	 * The payload of an OR entity, or the public properties of any other object.
+	 *
+	 * @param object $row One findAll() result object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function entityPayload(object $row): array {
 		$data = [];
 
 		try {
@@ -356,6 +369,18 @@ class FoldIntoOrder implements IRepairStep {
 			$data = get_object_vars($row);
 		}
 
+		return $data;
+	}//end entityPayload()
+
+	/**
+	 * Add the entity's uuid when the payload carries neither an id nor a uuid.
+	 *
+	 * @param object              $row  One findAll() result object.
+	 * @param array<string,mixed> $data Its payload.
+	 *
+	 * @return array<string,mixed> The payload, with a uuid when the entity has one.
+	 */
+	private function withEntityUuid(object $row, array $data): array {
 		// Guarantee a stable identifier even when the payload omits one.
 		if ((string)($data['id'] ?? '') === '' && (string)($data['uuid'] ?? '') === '') {
 			try {
@@ -369,7 +394,7 @@ class FoldIntoOrder implements IRepairStep {
 		}
 
 		return $data;
-	}//end normaliseRow()
+	}//end withEntityUuid()
 
 	/**
 	 * Derive the stable migration key for a source row.

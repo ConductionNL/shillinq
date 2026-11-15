@@ -29,6 +29,11 @@ const controller = fs.readFileSync(
 	path.join(ROOT, 'lib/Controller/PaymentRunController.php'),
 	'utf8',
 )
+// The controller reads some of the proposal's parameters through its criteria value object.
+const criteria = fs.readFileSync(
+	path.join(ROOT, 'lib/Controller/DraftRunCriteria.php'),
+	'utf8',
+)
 const checker = fs.readFileSync(
 	path.join(ROOT, 'lib/PaymentRun/PaymentBlockChecker.php'),
 	'utf8',
@@ -77,7 +82,7 @@ describe('Propose payment run', () => {
 		})
 		expect(body.debtorAccountIban).toBe('NL91ABNA0417164300')
 		for (const key of Object.keys(body)) {
-			expect(controller).toContain(`getParam('${key}'`)
+			expect(controller + criteria).toContain(`getParam('${key}'`)
 		}
 		axiosMock.post.mockResolvedValue({
 			data: { paymentRun: { id: 'pr-1' }, skipped: [] },
@@ -159,13 +164,16 @@ describe('Block payment and Release payment', () => {
 			paymentBlockReason: 'Wacht op creditnota',
 		})
 		axiosMock.patch.mockResolvedValue({ data: {} })
-		await setPaymentBlock('APTransaction', 'ap-1', releasePayload())
+		expect(() => releasePayload(' ')).toThrow(
+			'Give a reason for releasing the payment block.',
+		)
+		await setPaymentBlock('APTransaction', 'ap-1', releasePayload(' Creditnota ontvangen '))
 		expect(axiosMock.patch).toHaveBeenCalledWith(
 			'/index.php/apps/openregister/api/objects/shillinq/APTransaction/ap-1',
-			{ paymentBlocked: false, paymentBlockReason: null },
+			{ paymentBlocked: false, paymentBlockReleaseReason: 'Creditnota ontvangen' },
 		)
 		await expect(
-			setPaymentBlock('ARInvoice', 'x', releasePayload()),
+			setPaymentBlock('ARInvoice', 'x', releasePayload('x')),
 		).rejects.toThrow()
 	})
 })

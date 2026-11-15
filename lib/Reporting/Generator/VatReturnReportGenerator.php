@@ -3,6 +3,9 @@
 /**
  * BTW-aangifte (VAT return) data-report generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renders the prepared VAT return of the period (a BtwAangifte with its
  * VATDeclaration records, one per return box) as an XML file laid out by
  * rubriek. The figures are the declarations as VATReturnService prepared them
@@ -32,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -133,43 +136,9 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 		$returnId = (string)($vatReturn['id'] ?? ($vatReturn['@self']['id'] ?? ''));
 		$boxes = $this->boxTotals($returnId);
 
-		$owedCt = 0;
-		foreach ($boxes as $box => $amounts) {
-			if ($box !== self::INPUT_VAT_BOX) {
-				$owedCt += $amounts['vat'];
-			}
-		}
-
-		$deductibleCt = ($boxes[self::INPUT_VAT_BOX]['vat'] ?? 0);
-
-		$writer = new XMLWriter();
-		$writer->openMemory();
-		$writer->setIndent(true);
-		$writer->setIndentString('  ');
-		$writer->startDocument('1.0', 'UTF-8');
-
-		$writer->startElement('BTWAangifte');
-		$writer->writeAttribute('period', $period);
-		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
-		$writer->writeAttribute('aangifte', (string)($vatReturn['returnNumber'] ?? ''));
-		$writer->writeAttribute('status', (string)($vatReturn['statusCode'] ?? ''));
-		$writer->writeAttribute('valuta', 'EUR');
-		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
-
-		foreach (self::BOX_LABELS as $box => $label) {
-			$this->writeRubriek($writer, $box, $label, ($boxes[$box]['base'] ?? 0), ($boxes[$box]['vat'] ?? 0));
-		}
-
-		// A box of an operator-added tariff that is not on the form keeps its own code.
-		foreach ($boxes as $box => $amounts) {
-			if (isset(self::BOX_LABELS[$box]) === false && $box !== self::INPUT_VAT_BOX) {
-				$this->writeRubriek($writer, $box, 'Rubriek ' . $box, $amounts['base'], $amounts['vat']);
-			}
-		}
-
-		$this->writeRubriek($writer, '5a', 'Verschuldigde omzetbelasting', null, $owedCt);
-		$this->writeRubriek($writer, self::INPUT_VAT_BOX, 'Voorbelasting', null, $deductibleCt);
-		$this->writeRubriek($writer, '5g', 'Totaal te betalen / terug te vragen', null, ($owedCt - $deductibleCt));
+		$writer = $this->startDeclaration(context: $context, vatReturn: $vatReturn);
+		$this->writeBoxes(writer: $writer, boxes: $boxes);
+		$this->writeTotals(writer: $writer, boxes: $boxes);
 
 		$writer->endElement();
 		// End BTWAangifte.
@@ -183,6 +152,78 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 		);
 
 	}//end generate()
+
+	/**
+	 * Open the document and write the BTWAangifte element with its attributes.
+	 *
+	 * @param array<string,mixed> $context The report context.
+	 * @param array<string,mixed> $vatReturn The prepared return.
+	 *
+	 * @return XMLWriter The writer, inside the open BTWAangifte element.
+	 */
+	private function startDeclaration(array $context, array $vatReturn): XMLWriter {
+		$writer = new XMLWriter();
+		$writer->openMemory();
+		$writer->setIndent(true);
+		$writer->setIndentString('  ');
+		$writer->startDocument('1.0', 'UTF-8');
+
+		$writer->startElement('BTWAangifte');
+		$writer->writeAttribute('period', $this->contextString($context, 'period'));
+		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
+		$writer->writeAttribute('aangifte', (string)($vatReturn['returnNumber'] ?? ''));
+		$writer->writeAttribute('status', (string)($vatReturn['statusCode'] ?? ''));
+		$writer->writeAttribute('valuta', 'EUR');
+		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
+
+		return $writer;
+
+	}//end startDeclaration()
+
+	/**
+	 * Write every form box, then any box of an operator-added tariff.
+	 *
+	 * @param XMLWriter $writer The writer.
+	 * @param array<string,array{base:int,vat:int}> $boxes Totals per box, in cents.
+	 *
+	 * @return void
+	 */
+	private function writeBoxes(XMLWriter $writer, array $boxes): void {
+		foreach (self::BOX_LABELS as $box => $label) {
+			$this->writeRubriek($writer, $box, $label, ($boxes[$box]['base'] ?? 0), ($boxes[$box]['vat'] ?? 0));
+		}
+
+		// A box of an operator-added tariff that is not on the form keeps its own code.
+		foreach ($boxes as $box => $amounts) {
+			if (isset(self::BOX_LABELS[$box]) === false && $box !== self::INPUT_VAT_BOX) {
+				$this->writeRubriek($writer, $box, 'Rubriek ' . $box, $amounts['base'], $amounts['vat']);
+			}
+		}
+
+	}//end writeBoxes()
+
+	/**
+	 * Write the owed (5a), deductible (5b) and payable (5g) totals.
+	 *
+	 * @param XMLWriter $writer The writer.
+	 * @param array<string,array{base:int,vat:int}> $boxes Totals per box, in cents.
+	 *
+	 * @return void
+	 */
+	private function writeTotals(XMLWriter $writer, array $boxes): void {
+		$owedCt = 0;
+		foreach ($boxes as $box => $amounts) {
+			if ($box !== self::INPUT_VAT_BOX) {
+				$owedCt += $amounts['vat'];
+			}
+		}
+
+		$deductibleCt = ($boxes[self::INPUT_VAT_BOX]['vat'] ?? 0);
+		$this->writeRubriek($writer, '5a', 'Verschuldigde omzetbelasting', null, $owedCt);
+		$this->writeRubriek($writer, self::INPUT_VAT_BOX, 'Voorbelasting', null, $deductibleCt);
+		$this->writeRubriek($writer, '5g', 'Totaal te betalen / terug te vragen', null, ($owedCt - $deductibleCt));
+
+	}//end writeTotals()
 
 	/**
 	 * The prepared return of the context period: the filed one when the period

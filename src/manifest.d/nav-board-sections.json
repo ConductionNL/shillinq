@@ -1,0 +1,26 @@
+{
+	"_note": "Board navigation: daily pages under the Verkoop, Inkoop, Bank and Boekhouding headings; every page also stays in its cluster group.",
+	"menu": [
+		{"id":"NavSalesCaption","label":"Sales","type":"caption","order":11},
+		{"id":"NavSalesInvoices","label":"Sales invoices","icon":"ReceiptTextOutline","route":"AccountsReceivable","order":11},
+		{"id":"NavCustomers","label":"Customers","icon":"AccountStarOutline","route":"Customers","order":11},
+		{"id":"NavOrders","label":"Orders","icon":"ClipboardListOutline","route":"Orders","order":11},
+		{"id":"NavReceivables","label":"Receivables management","icon":"CalendarClockOutline","route":"ARAging","order":11},
+		{"id":"NavPurchasingCaption","label":"Purchasing","type":"caption","order":12},
+		{"id":"NavPurchaseInvoices","label":"Purchase invoices","icon":"ReceiptTextOutline","route":"SupplierInvoices","order":12},
+		{"id":"NavPurchaseOrders","label":"Purchase Orders","icon":"ClipboardListOutline","route":"PurchaseOrders","order":12},
+		{"id":"NavSuppliers","label":"Payees","icon":"TruckOutline","route":"Payees","order":12},
+		{"id":"NavExpenseClaims","label":"Claims","icon":"ReceiptOutline","route":"ExpenseClaims","order":12},
+		{"id":"NavBankCaption","label":"Bank","type":"caption","order":13},
+		{"id":"NavBankAndPayments","label":"Bank and payments","icon":"BankOutline","route":"BankAndPayments","order":13},
+		{"id":"NavLiquidity","label":"Liquidity","icon":"ChartLine","route":"CashflowDashboard","order":13},
+		{"id":"NavAccountingCaption","label":"Accounting","type":"caption","order":14},
+		{"id":"NavLedger","label":"General Ledger","icon":"BookOutline","route":"ChartOfAccounts","order":14},
+		{"id":"NavPeriodClose","label":"Closing the books","icon":"CalendarLock","route":"PeriodClose","order":14},
+		{"id":"NavTaxes","label":"Taxes","icon":"PercentOutline","route":"TaxesOverview","order":14},
+		{"id":"NavReports","label":"Reports","icon":"ChartBoxOutline","route":"Reports","order":14},
+		{"id":"NavBudget","label":"Budgeting","icon":"CalendarRange","route":"AnnualBudgets","order":14},
+		{"id":"NavAllModulesCaption","label":"All modules","type":"caption","order":15}
+	],
+	"pages": []
+}

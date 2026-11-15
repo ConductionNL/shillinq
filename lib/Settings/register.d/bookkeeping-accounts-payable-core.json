@@ -74,7 +74,30 @@
             "description": "Dutch KvK number (8 digits).",
             "nullable": true,
             "example": "24502797",
-            "title": "KvK Number"
+            "title": "KvK Number",
+            "x-openregister-property-source": {
+              "provider": "kvk",
+              "mode": "default",
+              "config": {
+                "fill": {
+                  "name": "naam",
+                  "tradingName": "handelsnamen[0].naam",
+                  "address.street": "_embedded.hoofdvestiging.adressen[0].straatnaam",
+                  "address.houseNumber": {
+                    "join": [
+                      "_embedded.hoofdvestiging.adressen[0].huisnummer",
+                      "_embedded.hoofdvestiging.adressen[0].huisletter",
+                      "_embedded.hoofdvestiging.adressen[0].huisnummerToevoeging"
+                    ]
+                  },
+                  "address.postcode": "_embedded.hoofdvestiging.adressen[0].postcode",
+                  "address.city": "_embedded.hoofdvestiging.adressen[0].plaats",
+                  "address.country": {
+                    "value": "NL"
+                  }
+                }
+              }
+            }
           },
           "vatNumber": {
             "type": "string",
@@ -159,6 +182,12 @@
             "nullable": true,
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
           },
           "dunningPolicyRef": {
             "type": "string",
@@ -282,29 +311,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "APTransaction": {
@@ -476,6 +499,12 @@
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
           },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
+          },
           "writeOffReason": {
             "type": "string",
             "description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition.",
@@ -500,6 +529,12 @@
             "description": "FK to the administration owning this AP invoice.",
             "example": "adm-1",
             "title": "Administration ID"
+          },
+          "supplierInvoiceId": {
+            "type": "string",
+            "description": "UUID of the SupplierInvoice this transaction was written for by the hand-over to accounts payable. The supplier invoice's pay guard accepts only a transaction that names the invoice itself.",
+            "nullable": true,
+            "title": "Supplier invoice ID"
           }
         },
         "x-openregister-lifecycle": {
@@ -627,7 +662,11 @@
               "label": "Write off",
               "description": "Operator in role controller writes off the residual balance. Action: materialise a compensating balanced GLTransaction (debit AP payable account, credit bad-debt recovery / write-off account). Audit-trailed reason required. Sets writeOffGlTransactionId back-reference.",
               "requires": "OCA\\Shillinq\\Lifecycle\\APGuard::requireWriteOffReason",
-              "x-rbac-role": "controller"
+              "authorization": [
+                {
+                  "role": "controller"
+                }
+              ]
             },
             "void": {
               "from": "issued",
@@ -928,29 +967,28 @@
             ]
           }
         },
-        "x-openregister-rbac": {
+        "authorization": {
           "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+            "controller": [
+              "shillinq_controller"
+            ]
+          },
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "DunningNotice": {
@@ -1025,29 +1063,23 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PaymentRun": {
@@ -1247,8 +1279,12 @@
               "to": "approved",
               "label": "Approve payment run",
               "description": "Controller approves the batch. Four-eyes segregation of duties (payment-run-four-eyes): the approver MUST differ from whoever prepared the batch. Enforced server-side by FourEyesPaymentRunGuard, which derives the preparer from OpenRegister's immutable audit trail (ADR-022) and fails closed when the preparer is indeterminate. There is NO direct draft → exported transition. Approval is the control point before money leaves the administration.",
-              "x-rbac-role": "controller",
-              "requires": "OCA\\Shillinq\\Lifecycle\\FourEyesPaymentRunGuard"
+              "requires": "OCA\\Shillinq\\Lifecycle\\FourEyesPaymentRunGuard",
+              "authorization": [
+                {
+                  "role": "controller"
+                }
+              ]
             },
             "export": {
               "from": "approved",
@@ -1261,33 +1297,33 @@
               "from": "exported",
               "to": "reconciled",
               "label": "Reconcile payment run",
-              "description": "Match the exported batch against the bank statement and set reconciledAt. Terminal."
+              "description": "Match the exported batch against the bank statement and set reconciledAt. Terminal.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PaymentRunReconcileGuard"
             }
           }
         },
-        "x-openregister-rbac": {
+        "authorization": {
           "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+            "controller": [
+              "shillinq_controller"
+            ]
+          },
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },

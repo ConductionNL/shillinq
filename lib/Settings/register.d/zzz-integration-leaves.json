@@ -1,0 +1,33 @@
+{
+  "x-shillinq-fragment": "integration-leaves",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "integration-leaves-consume",
+    "description": "REQ-CPA-006 / REQ-CPA-007: consume OpenRegister's calendar and contacts integration leaves. Declares configuration.linkedTypes only on the four schemas that carry none in the merged register: VatReturn and ARInvoice get the calendar leaf (a per-object view of the deadline events ComplianceDeadlineCalendarService already publishes; no second publisher), CustomerMaster and Payee get the contacts leaf (match and link one address-book contact per object, no bulk export). Invoice (mail) and Contract (decidesk-decisions) are not touched: SettingsService::deepMergeConfig() concatenates list arrays, so restating them here would duplicate their entries. Sorts last (zzz- prefix) so every fragment defining these schemas is merged before it."
+  },
+  "components": {
+    "schemas": {
+      "VatReturn": {
+        "configuration": {
+          "linkedTypes": ["calendar"]
+        }
+      },
+      "ARInvoice": {
+        "configuration": {
+          "linkedTypes": ["calendar"]
+        }
+      },
+      "CustomerMaster": {
+        "configuration": {
+          "linkedTypes": ["contacts"]
+        }
+      },
+      "Payee": {
+        "configuration": {
+          "linkedTypes": ["contacts"]
+        }
+      }
+    }
+  }
+}

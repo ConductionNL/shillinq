@@ -3,6 +3,9 @@
 /**
  * Register-`requires` Guard Adapter
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Shillinq#425 root-cause fix, part 2 of 2. Part 1 was the 15 missing guard
  * classes themselves (lib/Guard/*, lib/Lifecycle/*); this is the second,
  * previously-undiscovered half of the same bug class.
@@ -47,9 +50,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -31,6 +31,17 @@ function reason(error, fallback) {
 }
 
 /**
+ * The pair of a row, or null when it lacks a customer or a supplier.
+ *
+ * @param {{item: object}} scope The row scope.
+ * @return {object|null} The pair.
+ */
+function suggestedPair(scope) {
+	const pair = scope && scope.item
+	return pair && pair.customerId && pair.payeeId ? pair : null
+}
+
+/**
  * Row action: confirm a suggested pair as a link.
  *
  * @param {{item: object}} scope The row scope.
@@ -38,8 +49,8 @@ function reason(error, fallback) {
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function confirmRelationSuggestion(scope) {
-	const pair = scope && scope.item
-	if (!pair || !pair.customerId || !pair.payeeId) {
+	const pair = suggestedPair(scope)
+	if (!pair) {
 		return false
 	}
 	try {
@@ -69,8 +80,8 @@ export async function confirmRelationSuggestion(scope) {
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function dismissRelationSuggestion(scope) {
-	const pair = scope && scope.item
-	if (!pair || !pair.customerId || !pair.payeeId) {
+	const pair = suggestedPair(scope)
+	if (!pair) {
 		return false
 	}
 	try {

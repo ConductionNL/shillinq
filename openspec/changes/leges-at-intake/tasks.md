@@ -5,7 +5,7 @@
 ## 1. Schema and admin
 
 - [x] 1.1 Add `feeSchedule` to a register fragment `lib/Settings/register.d/leges-at-intake.json` with the D1 properties and the validity uniqueness (REQ-SOPR-006)
-- [ ] 1.2 Add the fee schedule settings page with the BbvTaakveld column (D4)
+- [ ] 1.2 Add the fee schedule settings page with the BbvTaakveld column (D4). Page built 9 Oct 2026 (Government > Fee schedules, `src/manifest.d/fee-schedules.json`). The BbvTaakveld column is NOT built: no Account schema carries a task field to read it from (question Q-shillinq-2).
 
 ## 2. Journey step
 

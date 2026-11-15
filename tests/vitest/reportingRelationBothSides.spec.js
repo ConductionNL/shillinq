@@ -61,6 +61,31 @@ const pair = {
 	number: 'NL812345678B01',
 }
 
+/**
+ * The widget ids a detail page places: its layout cells, the tabs of a
+ * placed tabs widget (`widgetId` and the `widgetIds` stack), and its side
+ * column. A widget declared but placed nowhere never renders.
+ *
+ * @param {object} config The page config.
+ * @return {string[]} The placed ids.
+ */
+function placedWidgetIds(config) {
+	const ids = new Set((config.layout || []).map((c) => c.widgetId))
+	for (const entry of config.sideColumn || []) {
+		ids.add(typeof entry === 'string' ? entry : entry.id)
+	}
+	for (const widget of config.widgets || []) {
+		if (widget.type === 'tabs' && ids.has(widget.id)) {
+			for (const tab of widget.content.tabs || []) {
+				for (const id of tab.widgetIds || [tab.widgetId]) {
+					ids.add(id)
+				}
+			}
+		}
+	}
+	return [...ids]
+}
+
 describe('relations both ways', () => {
 	beforeEach(() => {
 		axiosMock.get.mockReset()
@@ -133,7 +158,7 @@ describe('relations both ways', () => {
 				.replace('@objectId', '{customerId}')
 			expect(routes).toContain(`'url' => '${route}'`)
 		}
-		expect(customer.config.layout.map((c) => c.widgetId)).toEqual(
+		expect(placedWidgetIds(customer.config)).toEqual(
 			expect.arrayContaining(customer.config.widgets.map((w) => w.id)),
 		)
 	})

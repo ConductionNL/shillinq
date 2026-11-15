@@ -19,6 +19,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -227,7 +230,7 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 		// Two analytical dimensions: REGION (flat string) + PRODUCT_LINE (hierarchical).
 		$region = $byKey($objects, 'AnalyticalDimension', 'dim-region');
 		self::assertIsArray($region, 'REGION dimension seed MUST be present');
-		self::assertSame('REGION', $region['code']);
+		self::assertSame('region', $region['code']);
 		self::assertSame('string', $region['dataType']);
 		self::assertFalse($region['isHierarchical']);
 
