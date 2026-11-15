@@ -36,6 +36,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 
@@ -414,8 +416,10 @@ final class BillableRateService {
 				'administrationId' => (string)($hour['administrationId'] ?? ''),
 				'createdAt' => $this->timeFactory->getDateTime()->format(DateTimeInterface::ATOM),
 			],
-			register: $this->registerLocation->getRegisterSlug(),
-			schema: 'RateRecord'
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(
+					register: $this->registerLocation->getRegisterSlug(),
+					schema: 'RateRecord'
+				))
 		);
 
 		return $recordId;

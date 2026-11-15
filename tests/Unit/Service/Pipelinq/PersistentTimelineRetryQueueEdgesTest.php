@@ -33,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * enqueue() runs after the booking commit and so must never raise: an entry
@@ -131,7 +132,9 @@ final class PersistentTimelineRetryQueueEdgesTest extends TestCase {
 			 *
 			 * @return mixed The answer.
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saved[] = $object;
 
 				return $this->answer;
