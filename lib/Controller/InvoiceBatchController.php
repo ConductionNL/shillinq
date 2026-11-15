@@ -104,12 +104,9 @@ class InvoiceBatchController extends Controller {
 		bool $send = false,
 	): JSONResponse {
 		$administrationId = trim($administrationId);
-		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->context->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		$refusal = $this->administrationRefusal(administrationId: $administrationId, notFound: 'Administration not found');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
@@ -129,4 +126,26 @@ class InvoiceBatchController extends Controller {
 
 		return new JSONResponse($batch, Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * A 400 for a malformed administration id, a 404 for one the caller may not use; null when it may.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 * @param string $notFound         The 404 message.
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private function administrationRefusal(string $administrationId, string $notFound): ?JSONResponse {
+		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => $notFound], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end administrationRefusal()
 }//end class

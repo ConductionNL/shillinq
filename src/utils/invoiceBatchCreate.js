@@ -132,12 +132,34 @@ export function buildBatchRequest(form) {
  * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
  */
 export function batchRequestProblem(body, t) {
+	return customerProblem(body, t) || chargeProblem(body, t)
+}
+
+/**
+ * What is wrong with the request's customers, or ''.
+ *
+ * @param {object} body The request body.
+ * @param {(app: string, text: string, vars?: object) => string} t The translate function.
+ * @return {string}
+ */
+function customerProblem(body, t) {
 	if (body.customerIds.length === 0) {
 		return t('shillinq', 'Select at least one customer.')
 	}
 	if (body.customerIds.length > MAX_BATCH_CUSTOMERS) {
 		return t('shillinq', 'A batch bills at most 200 customers.')
 	}
+	return ''
+}
+
+/**
+ * What is wrong with the request's charge, or ''.
+ *
+ * @param {object} body The request body.
+ * @param {(app: string, text: string, vars?: object) => string} t The translate function.
+ * @return {string}
+ */
+function chargeProblem(body, t) {
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(String(body.charge.invoiceDate || ''))) {
 		return t('shillinq', 'Enter a valid invoice date.')
 	}

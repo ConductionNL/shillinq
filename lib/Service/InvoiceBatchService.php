@@ -127,19 +127,11 @@ class InvoiceBatchService {
 	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
 	 */
 	public function create(string $administrationId, array $request, string $requestedBy = ''): array {
-		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
-			|| $this->administrationContext->canAccess(administrationId: $administrationId) === false
-		) {
-			throw new OutOfBoundsException('Administration not found');
-		}
+		$this->assertAccessible(administrationId: $administrationId);
 
 		$charge = self::normaliseCharge(charge: $request['charge'] ?? null);
 		$customerIds = self::customerIds(request: $request);
-		$issue = (($request['issue'] ?? false) === true);
-		$send = (($request['send'] ?? false) === true);
-		if ($send === true && $issue === false) {
-			throw new InvalidArgumentException('Only issued invoices can be sent: issue the invoices to send them.');
-		}
+		[$issue, $send] = self::issueAndSend(request: $request);
 
 		$batch = $this->batchFor(
 			administrationId: $administrationId,
@@ -152,23 +144,93 @@ class InvoiceBatchService {
 			$outcomes[] = $this->createOne(batch: $batch, customerId: $customerId);
 		}
 
-		$batch['outcomes'] = $outcomes;
-		$batch['invoiceIds'] = self::invoiceIdsOf(outcomes: $outcomes);
-		$batch['state'] = 'done';
-		$batch = $this->save(batch: $batch);
-
+		$batch = $this->finish(batch: $batch, outcomes: $outcomes);
 		if ($send === true && $batch['invoiceIds'] !== []) {
-			$sendBatch = $this->sendBatches->queue(
-				administrationId: $administrationId,
-				invoiceIds: $batch['invoiceIds'],
-				options: ['requestedBy' => $requestedBy]
-			);
-			$batch['sendBatchId'] = ObjectIdentifier::resolve(saved: $sendBatch);
-			$batch = $this->save(batch: $batch);
+			$batch = $this->queueSending(batch: $batch, administrationId: $administrationId, requestedBy: $requestedBy);
 		}
 
 		return $batch;
 	}//end create()
+
+	/**
+	 * Refuse an administration id that is malformed or not one of the caller's.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return void
+	 *
+	 * @throws OutOfBoundsException When the caller may not work in it.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private function assertAccessible(string $administrationId): void {
+		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
+			|| $this->administrationContext->canAccess(administrationId: $administrationId) === false
+		) {
+			throw new OutOfBoundsException('Administration not found');
+		}
+	}//end assertAccessible()
+
+	/**
+	 * Whether the batch issues and sends its invoices; sending needs issuing.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 *
+	 * @return array{0: bool, 1: bool} Issue, send.
+	 *
+	 * @throws InvalidArgumentException When it asks to send without issuing.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private static function issueAndSend(array $request): array {
+		$issue = (($request['issue'] ?? false) === true);
+		$send = (($request['send'] ?? false) === true);
+		if ($send === true && $issue === false) {
+			throw new InvalidArgumentException('Only issued invoices can be sent: issue the invoices to send them.');
+		}
+
+		return [$issue, $send];
+	}//end issueAndSend()
+
+	/**
+	 * Record the outcomes on the batch and save it as done.
+	 *
+	 * @param array<string, mixed>             $batch    The batch.
+	 * @param list<array<string, mixed>>       $outcomes One outcome per customer.
+	 *
+	 * @return array<string, mixed> The saved batch.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private function finish(array $batch, array $outcomes): array {
+		$batch['outcomes'] = $outcomes;
+		$batch['invoiceIds'] = self::invoiceIdsOf(outcomes: $outcomes);
+		$batch['state'] = 'done';
+
+		return $this->save(batch: $batch);
+	}//end finish()
+
+	/**
+	 * Queue the batch's invoices for sending and record the send batch on it.
+	 *
+	 * @param array<string, mixed> $batch            The saved batch.
+	 * @param string               $administrationId The administration.
+	 * @param string               $requestedBy      Who asked.
+	 *
+	 * @return array<string, mixed> The saved batch.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private function queueSending(array $batch, string $administrationId, string $requestedBy): array {
+		$sendBatch = $this->sendBatches->queue(
+			administrationId: $administrationId,
+			invoiceIds: $batch['invoiceIds'],
+			options: ['requestedBy' => $requestedBy]
+		);
+		$batch['sendBatchId'] = ObjectIdentifier::resolve(saved: $sendBatch);
+
+		return $this->save(batch: $batch);
+	}//end queueSending()
 
 	/**
 	 * The charge checked whole: an invoice date, an optional due date, and at
@@ -187,6 +249,23 @@ class InvoiceBatchService {
 			throw new InvalidArgumentException('A batch needs a charge: an invoice date and at least one line.');
 		}
 
+		[$invoiceDate, $dueDate] = self::chargeDates(charge: $charge);
+
+		return ['invoiceDate' => $invoiceDate, 'dueDate' => $dueDate, 'lines' => self::chargeLines(charge: $charge)];
+	}//end normaliseCharge()
+
+	/**
+	 * The charge's invoice date and optional due date, checked.
+	 *
+	 * @param array<string, mixed> $charge The charge.
+	 *
+	 * @return array{0: string, 1: string} Invoice date, due date ('' when none).
+	 *
+	 * @throws InvalidArgumentException When a date is invalid or the due date is before the invoice date.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private static function chargeDates(array $charge): array {
 		$invoiceDate = trim((string)($charge['invoiceDate'] ?? ''));
 		if (self::isDate(value: $invoiceDate) === false) {
 			throw new InvalidArgumentException('Enter a valid invoice date.');
@@ -197,6 +276,21 @@ class InvoiceBatchService {
 			throw new InvalidArgumentException('The due date is a date on or after the invoice date.');
 		}
 
+		return [$invoiceDate, $dueDate];
+	}//end chargeDates()
+
+	/**
+	 * The charge's lines, numbered from 1; at least one.
+	 *
+	 * @param array<string, mixed> $charge The charge.
+	 *
+	 * @return list<array<string, mixed>>
+	 *
+	 * @throws InvalidArgumentException When no line can be billed.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private static function chargeLines(array $charge): array {
 		$lines = [];
 		foreach ((array)($charge['lines'] ?? []) as $line) {
 			if (is_array($line) === true) {
@@ -208,8 +302,8 @@ class InvoiceBatchService {
 			throw new InvalidArgumentException('Add at least one line with a description and a price.');
 		}
 
-		return ['invoiceDate' => $invoiceDate, 'dueDate' => $dueDate, 'lines' => $lines];
-	}//end normaliseCharge()
+		return $lines;
+	}//end chargeLines()
 
 	/**
 	 * The due date of one customer's invoice: the batch's own, else the invoice
@@ -346,13 +440,7 @@ class InvoiceBatchService {
 				return self::outcome(customerId: $customerId, invoiceId: $existing, status: self::OUTCOME_EXISTING, reason: '');
 			}
 
-			$saved = $this->scoped(schema: 'ARInvoice')->saveObject(
-				self::buildInvoice(batch: $batch, customer: $customer, number: $number)
-			);
-			$invoiceId = ObjectIdentifier::resolve(saved: $saved);
-			if ($invoiceId === '') {
-				throw new InvalidArgumentException('OpenRegister answered without an id.');
-			}
+			$invoiceId = $this->writeInvoice(batch: $batch, customer: $customer, number: $number);
 		} catch (Throwable $e) {
 			$this->logger->warning('InvoiceBatchService: invoice not written', ['customerId' => $customerId, 'exception' => $e->getMessage()]);
 			return self::outcome(
@@ -365,6 +453,31 @@ class InvoiceBatchService {
 
 		return self::outcome(customerId: $customerId, invoiceId: $invoiceId, status: self::OUTCOME_CREATED, reason: '');
 	}//end createOne()
+
+	/**
+	 * Write one customer's invoice and answer its id.
+	 *
+	 * @param array<string, mixed> $batch    The batch.
+	 * @param array<string, mixed> $customer The customer.
+	 * @param string               $number   The invoice number.
+	 *
+	 * @return string The new invoice's id.
+	 *
+	 * @throws InvalidArgumentException When OpenRegister answers without an id.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private function writeInvoice(array $batch, array $customer, string $number): string {
+		$saved = $this->scoped(schema: 'ARInvoice')->saveObject(
+			self::buildInvoice(batch: $batch, customer: $customer, number: $number)
+		);
+		$invoiceId = ObjectIdentifier::resolve(saved: $saved);
+		if ($invoiceId === '') {
+			throw new InvalidArgumentException('OpenRegister answered without an id.');
+		}
+
+		return $invoiceId;
+	}//end writeInvoice()
 
 	/**
 	 * The stored create batch with this reference, or a new one.
@@ -496,17 +609,7 @@ class InvoiceBatchService {
 		$quantity = $line['quantity'] ?? 1;
 		$price = $line['unitPrice'] ?? null;
 		$rate = $line['vatRate'] ?? 21;
-		if (is_numeric($quantity) === false || is_numeric($price) === false || is_numeric($rate) === false) {
-			throw new InvalidArgumentException('Every line needs a number for quantity, price and VAT rate.');
-		}
-
-		if ($description === '' || (float)$price <= 0 || (float)$quantity <= 0) {
-			throw new InvalidArgumentException('Add at least one line with a description and a price.');
-		}
-
-		if ((float)$rate < 0 || (float)$rate > 100) {
-			throw new InvalidArgumentException('A VAT rate lies between 0 and 100 percent.');
-		}
+		self::assertLine(description: $description, quantity: $quantity, price: $price, rate: $rate);
 
 		$category = 'Z';
 		if ((float)$rate > 0) {
@@ -524,6 +627,35 @@ class InvoiceBatchService {
 			'vatCategory' => $category,
 		];
 	}//end line()
+
+	/**
+	 * Refuse a line without numbers, without a description or positive price
+	 * and quantity, or with a VAT rate outside 0-100.
+	 *
+	 * @param string $description The description.
+	 * @param mixed  $quantity    The quantity as given.
+	 * @param mixed  $price       The unit price as given.
+	 * @param mixed  $rate        The VAT rate as given.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the line cannot be billed.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+	 */
+	private static function assertLine(string $description, mixed $quantity, mixed $price, mixed $rate): void {
+		if (is_numeric($quantity) === false || is_numeric($price) === false || is_numeric($rate) === false) {
+			throw new InvalidArgumentException('Every line needs a number for quantity, price and VAT rate.');
+		}
+
+		if ($description === '' || (float)$price <= 0 || (float)$quantity <= 0) {
+			throw new InvalidArgumentException('Add at least one line with a description and a price.');
+		}
+
+		if ((float)$rate < 0 || (float)$rate > 100) {
+			throw new InvalidArgumentException('A VAT rate lies between 0 and 100 percent.');
+		}
+	}//end assertLine()
 
 	/**
 	 * The ids of the invoices the batch holds, written now or before.

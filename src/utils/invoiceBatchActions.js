@@ -37,7 +37,7 @@ export function sendBatchEndpoint() {
  * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.2
  */
 export async function sendSelectedInvoices(scope) {
-	const ids = Array.isArray(scope?.selectedIds) ? scope.selectedIds.filter((id) => typeof id === 'string' && id !== '') : []
+	const ids = selectedInvoiceIds(scope)
 	if (ids.length === 0) {
 		return undefined
 	}
@@ -45,6 +45,29 @@ export async function sendSelectedInvoices(scope) {
 		showError(t('shillinq', 'Select at most 200 invoices to send at once.'))
 		return undefined
 	}
+	return queueSendBatch(ids)
+}
+
+/**
+ * The selected invoice ids of a list scope: non-empty strings only.
+ *
+ * @param {object} scope The list's action scope.
+ * @return {string[]}
+ */
+function selectedInvoiceIds(scope) {
+	if (!Array.isArray(scope?.selectedIds)) {
+		return []
+	}
+	return scope.selectedIds.filter((id) => typeof id === 'string' && id !== '')
+}
+
+/**
+ * Queue a send batch for the ids and say so.
+ *
+ * @param {string[]} ids The invoice ids.
+ * @return {Promise<object|undefined>} The queued batch, or undefined when it failed.
+ */
+async function queueSendBatch(ids) {
 	try {
 		const context = await fetchAdministrationContext()
 		const response = await axios.post(generateUrl(sendBatchEndpoint()), {

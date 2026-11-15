@@ -214,13 +214,9 @@ class InvoiceBatchSendService {
 	 * @return array{invoiceId: string, status: string, reason: string}
 	 */
 	private function sendOne(string $administrationId, string $invoiceId, bool $resend): array {
-		$invoice = $this->find(schema: 'ARInvoice', id: $invoiceId);
-		if ($invoice === null || (string)($invoice['administrationId'] ?? '') !== $administrationId) {
-			return $this->skipped(invoiceId: $invoiceId, reason: 'The invoice was not found in this administration.');
-		}
-
-		if ($resend === false && (string)(((array)($invoice['sending'] ?? []))['sentAt'] ?? '') !== '') {
-			return $this->skipped(invoiceId: $invoiceId, reason: 'The invoice was already sent.');
+		$skip = $this->skipBeforeSending(administrationId: $administrationId, invoiceId: $invoiceId, resend: $resend);
+		if ($skip !== null) {
+			return $skip;
 		}
 
 		try {
@@ -240,6 +236,31 @@ class InvoiceBatchSendService {
 
 		return self::outcome(invoiceId: $invoiceId, status: self::OUTCOME_SENT, reason: (string)($result['sending']['note'] ?? ''));
 	}//end sendOne()
+
+	/**
+	 * The skipped outcome of an invoice that is not in the administration, or
+	 * was sent already and is not to be resent; null when it is to be sent.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $invoiceId        The invoice.
+	 * @param bool   $resend           Whether a sent invoice is sent again.
+	 *
+	 * @return array<string, string>|null
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private function skipBeforeSending(string $administrationId, string $invoiceId, bool $resend): ?array {
+		$invoice = $this->find(schema: 'ARInvoice', id: $invoiceId);
+		if ($invoice === null || (string)($invoice['administrationId'] ?? '') !== $administrationId) {
+			return $this->skipped(invoiceId: $invoiceId, reason: 'The invoice was not found in this administration.');
+		}
+
+		if ($resend === false && (string)(((array)($invoice['sending'] ?? []))['sentAt'] ?? '') !== '') {
+			return $this->skipped(invoiceId: $invoiceId, reason: 'The invoice was already sent.');
+		}
+
+		return null;
+	}//end skipBeforeSending()
 
 	/**
 	 * A skipped outcome with its reason, translated.

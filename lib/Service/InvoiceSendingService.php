@@ -208,10 +208,7 @@ class InvoiceSendingService {
 		};
 
 		if ($outcome['status'] === self::STATUS_FALLBACK && $options['mailOnFallback'] === true) {
-			$outcome = $this->viaEmail(invoice: $invoice, customer: $customer);
-			if ($outcome['status'] === self::STATUS_SENT) {
-				$outcome['sending']['note'] = $this->l10n->t('No Peppol participant was found for this customer, so the invoice was mailed.');
-			}
+			$outcome = $this->mailInstead(invoice: $invoice, customer: $customer);
 		}
 
 		if ($outcome['status'] !== self::STATUS_FALLBACK) {
@@ -220,6 +217,25 @@ class InvoiceSendingService {
 
 		return $outcome;
 	}//end sendInvoice()
+
+	/**
+	 * Mail an invoice no Peppol participant was found for, and say so on a sent outcome.
+	 *
+	 * @param array<string, mixed>      $invoice  The invoice.
+	 * @param array<string, mixed>|null $customer The customer.
+	 *
+	 * @return array<string, mixed> The outcome.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private function mailInstead(array $invoice, ?array $customer): array {
+		$outcome = $this->viaEmail(invoice: $invoice, customer: $customer);
+		if ($outcome['status'] === self::STATUS_SENT) {
+			$outcome['sending']['note'] = $this->l10n->t('No Peppol participant was found for this customer, so the invoice was mailed.');
+		}
+
+		return $outcome;
+	}//end mailInstead()
 
 	/**
 	 * The delivery method of a customer: its own when it is one, else email.
@@ -313,13 +329,9 @@ class InvoiceSendingService {
 			return $this->failed(method: 'email', error: $this->l10n->t('The customer has no email address to send the invoice to.'));
 		}
 
-		$attachment = $this->pdfOf(invoice: $invoice);
-		if ($attachment === null) {
-			return $this->failed(method: 'email', error: $this->l10n->t('The invoice PDF could not be made.'));
-		}
-
-		if (strlen($attachment['pdf']) > self::MAX_ATTACHMENT_BYTES) {
-			return $this->failed(method: 'email', error: $this->l10n->t('The invoice PDF is larger than 10 MB and is not mailed.'));
+		$attachment = $this->mailablePdf(invoice: $invoice);
+		if (is_string($attachment) === true) {
+			return $this->failed(method: 'email', error: $attachment);
 		}
 
 		$error = $this->mail(
@@ -336,6 +348,28 @@ class InvoiceSendingService {
 			'error' => '',
 		];
 	}//end viaEmail()
+
+	/**
+	 * The invoice PDF to attach, or the reason it cannot be mailed.
+	 *
+	 * @param array<string, mixed> $invoice The invoice.
+	 *
+	 * @return array<string, mixed>|string The attachment, or the error.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private function mailablePdf(array $invoice): array|string {
+		$attachment = $this->pdfOf(invoice: $invoice);
+		if ($attachment === null) {
+			return $this->l10n->t('The invoice PDF could not be made.');
+		}
+
+		if (strlen($attachment['pdf']) > self::MAX_ATTACHMENT_BYTES) {
+			return $this->l10n->t('The invoice PDF is larger than 10 MB and is not mailed.');
+		}
+
+		return $attachment;
+	}//end mailablePdf()
 
 	/**
 	 * Hand the invoice to the Peppol send; without a participant, offer the
