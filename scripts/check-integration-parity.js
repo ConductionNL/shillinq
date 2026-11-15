@@ -319,6 +319,32 @@ function splitTopLevel(body) {
 }
 
 /**
+ * The named arguments of the `new LeafDescriptor(` call whose `(` is at
+ * `open`, with its value objects read through: `identity: new LeafIdentity(…)`,
+ * `availability: new LeafAvailability(…)` and `rendering: new LeafRendering(…)`
+ * contribute their own named arguments, so the grouped form and the flat
+ * eleven-argument form yield the same fields.
+ *
+ * @param {string} src The file text.
+ * @param {number} open Index of the call's opening parenthesis.
+ *
+ * @return {string[]} The top-level arguments, value objects expanded.
+ */
+function leafDescriptorArgs(src, open) {
+	const out = []
+	for (const arg of splitTopLevel(balanced(src, open))) {
+		const group = /^\s*(?:identity|availability|rendering)\s*:\s*new\s+Leaf(?:Identity|Availability|Rendering)\s*\(/.exec(arg)
+		if (group === null) {
+			out.push(arg)
+			continue
+		}
+		const inner = arg.indexOf('(', group.index + group[0].length - 1)
+		out.push(...splitTopLevel(balanced(arg, inner)).map((a) => a.trim()))
+	}
+	return out
+}
+
+/**
  * The split's parts, with the last one added when it is not blank.
  *
  * @param {{depth: number, current: string, parts: string[]}} split The split state.
@@ -566,7 +592,7 @@ function leafDescriptorFace(ctx, open) {
  */
 function namedPhpArgs(ctx, open) {
 	const fields = {}
-	for (const arg of splitTopLevel(balanced(ctx.src, open))) {
+	for (const arg of leafDescriptorArgs(ctx.src, open)) {
 		const m = /^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([\s\S]+)$/.exec(arg)
 		const value =
 			m === null ? null : resolvePhp(m[2], ctx.locals, ctx.globalConsts)

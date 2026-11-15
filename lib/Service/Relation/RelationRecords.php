@@ -30,7 +30,8 @@ namespace OCA\Shillinq\Service\Relation;
 
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Administration-scoped reads and patches of the relation schemas.
@@ -53,11 +54,11 @@ class RelationRecords {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister object service.
-	 * @param SettingsService        $settings      Resolves the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 	) {
 
 	}//end __construct()
@@ -110,10 +111,10 @@ class RelationRecords {
 			return null;
 		}
 
-		$entity = $this->objectService
-			->setRegister($this->settings->getRegisterSlug())
-			->setSchema($schema)
-			->find($id);
+		$entity = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema),
+			id: $id
+		);
 		if ($entity === null) {
 			return null;
 		}

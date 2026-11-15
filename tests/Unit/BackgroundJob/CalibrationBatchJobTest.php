@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\CalibrationBatchJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -47,9 +47,9 @@ final class CalibrationBatchJobTest extends TestCase {
 	/**
 	 * Mock settings service.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Mock logger.
@@ -66,7 +66,7 @@ final class CalibrationBatchJobTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 	}//end setUp()
 

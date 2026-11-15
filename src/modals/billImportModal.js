@@ -27,6 +27,18 @@ export const PDF_DEFERRAL_MESSAGE =
 	'PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.'
 
 /**
+ * The import format of each recognised file extension.
+ *
+ * @type {Map<string, string>}
+ */
+const FORMAT_BY_EXTENSION = new Map([
+	['xml', 'ubl'],
+	['ubl', 'ubl'],
+	['csv', 'csv'],
+	['pdf', 'pdf'],
+])
+
+/**
  * Detect the import format from a file name (falling back to a content
  * sniff). Returns 'ubl' | 'csv' | 'pdf' | '' (unknown).
  *
@@ -40,14 +52,21 @@ export function detectFormat(fileName, contents = '') {
 		.split('.')
 		.pop()
 		.toLowerCase()
-	if (ext === 'xml' || ext === 'ubl') return 'ubl'
-	if (ext === 'csv') return 'csv'
-	if (ext === 'pdf') return 'pdf'
+	return FORMAT_BY_EXTENSION.get(ext) ?? sniffFormat(contents)
+}
 
+/**
+ * The import format a file's raw text looks like: a PDF header, XML, or
+ * comma-separated text; '' when it looks like none.
+ *
+ * @param {string} contents The raw text.
+ * @return {string}
+ */
+function sniffFormat(contents) {
 	const trimmed = String(contents || '').replace(/^\s+/, '')
 	if (trimmed.startsWith('%PDF')) return 'pdf'
 	if (trimmed.startsWith('<')) return 'ubl'
-	if (trimmed && trimmed.includes(',')) return 'csv'
+	if (trimmed.includes(',')) return 'csv'
 	return ''
 }
 

@@ -30,8 +30,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\Service\Bank\BankfeedIntakeService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\BankfeedIntakeServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -55,13 +55,13 @@ class BankfeedSyncedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ListenerSchemaResolver $schemaResolver Resolves register and schema ids to slugs.
-	 * @param BankfeedIntakeService  $intake         Writes the batch as a statement.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves register and schema ids to slugs.
+	 * @param BankfeedIntakeServiceInterface  $intake         Writes the batch as a statement.
 	 * @param LoggerInterface        $logger         Logger.
 	 */
 	public function __construct(
-		private readonly ListenerSchemaResolver $schemaResolver,
-		private readonly BankfeedIntakeService $intake,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
+		private readonly BankfeedIntakeServiceInterface $intake,
 		private readonly LoggerInterface $logger,
 	) {
 

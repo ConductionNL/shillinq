@@ -3,6 +3,9 @@
 /**
  * Contract Cost Rollup Job
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Adds up nightly what the objects raised under each contract have cost, and
  * stamps the total with the time it was computed.
  *
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\ContractCostRollupService;
+use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -63,7 +63,7 @@ class ContractCostRollupJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Nextcloud's clock.
-	 * @param ContractCostRollupService $rollup The roll-up itself.
+	 * @param ContractCostRollupServiceInterface $rollup The roll-up itself.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param LoggerInterface $logger Logger.
@@ -72,7 +72,7 @@ class ContractCostRollupJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly ContractCostRollupService $rollup,
+		private readonly ContractCostRollupServiceInterface $rollup,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
@@ -96,40 +96,74 @@ class ContractCostRollupJob extends TimedJob {
 	 * TimedJob's run() signature; this job takes no argument.
 	 */
 	protected function run($argument): void {
-		$register = $this->appConfig->getValueString('shillinq', 'register', 'shillinq');
-
-		try {
-			$contracts = $this->objectService
-				->setRegister($register)
-				->setSchema(ContractCostRollupService::SCHEMA)
-				->findAll(['limit' => 1000]);
-		} catch (\Throwable $e) {
-			$this->logger->error('Shillinq: the contract cost roll-up could not read the contracts', ['exception' => $e->getMessage()]);
+		$contracts = $this->contracts();
+		if ($contracts === null) {
 			return;
 		}
 
 		$done = 0;
 		foreach ($contracts as $contract) {
-			if (is_array($contract) === false || is_array($contract['linkedObjects'] ?? null) === false) {
-				continue;
-			}
-
-			if ($contract['linkedObjects'] === []) {
-				continue;
-			}
-
-			try {
-				$this->rollup->rollUp(contract: $contract);
-				$done++;
-			} catch (\Throwable $e) {
-				// One contract that cannot be computed must not stop the rest.
-				$this->logger->warning(
-					'Shillinq: one contract could not be rolled up',
-					['contract' => (string)($contract['id'] ?? ''), 'exception' => $e->getMessage()]
-				);
+			if (self::hasLinks(contract: $contract) === true) {
+				$done += $this->rolledUp(contract: $contract);
 			}
 		}
 
 		$this->logger->info('Shillinq: contract cost roll-up finished', ['contracts' => $done]);
 	}//end run()
+
+	/**
+	 * Up to 1000 contracts from the configured register, or null after logging a failed read.
+	 *
+	 * @return array<int,mixed>|null
+	 */
+	private function contracts(): array|null {
+		$register = $this->appConfig->getValueString('shillinq', 'register', 'shillinq');
+
+		try {
+			return $this->objectService
+				->setRegister($register)
+				->setSchema(ContractCostRollupServiceInterface::SCHEMA)
+				->findAll(['limit' => 1000]);
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq: the contract cost roll-up could not read the contracts', ['exception' => $e->getMessage()]);
+			return null;
+		}
+	}//end contracts()
+
+	/**
+	 * Whether the row is a contract with a non-empty list of links.
+	 *
+	 * @param mixed $contract One row from the store.
+	 *
+	 * @return bool
+	 */
+	private static function hasLinks(mixed $contract): bool {
+		if (is_array($contract) === false || is_array($contract['linkedObjects'] ?? null) === false) {
+			return false;
+		}
+
+		return $contract['linkedObjects'] !== [];
+	}//end hasLinks()
+
+	/**
+	 * Roll up one contract: 1 when it was saved, 0 after a logged warning.
+	 *
+	 * One contract that cannot be computed must not stop the rest.
+	 *
+	 * @param array<string,mixed> $contract The contract.
+	 *
+	 * @return int
+	 */
+	private function rolledUp(array $contract): int {
+		try {
+			$this->rollup->rollUp(contract: $contract);
+			return 1;
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: one contract could not be rolled up',
+				['contract' => (string)($contract['id'] ?? ''), 'exception' => $e->getMessage()]
+			);
+			return 0;
+		}
+	}//end rolledUp()
 }//end class

@@ -214,7 +214,7 @@ _Monthly supplier scorecard tracking on-time delivery, quantity accuracy, price 
 
 ## Requirements
 
-### REQ-PO3W-001: Create purchase order with approval chain
+### Requirement: REQ-PO3W-001: Create purchase order with approval chain
 
 The system SHALL satisfy this requirement: Create purchase order with approval chain.
 
@@ -231,7 +231,7 @@ An **Inkoper** (purchasing agent) creates a purchase order for 200 office chairs
 
 ---
 
-### REQ-PO3W-002: Peppol transmission of approved PO to supplier
+### Requirement: REQ-PO3W-002: Peppol transmission of approved PO to supplier
 
 The system SHALL satisfy this requirement: Peppol transmission of approved PO to supplier.
 
@@ -248,7 +248,7 @@ An **Inkoper** sends an approved PO to a Peppol-registered supplier (ErenteSchre
 
 ---
 
-### REQ-PO3W-003: Goods receipt note entry with line-level quantities
+### Requirement: REQ-PO3W-003: Goods receipt note entry with line-level quantities
 
 The system SHALL satisfy this requirement: Goods receipt note entry with line-level quantities.
 
@@ -265,7 +265,7 @@ A **magazijn-medewerker** receives a pallet of 180 chairs (out of 200 ordered pe
 
 ---
 
-### REQ-PO3W-004: Automated 3-way matching within tolerance
+### Requirement: REQ-PO3W-004: Automated 3-way matching within tolerance
 
 The system SHALL satisfy this requirement: Automated 3-way matching within tolerance.
 
@@ -282,7 +282,7 @@ A **Peppol invoice** arrives from ErenteSchreuders for €18,547 (PO: €18,500,
 
 ---
 
-### REQ-PO3W-005: Exception workflow for price deviation
+### Requirement: REQ-PO3W-005: Exception workflow for price deviation
 
 The system SHALL satisfy this requirement: Exception workflow for price deviation.
 
@@ -302,7 +302,7 @@ An invoice arrives for €19,250 (PO: €18,500, delta +€750 = 4.1% deviation)
 
 ---
 
-### REQ-PO3W-006: Configurable tolerance profiles per supplier/category
+### Requirement: REQ-PO3W-006: Configurable tolerance profiles per supplier/category
 
 The system SHALL satisfy this requirement: Configurable tolerance profiles per supplier/category.
 
@@ -319,7 +319,7 @@ A **controller** onboards a new supplier (NieuweLeverancierBV) with a vendor_sco
 
 ---
 
-### REQ-PO3W-007: Multi-PO consolidated invoice matching
+### Requirement: REQ-PO3W-007: Multi-PO consolidated invoice matching
 
 The system SHALL satisfy this requirement: Multi-PO consolidated invoice matching.
 
@@ -336,7 +336,7 @@ A supplier sends one **maand-factuur** (monthly invoice) covering 12 different P
 
 ---
 
-### REQ-PO3W-008: Vendor performance scoring with auto-review eligibility
+### Requirement: REQ-PO3W-008: Vendor performance scoring with auto-review eligibility
 
 The system SHALL satisfy this requirement: Vendor performance scoring with auto-review eligibility.
 
@@ -353,7 +353,7 @@ ErenteSchreuders has achieved 12 months of 96%+ on-time delivery, 99% quantity a
 
 ---
 
-### REQ-PO3W-009: GR/IR clearing and GL posting on match
+### Requirement: REQ-PO3W-009: GR/IR clearing and GL posting on match
 
 The system SHALL satisfy this requirement: GR/IR clearing and GL posting on match.
 
@@ -379,7 +379,7 @@ The GL posting preserves cost_center and gl_account from the PO line. The GR/IR 
 
 ---
 
-### REQ-PO3W-010: Audit trail and compliance export for external auditors
+### Requirement: REQ-PO3W-010: Audit trail and compliance export for external auditors
 
 The system SHALL satisfy this requirement: Audit trail and compliance export for external auditors.
 

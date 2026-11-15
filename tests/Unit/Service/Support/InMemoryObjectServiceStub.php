@@ -3,6 +3,9 @@
 /**
  * In-memory ObjectService stub for procurement-governance service tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Honours equality filters on findAll and stamps / updates ids on saveObject,
  * mirroring the fluent OpenRegister ObjectService surface the services consume
  * (setRegister -> setSchema -> findAll / saveObject / find).
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/procurement-governance/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -284,27 +284,100 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		int|string $id,
 		?array $_extend = [],
 		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		mixed $register = null,
+		mixed $schema = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $_render = true,
 		bool $_audit = true
 	): ?ObjectEntityInterface {
-		$target = $this->schema;
+		$target = null;
 		if ($schema !== null) {
-			$target = (string)$schema;
+			$target = is_object($schema) === true ? (string)$schema->getSlug() : (string)$schema;
 		}
 
-		foreach (($this->data[$target] ?? []) as $row) {
-			if ((string)($row['id'] ?? '') === (string)$id || (string)($row['uuid'] ?? '') === (string)$id) {
-				return new ObjectEntityStub(payload: $row, register: $this->register, schema: $target);
+		$hit = $this->lookup(id: $id, schema: $target);
+		if ($hit === null && $target !== null && preg_match('/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i', (string)$id) === 1) {
+			$hit = $this->lookup(id: $id, schema: null);
+		}
+
+		return $hit;
+
+	}//end find()
+
+	/**
+	 * The row with this id or uuid in one schema, or in any schema when none is given.
+	 *
+	 * @param int|string  $id     Object id or UUID.
+	 * @param string|null $schema Schema slug, or null for every schema.
+	 *
+	 * @return ObjectEntityInterface|null
+	 */
+	private function lookup(int|string $id, ?string $schema): ?ObjectEntityInterface {
+		foreach ($this->data as $slug => $rows) {
+			if ($schema !== null && (string)$slug !== $schema) {
+				continue;
+			}
+
+			foreach ($rows as $row) {
+				if ((string)($row['id'] ?? '') === (string)$id || (string)($row['uuid'] ?? '') === (string)$id) {
+					return new ObjectEntityStub(payload: $row, register: $this->register, schema: (string)$slug);
+				}
 			}
 		}
 
 		return null;
 
-	}//end find()
+	}//end lookup()
+
+	/**
+	 * The active register, as OpenRegister answers it: an entity whose accessors are magic.
+	 *
+	 * @return object|null
+	 */
+	public function getCurrentRegisterEntity(): ?object {
+		return $this->register === '' ? null : self::magicEntity(slug: $this->register);
+
+	}//end getCurrentRegisterEntity()
+
+	/**
+	 * The active schema, as OpenRegister answers it: an entity whose accessors are magic.
+	 *
+	 * @return object|null
+	 */
+	public function getCurrentSchemaEntity(): ?object {
+		return $this->schema === '' ? null : self::magicEntity(slug: $this->schema);
+
+	}//end getCurrentSchemaEntity()
+
+	/**
+	 * An entity like OpenRegister's Register or Schema over Nextcloud's Entity:
+	 * public $id and every getter through __call, so method_exists() is false.
+	 *
+	 * @param string $slug The slug.
+	 *
+	 * @return object
+	 */
+	private static function magicEntity(string $slug): object {
+		return new class($slug) {
+			public $id;
+			protected $slug;
+			protected $uuid;
+			public function __construct(string $slug) {
+				$this->id = 1000 + (crc32(strtolower($slug)) % 100000);
+				$this->slug = $slug;
+				$this->uuid = 'uuid-' . strtolower($slug);
+			}
+			public function __call(string $name, array $args): mixed {
+				if (str_starts_with($name, 'get') === true) {
+					$property = lcfirst(substr($name, 3));
+					return $this->$property;
+				}
+				throw new \BadFunctionCallException($name);
+			}
+		};
+
+	}//end magicEntity()
 
 	/**
 	 * Capture a saved object; stamp an id when absent, update in place otherwise.
@@ -669,10 +742,11 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 *
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool       $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -684,6 +758,8 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param ?string $process    A label for the holding process.
 	 * @param ?int    $duration   Lock duration in seconds.
 	 * @param bool    $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
@@ -691,7 +767,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		string $identifier,
 		?string $process = null,
 		?int $duration = null,
-		bool $advisory = false
+		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
 	): array {
 		$this->unsupported(method: 'lockObject');
 

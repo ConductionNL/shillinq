@@ -1,0 +1,560 @@
+{
+    "figures": [
+        {
+            "id": "0a0e0000-0000-4000-8000-0000000000a1",
+            "number": "FA-1",
+            "administrationId": "adm-1",
+            "costCents": 120000,
+            "residualCents": 0,
+            "months": 12,
+            "acquired": "2026-01-10",
+            "method": "linear",
+            "rate": 0.4,
+            "expenseAccount": "4810",
+            "accumulatedAccount": "0309",
+            "costCenter": "KP-1",
+            "active": true
+        },
+        {
+            "id": "0a0e0000-0000-4000-8000-0000000000a2",
+            "number": "0a0e0000-0000-4000-8000-0000000000a2",
+            "administrationId": "adm-2",
+            "costCents": 100000,
+            "residualCents": 10000,
+            "months": 6,
+            "acquired": "2025-11-01",
+            "method": "degressive",
+            "rate": 0.5,
+            "expenseAccount": "4811",
+            "accumulatedAccount": "0319",
+            "costCenter": "",
+            "active": true
+        }
+    ],
+    "postMonth": {
+        "journals": 1,
+        "lines": 1
+    },
+    "missed": [
+        {
+            "period": "2025-11",
+            "amount": 41.67
+        },
+        {
+            "period": "2025-12",
+            "amount": 39.93
+        },
+        {
+            "period": "2026-01",
+            "amount": 38.27
+        },
+        {
+            "period": "2026-02",
+            "amount": 36.67
+        }
+    ],
+    "postMissed": 4,
+    "revise": {
+        "fromMonth": "2026-06",
+        "bookValue": 700,
+        "monthly": 23.33,
+        "months": 13
+    },
+    "extra": {
+        "line": {
+            "scheduleNumber": "FA-1-X20260820",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "extra",
+            "periodStartDate": "2026-08-20",
+            "periodEndDate": "2026-08-20",
+            "depreciationAmount": 150,
+            "accumulatedDepreciation": 695.89,
+            "bookValue": 504.11,
+            "fiscalYear": 2026,
+            "status": "posted",
+            "costCenterCode": "KP-1",
+            "reason": "schade",
+            "administrationId": "adm-1"
+        }
+    },
+    "refusals": [
+        "The depreciation of 2026-02 is already posted, so the revision cannot start before it.",
+        "Depreciation method sum-of-years cannot be planned.",
+        "A useful life of 12 months has ended before 2027-09.",
+        "Extra depreciation needs an amount above zero.",
+        "Extra depreciation needs a reason.",
+        "Only 403.29 is left to depreciate on this asset."
+    ],
+    "schedule": [
+        {
+            "scheduleNumber": "FA-1-2026-01",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-01-01",
+            "periodEndDate": "2026-01-31",
+            "depreciationAmount": 100,
+            "accumulatedDepreciation": 100,
+            "bookValue": 1100,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": null,
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-02",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-02-01",
+            "periodEndDate": "2026-02-28",
+            "depreciationAmount": 100,
+            "accumulatedDepreciation": 200,
+            "bookValue": 1000,
+            "fiscalYear": 2026,
+            "status": "posted",
+            "costCenterCode": "KP-1",
+            "reason": null,
+            "administrationId": "adm-1",
+            "glTransactionRef": "linked"
+        },
+        {
+            "scheduleNumber": "FA-1-2026-03",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-03-01",
+            "periodEndDate": "2026-03-31",
+            "depreciationAmount": 100,
+            "accumulatedDepreciation": 300,
+            "bookValue": 900,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": null,
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-04",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-04-01",
+            "periodEndDate": "2026-04-30",
+            "depreciationAmount": 100,
+            "accumulatedDepreciation": 400,
+            "bookValue": 800,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": null,
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-05",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-05-01",
+            "periodEndDate": "2026-05-31",
+            "depreciationAmount": 100,
+            "accumulatedDepreciation": 500,
+            "bookValue": 700,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": null,
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "0a0e0000-0000-4000-8000-0000000000a2-2025-11",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.5,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2025-11-01",
+            "periodEndDate": "2025-11-30",
+            "depreciationAmount": 41.67,
+            "accumulatedDepreciation": 41.67,
+            "bookValue": 958.33,
+            "fiscalYear": 2025,
+            "status": "posted",
+            "costCenterCode": null,
+            "reason": null,
+            "administrationId": "adm-2",
+            "glTransactionRef": "linked"
+        },
+        {
+            "scheduleNumber": "0a0e0000-0000-4000-8000-0000000000a2-2025-12",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.5,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2025-12-01",
+            "periodEndDate": "2025-12-31",
+            "depreciationAmount": 39.93,
+            "accumulatedDepreciation": 81.6,
+            "bookValue": 918.4,
+            "fiscalYear": 2025,
+            "status": "posted",
+            "costCenterCode": null,
+            "reason": null,
+            "administrationId": "adm-2",
+            "glTransactionRef": "linked"
+        },
+        {
+            "scheduleNumber": "0a0e0000-0000-4000-8000-0000000000a2-2026-01",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.5,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-01-01",
+            "periodEndDate": "2026-01-31",
+            "depreciationAmount": 38.27,
+            "accumulatedDepreciation": 119.87,
+            "bookValue": 880.13,
+            "fiscalYear": 2026,
+            "status": "posted",
+            "costCenterCode": null,
+            "reason": null,
+            "administrationId": "adm-2",
+            "glTransactionRef": "linked"
+        },
+        {
+            "scheduleNumber": "0a0e0000-0000-4000-8000-0000000000a2-2026-02",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.5,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-02-01",
+            "periodEndDate": "2026-02-28",
+            "depreciationAmount": 36.67,
+            "accumulatedDepreciation": 156.54,
+            "bookValue": 843.46,
+            "fiscalYear": 2026,
+            "status": "posted",
+            "costCenterCode": null,
+            "reason": null,
+            "administrationId": "adm-2",
+            "glTransactionRef": "linked"
+        },
+        {
+            "scheduleNumber": "0a0e0000-0000-4000-8000-0000000000a2-2026-03",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.5,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-03-01",
+            "periodEndDate": "2026-03-31",
+            "depreciationAmount": 35.14,
+            "accumulatedDepreciation": 191.68,
+            "bookValue": 808.32,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": null,
+            "reason": null,
+            "administrationId": "adm-2",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "0a0e0000-0000-4000-8000-0000000000a2-2026-04",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.5,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-04-01",
+            "periodEndDate": "2026-04-30",
+            "depreciationAmount": 708.32,
+            "accumulatedDepreciation": 900,
+            "bookValue": 100,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": null,
+            "reason": null,
+            "administrationId": "adm-2",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-06",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.4,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-06-01",
+            "periodEndDate": "2026-06-30",
+            "depreciationAmount": 23.33,
+            "accumulatedDepreciation": 523.33,
+            "bookValue": 676.67,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": "langer gebruik",
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-07",
+            "depreciationMethod": "declining-balance",
+            "annualRate": 0.4,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-07-01",
+            "periodEndDate": "2026-07-31",
+            "depreciationAmount": 22.56,
+            "accumulatedDepreciation": 545.89,
+            "bookValue": 654.11,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": "langer gebruik",
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-X20260820",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "extra",
+            "periodStartDate": "2026-08-20",
+            "periodEndDate": "2026-08-20",
+            "depreciationAmount": 150,
+            "accumulatedDepreciation": 695.89,
+            "bookValue": 504.11,
+            "fiscalYear": 2026,
+            "status": "posted",
+            "costCenterCode": "KP-1",
+            "reason": "schade",
+            "administrationId": "adm-1",
+            "glTransactionRef": "linked"
+        },
+        {
+            "scheduleNumber": "FA-1-2026-08",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-08-01",
+            "periodEndDate": "2026-08-31",
+            "depreciationAmount": 100.82,
+            "accumulatedDepreciation": 796.71,
+            "bookValue": 403.29,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": "schade",
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-09",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-09-01",
+            "periodEndDate": "2026-09-30",
+            "depreciationAmount": 100.82,
+            "accumulatedDepreciation": 897.53,
+            "bookValue": 302.47,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": "schade",
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-10",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-10-01",
+            "periodEndDate": "2026-10-31",
+            "depreciationAmount": 100.82,
+            "accumulatedDepreciation": 998.35,
+            "bookValue": 201.65,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": "schade",
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-11",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-11-01",
+            "periodEndDate": "2026-11-30",
+            "depreciationAmount": 100.82,
+            "accumulatedDepreciation": 1099.17,
+            "bookValue": 100.83,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": "schade",
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        },
+        {
+            "scheduleNumber": "FA-1-2026-12",
+            "depreciationMethod": "linear",
+            "annualRate": 1.0,
+            "rateType": "fixed-amount",
+            "periodStartDate": "2026-12-01",
+            "periodEndDate": "2026-12-31",
+            "depreciationAmount": 100.83,
+            "accumulatedDepreciation": 1200,
+            "bookValue": 0,
+            "fiscalYear": 2026,
+            "status": "planned",
+            "costCenterCode": "KP-1",
+            "reason": "schade",
+            "administrationId": "adm-1",
+            "glTransactionRef": null
+        }
+    ],
+    "journals": [
+        {
+            "entryDate": "2026-02-28",
+            "description": "Depreciation 2026-02",
+            "lines": [
+                {
+                    "accountNumber": "4810",
+                    "side": "debit",
+                    "amount": 100.0,
+                    "description": "FA-1 2026-02-28",
+                    "costCenterCode": "KP-1"
+                },
+                {
+                    "accountNumber": "0309",
+                    "side": "credit",
+                    "amount": 100.0,
+                    "description": "FA-1 2026-02-28"
+                }
+            ],
+            "journalType": "manual",
+            "approvalState": "not-required",
+            "administrationId": "adm-1",
+            "state": "posted",
+            "glTransactionRef": null
+        },
+        {
+            "entryDate": "2025-11-30",
+            "description": "Depreciation 2025-11, 0a0e0000-0000-4000-8000-0000000000a2",
+            "lines": [
+                {
+                    "accountNumber": "4811",
+                    "side": "debit",
+                    "amount": 41.67,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2025-11-30",
+                    "costCenterCode": ""
+                },
+                {
+                    "accountNumber": "0319",
+                    "side": "credit",
+                    "amount": 41.67,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2025-11-30"
+                }
+            ],
+            "journalType": "manual",
+            "approvalState": "not-required",
+            "administrationId": "adm-2",
+            "state": "posted",
+            "glTransactionRef": null
+        },
+        {
+            "entryDate": "2025-12-31",
+            "description": "Depreciation 2025-12, 0a0e0000-0000-4000-8000-0000000000a2",
+            "lines": [
+                {
+                    "accountNumber": "4811",
+                    "side": "debit",
+                    "amount": 39.93,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2025-12-31",
+                    "costCenterCode": ""
+                },
+                {
+                    "accountNumber": "0319",
+                    "side": "credit",
+                    "amount": 39.93,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2025-12-31"
+                }
+            ],
+            "journalType": "manual",
+            "approvalState": "not-required",
+            "administrationId": "adm-2",
+            "state": "posted",
+            "glTransactionRef": null
+        },
+        {
+            "entryDate": "2026-01-31",
+            "description": "Depreciation 2026-01, 0a0e0000-0000-4000-8000-0000000000a2",
+            "lines": [
+                {
+                    "accountNumber": "4811",
+                    "side": "debit",
+                    "amount": 38.27,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2026-01-31",
+                    "costCenterCode": ""
+                },
+                {
+                    "accountNumber": "0319",
+                    "side": "credit",
+                    "amount": 38.27,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2026-01-31"
+                }
+            ],
+            "journalType": "manual",
+            "approvalState": "not-required",
+            "administrationId": "adm-2",
+            "state": "posted",
+            "glTransactionRef": null
+        },
+        {
+            "entryDate": "2026-02-28",
+            "description": "Depreciation 2026-02, 0a0e0000-0000-4000-8000-0000000000a2",
+            "lines": [
+                {
+                    "accountNumber": "4811",
+                    "side": "debit",
+                    "amount": 36.67,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2026-02-28",
+                    "costCenterCode": ""
+                },
+                {
+                    "accountNumber": "0319",
+                    "side": "credit",
+                    "amount": 36.67,
+                    "description": "0a0e0000-0000-4000-8000-0000000000a2 2026-02-28"
+                }
+            ],
+            "journalType": "manual",
+            "approvalState": "not-required",
+            "administrationId": "adm-2",
+            "state": "posted",
+            "glTransactionRef": null
+        },
+        {
+            "entryDate": "2026-08-20",
+            "description": "Extra depreciation FA-1: schade",
+            "lines": [
+                {
+                    "accountNumber": "4810",
+                    "side": "debit",
+                    "amount": 150.0,
+                    "description": "FA-1 2026-08-20",
+                    "costCenterCode": "KP-1"
+                },
+                {
+                    "accountNumber": "0309",
+                    "side": "credit",
+                    "amount": 150.0,
+                    "description": "FA-1 2026-08-20"
+                }
+            ],
+            "journalType": "manual",
+            "approvalState": "not-required",
+            "administrationId": "adm-1",
+            "state": "posted",
+            "glTransactionRef": null
+        }
+    ]
+}

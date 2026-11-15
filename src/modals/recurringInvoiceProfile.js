@@ -37,6 +37,15 @@ export function perPeriodNet(lines) {
 	return Math.round((net + Number.EPSILON) * 100) / 100
 }
 
+/** The draft checks, in the order their errors are listed: [passes(form), error]. */
+const PROFILE_CHECKS = [
+	[hasName, 'A profile name is required.'],
+	[hasCustomer, 'A customer is required.'],
+	[hasPricedLine, 'At least one line with a description and a price is required.'],
+	[hasStartDate, 'A valid start date is required.'],
+	[validInvoiceDay, 'Invoice day must be between 1 and 31.'],
+]
+
 /**
  * Validate a profile draft. Returns an array of human-readable error
  * strings; empty array means valid enough to save as a draft.
@@ -46,28 +55,72 @@ export function perPeriodNet(lines) {
  * @return {Array<string>} Validation errors.
  */
 export function validateProfile(form) {
-	const errors = []
-	if (!(form.name || '').trim()) {
-		errors.push('A profile name is required.')
-	}
-	if (!(form.customerReference || '').trim()) {
-		errors.push('A customer is required.')
-	}
-	const lines = form.lines || []
-	const hasPricedLine = lines.some(
-		(l) => (l.description || '').trim().length > 0 && Number(l.unitPrice) > 0,
+	return PROFILE_CHECKS.filter(([passes]) => !passes(form)).map(
+		([, message]) => message,
 	)
-	if (!hasPricedLine) {
-		errors.push('At least one line with a description and a price is required.')
-	}
-	if (!(form.startDate || '').match(/^\d{4}-\d{2}-\d{2}$/)) {
-		errors.push('A valid start date is required.')
-	}
+}
+
+/**
+ * Whether a text field holds more than whitespace.
+ *
+ * @param {string|undefined|null} value The field.
+ * @return {boolean}
+ */
+function filled(value) {
+	return (value || '').trim().length > 0
+}
+
+/**
+ * Whether the draft is named.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasName(form) {
+	return filled(form.name)
+}
+
+/**
+ * Whether the draft names a customer.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasCustomer(form) {
+	return filled(form.customerReference)
+}
+
+/**
+ * Whether the start date reads as YYYY-MM-DD.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasStartDate(form) {
+	return Boolean((form.startDate || '').match(/^\d{4}-\d{2}-\d{2}$/))
+}
+
+/**
+ * Whether the draft has a line with a description and a positive price.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasPricedLine(form) {
+	return (form.lines || []).some(
+		(l) => filled(l.description) && Number(l.unitPrice) > 0,
+	)
+}
+
+/**
+ * Whether the invoice day is a whole day of the month, 1 to 31.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function validInvoiceDay(form) {
 	const day = Number(form.invoiceDay)
-	if (!Number.isInteger(day) || day < 1 || day > 31) {
-		errors.push('Invoice day must be between 1 and 31.')
-	}
-	return errors
+	return Number.isInteger(day) && day >= 1 && day <= 31
 }
 
 /**

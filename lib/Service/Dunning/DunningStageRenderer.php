@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Dunning;
 
 use DateTimeImmutable;
+use OCA\Shillinq\Kernel\Contracts\DunningStageRendererInterface;
 
 /**
  * Fills a ladder stage's text with DunningTemplateRegistry's merge fields
@@ -35,7 +36,7 @@ use DateTimeImmutable;
  *
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
  */
-final class DunningStageRenderer {
+final class DunningStageRenderer implements DunningStageRendererInterface {
 
 	/**
 	 * Buyer countries whose customers get Dutch texts.

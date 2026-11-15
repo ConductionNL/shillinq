@@ -18,7 +18,7 @@ This specification defines the requirements for inventory reorder automation in 
 
 @e2e exclude unbuilt UI: reorder rule pages not yet implemented
 
-### REQ-IRA-001: Inventory reorder automation SHALL be declared as `InventoryReorderRule` register with per-location, per-supplier granularity
+### Requirement: REQ-IRA-001: Inventory reorder automation SHALL be declared as `InventoryReorderRule` register with per-location, per-supplier granularity
 
 Inventory reorder automation MUST be expressed as a new register in
 `lib/Settings/nextcloud_inventory_register.json` per ADR-024:
@@ -47,7 +47,7 @@ velocity.
 - **THEN** the rule MUST carry `inventoryStockId = <UUID of the InventoryStock>`,
   and the FK MUST resolve via OR's relation engine.
 
-### REQ-IRA-002: The `InventoryReorderRule` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-IRA-002: The `InventoryReorderRule` schema SHALL declare a fixed minimum field set
 
 The system SHALL satisfy this requirement: The `InventoryReorderRule` schema SHALL declare a fixed minimum field set.
 
@@ -88,7 +88,7 @@ Schema.org annotation: `schema:Thing`.
 - **WHEN** attempting to save with reorderPoint=5
 - **THEN** the save MUST fail with a "reorderPoint must be ≥ minimumLevel" validation error.
 
-### REQ-IRA-003: Low-stock alert SHALL fire when inventory falls below or equals minimum level
+### Requirement: REQ-IRA-003: Low-stock alert SHALL fire when inventory falls below or equals minimum level
 
 The system SHALL satisfy this requirement: Low-stock alert SHALL fire when inventory falls below or equals minimum level.
 
@@ -113,7 +113,7 @@ rule's alert policy. The alert MUST include:
 - **WHEN** the alert is dispatched
 - **THEN** the alert message MUST include an "Order Now" action link.
 
-### REQ-IRA-004: Low-stock alert workflow SHALL consume OpenRegister's notification engine
+### Requirement: REQ-IRA-004: Low-stock alert workflow SHALL consume OpenRegister's notification engine
 
 Low-stock alerts MUST be dispatched via OR's `x-openregister-notifications`
 extension (per ADR-022). The lifecycle action on `InventoryReorderRule`
@@ -144,7 +144,7 @@ dispatch notifications via email queue or webhook fallback.
 - **THEN** the browser navigates to the InventoryReorderRule detail page
   for that rule.
 
-### REQ-IRA-005: Reorder point calculation SHALL factor supplier lead time
+### Requirement: REQ-IRA-005: Reorder point calculation SHALL factor supplier lead time
 
 The reorder-point threshold MUST be computed to prevent stock depletion
 during the supplier lead-time window:
@@ -176,7 +176,7 @@ may override reorderPoint manually in the UI.
 - **WHEN** reorderPoint is calculated
 - **THEN** reorderPoint MUST be ≥ minimumLevel + (7 × 5) + 10 = minimumLevel + 45.
 
-### REQ-IRA-006: Optional auto-purchase-order generation materialises balanced purchase orders
+### Requirement: REQ-IRA-006: Optional auto-purchase-order generation materialises balanced purchase orders
 
 The system SHALL satisfy this requirement: Optional auto-purchase-order generation materialises balanced purchase orders.
 
@@ -215,7 +215,7 @@ purchaseq. Operator approval gate is optional per administration policy
 - **THEN** the auto-order MUST be blocked; an escalation notification
   MUST be sent to role='procurement-manager'.
 
-### REQ-IRA-007: Reorder rule aggregation SHALL evaluate stock against minimum in real-time
+### Requirement: REQ-IRA-007: Reorder rule aggregation SHALL evaluate stock against minimum in real-time
 
 A `x-openregister-aggregations` query MUST evaluate the reorder trigger
 condition:
@@ -237,7 +237,7 @@ aggregation logic.
 - **THEN** the aggregation MUST evaluate to true and trigger the
   low-stock alert lifecycle action.
 
-### REQ-IRA-008: Dashboard widget SHALL aggregate below-minimum items by location
+### Requirement: REQ-IRA-008: Dashboard widget SHALL aggregate below-minimum items by location
 
 A manifest aggregation query SHALL group `InventoryStock` records
 where `quantity ≤ linkedRule.minimumLevel` by location:
@@ -266,7 +266,7 @@ The dashboard widget displays:
 - **THEN** the widget MUST display Amsterdam (2 items, 35-unit deficit),
   Rotterdam (1 item, 10-unit deficit).
 
-### REQ-IRA-009: Reorder rules SHALL support lifecycle state management
+### Requirement: REQ-IRA-009: Reorder rules SHALL support lifecycle state management
 
 `InventoryReorderRule` MUST declare an `x-openregister-lifecycle` block with:
 
@@ -286,7 +286,7 @@ low-stock alerts.
 - **WHEN** InventoryStock.quantity falls below minimumLevel
 - **THEN** no alert SHALL be generated.
 
-### REQ-IRA-010: Manifest navigation SHALL provide rule management and dashboards
+### Requirement: REQ-IRA-010: Manifest navigation SHALL provide rule management and dashboards
 
 The manifest MUST declare 3 navigation entries:
 

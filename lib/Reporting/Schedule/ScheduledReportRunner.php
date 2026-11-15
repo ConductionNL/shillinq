@@ -3,6 +3,9 @@
 /**
  * Scheduled Report Runner
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Produces every due report schedule (reporting-data-delivery REQ-RDD-002).
  * A schedule is due when it is active and its next run has passed. A run
  * produces the report through ReportGenerationService as the schedule's
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -37,10 +37,11 @@ namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Reporting\ReportGenerationService;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -48,28 +49,28 @@ use Throwable;
 /**
  * Runs the due report schedules.
  */
-class ScheduledReportRunner {
+class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 	use ReadsSourceRowsInBatches;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface       $objectService  OpenRegister object service.
-	 * @param SettingsService              $settings       Resolves the register slug.
+	 * @param RegisterLocationInterface              $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ReportGenerationService      $reports        Produces the report.
 	 * @param ScheduledReportDelivery      $delivery       Files, shares and notifies.
 	 * @param ReportScheduleCalendar       $calendar       Next run and period.
-	 * @param AdministrationContextService $administrations Who may reach an administration.
+	 * @param AdministrationContextServiceInterface $administrations Who may reach an administration.
 	 * @param LoggerInterface              $logger         Logger.
 	 * @param ReportRecipientPolicy|null   $recipientPolicy Who may receive the owner's reports.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly ReportGenerationService $reports,
 		private readonly ScheduledReportDelivery $delivery,
 		private readonly ReportScheduleCalendar $calendar,
-		private readonly AdministrationContextService $administrations,
+		private readonly AdministrationContextServiceInterface $administrations,
 		private readonly LoggerInterface $logger,
 		private readonly ?ReportRecipientPolicy $recipientPolicy = null,
 	) {
@@ -181,12 +182,9 @@ class ScheduledReportRunner {
 				format: (string)($schedule['format'] ?? ''),
 				asUserId: $ownerId
 			);
-			if (isset($produced['error']) === true) {
-				return (string)($produced['message'] ?? $produced['error']);
-			}
-
-			if (($produced['fileId'] ?? null) === null) {
-				return 'The report was produced but its file could not be stored.';
+			$failure = $this->productionFailure(produced: $produced);
+			if ($failure !== null) {
+				return $failure;
 			}
 
 			$recipients = $this->allowedRecipients(
@@ -209,6 +207,25 @@ class ScheduledReportRunner {
 		return '';
 
 	}//end produceAndDeliver()
+
+	/**
+	 * Why a produced report cannot be delivered, or null when it can.
+	 *
+	 * @param array<string, mixed> $produced The generate() result.
+	 *
+	 * @return string|null The reason, or null.
+	 */
+	private function productionFailure(array $produced): string|null {
+		if (isset($produced['error']) === true) {
+			return (string)($produced['message'] ?? $produced['error']);
+		}
+
+		if (($produced['fileId'] ?? null) === null) {
+			return 'The report was produced but its file could not be stored.';
+		}
+
+		return null;
+	}//end productionFailure()
 
 	/**
 	 * The recipients the owner may share this administration's reports with.

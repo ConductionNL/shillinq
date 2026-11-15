@@ -196,6 +196,14 @@ export function formatAmount(cents) {
 	}
 }
 
+/** Row key and CommitmentLine property of each drilldown filter, in request order. */
+const DRILLDOWN_FILTERS = [
+	['programme', 'programme'],
+	['cost_centre', 'costCentre'],
+	['financial_year', 'financialYear'],
+	['general_ledger_account', 'generalLedgerAccount'],
+]
+
 /**
  * Build the exact-match filter set to drill down from a budget-line row to
  * its underlying CommitmentLine records.
@@ -218,17 +226,25 @@ export function formatAmount(cents) {
  */
 export function drilldownFilters(row) {
 	const filters = {}
-	if (row.programme) {
-		filters.programme = row.programme
-	}
-	if (row.cost_centre) {
-		filters.costCentre = row.cost_centre
-	}
-	if (row.financial_year !== null && row.financial_year !== undefined) {
-		filters.financialYear = row.financial_year
-	}
-	if (row.general_ledger_account) {
-		filters.generalLedgerAccount = row.general_ledger_account
+	for (const [rowKey, filterKey] of DRILLDOWN_FILTERS) {
+		if (hasFilterValue(rowKey, row[rowKey])) {
+			filters[filterKey] = row[rowKey]
+		}
 	}
 	return filters
+}
+
+/**
+ * Whether a row value filters: any truthy value, and for the financial year
+ * also 0 and the empty string.
+ *
+ * @param {string} rowKey The row key.
+ * @param {unknown} value Its value.
+ * @return {boolean}
+ */
+function hasFilterValue(rowKey, value) {
+	if (rowKey === 'financial_year') {
+		return value !== null && value !== undefined
+	}
+	return Boolean(value)
 }

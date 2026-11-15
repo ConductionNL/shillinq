@@ -508,22 +508,9 @@ export default {
 					}),
 					{ method: 'GET', headers: this.authHeaders() },
 				)
-				if (response.status === 401 || response.status === 403) {
-					this.slotsError = this.t(
-						'Configuration error. Please contact the website owner.',
-					)
-					return
-				}
-				if (response.status === 404) {
-					this.slotsError = this.t(
-						'This service is no longer available. Please refresh the page.',
-					)
-					return
-				}
-				if (!response.ok) {
-					this.slotsError = this.t(
-						'We could not load available times. Please try another date.',
-					)
+				const refusal = this.slotsRefusal(response)
+				if (refusal !== '') {
+					this.slotsError = refusal
 					return
 				}
 				const payload = await response.json()
@@ -533,6 +520,30 @@ export default {
 					'Network error. Please check your connection and try again.',
 				)
 			}
+		},
+
+		/**
+		 * The message of a slots response that is not usable, or '' when it is.
+		 *
+		 * @param {Response} response The slots response.
+		 * @return {string}
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		slotsRefusal(response) {
+			if (response.status === 401 || response.status === 403) {
+				return this.t('Configuration error. Please contact the website owner.')
+			}
+			if (response.status === 404) {
+				return this.t(
+					'This service is no longer available. Please refresh the page.',
+				)
+			}
+			if (!response.ok) {
+				return this.t(
+					'We could not load available times. Please try another date.',
+				)
+			}
+			return ''
 		},
 
 		validateDetails() {

@@ -4,6 +4,9 @@
  * Unit tests for the slice-08 auth-handling extension of
  * {@see PipelinqContactAdapter::publishWithOutcome()}.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Verifies:
  *
  *   - A 401 response yields {@see TimelinePublishOutcome::AuthRejected},
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -44,8 +44,8 @@ use DateTimeZone;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\Pipelinq\TimelinePublishOutcome;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
