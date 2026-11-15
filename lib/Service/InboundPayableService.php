@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
@@ -756,10 +758,9 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	private function save(string $schema, array $object): string {
 		$saved = $this->objectService->saveObject(
 			object: $object,
-			register: $this->registerSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema)),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 		$uuid = ObjectIdentifier::resolve(saved: $saved);
 		if ($uuid === '') {
