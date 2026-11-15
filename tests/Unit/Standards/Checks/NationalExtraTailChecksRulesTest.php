@@ -33,7 +33,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  */
-final class NationalExtraTailChecksBehaviourTest extends TestCase {
+final class NationalExtraTailChecksRulesTest extends TestCase {
 
 	/**
 	 * A statement with a complete balance-sheet and P&L layout.

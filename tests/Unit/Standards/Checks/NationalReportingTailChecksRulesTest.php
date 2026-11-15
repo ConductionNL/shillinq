@@ -34,7 +34,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  */
-final class NationalReportingTailChecksBehaviourTest extends TestCase {
+final class NationalReportingTailChecksRulesTest extends TestCase {
 
 	/**
 	 * A statement whose class breakdowns reconcile to its balance sheet.
