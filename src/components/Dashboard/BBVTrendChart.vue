@@ -52,6 +52,71 @@ const MONTH_KEYS = [
 	'Dec',
 ]
 
+/**
+ * The timeline rows as twelve monthly euro values per programme code; a later
+ * row for the same month wins.
+ *
+ * @param {Array<object>} rows The timeline rows.
+ * @return {Map<string, Array<number>>}
+ */
+function timelineByProgramme(rows) {
+	const grouped = new Map()
+	for (const row of rows) {
+		const code = timelineCode(row)
+		if (!code) {
+			continue
+		}
+		if (!grouped.has(code)) {
+			grouped.set(code, new Array(12).fill(0))
+		}
+		grouped.get(code)[timelineMonthIndex(row)] = centsToEuro(row.cumulativeSpendCents)
+	}
+	return grouped
+}
+
+/**
+ * The programme code of a timeline row; empty when it has none.
+ *
+ * @param {object} row The timeline row.
+ * @return {string}
+ */
+function timelineCode(row) {
+	return row.programmeCode || row.code || ''
+}
+
+/**
+ * The zero-based month of a timeline row, clamped to January..December.
+ *
+ * @param {object} row The timeline row.
+ * @return {number}
+ */
+function timelineMonthIndex(row) {
+	return Math.max(0, Math.min(11, Number(row.month || 1) - 1))
+}
+
+/**
+ * Cents as euros; zero when absent or not a finite number.
+ *
+ * @param {number|string|null|undefined} value The amount in cents.
+ * @return {number}
+ */
+function centsToEuro(value) {
+	const cents = Number(value || 0)
+	return Number.isFinite(cents) ? cents / 100 : 0
+}
+
+/**
+ * The legend name of a programme: its code, with its name when it has one.
+ *
+ * @param {object} programme The programme.
+ * @return {string}
+ */
+function seriesName(programme) {
+	return programme.programmeName
+		? `${programme.programmeCode} — ${programme.programmeName}`
+		: programme.programmeCode
+}
+
 export default {
 	name: 'BBVTrendChart',
 	components: { CnChartWidget },
@@ -108,39 +173,13 @@ export default {
 	methods: {
 		t,
 		seriesFromTimeline() {
-			const grouped = new Map()
-			for (const row of this.timeline) {
-				const code = row.programmeCode || row.code || ''
-				if (!code) {
-					continue
-				}
-				if (!grouped.has(code)) {
-					grouped.set(code, new Array(12).fill(0))
-				}
-				const monthIndex = Math.max(
-					0,
-					Math.min(11, Number(row.month || 1) - 1),
-				)
-				const cents = Number(row.cumulativeSpendCents || 0)
-				grouped.get(code)[monthIndex] = Number.isFinite(cents)
-					? cents / 100
-					: 0
-			}
-			const out = []
-			for (const programme of this.programmes) {
-				const code = programme.programmeCode
-				if (!code) {
-					continue
-				}
-				const data = grouped.get(code) || new Array(12).fill(0)
-				out.push({
-					name: programme.programmeName
-						? `${code} — ${programme.programmeName}`
-						: code,
-					data,
-				})
-			}
-			return out
+			const grouped = timelineByProgramme(this.timeline)
+			return this.programmes
+				.filter((programme) => programme.programmeCode)
+				.map((programme) => ({
+					name: seriesName(programme),
+					data: grouped.get(programme.programmeCode) || new Array(12).fill(0),
+				}))
 		},
 
 		seriesFromCurrentYtd() {
@@ -157,12 +196,7 @@ export default {
 				for (let i = 0; i <= monthIndex; i += 1) {
 					data[i] = value * ((i + 1) / (monthIndex + 1))
 				}
-				out.push({
-					name: programme.programmeName
-						? `${programme.programmeCode} — ${programme.programmeName}`
-						: programme.programmeCode,
-					data,
-				})
+				out.push({ name: seriesName(programme), data })
 			}
 			return out
 		},

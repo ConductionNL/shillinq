@@ -25,7 +25,7 @@ use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
@@ -95,7 +95,7 @@ class ScheduledReportRunnerTest extends TestCase {
 			true
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($this->store);
@@ -105,7 +105,8 @@ class ScheduledReportRunnerTest extends TestCase {
 			$container,
 			$this->createMock(IUserSession::class),
 			$appConfig,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			$this->createMock(\OCP\IConfig::class)
 		);
 
 		$this->reports  = $this->createMock(ReportGenerationService::class);
@@ -257,4 +258,58 @@ class ScheduledReportRunnerTest extends TestCase {
 		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
 
 	}//end testAnOwnerWithoutAccessProducesNothing()
+	/**
+	 * A report produced without a stored file is a failed run, and nothing is filed.
+	 *
+	 * @return void
+	 */
+	public function testAReportWithoutAStoredFileFails(): void {
+		$runner = $this->runner(self::schedule());
+		$this->reports->method('generate')->willReturn(['fileId' => null, 'path' => null]);
+		$this->delivery->expects(self::never())->method('file');
+		$this->delivery->expects(self::never())->method('notifyReady');
+		$this->delivery->expects(self::once())->method('notifyFailed')
+			->with('controller-anna', self::anything(), 'The report was produced but its file could not be stored.');
+
+		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+		self::assertSame('The report was produced but its file could not be stored.', $this->stored()['lastError']);
+
+	}//end testAReportWithoutAStoredFileFails()
+
+	/**
+	 * A generator that throws is a failed run carrying its message; the
+	 * schedule still moves on to its next run.
+	 *
+	 * @return void
+	 */
+	public function testAGeneratorThatThrowsFailsTheRunWithItsMessage(): void {
+		$runner = $this->runner(self::schedule());
+		$this->reports->method('generate')->willThrowException(new \RuntimeException('Ledger is locked.'));
+		$this->delivery->expects(self::once())->method('notifyFailed')
+			->with('controller-anna', self::anything(), 'Ledger is locked.');
+
+		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+		$stored = $this->stored();
+		self::assertSame('Ledger is locked.', $stored['lastError']);
+		self::assertSame('2026-11-05T00:00:00+00:00', $stored['nextRunAt']);
+		self::assertArrayNotHasKey('lastFilePath', $stored);
+
+	}//end testAGeneratorThatThrowsFailsTheRunWithItsMessage()
+
+	/**
+	 * Filing that fails is a failed run, and no recipient is told the report is ready.
+	 *
+	 * @return void
+	 */
+	public function testFilingThatFailsTellsNoRecipient(): void {
+		$runner = $this->runner(self::schedule());
+		$this->reports->method('generate')->willReturn(['fileId' => 42]);
+		$this->delivery->method('file')->willThrowException(new \RuntimeException('The report folder path runs into a file: Rapportages'));
+		$this->delivery->expects(self::never())->method('notifyReady');
+		$this->delivery->expects(self::once())->method('notifyFailed')
+			->with('controller-anna', self::anything(), 'The report folder path runs into a file: Rapportages');
+
+		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+
+	}//end testFilingThatFailsTellsNoRecipient()
 }//end class

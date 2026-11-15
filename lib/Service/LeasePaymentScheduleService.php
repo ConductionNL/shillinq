@@ -30,10 +30,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\LeasePaymentScheduleServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Materialises the LeasePaymentSchedule rows for an active lease (REQ-LA-002).
@@ -45,7 +46,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
-class LeasePaymentScheduleService {
+class LeasePaymentScheduleService implements LeasePaymentScheduleServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -101,6 +102,23 @@ class LeasePaymentScheduleService {
 	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
 	 */
 	public function generateSchedule(string $leaseContractId, string $administrationId, int $fromSequence = 1): int {
+		$rows = $this->scheduleRows(leaseContractId: $leaseContractId, administrationId: $administrationId);
+		if ($rows === []) {
+			return 0;
+		}
+
+		return $this->writeSchedule(rows: $rows, leaseContractId: $leaseContractId, administrationId: $administrationId, fromSequence: $fromSequence);
+	}//end generateSchedule()
+
+	/**
+	 * The lease's schedule rows; empty when the lease is not found, is exempt, or yields none.
+	 *
+	 * @param string $leaseContractId  LeaseContract object id.
+	 * @param string $administrationId Tenant scope.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function scheduleRows(string $leaseContractId, string $administrationId): array {
 		$lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
 		if ($lease === null) {
 			$this->logger->warning(
@@ -108,48 +126,45 @@ class LeasePaymentScheduleService {
 				['leaseContractId' => $leaseContractId, 'administrationId' => $administrationId]
 			);
 
-			return 0;
+			return [];
 		}
 
 		if (($lease['classification'] ?? '') !== 'IFRS16-capitalised') {
 			// Exempt leases post straight-line expense and carry no schedule
 			// (REQ-LE-003); nothing to generate.
-			return 0;
+			return [];
 		}
 
-		$rows = $this->calculator->buildSchedule(lease: $lease);
-		if ($rows === []) {
-			return 0;
-		}
+		return $this->calculator->buildSchedule(lease: $lease);
+	}//end scheduleRows()
 
+	/**
+	 * Persist the schedule rows from the given sequence on.
+	 *
+	 * @param array<int, array<string, mixed>> $rows             The schedule rows.
+	 * @param string                           $leaseContractId  LeaseContract object id.
+	 * @param string                           $administrationId Tenant scope.
+	 * @param int                              $fromSequence     The first period sequence to write.
+	 *
+	 * @return int The number of rows written.
+	 */
+	private function writeSchedule(array $rows, string $leaseContractId, string $administrationId, int $fromSequence): int {
 		$objectService = $this->objectService();
-		$register = $this->register();
-		$written = 0;
+		$register      = $this->register();
+		$written       = 0;
 
 		foreach ($rows as $row) {
 			if ((int)$row['periodSequence'] < $fromSequence) {
 				continue;
 			}
 
-			$object = array_merge(
-				$row,
-				[
-					'leaseContract' => $leaseContractId,
-					'administrationId' => $administrationId,
-					'postedToGl' => null,
-				]
-			);
-
-			$objectService->saveObject(
-				object: $object,
-				register: $register,
-				schema: 'LeasePaymentSchedule',
-			);
+			$object = array_merge($row, ['leaseContract' => $leaseContractId, 'administrationId' => $administrationId, 'postedToGl' => null]);
+			$objectService->saveObject(object: $object, register: $register, schema: 'LeasePaymentSchedule');
 			$written++;
-		}//end foreach
+		}
 
 		return $written;
-	}//end generateSchedule()
+	}//end writeSchedule()
 
 	/**
 	 * Fetch a lease and verify it belongs to the given administration (ADR-005).
@@ -232,7 +247,7 @@ class LeasePaymentScheduleService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

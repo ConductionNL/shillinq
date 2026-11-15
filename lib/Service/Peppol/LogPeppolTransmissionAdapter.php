@@ -3,6 +3,9 @@
 /**
  * Log-only Peppol Transmission Adapter (generalised, default DI binding)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Generalised from `PurchaseOrder\LogPeppolTransmissionAdapter` (REQ-EINV-004):
  * the same log-only, dev/CI-safe adapter now implements
  * {@see \OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface}
@@ -32,11 +35,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -44,7 +44,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Peppol;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -53,7 +53,7 @@ use Psr\Log\NullLogger;
 /**
  * Log-only Peppol adapter (default DI binding for both PO and AR).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInterface {
@@ -142,12 +142,8 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 		}
 
 		foreach (self::PARTY_SCHEMAS as $target) {
-			$participantId = $this->lookupInSchema(
-				administrationId: $administrationId,
-				partyId: $partyId,
-				schema: $target['schema'],
-				idField: $target['idField']
-			);
+			$filters = ['administrationId' => $administrationId, $target['idField'] => $partyId];
+			$participantId = $this->lookupInSchema(schema: $target['schema'], filters: $filters);
 			if ($participantId !== null) {
 				return $participantId;
 			}
@@ -193,7 +189,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 *
 	 * @return string The transmission identifier.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
 	 *
 	 * @inheritDoc
 	 */
@@ -236,40 +232,56 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 * Look up a `peppolParticipantId` on one OR schema, filtered by administration
 	 * + party id.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param string $partyId Party id to match.
-	 * @param string $schema OR schema slug to search.
-	 * @param string $idField The row field that carries the party id
-	 *                        (`id` for Vendor, `customerId` for CustomerMaster).
+	 * @param string               $schema  OR schema slug to search.
+	 * @param array<string,string> $filters The administration and the party id under the
+	 *                                      schema's own id field (`id` for Vendor,
+	 *                                      `customerId` for CustomerMaster).
 	 *
 	 * @return string|null
 	 */
-	private function lookupInSchema(string $administrationId, string $partyId, string $schema, string $idField): ?string {
+	private function lookupInSchema(string $schema, array $filters): ?string {
 		try {
 			$register = $this->register();
 			$rows = $this->objectService
 				->setRegister($register)
 				->setSchema($schema)
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							$idField => $partyId,
-						],
-					]
-				);
+				->findAll(['filters' => $filters]);
 		} catch (\Throwable $e) {
-			$this->logger->info(
-				'shillinq.peppol.lookup.skipped',
-				[
-					'schema' => $schema,
-					'reason' => 'schema_unavailable',
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logSkippedSchema(schema: $schema, error: $e);
 			return null;
-		}//end try
+		}
 
+		return $this->firstParticipantId(rows: $rows);
+	}//end lookupInSchema()
+
+	/**
+	 * Log a schema the lookup could not read; the caller treats it as "not registered".
+	 *
+	 * @param string     $schema The OR schema slug.
+	 * @param \Throwable $error  The read failure.
+	 *
+	 * @return void
+	 */
+	private function logSkippedSchema(string $schema, \Throwable $error): void {
+		$this->logger->info(
+			'shillinq.peppol.lookup.skipped',
+			[
+				'schema' => $schema,
+				'reason' => 'schema_unavailable',
+				'exception' => $error->getMessage(),
+			]
+		);
+
+	}//end logSkippedSchema()
+
+	/**
+	 * The first non-blank `peppolParticipantId` among the array rows.
+	 *
+	 * @param array<int,mixed> $rows The matched rows.
+	 *
+	 * @return string|null
+	 */
+	private function firstParticipantId(array $rows): ?string {
 		foreach ($rows as $row) {
 			if (is_array($row) === false) {
 				continue;
@@ -282,7 +294,8 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 		}
 
 		return null;
-	}//end lookupInSchema()
+
+	}//end firstParticipantId()
 
 	/**
 	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
@@ -290,7 +303,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

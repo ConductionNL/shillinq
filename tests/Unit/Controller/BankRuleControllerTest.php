@@ -31,7 +31,8 @@ use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -152,9 +153,6 @@ final class BankRuleControllerTest extends TestCase {
 		);
 
 		$fake = ($fake ?? new FakeBankRuleObjectService([]));
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($fake);
-
 		$admin = $this->createMock(AdministrationContextService::class);
 		$admin->method('buildContext')->willReturn(['activeAdministrationId' => 'adm-1']);
 
@@ -172,7 +170,7 @@ final class BankRuleControllerTest extends TestCase {
 			new BankRulePreviewService(),
 			new BankRuleSuggestionService($this->createMock(LoggerInterface::class)),
 			$admin,
-			$container,
+			new DuckObjectServiceAdapter($fake),
 			$session,
 			$this->createMock(LoggerInterface::class),
 		);
@@ -485,8 +483,8 @@ final class BankRuleControllerTest extends TestCase {
 			}
 		);
 
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willThrowException(
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willThrowException(
 			new \RuntimeException('SQLSTATE[42S02] oc_openregister_objects missing')
 		);
 
@@ -506,7 +504,7 @@ final class BankRuleControllerTest extends TestCase {
 			new BankRulePreviewService(),
 			new BankRuleSuggestionService($this->createMock(LoggerInterface::class)),
 			$admin,
-			$container,
+			$objectService,
 			$session,
 			$logger,
 		);

@@ -27,9 +27,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Pivot\LedgerPivotService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\LedgerPivotServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,17 +48,17 @@ class LedgerPivotController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param AdministrationContextService $context The caller's administrations.
-	 * @param LedgerPivotService           $pivot   The pivot.
+	 * @param AdministrationContextServiceInterface $context The caller's administrations.
+	 * @param LedgerPivotServiceInterface           $pivot   The pivot.
 	 * @param LoggerInterface              $logger  The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly LedgerPivotService $pivot,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly LedgerPivotServiceInterface $pivot,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -78,11 +78,7 @@ class LedgerPivotController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($administrationId === '') {
-			$administrationId = trim((string)($this->context->buildContext()['activeAdministrationId'] ?? ''));
-		}
-
+		$administrationId = $this->administrationId();
 		if ($administrationId === '') {
 			return new JSONResponse(['error' => 'No administration selected'], Http::STATUS_BAD_REQUEST);
 		}
@@ -91,22 +87,55 @@ class LedgerPivotController extends Controller {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return $this->pivoted(administrationId: $administrationId);
+	}//end pivot()
+
+	/**
+	 * The requested administration, else the one the caller is working in, trimmed; '' when neither is set.
+	 *
+	 * @return string
+	 */
+	private function administrationId(): string {
+		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId !== '') {
+			return $administrationId;
+		}
+
+		return trim((string)($this->context->buildContext()['activeAdministrationId'] ?? ''));
+	}//end administrationId()
+
+	/**
+	 * The pivot over the requested axes and period, the 400 for a refused request or the logged 500.
+	 *
+	 * @param string $administrationId The administration, already checked.
+	 *
+	 * @return JSONResponse
+	 */
+	private function pivoted(string $administrationId): JSONResponse {
 		try {
-			return new JSONResponse(
-				$this->pivot->pivot(
-					administrationId: $administrationId,
-					rowAxis: (string)$this->request->getParam('rows', ''),
-					columnAxis: (string)$this->request->getParam('columns', ''),
-					from: (string)$this->request->getParam('from', ''),
-					to: (string)$this->request->getParam('to', '')
-				)
-			);
+			return new JSONResponse($this->pivotOf(administrationId: $administrationId));
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		} catch (\Throwable $e) {
 			$this->logger->error('LedgerPivotController: pivot failed', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'Pivot unavailable'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+	}//end pivoted()
 
-	}//end pivot()
+	/**
+	 * Ask the pivot over the rows, columns, from and to parameters, read in that order.
+	 *
+	 * @param string $administrationId The administration, already checked.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function pivotOf(string $administrationId): array {
+		return $this->pivot->pivot(
+			administrationId: $administrationId,
+			rowAxis: (string)$this->request->getParam('rows', ''),
+			columnAxis: (string)$this->request->getParam('columns', ''),
+			from: (string)$this->request->getParam('from', ''),
+			to: (string)$this->request->getParam('to', '')
+		);
+	}//end pivotOf()
 }//end class

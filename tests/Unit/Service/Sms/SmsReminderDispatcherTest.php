@@ -262,4 +262,52 @@ final class SmsReminderDispatcherTest extends TestCase {
 
 	}//end testMissingConnectorFails()
 
+	/**
+	 * Golden: the status, reference and reason of every outcome, in gate order.
+	 *
+	 * @return void
+	 */
+	public function testEveryOutcomeCarriesItsReason(): void {
+		$optedIn = ['phone' => '0612345678', 'smsOptOut' => false];
+		$noSender = $this->channel();
+		unset($noSender['senderId']);
+		$emptyTemplate = $this->channel();
+		$emptyTemplate['messageTemplate'] = '';
+		$noFallback = $this->channel();
+		unset($noFallback['fallbackPhoneNumber']);
+		$badNumber = ['phone' => 'abc', 'smsOptOut' => false];
+		$noConnector = $emptyTemplate;
+		$noConnector['providerConfig'] = [];
+
+		$outcomes = [];
+		foreach ([
+			'opted out' => [$this->channel(), ['phone' => '0612345678', 'smsOptOut' => true]],
+			'no number' => [$noFallback, ['smsOptOut' => false]],
+			'bad number' => [$this->channel(), $badNumber],
+			'empty body before connector' => [$noConnector, $optedIn],
+			'no sender id' => [$noSender, $optedIn],
+		] as $name => [$channel, $recipient]) {
+			$this->lastSend = null;
+			$result = $this->dispatcher->dispatch($channel, $recipient, ['customerName' => 'Jan']);
+			$sent = 'not sent';
+			if ($this->lastSend !== null) {
+				$sent = $this->lastSend['senderId'];
+			}
+
+			$outcomes[$name] = [$result->status, $result->providerReference, $result->reason, $sent];
+		}
+
+		self::assertSame(
+			[
+				'opted out' => [SmsSendResult::STATUS_SKIPPED, null, (new SmsOptOutPolicy())->skipReason($this->channel(), ['phone' => '0612345678', 'smsOptOut' => true]), 'not sent'],
+				'no number' => [SmsSendResult::STATUS_SKIPPED, null, 'no recipient phone number and no channel fallback', 'not sent'],
+				'bad number' => [SmsSendResult::STATUS_FAILED, null, 'recipient phone number failed E.164/NL validation', 'not sent'],
+				'empty body before connector' => [SmsSendResult::STATUS_FAILED, null, 'rendered message body is empty', 'not sent'],
+				'no sender id' => [SmsSendResult::STATUS_SENT, 'ref-1', null, null],
+			],
+			$outcomes
+		);
+
+	}//end testEveryOutcomeCarriesItsReason()
+
 }//end class

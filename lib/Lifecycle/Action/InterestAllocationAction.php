@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
+use OCA\Shillinq\Kernel\Contracts\InterestAllocationServiceInterface;
 
 /**
  * Calculates or posts an interest allocation run.
@@ -41,10 +41,10 @@ class InterestAllocationAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param InterestAllocationService $interest Calculates and posts the run.
+	 * @param InterestAllocationServiceInterface $interest Calculates and posts the run.
 	 */
 	public function __construct(
-		private readonly InterestAllocationService $interest,
+		private readonly InterestAllocationServiceInterface $interest,
 	) {
 	}//end __construct()
 

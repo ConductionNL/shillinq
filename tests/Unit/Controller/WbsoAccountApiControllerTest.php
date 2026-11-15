@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Shillinq\Controller\WbsoAccountApiController;
 use OCA\Shillinq\Service\WbsoAccountService;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
@@ -90,6 +91,20 @@ final class WbsoAccountApiControllerTest extends TestCase {
 	private IL10N&MockObject $l10n;
 
 	/**
+	 * Memberships: the caller is a member of adm-1 only.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
+
+	/**
+	 * Whether the caller's adm-1 membership grants posting.
+	 *
+	 * @var boolean
+	 */
+	private bool $mayPost = true;
+
+	/**
 	 * Controller under test.
 	 *
 	 * @var WbsoAccountApiController
@@ -110,6 +125,12 @@ final class WbsoAccountApiControllerTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->l10n = $this->createMock(IL10N::class);
 		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->context->method('accessibleAdministrationIds')->willReturn(['adm-1']);
+		$this->context->method('canAccess')->willReturnCallback(static fn (string $administrationId): bool => $administrationId === 'adm-1');
+		$this->context->method('canPostJournalEntry')->willReturnCallback(
+			fn (string $administrationId): bool => $administrationId === 'adm-1' && $this->mayPost
+		);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -122,6 +143,7 @@ final class WbsoAccountApiControllerTest extends TestCase {
 			userSession: $this->session,
 			logger: $this->logger,
 			l10n: $this->l10n,
+			administrationContext: $this->context,
 		);
 	}//end setUp()
 
@@ -132,7 +154,7 @@ final class WbsoAccountApiControllerTest extends TestCase {
 	 */
 	public function testIndexReturnsAccounts(): void {
 		$this->request->method('getParam')->willReturnMap([
-			['administration_id', 'adm-consultancy-nl', 'adm-1'],
+			['administration_id', '', 'adm-1'],
 		]);
 		$this->rbac->method('hasAny')->willReturn(false);
 		$this->accounts->method('getAccountsByAdministration')->willReturn([
@@ -164,6 +186,7 @@ final class WbsoAccountApiControllerTest extends TestCase {
 			userSession: $session,
 			logger: $this->logger,
 			l10n: $this->l10n,
+			administrationContext: $this->context,
 		);
 
 		$response = $controller->index();
@@ -178,7 +201,7 @@ final class WbsoAccountApiControllerTest extends TestCase {
 	 */
 	public function testHierarchyReturnsTree(): void {
 		$this->request->method('getParam')->willReturnMap([
-			['administration_id', 'adm-consultancy-nl', 'adm-1'],
+			['administration_id', '', 'adm-1'],
 		]);
 		$this->rbac->method('hasAny')->willReturn(true);
 		$this->accounts->method('getAccountHierarchy')->willReturn([
@@ -243,4 +266,56 @@ final class WbsoAccountApiControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
 	}//end testShowMissingReturns404()
+	/**
+	 * An administration the caller is no member of reads as not found, and nothing is loaded.
+	 *
+	 * @return void
+	 */
+	public function testIndexRefusesAnotherAdministration(): void {
+		$this->request->method('getParam')->willReturnMap([
+			['administration_id', '', 'adm-other'],
+		]);
+		$this->accounts->expects(self::never())->method('getAccountsByAdministration');
+
+		$response = $this->controller->index();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testIndexRefusesAnotherAdministration()
+
+	/**
+	 * Without an administration_id the caller's own membership is used, never a seed id.
+	 *
+	 * @return void
+	 */
+	public function testIndexWithoutAdministrationUsesTheCallersMembership(): void {
+		$this->request->method('getParam')->willReturnCallback(static fn (string $key, mixed $default = null): mixed => $default);
+		$this->accounts->expects(self::once())
+			->method('getAccountsByAdministration')
+			->with('adm-1')
+			->willReturn([]);
+
+		$response = $this->controller->index();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+
+	}//end testIndexWithoutAdministrationUsesTheCallersMembership()
+
+	/**
+	 * A global administrator role does not open an administration the caller is no member of.
+	 *
+	 * @return void
+	 */
+	public function testCreateRefusesAnotherAdministrationDespiteTheRole(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $key, mixed $default = null): mixed => ($key === 'administration_id' ? 'adm-other' : $default)
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->accounts->expects(self::never())->method('createAccount');
+
+		$response = $this->controller->create();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testCreateRefusesAnotherAdministrationDespiteTheRole()
 }//end class

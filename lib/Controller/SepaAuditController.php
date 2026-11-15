@@ -29,8 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\SepaAuditService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SepaAuditServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,17 +50,17 @@ class SepaAuditController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request.
-	 * @param SepaAuditService $auditService The audit assembly service.
+	 * @param SepaAuditServiceInterface $auditService The audit assembly service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SepaAuditService $auditService,
+		private readonly SepaAuditServiceInterface $auditService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -88,20 +88,19 @@ class SepaAuditController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		try {
-			$bundle = $this->auditService->buildMandateDossier(mandateId: $mandateId);
-			if ($bundle === null) {
-				return new JSONResponse(
-					['error' => 'mandate_not_found'],
-					Http::STATUS_NOT_FOUND
-				);
-			}
+		return $this->dossier(mandateId: $mandateId);
+	}//end exportMandate()
 
-			return new DataDownloadResponse(
-				$bundle['data'],
-				$bundle['filename'],
-				'application/zip'
-			);
+	/**
+	 * Build the dossier and answer it; a failure, including building the download, is a logged 500.
+	 *
+	 * @param string $mandateId The SepaMandate UUID/slug to export.
+	 *
+	 * @return DataDownloadResponse|JSONResponse
+	 */
+	private function dossier(string $mandateId): DataDownloadResponse|JSONResponse {
+		try {
+			return self::download(bundle: $this->auditService->buildMandateDossier(mandateId: $mandateId));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SepaAuditController: mandate export failed',
@@ -111,6 +110,21 @@ class SepaAuditController extends Controller {
 				['error' => 'export_failed'],
 				Http::STATUS_INTERNAL_SERVER_ERROR
 			);
-		}//end try
-	}//end exportMandate()
+		}
+	}//end dossier()
+
+	/**
+	 * The ZIP download, or the 404 for a mandate the caller may not read.
+	 *
+	 * @param array<string,mixed>|null $bundle The dossier: data and filename.
+	 *
+	 * @return DataDownloadResponse|JSONResponse
+	 */
+	private static function download(array|null $bundle): DataDownloadResponse|JSONResponse {
+		if ($bundle === null) {
+			return new JSONResponse(['error' => 'mandate_not_found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return new DataDownloadResponse($bundle['data'], $bundle['filename'], 'application/zip');
+	}//end download()
 }//end class

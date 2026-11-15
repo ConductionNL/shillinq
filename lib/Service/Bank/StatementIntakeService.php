@@ -31,7 +31,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 
@@ -40,7 +41,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
-class StatementIntakeService {
+class StatementIntakeService implements StatementIntakeServiceInterface {
 	/**
 	 * `bankConnectionId` of a statement no connection delivered.
 	 *
@@ -56,12 +57,12 @@ class StatementIntakeService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -83,27 +84,14 @@ class StatementIntakeService {
 	 */
 	public function ingest(string $administrationId, string $iban, array $lines, array $meta): array {
 		$batchUri = trim((string)($meta['sourceBatchUri'] ?? ''));
-		if ($batchUri !== '' && $this->batchAlreadyWritten(administrationId: $administrationId, batchUri: $batchUri) === true) {
+		if ($this->batchAlreadyWritten(administrationId: $administrationId, batchUri: $batchUri) === true) {
 			$this->logger->info('StatementIntakeService: batch already written, nothing to do', ['batchUri' => $batchUri]);
 			return ['statementId' => '', 'written' => [], 'skipped' => count($lines), 'duplicateBatch' => true];
 		}
 
 		$known = $this->knownEndToEndRefs(administrationId: $administrationId, iban: $iban);
-		$fresh = [];
-		$skipped = 0;
-		foreach ($lines as $line) {
-			$ref = trim((string)($line['endToEndRef'] ?? ''));
-			if ($ref !== '' && isset($known[$ref]) === true) {
-				$skipped++;
-				continue;
-			}
-
-			if ($ref !== '') {
-				$known[$ref] = true;
-			}
-
-			$fresh[] = $line;
-		}
+		$fresh = self::freshLines(lines: $lines, known: $known);
+		$skipped = (count($lines) - count($fresh));
 
 		$statement = self::buildStatement(administrationId: $administrationId, iban: $iban, lineCount: count($fresh), meta: $meta);
 		$saved = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'BankStatement')->saveObject($statement));
@@ -234,7 +222,36 @@ class StatementIntakeService {
 	}//end dateTime()
 
 	/**
-	 * Whether a feed batch was already written as a statement.
+	 * The lines whose end-to-end reference is neither already booked nor seen
+	 * earlier in the same batch; lines without a reference always pass.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The parsed lines, in order.
+	 * @param array<string,bool>             $known The references already booked.
+	 *
+	 * @return array<int,array<string,mixed>> The lines to write, in order.
+	 */
+	private static function freshLines(array $lines, array $known): array {
+		$fresh = [];
+		foreach ($lines as $line) {
+			$ref = trim((string)($line['endToEndRef'] ?? ''));
+			if ($ref !== '' && isset($known[$ref]) === true) {
+				continue;
+			}
+
+			if ($ref !== '') {
+				$known[$ref] = true;
+			}
+
+			$fresh[] = $line;
+		}
+
+		return $fresh;
+
+	}//end freshLines()
+
+	/**
+	 * Whether a feed batch was already written as a statement (never for an
+	 * empty batch uri, which is not looked up).
 	 *
 	 * @param string $administrationId The administration.
 	 * @param string $batchUri         The batch uri.
@@ -242,6 +259,10 @@ class StatementIntakeService {
 	 * @return bool
 	 */
 	private function batchAlreadyWritten(string $administrationId, string $batchUri): bool {
+		if ($batchUri === '') {
+			return false;
+		}
+
 		$rows = $this->scoped(schema: 'BankStatement')->findAll(
 			['filters' => ['administrationId' => $administrationId, 'sourceBatchUri' => $batchUri], 'limit' => 1]
 		);
@@ -273,18 +294,33 @@ class StatementIntakeService {
 				continue;
 			}
 
-			$lines = $this->scoped(schema: 'BankStatementLine')->findAll(['filters' => ['statementId' => $statementId], 'limit' => 5000]);
-			foreach ($lines as $row) {
-				$ref = trim((string)(ObjectIdentifier::recordWithId(candidate: $row)['endToEndRef'] ?? ''));
-				if ($ref !== '') {
-					$known[$ref] = true;
-				}
-			}
+			$known += $this->statementRefs(statementId: $statementId);
 		}
 
 		return $known;
 
 	}//end knownEndToEndRefs()
+
+	/**
+	 * The non-empty end-to-end references on one statement's lines.
+	 *
+	 * @param string $statementId The statement.
+	 *
+	 * @return array<string,bool> Reference => true.
+	 */
+	private function statementRefs(string $statementId): array {
+		$refs = [];
+		$lines = $this->scoped(schema: 'BankStatementLine')->findAll(['filters' => ['statementId' => $statementId], 'limit' => 5000]);
+		foreach ($lines as $row) {
+			$ref = trim((string)(ObjectIdentifier::recordWithId(candidate: $row)['endToEndRef'] ?? ''));
+			if ($ref !== '') {
+				$refs[$ref] = true;
+			}
+		}
+
+		return $refs;
+
+	}//end statementRefs()
 
 	/**
 	 * The object service scoped to shillinq's register and one schema.
@@ -294,7 +330,7 @@ class StatementIntakeService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class
