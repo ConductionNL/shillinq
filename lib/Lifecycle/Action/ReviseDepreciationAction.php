@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Asset\FixedAssetDepreciation;
+use OCA\Shillinq\Kernel\Contracts\FixedAssetDepreciationInterface;
 
 /**
  * The `revise` transition's executor.
@@ -39,10 +39,10 @@ class ReviseDepreciationAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param FixedAssetDepreciation $depreciation The asset-level operations.
+	 * @param FixedAssetDepreciationInterface $depreciation The asset-level operations.
 	 */
 	public function __construct(
-		private readonly FixedAssetDepreciation $depreciation,
+		private readonly FixedAssetDepreciationInterface $depreciation,
 	) {
 	}//end __construct()
 

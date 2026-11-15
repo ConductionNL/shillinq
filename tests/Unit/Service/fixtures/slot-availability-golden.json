@@ -55,6 +55,17 @@
             },
             {
                 "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
                 "schema": "Appointment",
                 "config": {
                     "filters": {
@@ -96,6 +107,17 @@
                         "resourceId": "room-1"
                     },
                     "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
                 },
                 "rbac": false
             },
@@ -159,6 +181,17 @@
             },
             {
                 "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
                 "schema": "Appointment",
                 "config": {
                     "filters": {
@@ -215,6 +248,17 @@
             },
             {
                 "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
                 "schema": "Appointment",
                 "config": {
                     "filters": {
@@ -263,6 +307,17 @@
                         "resourceId": "room-1"
                     },
                     "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
                 },
                 "rbac": false
             },
@@ -326,6 +381,17 @@
             },
             {
                 "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
                 "schema": "Appointment",
                 "config": {
                     "filters": {
@@ -374,6 +440,17 @@
                         "resourceId": "room-1"
                     },
                     "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
                 },
                 "rbac": false
             },
@@ -564,6 +641,17 @@
             },
             {
                 "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
                 "schema": "Appointment",
                 "config": {
                     "filters": {
@@ -749,6 +837,17 @@
             },
             {
                 "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
                 "schema": "Appointment",
                 "config": {
                     "filters": {
@@ -846,6 +945,17 @@
                         "resourceId": "room-1"
                     },
                     "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "AvailabilityRule",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 500
                 },
                 "rbac": false
             },

@@ -3,6 +3,9 @@
 /**
  * Intercompany Journal Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic helper for intercompany-journaalpost mirroring and reconciliation
  * (REQ-MA-004). A single conceptual intercompany transaction (e.g. a management
  * fee from Werk B.V. to Beheer B.V.) is booked as two self-contained journal
@@ -26,14 +29,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\Kernel\Contracts\IntercompanyJournalServiceInterface;
 
 /**
  * Computes intercompany mirroring + reconciliation and validates the status flow.
@@ -44,7 +46,7 @@ namespace OCA\Shillinq\Service;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class IntercompanyJournalService {
+class IntercompanyJournalService implements IntercompanyJournalServiceInterface {
 	/**
 	 * Allowed IntercompanyJournalEntry status transitions (REQ-MA-004).
 	 *

@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
 use OCA\Shillinq\Service\Asset\AssetRecords;
@@ -326,7 +326,7 @@ class FixedAssetDisposalListenerTest extends TestCase {
 		$this->objects->seed('FixedAsset', [$van]);
 		$this->objects->seed('DepreciationSchedule', [['id' => 'sch-van', 'assetRef' => 'old-van', 'administrationId' => 'adm-1', 'periodEndDate' => '2026-03-31', 'accumulatedDepreciation' => 12000, 'status' => 'posted']]);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$objects = new DuckObjectServiceAdapter($this->objects);
 		$records = new AssetRecords($objects, new ObjectTransitionRunner(container: $this->createMock(ContainerInterface::class)), $settings);

@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
+use OCA\Shillinq\Kernel\Contracts\ReinvestmentReservesInterface;
 
 /**
  * The `applyReinvestmentReserve` transition's executor.
@@ -39,10 +39,10 @@ class ApplyReinvestmentReserveAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ReinvestmentReserves $reserves The reserves.
+	 * @param ReinvestmentReservesInterface $reserves The reserves.
 	 */
 	public function __construct(
-		private readonly ReinvestmentReserves $reserves,
+		private readonly ReinvestmentReservesInterface $reserves,
 	) {
 	}//end __construct()
 

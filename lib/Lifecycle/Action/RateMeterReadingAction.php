@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Usage\MeterReadingRating;
+use OCA\Shillinq\Kernel\Contracts\MeterReadingRatingInterface;
 
 /**
  * The `rate` transition's executor.
@@ -39,10 +39,10 @@ class RateMeterReadingAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param MeterReadingRating $rating Prices a reading against its plan.
+	 * @param MeterReadingRatingInterface $rating Prices a reading against its plan.
 	 */
 	public function __construct(
-		private readonly MeterReadingRating $rating,
+		private readonly MeterReadingRatingInterface $rating,
 	) {
 	}//end __construct()
 

@@ -1,12 +1,13 @@
 # Tasks: purchasing-approval-delegation
 
-<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 7. -->
+<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 8. -->
 
 ## 1. Approval on OpenRegister
 
 - [ ] 1.1 Add the `purchase-order-approval` `x-openregister-approval-chains` block on `PurchaseOrder.approve` with the three tiers and separation of duties, and create the three groups in the setup wizard (REQ-PAD-001). Verify: a contract test like `VerplichtingApprovalChainFragmentTest` against the OpenRegister shape; a live re-import provisions the steps for a seed order.
 - [ ] 1.2 Replace the chain display in `PurchaseOrderDetail.vue` with an approval panel on OpenRegister's steps, with Approve and Reject for a user who may decide (REQ-PAD-001). Verify: Playwright approves PO-2026-040 as Karin de Wit and sees the requester refused on PO-2026-041.
 - [ ] 1.3 Remove `PurchaseOrderApprovalService`, its controller and route, `determineApprovalChain()`, `initialiseApprovalChainEntries()`, `blockSendUntilApproved()` and the `delegated` value; point `previewApprovalChain()` at the schema tiers and `send()` at `statusCode`; add the repair step for `pending_approval` orders (REQ-PAD-001). Verify: hydra gates orphan-auth and route-reachability pass; the repair step is idempotent on a local instance; a live approval of a seed order materialises its `Commitment`.
+- [ ] 1.4 Add the `supplier-invoice-approval` chain on `SupplierInvoice.approve` with amount tiers and let `ThreeWayMatchingEngine` hand matched invoices to it instead of approving them, with the approval panel on `SupplierInvoiceDetail.vue` (REQ-PAD-004). Verify: PHPUnit for both scenarios; Playwright approves a large matched invoice.
 
 ## 2. Delegation
 

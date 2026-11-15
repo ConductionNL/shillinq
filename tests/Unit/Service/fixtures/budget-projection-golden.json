@@ -1,0 +1,352 @@
+{
+    "account:4000": {
+        "accountNumber": "4000",
+        "accountType": "expenses",
+        "metric": "netMovement",
+        "rate": 0.10000000000000009,
+        "validSteps": 3,
+        "trend": {
+            "2027-01": {
+                "kind": "actual",
+                "amount": 10000
+            },
+            "2027-02": {
+                "kind": "actual",
+                "amount": 11000
+            },
+            "2027-03": {
+                "kind": "actual",
+                "amount": 12100
+            },
+            "2027-04": {
+                "kind": "actual",
+                "amount": 13310
+            },
+            "2027-05": {
+                "kind": "projected",
+                "amount": 14641,
+                "rate": 0.10000000000000009,
+                "validSteps": 3
+            },
+            "2027-06": {
+                "kind": "projected",
+                "amount": 16105,
+                "rate": 0.10000000000000009,
+                "validSteps": 3
+            },
+            "2028-04": {
+                "kind": "projected",
+                "amount": 41772,
+                "rate": 0.10000000000000009,
+                "validSteps": 3
+            },
+            "2028-05": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 3
+            }
+        },
+        "cumulative": {
+            "2027-01": 10000,
+            "2027-02": 21000,
+            "2027-03": 33100,
+            "2027-04": 46410,
+            "2027-05": 61051,
+            "2027-06": 77156,
+            "2028-04": 118928,
+            "2028-05": 118928
+        }
+    },
+    "account:8000": {
+        "accountNumber": "8000",
+        "accountType": "revenue",
+        "metric": "netMovement",
+        "rate": null,
+        "validSteps": 2,
+        "trend": {
+            "2027-01": {
+                "kind": "actual",
+                "amount": -50000
+            },
+            "2027-02": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-03": {
+                "kind": "actual",
+                "amount": -52000
+            },
+            "2027-04": {
+                "kind": "actual",
+                "amount": -54080
+            },
+            "2027-05": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 2
+            },
+            "2027-06": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 2
+            },
+            "2028-04": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 2
+            },
+            "2028-05": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 2
+            }
+        },
+        "cumulative": {
+            "2027-01": -50000,
+            "2027-02": -50000,
+            "2027-03": -102000,
+            "2027-04": -156080,
+            "2027-05": -156080,
+            "2027-06": -156080,
+            "2028-04": -156080,
+            "2028-05": -156080
+        }
+    },
+    "account:1100": {
+        "accountNumber": "1100",
+        "accountType": "assets",
+        "metric": "closingBalance",
+        "rate": 0.19999999999999998,
+        "validSteps": 3,
+        "trend": {
+            "2027-01": {
+                "kind": "actual",
+                "amount": 500
+            },
+            "2027-02": {
+                "kind": "actual",
+                "amount": 500
+            },
+            "2027-03": {
+                "kind": "actual",
+                "amount": 300
+            },
+            "2027-04": {
+                "kind": "actual",
+                "amount": 600
+            },
+            "2027-05": {
+                "kind": "projected",
+                "amount": 720,
+                "rate": 0.19999999999999998,
+                "validSteps": 3
+            },
+            "2027-06": {
+                "kind": "projected",
+                "amount": 864,
+                "rate": 0.19999999999999998,
+                "validSteps": 3
+            },
+            "2028-04": {
+                "kind": "projected",
+                "amount": 5350,
+                "rate": 0.19999999999999998,
+                "validSteps": 3
+            },
+            "2028-05": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 3
+            }
+        },
+        "cumulative": {
+            "2027-01": 500,
+            "2027-02": 500,
+            "2027-03": 300,
+            "2027-04": 600,
+            "2027-05": 720,
+            "2027-06": 864,
+            "2028-04": 5350,
+            "2028-05": 0
+        }
+    },
+    "account:4100": {
+        "accountNumber": "4100",
+        "accountType": "expenses",
+        "metric": "netMovement",
+        "rate": null,
+        "validSteps": 0,
+        "trend": {
+            "2027-01": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-02": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-03": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-04": {
+                "kind": "actual",
+                "amount": 700
+            },
+            "2027-05": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 0
+            },
+            "2027-06": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 0
+            },
+            "2028-04": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 0
+            },
+            "2028-05": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 0
+            }
+        },
+        "cumulative": {
+            "2027-01": 0,
+            "2027-02": 0,
+            "2027-03": 0,
+            "2027-04": 700,
+            "2027-05": 700,
+            "2027-06": 700,
+            "2028-04": 700,
+            "2028-05": 700
+        }
+    },
+    "account:4200": {
+        "accountNumber": "4200",
+        "accountType": "expenses",
+        "metric": "netMovement",
+        "rate": null,
+        "validSteps": 0,
+        "trend": {
+            "2027-01": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-02": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-03": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-04": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-05": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2027-06": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2028-04": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            },
+            "2028-05": {
+                "kind": "unprojectable",
+                "reason": "no-history",
+                "validSteps": 0
+            }
+        },
+        "cumulative": {
+            "2027-01": 0,
+            "2027-02": 0,
+            "2027-03": 0,
+            "2027-04": 0,
+            "2027-05": 0,
+            "2027-06": 0,
+            "2028-04": 0,
+            "2028-05": 0
+        }
+    },
+    "group:kosten": {
+        "ledgerGroupKey": "kosten",
+        "memberAccountNumbers": [
+            "4000",
+            "4100",
+            "4200",
+            "9999"
+        ],
+        "trend": {
+            "2027-01": {
+                "kind": "projected",
+                "amount": 10000,
+                "partial": true
+            },
+            "2027-02": {
+                "kind": "projected",
+                "amount": 11000,
+                "partial": true
+            },
+            "2027-03": {
+                "kind": "projected",
+                "amount": 12100,
+                "partial": true
+            },
+            "2027-04": {
+                "kind": "projected",
+                "amount": 14010,
+                "partial": true
+            },
+            "2027-05": {
+                "kind": "projected",
+                "amount": 14641,
+                "partial": true
+            },
+            "2027-06": {
+                "kind": "projected",
+                "amount": 16105,
+                "partial": true
+            },
+            "2028-04": {
+                "kind": "projected",
+                "amount": 41772,
+                "partial": true
+            },
+            "2028-05": {
+                "kind": "unprojectable",
+                "reason": "insufficient-data",
+                "validSteps": 0
+            }
+        },
+        "cumulative": {
+            "2027-01": 10000,
+            "2027-02": 21000,
+            "2027-03": 33100,
+            "2027-04": 47110,
+            "2027-05": 61751,
+            "2027-06": 77856,
+            "2028-04": 119628,
+            "2028-05": 119628
+        }
+    }
+}

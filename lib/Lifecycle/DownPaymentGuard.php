@@ -3,6 +3,9 @@
 /**
  * Shillinq DownPaymentGuard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The down-payment check and stamp on ARInvoice.issue (sales-down-payments
  * REQ-SDP-004), declared twice on that transition: `step: check` before the
  * posting action, `step: stamp` after it.
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,8 +39,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
-use OCA\Shillinq\Service\Sales\DownPaymentService;
+use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 use RuntimeException;
 
 /**
@@ -52,10 +52,10 @@ class DownPaymentGuard implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param DownPaymentService $downPayments The down-payment rules.
+	 * @param DownPaymentServiceInterface $downPayments The down-payment rules.
 	 */
 	public function __construct(
-		private readonly DownPaymentService $downPayments,
+		private readonly DownPaymentServiceInterface $downPayments,
 	) {
 
 	}//end __construct()

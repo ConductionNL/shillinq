@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 use InvalidArgumentException;
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\BcfClaimService;
+use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
 
 /**
  * The `compute` transition's executor.
@@ -41,10 +41,10 @@ class ComputeBcfClaimAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param BcfClaimService $claims Computes the compensable VAT of a quarter.
+	 * @param BcfClaimServiceInterface $claims Computes the compensable VAT of a quarter.
 	 */
 	public function __construct(
-		private readonly BcfClaimService $claims,
+		private readonly BcfClaimServiceInterface $claims,
 	) {
 	}//end __construct()
 

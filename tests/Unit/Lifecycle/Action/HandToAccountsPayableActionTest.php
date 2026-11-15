@@ -26,7 +26,7 @@ use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\HandToAccountsPayableAction;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -61,14 +61,14 @@ class HandToAccountsPayableActionTest extends TestCase {
 	private function action(): HandToAccountsPayableAction {
 		$this->saved = [];
 		$store = new InMemoryObjectServiceStub(SupplierInvoiceChecksTest::records(), $this->saved);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$this->engine = new LifecycleFaithfulTransitionEngine(store: $store, schemas: ['APTransaction']);
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('has')->willReturnCallback(static fn (string $id): bool => $id === ObjectTransitionRunner::ENGINE_CLASS);
 		$container->method('get')->willReturn($this->engine);
 
-		return new HandToAccountsPayableAction($store, $settings, new SupplierInvoiceChecks($store, $settings), new ObjectTransitionRunner(container: $container));
+		return new HandToAccountsPayableAction($store, $settings, new SupplierInvoiceChecks($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])), new ObjectTransitionRunner(container: $container));
 
 	}//end action()
 

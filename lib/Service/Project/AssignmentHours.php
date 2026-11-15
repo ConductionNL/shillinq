@@ -3,6 +3,9 @@
 /**
  * Assignment Hours
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Keeps the hours budget of a project assignment current (people-hours-budget
  * REQ-PHB-001, REQ-PHB-002): the logged hours are the sum of the time
  * registrations booked on the assignment, the remaining hours follow from the
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -37,25 +37,16 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Project;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Sums the hours booked on an assignment and writes its hours budget.
  */
-class AssignmentHours {
+class AssignmentHours implements AssignmentHoursInterface {
 	use ReadsSourceRowsInBatches;
-
-	/**
-	 * The schema holding one booked hour, with `projectAssignmentId` and `hours`.
-	 */
-	public const HOUR_SCHEMA = 'UrenRegistratie';
-
-	/**
-	 * The assignment schema.
-	 */
-	public const ASSIGNMENT_SCHEMA = 'ProjectAssignment';
 
 	/**
 	 * The project schema the assignments point at with `projectId`.
@@ -74,11 +65,11 @@ class AssignmentHours {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister object service.
-	 * @param SettingsService        $settings      Resolves the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 	) {
 
 	}//end __construct()
@@ -227,6 +218,22 @@ class AssignmentHours {
 			return;
 		}
 
+		$totals = $this->projectHourTotals(projectId: $projectId);
+		$changed = $this->changedFields(current: $project, wanted: $totals);
+		if ($changed !== []) {
+			$this->patch(schema: self::PROJECT_SCHEMA, objectId: $projectId, data: $changed);
+		}
+
+	}//end recalculateProject()
+
+	/**
+	 * The estimated, logged and remaining hours over a project's assignments, and whether any is over budget.
+	 *
+	 * @param string $projectId The engagement id.
+	 *
+	 * @return array{estimatedHoursTotal: float, loggedHoursTotal: float, remainingHoursTotal: float, hoursOverBudget: bool}
+	 */
+	private function projectHourTotals(string $projectId): array {
 		$estimated = 0.0;
 		$logged = 0.0;
 		$over = false;
@@ -238,18 +245,13 @@ class AssignmentHours {
 			$over = $over || ($percent !== null && $percent > 100.0);
 		}
 
-		$totals = [
+		return [
 			'estimatedHoursTotal' => $estimated,
 			'loggedHoursTotal'    => $logged,
 			'remainingHoursTotal' => round($estimated - $logged, 2),
 			'hoursOverBudget'     => $over,
 		];
-		$changed = $this->changedFields(current: $project, wanted: $totals);
-		if ($changed !== []) {
-			$this->patch(schema: self::PROJECT_SCHEMA, objectId: $projectId, data: $changed);
-		}
-
-	}//end recalculateProject()
+	}//end projectHourTotals()
 
 	/**
 	 * The project owner and name copied onto the assignment for the warnings.

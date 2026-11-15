@@ -32,7 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ScheduledReportDeliveryInterface;
 use OCP\Constants;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -49,11 +50,7 @@ use Throwable;
 /**
  * Files, shares and announces a scheduled report.
  */
-class ScheduledReportDelivery {
-
-	public const SUBJECT_READY = 'scheduled_report_ready';
-
-	public const SUBJECT_FAILED = 'scheduled_report_failed';
+class ScheduledReportDelivery implements ScheduledReportDeliveryInterface {
 
 	/**
 	 * Constructor.
@@ -130,10 +127,12 @@ class ScheduledReportDelivery {
 		foreach ($this->users(recipients: $recipients) as $userId) {
 			$this->notify(
 				userId: $userId,
-				schedule: $schedule,
-				subject: self::SUBJECT_READY,
-				parameters: ['name' => $this->label(schedule: $schedule), 'period' => $period],
-				link: $link
+				message: [
+					'scheduleId' => (string)($schedule['id'] ?? ''),
+					'subject' => self::SUBJECT_READY,
+					'parameters' => ['name' => $this->label(schedule: $schedule), 'period' => $period],
+					'link' => $link,
+				]
 			);
 			$sent++;
 		}
@@ -160,10 +159,12 @@ class ScheduledReportDelivery {
 
 		$this->notify(
 			userId: $ownerId,
-			schedule: $schedule,
-			subject: self::SUBJECT_FAILED,
-			parameters: ['name' => $this->label(schedule: $schedule), 'reason' => $reason],
-			link: $this->urlGenerator->linkToRouteAbsolute(AppIdentity::APP_ID . '.dashboard.page')
+			message: [
+				'scheduleId' => (string)($schedule['id'] ?? ''),
+				'subject' => self::SUBJECT_FAILED,
+				'parameters' => ['name' => $this->label(schedule: $schedule), 'reason' => $reason],
+				'link' => $this->urlGenerator->linkToRouteAbsolute(AppIdentity::APP_ID . '.dashboard.page'),
+			]
 		);
 
 	}//end notifyFailed()
@@ -243,22 +244,19 @@ class ScheduledReportDelivery {
 	/**
 	 * Send one notification.
 	 *
-	 * @param string               $userId     The user.
-	 * @param array<string, mixed> $schedule   The schedule.
-	 * @param string               $subject    The subject key.
-	 * @param array<string, mixed> $parameters The subject parameters.
-	 * @param string               $link       Where it leads.
+	 * @param string               $userId  The user.
+	 * @param array<string, mixed> $message scheduleId, subject (key), parameters and link.
 	 *
 	 * @return void
 	 */
-	private function notify(string $userId, array $schedule, string $subject, array $parameters, string $link): void {
+	private function notify(string $userId, array $message): void {
 		$notification = $this->notifications->createNotification();
 		$notification->setApp(AppIdentity::APP_ID)
 			->setUser($userId)
 			->setDateTime(new DateTime())
-			->setObject('report_schedule', (string)($schedule['id'] ?? ''))
-			->setSubject($subject, $parameters)
-			->setLink($link);
+			->setObject('report_schedule', $message['scheduleId'])
+			->setSubject($message['subject'], $message['parameters'])
+			->setLink($message['link']);
 		$this->notifications->notify($notification);
 
 	}//end notify()

@@ -3,6 +3,9 @@
 /**
  * Confirmation Mailer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Builds and sends the appointment confirmation email: the confirmation
  * details, the ICS calendar attachment, a fallback web link and the customer's
  * local timezone (REQ-BCF-003). It sends through Nextcloud's IMailer, the way
@@ -28,16 +31,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IURLGenerator;
 use OCP\Mail\IMailer;
 use Psr\Log\LoggerInterface;

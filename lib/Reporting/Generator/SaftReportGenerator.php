@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * SAF-T audit-file data-report generator
  *
  * Renders a minimal OECD SAF-T (Standard Audit File for Tax) document natively as
@@ -44,7 +49,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;

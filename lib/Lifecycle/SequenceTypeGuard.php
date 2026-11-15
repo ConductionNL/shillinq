@@ -3,6 +3,9 @@
 /**
  * Direct Debit Sequence-Type Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path guard deriving the SEPA sequence type
  * (FRST / RCUR / OOFF / FNAL) for a DirectDebitCollection from its
  * mandate's history, and refusing collections against a mandate that is
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

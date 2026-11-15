@@ -27,7 +27,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunProposalServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -35,25 +36,11 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/payment-run-sepa-export/spec.md
  */
-class PaymentRunProposalService {
+class PaymentRunProposalService implements PaymentRunProposalServiceInterface {
 
 	public const REASON_ALREADY_ON_RUN = 'already-on-run';
 	public const REASON_NO_IBAN = 'no-iban';
 	public const REASON_CURRENCY = 'not-euro';
-
-	/**
-	 * Every line goes out on the run's execution date.
-	 *
-	 * @var string
-	 */
-	public const DATES_RUN = 'run';
-
-	/**
-	 * Each line goes out on the later of its due date and the run's date.
-	 *
-	 * @var string
-	 */
-	public const DATES_DUE = 'due';
 
 	/**
 	 * Invoice states a run may pay.
@@ -87,12 +74,12 @@ class PaymentRunProposalService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      The register slug.
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param PaymentBlockChecker    $blockChecker  The shared block check.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly PaymentBlockChecker $blockChecker,
 	) {
 
@@ -118,35 +105,70 @@ class PaymentRunProposalService {
 		string $executionDate,
 		string $lineDates=self::DATES_RUN
 	): array {
+		$request = new PaymentProposalRequest(
+			administrationId: $administrationId,
+			dueOnOrBefore: $dueOnOrBefore,
+			debtorAccountIban: $debtorAccountIban,
+			executionDate: $executionDate,
+			lineDates: $lineDates
+		);
 		$runs = $this->read(schema: 'PaymentRun', administrationId: $administrationId);
+		$proposal = $this->proposedLines(request: $request, runs: $runs);
+		if ($proposal['lines'] === []) {
+			return ['paymentRun' => null, 'skipped' => $proposal['skipped']];
+		}
+
+		$run = ['runNumber' => $this->nextRunNumber(runs: $runs, executionDate: $executionDate)];
+		$run += $this->draftRun(request: $request, lines: $proposal['lines']);
+
+		return ['paymentRun' => $this->persistRun(run: $run), 'skipped' => $proposal['skipped']];
+
+	}//end propose()
+
+	/**
+	 * A line per payable invoice due, and the reason for every invoice left out.
+	 *
+	 * @param PaymentProposalRequest $request The proposal request.
+	 * @param list<array<string, mixed>> $runs The administration's payment runs.
+	 *
+	 * @return array{lines: list<array<string, mixed>>, skipped: list<array<string, mixed>>}
+	 */
+	private function proposedLines(PaymentProposalRequest $request, array $runs): array {
 		$occupied = $this->refsInRuns(runs: $runs, states: self::OCCUPYING_STATES, exceptPaidOut: true);
 		$paidOut = $this->amountsInRuns(runs: $runs);
 
-		$lines = [];
-		$skipped = [];
-		foreach ($this->dueInvoices(administrationId: $administrationId, dueOnOrBefore: $dueOnOrBefore) as $invoice) {
+		$proposal = ['lines' => [], 'skipped' => []];
+		foreach ($this->dueInvoices(administrationId: $request->administrationId, dueOnOrBefore: $request->dueOnOrBefore) as $invoice) {
 			$outcome = $this->lineFor(invoice: $invoice, occupied: $occupied, paidOut: $paidOut);
 			if (isset($outcome['reason']) === true) {
-				$skipped[] = $outcome;
+				$proposal['skipped'][] = $outcome;
 				continue;
 			}
 
-			if ($lineDates === self::DATES_DUE) {
-				$outcome['requestedExecutionDate'] = max((string)($invoice['dueDate'] ?? ''), $executionDate);
+			if ($request->lineDates === self::DATES_DUE) {
+				$outcome['requestedExecutionDate'] = max((string)($invoice['dueDate'] ?? ''), $request->executionDate);
 			}
 
-			$lines[] = $outcome;
+			$proposal['lines'][] = $outcome;
 		}
 
-		if ($lines === []) {
-			return ['paymentRun' => null, 'skipped' => $skipped];
-		}
+		return $proposal;
 
-		$run = [
-			'runNumber' => $this->nextRunNumber(runs: $runs, executionDate: $executionDate),
-			'administrationId' => $administrationId,
-			'executionDate' => $executionDate,
-			'debtorAccountIban' => $debtorAccountIban,
+	}//end proposedLines()
+
+	/**
+	 * The draft run's fields after its run number.
+	 *
+	 * @param PaymentProposalRequest $request The proposal request.
+	 * @param list<array<string, mixed>> $lines The payment lines.
+	 *
+	 * @return array<string, mixed> The run fields.
+	 */
+	private function draftRun(PaymentProposalRequest $request, array $lines): array {
+		return [
+			'administrationId' => $request->administrationId,
+			'executionDate' => $request->executionDate,
+			'debtorAccountIban' => $request->debtorAccountIban,
 			'status' => 'draft',
 			'lifecycleState' => 'draft',
 			'totalAmount' => round(array_sum(array_column($lines, 'amount')), 2),
@@ -154,15 +176,25 @@ class PaymentRunProposalService {
 			'paymentLines' => $lines,
 		];
 
+	}//end draftRun()
+
+	/**
+	 * Save the draft run; the saved record with its id, else the run itself.
+	 *
+	 * @param array<string, mixed> $run The draft run.
+	 *
+	 * @return array<string, mixed> The persisted run.
+	 */
+	private function persistRun(array $run): array {
 		$saved = $this->scoped(schema: 'PaymentRun')->saveObject(object: $run);
 		$record = ObjectIdentifier::recordWithId(candidate: $saved);
 		if ($record === null) {
 			$record = $run;
 		}
 
-		return ['paymentRun' => $record, 'skipped' => $skipped];
+		return $record;
 
-	}//end propose()
+	}//end persistRun()
 
 	/**
 	 * The payment line for one invoice, or the reason it is left out.
@@ -350,7 +382,7 @@ class PaymentRunProposalService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

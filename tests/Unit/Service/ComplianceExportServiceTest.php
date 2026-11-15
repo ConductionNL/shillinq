@@ -27,10 +27,12 @@ use OCA\OpenRegister\Db\Register;
 use OCA\OpenRegister\Db\RegisterMapper;
 use OCA\Shillinq\Service\ComplianceExportService;
 use OCP\IAppConfig;
+use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * The export reads the register's hash-chained audit trail through the typed
@@ -93,24 +95,160 @@ final class ComplianceExportServiceTest extends TestCase {
 	}//end testExportReadsTheRegisterAuditTrailInsideTheWindow()
 
 	/**
+	 * An unknown scope or format is refused before the audit trail is read.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownScopeOrFormatIsRefused(): void {
+		$service = $this->service(entries: [], uid: 'alice', expectRead: false);
+
+		try {
+			$service->generateExport(from: '2026-01-01', to: '2026-03-31', scope: 'everyone');
+			self::fail('An unknown scope was accepted.');
+		} catch (RuntimeException $e) {
+			self::assertSame('Invalid scope (must be all or subject)', $e->getMessage());
+		}
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Invalid format (must be csv or json)');
+		$service->generateExport(from: '2026-01-01', to: '2026-03-31', format: 'xml');
+
+	}//end testAnUnknownScopeOrFormatIsRefused()
+
+	/**
+	 * A subject export without an actor keeps the session user's own events,
+	 * matched on user or else actor, and names that user as filter and author.
+	 *
+	 * @return void
+	 */
+	public function testASubjectExportDefaultsToTheSessionUser(): void {
+		$service = $this->service(
+			entries: [
+				$this->entry(created: '2026-02-10T10:00:00+00:00', objectUuid: 'inv-1', user: 'alice'),
+				$this->entry(created: '2026-02-11T10:00:00+00:00', objectUuid: 'inv-2', user: 'bob'),
+				$this->entry(created: '2026-02-12T10:00:00+00:00', objectUuid: 'inv-3', user: null, actor: 'alice'),
+			],
+			uid: 'alice',
+		);
+
+		$envelope = $service->generateExport(from: '2026-01-01', to: '2026-03-31', scope: 'subject');
+
+		self::assertSame('subject', $envelope['scope']);
+		self::assertSame('csv', $envelope['format']);
+		self::assertSame('alice', $envelope['actorFilter']);
+		self::assertSame('alice', $envelope['generatedBy']);
+		self::assertSame(2, $envelope['eventCount']);
+		self::assertSame(['inv-1', 'inv-3'], array_column($envelope['rows'], 'objectId'));
+		self::assertSame(
+			['timestamp', 'objectType', 'objectId', 'action', 'actor', 'fields_changed', 'beforeValue', 'afterValue'],
+			$envelope['headers']
+		);
+
+	}//end testASubjectExportDefaultsToTheSessionUser()
+
+	/**
+	 * An explicit actor narrows a subject export; an all export ignores the actor;
+	 * without a session the author is system.
+	 *
+	 * @return void
+	 */
+	public function testAnExplicitActorOnlyNarrowsASubjectExport(): void {
+		$entries = [
+			$this->entry(created: '2026-02-10T10:00:00+00:00', objectUuid: 'inv-1', user: 'alice'),
+			$this->entry(created: '2026-02-11T10:00:00+00:00', objectUuid: 'inv-2', user: 'bob'),
+		];
+
+		$subject = $this->service(entries: $entries, uid: null)
+			->generateExport(from: '2026-01-01', to: '2026-03-31', scope: 'subject', actorFilter: 'bob');
+		self::assertSame(['inv-2'], array_column($subject['rows'], 'objectId'));
+		self::assertSame('bob', $subject['actorFilter']);
+		self::assertSame('system', $subject['generatedBy']);
+
+		$all = $this->service(entries: $entries, uid: null)
+			->generateExport(from: '2026-01-01', to: '2026-03-31', scope: 'all', actorFilter: 'bob');
+		self::assertSame(['inv-1', 'inv-2'], array_column($all['rows'], 'objectId'));
+		self::assertSame('bob', $all['actorFilter']);
+
+		$none = $this->service(entries: $entries, uid: null)
+			->generateExport(from: '2026-01-01', to: '2026-03-31');
+		self::assertNull($none['actorFilter']);
+		self::assertSame(2, $none['eventCount']);
+
+	}//end testAnExplicitActorOnlyNarrowsASubjectExport()
+
+	/**
+	 * The service over a register 7 audit trail holding the given entries.
+	 *
+	 * @param list<JsonSerializable> $entries    The audit-trail entries.
+	 * @param string|null            $uid        The session user, or null for none.
+	 * @param bool                   $expectRead Whether the audit trail may be read.
+	 *
+	 * @return ComplianceExportService
+	 */
+	private function service(array $entries, ?string $uid, bool $expectRead = true): ComplianceExportService {
+		$register = new Register();
+		$register->setId(7);
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')->willReturn($register);
+
+		$auditTrailMapper = $this->createMock(AuditTrailMapper::class);
+		$auditTrailMapper->expects($expectRead === true ? self::atLeastOnce() : self::never())
+			->method('findEvery')->willReturn($entries);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnMap(
+			[
+				[RegisterMapper::class, $registerMapper],
+				[AuditTrailMapper::class, $auditTrailMapper],
+			]
+		);
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$userSession = $this->createMock(IUserSession::class);
+		$user = null;
+		if ($uid !== null) {
+			$user = $this->createMock(IUser::class);
+			$user->method('getUID')->willReturn($uid);
+		}
+
+		$userSession->method('getUser')->willReturn($user);
+
+		return new ComplianceExportService(
+			container: $container,
+			appConfig: $appConfig,
+			userSession: $userSession,
+			logger: $this->createMock(LoggerInterface::class),
+		);
+
+	}//end service()
+
+	/**
 	 * One serialisable audit-trail entry as OpenRegister returns it.
 	 *
 	 * @param string $created    ISO creation instant.
 	 * @param string $objectUuid The object the entry is about.
+	 * @param string|null $user  The user field, or null to leave it out.
+	 * @param string|null $actor The actor field, or null to leave it out.
 	 *
 	 * @return JsonSerializable
 	 */
-	private function entry(string $created, string $objectUuid): JsonSerializable {
-		return new class($created, $objectUuid) implements JsonSerializable {
+	private function entry(string $created, string $objectUuid, ?string $user = 'alice', ?string $actor = null): JsonSerializable {
+		return new class($created, $objectUuid, $user, $actor) implements JsonSerializable {
 			/**
 			 * Constructor.
 			 *
 			 * @param string $created    ISO creation instant.
 			 * @param string $objectUuid The object uuid.
+			 * @param string|null $user  The user field.
+			 * @param string|null $actor The actor field.
 			 */
 			public function __construct(
 				private readonly string $created,
 				private readonly string $objectUuid,
+				private readonly ?string $user,
+				private readonly ?string $actor,
 			) {
 			}//end __construct()
 
@@ -120,13 +258,18 @@ final class ComplianceExportServiceTest extends TestCase {
 			 * @return array<string, mixed>
 			 */
 			public function jsonSerialize(): array {
-				return [
+				return array_filter(
+					[
+						'user' => $this->user,
+						'actor' => $this->actor,
+					],
+					static fn (?string $value): bool => $value !== null
+				) + [
 					'id' => 1,
 					'objectUuid' => $this->objectUuid,
 					'schema' => 3,
 					'register' => 7,
 					'action' => 'update',
-					'user' => 'alice',
 					'created' => $this->created,
 					'changed' => [
 						'amount' => ['old' => 100, 'new' => 120],

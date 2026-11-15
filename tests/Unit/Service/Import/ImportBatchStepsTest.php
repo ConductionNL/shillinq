@@ -32,11 +32,12 @@ namespace OCA\Shillinq\Tests\Unit\Service\Import;
 use DomainException;
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\AppInfo\GuardTagServices;
+use OCA\Shillinq\Listener\Registration\GuardTagServices;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Lifecycle\ImportReverseGuard;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\LineDimensionCheck;
 use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Service\Import\AuditfileParser;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
@@ -46,7 +47,7 @@ use OCA\Shillinq\Service\Import\ImportPosting;
 use OCA\Shillinq\Service\Import\ImportPostingPayloads;
 use OCA\Shillinq\Service\Import\ImportSourceReader;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -157,23 +158,23 @@ final class ImportBatchStepsTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		$posting  = new ImportPosting(
 			objectService: $this->store,
 			transitions: new ObjectTransitionRunner(container: $container),
 			payloads: new ImportPostingPayloads(),
-			settings: $settings,
+			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->createMock(LoggerInterface::class)
 		);
 		$pipeline = new ImportPipelineService($container, $this->createMock(LoggerInterface::class), new AuditfileParser(), new ImportBatchGuard(), $posting);
 		$steps    = new ImportBatchSteps(
 			pipeline: $pipeline,
 			reader: new ImportSourceReader(rootFolder: $root, userSession: $this->createMock(IUserSession::class)),
-			period: new ImportPeriod(objectService: $this->store, settings: $settings),
+			period: new ImportPeriod(objectService: $this->store, registerLocation: $settings),
 			objectService: $this->store,
-			settings: $settings
+			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])
 		);
 
 		return new ImportBatchAction(steps: $steps);
@@ -197,7 +198,8 @@ final class ImportBatchStepsTest extends TestCase {
 			$appConfig,
 			$this->createMock(LoggerInterface::class),
 			$this->store,
-			new PostingRestrictionGuard($appConfig, $this->store, $l10n)
+			new PostingRestrictionGuard($appConfig, $this->store, $l10n),
+			new LineDimensionCheck($appConfig, $this->store, $l10n)
 		);
 
 		return new class ($this->store, $guard, new LifecycleFaithfulTransitionEngine($this->store, ['JournalEntry'])) {
@@ -608,6 +610,48 @@ final class ImportBatchStepsTest extends TestCase {
 	}//end testTheSameImportIsNotPostedTwice()
 
 	/**
+	 * The batch that posted the files is not refused as its own duplicate (REQ-AIW-001).
+	 *
+	 * @return void
+	 */
+	public function testABatchIsNotRefusedAsItsOwnEarlierPost(): void {
+		$action = $this->action();
+		$ready  = $this->throughDryRun(action: $action, batch: $this->batch(status: 'draft'));
+		$this->store->setSchema('ImportBatch')->saveObject(array_merge($ready, ['status' => 'posted']));
+
+		$posted = $this->step(action: $action, batch: $ready, to: 'posting', step: 'post');
+
+		$this->assertSame('posted', $posted['status']);
+		$this->assertCount(1, $this->rows(schema: 'JournalEntry'));
+	}//end testABatchIsNotRefusedAsItsOwnEarlierPost()
+
+	/**
+	 * Reversing into a period that is not open is refused with the pipeline's message (REQ-AIW-003).
+	 *
+	 * @return void
+	 */
+	public function testReversingIntoAPeriodThatIsNotOpenIsRefused(): void {
+		$year   = $this->store->setSchema('FiscalYear')->saveObject(
+			['administrationId' => 'adm-new', 'yearNumber' => 2026, 'startDate' => '2026-01-01', 'endDate' => '2026-12-31', 'state' => 'open']
+		);
+		$action = $this->action();
+		$posted = $this->step(action: $action, batch: $this->throughDryRun(action: $action, batch: $this->batch(status: 'draft')), to: 'posting', step: 'post');
+		$this->store->setSchema('FiscalYear')->patchObject((string)$year->getObject()['id'], ['state' => 'closed']);
+
+		try {
+			$this->step(action: $action, batch: $posted, to: 'reversed', step: 'reverse');
+			$this->fail('reverse did not refuse');
+		} catch (DomainException $e) {
+			$this->assertSame(
+				'Reversal is blocked: the batch is not posted or the target period is closed. Follow correction-journal practice.',
+				$e->getMessage()
+			);
+		}
+
+		$this->assertCount(1, $this->rows(schema: 'JournalEntry'));
+	}//end testReversingIntoAPeriodThatIsNotOpenIsRefused()
+
+	/**
 	 * Reversing posts the reversing entry and removes the customers the import wrote (REQ-AIW-003).
 	 *
 	 * @return void
@@ -655,7 +699,7 @@ final class ImportBatchStepsTest extends TestCase {
 		);
 		(new GuardTagServices())->register(context: $context);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$c = $this->createMock(\OCP\AppFramework\IAppContainer::class);
 		$c->method('get')->willReturnCallback(
@@ -664,7 +708,7 @@ final class ImportBatchStepsTest extends TestCase {
 				LoggerInterface::class => $this->createMock(LoggerInterface::class),
 				ImportReverseGuard::class => new ImportReverseGuard(
 					new ImportBatchGuard(),
-					new ImportPeriod(objectService: $this->store, settings: $settings),
+					new ImportPeriod(objectService: $this->store, registerLocation: $settings),
 					$this->createMock(LoggerInterface::class)
 				),
 			}

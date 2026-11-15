@@ -3,6 +3,9 @@
 /**
  * Shillinq GlLineFiscalYearBackfillMigrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure migration core for the `GLLine.fiscalYearId` backfill: resolves each
  * line's fiscal year through its parent `GLTransaction` and stamps it onto the
  * line, so line-level roll-ups can group by year.
@@ -47,35 +50,19 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Migration;
 
+use OCA\Shillinq\Kernel\Contracts\GlLineFiscalYearBackfillMigratorInterface;
 use RuntimeException;
 
 /**
  * Resolves and stamps `GLLine.fiscalYearId` from the parent `GLTransaction`.
  */
-class GlLineFiscalYearBackfillMigrator {
-
-	/**
-	 * Schema slug of the line rows this migrator writes.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_GL_LINE = 'GLLine';
-
-	/**
-	 * Schema slug of the parent rows this migrator reads.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_GL_TRANSACTION = 'GLTransaction';
+class GlLineFiscalYearBackfillMigrator implements GlLineFiscalYearBackfillMigratorInterface {
 
 	/**
 	 * The property being backfilled, on both schemas.
@@ -262,19 +249,7 @@ class GlLineFiscalYearBackfillMigrator {
 			if ($class === self::CLASS_ALREADY_STAMPED) {
 				$alreadyStamped++;
 
-				// A line that already carries a year is never rewritten, but a
-				// parent that now disagrees is worth surfacing: silently
-				// keeping either value hides a real inconsistency.
-				$parentYear = $this->resolveFiscalYearId(glLine: $glLine, index: $index);
-				$ownYear    = trim((string)($glLine[self::YEAR_PROPERTY] ?? ''));
-				if ($parentYear !== null && $parentYear !== $ownYear) {
-					$disagreements[] = sprintf(
-						'line at offset %d carries "%s" while its transaction says "%s"',
-						(int)$offset,
-						$ownYear,
-						$parentYear
-					);
-				}
+				array_push($disagreements, ...$this->disagreementsOf(glLine: $glLine, index: $index, offset: $offset));
 
 				continue;
 			}
@@ -306,6 +281,37 @@ class GlLineFiscalYearBackfillMigrator {
 			'disagreements'  => $disagreements,
 		];
 	}//end backfillBatch()
+
+	/**
+	 * The disagreement, if any, between an already-stamped line's year and its transaction's year.
+	 *
+	 * @param array<string, mixed> $glLine The already-stamped line.
+	 * @param array<string, string> $index  Output of indexFiscalYearsByTransaction().
+	 * @param int|string           $offset The line's offset in the batch.
+	 *
+	 * @return list<string> One message when the years disagree, none otherwise.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
+	 */
+	private function disagreementsOf(array $glLine, array $index, int|string $offset): array {
+		// A line that already carries a year is never rewritten, but a
+		// parent that now disagrees is worth surfacing: silently
+		// keeping either value hides a real inconsistency.
+		$parentYear = $this->resolveFiscalYearId(glLine: $glLine, index: $index);
+		$ownYear    = trim((string)($glLine[self::YEAR_PROPERTY] ?? ''));
+		if ($parentYear !== null && $parentYear !== $ownYear) {
+			return [
+				sprintf(
+					'line at offset %d carries "%s" while its transaction says "%s"',
+					(int)$offset,
+					$ownYear,
+					$parentYear
+				),
+			];
+		}
+
+		return [];
+	}//end disagreementsOf()
 
 	/**
 	 * Count the rows still carrying no fiscal year.
