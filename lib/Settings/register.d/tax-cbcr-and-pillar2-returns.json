@@ -488,6 +488,18 @@
             "title": "Last validation",
             "description": "The outcome of the last file validation: valid, when, and the errors by line, element and message."
           }
+        },
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "submit": {
+              "inputs": [
+                {
+                  "field": "taxAuthorityReference",
+                  "required": true
+                }
+              ]
+            }
+          }
         }
       },
       "GlobeInformationReturn": {
@@ -523,6 +535,23 @@
                   "description": "The element the records cannot fill."
                 }
               }
+            }
+          },
+          "taxAuthorityReference": {
+            "type": "string",
+            "title": "Belastingdienst reference",
+            "description": "The reference the Belastingdienst gave the filed return, asked for when it is marked submitted."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "submit": {
+              "inputs": [
+                {
+                  "field": "taxAuthorityReference",
+                  "required": true
+                }
+              ]
             }
           }
         }

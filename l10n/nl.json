@@ -7273,7 +7273,13 @@
         "XBRL file downloaded.": "XBRL-bestand gedownload.",
         "The XBRL file could not be downloaded.": "Het XBRL-bestand kon niet worden gedownload.",
         "Download the filing's XBRL instance, in any state.": "Download de XBRL-instantie van deze aangifte, in elke status.",
-        "Parts": "Onderdelen"
+        "Parts": "Onderdelen",
+        "The reference the Belastingdienst gave the filed return, asked for when it is marked submitted.": "De referentie die de Belastingdienst aan de ingediende aangifte gaf; gevraagd wanneer die als ingediend wordt gemarkeerd.",
+        "Create correction": "Correctie maken",
+        "A correction of this report was created as a draft under Country-by-country reports.": "Een correctie van dit rapport is als concept aangemaakt onder Landenrapporten.",
+        "The correction could not be created.": "De correctie kon niet worden aangemaakt.",
+        "Start a new report that corrects this filed one. Prepare it from the books and generate its file; only the records that changed are sent.": "Start een nieuw rapport dat dit ingediende rapport corrigeert. Stel het op uit de boekhouding en maak het bestand; alleen de gewijzigde gegevens worden verzonden.",
+        "Only a submitted country-by-country report can be corrected.": "Alleen een ingediend landenrapport kan worden gecorrigeerd."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -29,6 +29,7 @@ use InvalidArgumentException;
 use OCA\Shillinq\Controller\CbcrController;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
+use OCA\Shillinq\Service\Cbcr\CbcrCorrectionService;
 use OCA\Shillinq\Service\Cbcr\CbcrFiguresService;
 use OCA\Shillinq\Service\Cbcr\GroupScopeService;
 use OCA\Shillinq\Service\Cbcr\Pillar2SafeHarbourService;
@@ -83,6 +84,13 @@ final class CbcrControllerTest extends TestCase {
 	private CbcrCheckRunner $checks;
 
 	/**
+	 * The correction service.
+	 *
+	 * @var CbcrCorrectionService&MockObject
+	 */
+	private CbcrCorrectionService $corrections;
+
+	/**
 	 * The controller with the given request parameters, for a member of adm-holding and adm-productie only.
 	 *
 	 * @param array<string,mixed> $parameters The request parameters.
@@ -108,7 +116,10 @@ final class CbcrControllerTest extends TestCase {
 					['id' => 'ge-other', 'entityName' => 'Andere Groep B.V.', 'administrationId' => 'adm-other'],
 				],
 				'Pillar2JurisdictionComputation' => [['id' => 'comp-nl', 'ultimateParentEntity' => 'ge-holding', 'jurisdiction' => 'NL']],
-				'CbcrReturn' => [['id' => 'cbc-2026', 'reportingEntity' => 'ge-productie', 'period' => 'FY2026']],
+				'CbcrReturn' => [
+					['id' => 'cbc-2026', 'reportingEntity' => 'ge-productie', 'period' => 'FY2026'],
+					['id' => 'cbc-other', 'reportingEntity' => 'ge-other', 'period' => 'FY2026', 'state' => 'submitted'],
+				],
 				'GlobeInformationReturn' => [['id' => 'gir-2026', 'ultimateParent' => 'ge-other', 'period' => 'FY2026']],
 			]
 		);
@@ -133,6 +144,7 @@ final class CbcrControllerTest extends TestCase {
 			$this->figures,
 			$this->safeHarbour,
 			$this->checks,
+			$this->corrections,
 			$store,
 			$context,
 			$session,
@@ -152,6 +164,7 @@ final class CbcrControllerTest extends TestCase {
 		$this->figures     = $this->createMock(CbcrFiguresService::class);
 		$this->safeHarbour = $this->createMock(Pillar2SafeHarbourService::class);
 		$this->checks      = $this->createMock(CbcrCheckRunner::class);
+		$this->corrections = $this->createMock(CbcrCorrectionService::class);
 	}//end setUp()
 
 	/**
@@ -274,4 +287,47 @@ final class CbcrControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_FOUND, $controller->safeHarbourReturn('gir-2026')->getStatus());
 		$this->assertSame(Http::STATUS_NOT_FOUND, $controller->prepareReturn('cbc-missing')->getStatus());
 	}//end testTheReportActionsTakeTheGroupAndYearFromTheReport()
+
+	/**
+	 * "Create correction" answers 201 with a new correction and 200 with the
+	 * one already open, for the report as stored.
+	 *
+	 * @return void
+	 */
+	public function testCreateCorrectionAnswersCreatedOrTheOpenCorrection(): void {
+		$this->corrections->expects($this->exactly(2))->method('createCorrection')
+			->with($this->callback(static fn (array $return): bool => $return['id'] === 'cbc-2026' && $return['reportingEntity'] === 'ge-productie'))
+			->willReturnOnConsecutiveCalls(
+				['correction' => ['id' => 'cbc-2026-c1', 'correctsReturn' => 'cbc-2026'], 'created' => true],
+				['correction' => ['id' => 'cbc-2026-c1', 'correctsReturn' => 'cbc-2026'], 'created' => false]
+			);
+		$controller = $this->controller();
+
+		$created = $controller->createCorrection('cbc-2026');
+		$this->assertSame(Http::STATUS_CREATED, $created->getStatus());
+		$this->assertSame(['id' => 'cbc-2026-c1', 'correctsReturn' => 'cbc-2026'], $created->getData());
+
+		$open = $controller->createCorrection('cbc-2026');
+		$this->assertSame(Http::STATUS_OK, $open->getStatus());
+		$this->assertSame('cbc-2026-c1', $open->getData()['id']);
+	}//end testCreateCorrectionAnswersCreatedOrTheOpenCorrection()
+
+	/**
+	 * Another group's report and an unknown report answer 404 and nothing is
+	 * created; a report that was not submitted is a 422 with the reason.
+	 *
+	 * @return void
+	 */
+	public function testCreateCorrectionIsRefusedOutsideTheGroupOrBeforeSubmission(): void {
+		$refusal = 'Only a submitted country-by-country report can be corrected.';
+		$this->corrections->expects($this->once())->method('createCorrection')->willThrowException(new InvalidArgumentException($refusal));
+		$controller = $this->controller();
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $controller->createCorrection('cbc-other')->getStatus());
+		$this->assertSame(Http::STATUS_NOT_FOUND, $controller->createCorrection('cbc-missing')->getStatus());
+
+		$response = $controller->createCorrection('cbc-2026');
+		$this->assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		$this->assertSame(['error' => $refusal], $response->getData());
+	}//end testCreateCorrectionIsRefusedOutsideTheGroupOrBeforeSubmission()
 }//end class

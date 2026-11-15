@@ -5648,18 +5648,6 @@
 			]
 		},
 		{
-			"menu": [],
-			"pages": [
-				{
-					"_fragment": "tax-vat-position-and-suppletie",
-					"id": "BtwCorrectieDetail",
-					"route": "/belastingen/btw-correcties/:id",
-					"type": "detail",
-					"title": "BTW-correctie"
-				}
-			]
-		},
-		{
 			"menu": [
 				{
 					"id": "Taxes",
@@ -5733,6 +5721,18 @@
 					"route": "/taxes/minimum-tax/:id",
 					"type": "detail",
 					"title": "Minimum tax return"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-vat-position-and-suppletie",
+					"id": "BtwCorrectieDetail",
+					"route": "/belastingen/btw-correcties/:id",
+					"type": "detail",
+					"title": "BTW-correctie"
 				}
 			]
 		},

@@ -40,6 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
+use OCA\Shillinq\Service\Cbcr\CbcrCorrectionService;
 use OCA\Shillinq\Service\Cbcr\CbcrFiguresService;
 use OCA\Shillinq\Service\Cbcr\GroupScopeService;
 use OCA\Shillinq\Service\Cbcr\Pillar2SafeHarbourService;
@@ -70,6 +71,7 @@ class CbcrController extends Controller {
 	 * @param CbcrFiguresService                    $figures     Figures from the books.
 	 * @param Pillar2SafeHarbourService             $safeHarbour Safe harbour tests and QDMTT.
 	 * @param CbcrCheckRunner                       $checks      The CbC and GIR checks.
+	 * @param CbcrCorrectionService                 $corrections Creates the correction of a submitted CbC report.
 	 * @param ObjectServiceInterface                $objects     OpenRegister's object service.
 	 * @param AdministrationContextServiceInterface $context     Which administrations the caller may use.
 	 * @param IUserSession                          $session     The caller.
@@ -83,6 +85,7 @@ class CbcrController extends Controller {
 		private readonly CbcrFiguresService $figures,
 		private readonly Pillar2SafeHarbourService $safeHarbour,
 		private readonly CbcrCheckRunner $checks,
+		private readonly CbcrCorrectionService $corrections,
 		private readonly ObjectServiceInterface $objects,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $session,
@@ -293,6 +296,39 @@ class CbcrController extends Controller {
 
 		return $this->checksResponse(results: $this->checks->runGir(return: $return));
 	}//end girChecks()
+
+	/**
+	 * "Create correction" on a submitted CbC report: a new draft report that
+	 * corrects it, or the correction already open for it (REQ-CBC-013).
+	 *
+	 * @param string $returnId The submitted CbcrReturn id.
+	 *
+	 * @return JSONResponse 201 with the new correction, 200 with the open one;
+	 *                      422 when the report was not submitted; 404 for a
+	 *                      report the caller may not see.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-6.2
+	 */
+	#[NoAdminRequired]
+	public function createCorrection(string $returnId): JSONResponse {
+		$return = $this->record(schema: 'CbcrReturn', id: $returnId);
+		$entity = $this->entityFor(id: (string)($return['reportingEntity'] ?? ''));
+		if ($return === null || $entity === null || $this->canAccessBooks(entity: $this->upeOf(entity: $entity)) === false) {
+			return $this->notFound();
+		}
+
+		try {
+			$result = $this->corrections->createCorrection(return: $return);
+		} catch (Throwable $e) {
+			return $this->failed(error: $e);
+		}
+
+		if ($result['created'] === true) {
+			return new JSONResponse($result['correction'], Http::STATUS_CREATED);
+		}
+
+		return new JSONResponse($result['correction']);
+	}//end createCorrection()
 
 	/**
 	 * Read every bookkeeping entity of the group, then summarise.

@@ -5077,7 +5077,14 @@ OC.L10N.register(
         "XBRL file downloaded.": "XBRL file downloaded.",
         "The XBRL file could not be downloaded.": "The XBRL file could not be downloaded.",
         "Download the filing's XBRL instance, in any state.": "Download the filing's XBRL instance, in any state.",
-        "Parts": "Parts"
+        "Parts": "Parts",
+        "Belastingdienst reference": "Belastingdienst reference",
+        "The reference the Belastingdienst gave the filed return, asked for when it is marked submitted.": "The reference the Belastingdienst gave the filed return, asked for when it is marked submitted.",
+        "Create correction": "Create correction",
+        "A correction of this report was created as a draft under Country-by-country reports.": "A correction of this report was created as a draft under Country-by-country reports.",
+        "The correction could not be created.": "The correction could not be created.",
+        "Start a new report that corrects this filed one. Prepare it from the books and generate its file; only the records that changed are sent.": "Start a new report that corrects this filed one. Prepare it from the books and generate its file; only the records that changed are sent.",
+        "Only a submitted country-by-country report can be corrected.": "Only a submitted country-by-country report can be corrected."
     },
     "nplurals=2; plural=(n != 1);"
 )
