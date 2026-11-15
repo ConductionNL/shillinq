@@ -2,40 +2,35 @@
  * SPDX-License-Identifier: EUPL-1.2
  * Copyright (C) 2026 Conduction B.V.
  *
- * The supplier side of Relations both ways: the linked customer's page URL,
- * the "open linked customer" header action on a supplier (from the row or
- * from the page URL), what it says when there is no link or the lookup fails,
- * and the export header action.
- *
- * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
+ * The supplier side of Relations both ways (src/utils/relationActions.js):
+ * the linked customer's page found from a supplier, the header action that
+ * opens it or says the supplier is not linked yet, and the export dialog.
+ * Only HTTP, the toasts, the dialog spawner and the location are replaced.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({
-	get: vi.fn(),
-	showError: vi.fn(),
-	showInfo: vi.fn(),
-	spawnDialog: vi.fn(() => 'dialog-result'),
-}))
-vi.mock('@nextcloud/router', () => ({
-	generateUrl: (url, params = {}) => url.replace(/\{(\w+)\}/g, (m, k) => String(params[k])),
-}))
-vi.mock('@nextcloud/l10n', () => ({ translate: (app, text) => text }))
-vi.mock('@nextcloud/dialogs', () => ({ showError: mocks.showError, showInfo: mocks.showInfo, showSuccess: vi.fn() }))
+const http = vi.hoisted(() => ({ get: vi.fn() }))
+const toast = vi.hoisted(() => ({ showError: vi.fn(), showInfo: vi.fn(), showSuccess: vi.fn() }))
+const dialog = vi.hoisted(() => ({ spawnDialog: vi.fn() }))
+
+vi.mock('@nextcloud/axios', () => ({ default: http }))
+vi.mock('@nextcloud/dialogs', () => toast)
 vi.mock('@nextcloud/event-bus', () => ({ emit: vi.fn() }))
-vi.mock('@nextcloud/vue/functions/dialog', () => ({ spawnDialog: mocks.spawnDialog }))
+vi.mock('@nextcloud/l10n', () => ({ translate: (app, text) => text }))
+vi.mock('@nextcloud/router', () => ({
+	generateUrl: (url, vars = {}) => '/index.php' + url.replace(/\{(\w+)\}/g, (all, key) => encodeURIComponent(vars[key])),
+}))
+vi.mock('@nextcloud/vue/functions/dialog', () => dialog)
 vi.mock('../../src/modals/RelationsExportDialog.vue', () => ({ default: { name: 'RelationsExportDialog' } }))
-vi.mock('@nextcloud/axios', () => ({ default: { get: mocks.get, post: vi.fn() } }))
 
 const { linkedCustomerUrl, openPayeeRelation, openRelationsExport } = await import('../../src/utils/relationActions.js')
+const { default: RelationsExportDialog } = await import('../../src/modals/RelationsExportDialog.vue')
 
 let assign
 
 beforeEach(() => {
-	mocks.get.mockReset()
-	mocks.showError.mockReset()
-	mocks.showInfo.mockReset()
+	vi.clearAllMocks()
 	assign = vi.fn()
 	vi.stubGlobal('window', { location: { pathname: '/apps/shillinq/bookkeeping/payees/payee-from-url', assign } })
 })
@@ -45,68 +40,68 @@ afterEach(() => {
 })
 
 describe('linkedCustomerUrl', () => {
-	it('asks both sides of the supplier and answers the customer page', async () => {
-		mocks.get.mockResolvedValueOnce({ data: { customer: { id: 'cust-7' } } })
+	it('answers the linked customer page of a supplier', async () => {
+		http.get.mockResolvedValue({ data: { customer: { id: 'cust 1' } } })
 
-		expect(await linkedCustomerUrl('payee-1')).toBe('/apps/shillinq/bookkeeping/customers/cust-7')
-		expect(mocks.get).toHaveBeenCalledWith('/apps/shillinq/api/relations/payee/payee-1/both-sides')
+		await expect(linkedCustomerUrl('payee-1')).resolves.toBe('/index.php/apps/shillinq/bookkeeping/customers/cust%201')
+		expect(http.get).toHaveBeenCalledWith('/index.php/apps/shillinq/api/relations/payee/payee-1/both-sides')
 	})
 
 	it.each([
 		['no customer', { customer: null }],
 		['a customer without id', { customer: {} }],
 		['no body', null],
-	])('answers null for %s', async (name, data) => {
-		mocks.get.mockResolvedValueOnce({ data })
-
-		expect(await linkedCustomerUrl('payee-1')).toBeNull()
+	])('answers null for %s', async (label, data) => {
+		http.get.mockResolvedValue({ data })
+		await expect(linkedCustomerUrl('payee-1')).resolves.toBeNull()
 	})
 })
 
 describe('openPayeeRelation', () => {
-	it('opens the linked customer of the row\'s supplier', async () => {
-		mocks.get.mockResolvedValueOnce({ data: { customer: { id: 'cust-7' } } })
+	it('opens the linked customer of the supplier on the page', async () => {
+		http.get.mockResolvedValue({ data: { customer: { id: 'cust-2' } } })
 
-		expect(await openPayeeRelation({ item: { id: 'payee-1' } })).toBe(true)
-		expect(mocks.get).toHaveBeenCalledWith('/apps/shillinq/api/relations/payee/payee-1/both-sides')
-		expect(assign).toHaveBeenCalledWith('/apps/shillinq/bookkeeping/customers/cust-7')
+		await expect(openPayeeRelation({ item: { id: 'payee-2' } })).resolves.toBe(true)
+
+		expect(http.get).toHaveBeenCalledWith('/index.php/apps/shillinq/api/relations/payee/payee-2/both-sides')
+		expect(assign).toHaveBeenCalledWith('/index.php/apps/shillinq/bookkeeping/customers/cust-2')
+		expect(toast.showInfo).not.toHaveBeenCalled()
 	})
 
-	it('reads the supplier from the page URL without a row', async () => {
-		mocks.get.mockResolvedValueOnce({ data: { customer: { id: 'cust-8' } } })
+	it('takes the supplier from the address when the scope has no item', async () => {
+		http.get.mockResolvedValue({ data: { customer: { id: 'cust-3' } } })
 
-		expect(await openPayeeRelation(undefined)).toBe(true)
-		expect(mocks.get).toHaveBeenCalledWith('/apps/shillinq/api/relations/payee/payee-from-url/both-sides')
+		await expect(openPayeeRelation(undefined)).resolves.toBe(true)
+
+		expect(http.get).toHaveBeenCalledWith('/index.php/apps/shillinq/api/relations/payee/payee-from-url/both-sides')
 	})
 
-	it('says the supplier is not linked yet and opens nothing', async () => {
-		mocks.get.mockResolvedValueOnce({ data: { customer: null } })
+	it('says the supplier is not linked yet and goes nowhere', async () => {
+		http.get.mockResolvedValue({ data: {} })
 
-		expect(await openPayeeRelation({ item: { id: 'payee-1' } })).toBe(false)
-		expect(mocks.showInfo).toHaveBeenCalledWith('This supplier is not linked to a customer yet. Link it from the customer page or from Relations both ways.')
+		await expect(openPayeeRelation({ item: { id: 'payee-4' } })).resolves.toBe(false)
+
+		expect(toast.showInfo).toHaveBeenCalledWith('This supplier is not linked to a customer yet. Link it from the customer page or from Relations both ways.')
 		expect(assign).not.toHaveBeenCalled()
 	})
 
-	it('shows the server\'s reason when the lookup fails', async () => {
-		mocks.get.mockRejectedValueOnce({ response: { data: { error: 'Supplier not found' } } })
+	it('shows the server reason, or a fallback, when the lookup fails', async () => {
+		http.get.mockRejectedValueOnce({ response: { data: { error: 'Geen toegang' } } })
+		await expect(openPayeeRelation({ item: { id: 'payee-5' } })).resolves.toBe(false)
+		expect(toast.showError).toHaveBeenLastCalledWith('Geen toegang')
 
-		expect(await openPayeeRelation({ item: { id: 'payee-x' } })).toBe(false)
-		expect(mocks.showError).toHaveBeenCalledTimes(1)
-		expect(mocks.showError.mock.calls[0][0]).toBe('Supplier not found')
+		http.get.mockRejectedValueOnce(new Error('offline'))
+		await expect(openPayeeRelation({ item: { id: 'payee-5' } })).resolves.toBe(false)
+		expect(toast.showError).toHaveBeenLastCalledWith('The linked customer could not be found.')
 		expect(assign).not.toHaveBeenCalled()
-	})
-
-	it('falls back to its own words when the failure carries none', async () => {
-		mocks.get.mockRejectedValueOnce(new Error('Network Error'))
-
-		expect(await openPayeeRelation({ item: { id: 'payee-x' } })).toBe(false)
-		expect(mocks.showError).toHaveBeenCalledWith('The linked customer could not be found.')
 	})
 })
 
 describe('openRelationsExport', () => {
-	it('opens the export dialog and hands its result back', () => {
-		expect(openRelationsExport()).toBe('dialog-result')
-		expect(mocks.spawnDialog).toHaveBeenCalledWith({ name: 'RelationsExportDialog' }, { open: true })
+	it('opens the export dialog already open and hands back what it closes with', () => {
+		dialog.spawnDialog.mockReturnValue('closed')
+
+		expect(openRelationsExport()).toBe('closed')
+		expect(dialog.spawnDialog).toHaveBeenCalledWith(RelationsExportDialog, { open: true })
 	})
 })

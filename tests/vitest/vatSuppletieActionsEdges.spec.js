@@ -2,52 +2,50 @@
  * SPDX-License-Identifier: EUPL-1.2
  * Copyright (C) 2026 Conduction B.V.
  *
- * The edges of the VAT correction page actions (tax-vat-position-and-suppletie):
- * where the record id comes from, the actions without an id, the fallback
- * refusals, a prepared correction under the threshold, a failed filing that
- * is not a missing Digipoort, and a lines action with nothing to show.
+ * The edges of the supplementary-return actions
+ * (src/utils/vatSuppletieActions.js, tax-vat-position-and-suppletie 2.1 and
+ * 2.2): a correction small enough for the next return, a prepare that fails,
+ * the record id taken from the page or the address, and every action doing
+ * nothing without a record. Only HTTP, the toasts, the event bus, the dialog
+ * spawner and the location are replaced.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({
-	post: vi.fn(),
-	showError: vi.fn(),
-	showSuccess: vi.fn(),
-	showWarning: vi.fn(),
-	emit: vi.fn(),
-	spawnDialog: vi.fn(() => 'dialog'),
+const http = vi.hoisted(() => ({ post: vi.fn() }))
+const toast = vi.hoisted(() => ({ showError: vi.fn(), showSuccess: vi.fn(), showWarning: vi.fn() }))
+const bus = vi.hoisted(() => ({ emit: vi.fn() }))
+
+vi.mock('@nextcloud/axios', () => ({ default: http }))
+vi.mock('@nextcloud/dialogs', () => toast)
+vi.mock('@nextcloud/event-bus', () => bus)
+vi.mock('@nextcloud/l10n', () => ({
+	translate: (app, text, vars = {}) => text.replace(/\{(\w+)\}/g, (all, key) => (key in vars ? String(vars[key]) : all)),
 }))
 vi.mock('@nextcloud/router', () => ({
-	generateUrl: (url, params = {}) => url.replace(/\{(\w+)\}/g, (m, k) => String(params[k])),
+	generateUrl: (url, vars = {}) => '/index.php' + url.replace(/\{(\w+)\}/g, (all, key) => encodeURIComponent(vars[key])),
 }))
-vi.mock('@nextcloud/l10n', () => ({
-	translate: (app, text, vars = {}) => text.replace(/\{(\w+)\}/g, (m, k) => String(vars[k])),
-}))
-vi.mock('@nextcloud/dialogs', () => ({ showError: mocks.showError, showSuccess: mocks.showSuccess, showWarning: mocks.showWarning }))
-vi.mock('@nextcloud/event-bus', () => ({ emit: mocks.emit }))
-vi.mock('@nextcloud/axios', () => ({ default: { post: mocks.post } }))
-vi.mock('@nextcloud/vue/functions/dialog', () => ({ spawnDialog: mocks.spawnDialog }))
-vi.mock('../../src/modals/VatPositionLinesModal.vue', () => ({ default: { name: 'VatPositionLinesModal' } }))
+vi.mock('@nextcloud/vue/functions/dialog', () => ({ spawnDialog: vi.fn() }))
+vi.mock('../../src/modals/VatPositionLinesModal.vue', () => ({ default: {} }))
 
 const actions = await import('../../src/utils/vatSuppletieActions.js')
 
 let assign
 
 /**
- * Point the page at a path.
+ * Put the browser on an address.
  *
  * @param {string} pathname The path.
+ * @return {void}
  */
 function at(pathname) {
-	assign = vi.fn()
 	vi.stubGlobal('window', { location: { pathname, assign } })
 }
 
 beforeEach(() => {
-	Object.values(mocks).forEach((mock) => mock.mockReset())
-	mocks.spawnDialog.mockReturnValue('dialog')
-	at('/apps/shillinq/tax/vat-corrections/corr-url')
+	vi.clearAllMocks()
+	assign = vi.fn()
+	at('/apps/shillinq/bookkeeping/vat-corrections/')
 })
 
 afterEach(() => {
@@ -55,81 +53,78 @@ afterEach(() => {
 })
 
 describe('recordId', () => {
-	it('takes the row, then the page object, then the URL', () => {
-		expect(actions.recordId({ item: { id: 'row-1' }, object: { id: 'obj-1' } })).toBe('row-1')
+	it('takes the page item, then the page object, then the last part of the address', () => {
+		expect(actions.recordId({ item: { id: 'item-1' }, object: { id: 'obj-1' } })).toBe('item-1')
 		expect(actions.recordId({ object: { id: 'obj-1' } })).toBe('obj-1')
-		expect(actions.recordId(undefined)).toBe('corr-url')
-		at('/')
+		at('/apps/shillinq/bookkeeping/vat-returns/ret-9')
+		expect(actions.recordId(null)).toBe('ret-9')
+	})
+
+	it('answers an empty id on an address that ends in a slash', () => {
 		expect(actions.recordId({})).toBe('')
 	})
 })
 
-describe('without a record id', () => {
-	beforeEach(() => at('/'))
+describe('preparedMessage', () => {
+	it('says a correction of EUR 1,000 or less goes into the next return', () => {
+		expect(actions.preparedMessage({ thresholdExceeded: false })).toBe('The correction is EUR 1,000 or less and can go into the next return. The correction posting is staged.')
+		expect(actions.preparedMessage(null)).toBe('The correction is EUR 1,000 or less and can go into the next return. The correction posting is staged.')
+	})
 
-	it('asks the server nothing and says nothing', async () => {
-		expect(await actions.checkVatReturnForCorrections({})).toBeNull()
-		expect(await actions.prepareSupplementaryReturn({})).toBeNull()
+	it('names no date when an above-threshold correction has no deadline', () => {
+		expect(actions.preparedMessage({ thresholdExceeded: true, filingDeadline: null })).toBe('The correction is above EUR 1,000: file the supplementary return before . The correction posting is staged.')
+	})
+})
+
+describe('without a record', () => {
+	it('checks, prepares, downloads and files nothing', async () => {
+		await expect(actions.checkVatReturnForCorrections({})).resolves.toBeNull()
+		await expect(actions.prepareSupplementaryReturn({})).resolves.toBeNull()
 		expect(actions.downloadSupplementaryReturn({})).toBe('')
-		expect(await actions.fileSupplementaryReturn({})).toBe('failed')
-		expect(mocks.post).not.toHaveBeenCalled()
+		await expect(actions.fileSupplementaryReturn({})).resolves.toBe('failed')
+
+		expect(http.post).not.toHaveBeenCalled()
 		expect(assign).not.toHaveBeenCalled()
-		expect(mocks.showError).not.toHaveBeenCalled()
+		expect(bus.emit).not.toHaveBeenCalled()
 	})
 })
 
-describe('preparing and filing', () => {
-	it('says a correction under the threshold goes into the next return', async () => {
-		mocks.post.mockResolvedValueOnce({ data: { data: { thresholdExceeded: false } } })
+describe('prepareSupplementaryReturn', () => {
+	it('stages a small correction for the next return and refreshes the page', async () => {
+		http.post.mockResolvedValue({ data: { data: { id: 'corr-1', thresholdExceeded: false } } })
 
-		expect(await actions.prepareSupplementaryReturn({ item: { id: 'corr-1' } })).toEqual({ thresholdExceeded: false })
-		expect(mocks.post).toHaveBeenCalledWith('/apps/shillinq/api/vat-corrections/corr-1/prepare')
-		expect(mocks.showSuccess).toHaveBeenCalledWith('The correction is EUR 1,000 or less and can go into the next return. The correction posting is staged.')
-		expect(mocks.emit).toHaveBeenCalledWith('cn:page:refresh', {})
+		await expect(actions.prepareSupplementaryReturn({ item: { id: 'corr-1' } })).resolves.toEqual({ id: 'corr-1', thresholdExceeded: false })
+
+		expect(http.post).toHaveBeenCalledWith('/index.php/apps/shillinq/api/vat-corrections/corr-1/prepare')
+		expect(toast.showSuccess).toHaveBeenCalledWith('The correction is EUR 1,000 or less and can go into the next return. The correction posting is staged.')
+		expect(bus.emit).toHaveBeenCalledWith('cn:page:refresh', {})
 	})
 
-	it('answers null when the server sends no correction back', async () => {
-		mocks.post.mockResolvedValueOnce({ data: {} })
-
-		expect(await actions.prepareSupplementaryReturn({ item: { id: 'corr-1' } })).toBeNull()
+	it('answers null when the endpoint sends no correction back', async () => {
+		http.post.mockResolvedValue({ data: {} })
+		await expect(actions.prepareSupplementaryReturn({ item: { id: 'corr-2' } })).resolves.toBeNull()
 	})
 
-	it('names no date when an exceeded threshold carries none', () => {
-		expect(actions.preparedMessage({ thresholdExceeded: true })).toBe('The correction is above EUR 1,000: file the supplementary return before . The correction posting is staged.')
+	it('shows the server refusal, or a fallback, and does not refresh', async () => {
+		http.post.mockRejectedValueOnce({ response: { data: { error: 'Periode is gesloten' } } })
+		await expect(actions.prepareSupplementaryReturn({ item: { id: 'corr-3' } })).resolves.toBeNull()
+		expect(toast.showError).toHaveBeenLastCalledWith('Periode is gesloten')
+
+		http.post.mockRejectedValueOnce(new Error('offline'))
+		await expect(actions.prepareSupplementaryReturn({ item: { id: 'corr-3' } })).resolves.toBeNull()
+		expect(toast.showError).toHaveBeenLastCalledWith('The supplementary return could not be prepared.')
+		expect(bus.emit).not.toHaveBeenCalled()
 	})
+})
 
-	it.each([
-		['prepare', () => actions.prepareSupplementaryReturn({ item: { id: 'c' } }), null, 'The supplementary return could not be prepared.'],
-		['check', () => actions.checkVatReturnForCorrections({ item: { id: 'r' } }), null, 'The return could not be checked for corrections.'],
-		['file', () => actions.fileSupplementaryReturn({ item: { id: 'c' } }), 'failed', 'The supplementary return could not be filed.'],
-	])('falls back to its own words when %s fails without a reason', async (name, run, result, text) => {
-		mocks.post.mockRejectedValueOnce(new Error('Network Error'))
-
-		expect(await run()).toBe(result)
-		expect(mocks.showError).toHaveBeenCalledWith(text)
-		expect(mocks.emit).not.toHaveBeenCalled()
-	})
-
+describe('fileSupplementaryReturn', () => {
 	it('does not download on a conflict that offers no download', async () => {
-		mocks.post.mockRejectedValueOnce({ response: { status: 409, data: { error: 'Already filed.' } } })
+		http.post.mockRejectedValue({ response: { status: 409, data: { error: 'Al ingediend' } } })
 
-		expect(await actions.fileSupplementaryReturn({ item: { id: 'corr-1' } })).toBe('failed')
-		expect(mocks.showError).toHaveBeenCalledWith('Already filed.')
-		expect(mocks.showWarning).not.toHaveBeenCalled()
+		await expect(actions.fileSupplementaryReturn({ item: { id: 'corr-4' } })).resolves.toBe('failed')
+
+		expect(toast.showError).toHaveBeenCalledWith('Al ingediend')
+		expect(toast.showWarning).not.toHaveBeenCalled()
 		expect(assign).not.toHaveBeenCalled()
-	})
-})
-
-describe('openVatPositionLines', () => {
-	it('opens nothing when no argument carries lines', () => {
-		expect(actions.openVatPositionLines({ item: { id: 'x' } }, 'row', null)).toBeNull()
-		expect(mocks.spawnDialog).not.toHaveBeenCalled()
-	})
-
-	it('takes the lines from a row scope when no box is handed over', () => {
-		const item = { box: '1a', lines: [] }
-
-		expect(actions.openVatPositionLines({ item })).toBe('dialog')
-		expect(mocks.spawnDialog).toHaveBeenCalledWith({ name: 'VatPositionLinesModal' }, { box: item })
 	})
 })

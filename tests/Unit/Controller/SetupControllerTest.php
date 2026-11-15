@@ -144,6 +144,28 @@ final class SetupControllerTest extends TestCase {
 	}//end testStatusCarriesTheOptionListTheChoiceStepReads()
 
 	/**
+	 * The status document carries the chart templates the template step offers,
+	 * office templates included.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testStatusCarriesTheChartTemplateOptions(): void {
+		$this->stubConfig([]);
+		$this->demoDataService->method('listChoices')->willReturn([]);
+		$choices = [
+			['value' => 'mkb', 'label' => 'MKB'],
+			['value' => 'office:tpl-1', 'label' => 'Kantoor De Boer MKB', 'office' => true],
+		];
+		$this->settingsService->expects($this->once())->method('chartTemplateChoices')->willReturn($choices);
+
+		$data = $this->controller->status()->getData();
+
+		$this->assertSame($choices, $data['chartTemplates']);
+	}//end testStatusCarriesTheChartTemplateOptions()
+
+	/**
 	 * Choosing none closes both steps without running anything.
 	 *
 	 * 🔴 THE DEFECT THIS FIXES. This app implemented `skip-demo-data` and no
@@ -767,7 +789,7 @@ final class SetupControllerTest extends TestCase {
 
 		$this->appConfig->expects($this->never())->method('setValueString');
 		$data = $this->controller->status()->getData();
-		self::assertSame(['version', 'completed', 'datasets', 'steps'], array_keys($data));
+		self::assertSame(['version', 'completed', 'datasets', 'chartTemplates', 'steps'], array_keys($data));
 		self::assertSame(
 			[
 				'welcome' => ['done' => true],

@@ -123,7 +123,7 @@ class MeterReadingImportControllerTest extends TestCase {
 
 		return new MeterReadingImportController(
 			$request,
-			new AdministrationContextService($container, $session, $config, $this->createMock(LoggerInterface::class)),
+			new AdministrationContextService($container, $session, $config, $this->createMock(LoggerInterface::class), $this->createMock(\OCP\IConfig::class)),
 			new MeterReadingImportService($this->store, $settings, $l10n)
 		);
 
