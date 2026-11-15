@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\ConnectionReportService;
+use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -50,11 +50,11 @@ class ConnectionReportJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory            $time     Nextcloud time factory.
-	 * @param ConnectionReportService $reporter Sends the reports.
+	 * @param ConnectionReportServiceInterface $reporter Sends the reports.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly ConnectionReportService $reporter,
+		private readonly ConnectionReportServiceInterface $reporter,
 	) {
 		parent::__construct(time: $time);
 		$this->setInterval(seconds: self::INTERVAL_SECONDS);

@@ -32,7 +32,7 @@
         },
         "slug": "FeeSchedule",
         "icon": "CashRegister",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Fee Schedule",
         "description": "What a case type costs. One row per (targetApp, register, schema, typeProperty, typeValue, intakeChannel) and validity window, so a fee change is a new row with a new validFrom rather than an edit that loses what was charged last year. At most one schedule is valid per tuple on a given day: FeeScheduleService refuses an overlap and names the schedule it overlaps with, because two valid fees for one case type is a question nothing can answer. V0.2.0 (fees-payments-and-the-contract-register) makes the legal basis a structured citation and required, and moves the amount into `amounts`, one entry per intake channel with at most one default.",
         "x-openregister-audit-trail": {
@@ -77,11 +77,31 @@
             "title": "Type Property",
             "description": "The property on that schema holding the type value, so the same schedule shape works for a case type, a permit kind or a product line."
           },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Bouwen, per euro bouwkosten",
+            "title": "Name",
+            "description": "The rule as people read it in a fee list. Lists fall back to the type value without one."
+          },
           "typeValue": {
             "type": "string",
             "example": "bouwvergunning",
             "title": "Type Value",
             "description": "The value of that property this fee applies to."
+          },
+          "variantProperty": {
+            "type": "string",
+            "default": "variant",
+            "example": "variant",
+            "title": "Variant Property",
+            "description": "The property on the object holding its variant (route), when the type has variants."
+          },
+          "variantValue": {
+            "type": "string",
+            "example": "Met welstand",
+            "title": "Variant Value",
+            "description": "The variant this fee applies to. Empty means every variant; a fee for the object's own variant wins over one without."
           },
           "intakeChannel": {
             "type": "string",
@@ -149,6 +169,52 @@
               ]
             },
             "title": "Amounts"
+          },
+          "calculation": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "percentage",
+              "per_unit",
+              "refund_percentage"
+            ],
+            "default": "fixed",
+            "title": "Calculation",
+            "description": "How the fee is worked out: a fixed amount; a percentage of a base value on the object with a minimum; a price per unit counted on the object; or a percentage refunded of a fee already paid."
+          },
+          "percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 2.35,
+            "title": "Percentage",
+            "description": "The percentage, for percentage and refund_percentage."
+          },
+          "minimumAmount": {
+            "type": "number",
+            "minimum": 0,
+            "example": 125,
+            "title": "Minimum Amount",
+            "description": "The least the fee is, for percentage."
+          },
+          "baseProperty": {
+            "type": "string",
+            "example": "bouwkosten",
+            "title": "Base Property",
+            "description": "The object's property the percentage is taken of, or the count a per-unit price is multiplied by."
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0,
+            "example": 82.4,
+            "title": "Unit Price",
+            "description": "The price per unit, for per_unit."
+          },
+          "unitLabel": {
+            "type": "string",
+            "example": "boom",
+            "title": "Unit Label",
+            "description": "What one unit is, in the fee list's words (per boom)."
           },
           "currency": {
             "type": "string",

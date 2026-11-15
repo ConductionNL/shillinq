@@ -3,6 +3,9 @@
 /**
  * ENSIA Validation Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Single declarative-precondition seam the OpenRegister lifecycle engine
  * cannot yet express for the ENSIA (Eenduidige Normatiek Single Information
  * Audit) annual cycle (REQ-ENSIA-001..010).
@@ -40,16 +43,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -90,7 +90,7 @@ class ENSIAValidationGuard {
 	 * @return string The register slug, defaulting to 'shillinq'.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -147,20 +147,7 @@ class ENSIAValidationGuard {
 		}
 
 		try {
-			$unresolved = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('Evaluatievraag')
-				->findAll(
-					[
-						'filters' => [
-							'cyclusId' => $cyclusId,
-							'peerReviewStatus' => 'wijziging-gevraagd',
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($unresolved) === false) {
+			if ($this->hasUnresolvedWijziging(objectService: $objectService, cyclusId: $cyclusId) === true) {
 				$this->logger->info(
 					'ENSIAValidationGuard: blocking college-akkoord — unresolved peer-review wijzigingen',
 					['cyclusId' => $cyclusId]
@@ -183,6 +170,32 @@ class ENSIAValidationGuard {
 	}//end collegeAkkoordAllowed()
 
 	/**
+	 * Whether any of the cycle's questions still awaits a requested wijziging.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $cyclusId The ENSIAJaarcyclus id.
+	 *
+	 * @return bool True when at least one question is `wijziging-gevraagd`.
+	 */
+	private function hasUnresolvedWijziging(object $objectService, string $cyclusId): bool {
+		$unresolved = $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('Evaluatievraag')
+			->findAll(
+				[
+					'filters' => [
+						'cyclusId' => $cyclusId,
+						'peerReviewStatus' => 'wijziging-gevraagd',
+					],
+					'limit' => 1,
+				]
+			);
+
+		return empty($unresolved) === false;
+
+	}//end hasUnresolvedWijziging()
+
+	/**
 	 * Precondition enforcing REQ-ENSIA-003 maturity-evidence rule on an
 	 * Evaluatievraag persist.
 	 *
@@ -201,14 +214,10 @@ class ENSIAValidationGuard {
 			return true;
 		}
 
-		$supportingDocuments = $question['supportingDocuments'] ?? [];
-		if (is_array($supportingDocuments) === false || count($supportingDocuments) === 0) {
+		if (self::hasSupportingDocuments(question: $question) === false) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires evidence',
-				[
-					'questionCode' => (string)($question['questionCode'] ?? ''),
-					'score' => $score,
-				]
+				['questionCode' => (string)($question['questionCode'] ?? ''), 'score' => $score]
 			);
 			return false;
 		}
@@ -217,16 +226,25 @@ class ENSIAValidationGuard {
 		if (mb_strlen($notes) < 50) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires toelichting ≥ 50 chars',
-				[
-					'questionCode' => (string)($question['questionCode'] ?? ''),
-					'toelichtingChars' => mb_strlen($notes),
-				]
+				['questionCode' => (string)($question['questionCode'] ?? ''), 'toelichtingChars' => mb_strlen($notes)]
 			);
 			return false;
 		}
 
 		return true;
 	}//end maturityEvidenceSatisfied()
+
+	/**
+	 * Whether the question carries at least one supporting document.
+	 *
+	 * @param array<string, mixed> $question The ENSIA question.
+	 *
+	 * @return bool
+	 */
+	private static function hasSupportingDocuments(array $question): bool {
+		$supportingDocuments = $question['supportingDocuments'] ?? [];
+		return (is_array($supportingDocuments) === true && count($supportingDocuments) !== 0);
+	}//end hasSupportingDocuments()
 
 	/**
 	 * Precondition enforcing REQ-ENSIA-008 post-peer-review reden requirement

@@ -3,6 +3,9 @@
 /**
  * Commitment Ledger
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Writes what a commitment does to its lines, its movements and its budgets
  * (planning-commitment-year-end, REQ-PCYE-001 to REQ-PCYE-004):
  *
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -38,7 +38,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Commitment;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 
@@ -47,17 +48,17 @@ use OCP\AppFramework\Utility\ITimeFactory;
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
-class CommitmentLedger {
+class CommitmentLedger implements CommitmentLedgerInterface {
 	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ITimeFactory           $time          Today.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ITimeFactory $time,
 	) {
 
@@ -434,9 +435,7 @@ class CommitmentLedger {
 			return [];
 		}
 
-		$matching = array_keys(
-			array_filter($lines, static fn (array $line): bool => $costCentre !== '' && (string)($line['costCentre'] ?? '') === $costCentre)
-		);
+		$matching = self::linesOnCostCentre(lines: $lines, costCentre: $costCentre);
 		if (count($matching) === 1) {
 			return [$matching[0] => $amount];
 		}
@@ -447,9 +446,37 @@ class CommitmentLedger {
 			return [0 => $amount];
 		}
 
+		return self::proportionalShares(weights: $weights, amount: $amount, last: array_key_last($lines));
+
+	}//end allocate()
+
+	/**
+	 * The keys of the lines booked on the cost centre; none when no cost centre is given.
+	 *
+	 * @param array<int|string, array<string, mixed>> $lines      The commitment lines.
+	 * @param string                                  $costCentre The cost centre.
+	 *
+	 * @return list<int|string>
+	 */
+	private static function linesOnCostCentre(array $lines, string $costCentre): array {
+		return array_keys(
+			array_filter($lines, static fn (array $line): bool => $costCentre !== '' && (string)($line['costCentre'] ?? '') === $costCentre)
+		);
+	}//end linesOnCostCentre()
+
+	/**
+	 * Split the amount over the weights, rounding down; the last line takes the remainder.
+	 *
+	 * @param array<int|string, int> $weights The lines' remaining committed amounts.
+	 * @param int                    $amount  The amount to split.
+	 * @param int|string|null        $last    The key of the last line.
+	 *
+	 * @return array<int|string, int>
+	 */
+	private static function proportionalShares(array $weights, int $amount, int|string|null $last): array {
+		$total  = array_sum($weights);
 		$shares = [];
-		$given = 0;
-		$last = array_key_last($lines);
+		$given  = 0;
 		foreach ($weights as $index => $weight) {
 			$share = (int)floor($amount * $weight / $total);
 			if ($index === $last) {
@@ -457,12 +484,11 @@ class CommitmentLedger {
 			}
 
 			$shares[$index] = $share;
-			$given += $share;
+			$given         += $share;
 		}
 
 		return $shares;
-
-	}//end allocate()
+	}//end proportionalShares()
 
 	/**
 	 * Sum of remaining amounts.
@@ -484,7 +510,7 @@ class CommitmentLedger {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

@@ -3,6 +3,9 @@
 /**
  * GL Account Suggestion Client
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change gl-account-suggestion-consume (REQ-GAC-003 / REQ-GAC-005) — the two
  * outbound HTTP calls to docudesk's already-shipped `ai-gl-account-suggestion`
  * REST endpoints (archived
@@ -35,15 +38,13 @@
  *
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
+use OCA\Shillinq\Kernel\Contracts\GlAccountSuggestionClientInterface;
 use OCP\Http\Client\IClientService;
 use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
@@ -54,7 +55,7 @@ use Throwable;
  *
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  */
-class GlAccountSuggestionClient {
+class GlAccountSuggestionClient implements GlAccountSuggestionClientInterface {
 	/**
 	 * Docudesk route name for the suggestion endpoint (NC
 	 * `{appId}.{controller}.{method}` convention for

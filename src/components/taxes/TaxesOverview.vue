@@ -28,6 +28,92 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import ClusterOverview from '../cluster-overview/ClusterOverview.vue'
+import { translateSections } from '../cluster-overview/clusterSections.js'
+
+// Each label is a function, so its literal t() call runs when the page renders.
+const SECTIONS = [
+	{
+		id: 'vat',
+		label: () => t('shillinq', 'VAT / BTW'),
+		cards: [
+			{
+				id: 'VATReturns',
+				label: () => t('shillinq', 'BTW returns'),
+				route: 'VATReturns',
+			},
+			{
+				id: 'OssReturns',
+				label: () => t('shillinq', 'OSS returns'),
+				route: 'OssReturns',
+			},
+		],
+	},
+	{
+		id: 'kor',
+		label: () => t('shillinq', 'KOR (Small Business Scheme)'),
+		cards: [
+			{
+				id: 'KorDashboard',
+				label: () => t('shillinq', 'KOR dashboard'),
+				route: 'KorDashboard',
+			},
+			{
+				id: 'KorAanmelding',
+				label: () => t('shillinq', 'KOR registration'),
+				route: 'KorDashboard',
+				query: { status: 'draft' },
+			},
+			{
+				id: 'KorOpzegging',
+				label: () => t('shillinq', 'KOR cancellation'),
+				route: 'KorDashboard',
+				query: { status: 'ACTIEF' },
+			},
+		],
+	},
+	{
+		id: 'income-tax',
+		label: () => t('shillinq', 'Income Tax'),
+		cards: [
+			{
+				id: 'IbAangifte',
+				label: () => t('shillinq', 'IB return'),
+				route: 'IbAangifte',
+			},
+			{
+				id: 'Vpb',
+				label: () => t('shillinq', 'Corporate tax (Vpb)'),
+				route: 'VpbDeadlines',
+			},
+			{
+				id: 'TaxProvisions',
+				label: () => t('shillinq', 'Deferred tax'),
+				route: 'TaxProvisions',
+			},
+		],
+	},
+	{
+		id: 'wbso',
+		label: () => t('shillinq', 'WBSO & R&D'),
+		cards: [
+			{
+				id: 'RDSubsidies',
+				label: () => t('shillinq', 'R&D grants'),
+				route: 'RDSubsidies',
+			},
+			{
+				id: 'WBSOActivityCodes',
+				label: () => t('shillinq', 'WBSO Activity Codes'),
+				route: 'WBSOActivityCodes',
+			},
+			{
+				id: 'InnovatieboxElections',
+				label: () => t('shillinq', 'Innovation box'),
+				route: 'InnovatieboxElections',
+			},
+		],
+	},
+]
 
 export default {
 	name: 'TaxesOverview',
@@ -41,89 +127,7 @@ export default {
 		 * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-002
 		 */
 		sections() {
-			return [
-				{
-					id: 'vat',
-					label: this.t('shillinq', 'VAT / BTW'),
-					cards: [
-						{
-							id: 'VATReturns',
-							label: this.t('shillinq', 'BTW returns'),
-							route: 'VATReturns',
-						},
-						{
-							id: 'OssReturns',
-							label: this.t('shillinq', 'OSS returns'),
-							route: 'OssReturns',
-						},
-					],
-				},
-				{
-					id: 'kor',
-					label: this.t('shillinq', 'KOR (Small Business Scheme)'),
-					cards: [
-						{
-							id: 'KorDashboard',
-							label: this.t('shillinq', 'KOR dashboard'),
-							route: 'KorDashboard',
-						},
-						{
-							id: 'KorAanmelding',
-							label: this.t('shillinq', 'KOR registration'),
-							route: 'KorDashboard',
-							query: { status: 'draft' },
-						},
-						{
-							id: 'KorOpzegging',
-							label: this.t('shillinq', 'KOR cancellation'),
-							route: 'KorDashboard',
-							query: { status: 'ACTIEF' },
-						},
-					],
-				},
-				{
-					id: 'income-tax',
-					label: this.t('shillinq', 'Income Tax'),
-					cards: [
-						{
-							id: 'IbAangifte',
-							label: this.t('shillinq', 'IB return'),
-							route: 'IbAangifte',
-						},
-						{
-							id: 'Vpb',
-							label: this.t('shillinq', 'Corporate tax (Vpb)'),
-							route: 'VpbDeadlines',
-						},
-						{
-							id: 'TaxProvisions',
-							label: this.t('shillinq', 'Deferred tax'),
-							route: 'TaxProvisions',
-						},
-					],
-				},
-				{
-					id: 'wbso',
-					label: this.t('shillinq', 'WBSO & R&D'),
-					cards: [
-						{
-							id: 'RDSubsidies',
-							label: this.t('shillinq', 'R&D grants'),
-							route: 'RDSubsidies',
-						},
-						{
-							id: 'WBSOActivityCodes',
-							label: this.t('shillinq', 'WBSO Activity Codes'),
-							route: 'WBSOActivityCodes',
-						},
-						{
-							id: 'InnovatieboxElections',
-							label: this.t('shillinq', 'Innovation box'),
-							route: 'InnovatieboxElections',
-						},
-					],
-				},
-			]
+			return translateSections(SECTIONS)
 		},
 	},
 

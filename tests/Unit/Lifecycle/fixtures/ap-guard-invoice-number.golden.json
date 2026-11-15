@@ -1,0 +1,137 @@
+{
+    "noNumber": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "unique": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceNumber": "F-1",
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "nonArray": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceNumber": "F-1",
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "onlySelf": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceNumber": "F-1",
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "duplicate": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "APGuard: duplicate vendor invoice number rejected",
+                {
+                    "vendorId": "v1",
+                    "administrationId": "adm-1",
+                    "invoiceNumber": "F-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceNumber": "F-1",
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "newVsIdless": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "APGuard: duplicate vendor invoice number rejected",
+                {
+                    "vendorId": "",
+                    "administrationId": "",
+                    "invoiceNumber": "F-2"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceNumber": "F-2",
+                        "vendorId": "",
+                        "administrationId": ""
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "APGuard: isInvoiceNumberUnique check failed — denying receive (fail-closed)",
+                {
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceNumber": "F-1",
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    }
+}

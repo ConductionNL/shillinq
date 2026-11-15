@@ -308,4 +308,29 @@ final class ContributionInvoiceBuilderTest extends TestCase {
 			'no description' => [['description' => '  '], 'description'],
 		];
 	}//end malformedCalls()
+
+	/**
+	 * Pin the beneficiary over the default, trimming, partial parts and every refusal.
+	 *
+	 * @return void
+	 */
+	public function testBeneficiaryForEveryShapeIsExact(): void {
+		$customer = ['type' => 'customer', 'register' => 'reg', 'schema' => 'CustomerMaster', 'id' => 'cm-1'];
+		self::assertSame($customer, $this->builder->beneficiaryFor([], 'cm-1', 'reg'));
+		self::assertSame($customer, $this->builder->beneficiaryFor(['beneficiary' => null], 'cm-1', 'reg'));
+		self::assertSame($customer, $this->builder->beneficiaryFor(['beneficiary' => []], 'cm-1', 'reg'));
+		self::assertSame(
+			['type' => 'child', 'schema' => 'Leerling', 'id' => '7'],
+			$this->builder->beneficiaryFor(['beneficiary' => ['id' => 7, 'schema' => ' Leerling ', 'type' => ' child ', 'register' => '  ', 'extra' => 'x']], 'cm-1', 'reg')
+		);
+		foreach (['kid', ['type' => 'child'], ['id' => 'x'], ['type' => ' ', 'id' => 'x'], ['type' => 'child', 'id' => ' ']] as $index => $given) {
+			try {
+				$this->builder->beneficiaryFor(['beneficiary' => $given], 'cm-1', 'reg');
+				self::fail('accepted ' . $index);
+			} catch (\InvalidArgumentException $exception) {
+				self::assertSame('A beneficiary names at least a type and an id.', $exception->getMessage());
+			}
+		}
+
+	}//end testBeneficiaryForEveryShapeIsExact()
 }//end class
