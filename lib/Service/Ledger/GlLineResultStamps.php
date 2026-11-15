@@ -34,6 +34,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Ledger;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\GlLineResultStampsInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -225,10 +227,11 @@ class GlLineResultStamps implements GlLineResultStampsInterface {
 		}
 
 		$this->objectService->patchObject(
-			objectId: $lineId,
-			data: $stamp,
-			register: $this->settings->getRegisterSlug(),
-			schema: 'GLLine',
+			new ObjectPatch(
+				objectId: $lineId,
+				data: $stamp,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'GLLine')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

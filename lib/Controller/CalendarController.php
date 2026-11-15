@@ -35,6 +35,8 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
@@ -552,7 +554,9 @@ class CalendarController extends Controller {
 	private function saveBooking(array $booking): array {
 		$payload = (new CalendarRows())->payload(booking: $booking);
 		$saved   = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService')
-			->saveObject(object: $payload, register: $this->settings->getRegisterSlug(), schema: 'Booking');
+			->saveObject(object: $payload, options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'Booking')
+			));
 		$row     = array_merge($payload, $this->toArray(object: $saved));
 
 		if ($booking['confirm'] === true) {

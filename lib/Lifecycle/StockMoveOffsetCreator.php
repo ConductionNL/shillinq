@@ -47,6 +47,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -129,7 +131,10 @@ class StockMoveOffsetCreator {
 
 		$offset        = self::offsetMove(original: $original, originalId: $originalId, administrationId: $administrationId);
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->saveObject(object: $offset, register: $this->register(), schema: 'StockMove');
+		$objectService->saveObject(
+			object: $offset,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'StockMove'))
+		);
 
 		return true;
 

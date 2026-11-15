@@ -31,6 +31,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 require_once __DIR__ . '/../InMemoryObjectService.php';
 
@@ -118,7 +119,11 @@ final class FidoQuarterStoreTest extends TestCase {
 		$entity = $this->createStub(ObjectEntityInterface::class);
 		$saved = [];
 		$os->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], string|int|null $register = null, string|int|null $schema = null, ?string $uuid = null) use (&$saved, $entity) {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) use (&$saved, $entity) {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid];
 				return $entity;
 			}

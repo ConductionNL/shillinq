@@ -29,6 +29,7 @@ use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * An OpenRegister double over two schemas, with JSON-property filters, paging and audit logs.
@@ -139,13 +140,14 @@ final class BackfillInvoiceStore {
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		mixed $register = null,
-		mixed $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$target = (string)($schema ?? $this->schema);
 		$this->saved[] = ['object' => $object, 'uuid' => $uuid, 'schema' => $target];
 		$this->rows[$target][(string)$uuid] = $object;

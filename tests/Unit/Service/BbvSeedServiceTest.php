@@ -28,6 +28,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Covers Task 5.12: the BBV seed repair step imports all catalogues
@@ -258,7 +259,9 @@ class BbvSeedServiceTest extends TestCase {
 			 *
 			 * @return void
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saved[] = ['object' => $object, 'schema' => $schema];
 				// Add to existingRows so a subsequent invocation in the same run dedupes.
 				$this->existingRows[] = $object;
