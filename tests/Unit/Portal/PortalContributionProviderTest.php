@@ -3,6 +3,9 @@
 /**
  * Unit tests for PortalContributionProvider.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pins shillinq's ADR-046 contribution contract: the dual v2/v1 audience
  * declaration (customer + supplier + accountant), the fail-closed null for
  * non-matching subjects, every declarative manifest's exact shape (verified
@@ -34,9 +37,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @version GIT: <git-id>
  *
@@ -259,7 +259,7 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertIsArray($manifest);
 		$this->assertNotSame('Shillinq', $manifest['label']);
 		// pay for invoices, pay-request for requests without one (REQ-SPPI-006, REQ-SPPI-008).
-		$this->assertSame(['pay', 'pay-request'], array_column($manifest['actions'], 'id'));
+		$this->assertSame(['pay', 'pay-request', 'cancel-subscription'], array_column($manifest['actions'], 'id'));
 		$this->assertSame([], $manifest['notifications']);
 
 		// [schema, scopeField, scopeClaim] per collection id.
@@ -272,6 +272,7 @@ class PortalContributionProviderTest extends TestCase {
 			'salesInvoices' => ['ARInvoice', 'customerId', 'customerMasterId'],
 			'paymentRequests' => ['PaymentRequest', 'invoiceReference', 'customerMasterId'],
 			'requestPayments' => ['PaymentRequest', 'customerId', 'customerMasterId'],
+			'subscriptions' => ['RecurringInvoiceProfile', 'customerMasterId', 'customerMasterId'],
 		];
 
 		$this->assertSame(array_keys($expected), array_column($manifest['collections'], 'id'));
@@ -358,8 +359,9 @@ class PortalContributionProviderTest extends TestCase {
 			$collections[$collection['id']] = $collection;
 		}
 
-		// pay-request (REQ-SPPI-008) sits next to pay for requests without an invoice.
-		$this->assertSame(['pay', 'pay-request'], array_column($manifest['actions'], 'id'));
+		// pay-request (REQ-SPPI-008) sits next to pay for requests without an invoice;
+		// cancel-subscription (REQ-SCX-003) ends a subscription.
+		$this->assertSame(['pay', 'pay-request', 'cancel-subscription'], array_column($manifest['actions'], 'id'));
 		$action = $manifest['actions'][0];
 		$this->assertSame('pay', $action['id']);
 		$this->assertSame('endpoint-forward', $action['type']);
@@ -612,9 +614,9 @@ class PortalContributionProviderTest extends TestCase {
 		$supplier = $this->provider->getContribution(self::SUPPLIER_SUBJECT);
 
 		// Wave-1 customer collections stay first and in order; the two Wave-2
-		// AR surfaces are appended after them.
+		// AR surfaces are appended after them, then the subscriptions (REQ-SCX-003).
 		$this->assertSame(
-			['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts', 'salesInvoices', 'paymentRequests', 'requestPayments'],
+			['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts', 'salesInvoices', 'paymentRequests', 'requestPayments', 'subscriptions'],
 			array_column($customer['collections'], 'id')
 		);
 
@@ -930,7 +932,7 @@ class PortalContributionProviderTest extends TestCase {
 		self::assertSame('low', $decline['minTrust']);
 
 		$customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
-		self::assertSame(['pay', 'pay-request'], array_column($customer['actions'], 'id'));
+		self::assertSame(['pay', 'pay-request', 'cancel-subscription'], array_column($customer['actions'], 'id'));
 	}//end testOnlyTheParentManifestCarriesTheDeclineAction()
 
 	/**

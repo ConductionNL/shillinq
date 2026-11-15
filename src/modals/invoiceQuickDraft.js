@@ -153,18 +153,38 @@ function prefsKey(customerId) {
 export function loadQuickDraftPrefs(customerId) {
 	if (!customerId) return null
 	try {
-		const raw = globalThis.localStorage?.getItem(prefsKey(customerId))
-		if (!raw) return null
-		const parsed = JSON.parse(raw)
-		if (!parsed || typeof parsed !== 'object') return null
-		if (parsed.savedAt && Date.now() - parsed.savedAt > PREFS_TTL_MS) {
+		const prefs = readStoredPrefs(customerId)
+		if (prefs && isExpired(prefs)) {
 			globalThis.localStorage?.removeItem(prefsKey(customerId))
 			return null
 		}
-		return parsed
+		return prefs
 	} catch (e) {
 		return null
 	}
+}
+
+/**
+ * The stored preferences object of a customer, or null when absent or not an object.
+ *
+ * @param {string} customerId Customer id.
+ * @return {object|null}
+ */
+function readStoredPrefs(customerId) {
+	const raw = globalThis.localStorage?.getItem(prefsKey(customerId))
+	if (!raw) return null
+	const parsed = JSON.parse(raw)
+	return parsed && typeof parsed === 'object' ? parsed : null
+}
+
+/**
+ * Whether stored preferences are older than their time to live.
+ *
+ * @param {object} prefs The stored preferences.
+ * @return {boolean}
+ */
+function isExpired(prefs) {
+	return Boolean(prefs.savedAt) && Date.now() - prefs.savedAt > PREFS_TTL_MS
 }
 
 /**
@@ -184,5 +204,43 @@ export function saveQuickDraftPrefs(customerId, prefs) {
 		)
 	} catch (e) {
 		// Non-fatal: preferences are a convenience, not a requirement.
+	}
+}
+
+/**
+ * Apply a customer's stored preferences to a draft form: the GL account,
+ * then the first line's blank description and price and its VAT rate.
+ *
+ * @param {object} form The draft form; changed in place.
+ * @param {object|null} prefs The stored preferences, or null.
+ */
+export function applyQuickDraftPrefs(form, prefs) {
+	if (!prefs) return
+	if (prefs.glAccount) form.glAccount = String(prefs.glAccount)
+	const line = form.lines[0]
+	if (line) applyLinePrefs(line, prefs)
+}
+
+/**
+ * Fill a line's blank description and price from the preferences, then set
+ * its VAT rate when one is stored.
+ *
+ * @param {object} line The draft line; changed in place.
+ * @param {object} prefs The stored preferences.
+ */
+function applyLinePrefs(line, prefs) {
+	fillBlankLineFields(line, prefs)
+	if (prefs.vatCode !== undefined && prefs.vatCode !== null) line.vatRate = prefs.vatCode
+}
+
+/**
+ * Fill a line's blank description and price from the preferences.
+ *
+ * @param {object} line The draft line; changed in place.
+ * @param {object} prefs The stored preferences.
+ */
+function fillBlankLineFields(line, prefs) {
+	for (const field of ['description', 'unitPrice']) {
+		if (prefs[field] && !line[field]) line[field] = prefs[field]
 	}
 }

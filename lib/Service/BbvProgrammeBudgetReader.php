@@ -3,6 +3,9 @@
 /**
  * BBV Provincie Programme Budget Reader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The OpenRegister half of the provincies-BBV Compliance Dashboard
  * (#866/#862): every read the dashboard and the Budget-to-Programme Linker
  * need, and nothing else. {@see BbvProgrammeBudgetService} orchestrates,
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -45,10 +45,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Reads the four schemas the provincies-BBV dashboards aggregate.
@@ -345,7 +343,7 @@ class BbvProgrammeBudgetReader {
 				}
 
 				$month = substr($postingDate, 0, 7);
-				foreach ($this->transactionRefs(transaction: $transaction) as $ref) {
+				foreach ((new LedgerActuals())->transactionRefs(transaction: $transaction) as $ref) {
 					$months[$ref] = $month;
 				}
 			}
@@ -373,29 +371,6 @@ class BbvProgrammeBudgetReader {
 	}//end inWindow()
 
 	/**
-	 * Every reference a GL line may use to name this transaction.
-	 *
-	 * @param array<string,mixed> $transaction The GL transaction.
-	 *
-	 * @return list<string> The non-empty references.
-	 */
-	private function transactionRefs(array $transaction): array {
-		$refs = [];
-		$objectId = (string)($transaction['@self']['id'] ?? $transaction['id'] ?? '');
-		if ($objectId !== '') {
-			$refs[] = $objectId;
-		}
-
-		$number = (string)($transaction['transactionNumber'] ?? '');
-		if ($number !== '') {
-			$refs[] = $number;
-		}
-
-		return $refs;
-
-	}//end transactionRefs()
-
-	/**
 	 * Resolve a GL line's contribution to programme spend.
 	 *
 	 * A debit on a programme increases spend; a credit reduces it (a correction
@@ -420,8 +395,7 @@ class BbvProgrammeBudgetReader {
 	 * Run one property-filtered query against the shillinq register.
 	 *
 	 * A failure is logged and answered as an empty result set: a missing
-	 * commitment register must not stop the budget half of the dashboard from
-	 * rendering.
+	 * schema must not stop the reader from computing whatever it can.
 	 *
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters Property filters (never `id`).
@@ -429,50 +403,12 @@ class BbvProgrammeBudgetReader {
 	 * @return list<array<string,mixed>> The matching records as plain arrays.
 	 */
 	private function query(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BbvProgrammeBudgetReader: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
+		$query = new RegisterQuery(
+			register: new ShillinqRegister(appConfig: $this->appConfig, objectService: $this->objectService),
+			failureLog: new QueryFailureLog(logger: $this->logger, component: 'BbvProgrammeBudgetReader'),
+		);
 
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
-			}
-		}
-
-		return $result;
+		return $query->rows(schema: $schema, filters: $filters);
 
 	}//end query()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config.
-	 *
-	 * @return string The register slug, defaulting to `shillinq`.
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-
-	}//end register()
 }//end class

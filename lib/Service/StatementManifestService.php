@@ -28,7 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\StatementManifestServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -37,7 +38,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  */
-class StatementManifestService {
+class StatementManifestService implements StatementManifestServiceInterface {
 
 	/**
 	 * Statement-manifest files shipped under lib/Settings/statements/.
@@ -98,47 +99,57 @@ class StatementManifestService {
 	 * @return array{success: bool, imported: int, skipped: int, message?: string}
 	 */
 	private function run(bool $force): array {
-		$imported = 0;
-		$skipped = 0;
+		$counts = ['imported' => 0, 'skipped' => 0];
 
 		foreach (self::STATEMENT_MANIFESTS as $configKey => $fileName) {
 			$manifest = $this->loadManifest(fileName: $fileName);
 			if ($manifest === null) {
-				return [
-					'success' => false,
-					'imported' => $imported,
-					'skipped' => $skipped,
-					'message' => 'Failed to load statement manifest: ' . $fileName,
-				];
+				return ['success' => false] + $counts + ['message' => 'Failed to load statement manifest: ' . $fileName];
 			}
 
-			$existing = $this->appConfig->getValueString(Application::APP_ID, $configKey, '');
-			if ($existing !== '' && $force === false) {
+			if ($this->hasManifest(configKey: $configKey) === true && $force === false) {
 				// Idempotent: operator-edited manifest already present — preserve it.
-				$skipped++;
+				$counts['skipped']++;
 				continue;
 			}
 
-			$this->appConfig->setValueString(
-				Application::APP_ID,
-				$configKey,
-				json_encode($manifest)
-			);
-			$imported++;
+			$this->storeManifest(configKey: $configKey, manifest: $manifest);
+			$counts['imported']++;
 		}//end foreach
 
-		$this->logger->info(
-			'Shillinq: statement manifests imported',
-			['imported' => $imported, 'skipped' => $skipped]
+		$this->logger->info('Shillinq: statement manifests imported', $counts);
+
+		return ['success' => true] + $counts;
+	}//end run()
+
+	/**
+	 * Whether a manifest is already stored under the key.
+	 *
+	 * @param string $configKey The app-config key.
+	 *
+	 * @return bool
+	 */
+	private function hasManifest(string $configKey): bool {
+		return $this->appConfig->getValueString(AppIdentity::APP_ID, $configKey, '') !== '';
+
+	}//end hasManifest()
+
+	/**
+	 * Store a manifest, JSON-encoded, under the key.
+	 *
+	 * @param string              $configKey The app-config key.
+	 * @param array<string,mixed> $manifest  The manifest.
+	 *
+	 * @return void
+	 */
+	private function storeManifest(string $configKey, array $manifest): void {
+		$this->appConfig->setValueString(
+			AppIdentity::APP_ID,
+			$configKey,
+			json_encode($manifest)
 		);
 
-		return [
-			'success' => true,
-			'imported' => $imported,
-			'skipped' => $skipped,
-		];
-
-	}//end run()
+	}//end storeManifest()
 
 	/**
 	 * Load and validate a single statement-presentation manifest file.

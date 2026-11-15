@@ -404,35 +404,10 @@ export default {
 						scenarioId: this.scenarioId,
 					}),
 				})
-				this.activeScenario = data?.scenario || null
-				this.columns = Array.isArray(data?.columns) ? data.columns : []
-				this.rows = Array.isArray(data?.rows) ? data.rows : []
-				this.computedRows = Array.isArray(data?.computedRows)
-					? data.computedRows
-					: []
-				this.expandedIds = new Set()
-				this.openChartRowId = null
+				this.applyGrid(data)
 			} catch (error) {
-				const status = error?.response?.status
-				if (status === 404 && this.scenarioId) {
-					this.errorMessage = this.t('shillinq', 'Scenario not found.')
-				} else if (status === 404) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Administration not found.',
-					)
-				} else if (status === 401) {
-					this.errorMessage = this.t('shillinq', 'Not logged in.')
-				} else {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Failed to load the budget grid.',
-					)
-				}
-				this.columns = []
-				this.rows = []
-				this.computedRows = []
-				this.activeScenario = null
+				this.errorMessage = this.gridLoadError(error)
+				this.clearGrid()
 			} finally {
 				this.loading = false
 			}
@@ -466,6 +441,50 @@ export default {
 			} catch {
 				this.scenarios = []
 			}
+		},
+
+		/**
+		 * Show a loaded grid: its columns and rows, every row collapsed and no chart open.
+		 *
+		 * @param {object} data The budget-grid response body.
+		 */
+		applyGrid(data) {
+			this.activeScenario = data?.scenario || null
+			this.columns = Array.isArray(data?.columns) ? data.columns : []
+			this.rows = Array.isArray(data?.rows) ? data.rows : []
+			this.computedRows = Array.isArray(data?.computedRows)
+				? data.computedRows
+				: []
+			this.expandedIds = new Set()
+			this.openChartRowId = null
+		},
+
+		/**
+		 * The message of a failed grid load, by HTTP status.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 */
+		gridLoadError(error) {
+			const status = error?.response?.status
+			if (status === 404 && this.scenarioId) {
+				return this.t('shillinq', 'Scenario not found.')
+			}
+			if (status === 404) {
+				return this.t('shillinq', 'Administration not found.')
+			}
+			if (status === 401) {
+				return this.t('shillinq', 'Not logged in.')
+			}
+			return this.t('shillinq', 'Failed to load the budget grid.')
+		},
+
+		/** Empty the grid after a failed load. */
+		clearGrid() {
+			this.columns = []
+			this.rows = []
+			this.computedRows = []
+			this.activeScenario = null
 		},
 
 		/**
