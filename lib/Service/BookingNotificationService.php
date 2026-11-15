@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -322,8 +324,7 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 
 			$this->objectService->saveObject(
 				object: $record,
-				register: $registerSlug,
-				schema: 'NotificationDelivery',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'NotificationDelivery'))
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error(

@@ -29,6 +29,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * Input refusals, the multi-year window and the refusal's template and parameters.
@@ -131,7 +132,7 @@ final class BudgetEditingServiceRefusalsTest extends TestCase {
 	 * @return void
 	 */
 	public function testSpreadingIntoAClosedBudgetIsRefused(): void {
-		$this->store->setSchema('AnnualBudget')->patchObject($this->ids['budget-2026'], ['state' => 'closed']);
+		$this->store->setSchema('AnnualBudget')->patchObject(new ObjectPatch(objectId: $this->ids['budget-2026'], data: ['state' => 'closed']));
 
 		$this->expectException(BudgetEditRefusedException::class);
 		$this->expectExceptionMessage('This budget is closed. Its amounts can no longer change.');

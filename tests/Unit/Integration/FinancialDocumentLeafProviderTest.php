@@ -41,6 +41,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 
 /**
  * An in-memory store per schema that answers a system read in full and a
@@ -174,7 +175,7 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	 * @return array<string, array<string, mixed>>
 	 */
 	private function listed(FinancialDocumentStore $store): array {
-		$items = $this->provider($store)->list('dossiq', 'case', self::CASE_ID)['items'];
+		$items = $this->provider($store)->list(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID))['items'];
 
 		return array_column($items, null, 'id');
 	}//end listed()
@@ -232,8 +233,8 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	}//end testADocumentTheCallerMayNotReadIsCountedWithoutItsAmountOrNumber()
 
 	public function testTheListSaysWhichActsTheCallerHolds(): void {
-		$none = $this->provider(new FinancialDocumentStore([]))->list('dossiq', 'case', self::CASE_ID)['acts'];
-		$some = $this->provider(new FinancialDocumentStore([]), ['invoice.issue', 'payment.administer', 'invoice.credit'])->list('dossiq', 'case', self::CASE_ID)['acts'];
+		$none = $this->provider(new FinancialDocumentStore([]))->list(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID))['acts'];
+		$some = $this->provider(new FinancialDocumentStore([]), ['invoice.issue', 'payment.administer', 'invoice.credit'])->list(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID))['acts'];
 
 		self::assertSame(['issueInvoice' => false, 'requestPayment' => false, 'administerPayments' => false, 'createQuote' => false, 'creditInvoice' => false, 'raisePayout' => false], $none);
 		self::assertSame(['issueInvoice' => true, 'requestPayment' => false, 'administerPayments' => true, 'createQuote' => false, 'creditInvoice' => true, 'raisePayout' => false], $some);
@@ -242,10 +243,10 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	public function testGetAnswersAReadableRowAndRefusesTheRest(): void {
 		$provider = $this->provider(new FinancialDocumentStore(self::rows(), hidden: ['i-1']));
 
-		self::assertSame('payout', $provider->get('dossiq', 'case', self::CASE_ID, 'o-1')['kind']);
+		self::assertSame('payout', $provider->get(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), 'o-1')['kind']);
 		foreach (['i-1', 'i-9', 'nope'] as $id) {
 			try {
-				$provider->get('dossiq', 'case', self::CASE_ID, $id);
+				$provider->get(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), $id);
 				self::fail($id . ' was answered');
 			} catch (RuntimeException $e) {
 				self::assertStringStartsWith('404', $e->getMessage(), $id);
@@ -257,10 +258,10 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 		$provider = $this->provider(new FinancialDocumentStore(self::rows()));
 
 		foreach ([
-			'400' => static fn () => $provider->create('dossiq', 'case', self::CASE_ID, []),
-			'400 ' => static fn () => $provider->create('dossiq', 'case', self::CASE_ID, ['act' => 'deleteEverything']),
-			'' => static fn () => $provider->update('dossiq', 'case', self::CASE_ID, 'i-1', []),
-			' ' => static fn () => $provider->delete('dossiq', 'case', self::CASE_ID, 'i-1'),
+			'400' => static fn () => $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), []),
+			'400 ' => static fn () => $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'deleteEverything']),
+			'' => static fn () => $provider->update(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), 'i-1', []),
+			' ' => static fn () => $provider->delete(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), 'i-1'),
 		] as $status => $write) {
 			try {
 				$write();
@@ -285,11 +286,11 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 		$authoring->expects(self::once())->method('raisePayout')->with('dossiq', 'case', self::CASE_ID, $fields, '')->willReturn(['payableId' => 'po-1', 'state' => 'requested']);
 		$provider = $this->provider(new FinancialDocumentStore(self::rows()), acts: $acts, authoring: $authoring);
 
-		self::assertSame(['id' => 'inv-1'], $provider->create('dossiq', 'case', self::CASE_ID, ['act' => 'issueInvoice'] + $fields));
-		self::assertSame(['id' => 'pr-1'], $provider->create('dossiq', 'case', self::CASE_ID, ['act' => 'requestPayment', 'invoiceId' => 'i-1']));
-		self::assertSame(['id' => 'q-9'], $provider->create('dossiq', 'case', self::CASE_ID, ['act' => 'createQuote'] + $fields));
-		self::assertSame(['id' => 'cn-1'], $provider->create('dossiq', 'case', self::CASE_ID, ['act' => 'creditInvoice', 'invoiceId' => 'i-1']));
-		self::assertSame(['payableId' => 'po-1', 'state' => 'requested'], $provider->create('dossiq', 'case', self::CASE_ID, ['act' => 'raisePayout'] + $fields));
+		self::assertSame(['id' => 'inv-1'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'issueInvoice'] + $fields));
+		self::assertSame(['id' => 'pr-1'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'requestPayment', 'invoiceId' => 'i-1']));
+		self::assertSame(['id' => 'q-9'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'createQuote'] + $fields));
+		self::assertSame(['id' => 'cn-1'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'creditInvoice', 'invoiceId' => 'i-1']));
+		self::assertSame(['payableId' => 'po-1', 'state' => 'requested'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'raisePayout'] + $fields));
 	}//end testEachActIsHandedToItsServiceForTheCaller()
 
 	public function testAnInvoiceActOnlyReachesAnInvoiceOnThisObject(): void {
@@ -308,7 +309,7 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 		] as $label => $invoiceId) {
 			foreach (['requestPayment', 'creditInvoice'] as $act) {
 				try {
-					$provider->create('dossiq', 'case', self::CASE_ID, ['act' => $act, 'invoiceId' => $invoiceId]);
+					$provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => $act, 'invoiceId' => $invoiceId]);
 					self::fail($label.' was reached through '.$act);
 				} catch (RuntimeException $e) {
 					self::assertStringStartsWith('404 ', $e->getMessage(), $label);
@@ -323,7 +324,7 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 		$provider = $this->provider(new FinancialDocumentStore(self::rows()), acts: $acts);
 
 		try {
-			$provider->create('dossiq', 'case', self::CASE_ID, ['act' => 'issueInvoice', 'amount' => 10]);
+			$provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'issueInvoice', 'amount' => 10]);
 			self::fail('the refusal was swallowed');
 		} catch (RuntimeException $e) {
 			self::assertSame('403 This needs the invoice.issue action.', $e->getMessage());

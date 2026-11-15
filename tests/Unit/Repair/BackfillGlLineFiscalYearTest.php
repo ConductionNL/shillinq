@@ -35,6 +35,7 @@ use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests the register wiring of BackfillGlLineFiscalYear.
@@ -158,12 +159,13 @@ final class BackfillGlLineFiscalYearTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register = '',
-				string $schema = '',
-				?string $uuid = null,
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_multitenancy = true,
+				bool $_multitenancy = true
 			): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
+				$uuid = $options->uuid;
 				$this->saves[] = [
 					'register' => $register,
 					'schema' => $schema,
