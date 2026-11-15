@@ -1,0 +1,74 @@
+{
+    "addition": {
+        "journalNumber": "RES-a461b472cb41",
+        "entryDate": "2025-12-31",
+        "description": "Toevoeging 2025: Reserve wegen (raadsbesluit 2026-01)",
+        "lines": [
+            {
+                "accountNumber": "8990",
+                "side": "debit",
+                "amount": 1000.01,
+                "description": "Toevoeging 2025: Reserve wegen (raadsbesluit 2026-01)"
+            },
+            {
+                "accountNumber": "0520",
+                "side": "credit",
+                "amount": 1000.01,
+                "description": "Toevoeging 2025: Reserve wegen (raadsbesluit 2026-01)"
+            }
+        ],
+        "journalType": "manual",
+        "approvalState": "not-required",
+        "administrationId": "adm-m",
+        "state": "draft"
+    },
+    "withdrawal": {
+        "journalNumber": "RES-9407970aa752",
+        "entryDate": "2024-12-31",
+        "description": "Onttrekking 2024: Reserve wegen",
+        "lines": [
+            {
+                "accountNumber": "8990",
+                "side": "credit",
+                "amount": 250.0,
+                "description": "Onttrekking 2024: Reserve wegen"
+            },
+            {
+                "accountNumber": "0520",
+                "side": "debit",
+                "amount": 250.0,
+                "description": "Onttrekking 2024: Reserve wegen"
+            }
+        ],
+        "journalType": "manual",
+        "approvalState": "not-required",
+        "administrationId": "adm-r",
+        "state": "draft"
+    },
+    "no key": {
+        "journalNumber": "RES-c7a89b010fd2",
+        "entryDate": "2023-12-31",
+        "description": "Toevoeging 2023: Reserve wegen",
+        "lines": [
+            {
+                "accountNumber": "8990",
+                "side": "debit",
+                "amount": 1.0,
+                "description": "Toevoeging 2023: Reserve wegen"
+            },
+            {
+                "accountNumber": "0520",
+                "side": "credit",
+                "amount": 1.0,
+                "description": "Toevoeging 2023: Reserve wegen"
+            }
+        ],
+        "journalType": "manual",
+        "approvalState": "not-required",
+        "administrationId": "adm-r",
+        "state": "draft"
+    },
+    "refused no reserve account": "Enter the reserve account and the result account on the reserve first.",
+    "refused no result account": "Enter the reserve account and the result account on the reserve first.",
+    "refused zero amount": "The amount of a mutation must be more than zero."
+}

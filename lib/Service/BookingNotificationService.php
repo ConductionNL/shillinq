@@ -18,6 +18,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -26,18 +29,22 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Evaluates booking notification triggers and dispatches via openconnector.
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
  */
-class BookingNotificationService {
+class BookingNotificationService implements BookingNotificationServiceInterface {
 
 	/**
 	 * Openconnector notification endpoint path.
@@ -101,74 +108,111 @@ class BookingNotificationService {
 			);
 
 			foreach ($recipients as $recipient) {
-				$address = $this->resolveRecipientAddress(role: $recipient['role'], booking: $booking);
-				if ($address === '') {
-					continue;
-				}
-
-				$bookingId = (string)($booking['id'] ?? '');
-				$organizerId = (string)($booking['organizerUserId'] ?? $booking['organizer'] ?? '');
-
-				if ($this->isOptedOut(recipient: $address, triggerType: $eventType) === true) {
-					$this->recordAuditTrail(
-						notification: [
-							'triggerName' => ($trigger['name'] ?? $eventType),
-							'triggerType' => $eventType,
-							'bookingId' => $bookingId,
-							'recipient' => $address,
-							'channel' => ($recipient['channels'][0] ?? 'email'),
-							'templateName' => '',
-						],
-						status: 'skipped',
-						reason: 'opt-out'
-					);
-					continue;
-				}
-
-				$rateLimitPerBooking = (int)($trigger['rateLimitPerBookingPerHour'] ?? self::DEFAULT_RATE_LIMIT_BOOKING_HOURLY);
-				$rateLimitPerOrganizer = (int)($trigger['rateLimitPerOrganizerPerDay'] ?? self::DEFAULT_RATE_LIMIT_ORGANIZER_DAILY);
-				$dedupWindowMinutes = (int)($trigger['deduplicationWindowMinutes'] ?? self::DEFAULT_DEDUP_WINDOW_MINUTES);
-
-				if ($this->isRateLimited(
-					bookingId: $bookingId,
-					organizerId: $organizerId,
-					rateLimitPerBooking: $rateLimitPerBooking,
-					rateLimitPerOrganizer: $rateLimitPerOrganizer
-				) === true
-				) {
-					$this->logger->warning(
-						'Shillinq: notification rate-limited',
-						['bookingId' => $bookingId, 'triggerType' => $eventType]
-					);
-					continue;
-				}
-
-				if ($this->isDuplicate(
-					bookingId: $bookingId,
-					recipient: $address,
-					triggerType: $eventType,
-					windowMinutes: $dedupWindowMinutes
-				) === true
-				) {
-					$this->logger->info(
-						'Shillinq: notification deduplicated',
-						['bookingId' => $bookingId, 'recipient' => $address]
-					);
-					continue;
-				}
-
-				$template = $this->loadTemplate(triggerId: ($trigger['templateId'] ?? ''), eventType: $eventType);
-
-				$this->dispatchNotification(
-					trigger: $trigger,
-					recipient: array_merge($recipient, ['address' => $address]),
-					template: $template,
-					booking: $booking
-				);
-			}//end foreach
+				$this->notifyRecipient(eventType: $eventType, booking: $booking, trigger: $trigger, recipient: $recipient);
+			}
 		}//end foreach
-
 	}//end evaluateEventTrigger()
+
+	/**
+	 * Notify one recipient of a trigger unless opted out, rate-limited or a duplicate.
+	 *
+	 * @param string $eventType Booking event type.
+	 * @param array<mixed> $booking Booking payload.
+	 * @param array<mixed> $trigger The trigger.
+	 * @param array<mixed> $recipient The recipient rule match (role, channels).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+	 */
+	private function notifyRecipient(string $eventType, array $booking, array $trigger, array $recipient): void {
+		$address = $this->resolveRecipientAddress(role: $recipient['role'], booking: $booking);
+		if ($address === '') {
+			return;
+		}
+
+		$bookingId = (string)($booking['id'] ?? '');
+
+		if ($this->isOptedOut(recipient: $address, triggerType: $eventType) === true) {
+			$this->recordAuditTrail(
+				notification: [
+					'triggerName' => ($trigger['name'] ?? $eventType),
+					'triggerType' => $eventType,
+					'bookingId' => $bookingId,
+					'recipient' => $address,
+					'channel' => ($recipient['channels'][0] ?? 'email'),
+					'templateName' => '',
+				],
+				status: 'skipped',
+				reason: 'opt-out'
+			);
+			return;
+		}
+
+		if ($this->isThrottled(eventType: $eventType, booking: $booking, trigger: $trigger, address: $address) === true) {
+			return;
+		}
+
+		$template = $this->loadTemplate(triggerId: ($trigger['templateId'] ?? ''), eventType: $eventType);
+
+		$this->dispatchNotification(
+			trigger: $trigger,
+			recipient: array_merge($recipient, ['address' => $address]),
+			template: $template,
+			booking: $booking
+		);
+	}//end notifyRecipient()
+
+	/**
+	 * Whether a notification is rate-limited or a duplicate within the trigger's window; each is logged.
+	 *
+	 * @param string $eventType Booking event type.
+	 * @param array<mixed> $booking Booking payload.
+	 * @param array<mixed> $trigger The trigger.
+	 * @param string $address The resolved recipient address.
+	 *
+	 * @return bool True when the notification must not be sent.
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+	 */
+	private function isThrottled(string $eventType, array $booking, array $trigger, string $address): bool {
+		$bookingId = (string)($booking['id'] ?? '');
+		$organizerId = (string)($booking['organizerUserId'] ?? $booking['organizer'] ?? '');
+
+		$rateLimitPerBooking = (int)($trigger['rateLimitPerBookingPerHour'] ?? self::DEFAULT_RATE_LIMIT_BOOKING_HOURLY);
+		$rateLimitPerOrganizer = (int)($trigger['rateLimitPerOrganizerPerDay'] ?? self::DEFAULT_RATE_LIMIT_ORGANIZER_DAILY);
+		$dedupWindowMinutes = (int)($trigger['deduplicationWindowMinutes'] ?? self::DEFAULT_DEDUP_WINDOW_MINUTES);
+
+		if ($this->isRateLimited(
+			bookingId: $bookingId,
+			organizerId: $organizerId,
+			rateLimitPerBooking: $rateLimitPerBooking,
+			rateLimitPerOrganizer: $rateLimitPerOrganizer
+		) === true
+		) {
+			$this->logger->warning(
+				'Shillinq: notification rate-limited',
+				['bookingId' => $bookingId, 'triggerType' => $eventType]
+			);
+			return true;
+		}
+
+		if ($this->isDuplicate(
+			bookingId: $bookingId,
+			recipient: $address,
+			triggerType: $eventType,
+			windowMinutes: $dedupWindowMinutes
+		) === true
+		) {
+			$this->logger->info(
+				'Shillinq: notification deduplicated',
+				['bookingId' => $bookingId, 'recipient' => $address]
+			);
+			return true;
+		}
+
+		return false;
+	}//end isThrottled()
 
 	/**
 	 * Dispatch a notification to a single recipient via openconnector channel adapters.
@@ -187,61 +231,55 @@ class BookingNotificationService {
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
 	 */
 	public function dispatchNotification(array $trigger, array $recipient, array $template, array $booking): void {
-		$rendered = $this->renderTemplate(template: $template, booking: $booking, recipient: $recipient);
-		$channels = ($recipient['channels'] ?? ['email']);
-		$address = (string)($recipient['address'] ?? '');
+		$this->dispatch(dispatch: new NotificationDispatch(trigger: $trigger, recipient: $recipient, template: $template, booking: $booking));
+
+	}//end dispatchNotification()
+
+	/**
+	 * Try the recipient's channels in order; audit the first that posts, or the failure of all.
+	 *
+	 * @param NotificationDispatch $dispatch The notification to one recipient.
+	 *
+	 * @return void
+	 */
+	private function dispatch(NotificationDispatch $dispatch): void {
+		$rendered = $this->renderTemplate(template: $dispatch->template, booking: $dispatch->booking, recipient: $dispatch->recipient);
 
 		$retryCount = 0;
-		foreach ($channels as $channel) {
-			$success = $this->sendViaOpenconnector(
-				channel: $channel,
-				recipient: $address,
-				subject: ($rendered['subject'] ?? ''),
-				body: ($rendered['body'] ?? ''),
-				templateId: ($template['id'] ?? '')
-			);
-
-			if ($success === true) {
-				$this->recordAuditTrail(
-					notification: [
-						'triggerName' => ($trigger['name'] ?? ''),
-						'triggerType' => ($trigger['eventType'] ?? ''),
-						'bookingId' => (string)($booking['id'] ?? ''),
-						'recipient' => $address,
-						'channel' => $channel,
-						'templateName' => ($template['name'] ?? ''),
-						'retryCount' => $retryCount,
-					],
-					status: 'sent',
-					reason: ''
-				);
+		foreach ($dispatch->channels() as $channel) {
+			if ($this->postToOpenconnector(notification: $dispatch->via(channel: $channel, rendered: $rendered)) === true) {
+				$this->recordAuditTrail(notification: $dispatch->auditRecord(channel: $channel, retryCount: $retryCount), status: 'sent', reason: '');
 				return;
 			}
 
 			$retryCount++;
-		}//end foreach
+		}
 
-		// All channels failed — record final failure.
+		$this->recordAllChannelsFailed(dispatch: $dispatch, retryCount: $retryCount);
+
+	}//end dispatch()
+
+	/**
+	 * All channels failed — record final failure.
+	 *
+	 * @param NotificationDispatch $dispatch The notification to one recipient.
+	 * @param int $retryCount The failed attempts.
+	 *
+	 * @return void
+	 */
+	private function recordAllChannelsFailed(NotificationDispatch $dispatch, int $retryCount): void {
 		$this->recordAuditTrail(
-			notification: [
-				'triggerName' => ($trigger['name'] ?? ''),
-				'triggerType' => ($trigger['eventType'] ?? ''),
-				'bookingId' => (string)($booking['id'] ?? ''),
-				'recipient' => $address,
-				'channel' => implode(separator: '/', array: $channels),
-				'templateName' => ($template['name'] ?? ''),
-				'retryCount' => $retryCount,
-			],
+			notification: $dispatch->auditRecord(channel: implode(separator: '/', array: $dispatch->channels()), retryCount: $retryCount),
 			status: 'failed',
 			reason: 'all channels exhausted'
 		);
 
 		$this->logger->error(
 			'Shillinq: all notification channels failed',
-			['bookingId' => ($booking['id'] ?? ''), 'recipient' => $address]
+			['bookingId' => ($dispatch->booking['id'] ?? ''), 'recipient' => $dispatch->address()]
 		);
 
-	}//end dispatchNotification()
+	}//end recordAllChannelsFailed()
 
 	/**
 	 * Record a notification dispatch attempt in the OpenRegister audit trail.
@@ -259,7 +297,7 @@ class BookingNotificationService {
 	 */
 	public function recordAuditTrail(array $notification, string $status, string $reason): void {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -377,6 +415,49 @@ class BookingNotificationService {
 			return false;
 		}
 
+		$matched = $this->evaluatePatternCondition(condition: $condition, booking: $booking);
+		if ($matched !== null) {
+			return $matched;
+		}
+
+		// Unknown expression — fail-open for forward compatibility.
+		$this->logger->warning(
+			'Shillinq: unrecognised condition expression, defaulting to true',
+			['condition' => $condition]
+		);
+		return true;
+	}//end evaluateCondition()
+
+	/**
+	 * Evaluate a comparison expression, or return null when it matches no known pattern.
+	 *
+	 * @param string $condition Trimmed expression string.
+	 * @param array<mixed> $booking Booking data.
+	 *
+	 * @return bool|null The outcome, or null when unrecognised.
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+	 */
+	private function evaluatePatternCondition(string $condition, array $booking): bool|null {
+		$matched = $this->evaluateEqualityCondition(condition: $condition, booking: $booking);
+		if ($matched === null) {
+			$matched = $this->evaluateNumericCondition(condition: $condition, booking: $booking);
+		}
+
+		return $matched;
+	}//end evaluatePatternCondition()
+
+	/**
+	 * Evaluate a `booking.field == 'value'` or `!= 'value'` expression.
+	 *
+	 * @param string $condition Trimmed expression string.
+	 * @param array<mixed> $booking Booking data.
+	 *
+	 * @return bool|null The outcome, or null when not an equality expression.
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+	 */
+	private function evaluateEqualityCondition(string $condition, array $booking): bool|null {
 		// Pattern: booking.field == 'value'.
 		if (preg_match('/^booking\.(\w+)\s*==\s*[\'"](.+?)[\'"]\s*$/', $condition, $m) === 1) {
 			return ($booking[$m[1]] ?? '') === $m[2];
@@ -387,6 +468,20 @@ class BookingNotificationService {
 			return ($booking[$m[1]] ?? '') !== $m[2];
 		}
 
+		return null;
+	}//end evaluateEqualityCondition()
+
+	/**
+	 * Evaluate a `booking.field > numeric` or `< numeric` expression.
+	 *
+	 * @param string $condition Trimmed expression string.
+	 * @param array<mixed> $booking Booking data.
+	 *
+	 * @return bool|null The outcome, or null when not a numeric comparison.
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+	 */
+	private function evaluateNumericCondition(string $condition, array $booking): bool|null {
 		// Pattern: booking.field > numeric.
 		if (preg_match('/^booking\.(\w+)\s*>\s*(\d+(?:\.\d+)?)\s*$/', $condition, $m) === 1) {
 			return (float)($booking[$m[1]] ?? 0) > (float)$m[2];
@@ -397,13 +492,8 @@ class BookingNotificationService {
 			return (float)($booking[$m[1]] ?? 0) < (float)$m[2];
 		}
 
-		// Unknown expression — fail-open for forward compatibility.
-		$this->logger->warning(
-			'Shillinq: unrecognised condition expression, defaulting to true',
-			['condition' => $condition]
-		);
-		return true;
-	}//end evaluateCondition()
+		return null;
+	}//end evaluateNumericCondition()
 
 	/**
 	 * Check whether a recipient has opted out of notifications.
@@ -420,7 +510,7 @@ class BookingNotificationService {
 	 */
 	public function isOptedOut(string $recipient, string $triggerType): bool {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -476,59 +566,31 @@ class BookingNotificationService {
 		int $rateLimitPerBooking = self::DEFAULT_RATE_LIMIT_BOOKING_HOURLY,
 		int $rateLimitPerOrganizer = self::DEFAULT_RATE_LIMIT_ORGANIZER_DAILY,
 	): bool {
-		if ($bookingId === '' && $organizerId === '') {
+		return $this->exceedsRateLimit(
+			limit: new NotificationRateLimit(
+				bookingId: $bookingId,
+				organizerId: $organizerId,
+				perBooking: $rateLimitPerBooking,
+				perOrganizer: $rateLimitPerOrganizer
+			)
+		);
+
+	}//end isRateLimited()
+
+	/**
+	 * Whether a booking's hourly or an organizer's daily send limit is reached.
+	 *
+	 * @param NotificationRateLimit $limit The booking, organizer and their limits.
+	 *
+	 * @return bool True if rate-limited (should NOT send).
+	 */
+	private function exceedsRateLimit(NotificationRateLimit $limit): bool {
+		if ($limit->bookingId === '' && $limit->organizerId === '') {
 			return false;
 		}
 
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-			if ($registerSlug === '') {
-				$registerSlug = 'shillinq';
-			}
-
-			// Check per-booking hourly limit.
-			if ($bookingId !== '') {
-				$hourStart = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:00:00\Z');
-				$bookingHit = $this->objectService
-					->setRegister($registerSlug)
-					->setSchema('NotificationDelivery')
-					->findAll(
-						[
-							'filters' => [
-								'bookingId' => $bookingId,
-								'sentAt[gte]' => $hourStart,
-							],
-							'limit' => ($rateLimitPerBooking + 1),
-						]
-					);
-
-				if (count($bookingHit) >= $rateLimitPerBooking) {
-					return true;
-				}
-			}
-
-			// Check per-organizer daily limit.
-			if ($organizerId !== '') {
-				$dayStart = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\T00:00:00\Z');
-				$organizerHit = $this->objectService
-					->setRegister($registerSlug)
-					->setSchema('NotificationDelivery')
-					->findAll(
-						[
-							'filters' => [
-								'organizerId' => $organizerId,
-								'sentAt[gte]' => $dayStart,
-							],
-							'limit' => ($rateLimitPerOrganizer + 1),
-						]
-					);
-
-				if (count($organizerHit) >= $rateLimitPerOrganizer) {
-					return true;
-				}
-			}
-
-			return false;
+			return $this->limitReached(limit: $limit);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: rate-limit check failed, defaulting to not limited',
@@ -537,7 +599,87 @@ class BookingNotificationService {
 			return false;
 		}//end try
 
-	}//end isRateLimited()
+	}//end exceedsRateLimit()
+
+	/**
+	 * Check the per-booking hourly limit, then the per-organizer daily limit.
+	 *
+	 * @param NotificationRateLimit $limit The booking, organizer and their limits.
+	 *
+	 * @return bool
+	 */
+	private function limitReached(NotificationRateLimit $limit): bool {
+		$registerSlug = $this->notificationRegister();
+		return $this->bookingHourFull(limit: $limit, registerSlug: $registerSlug)
+			|| $this->organizerDayFull(limit: $limit, registerSlug: $registerSlug);
+	}//end limitReached()
+
+	/**
+	 * Check the per-booking hourly limit.
+	 *
+	 * @param NotificationRateLimit $limit The booking and its limit.
+	 * @param string $registerSlug The register holding NotificationDelivery.
+	 *
+	 * @return bool
+	 */
+	private function bookingHourFull(NotificationRateLimit $limit, string $registerSlug): bool {
+		if ($limit->bookingId === '') {
+			return false;
+		}
+
+		$hourStart = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:00:00\Z');
+		$bookingHit = $this->recentDeliveries(registerSlug: $registerSlug, query: $limit->bookingQuery(since: $hourStart));
+
+		return count($bookingHit) >= $limit->perBooking;
+	}//end bookingHourFull()
+
+	/**
+	 * Check the per-organizer daily limit.
+	 *
+	 * @param NotificationRateLimit $limit The organizer and its limit.
+	 * @param string $registerSlug The register holding NotificationDelivery.
+	 *
+	 * @return bool
+	 */
+	private function organizerDayFull(NotificationRateLimit $limit, string $registerSlug): bool {
+		if ($limit->organizerId === '') {
+			return false;
+		}
+
+		$dayStart = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\T00:00:00\Z');
+		$organizerHit = $this->recentDeliveries(registerSlug: $registerSlug, query: $limit->organizerQuery(since: $dayStart));
+
+		return count($organizerHit) >= $limit->perOrganizer;
+	}//end organizerDayFull()
+
+	/**
+	 * Query NotificationDelivery rows.
+	 *
+	 * @param string $registerSlug The register holding NotificationDelivery.
+	 * @param array<string,mixed> $query The findAll query.
+	 *
+	 * @return array<mixed>
+	 */
+	private function recentDeliveries(string $registerSlug, array $query): array {
+		return $this->objectService
+			->setRegister($registerSlug)
+			->setSchema('NotificationDelivery')
+			->findAll($query);
+	}//end recentDeliveries()
+
+	/**
+	 * The configured register slug, 'shillinq' when unset.
+	 *
+	 * @return string
+	 */
+	private function notificationRegister(): string {
+		$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
+		if ($registerSlug === '') {
+			$registerSlug = 'shillinq';
+		}
+
+		return $registerSlug;
+	}//end notificationRegister()
 
 	/**
 	 * Check whether a duplicate notification was recently sent to prevent double-sends.
@@ -560,33 +702,27 @@ class BookingNotificationService {
 		string $triggerType,
 		int $windowMinutes = self::DEFAULT_DEDUP_WINDOW_MINUTES,
 	): bool {
+		return $this->wasRecentlySent(
+			key: new NotificationDedupKey(
+				bookingId: $bookingId,
+				recipient: $recipient,
+				triggerType: $triggerType,
+				windowMinutes: $windowMinutes
+			)
+		);
+
+	}//end isDuplicate()
+
+	/**
+	 * Whether the same notification was sent within the window.
+	 *
+	 * @param NotificationDedupKey $key The booking, recipient, trigger type and window.
+	 *
+	 * @return bool True if a duplicate send was detected.
+	 */
+	private function wasRecentlySent(NotificationDedupKey $key): bool {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-			if ($registerSlug === '') {
-				$registerSlug = 'shillinq';
-			}
-
-			$windowStart = (new DateTimeImmutable(
-				'-' . $windowMinutes . ' minutes',
-				new DateTimeZone('UTC')
-			))->format('c');
-
-			$existing = $this->objectService
-				->setRegister($registerSlug)
-				->setSchema('NotificationDelivery')
-				->findAll(
-					[
-						'filters' => [
-							'bookingId' => $bookingId,
-							'recipient' => $recipient,
-							'triggerType' => $triggerType,
-							'sentAt[gte]' => $windowStart,
-						],
-						'limit' => 1,
-					]
-				);
-
-			return empty($existing) === false;
+			return $this->hasRecentSend(key: $key);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: deduplication check failed, defaulting to not duplicate',
@@ -595,7 +731,25 @@ class BookingNotificationService {
 			return false;
 		}//end try
 
-	}//end isDuplicate()
+	}//end wasRecentlySent()
+
+	/**
+	 * Query one matching NotificationDelivery within the window.
+	 *
+	 * @param NotificationDedupKey $key The booking, recipient, trigger type and window.
+	 *
+	 * @return bool
+	 */
+	private function hasRecentSend(NotificationDedupKey $key): bool {
+		$registerSlug = $this->notificationRegister();
+		$windowStart = (new DateTimeImmutable(
+			'-' . $key->windowMinutes . ' minutes',
+			new DateTimeZone('UTC')
+		))->format('c');
+
+		$existing = $this->recentDeliveries(registerSlug: $registerSlug, query: $key->query(since: $windowStart));
+		return empty($existing) === false;
+	}//end hasRecentSend()
 
 	/**
 	 * Send a notification via openconnector's channel adapter API.
@@ -621,37 +775,59 @@ class BookingNotificationService {
 		string $body,
 		string $templateId,
 	): bool {
+		$notification = new OpenconnectorNotification(
+			channel: $channel,
+			recipient: $recipient,
+			subject: $subject,
+			body: $body,
+			templateId: $templateId
+		);
+		return $this->postToOpenconnector(notification: $notification);
+
+	}//end sendViaOpenconnector()
+
+	/**
+	 * Post a notification to openconnector: true on HTTP 2xx, false on any error.
+	 *
+	 * @param OpenconnectorNotification $notification The rendered notification on one channel.
+	 *
+	 * @return bool True on successful dispatch.
+	 */
+	private function postToOpenconnector(OpenconnectorNotification $notification): bool {
 		try {
-			$clientService = $this->container->get('OCP\Http\Client\IClientService');
-			$client = $clientService->newClient();
-
-			$payload = [
-				'channelAdapter' => $channel,
-				'recipient' => $recipient,
-				'subject' => $subject,
-				'body' => $body,
-				'templateId' => $templateId,
-			];
-
-			$response = $client->post(
-				url: self::OPENCONNECTOR_ENDPOINT,
-				options: [
-					'json' => $payload,
-					'timeout' => 10,
-				]
-			);
-
-			$statusCode = $response->getStatusCode();
+			$statusCode = $this->openconnectorStatus(notification: $notification);
 			return ($statusCode >= 200 && $statusCode < 300);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: openconnector send failed',
-				['channel' => $channel, 'exception' => $e->getMessage()]
+				['channel' => $notification->channel, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
 
-	}//end sendViaOpenconnector()
+	}//end postToOpenconnector()
+
+	/**
+	 * Make the HTTP POST to openconnector's send endpoint and return its status code.
+	 *
+	 * @param OpenconnectorNotification $notification The rendered notification on one channel.
+	 *
+	 * @return int
+	 */
+	private function openconnectorStatus(OpenconnectorNotification $notification): int {
+		$clientService = $this->container->get('OCP\Http\Client\IClientService');
+		$client = $clientService->newClient();
+
+		$response = $client->post(
+			url: self::OPENCONNECTOR_ENDPOINT,
+			options: [
+				'json' => $notification->payload(),
+				'timeout' => 10,
+			]
+		);
+
+		return $response->getStatusCode();
+	}//end openconnectorStatus()
 
 	/**
 	 * Load active notification triggers for the given event type.
@@ -675,7 +851,7 @@ class BookingNotificationService {
 	 */
 	private function loadActiveTriggers(string $eventType, ?string $bookingId): array {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -714,44 +890,17 @@ class BookingNotificationService {
 	 */
 	private function loadTemplate(string $triggerId, string $eventType): array {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
 
-			if ($triggerId !== '') {
-				// ADR-022: use the real ObjectService API (find/findAll);
-				// findObject()/findObjects() do not exist on OpenRegister's ObjectService.
-				$template = $this->objectService->find(
-					id: $triggerId,
-					register: $registerSlug,
-					schema: 'BookingNotificationTemplate'
-				);
-				if ($template !== null) {
-					return $template->jsonSerialize();
-				}
+			$template = $this->findTemplateById(registerSlug: $registerSlug, triggerId: $triggerId);
+			if ($template !== null) {
+				return $template;
 			}
 
-			// Fallback: find active template matching the event type.
-			$results = $this->objectService
-				->setRegister($registerSlug)
-				->setSchema('BookingNotificationTemplate')
-				->findAll(
-					[
-						'filters' => [
-							'trigger' => $eventType,
-							'active' => true,
-						],
-						'limit' => 1,
-					]
-				);
-
-			$first = ($results[0] ?? []);
-			if ($first instanceof \OCA\OpenRegister\Db\ObjectEntity) {
-				return $first->jsonSerialize();
-			}
-
-			return $first;
+			return $this->findDefaultTemplate(registerSlug: $registerSlug, eventType: $eventType);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: failed to load notification template',
@@ -761,6 +910,64 @@ class BookingNotificationService {
 		}//end try
 
 	}//end loadTemplate()
+
+	/**
+	 * Load the trigger's preferred template, or null when there is none.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param string $triggerId UUID of the trigger's preferred template ('' for none).
+	 *
+	 * @return array<mixed>|null The template, or null.
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+	 */
+	private function findTemplateById(string $registerSlug, string $triggerId): array|null {
+		if ($triggerId !== '') {
+			// ADR-022: use the real ObjectService API (find/findAll);
+			// findObject()/findObjects() do not exist on OpenRegister's ObjectService.
+			$template = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($registerSlug)->setSchema('BookingNotificationTemplate'),
+				id: $triggerId
+			);
+			if ($template !== null) {
+				return $template->jsonSerialize();
+			}
+		}
+
+		return null;
+	}//end findTemplateById()
+
+	/**
+	 * Fallback: find the active template matching the event type.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param string $eventType Booking event type.
+	 *
+	 * @return array<mixed> Template object, or empty array if none found.
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+	 */
+	private function findDefaultTemplate(string $registerSlug, string $eventType): array {
+		$results = $this->objectService
+			->setRegister($registerSlug)
+			->setSchema('BookingNotificationTemplate')
+			->findAll(
+				[
+					'filters' => [
+						'trigger' => $eventType,
+						'active' => true,
+					],
+					'limit' => 1,
+				]
+			);
+
+		$first = ($results[0] ?? []);
+		if ($first instanceof \OCA\OpenRegister\Db\ObjectEntity) {
+			return $first->jsonSerialize();
+		}
+
+		return $first;
+	}//end findDefaultTemplate()
 
 	/**
 	 * Resolve a recipient's contact address from the booking payload.

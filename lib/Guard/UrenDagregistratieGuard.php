@@ -3,6 +3,9 @@
 /**
  * Uren Dagregistratie Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the UrenDagregistratie save
  * precondition. Before any daily hour-ledger entry is persisted, this guard
  * enforces and normalises the fiscal-ledger invariants that the declarative
@@ -36,15 +39,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\Kernel\Contracts\UrenDagregistratieGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -54,7 +55,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
  */
-class UrenDagregistratieGuard {
+class UrenDagregistratieGuard implements UrenDagregistratieGuardInterface {
 
 	/**
 	 * Maximum number of reistijd hours counted per day (REQ-URC-001).
@@ -97,11 +98,7 @@ class UrenDagregistratieGuard {
 	 */
 	public function validateOnSave(array $entry): bool {
 		try {
-			if ($this->evidenceRequirementWith(entry: $entry) === false) {
-				return false;
-			}
-
-			return $this->backfillRuleWith(entry: $entry);
+			return $this->evidenceRequirementWith(entry: $entry) === true && $this->backfillRuleWith(entry: $entry) === true;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'UrenDagregistratieGuard: validateOnSave failed — denying save (fail-closed)',
@@ -111,8 +108,7 @@ class UrenDagregistratieGuard {
 				]
 			);
 			return false;
-		}//end try
-
+		}
 	}//end validateOnSave()
 
 	/**
@@ -193,7 +189,7 @@ class UrenDagregistratieGuard {
 		}
 
 		return true;
-	}//end evidenceRequirementMet()
+	}//end evidenceRequirementWith()
 
 	/**
 	 * Verify the backfill rule: entries older than BACKFILL_FREE_DAYS require both a
@@ -208,27 +204,34 @@ class UrenDagregistratieGuard {
 			date: (string)($entry['date'] ?? ''),
 			registrationMoment: (string)($entry['registrationMoment'] ?? '')
 		);
-
 		if ($days === null || $days <= self::BACKFILL_FREE_DAYS) {
 			return true;
 		}
 
-		$reason = (string)($entry['backfillReason'] ?? '');
+		return $this->backfillJustified(entry: $entry, days: $days);
+	}//end backfillRuleWith()
+
+	/**
+	 * Whether a late backfill carries both a reason and evidence; logs the refusal when it does not.
+	 *
+	 * @param array<string, mixed> $entry The UrenDagregistratie object payload.
+	 * @param int                  $days  Days between the work and its registration.
+	 *
+	 * @return bool
+	 */
+	private function backfillJustified(array $entry, int $days): bool {
+		$reason   = (string)($entry['backfillReason'] ?? '');
 		$evidence = (string)($entry['backfillEvidence'] ?? '');
-		if ($reason === '' || $evidence === '') {
-			$this->logger->info(
-				'UrenDagregistratieGuard: backfill older than 7 days requires reden + bewijs — denying save',
-				[
-					'days' => $days,
-					'hasReden' => ($reason !== ''),
-					'hasBewijs' => ($evidence !== ''),
-				]
-			);
-			return false;
+		if ($reason !== '' && $evidence !== '') {
+			return true;
 		}
 
-		return true;
-	}//end backfillRuleMet()
+		$this->logger->info(
+			'UrenDagregistratieGuard: backfill older than 7 days requires reden + bewijs — denying save',
+			['days' => $days, 'hasReden' => ($reason !== ''), 'hasBewijs' => ($evidence !== '')]
+		);
+		return false;
+	}//end backfillJustified()
 
 	/**
 	 * Compute the number of whole days between a work date and the registration
@@ -241,23 +244,37 @@ class UrenDagregistratieGuard {
 	 * @return int|null Whole days of delay, or null when not computable.
 	 */
 	private function backfillDays(string $date, string $registrationMoment): ?int {
-		if ($date === '' || $registrationMoment === '') {
-			return null;
-		}
-
-		$work = strtotime($date);
-		$reg = strtotime($registrationMoment);
-		if ($work === false || $reg === false) {
-			return null;
-		}
-
-		// Compare calendar days at UTC midnight to avoid intra-day rounding.
-		$workDay = strtotime(gmdate('Y-m-d', $work) . 'T00:00:00Z');
-		$regDay = strtotime(gmdate('Y-m-d', $reg) . 'T00:00:00Z');
-		if ($workDay === false || $regDay === false) {
+		$workDay = self::utcDay(moment: $date);
+		$regDay  = self::utcDay(moment: $registrationMoment);
+		if ($workDay === null || $regDay === null) {
 			return null;
 		}
 
 		return (int)floor((($regDay - $workDay) / 86400));
 	}//end backfillDays()
+
+	/**
+	 * The moment's calendar day as a UTC-midnight timestamp, so intra-day times do not round; null when blank or unparsable.
+	 *
+	 * @param string $moment A date or date-time.
+	 *
+	 * @return int|null
+	 */
+	private static function utcDay(string $moment): int|null {
+		$time = false;
+		if ($moment !== '') {
+			$time = strtotime($moment);
+		}
+
+		if ($time === false) {
+			return null;
+		}
+
+		$day = strtotime(gmdate('Y-m-d', $time) . 'T00:00:00Z');
+		if ($day === false) {
+			return null;
+		}
+
+		return $day;
+	}//end utcDay()
 }//end class

@@ -45,6 +45,13 @@ final class BsnValidator {
 	private const VISIBLE_TRAILING_DIGITS = 4;
 
 	/**
+	 * The 11-proef weight of each of the nine digits.
+	 *
+	 * @var list<int>
+	 */
+	private const ELFPROEF_WEIGHTS = [9, 8, 7, 6, 5, 4, 3, 2, -1];
+
+	/**
 	 * Validate a BSN against the Dutch 11-proef checksum.
 	 *
 	 * A BSN is exactly 9 digits. The weighted sum uses descending weights
@@ -61,11 +68,7 @@ final class BsnValidator {
 	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
 	 */
 	public static function isValid(?string $bsn): bool {
-		if ($bsn === null) {
-			return true;
-		}
-
-		$bsn = trim($bsn);
+		$bsn = trim((string)$bsn);
 		if ($bsn === '') {
 			return true;
 		}
@@ -74,23 +77,26 @@ final class BsnValidator {
 			return false;
 		}
 
-		$sum = 0;
-		for ($i = 0; $i < 9; $i++) {
-			$digit = (int)$bsn[$i];
-			$weight = (9 - $i);
-			if ($i === 8) {
-				$weight = -1;
-			}
+		$sum = self::weightedSum(bsn: $bsn);
 
-			$sum += ($digit * $weight);
-		}
-
-		if ($sum === 0) {
-			return false;
-		}
-
-		return ($sum % 11) === 0;
+		return $sum !== 0 && ($sum % 11) === 0;
 	}//end isValid()
+
+	/**
+	 * The 11-proef sum of nine digits: weights 9..2, then -1 for the last digit.
+	 *
+	 * @param string $bsn Nine digits.
+	 *
+	 * @return int The weighted sum.
+	 */
+	private static function weightedSum(string $bsn): int {
+		$sum = 0;
+		foreach (self::ELFPROEF_WEIGHTS as $i => $weight) {
+			$sum += ((int)$bsn[$i] * $weight);
+		}
+
+		return $sum;
+	}//end weightedSum()
 
 	/**
 	 * Mask a BSN for display, revealing only the trailing digits.

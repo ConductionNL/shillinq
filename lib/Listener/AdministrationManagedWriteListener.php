@@ -27,9 +27,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\AdministrationManagementAccess;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -65,17 +65,17 @@ class AdministrationManagedWriteListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param AdministrationContextService $administrationContext The session user.
-	 * @param AdministrationManagementAccess $managementAccess Owner or admin check.
-	 * @param ListenerSchemaResolver $schemaResolver Schema matching for the written entity.
+	 * @param AdministrationContextServiceInterface $administrationContext The session user.
+	 * @param AdministrationManagementAccessInterface $managementAccess Owner or admin check.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Schema matching for the written entity.
 	 * @param LoggerInterface $logger Logger.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly AdministrationContextService $administrationContext,
-		private readonly AdministrationManagementAccess $managementAccess,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly AdministrationContextServiceInterface $administrationContext,
+		private readonly AdministrationManagementAccessInterface $managementAccess,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -90,6 +90,28 @@ class AdministrationManagedWriteListener implements IEventListener {
 	 * @spec openspec/specs/accounting-standards-policy/spec.md
 	 */
 	public function handle(Event $event): void {
+		$entities = $this->entitiesOf(event: $event);
+		if ($entities === [] || $this->isChecked(entity: $entities[0]) === false) {
+			return;
+		}
+
+		if ($this->administrationContext->currentUserId() === null) {
+			return;
+		}
+
+		$this->refuseUnmanaged(event: $event, entities: $entities);
+	}//end handle()
+
+	/**
+	 * The objects the write touches: the new object, and on an update also the old one.
+	 *
+	 * @param Event $event An ObjectCreatingEvent or ObjectUpdatingEvent.
+	 *
+	 * @return array<int, mixed> The non-null objects.
+	 *
+	 * @spec openspec/specs/accounting-standards-policy/spec.md
+	 */
+	private function entitiesOf(Event $event): array {
 		$entities = [];
 		if ($event instanceof ObjectCreatingEvent === true) {
 			$entities[] = $event->getObject();
@@ -100,15 +122,20 @@ class AdministrationManagedWriteListener implements IEventListener {
 			$entities[] = $event->getOldObject();
 		}
 
-		$entities = array_values(array_filter($entities, static fn ($entity): bool => $entity !== null));
-		if ($entities === [] || $this->isChecked(entity: $entities[0]) === false) {
-			return;
-		}
+		return array_values(array_filter($entities, static fn ($entity): bool => $entity !== null));
+	}//end entitiesOf()
 
-		if ($this->administrationContext->currentUserId() === null) {
-			return;
-		}
-
+	/**
+	 * Stop the write at the first object whose administration the caller does not manage.
+	 *
+	 * @param Event             $event    The write event.
+	 * @param array<int, mixed> $entities The objects the write touches.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/accounting-standards-policy/spec.md
+	 */
+	private function refuseUnmanaged(Event $event, array $entities): void {
 		foreach ($entities as $entity) {
 			$administrationId = trim((string)(($entity->getObject() ?? [])['administrationId'] ?? ''));
 			if ($this->managementAccess->canManage(administrationId: $administrationId) === true) {
@@ -123,7 +150,7 @@ class AdministrationManagedWriteListener implements IEventListener {
 			$event->stopPropagation();
 			return;
 		}
-	}//end handle()
+	}//end refuseUnmanaged()
 
 	/**
 	 * Whether the entity belongs to one of the checked schemas.

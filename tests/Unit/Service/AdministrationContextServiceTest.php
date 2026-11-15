@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -64,6 +65,20 @@ final class AdministrationContextServiceTest extends TestCase {
 	private IAppConfig&MockObject $appConfig;
 
 	/**
+	 * User preferences as stored, keyed "uid/app/key".
+	 *
+	 * @var array<string, string>
+	 */
+	private array $preferences = [];
+
+	/**
+	 * User config over $preferences.
+	 *
+	 * @var IConfig&MockObject
+	 */
+	private IConfig&MockObject $config;
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -74,6 +89,16 @@ final class AdministrationContextServiceTest extends TestCase {
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->preferences = [];
+		$this->config = $this->createMock(IConfig::class);
+		$this->config->method('getUserValue')->willReturnCallback(
+			fn (string $uid, string $app, string $key, mixed $default = ''): mixed => ($this->preferences[$uid . '/' . $app . '/' . $key] ?? $default)
+		);
+		$this->config->method('setUserValue')->willReturnCallback(
+			function (string $uid, string $app, string $key, mixed $value): void {
+				$this->preferences[$uid . '/' . $app . '/' . $key] = (string)$value;
+			}
+		);
 
 	}//end setUp()
 
@@ -233,6 +258,7 @@ final class AdministrationContextServiceTest extends TestCase {
 			userSession: $this->userSession,
 			appConfig: $this->appConfig,
 			logger: $this->createMock(LoggerInterface::class),
+			config: $this->config,
 		);
 
 	}//end buildService()
@@ -394,6 +420,96 @@ final class AdministrationContextServiceTest extends TestCase {
 		self::assertFalse($service->isOwnerOf(''));
 
 	}//end testIsOwnerOfNeedsAValidOwnerMembershipOfThatAdministration()
+
+	/**
+	 * Two current memberships of `bob`: Bakkerij Jansen first, Kapsalon Mooi second.
+	 *
+	 * @return array{0: array<int, array<string, mixed>>, 1: array<int, array<string, mixed>>}
+	 */
+	private static function twoAdministrations(): array {
+		return [
+			[
+				['userId' => 'bob', 'administrationId' => 'adm-bakker', 'role' => 'boekhouder'],
+				['userId' => 'bob', 'administrationId' => 'adm-kapper', 'role' => 'boekhouder'],
+			],
+			[
+				['id' => 'adm-bakker', 'administrationCode' => 'BAK', 'name' => 'Bakkerij Jansen', 'status' => 'actief'],
+				['id' => 'adm-kapper', 'administrationCode' => 'KAP', 'name' => 'Kapsalon Mooi', 'status' => 'actief'],
+			],
+		];
+	}//end twoAdministrations()
+
+	/**
+	 * A stored choice the user is still a member of is the active one, in a
+	 * fresh service as after a reload or a new login (REQ-LMA-001).
+	 *
+	 * @return void
+	 */
+	public function testTheStoredChoiceIsActiveAfterAReload(): void {
+		$this->authenticateAs('bob');
+		[$memberships, $administrations] = self::twoAdministrations();
+
+		$this->buildService($memberships, $administrations)->rememberActiveAdministration(administrationId: 'adm-kapper');
+
+		self::assertSame(['bob/shillinq/activeAdministrationId' => 'adm-kapper'], $this->preferences);
+		$context = $this->buildService($memberships, $administrations)->buildContext();
+		self::assertSame('adm-kapper', $context['activeAdministrationId']);
+		self::assertSame(['adm-bakker', 'adm-kapper'], array_column($context['administrations'], 'administrationId'));
+	}//end testTheStoredChoiceIsActiveAfterAReload()
+
+	/**
+	 * Without a stored choice the first membership is active.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAStoredChoiceTheFirstMembershipIsActive(): void {
+		$this->authenticateAs('bob');
+		[$memberships, $administrations] = self::twoAdministrations();
+
+		self::assertSame('adm-bakker', $this->buildService($memberships, $administrations)->buildContext()['activeAdministrationId']);
+	}//end testWithoutAStoredChoiceTheFirstMembershipIsActive()
+
+	/**
+	 * A stored choice the user lost access to, or whose membership expired,
+	 * falls back to the first membership.
+	 *
+	 * @return void
+	 */
+	public function testAStaleChoiceFallsBackToTheFirstMembership(): void {
+		$this->authenticateAs('bob');
+		[$memberships, $administrations] = self::twoAdministrations();
+
+		$this->preferences['bob/shillinq/activeAdministrationId'] = 'adm-elders';
+		self::assertSame('adm-bakker', $this->buildService($memberships, $administrations)->buildContext()['activeAdministrationId']);
+
+		$this->setUp();
+		$this->authenticateAs('bob');
+		$this->preferences['bob/shillinq/activeAdministrationId'] = 'adm-kapper';
+		$memberships[1]['validUntil'] = '2000-01-01';
+		self::assertSame('adm-bakker', $this->buildService($memberships, $administrations)->buildContext()['activeAdministrationId']);
+	}//end testAStaleChoiceFallsBackToTheFirstMembership()
+
+	/**
+	 * Without memberships there is no active administration, whatever is stored;
+	 * an anonymous request or an empty id stores nothing.
+	 *
+	 * @return void
+	 */
+	public function testNothingIsActiveWithoutMembershipsAndNothingIsStoredAnonymously(): void {
+		$this->authenticateAs(null);
+		[$memberships, $administrations] = self::twoAdministrations();
+		$service = $this->buildService($memberships, $administrations);
+		$service->rememberActiveAdministration(administrationId: 'adm-kapper');
+		self::assertSame([], $this->preferences);
+
+		$this->setUp();
+		$this->authenticateAs('bob');
+		$this->preferences['bob/shillinq/activeAdministrationId'] = 'adm-kapper';
+		$lonely = $this->buildService([], $administrations);
+		self::assertNull($lonely->buildContext()['activeAdministrationId']);
+		$lonely->rememberActiveAdministration(administrationId: '');
+		self::assertSame(['bob/shillinq/activeAdministrationId' => 'adm-kapper'], $this->preferences);
+	}//end testNothingIsActiveWithoutMembershipsAndNothingIsStoredAnonymously()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

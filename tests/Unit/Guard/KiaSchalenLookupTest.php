@@ -183,4 +183,15 @@ class KiaSchalenLookupTest extends TestCase {
 		self::assertSame(3, $tier['tier']);
 
 	}//end testResolveTierSelectsCorrectBand()
+
+	public function testAnAmountNoTierCoversYieldsNoAftrekAndIsLogged(): void {
+		$this->logger->expects($this->once())->method('debug')->with(
+			'KiaSchalenLookup: no tier matched',
+			['jaartotaal' => 500000]
+		);
+
+		$tiers = [['tier' => 1, 'from' => 0, 'tot' => 280000, 'percentage' => 28, 'fixedAmount' => null]];
+
+		$this->assertSame(0, $this->lookup->computeAftrek(tiers: $tiers, jaartotaal: 500000));
+	}//end testAnAmountNoTierCoversYieldsNoAftrekAndIsLogged()
 }//end class

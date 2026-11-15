@@ -29,7 +29,8 @@ namespace OCA\Shillinq\Service;
 use DomainException;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationMembershipServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -37,7 +38,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
  */
-class AdministrationMembershipService {
+class AdministrationMembershipService implements AdministrationMembershipServiceInterface {
 
 	/**
 	 * The membership roles, as the AdministrationMembership schema declares them.
@@ -97,24 +98,8 @@ class AdministrationMembershipService {
 			'role' => $role,
 			'grantedBy' => $grantedBy,
 		];
-		foreach (['validFrom', 'validUntil'] as $dateKey) {
-			$value = trim((string)($options[$dateKey] ?? ''));
-			if ($value === '') {
-				continue;
-			}
-
-			if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) !== 1) {
-				throw new InvalidArgumentException('Dates are written as YYYY-MM-DD.');
-			}
-
-			$membership[$dateKey] = $value;
-		}
-
-		foreach (['mayPostJournalEntries', 'mayCloseFiscalYear'] as $flagKey) {
-			if (array_key_exists($flagKey, $options) === true && $options[$flagKey] !== null) {
-				$membership[$flagKey] = ($options[$flagKey] === true);
-			}
-		}
+		$membership = $this->withMembershipDates(membership: $membership, options: $options);
+		$membership = $this->withMembershipFlags(membership: $membership, options: $options);
 
 		$existing = $this->objectService
 			->setRegister($this->register())
@@ -141,12 +126,61 @@ class AdministrationMembershipService {
 	}//end addMember()
 
 	/**
+	 * Copy the optional `validFrom` / `validUntil` dates onto the membership.
+	 *
+	 * @param array<string,mixed> $membership The membership.
+	 * @param array<string,mixed> $options The addMember() options.
+	 *
+	 * @return array<string,mixed> The membership with its dates.
+	 *
+	 * @throws InvalidArgumentException When a date is not YYYY-MM-DD.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	private function withMembershipDates(array $membership, array $options): array {
+		foreach (['validFrom', 'validUntil'] as $dateKey) {
+			$value = trim((string)($options[$dateKey] ?? ''));
+			if ($value === '') {
+				continue;
+			}
+
+			if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) !== 1) {
+				throw new InvalidArgumentException('Dates are written as YYYY-MM-DD.');
+			}
+
+			$membership[$dateKey] = $value;
+		}
+
+		return $membership;
+	}//end withMembershipDates()
+
+	/**
+	 * Copy the optional permission flags onto the membership.
+	 *
+	 * @param array<string,mixed> $membership The membership.
+	 * @param array<string,mixed> $options The addMember() options.
+	 *
+	 * @return array<string,mixed> The membership with its flags.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	private function withMembershipFlags(array $membership, array $options): array {
+		foreach (['mayPostJournalEntries', 'mayCloseFiscalYear'] as $flagKey) {
+			if (array_key_exists($flagKey, $options) === true && $options[$flagKey] !== null) {
+				$membership[$flagKey] = ($options[$flagKey] === true);
+			}
+		}
+
+		return $membership;
+	}//end withMembershipFlags()
+
+	/**
 	 * The configured register slug.
 	 *
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 
 		if ($register === '') {
 			return 'shillinq';

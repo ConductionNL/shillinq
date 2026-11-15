@@ -25,19 +25,23 @@
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RuleTestDataSeederInterface;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Makes the local test data compliant with the enforced rules (idempotent).
@@ -50,7 +54,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): this seeder enumerates every rule
  * family's test fixtures; inherent complexity. Deferred to a follow-up.
  */
-class RuleTestDataSeeder {
+class RuleTestDataSeeder implements RuleTestDataSeederInterface {
 	/**
 	 * Construct the rule test-data seeder.
 	 *
@@ -118,7 +122,7 @@ class RuleTestDataSeeder {
 	 * @return string The configured register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		return $register === '' ? 'shillinq' : $register;
 	}//end register()
 }//end class
