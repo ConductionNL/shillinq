@@ -6,7 +6,7 @@
  * holds the app's own settings, each other tab one section, the Required
  * fields tab counts its records, and the last crumb names the open tab.
  *
- * @spec openspec/specs/platform-required-fields/spec.md
+ * @spec openspec/specs/app-administration/spec.md
  */
 
 import axios from '@nextcloud/axios'

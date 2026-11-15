@@ -1,3 +1,5 @@
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!--
   StandardsPolicyEditor — Settings → Accounting standards.
 
@@ -41,8 +43,14 @@
 				data-testid="standards-policy-readonly">
 				{{
 					administrationId
-						? t('shillinq', 'Only an owner of this administration can change its standards policy.')
-						: t('shillinq', 'Choose an administration to see its standards policy.')
+						? t(
+								'shillinq',
+								'Only an owner of this administration can change its standards policy.',
+							)
+						: t(
+								'shillinq',
+								'Choose an administration to see its standards policy.',
+							)
 				}}
 			</p>
 			<ul class="standards-policy__list" data-testid="standards-policy-list">
@@ -107,7 +115,10 @@
 			</div>
 
 			<div class="standards-policy__actions">
-				<NcButton variant="primary" :disabled="saving || !canEdit" @click="save">
+				<NcButton
+					variant="primary"
+					:disabled="saving || !canEdit"
+					@click="save">
 					<template #icon>
 						<NcLoadingIcon v-if="saving" :size="20" />
 						<ContentSave v-else :size="20" />
@@ -129,7 +140,6 @@ import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
 import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
-
 import { fetchAdministrationContext } from '../../api/administrationApi.js'
 
 const DOCS_BASE = 'https://shillinq.conduction.nl/standards/'
@@ -280,11 +290,13 @@ export default {
 					const response = await axios.get(this.policyUrl())
 					this.canEdit = response.data?.canEdit === true
 					this.applyPolicy(
-						Array.isArray(response.data?.frameworks) ? response.data.frameworks : [],
+						Array.isArray(response.data?.frameworks)
+							? response.data.frameworks
+							: [],
 					)
 				}
-			} catch (e) {
-				console.debug('[StandardsPolicyEditor] no policy loaded; using defaults', e)
+			} catch {
+				// No policy loaded: the defaults stay.
 			} finally {
 				this.loading = false
 			}
@@ -296,7 +308,10 @@ export default {
 		 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
 		 */
 		policyUrl() {
-			return generateUrl('/apps/shillinq/api/administrations/{id}/standards-policy', { id: this.administrationId })
+			return generateUrl(
+				'/apps/shillinq/api/administrations/{id}/standards-policy',
+				{ id: this.administrationId },
+			)
 		},
 
 		/**

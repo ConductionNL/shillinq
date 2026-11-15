@@ -3,6 +3,9 @@
 /**
  * Payment-provider port for the portal pay-now flow (portal-payment-initiation).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * This is the seam PortalPaymentSessionService drives to mint an iDEAL payment
  * session for a subject-initiated "pay my invoice" action. It sits ABOVE the
  * existing `MolliePaymentAdapterInterface` — the exact same layering
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

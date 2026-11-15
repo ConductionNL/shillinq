@@ -126,7 +126,9 @@ describe('Generate invoices', () => {
 				},
 			},
 		)
-		expect(routes).toContain("'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'")
+		expect(routes).toContain(
+			"'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'",
+		)
 	})
 
 	it('sends the fields InvoiceGenerationRequest reads', async () => {

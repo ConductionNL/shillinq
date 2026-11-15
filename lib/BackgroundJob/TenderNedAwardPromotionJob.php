@@ -3,6 +3,9 @@
 /**
  * TenderNed Award Promotion Job.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Runs the award -> Commitment promotion that
  * `TenderNedAwardDetectedListener` used to do synchronously, inside the
  * OpenRegister write that raised the event.
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -47,7 +47,7 @@ namespace OCA\Shillinq\BackgroundJob;
 use OCA\OpenRegister\BackgroundJob\ActorForwardedJob;
 use OCA\OpenRegister\Service\Deferral\DeferredListenerContext;
 use OCA\OpenRegister\Service\OrganisationService;
-use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
+use OCA\Shillinq\Kernel\Contracts\TenderNedAwardDetectedListenerInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IUserManager;
 use OCP\IUserSession;
@@ -117,11 +117,11 @@ class TenderNedAwardPromotionJob extends ActorForwardedJob {
 	/**
 	 * Resolve the listener that owns the promotion logic.
 	 *
-	 * @return TenderNedAwardDetectedListener|null Null when unresolvable.
+	 * @return TenderNedAwardDetectedListenerInterface|null Null when unresolvable.
 	 */
-	private function resolveListener(): ?TenderNedAwardDetectedListener {
+	private function resolveListener(): ?TenderNedAwardDetectedListenerInterface {
 		try {
-			$listener = $this->container->get(TenderNedAwardDetectedListener::class);
+			$listener = $this->container->get(TenderNedAwardDetectedListenerInterface::class);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'TenderNedAwardPromotionJob: listener could not be resolved — dropping batch',
@@ -130,7 +130,7 @@ class TenderNedAwardPromotionJob extends ActorForwardedJob {
 			return null;
 		}
 
-		if (($listener instanceof TenderNedAwardDetectedListener) === false) {
+		if (($listener instanceof TenderNedAwardDetectedListenerInterface) === false) {
 			return null;
 		}
 
@@ -141,17 +141,16 @@ class TenderNedAwardPromotionJob extends ActorForwardedJob {
 	/**
 	 * Run one buffered entry, fail-soft.
 	 *
-	 * @param TenderNedAwardDetectedListener $listener Promotion owner.
+	 * @param TenderNedAwardDetectedListenerInterface $listener Promotion owner.
 	 * @param array<string, mixed>           $entry    Buffered payload.
 	 *
 	 * @return void
 	 */
-	private function runEntry(TenderNedAwardDetectedListener $listener, array $entry): void {
+	private function runEntry(TenderNedAwardDetectedListenerInterface $listener, array $entry): void {
 		// The uuid is what the listener re-resolves the dossier by. Without
 		// it the deferred run has no identity to re-read and could only
 		// promote from the stale snapshot, which the contract forbids.
-		$uuid = (string)($entry['uuid'] ?? '');
-		if ($uuid === '') {
+		if ((string)($entry['uuid'] ?? '') === '') {
 			$this->logger->warning(
 				'TenderNedAwardPromotionJob: buffered entry carries no uuid — skipped',
 				['keys' => array_keys($entry)]
@@ -159,19 +158,31 @@ class TenderNedAwardPromotionJob extends ActorForwardedJob {
 			return;
 		}
 
+		$this->promote(listener: $listener, entry: $entry);
+	}//end runEntry()
+
+	/**
+	 * Promote one entry, fail-soft.
+	 *
+	 * Same blast radius the inline handler had: logged and dropped, never
+	 * rethrown into cron. The next polling tick re-attempts.
+	 *
+	 * @param TenderNedAwardDetectedListenerInterface $listener The resolved listener.
+	 * @param array<string, mixed>           $entry    One buffered entry, with a uuid.
+	 *
+	 * @return void
+	 */
+	private function promote(TenderNedAwardDetectedListenerInterface $listener, array $entry): void {
 		try {
 			$listener->runDeferredPromotion(entry: $entry);
 		} catch (Throwable $e) {
-			// Same blast radius the inline handler had: logged and dropped,
-			// never rethrown into cron. The next polling tick re-attempts.
 			$this->logger->warning(
 				'TenderNedAwardPromotionJob: promotion failed — fail-soft',
 				[
-					'uuid'      => $uuid,
+					'uuid'      => (string)$entry['uuid'],
 					'exception' => $e->getMessage(),
 				]
 			);
-		}//end try
-
-	}//end runEntry()
+		}
+	}//end promote()
 }//end class

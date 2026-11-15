@@ -3,6 +3,9 @@
 /**
  * Treasury reference-rate + FX-spot adapter port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The Shillinq treasury / in-house bank surface
  * (`bookkeeping-treasury-ihb`) needs three flavours of reference data
  * to roll its declarative aggregations:
@@ -42,9 +45,6 @@
  * @link https://data.ecb.europa.eu/help/api/overview
  *
  * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

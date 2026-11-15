@@ -3,6 +3,9 @@
 /**
  * Voluntary Contribution Policy
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The Wet vrijwillige ouderbijdrage (in force since 2021-08-01) makes a school's
  * parental contribution voluntary: a child takes part whether or not it is
  * paid, and a school may not pressure a parent into paying. For dunning that
@@ -27,15 +30,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
+use OCA\Shillinq\Kernel\Contracts\VoluntaryContributionPolicyInterface;
 use RuntimeException;
 
 /**
@@ -43,7 +44,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
  */
-final class VoluntaryContributionPolicy {
+final class VoluntaryContributionPolicy implements VoluntaryContributionPolicyInterface {
 	/**
 	 * The only stage a voluntary contribution may reach.
 	 *

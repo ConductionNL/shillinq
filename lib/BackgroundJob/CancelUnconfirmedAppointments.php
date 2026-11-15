@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\AppointmentConfirmationService;
+use OCA\Shillinq\Kernel\Contracts\AppointmentConfirmationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -49,12 +49,12 @@ class CancelUnconfirmedAppointments extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time The time factory.
-	 * @param AppointmentConfirmationService $confirmationService The confirmation service.
+	 * @param AppointmentConfirmationServiceInterface $confirmationService The confirmation service.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private AppointmentConfirmationService $confirmationService,
+		private AppointmentConfirmationServiceInterface $confirmationService,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
