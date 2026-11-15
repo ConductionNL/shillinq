@@ -63,12 +63,14 @@ class WidgetService implements WidgetServiceInterface {
 	 * @param IAppConfig $appConfig App config for register-slug resolution.
 	 * @param SlotService $slotService Slot availability + cache invalidation.
 	 * @param LoggerInterface $logger Nextcloud logger.
+	 * @param WithdrawalService|null $withdrawals Signs the guest withdrawal link for the confirmation step; absent, none is offered.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly SlotService $slotService,
 		private readonly LoggerInterface $logger,
+		private readonly ?WithdrawalService $withdrawals = null,
 	) {
 	}//end __construct()
 
@@ -525,7 +527,7 @@ class WidgetService implements WidgetServiceInterface {
 	 * @return array<string,mixed>
 	 */
 	private function createdResponse(?array $saved, array $appointment): array {
-		return [
+		$response = [
 			'code' => 201,
 			'appointmentId' => (string)($saved['appointmentId'] ?? $appointment['appointmentId']),
 			'status' => (string)($saved['status'] ?? 'pending_confirmation'),
@@ -533,7 +535,40 @@ class WidgetService implements WidgetServiceInterface {
 			'endTime' => $appointment['endTime'],
 			'confirmationMessage' => 'Your appointment was created. You will receive a confirmation email shortly.',
 		];
+
+		$withdrawal = $this->withdrawalLink(appointment: array_merge($appointment, ($saved ?? [])));
+		if ($withdrawal !== null) {
+			$response['withdrawal'] = $withdrawal;
+		}
+
+		return $response;
 	}//end createdResponse()
+
+	/**
+	 * The signed guest link to withdraw from the booking just made, for the
+	 * widget's confirmation step (sales-cancellation REQ-SCX-004, design D4).
+	 *
+	 * Null when no withdrawal service is wired, the booking cannot be
+	 * withdrawn, or the link cannot be built: a booking is never refused for it.
+	 *
+	 * @param array<string,mixed> $appointment The saved appointment, with its `@self.created` moment.
+	 *
+	 * @return array{url: string, periodEndsOn: string}|null The link and the last day it works.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 */
+	private function withdrawalLink(array $appointment): ?array {
+		if ($this->withdrawals === null) {
+			return null;
+		}
+
+		try {
+			return $this->withdrawals->guestLinkFor(appointment: $appointment, now: new DateTimeImmutable('now', new DateTimeZone('UTC')));
+		} catch (\Throwable $e) {
+			$this->logger->warning('WidgetService: no withdrawal link for the confirmation step', ['exception' => $e->getMessage()]);
+			return null;
+		}
+	}//end withdrawalLink()
 
 	/**
 	 * Whether a serviceId names a service the business actually published.

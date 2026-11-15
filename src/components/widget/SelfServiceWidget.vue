@@ -246,6 +246,10 @@
 			role="status">
 			<strong>{{ t('Booking confirmed') }}</strong>
 			<p>{{ confirmationMessage }}</p>
+			<p v-if="withdrawalLink" class="wsw-widget__withdrawal" data-testid="wsw-withdrawal">
+				{{ withdrawalNotice }}
+				<a :href="withdrawalLink.url" rel="noopener" target="_blank">{{ t('Withdraw from contract here') }}</a>
+			</p>
 		</section>
 	</div>
 </template>
@@ -333,6 +337,7 @@ export default {
 			submitting: false,
 			submitError: '',
 			confirmationMessage: '',
+			withdrawalLink: null,
 			ids: {
 				service: 'wsw-service-' + uid,
 				date: 'wsw-date-' + uid,
@@ -366,6 +371,19 @@ export default {
 			}
 			return steps[this.step] || ''
 		},
+
+		/**
+		 * The sentence before the withdrawal link, with its last day.
+		 *
+		 * @return {string}
+		 *
+		 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+		 */
+		withdrawalNotice() {
+			const until = this.withdrawalLink ? this.withdrawalLink.periodEndsOn : ''
+			return this.t('You can withdraw from this booking free of charge until {date}.').replace('{date}', until)
+		},
+
 
 		selectedServiceName() {
 			const found = this.services.find(
@@ -758,7 +776,25 @@ export default {
 				payload && payload.confirmationMessage
 					? payload.confirmationMessage
 					: this.t('Booking confirmed')
+			this.withdrawalLink = this.withdrawalOf(payload)
 			this.step = 'confirmed'
+		},
+
+		/**
+		 * The signed withdrawal link the server sent with the booking, when it
+		 * is an https link with its last day; anything else offers none.
+		 *
+		 * @param {object|null} payload The API answer.
+		 * @return {{url: string, periodEndsOn: string}|null} The link.
+		 *
+		 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+		 */
+		withdrawalOf(payload) {
+			const link = payload && payload.withdrawal
+			if (!link || typeof link.url !== 'string' || !link.url.startsWith('https://')) {
+				return null
+			}
+			return { url: link.url, periodEndsOn: String(link.periodEndsOn || '') }
 		},
 	},
 }
