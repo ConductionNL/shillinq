@@ -22,7 +22,8 @@
 
 ## 3. Pages
 
-- [ ] 3.1 Add `WebshopOrders` (index with intake-state quick filters and detail with the invoice link) under Sales, and `WebshopChannels` under the settings gear (REQ-SWO-001, REQ-SWO-006). Verify: `npm run check:manifest`, `npm run check:nav-reachability`, and Playwright on the seeded orders.
+- [x] 3.1 Add `WebshopOrders` (index with intake-state quick filters and detail with the invoice link) under Sales, and `WebshopChannels` under the settings gear (REQ-SWO-001, REQ-SWO-006). Verify: `npm run check:manifest`, `npm run check:nav-reachability`, and Playwright on the seeded orders.
+  - Done: `src/manifest.d/sales-webshop-orders.json` — `WebshopOrders` (index over WebshopOrder, quick filters All / Received / Invoiced / Refused / Duplicate / Credited, refusal reason column) and `WebshopOrderDetail` (the order's data and a related panel with its invoice and credit note), relocated under Sales in `src/menu-layout.json`; `WebshopChannels` and `WebshopChannelDetail` (channel data and the orders that came in through it) lifted into the settings gear. English and Dutch catalogue entries for the page labels and the new schema strings. `check:manifest` passes Ajv, consistency and dead-config gates; `check:nav-reachability` reports no new orphan from this change (its one failure, `CancellationReasons`, is on development too). Left: the Playwright run on the seeded orders, which needs a live instance.
 
 ## 4. Docs
 
