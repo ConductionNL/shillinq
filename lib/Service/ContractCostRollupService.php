@@ -3,6 +3,9 @@
 /**
  * Contract Cost Rollup Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A contract with an expiry nobody watches is the most common avoidable
  * overspend in a gemeente, and a contract whose cost nobody adds up is the
  * second. `compliance-deadline-calendar` already watches the expiry. This adds
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -47,13 +48,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
  */
-final class ContractCostRollupService {
-	/**
-	 * The schema holding contracts.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA = 'Contract';
+final class ContractCostRollupService implements ContractCostRollupServiceInterface {
 
 	/**
 	 * Constructor.
@@ -86,26 +81,7 @@ final class ContractCostRollupService {
 		$unreadable = 0;
 		$links = ($contract['linkedObjects'] ?? []);
 		if (is_array($links) === true) {
-			foreach ($links as $index => $link) {
-				if (is_array($link) === false) {
-					++$unreadable;
-					continue;
-				}
-
-				$cost = $this->costOf(link: $link);
-				if ($cost === null) {
-					// Counted, not summed. A subject that cannot be priced used
-					// to contribute zero in silence, and the comment beside it
-					// said the tell was a total that stops moving. It is not:
-					// the timestamp below moves on every run, complete or not.
-					++$unreadable;
-					$links[$index]['cost'] = null;
-					continue;
-				}
-
-				$links[$index]['cost'] = $cost;
-				$total += $cost;
-			}
+			[$links, $total, $unreadable] = $this->priceLinks(links: $links);
 		}
 
 		$linked = [];
@@ -119,6 +95,64 @@ final class ContractCostRollupService {
 		$contract['incurredCostComplete'] = ($unreadable === 0);
 		$contract['incurredCostUnreadableLinks'] = $unreadable;
 
+		$contract = $this->withRemainingValue(contract: $contract, unreadable: $unreadable);
+
+		$this->objectService->saveObject(
+			object: $contract,
+			register: $this->registerSlug(),
+			schema: self::SCHEMA,
+		);
+
+		return $contract;
+	}//end rollUp()
+
+	/**
+	 * Price every linked subject, counting the links that cannot be priced.
+	 *
+	 * @param array<mixed> $links The contract's linkedObjects.
+	 *
+	 * @return array{0: array<mixed>, 1: float, 2: int} [links with their cost, total cost, unreadable links].
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
+	 */
+	private function priceLinks(array $links): array {
+		$total = 0.0;
+		$unreadable = 0;
+		foreach ($links as $index => $link) {
+			if (is_array($link) === false) {
+				++$unreadable;
+				continue;
+			}
+
+			$cost = $this->costOf(link: $link);
+			if ($cost === null) {
+				// Counted, not summed. A subject that cannot be priced used
+				// to contribute zero in silence, and the comment beside it
+				// said the tell was a total that stops moving. It is not:
+				// the timestamp below moves on every run, complete or not.
+				++$unreadable;
+				$links[$index]['cost'] = null;
+				continue;
+			}
+
+			$links[$index]['cost'] = $cost;
+			$total += $cost;
+		}
+
+		return [$links, $total, $unreadable];
+	}//end priceLinks()
+
+	/**
+	 * Set the remaining value from the agreed value when the cost is complete; drop it when it is not.
+	 *
+	 * @param array<string, mixed> $contract   The contract with incurredCost set.
+	 * @param int                  $unreadable The links that could not be priced.
+	 *
+	 * @return array<string, mixed> The contract.
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
+	 */
+	private function withRemainingValue(array $contract, int $unreadable): array {
 		$agreed = ($contract['totalContractValue'] ?? null);
 		if (is_numeric($agreed) === true && $unreadable === 0) {
 			$contract['remainingValue'] = round(((float)$agreed - $contract['incurredCost']), 2);
@@ -129,14 +163,8 @@ final class ContractCostRollupService {
 			unset($contract['remainingValue']);
 		}
 
-		$this->objectService->saveObject(
-			object: $contract,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
-		);
-
 		return $contract;
-	}//end rollUp()
+	}//end withRemainingValue()
 
 	/**
 	 * Remove one link and recompute, leaving the unlinked object untouched.

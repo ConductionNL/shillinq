@@ -3,6 +3,9 @@
 /**
  * Lease decidesk webhook delivery (Task 8.2).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * When LeaseReassessmentService persists a reassessment-event with
  * `status = pending-approval` (i.e. the RoU adjustment exceeds the
  * EUR 100,000 materiality threshold per REQ-LR-007) this service
@@ -31,16 +34,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use OCP\Security\ICredentialsManager;
@@ -143,15 +143,7 @@ class LeaseDecideskWebhookService {
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function getWebhookToken(): string {
-		$secret = $this->credentialsManager->retrieve(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN
-		);
-		if (is_string($secret) === false || $secret === '') {
-			return '';
-		}
-
-		return $secret;
+		return $this->token()->read();
 	}//end getWebhookToken()
 
 	/**
@@ -167,22 +159,18 @@ class LeaseDecideskWebhookService {
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function setWebhookToken(string $token): void {
-		$trimmed = trim($token);
-		if ($trimmed === '') {
-			$this->credentialsManager->delete(
-				userId: '',
-				identifier: self::CREDENTIAL_ID_TOKEN
-			);
-			return;
-		}
-
-		$this->credentialsManager->store(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN,
-			credentials: $trimmed
-		);
+		$this->token()->write(value: $token);
 
 	}//end setWebhookToken()
+
+	/**
+	 * The token in the secrets store.
+	 *
+	 * @return StoredSecret
+	 */
+	private function token(): StoredSecret {
+		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_TOKEN);
+	}//end token()
 
 	/**
 	 * Build the JSON payload for the decidesk approval webhook.
@@ -267,10 +255,7 @@ class LeaseDecideskWebhookService {
 		$token = $this->getWebhookToken();
 		$payload = $this->buildPayload(event: $event);
 
-		$headers = ['Content-Type' => 'application/json'];
-		if ($token !== '') {
-			$headers['Authorization'] = 'Bearer ' . $token;
-		}
+		$headers = $this->webhookHeaders(token: $token);
 
 		try {
 			$client = $this->clientService->newClient();
@@ -309,4 +294,22 @@ class LeaseDecideskWebhookService {
 		}//end try
 
 	}//end deliver()
+
+	/**
+	 * The webhook request headers; the bearer token only when one is configured.
+	 *
+	 * @param string $token The configured bearer token, or ''.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
+	 */
+	private function webhookHeaders(string $token): array {
+		$headers = ['Content-Type' => 'application/json'];
+		if ($token !== '') {
+			$headers['Authorization'] = 'Bearer ' . $token;
+		}
+
+		return $headers;
+	}//end webhookHeaders()
 }//end class

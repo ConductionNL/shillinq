@@ -4,6 +4,9 @@
  * Read/write in-memory ObjectService stub for `budget-known-costs` writer
  * tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `budget-core-schema`'s two existing doubles each model one half of what
  * {@see \OCA\Shillinq\Service\KnownCostBudgetWriter} needs:
  * `FilteredObjectServiceStub` models `{in: [...]}`-filtered reads but every
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 use LogicException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Service\Object\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
 use OCP\IUser;
 use RuntimeException;
 
@@ -625,10 +625,11 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 *
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -640,6 +641,8 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * @param ?string $process A label for the holding process.
 	 * @param ?int $duration Lock duration in seconds.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
@@ -647,7 +650,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 		string $identifier,
 		?string $process = null,
 		?int $duration = null,
-		bool $advisory = false
+		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
 	): array {
 		$this->unsupported(method: 'lockObject');
 

@@ -1,0 +1,226 @@
+{
+    "noObject": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "noStart": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "reversed": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "noClient": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "clean": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "overlapOnEdge": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "afterEnd": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "beforeStart": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "self": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "selfByArgument": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "archived": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "draftSibling": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "otherProject": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "noProjectBoth": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "idless": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "openEnded": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "RetainerGuard: pool activation check failed — denying transition (fail-closed)",
+                {
+                    "poolId": "p1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:RetainerPool",
+            {
+                "findAll": {
+                    "filters": {
+                        "clientId": "c1"
+                    }
+                }
+            }
+        ]
+    }
+}

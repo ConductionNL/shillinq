@@ -3,6 +3,9 @@
 /**
  * Uren Tally Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * End-of-day idempotent tally service per REQ-URC-001. Sums UrenDagregistratie
  * entries for a given (enterpriseId, date) pair, applies the reistijd-cap
  * (REISTIJD_ZAKELIJK ≤ 4 uur/dag) via UrenDagregistratieGuard::pasReistijdCapToe,
@@ -27,16 +30,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Guard\UrenDagregistratieGuard;
+use OCA\Shillinq\Kernel\Contracts\UrenDagregistratieGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -61,11 +61,11 @@ final class UrenTallyService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param UrenDagregistratieGuard $guard The reistijd-cap policy owner.
+	 * @param UrenDagregistratieGuardInterface $guard The reistijd-cap policy owner.
 	 * @param LoggerInterface $logger Diagnostics logger.
 	 */
 	public function __construct(
-		private readonly UrenDagregistratieGuard $guard,
+		private readonly UrenDagregistratieGuardInterface $guard,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -91,32 +91,18 @@ final class UrenTallyService {
 		$overages = [];
 
 		foreach ($entries as $entry) {
-			if (is_array($entry) === false) {
+			$counted = $this->countedEntry(entry: $entry);
+			if ($counted === null) {
 				continue;
 			}
 
-			$category = (string)($entry['category'] ?? '');
-			if ($category === '') {
-				continue;
+			$category = $counted['category'];
+			$total += $counted['geteld'];
+			$perCategory[$category] = (($perCategory[$category] ?? 0.0) + $counted['geteld']);
+			if ($counted['notitie'] !== null) {
+				$overages[] = $counted;
 			}
-
-			$hours = (float)($entry['hours'] ?? 0);
-			$capInfo = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
-			$geteld = $capInfo['countedHours'];
-			$notitie = $capInfo['capNote'];
-
-			$total += $geteld;
-			$perCategory[$category] = (($perCategory[$category] ?? 0.0) + $geteld);
-
-			if ($notitie !== null) {
-				$overages[] = [
-					'category' => $category,
-					'ingevoerd' => $hours,
-					'geteld' => $geteld,
-					'notitie' => $notitie,
-				];
-			}
-		}//end foreach
+		}
 
 		return [
 			'totalHours' => $total,
@@ -125,6 +111,36 @@ final class UrenTallyService {
 		];
 
 	}//end tallyDag()
+
+	/**
+	 * One entry's category, entered hours, counted hours (travel time capped)
+	 * and cap note; null for an entry without a category.
+	 *
+	 * @param mixed $entry A day entry.
+	 *
+	 * @return array{category:string,ingevoerd:float,geteld:float,notitie:string|null}|null
+	 */
+	private function countedEntry(mixed $entry): ?array {
+		if (is_array($entry) === false) {
+			return null;
+		}
+
+		$category = (string)($entry['category'] ?? '');
+		if ($category === '') {
+			return null;
+		}
+
+		$hours = (float)($entry['hours'] ?? 0);
+		$capInfo = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
+
+		return [
+			'category' => $category,
+			'ingevoerd' => $hours,
+			'geteld' => $capInfo['countedHours'],
+			'notitie' => $capInfo['capNote'],
+		];
+
+	}//end countedEntry()
 
 	/**
 	 * Aggregate YTD UrenDagregistratie entries into a UrencriteriumYear patch.

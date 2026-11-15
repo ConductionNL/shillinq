@@ -57,77 +57,171 @@ class WmoJaarrekeningBijlageService {
 	 * @return array<string,mixed> Bijlage payload.
 	 */
 	public function compose(array $input): array {
-		$activities = (array)$input['activities'];
-		$ikpByAct = (array)$input['definitiefIkpByActivity'];
-		$priorIkpByAct = (array)($input['priorYearIkpByActivity'] ?? []);
-		$revenueByAct = (array)$input['omzetByActivity'];
-		$priorRevenueByAct = (array)($input['priorYearOmzetByActivity'] ?? []);
-		$abbByAct = (array)($input['abbByActivity'] ?? []);
-		$overridesByAct = (array)($input['manualOverridesByActivity'] ?? []);
+		$figures = $this->activityFigures(input: $input);
 
 		$rows = [];
-		$compliantCount = 0;
-		$totalCount = 0;
-
-		foreach ($activities as $activity) {
+		foreach ($figures['activities'] as $activity) {
 			if (is_array($activity) === false) {
 				continue;
 			}
 
-			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
-			$code = (string)($activity['code'] ?? '');
-			$name = (string)($activity['name'] ?? '');
+			$rows[] = $this->activityRow(activity: $activity, figures: $figures);
+		}
 
-			$ikp = (array)($ikpByAct[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totalCost'] ?? 0);
-			$revenue = (float)($revenueByAct[$activityId] ?? 0);
-			$ratio = null;
-			if ($integraleCost > 0.0) {
-				$ratio = round(($revenue / $integraleCost), 4);
-			}
+		return $this->bijlage(input: $input, rows: $rows);
 
-			$compliant = ($revenue >= $integraleCost);
-			$colorStatus = 'rood';
-			if ($compliant === true) {
-				$colorStatus = 'groen';
-			}
+	}//end compose()
 
-			$priorIkp = (array)($priorIkpByAct[$activityId] ?? []);
-			$priorCost = (float)($priorIkp['totalCost'] ?? 0);
-			$priorRevenue = (float)($priorRevenueByAct[$activityId] ?? 0);
-			$priorRatio = null;
-			if ($priorCost > 0.0) {
-				$priorRatio = round(($priorRevenue / $priorCost), 4);
-			}
+	/**
+	 * The activities and the per-activity figure maps of the input.
+	 *
+	 * @param array<string,mixed> $input The compose() inputs.
+	 *
+	 * @return array<string,array<mixed>>
+	 */
+	private function activityFigures(array $input): array {
+		return [
+			'activities' => (array)$input['activities'],
+			'ikp' => (array)$input['definitiefIkpByActivity'],
+			'priorIkp' => (array)($input['priorYearIkpByActivity'] ?? []),
+			'revenue' => (array)$input['omzetByActivity'],
+			'priorRevenue' => (array)($input['priorYearOmzetByActivity'] ?? []),
+			'abb' => (array)($input['abbByActivity'] ?? []),
+			'overrides' => (array)($input['manualOverridesByActivity'] ?? []),
+		];
 
-			$abb = (array)($abbByAct[$activityId] ?? []);
-			$abbReference = null;
-			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReference = (string)($abb['reference'] ?? $activity['exemptionDecisionId'] ?? '');
-			}
+	}//end activityFigures()
 
-			$rows[] = [
-				'commercialActivityId' => $activityId,
-				'code' => $code,
-				'name' => $name,
-				'revenue' => $revenue,
-				'integralCostPrice' => $integraleCost,
-				'costRecoveryRatio' => $ratio,
-				'compliant' => $compliant,
-				'complianceColor' => $colorStatus,
-				'priorYearOmzet' => $priorRevenue,
-				'priorYearIntegraleKostprijs' => $priorCost,
-				'priorYearRatio' => $priorRatio,
-				'abbReference' => $abbReference,
-				'manualOverrides' => (int)($overridesByAct[$activityId] ?? 0),
+	/**
+	 * The bijlage row of one commercial activity.
+	 *
+	 * @param array<string,mixed>        $activity The commercial activity.
+	 * @param array<string,array<mixed>> $figures  From activityFigures().
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function activityRow(array $activity, array $figures): array {
+		$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
+
+		return [
+			'commercialActivityId' => $activityId,
+			'code' => (string)($activity['code'] ?? ''),
+			'name' => (string)($activity['name'] ?? ''),
+		] + $this->currentYearFigures(activityId: $activityId, figures: $figures)
+			+ $this->priorYearFigures(activityId: $activityId, figures: $figures)
+			+ [
+				'abbReference' => $this->abbReference(activity: $activity, abb: (array)($figures['abb'][$activityId] ?? [])),
+				'manualOverrides' => (int)($figures['overrides'][$activityId] ?? 0),
 			];
 
-			if ($compliant === true) {
-				$compliantCount++;
-			}
+	}//end activityRow()
 
-			$totalCount++;
-		}//end foreach
+	/**
+	 * Revenue, integral cost price, cost recovery and compliance of the fiscal year.
+	 *
+	 * @param string                     $activityId The activity id.
+	 * @param array<string,array<mixed>> $figures    From activityFigures().
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function currentYearFigures(string $activityId, array $figures): array {
+		$ikp = (array)($figures['ikp'][$activityId] ?? []);
+		$integraleCost = (float)($ikp['totalCost'] ?? 0);
+		$revenue = (float)($figures['revenue'][$activityId] ?? 0);
+		$compliant = ($revenue >= $integraleCost);
+
+		return [
+			'revenue' => $revenue,
+			'integralCostPrice' => $integraleCost,
+			'costRecoveryRatio' => $this->recoveryRatio(revenue: $revenue, cost: $integraleCost),
+			'compliant' => $compliant,
+			'complianceColor' => $this->complianceColor(compliant: $compliant),
+		];
+
+	}//end currentYearFigures()
+
+	/**
+	 * Revenue, integral cost price and cost recovery of the prior year.
+	 *
+	 * @param string                     $activityId The activity id.
+	 * @param array<string,array<mixed>> $figures    From activityFigures().
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function priorYearFigures(string $activityId, array $figures): array {
+		$priorIkp = (array)($figures['priorIkp'][$activityId] ?? []);
+		$priorCost = (float)($priorIkp['totalCost'] ?? 0);
+		$priorRevenue = (float)($figures['priorRevenue'][$activityId] ?? 0);
+
+		return [
+			'priorYearOmzet' => $priorRevenue,
+			'priorYearIntegraleKostprijs' => $priorCost,
+			'priorYearRatio' => $this->recoveryRatio(revenue: $priorRevenue, cost: $priorCost),
+		];
+
+	}//end priorYearFigures()
+
+	/**
+	 * Revenue over cost to four decimals, or null without a positive cost.
+	 *
+	 * @param float $revenue The revenue.
+	 * @param float $cost    The integral cost.
+	 *
+	 * @return float|null
+	 */
+	private function recoveryRatio(float $revenue, float $cost): ?float {
+		if ($cost > 0.0) {
+			return round(($revenue / $cost), 4);
+		}
+
+		return null;
+
+	}//end recoveryRatio()
+
+	/**
+	 * The compliance color: groen when compliant, else rood.
+	 *
+	 * @param bool $compliant Whether revenue covers the integral cost.
+	 *
+	 * @return string
+	 */
+	private function complianceColor(bool $compliant): string {
+		if ($compliant === true) {
+			return 'groen';
+		}
+
+		return 'rood';
+
+	}//end complianceColor()
+
+	/**
+	 * The ABB exemption reference of an exempted activity, else null.
+	 *
+	 * @param array<string,mixed> $activity The commercial activity.
+	 * @param array<string,mixed> $abb      The activity's ABB record, if any.
+	 *
+	 * @return string|null
+	 */
+	private function abbReference(array $activity, array $abb): ?string {
+		if ((bool)($activity['isExempted'] ?? false) === true) {
+			return (string)($abb['reference'] ?? $activity['exemptionDecisionId'] ?? '');
+		}
+
+		return null;
+
+	}//end abbReference()
+
+	/**
+	 * The bijlage envelope around the rows, with its compliance summary.
+	 *
+	 * @param array<string,mixed>            $input The compose() inputs.
+	 * @param array<int,array<string,mixed>> $rows  The activity rows.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function bijlage(array $input, array $rows): array {
+		$totalCount = count($rows);
+		$compliantCount = count(array_filter($rows, static fn (array $row): bool => $row['compliant'] === true));
 
 		return [
 			'format' => 'WMO-jaarrekening-bijlage-2024',
@@ -142,7 +236,7 @@ class WmoJaarrekeningBijlageService {
 			],
 		];
 
-	}//end compose()
+	}//end bijlage()
 
 	/**
 	 * Aggregate compliance status (REQ-WMO-004 §validate).
@@ -198,31 +292,10 @@ class WmoJaarrekeningBijlageService {
 		$lines[] = '|------|------|-------|---------------------|-------|-----------|-----|';
 
 		foreach ((array)($bijlage['activities'] ?? []) as $row) {
-			if (is_array($row) === false) {
-				continue;
+			if (is_array($row) === true) {
+				$lines[] = $this->markdownRow(row: $row);
 			}
-
-			$ratioText = '—';
-			if ($row['costRecoveryRatio'] !== null) {
-				$ratioText = (string)$row['costRecoveryRatio'];
-			}
-
-			$compliantText = 'rood';
-			if ((bool)($row['compliant'] ?? false) === true) {
-				$compliantText = 'groen';
-			}
-
-			$lines[] = sprintf(
-				'| %s | %s | %.2f | %.2f | %s | %s | %s |',
-				(string)($row['code'] ?? ''),
-				(string)($row['name'] ?? ''),
-				(float)($row['revenue'] ?? 0),
-				(float)($row['integralCostPrice'] ?? 0),
-				$ratioText,
-				$compliantText,
-				(string)($row['abbReference'] ?? '—')
-			);
-		}//end foreach
+		}
 
 		$sam = (array)($bijlage['summary'] ?? []);
 		$lines[] = '';
@@ -230,6 +303,32 @@ class WmoJaarrekeningBijlageService {
 
 		return implode("\n", $lines);
 	}//end toMarkdown()
+
+	/**
+	 * The Markdown table line of one bijlage row.
+	 *
+	 * @param array<string,mixed> $row A bijlage activity row.
+	 *
+	 * @return string
+	 */
+	private function markdownRow(array $row): string {
+		$ratioText = '—';
+		if ($row['costRecoveryRatio'] !== null) {
+			$ratioText = (string)$row['costRecoveryRatio'];
+		}
+
+		return sprintf(
+			'| %s | %s | %.2f | %.2f | %s | %s | %s |',
+			(string)($row['code'] ?? ''),
+			(string)($row['name'] ?? ''),
+			(float)($row['revenue'] ?? 0),
+			(float)($row['integralCostPrice'] ?? 0),
+			$ratioText,
+			$this->complianceColor(compliant: (bool)($row['compliant'] ?? false)),
+			(string)($row['abbReference'] ?? '—')
+		);
+
+	}//end markdownRow()
 
 	/**
 	 * Render the WMO-bijlage as minimal SBR/XBRL-style XML (REQ-WMO-004 §xml).

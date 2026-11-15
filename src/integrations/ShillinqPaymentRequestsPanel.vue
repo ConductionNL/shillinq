@@ -143,13 +143,11 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import {
 	formatAmount,
-	hostIdentity,
-	isResolvable,
 	PAYMENT_REQUESTS_DATA_LEAF,
-	readLeaf,
 	sendPaymentLink,
 	settleByOtherMeans,
 } from './leafApi.js'
+import { leafHostPanelMixin } from './leafHostPanel.js'
 import { leafReportMixin } from './leafReport.js'
 
 /**
@@ -164,18 +162,7 @@ export default {
 		NcLoadingIcon,
 	},
 
-	mixins: [leafReportMixin],
-
-	props: {
-		/** OpenRegister register id of the host object. */
-		register: { type: String, default: '' },
-		/** OpenRegister schema id of the host object. */
-		schema: { type: String, default: '' },
-		/** Id of the host object the requests stand on. */
-		objectId: { type: [String, Number], default: '' },
-		/** Whole registry context, the fallback when the discrete props are absent. */
-		integrationContext: { type: Object, default: () => ({}) },
-	},
+	mixins: [leafReportMixin, leafHostPanelMixin],
 
 	data() {
 		return {
@@ -309,23 +296,13 @@ export default {
 		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		async load() {
-			const identity = hostIdentity(this.$props)
-			if (isResolvable(identity) === false) {
-				this.error = t('shillinq', 'This panel needs a record to stand on.')
-				return
-			}
-
-			this.loading = true
-			this.error = ''
-			try {
-				const envelope = await readLeaf(identity, PAYMENT_REQUESTS_DATA_LEAF)
-				this.requests = Array.isArray(envelope.items) ? envelope.items : []
-				this.fee = envelope.fee || null
-			} catch {
-				this.error = t('shillinq', 'The payment requests could not be read.')
-			} finally {
-				this.loading = false
-			}
+			await this.readHostLeaf(PAYMENT_REQUESTS_DATA_LEAF, {
+				apply: (envelope) => {
+					this.requests = Array.isArray(envelope.items) ? envelope.items : []
+					this.fee = envelope.fee || null
+				},
+				failedText: () => t('shillinq', 'The payment requests could not be read.'),
+			})
 		},
 
 		/**
@@ -455,23 +432,6 @@ export default {
 			}
 		},
 
-		/**
-		 * The server's own words for a refusal, so a handler reads why rather
-		 * than a generic failure.
-		 *
-		 * @param {object} e The axios error.
-		 * @return {string} The message.
-		 *
-		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
-		 */
-		refusal(e) {
-			const message =
-				e && e.response && e.response.data && e.response.data.error
-			if (typeof message === 'string' && message !== '') {
-				return message
-			}
-			return t('shillinq', 'That did not go through.')
-		},
 	},
 }
 </script>

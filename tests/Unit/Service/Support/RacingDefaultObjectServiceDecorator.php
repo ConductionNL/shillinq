@@ -3,6 +3,9 @@
 /**
  * Racing-default decorator over InMemoryObjectServiceStub.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Simulates a concurrent `BudgetScenarioDefaultPromoter::promote()` call
  * (e.g. a second browser tab) interleaving its own write BETWEEN this call's
  * demotion/promotion writes and its own post-promotion verification re-read
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Service\Object\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
 use OCP\IUser;
 
 /**
@@ -489,11 +489,12 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	/**
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
-		return $this->inner->unlockObject($identifier, $advisory);
+	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
+		return $this->inner->unlockObject($identifier, $advisory, $runUuid);
 
 	}//end unlockObject()
 
@@ -502,6 +503,8 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 * @param ?string $process A label for the holding process.
 	 * @param ?int $duration Lock duration in seconds.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
@@ -509,9 +512,9 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 		string $identifier,
 		?string $process = null,
 		?int $duration = null,
-		bool $advisory = false
+		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
 	): array {
-		return $this->inner->lockObject($identifier, $process, $duration, $advisory);
+		return $this->inner->lockObject($identifier, $process, $duration, $advisory, $runUuid, $nodeId);
 
 	}//end lockObject()
 

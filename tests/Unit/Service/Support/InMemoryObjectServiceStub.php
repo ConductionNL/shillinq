@@ -3,6 +3,9 @@
 /**
  * In-memory ObjectService stub for procurement-governance service tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Honours equality filters on findAll and stamps / updates ids on saveObject,
  * mirroring the fluent OpenRegister ObjectService surface the services consume
  * (setRegister -> setSchema -> findAll / saveObject / find).
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/procurement-governance/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Service\Object\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
 use OCP\IUser;
 use RuntimeException;
 
@@ -731,10 +731,11 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 *
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool       $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -746,6 +747,8 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param ?string $process    A label for the holding process.
 	 * @param ?int    $duration   Lock duration in seconds.
 	 * @param bool    $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
@@ -753,7 +756,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		string $identifier,
 		?string $process = null,
 		?int $duration = null,
-		bool $advisory = false
+		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
 	): array {
 		$this->unsupported(method: 'lockObject');
 

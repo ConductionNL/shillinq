@@ -33,7 +33,7 @@ use OCA\Shillinq\Service\Booking\TimezoneResolver;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\IcsService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -129,7 +129,7 @@ final class BookingConflictIcsGoldenTest extends TestCase {
 		$objects  = new GoldenBookingObjects(rows: self::bookings(), fails: $name === 'lookupFails');
 		$logger   = new GoldenBookingLogger();
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn($name !== 'noOpenRegister');
 		$settings->method('getRegisterSlug')->willReturn('books');
 
@@ -138,7 +138,7 @@ final class BookingConflictIcsGoldenTest extends TestCase {
 
 		$service = new ConflictDetectionService(
 			container: $container,
-			settings: $settings,
+			registerLocation: $settings,
 			guard: $this->createStub(TransactionalGuard::class),
 			logger: $logger,
 		);

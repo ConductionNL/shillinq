@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Service\Usage;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use RuntimeException;
 
 /**
@@ -43,12 +43,12 @@ class BilledReadings {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param ObjectTransitionRunner $transitions   Runs MeterReading's `invoice` transition.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 	) {
 	}//end __construct()
 

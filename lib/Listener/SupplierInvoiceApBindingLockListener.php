@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -69,10 +69,10 @@ class SupplierInvoiceApBindingLockListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param ListenerSchemaResolver $schemaResolver Matches SupplierInvoice in shillinq's register.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Matches SupplierInvoice in shillinq's register.
 	 */
 	public function __construct(
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 	) {
 	}//end __construct()
 

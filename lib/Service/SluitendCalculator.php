@@ -153,28 +153,46 @@ class SluitendCalculator {
 			return 'artikel-12';
 		}
 
-		// Sustained tekort = every one of (at least four) prior years negative.
-		$sustainedTekort = false;
-		if (count($historyResultaten) >= 4) {
-			$sustainedTekort = true;
-			foreach ($historyResultaten as $result) {
-				if ($result >= 0.0) {
-					$sustainedTekort = false;
-					break;
-				}
-			}
-		}
-
-		if ($structurallyBalanced === true
-			&& $sluitendReeel === true
-			&& $weerstandsverhouding >= 1.0
-			&& $sustainedTekort === false
-		) {
+		$healthyReserve = $this->hasHealthyReserve(weerstandsverhouding: $weerstandsverhouding, historyResultaten: $historyResultaten);
+		if ($structurallyBalanced === true && $sluitendReeel === true && $healthyReserve === true) {
 			return 'repressief';
 		}
 
 		return 'preventief';
 	}//end determineToezichtRegime()
+
+	/**
+	 * A weerstandsverhouding of at least 1.0 and no sustained tekort.
+	 *
+	 * @param float            $weerstandsverhouding Algemene reserve / totale lasten ratio.
+	 * @param array<int,float> $historyResultaten    Resultaat of the preceding years.
+	 *
+	 * @return bool True when the reserve is healthy.
+	 */
+	private function hasHealthyReserve(float $weerstandsverhouding, array $historyResultaten): bool {
+		return $weerstandsverhouding >= 1.0 && $this->hasSustainedTekort(historyResultaten: $historyResultaten) === false;
+	}//end hasHealthyReserve()
+
+	/**
+	 * Sustained tekort = every one of (at least four) prior years negative.
+	 *
+	 * @param array<int,float> $historyResultaten Resultaat of the preceding years.
+	 *
+	 * @return bool True when at least four years are on record and none is non-negative.
+	 */
+	private function hasSustainedTekort(array $historyResultaten): bool {
+		if (count($historyResultaten) < 4) {
+			return false;
+		}
+
+		foreach ($historyResultaten as $result) {
+			if ($result >= 0.0) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end hasSustainedTekort()
 
 	/**
 	 * Convert a euro amount to integer cents (round-half-up).
