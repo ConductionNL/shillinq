@@ -47,6 +47,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
@@ -190,7 +192,12 @@ class SupplierInvoiceImportController extends Controller {
 		}
 
 		try {
-			$this->objectService->setRegister(self::REGISTER_SLUG)->setSchema(self::SUPPLIER_INVOICE_SCHEMA)->deleteObject($id);
+			$this->objectService->deleteObject(
+				deletion: new ObjectDeletion(
+					uuid: $id,
+					target: new ObjectFindTarget(register: self::REGISTER_SLUG, schema: self::SUPPLIER_INVOICE_SCHEMA)
+				)
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error('SupplierInvoiceImportController.discard failed: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'The import could not be discarded.'], Http::STATUS_INTERNAL_SERVER_ERROR);

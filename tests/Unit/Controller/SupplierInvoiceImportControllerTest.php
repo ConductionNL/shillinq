@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Controller\SupplierInvoiceImportController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
@@ -497,7 +498,7 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		);
 
 		self::assertSame(Http::STATUS_NO_CONTENT, $controller->discard('si-1')->getStatus());
-		self::assertSame(['si-1'], $deleted);
+		self::assertSame([['si-1', 'shillinq', 'SupplierInvoice']], $deleted);
 
 	}//end testDiscardDeletesYourOwnDraft()
 
@@ -579,8 +580,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$objectService->method('setSchema')->willReturnSelf();
 		$objectService->method('find')->willReturn(new ObjectEntityStub(payload: $invoice));
 		$objectService->method('deleteObject')->willReturnCallback(
-			static function (string $uuid) use (&$deleted): bool {
-				$deleted[] = $uuid;
+			static function (ObjectDeletion $deletion) use (&$deleted): bool {
+				$deleted[] = [$deletion->uuid, $deletion->target->register, $deletion->target->schema];
 				return true;
 			}
 		);
