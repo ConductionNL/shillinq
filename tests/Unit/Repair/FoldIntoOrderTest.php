@@ -42,6 +42,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for FoldIntoOrder.
@@ -200,7 +201,10 @@ class FoldIntoOrderTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy, mixed $currentUser): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$currentUser = $options->actor->currentUser;
 				$this->recordsBySchema[$schema][] = $object;
 
 			}//end saveObject()

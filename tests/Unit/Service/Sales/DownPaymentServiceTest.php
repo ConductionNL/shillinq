@@ -30,6 +30,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * REQ-SDP-001, REQ-SDP-003, REQ-SDP-004, REQ-SDP-005: the Keuken Eiland example.
@@ -238,7 +239,7 @@ final class DownPaymentServiceTest extends TestCase {
 	 */
 	private function issuedDownPayment(string $state = 'paid'): array {
 		$invoice = $this->service()->raise($this->request());
-		$this->store->setSchema('ARInvoice')->patchObject($invoice['id'], ['lifecycleState' => $state]);
+		$this->store->setSchema('ARInvoice')->patchObject(new ObjectPatch(objectId: $invoice['id'], data: ['lifecycleState' => $state]));
 		return array_merge($invoice, ['lifecycleState' => $state]);
 
 	}//end issuedDownPayment()
@@ -373,7 +374,7 @@ final class DownPaymentServiceTest extends TestCase {
 		$final = $this->service()->deductOnto($this->kitchenInvoice(), 'order-117');
 		$this->service()->stampDeductions($final);
 		$second = $this->service()->raise($this->request(['invoiceNumber' => '2026-0450', 'percentage' => 10]));
-		$this->store->setSchema('ARInvoice')->patchObject($second['id'], ['lifecycleState' => 'issued']);
+		$this->store->setSchema('ARInvoice')->patchObject(new ObjectPatch(objectId: $second['id'], data: ['lifecycleState' => 'issued']));
 
 		$position = $this->service()->position($first);
 

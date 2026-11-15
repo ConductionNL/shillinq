@@ -67,6 +67,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
@@ -266,10 +268,9 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 			$objectService->saveObject(
 				object: $record,
-				register: $registerSlug,
-				schema: 'AnalyticalDimension',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AnalyticalDimension')),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			return 'created';
 		} catch (\Throwable $e) {
@@ -350,10 +351,9 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 			$objectService->saveObject(
 				object: $record,
-				register: $registerSlug,
-				schema: 'AnalyticalDimension',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AnalyticalDimension')),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			return 'created';
 		} catch (\Throwable $e) {

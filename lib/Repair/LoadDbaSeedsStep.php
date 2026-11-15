@@ -31,6 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -289,7 +291,12 @@ class LoadDbaSeedsStep implements IRepairStep {
 		// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
 		// seed persists instead of throwing "User 'Anonymous' does not have
 		// permission to 'create'" — mirrors the OR ImportHandler fix.
-		$objectService->saveObject(object: $payload, register: $registerSlug, schema: self::DBA_SCHEMA, _rbac: false, _multitenancy: false);
+		$objectService->saveObject(
+			object: $payload,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: self::DBA_SCHEMA)),
+			_rbac: false,
+			_multitenancy: false
+		);
 		return 'seeded';
 	}//end saveUnlessExists()
 

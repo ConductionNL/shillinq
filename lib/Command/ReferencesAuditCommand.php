@@ -25,6 +25,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use Psr\Container\ContainerInterface;
@@ -352,10 +354,11 @@ class ReferencesAuditCommand extends Command {
 			// one-field update through them quietly clears every field the read
 			// did not return. Patch merges.
 			$objectService->patchObject(
-				objectId: $id,
-				data: [self::REFERENCE_PROPERTY => $owner],
-				register: 'shillinq',
-				schema: self::SATELLITE_SCHEMA,
+				new ObjectPatch(
+					objectId: $id,
+					data: [self::REFERENCE_PROPERTY => $owner],
+					target: new ObjectFindTarget(register: 'shillinq', schema: self::SATELLITE_SCHEMA)
+				),
 				_rbac: false,
 				_multitenancy: false
 			);
