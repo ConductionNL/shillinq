@@ -31,6 +31,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -102,9 +104,8 @@ class ObjectRequestInvoiceService implements ObjectRequestInvoiceServiceInterfac
 
 		$saved = $this->objectService->saveObject(
 			object: $invoice,
-			register: $this->registerSlug(),
-			schema: 'ARInvoice',
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'ARInvoice')),
+			_rbac: false
 		);
 
 		$uuid = ObjectIdentifier::resolve(saved: $saved);

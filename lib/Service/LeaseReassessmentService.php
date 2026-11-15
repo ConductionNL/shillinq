@@ -45,6 +45,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\LeaseReassessmentServiceInterface;
 use OCP\IAppConfig;
@@ -549,8 +551,7 @@ class LeaseReassessmentService implements LeaseReassessmentServiceInterface {
 		try {
 			$saved = $this->objectService()->saveObject(
 				object: $row,
-				register: $this->register(),
-				schema: 'LeaseReassessmentEvent',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'LeaseReassessmentEvent'))
 			);
 			if (is_array($saved) === true) {
 				// Task 8.2: fire decidesk approval webhook for material events.

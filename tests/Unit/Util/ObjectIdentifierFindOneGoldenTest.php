@@ -13,6 +13,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden record of findOne() over object-service doubles that do not report
@@ -38,6 +39,7 @@ final class ObjectIdentifierFindOneGoldenTest extends TestCase {
 			public function __construct(private string $find, private string $findAll) {
 			}
 			public function find(string $id, mixed ...$named): mixed {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				$this->calls[] = ['find', $id, $named];
 				return match ($this->find) {
 					'hit' => ['id' => $id, 'name' => 'by uuid'],

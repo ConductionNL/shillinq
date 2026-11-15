@@ -32,7 +32,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Integration;
 
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\OpenRegister\Service\Integration\RefIntegrationProvider;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentFinderInterface;
@@ -47,7 +49,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
-final class FinancialDocumentLeafProvider implements IntegrationProvider, FinancialDocumentLeafProviderInterface {
+final class FinancialDocumentLeafProvider implements RefIntegrationProvider, FinancialDocumentLeafProviderInterface {
 
 	/**
 	 * Constructor.
@@ -182,9 +184,7 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	/**
 	 * Every financial document on the host object, newest first.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $filters Optional list filters; unknown keys are ignored.
 	 *
 	 * @return array<string, mixed> The `{items, total, nextCursor, acts}` envelope.
@@ -194,7 +194,10 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
 	 * the panel narrows by kind itself.
 	 */
-	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
+	public function list(ObjectRef $ref, array $filters = []): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		$items = [];
 		foreach ($this->finder->onObject(register: $register, schema: $schema, objectId: $objectId) as $found) {
 			$row = $this->rows->row(schema: $found['schema'], document: $found['document']);
@@ -225,9 +228,7 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	/**
 	 * One document on the host object that the caller may read.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The document id.
 	 *
 	 * @return array<string, mixed> The row.
@@ -236,8 +237,8 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
-	public function get(string $register, string $schema, string $objectId, string $entityId): array {
-		foreach ($this->list(register: $register, schema: $schema, objectId: $objectId)['items'] as $row) {
+	public function get(ObjectRef $ref, string $entityId): array {
+		foreach ($this->list(ref: $ref)['items'] as $row) {
 			if ($row['id'] === $entityId && $row['restricted'] === false) {
 				return $row;
 			}
@@ -255,9 +256,7 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 * which must stand on this object and be readable by the caller. Each act
 	 * checks its own action and the administration before it writes.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $payload `act` plus the act's fields.
 	 *
 	 * @return array<string, mixed> What the act wrote.
@@ -266,7 +265,10 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
-	public function create(string $register, string $schema, string $objectId, array $payload): array {
+	public function create(ObjectRef $ref, array $payload): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		return $this->act(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: '');
 	}//end create()
 
@@ -380,9 +382,7 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	/**
 	 * A document is changed in shillinq, where its lifecycle and audit trail are.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The document id.
 	 * @param array<string, mixed> $payload Ignored.
 	 *
@@ -394,16 +394,14 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is IntegrationProvider's.
 	 */
-	public function update(string $register, string $schema, string $objectId, string $entityId, array $payload): array {
+	public function update(ObjectRef $ref, string $entityId, array $payload): array {
 		throw new RuntimeException('A financial document is changed in shillinq, where its lifecycle and its audit trail are.');
 	}//end update()
 
 	/**
 	 * A financial document is credited or voided, never deleted from an object.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The document id.
 	 *
 	 * @return void
@@ -414,7 +412,7 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is IntegrationProvider's.
 	 */
-	public function delete(string $register, string $schema, string $objectId, string $entityId): void {
+	public function delete(ObjectRef $ref, string $entityId): void {
 		throw new RuntimeException('A financial document is credited or voided, never deleted from an object.');
 	}//end delete()
 

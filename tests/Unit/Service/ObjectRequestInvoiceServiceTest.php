@@ -39,6 +39,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 
 /**
  * An invoice asked for at create stands behind the request (REQ-ORS-006).
@@ -163,7 +164,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testInvoiceStandsBehindTheRequest(): void {
-		$created = $this->leaf()->create('larpinq', 'Registration', 'reg-42', $this->payload());
+		$created = $this->leaf()->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload());
 
 		$customers = $this->savedIn(schema: 'CustomerMaster');
 		self::assertCount(1, $customers);
@@ -197,7 +198,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 */
 	public function testANamedCustomerIsBilledAsIs(): void {
 		$seed = ['CustomerMaster' => [['id' => 'cm-7', 'customerId' => 'G-7', 'email' => 'sanne@example.nl', 'administrationId' => 'adm-larp-1']]];
-		$created = $this->leaf(data: $seed)->create('larpinq', 'Registration', 'reg-42', $this->payload(['debtor' => ['customerMasterId' => 'cm-7']]));
+		$created = $this->leaf(data: $seed)->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload(['debtor' => ['customerMasterId' => 'cm-7']]));
 
 		self::assertSame([], $this->savedIn(schema: 'CustomerMaster'));
 		self::assertSame('cm-7', $this->savedIn(schema: 'ARInvoice')[0]['customerId']);
@@ -212,7 +213,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testAMappedVatRateSplitsTheGross(): void {
-		$this->leaf(vatRates: ['event-fee' => 21])->create('larpinq', 'Registration', 'reg-42', $this->payload());
+		$this->leaf(vatRates: ['event-fee' => 21])->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload());
 
 		$invoice = $this->savedIn(schema: 'ARInvoice')[0];
 		self::assertSame(85.0, $invoice['grossAmount']);
@@ -230,7 +231,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testNoFlagNoInvoice(): void {
-		$created = $this->leaf()->create('larpinq', 'Registration', 'reg-42', $this->payload(['invoiceRequested' => false]));
+		$created = $this->leaf()->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload(['invoiceRequested' => false]));
 
 		self::assertSame([], $this->savedIn(schema: 'ARInvoice'));
 		self::assertArrayNotHasKey('invoiceReference', $created);
@@ -246,7 +247,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	public function testAnInvoiceWithoutAnAdministrationWritesNothing(): void {
 		$leaf = $this->leaf();
 		try {
-			$leaf->create('larpinq', 'Registration', 'reg-42', $this->payload(['administrationId' => '']));
+			$leaf->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload(['administrationId' => '']));
 			self::fail('An invoice without an administration was issued');
 		} catch (InvalidArgumentException $e) {
 			self::assertStringContainsString('administrationId', $e->getMessage());

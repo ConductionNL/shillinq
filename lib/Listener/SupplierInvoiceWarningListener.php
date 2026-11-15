@@ -32,6 +32,8 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
@@ -136,10 +138,11 @@ class SupplierInvoiceWarningListener implements IEventListener {
 		}
 
 		$this->objectService->patchObject(
-			objectId: $id,
-			data: $warnings,
-			register: $this->settings->getRegisterSlug(),
-			schema: 'SupplierInvoice'
+			new ObjectPatch(
+				objectId: $id,
+				data: $warnings,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'SupplierInvoice')
+			)
 		);
 	}//end refreshWarnings()
 }//end class

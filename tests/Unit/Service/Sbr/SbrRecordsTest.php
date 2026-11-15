@@ -31,6 +31,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 #[CoversClass(SbrRecords::class)]
 #[UsesClass(ObjectIdentifier::class)]
@@ -61,7 +62,9 @@ final class SbrRecordsTest extends TestCase {
 		$entity = new ObjectEntity();
 		$entity->setUuid('7d6c1a2e-0000-4000-8000-000000000001');
 		$objects = $this->objects('XbrlInstance');
-		$objects->expects($this->once())->method('saveObject')->with(['state' => 'draft'])->willReturn($entity);
+		$objects->expects($this->once())->method('saveObject')->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => ['state' => 'draft'],
+			]))->willReturn($entity);
 
 		$this->assertSame(
 			['state' => 'draft', 'id' => '7d6c1a2e-0000-4000-8000-000000000001'],
