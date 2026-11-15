@@ -17,6 +17,7 @@
 -->
 <template>
 	<div
+		v-if="!summarised"
 		class="shillinq-payment-requests-panel"
 		data-testid="shillinq-payment-requests-panel">
 		<NcLoadingIcon v-if="loading" :size="24" />
@@ -31,13 +32,13 @@
 			</p>
 
 			<p
-				v-if="requests.length === 0"
+				v-if="requests.length === 0 && !carded"
 				class="shillinq-leaf__empty"
 				data-testid="shillinq-payment-requests-empty">
 				{{ emptyLabel }}
 			</p>
 
-			<ul v-else class="shillinq-leaf__list">
+			<ul v-else-if="requests.length > 0" class="shillinq-leaf__list">
 				<li
 					v-for="request in requests"
 					:key="request.id"
@@ -142,13 +143,12 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import {
 	formatAmount,
-	hostIdentity,
-	isResolvable,
 	PAYMENT_REQUESTS_DATA_LEAF,
-	readLeaf,
 	sendPaymentLink,
 	settleByOtherMeans,
 } from './leafApi.js'
+import { leafHostPanelMixin } from './leafHostPanel.js'
+import { leafReportMixin } from './leafReport.js'
 
 /**
  * The payment-request panel mounted by the `shillinq-payment-requests-panel`
@@ -162,16 +162,7 @@ export default {
 		NcLoadingIcon,
 	},
 
-	props: {
-		/** OpenRegister register id of the host object. */
-		register: { type: String, default: '' },
-		/** OpenRegister schema id of the host object. */
-		schema: { type: String, default: '' },
-		/** Id of the host object the requests stand on. */
-		objectId: { type: [String, Number], default: '' },
-		/** Whole registry context, the fallback when the discrete props are absent. */
-		integrationContext: { type: Object, default: () => ({}) },
-	},
+	mixins: [leafReportMixin, leafHostPanelMixin],
 
 	data() {
 		return {
@@ -191,6 +182,26 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * What this leaf reports to a carding host or a "linked" card.
+		 *
+		 * @return {object} The report.
+		 * @spec openspec/specs/leaves-library-card/spec.md#requirement-the-finance-leaves-report-to-the-library-card-and-the-linked-card
+		 */
+		leafReport() {
+			return {
+				count: this.requests.length,
+				emptyLabel: this.emptyLabel,
+				noun: t('shillinq', 'fees and payments'),
+				rows: this.requests.map((request) => ({
+					label: [this.amountOf(request), this.stateOf(request)]
+						.filter((part) => part !== '')
+						.join(' · '),
+					icon: 'CashMultiple',
+				})),
+			}
+		},
+
 		/** @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004) */
 		emptyLabel() {
 			return t(
@@ -285,23 +296,13 @@ export default {
 		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		async load() {
-			const identity = hostIdentity(this.$props)
-			if (isResolvable(identity) === false) {
-				this.error = t('shillinq', 'This panel needs a record to stand on.')
-				return
-			}
-
-			this.loading = true
-			this.error = ''
-			try {
-				const envelope = await readLeaf(identity, PAYMENT_REQUESTS_DATA_LEAF)
-				this.requests = Array.isArray(envelope.items) ? envelope.items : []
-				this.fee = envelope.fee || null
-			} catch {
-				this.error = t('shillinq', 'The payment requests could not be read.')
-			} finally {
-				this.loading = false
-			}
+			await this.readHostLeaf(PAYMENT_REQUESTS_DATA_LEAF, {
+				apply: (envelope) => {
+					this.requests = Array.isArray(envelope.items) ? envelope.items : []
+					this.fee = envelope.fee || null
+				},
+				failedText: () => t('shillinq', 'The payment requests could not be read.'),
+			})
 		},
 
 		/**
@@ -431,48 +432,15 @@ export default {
 			}
 		},
 
-		/**
-		 * The server's own words for a refusal, so a handler reads why rather
-		 * than a generic failure.
-		 *
-		 * @param {object} e The axios error.
-		 * @return {string} The message.
-		 *
-		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
-		 */
-		refusal(e) {
-			const message =
-				e && e.response && e.response.data && e.response.data.error
-			if (typeof message === 'string' && message !== '') {
-				return message
-			}
-			return t('shillinq', 'That did not go through.')
-		},
 	},
 }
 </script>
 
+<style scoped src="./leafPanel.css"></style>
+
 <style scoped>
 .shillinq-payment-requests-panel {
 	padding: 8px;
-}
-
-.shillinq-leaf__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.shillinq-leaf__row {
-	border-bottom: 1px solid var(--color-border);
-	padding: 8px 0;
-}
-
-.shillinq-leaf__row-head {
-	display: flex;
-	justify-content: space-between;
-	gap: 8px;
-	font-weight: bold;
 }
 
 .shillinq-leaf__state {
@@ -505,13 +473,5 @@ export default {
 .shillinq-leaf__settle input,
 .shillinq-leaf__settle select {
 	width: 100%;
-}
-
-.shillinq-leaf__error {
-	color: var(--color-error);
-}
-
-.shillinq-leaf__notice {
-	margin-top: 8px;
 }
 </style>

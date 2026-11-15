@@ -1,0 +1,75 @@
+[
+    {
+        "service": "OCA\\Shillinq\\Controller\\DashboardController",
+        "built": {
+            "class": "OCA\\OpenRegister\\AppHost\\Controller\\GenericDashboardController",
+            "args": {
+                "appName": "shillinq",
+                "request": "get:OCP\\IRequest"
+            }
+        }
+    },
+    {
+        "service": "OCA\\Shillinq\\Controller\\HealthController",
+        "built": {
+            "class": "OCA\\OpenRegister\\AppHost\\Controller\\GenericHealthController",
+            "args": {
+                "appName": "shillinq",
+                "request": "get:OCP\\IRequest",
+                "manifestLoader": "get:OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader",
+                "executor": "get:OCA\\OpenRegister\\AppHost\\Observability\\HealthCheckExecutor"
+            }
+        }
+    },
+    {
+        "service": "OCA\\Shillinq\\Controller\\MetricsController",
+        "built": {
+            "class": "OCA\\OpenRegister\\AppHost\\Controller\\GenericMetricsController",
+            "args": {
+                "appName": "shillinq",
+                "request": "get:OCP\\IRequest",
+                "manifestLoader": "get:OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader",
+                "engine": "get:OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine"
+            }
+        }
+    },
+    {
+        "service": "OCA\\Shillinq\\Settings\\AdminSettings",
+        "built": {
+            "class": "OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings",
+            "args": {
+                "appId": "shillinq",
+                "sectionId": "shillinq",
+                "priority": 10,
+                "appManager": "get:OCP\\App\\IAppManager",
+                "initialState": "get:OCP\\AppFramework\\Services\\IInitialState",
+                "appConfig": "get:OCP\\IAppConfig"
+            }
+        }
+    },
+    {
+        "service": "OCA\\Shillinq\\Sections\\SettingsSection",
+        "built": {
+            "class": "OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection",
+            "args": {
+                "sectionId": "shillinq",
+                "name": "Shillinq",
+                "appId": "shillinq",
+                "iconFile": "app-dark.svg",
+                "priority": 75,
+                "urlGenerator": "get:OCP\\IURLGenerator"
+            }
+        }
+    },
+    {
+        "service": "OCA\\OpenRegister\\AppHost\\IMetricsProvider::shillinq",
+        "built": "instance:OCA\\Shillinq\\Service\\Pipelinq\\CustomerBridgeMetricsService"
+    },
+    {
+        "storeAlias": {
+            "context": true,
+            "appId": "shillinq",
+            "controllerNs": "OCA\\Shillinq\\Controller"
+        }
+    }
+]

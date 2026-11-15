@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\PaymentPlan\PaymentPlanSchedule;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanScheduleInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -62,14 +62,14 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
-	 * @param PaymentPlanSchedule    $schedule      The cent-exact sum check.
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param PaymentPlanScheduleInterface    $schedule      The cent-exact sum check.
 	 * @param LoggerInterface        $logger        Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
-		private readonly PaymentPlanSchedule $schedule,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly PaymentPlanScheduleInterface $schedule,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -114,7 +114,7 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 
 		try {
 			$rows = $this->objectService
-				->setRegister($this->settings->getRegisterSlug())
+				->setRegister($this->registerLocation->getRegisterSlug())
 				->setSchema('PaymentPlanInstalment')
 				->findAll(['filters' => ['planId' => $planId], 'limit' => 1000]);
 		} catch (Throwable $e) {
@@ -122,13 +122,7 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
 		}
 
-		$amounts = [];
-		foreach ($rows as $row) {
-			$instalment = ObjectIdentifier::recordWithId(candidate: $row);
-			if ($instalment !== null) {
-				$amounts[] = (float)($instalment['amount'] ?? 0);
-			}
-		}
+		$amounts = $this->instalmentAmounts(rows: $rows);
 
 		$total = (float)($plan['totalAmount'] ?? 0);
 		if ($this->schedule->balances(total: $total, amounts: $amounts) === true) {
@@ -140,4 +134,25 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 		);
 
 	}//end requireBalancedSchedule()
+
+	/**
+	 * The amounts of the instalment rows that carry an id.
+	 *
+	 * @param mixed $rows The findAll() result.
+	 *
+	 * @return list<float> The instalment amounts.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-1.1
+	 */
+	private function instalmentAmounts(mixed $rows): array {
+		$amounts = [];
+		foreach ($rows as $row) {
+			$instalment = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($instalment !== null) {
+				$amounts[] = (float)($instalment['amount'] ?? 0);
+			}
+		}
+
+		return $amounts;
+	}//end instalmentAmounts()
 }//end class

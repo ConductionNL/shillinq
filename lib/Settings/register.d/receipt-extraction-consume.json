@@ -135,7 +135,6 @@
         "slug": "supplier-invoice-draft-0001"
       },
       "invoiceNumber": "F-2026-88",
-      "supplierId": "ACME Consultancy B.V.",
       "invoiceDate": "2026-02-05",
       "currency": "EUR",
       "totalExclVat": 100000,
@@ -145,12 +144,24 @@
       "administrationId": "adm-consultancy-nl",
       "sourceDocumentUri": "docudesk://attachments/00000000-0000-0000-0000-000000000000/invoice.pdf",
       "overallConfidence": 0.93,
-      "fieldConfidence": { "invoiceNumber": 0.97, "totalInclVat": 0.9, "glAccount": 0.55 },
-      "extractedFieldsOriginal": {
-        "fields": { "invoiceNumber": "F-2026-88", "totalIncl": 1210.0 },
-        "fieldConfidence": { "invoiceNumber": 0.97, "totalInclVat": 0.9, "glAccount": 0.55 }
+      "fieldConfidence": {
+        "invoiceNumber": 0.97,
+        "totalInclVat": 0.9,
+        "glAccount": 0.55
       },
-      "extractionStatus": "pending-review"
+      "extractedFieldsOriginal": {
+        "fields": {
+          "invoiceNumber": "F-2026-88",
+          "totalIncl": 1210.0
+        },
+        "fieldConfidence": {
+          "invoiceNumber": 0.97,
+          "totalInclVat": 0.9,
+          "glAccount": 0.55
+        }
+      },
+      "extractionStatus": "pending-review",
+      "supplierIdentifier": "ACME Consultancy B.V."
     },
     {
       "@self": {
@@ -159,7 +170,6 @@
         "slug": "supplier-invoice-draft-0002"
       },
       "invoiceNumber": "UNVERIFIED-0002",
-      "supplierId": "Onbekende leverancier",
       "invoiceDate": "2026-02-11",
       "currency": "EUR",
       "totalExclVat": 37355,
@@ -169,12 +179,22 @@
       "administrationId": "adm-consultancy-nl",
       "sourceDocumentUri": "docudesk://attachments/00000000-0000-0000-0000-000000000001/bon.pdf",
       "overallConfidence": 0.61,
-      "fieldConfidence": { "totalInclVat": 0.62, "invoiceNumber": 0.4 },
-      "extractedFieldsOriginal": {
-        "fields": { "invoiceNumber": "UNVERIFIED-0002", "totalIncl": 452.0 },
-        "fieldConfidence": { "totalInclVat": 0.62, "invoiceNumber": 0.4 }
+      "fieldConfidence": {
+        "totalInclVat": 0.62,
+        "invoiceNumber": 0.4
       },
-      "extractionStatus": "pending-review"
+      "extractedFieldsOriginal": {
+        "fields": {
+          "invoiceNumber": "UNVERIFIED-0002",
+          "totalIncl": 452.0
+        },
+        "fieldConfidence": {
+          "totalInclVat": 0.62,
+          "invoiceNumber": 0.4
+        }
+      },
+      "extractionStatus": "pending-review",
+      "supplierIdentifier": "Onbekende leverancier"
     },
     {
       "@self": {

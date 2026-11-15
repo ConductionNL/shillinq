@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -90,6 +91,15 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 	private ?IUser $currentUser = null;
 
 	/**
+	 * The groups the caller is in (alice is an exception approver by default).
+	 *
+	 * @var list<string>
+	 */
+	private array $groups = ['shillinq_approver'];
+
+	private bool $isAdmin = false;
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var ThreeWayMatchExceptionController
@@ -125,9 +135,78 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			userSession: $this->userSession,
 			logger: $this->logger,
+			groupManager: $this->groupManager(),
 		);
 
 	}//end setUp()
+
+	/**
+	 * A group manager answering from $this->groups and $this->isAdmin.
+	 *
+	 * @return IGroupManager
+	 */
+	private function groupManager(): IGroupManager {
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isAdmin')->willReturnCallback(fn (string $uid): bool => $uid === 'alice' && $this->isAdmin);
+		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => $uid === 'alice' && in_array($group, $this->groups, true));
+
+		return $groups;
+	}//end groupManager()
+
+	/**
+	 * A caller in no approver group cannot accept, and nothing is read or written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#2-state-guards
+	 */
+	public function testAcceptRefusesACallerWhoIsNoExceptionApprover(): void {
+		$this->groups = ['shillinq_bookkeeper', 'shillinq_procurement_officer'];
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'resolutionNotes' => 'ok']);
+		$this->administrationContext->expects($this->never())->method('canAccess');
+		$this->exceptions->expects($this->never())->method('acceptWithMotivation');
+
+		$response = $this->controller->accept();
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame(['error' => 'Only an exception approver can accept a three-way-match exception'], $response->getData());
+	}//end testAcceptRefusesACallerWhoIsNoExceptionApprover()
+
+	/**
+	 * A controller and an administrator may accept, like an approver.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#2-state-guards
+	 */
+	public function testAControllerOrAnAdministratorMayAccept(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'resolutionNotes' => 'ok']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->exceptions->expects($this->exactly(2))->method('acceptWithMotivation')->willReturn(['id' => 'match-3']);
+
+		$this->groups = ['shillinq_controller'];
+		self::assertSame(Http::STATUS_OK, $this->controller->accept()->getStatus());
+
+		$this->groups = [];
+		$this->isAdmin = true;
+		self::assertSame(Http::STATUS_OK, $this->controller->accept()->getStatus());
+	}//end testAControllerOrAnAdministratorMayAccept()
+
+	/**
+	 * Disputing and rejecting are not limited to exception approvers.
+	 *
+	 * @return void
+	 */
+	public function testDisputeAndRejectNeedNoApproverRole(): void {
+		$this->groups = [];
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'disputeReason' => 'wrong price', 'rejectionReason' => 'not ordered']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->exceptions->expects($this->once())->method('fileDispute')->willReturn(['id' => 'match-3']);
+		$this->exceptions->expects($this->once())->method('rejectAndBlockPayment')->willReturn(['id' => 'match-3']);
+
+		self::assertSame(Http::STATUS_OK, $this->controller->dispute()->getStatus());
+		self::assertSame(Http::STATUS_OK, $this->controller->reject()->getStatus());
+	}//end testDisputeAndRejectNeedNoApproverRole()
 
 	/**
 	 * Configure request params from a key => value map.
@@ -571,4 +650,83 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 	}//end testRejectRejectsAnonymousCaller()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * Each action's failure body and log line, its reason body, and the trimmed
+	 * scope and capped notes passed to the service.
+	 *
+	 * @return void
+	 */
+	public function testEveryActionsBodiesLogAndArguments(): void {
+		$long = ' ' . str_repeat('é', 2005) . ' ';
+		$this->withParams(
+			[
+				'administrationId' => ' adm-1 ',
+				'matchId' => ' match-3 ',
+				'resolutionNotes' => $long,
+				'disputeReason' => $long,
+				'rejectionReason' => $long,
+			]
+		);
+		$this->administrationContext->method('canAccess')->with('adm-1')->willReturn(true);
+		$capped = str_repeat('é', 2000);
+		$boom = new \LogicException('boom');
+		$this->exceptions->expects($this->once())->method('acceptWithMotivation')->with('adm-1', 'match-3', $capped)->willThrowException($boom);
+		$this->exceptions->expects($this->once())->method('fileDispute')->with('adm-1', 'match-3', $capped)->willThrowException($boom);
+		$this->exceptions->expects($this->once())->method('rejectAndBlockPayment')->with('adm-1', 'match-3', $capped)->willThrowException($boom);
+		$logged = [];
+		$this->logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+
+		self::assertSame(['error' => 'Could not record acceptance'], $this->controller->accept()->getData());
+		self::assertSame(['error' => 'Could not file dispute'], $this->controller->dispute()->getData());
+		self::assertSame(['error' => 'Could not record rejection'], $this->controller->reject()->getData());
+
+		$context = ['administrationId' => 'adm-1', 'matchId' => 'match-3', 'exception' => 'boom'];
+		self::assertSame(
+			[
+				['ThreeWayMatchExceptionController: accept failed', $context],
+				['ThreeWayMatchExceptionController: dispute failed', $context],
+				['ThreeWayMatchExceptionController: reject failed', $context],
+			],
+			$logged
+		);
+
+	}//end testEveryActionsBodiesLogAndArguments()
+
+	/**
+	 * The reason bodies of dispute and reject, and a refused administration
+	 * answered before the match or reason is checked.
+	 *
+	 * @return void
+	 */
+	public function testReasonBodiesAndCheckOrder(): void {
+		$params = ['administrationId' => 'adm-1', 'matchId' => 'match-3'];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$access = true;
+		$this->administrationContext->method('canAccess')->willReturnCallback(
+			static function () use (&$access): bool {
+				return $access;
+			}
+		);
+		$this->exceptions->expects($this->never())->method($this->anything());
+
+		self::assertSame(['error' => 'disputeReason is required'], $this->controller->dispute()->getData());
+		self::assertSame(['error' => 'rejectionReason is required'], $this->controller->reject()->getData());
+
+		$access = false;
+		$params = ['administrationId' => 'adm-1'];
+		$response = $this->controller->reject();
+		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Administration not found']], [$response->getStatus(), $response->getData()]);
+
+		$params = ['administrationId' => 'a b', 'matchId' => 'x'];
+		self::assertSame(['error' => 'administrationId is required'], $this->controller->dispute()->getData());
+
+	}//end testReasonBodiesAndCheckOrder()
 }//end class

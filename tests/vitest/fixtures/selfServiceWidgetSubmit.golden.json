@@ -1,0 +1,678 @@
+{
+	"no slot selected": {
+		"requests": [],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "stale",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": null
+	},
+	"confirmed with a message": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "confirmed",
+		"submitting": false,
+		"submitError": "",
+		"confirmationMessage": "See you soon",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"confirmed without a message": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "confirmed",
+		"submitting": false,
+		"submitError": "",
+		"confirmationMessage": "Geboekt",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"confirmed with a null payload": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "confirmed",
+		"submitting": false,
+		"submitError": "",
+		"confirmationMessage": "Geboekt",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"confirmed but the body is not JSON": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Network error. Please check your connection and try again.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"confirmed without phone or notes": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": null,
+					"notes": null
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "confirmed",
+		"submitting": false,
+		"submitError": "",
+		"confirmationMessage": "ok",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"slot just taken": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			},
+			{
+				"url": "https://api.example.org/api/widget/slots?businessId=biz-1&serviceId=svc-1&resourceId=res-9&date=2026-11-02",
+				"method": "GET",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": null,
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "datetime",
+		"submitting": false,
+		"submitError": "This slot was just booked. Please select another time.",
+		"confirmationMessage": "",
+		"slots": [
+			{
+				"startTime": "2026-11-02T09:00:00Z",
+				"endTime": "2026-11-02T09:30:00Z"
+			}
+		],
+		"slotsError": "",
+		"selectedSlot": null
+	},
+	"slot just taken and the slot reload fails": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			},
+			{
+				"url": "https://api.example.org/api/widget/slots?businessId=biz-1&serviceId=svc-1&resourceId=res-9&date=2026-11-02",
+				"method": "GET",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": null,
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "datetime",
+		"submitting": false,
+		"submitError": "This slot was just booked. Please select another time.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "We could not load available times. Please try another date.",
+		"selectedSlot": null
+	},
+	"unauthorised": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Configuration error. Please contact the website owner.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"forbidden": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Configuration error. Please contact the website owner.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"service gone": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "This service is no longer available. Please refresh the page.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"server error": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Something went wrong. Our team has been notified. Please try again later.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"gateway error": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Something went wrong. Our team has been notified. Please try again later.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"rejected with a message": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Bad email",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"rejected without a message": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Network error. Please check your connection and try again.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"rejected with a null payload": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Network error. Please check your connection and try again.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"rejected with a body that is not JSON": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Network error. Please check your connection and try again.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"not ok below 200": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "odd",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"redirect status": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "moved",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	},
+	"network failure": {
+		"requests": [
+			{
+				"url": "https://api.example.org/api/widget/appointments?businessId=biz-1",
+				"method": "POST",
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer key-1"
+				},
+				"body": {
+					"serviceId": "svc-1",
+					"resourceId": "res-9",
+					"startTime": "2026-11-02T09:00:00Z",
+					"endTime": "2026-11-02T09:30:00Z",
+					"customerName": "Ada",
+					"email": "ada@example.org",
+					"phone": "+31612345678",
+					"notes": "Window seat"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"step": "review",
+		"submitting": false,
+		"submitError": "Network error. Please check your connection and try again.",
+		"confirmationMessage": "",
+		"slots": [],
+		"slotsError": "",
+		"selectedSlot": {
+			"startTime": "2026-11-02T09:00:00Z",
+			"endTime": "2026-11-02T09:30:00Z"
+		}
+	}
+}

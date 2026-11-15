@@ -28,8 +28,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\ObjectRequestRefundService;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestRefundServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
+use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,8 +51,8 @@ class ObjectRequestRefundController extends Controller {
 	 *
 	 * @param string                     $appName    The app id.
 	 * @param IRequest                   $request    The request.
-	 * @param PaymentActionAuthorizer    $authorizer The payment action matrix.
-	 * @param ObjectRequestRefundService $refunds    Books and records the refund steps.
+	 * @param PaymentActionAuthorizerInterface    $authorizer The payment action matrix.
+	 * @param ObjectRequestRefundServiceInterface $refunds    Books and records the refund steps.
 	 * @param LoggerInterface            $logger     Logs a step that failed for another reason.
 	 *
 	 * @return void
@@ -59,8 +60,8 @@ class ObjectRequestRefundController extends Controller {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly PaymentActionAuthorizer $authorizer,
-		private readonly ObjectRequestRefundService $refunds,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
+		private readonly ObjectRequestRefundServiceInterface $refunds,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -77,7 +78,7 @@ class ObjectRequestRefundController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function approve(string $id): JSONResponse {
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Approving a refund needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
 		}
 
@@ -97,7 +98,7 @@ class ObjectRequestRefundController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function markPaid(string $id, string $bankReference = '', string $bankAccount = ''): JSONResponse {
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Marking a refund paid needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
 		}
 
@@ -111,11 +112,13 @@ class ObjectRequestRefundController extends Controller {
 	 *
 	 * @param callable(): array<string, mixed> $step The step.
 	 *
-	 * @return JSONResponse The request, a 400 with the reason, or a 500.
+	 * @return JSONResponse The request, a 403 or 400 with the reason, or a 500.
 	 */
 	private function answer(callable $step): JSONResponse {
 		try {
 			$request = $step();
+		} catch (RefundStepForbiddenException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		} catch (Throwable $e) {

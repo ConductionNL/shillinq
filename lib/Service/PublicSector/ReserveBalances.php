@@ -34,13 +34,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\PublicSector;
 
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\ReserveBalancesInterface;
 
 /**
  * Balances, the multi-year overview and the booking of reserve mutations.
  *
  * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
-class ReserveBalances {
+class ReserveBalances implements ReserveBalancesInterface {
 	/**
 	 * How many years the overview shows: the year asked for and four ahead.
 	 *
@@ -116,18 +117,7 @@ class ReserveBalances {
 			$sums = self::sums(mutations: $mutations, year: $year, realisedOnly: false);
 			$closing = ($balance + $sums['additions'] - $sums['withdrawals']);
 			if ($year >= $fromYear) {
-				$rows[] = [
-					'reserveId'    => (string)($reserve['id'] ?? ''),
-					'reserveName'  => (string)($reserve['name'] ?? ''),
-					'year'         => $year,
-					'opening'      => ($balance / 100),
-					'additions'    => ($sums['additions'] / 100),
-					'withdrawals'  => ($sums['withdrawals'] / 100),
-					'closing'      => ($closing / 100),
-					'planned'      => $sums['planned'],
-					'belowFloor'   => (isset($reserve['floorCents']) === true && $closing < (int)$reserve['floorCents']),
-					'aboveCeiling' => (isset($reserve['plafondCents']) === true && $closing > (int)$reserve['plafondCents']),
-				];
+				$rows[] = $this->yearRow(reserve: $reserve, year: $year, balance: $balance, sums: $sums);
 			}
 
 			$balance = $closing;
@@ -136,6 +126,35 @@ class ReserveBalances {
 		return $rows;
 
 	}//end chain()
+
+	/**
+	 * One reserve year, opening to closing, with its floor and ceiling signals.
+	 *
+	 * @param array<string,mixed> $reserve The reserve.
+	 * @param int                 $year    The year.
+	 * @param int                 $balance The opening balance in cents.
+	 * @param array<string,mixed> $sums    The year's additions, withdrawals (cents) and planned flag.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
+	 */
+	private function yearRow(array $reserve, int $year, int $balance, array $sums): array {
+		$closing = ($balance + $sums['additions'] - $sums['withdrawals']);
+
+		return [
+			'reserveId'    => (string)($reserve['id'] ?? ''),
+			'reserveName'  => (string)($reserve['name'] ?? ''),
+			'year'         => $year,
+			'opening'      => ($balance / 100),
+			'additions'    => ($sums['additions'] / 100),
+			'withdrawals'  => ($sums['withdrawals'] / 100),
+			'closing'      => ($closing / 100),
+			'planned'      => $sums['planned'],
+			'belowFloor'   => (isset($reserve['floorCents']) === true && $closing < (int)$reserve['floorCents']),
+			'aboveCeiling' => (isset($reserve['plafondCents']) === true && $closing > (int)$reserve['plafondCents']),
+		];
+	}//end yearRow()
 
 	/**
 	 * A reserve's realised balance on 1 January of a year.
@@ -207,46 +226,16 @@ class ReserveBalances {
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function journalFor(array $mutation, array $reserve): array {
-		$reserveAccount = trim((string)($reserve['balanceAccountNumber'] ?? ''));
-		$resultAccount = trim((string)($reserve['resultAccountNumber'] ?? ''));
-		if ($reserveAccount === '' || $resultAccount === '') {
-			throw new DomainException('Enter the reserve account and the result account on the reserve first.');
-		}
-
-		$amount = round((float)($mutation['amount'] ?? 0), 2);
-		if ($amount <= 0) {
-			throw new DomainException('The amount of a mutation must be more than zero.');
-		}
-
-		$year = (int)($mutation['year'] ?? 0);
-		$kind = (string)($mutation['kind'] ?? 'addition');
-		$label = 'Toevoeging';
-		if ($kind === 'withdrawal') {
-			$label = 'Onttrekking';
-		}
-
-		$description = sprintf('%s %d: %s', $label, $year, (string)($reserve['name'] ?? ''));
-		$resolution = trim((string)($mutation['councilResolution'] ?? ''));
-		if ($resolution !== '') {
-			$description .= ' (raadsbesluit ' . $resolution . ')';
-		}
-
-		$reserveSide = 'credit';
-		$resultSide = 'debit';
-		if ($kind === 'withdrawal') {
-			$reserveSide = 'debit';
-			$resultSide = 'credit';
-		}
-
+		$this->assertReserveAccounts(reserve: $reserve);
+		$amount = self::positiveAmount(mutation: $mutation);
+		$description = self::mutationDescription(mutation: $mutation, reserve: $reserve);
 		$key = (string)($mutation['id'] ?? ($mutation['@self']['slug'] ?? $description));
+
 		return [
 			'journalNumber'    => 'RES-' . substr(hash('sha256', $key), 0, 12),
-			'entryDate'        => self::entryDate(year: $year),
+			'entryDate'        => self::entryDate(year: (int)($mutation['year'] ?? 0)),
 			'description'      => $description,
-			'lines'            => [
-				['accountNumber' => $resultAccount, 'side' => $resultSide, 'amount' => $amount, 'description' => $description],
-				['accountNumber' => $reserveAccount, 'side' => $reserveSide, 'amount' => $amount, 'description' => $description],
-			],
+			'lines'            => self::mutationLines(mutation: $mutation, reserve: $reserve),
 			'journalType'      => 'manual',
 			'approvalState'    => 'not-required',
 			'administrationId' => (string)($mutation['administrationId'] ?? ($reserve['administrationId'] ?? '')),
@@ -254,6 +243,108 @@ class ReserveBalances {
 		];
 
 	}//end journalFor()
+
+	/**
+	 * Refuse a reserve without its balance account or its result account.
+	 *
+	 * @param array<string,mixed> $reserve The reserve.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When either account is missing.
+	 */
+	private function assertReserveAccounts(array $reserve): void {
+		$reserveAccount = trim((string)($reserve['balanceAccountNumber'] ?? ''));
+		$resultAccount = trim((string)($reserve['resultAccountNumber'] ?? ''));
+		if ($reserveAccount === '' || $resultAccount === '') {
+			throw new DomainException('Enter the reserve account and the result account on the reserve first.');
+		}
+
+	}//end assertReserveAccounts()
+
+	/**
+	 * The mutation's amount rounded to cents, which must be more than zero.
+	 *
+	 * @param array<string,mixed> $mutation The mutation.
+	 *
+	 * @return float
+	 *
+	 * @throws DomainException When the amount is not positive.
+	 */
+	private static function positiveAmount(array $mutation): float {
+		$amount = round((float)($mutation['amount'] ?? 0), 2);
+		if ($amount <= 0) {
+			throw new DomainException('The amount of a mutation must be more than zero.');
+		}
+
+		return $amount;
+
+	}//end positiveAmount()
+
+	/**
+	 * "Toevoeging" or "Onttrekking", the year and the reserve, with the council resolution when known.
+	 *
+	 * @param array<string,mixed> $mutation The mutation.
+	 * @param array<string,mixed> $reserve  Its reserve.
+	 *
+	 * @return string
+	 */
+	private static function mutationDescription(array $mutation, array $reserve): string {
+		$label = 'Toevoeging';
+		if (self::isWithdrawal(mutation: $mutation) === true) {
+			$label = 'Onttrekking';
+		}
+
+		$description = sprintf('%s %d: %s', $label, (int)($mutation['year'] ?? 0), (string)($reserve['name'] ?? ''));
+		$resolution = trim((string)($mutation['councilResolution'] ?? ''));
+		if ($resolution !== '') {
+			$description .= ' (raadsbesluit ' . $resolution . ')';
+		}
+
+		return $description;
+
+	}//end mutationDescription()
+
+	/**
+	 * The result line and the reserve line: an addition credits the reserve,
+	 * a withdrawal debits it.
+	 *
+	 * @param array<string,mixed> $mutation The mutation, already checked.
+	 * @param array<string,mixed> $reserve  Its reserve, already checked.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private static function mutationLines(array $mutation, array $reserve): array {
+		$amount = round((float)($mutation['amount'] ?? 0), 2);
+		$description = self::mutationDescription(mutation: $mutation, reserve: $reserve);
+		$reserveSide = 'credit';
+		$resultSide = 'debit';
+		if (self::isWithdrawal(mutation: $mutation) === true) {
+			$reserveSide = 'debit';
+			$resultSide = 'credit';
+		}
+
+		$resultAccount = trim((string)($reserve['resultAccountNumber'] ?? ''));
+		$reserveAccount = trim((string)($reserve['balanceAccountNumber'] ?? ''));
+
+		return [
+			['accountNumber' => $resultAccount, 'side' => $resultSide, 'amount' => $amount, 'description' => $description],
+			['accountNumber' => $reserveAccount, 'side' => $reserveSide, 'amount' => $amount, 'description' => $description],
+		];
+
+	}//end mutationLines()
+
+	/**
+	 * Whether a mutation is a withdrawal (else an addition).
+	 *
+	 * @param array<string,mixed> $mutation The mutation.
+	 *
+	 * @return bool
+	 */
+	private static function isWithdrawal(array $mutation): bool {
+		return (string)($mutation['kind'] ?? 'addition') === 'withdrawal';
+
+	}//end isWithdrawal()
 
 	/**
 	 * The year and amount a reserve's balances start from.

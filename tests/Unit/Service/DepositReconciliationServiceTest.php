@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-007, REQ-DP-011)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -21,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\DepositReconciliationService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +47,13 @@ final class DepositReconciliationServiceTest extends TestCase {
 	private function buildObjectServiceStub(array $deposits, array &$saved): object {
 		return new class($deposits, $saved) {
 			/**
+			 * The `_rbac` flag of every OpenRegister call, in call order.
+			 *
+			 * @var array<int,bool>
+			 */
+			public array $rbacFlags = [];
+
+			/**
 			 * @param array<int, array<string, mixed>> $deposits Records.
 			 * @param array<int, array<string, mixed>> $saved Sink.
 			 */
@@ -63,10 +73,12 @@ final class DepositReconciliationServiceTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $params Query params.
+			 * @param bool                 $_rbac  Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<int, array<string, mixed>>
 			 */
-			public function findAll(array $params = []): array {
+			public function findAll(array $params = [], bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
 				$offset = (int)($params['offset'] ?? 0);
 				if ($offset > 0) {
 					return [];
@@ -79,10 +91,12 @@ final class DepositReconciliationServiceTest extends TestCase {
 			 * @param array<string, mixed> $object Object to persist.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
+			 * @param bool   $_rbac  Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
 				$this->saved[] = $object;
 				return $object;
 			}
@@ -178,6 +192,8 @@ final class DepositReconciliationServiceTest extends TestCase {
 		self::assertSame('authorized', $saved[0]['state']);
 		self::assertSame('mollie', $saved[0]['paymentGateway']);
 		self::assertArrayHasKey('authorizedAt', $saved[0]);
+		// The webhook is authenticated by its signature, not a Nextcloud session.
+		self::assertSame(expected: [false, false], actual: $stub->rbacFlags);
 	}//end testAuthorizeTransitionsPendingToAuthorized()
 
 	/**
@@ -511,4 +527,29 @@ final class DepositReconciliationServiceTest extends TestCase {
 		self::assertSame(1, $counters['reconciled']);
 		self::assertSame('failed', $saved[0]['state']);
 	}//end testPollPendingViaAdapterProjectsFailedLifecycleOntoFailedOutcome()
+
+	/**
+	 * An unknown outcome is a no-op that reads nothing; a void stamps voidedAt
+	 * and the webhook time; a failure without details records the defaults.
+	 *
+	 * @return void
+	 */
+	public function testUnknownOutcomeVoidAndDefaultFailureDetails(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub([['paymentIntentId' => 'tr_1', 'state' => 'pending']], $saved);
+		$service = $this->makeService($stub);
+
+		self::assertSame(DepositReconciliationService::RESULT_NOOP, $service->reconcile(paymentIntentId: 'tr_1', outcome: 'refunded', gateway: 'mollie'));
+		self::assertSame([], $stub->rbacFlags);
+
+		self::assertSame(DepositReconciliationService::RESULT_APPLIED, $service->reconcile(paymentIntentId: 'tr_1', outcome: DepositReconciliationService::OUTCOME_VOIDED, gateway: 'mollie'));
+		self::assertSame(['voided', 'mollie'], [$saved[0]['state'], $saved[0]['paymentGateway']]);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $saved[0]['voidedAt']);
+		self::assertMatchesRegularExpression('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$/', $saved[0]['lastWebhookAttempt']);
+		self::assertArrayNotHasKey('authorizedAt', $saved[0]);
+
+		self::assertSame(DepositReconciliationService::RESULT_APPLIED, $service->reconcile(paymentIntentId: 'tr_1', outcome: DepositReconciliationService::OUTCOME_FAILED, gateway: 'stripe'));
+		self::assertSame(['failed', 'payment_failed', 'Payment failed at gateway.'], [$saved[1]['state'], $saved[1]['lastErrorCode'], $saved[1]['lastErrorMessage']]);
+		self::assertArrayNotHasKey('voidedAt', $saved[1]);
+	}//end testUnknownOutcomeVoidAndDefaultFailureDetails()
 }//end class

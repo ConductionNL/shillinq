@@ -373,38 +373,22 @@
             "description": "Powers the Cycle Counts index filter by state + date range."
           }
         ],
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "inventory": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory",
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "InventoryCycleCountLine": {
@@ -599,37 +583,21 @@
             "description": "Powers the VarianceGate check on counting → posted."
           }
         ],
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "inventory": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory"
+          ]
         }
       },
       "InventoryVarianceReason": {
@@ -714,37 +682,21 @@
             "description": "Powers the dropdown query on the count-line edit form (active only)."
           }
         ],
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "inventory": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "StockMove": {

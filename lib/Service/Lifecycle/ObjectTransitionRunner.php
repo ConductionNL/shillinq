@@ -28,6 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Lifecycle;
 
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 
@@ -36,7 +38,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
-class ObjectTransitionRunner {
+class ObjectTransitionRunner implements ObjectTransitionRunnerInterface {
 	/**
 	 * The engine's container id.
 	 *
@@ -78,4 +80,36 @@ class ObjectTransitionRunner {
 		$engine->transition($objectId, $action, $data);
 
 	}//end run()
+
+	/**
+	 * Run one declared transition as the system, after shillinq checked the caller itself.
+	 *
+	 * OpenRegister skips its own read and update checks on the subject; the
+	 * transition's declared guards still run. Only for callers shillinq has
+	 * authorised by other means, such as a redeemed confirmation token.
+	 *
+	 * @param string $objectId The object's uuid.
+	 * @param string $action   The transition name as the schema declares it.
+	 * @param array<string,mixed> $data Declared transition inputs, if any.
+	 *
+	 * @return mixed The saved object as the engine returns it.
+	 *
+	 * @throws RuntimeException When the engine is not available.
+	 * @throws \Throwable Whatever the engine throws: a refused guard, a state it cannot leave.
+	 *
+	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+	 */
+	public function runAsSystem(string $objectId, string $action, array $data = []): mixed {
+		if ($this->container->has(self::ENGINE_CLASS) === false) {
+			throw new RuntimeException('OpenRegister TransitionEngine is not available');
+		}
+
+		$engine = $this->container->get(self::ENGINE_CLASS);
+		if (method_exists($engine, 'transitionAsSystem') === false) {
+			throw new RuntimeException('OpenRegister TransitionEngine cannot run a transition as the system');
+		}
+
+		return $engine->transitionAsSystem($objectId, $action, AppIdentity::APP_ID, $data);
+
+	}//end runAsSystem()
 }//end class

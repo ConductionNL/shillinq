@@ -296,5 +296,60 @@ final class WbsoAdministratieServiceTest extends TestCase {
 
 	}//end testZeroRealisationForEmptyBeschikking()
 
+	/**
+	 * Golden: the full row of every beschikking, sorted by decision number, with tenths rounding.
+	 *
+	 * @return void
+	 */
+	public function testSummaryRowsGolden(): void {
+		$service = $this->buildService(
+			[
+				$this->decision('WBSO-2', 10.04, 'adm-a'),
+				$this->decision('10', 0.0, 'adm-a'),
+				$this->decision('WBSO-1', 2.0, 'adm-a'),
+			],
+			[
+				$this->uur('WBSO-2', 10.0, 'confirmed', 'adm-a'),
+				$this->uur('10', 0.1, 'locked', 'adm-a'),
+				$this->uur('WBSO-1', 2.0, 'locked', 'adm-a'),
+			]
+		);
+
+		$row = static fn (string $number, float $granted, float $realised, float $remaining, bool $exceeded): array => [
+			'decisionNumber'   => $number,
+			'rvoReference'     => 'S&O '.$number,
+			'projectNumber'    => 'PRJ-'.$number,
+			'state'            => 'granted',
+			'grantedSoHours'   => $granted,
+			'realisedSoHours'  => $realised,
+			'remainingSoHours' => $remaining,
+			'exceeded'         => $exceeded,
+			'administrationId' => 'adm-a',
+		];
+
+		self::assertSame(
+			[
+				'data'  => [
+					$row('10', 0.0, 0.1, -0.1, true),
+					$row('WBSO-1', 2.0, 2.0, 0.0, false),
+					$row('WBSO-2', 10.0, 10.0, 0.0, false),
+				],
+				'total' => 3,
+			],
+			$service->realisatieSummary('adm-a')
+		);
+
+	}//end testSummaryRowsGolden()
+
+	/**
+	 * An administration without beschikkingen has an empty summary.
+	 *
+	 * @return void
+	 */
+	public function testEmptySummary(): void {
+		self::assertSame(['data' => [], 'total' => 0], $this->buildService([], [])->realisatieSummary('adm-a'));
+
+	}//end testEmptySummary()
+
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

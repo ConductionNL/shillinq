@@ -3,6 +3,9 @@
 /**
  * Budget Impact Emitter Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-007 — on activation of a `bron: tenderned` Commitment, publish an
  * `obligation.activated` CloudEvent so launchpad's budget-utilisation widget
  * can reflect the new committed expense within 60 seconds.
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,6 +48,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -58,7 +59,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class BudgetImpactEmitter {
+class BudgetImpactEmitter implements BudgetImpactEmitterInterface {
 
 	/**
 	 * Event name for an activated TenderNed-sourced obligation (REQ-007).

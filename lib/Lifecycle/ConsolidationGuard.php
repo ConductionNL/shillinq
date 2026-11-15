@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Commercial Consolidation Lifecycle Guard
  *
  * ADR-031 exception-path lifecycle guards for the commercial consolidation
@@ -54,14 +59,14 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+ * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -84,7 +89,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
- * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+ * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
  */
 class ConsolidationGuard {
 	/**
@@ -118,7 +123,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the group may be activated.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canActivateGroup(string $groupId, ?array $object = null): bool {
 		try {
@@ -149,7 +154,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the entity may be activated.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canActivateEntity(string $entityId, ?array $object = null): bool {
 		try {
@@ -185,7 +190,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the elimination phase may start.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canStartElimination(string $periodId, ?array $object = null): bool {
 		try {
@@ -217,7 +222,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the period may go to review.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canSubmitForReview(string $periodId, ?array $object = null): bool {
 		try {
@@ -226,24 +231,7 @@ class ConsolidationGuard {
 				return false;
 			}
 
-			if ((int)($period['totalEliminationCount'] ?? 0) < 1) {
-				return false;
-			}
-
-			$mismatches = $period['mismatches'] ?? [];
-			if (is_array($mismatches) === false) {
-				return false;
-			}
-
-			foreach ($mismatches as $mismatch) {
-				if (is_array($mismatch) === true
-					&& (string)($mismatch['status'] ?? 'pending') === 'pending'
-				) {
-					return false;
-				}
-			}
-
-			return true;
+			return self::isReadyForReview(period: $period);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ConsolidationGuard: submit-for-review check failed — denying transition (fail-closed)',
@@ -252,6 +240,49 @@ class ConsolidationGuard {
 			return false;
 		}//end try
 	}//end canSubmitForReview()
+
+	/**
+	 * Whether the period has eliminations and no pending mismatch.
+	 *
+	 * @param array<string,mixed> $period The ConsolidationPeriod.
+	 *
+	 * @return bool True when the period may go to review.
+	 *
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
+	 */
+	private static function isReadyForReview(array $period): bool {
+		if ((int)($period['totalEliminationCount'] ?? 0) < 1) {
+			return false;
+		}
+
+		$mismatches = $period['mismatches'] ?? [];
+		if (is_array($mismatches) === false) {
+			return false;
+		}
+
+		return self::hasPendingMismatch(mismatches: $mismatches) === false;
+	}//end isReadyForReview()
+
+	/**
+	 * Whether any mismatch is still pending in the exception queue.
+	 *
+	 * @param array<mixed> $mismatches The period's mismatches.
+	 *
+	 * @return bool True when one is pending.
+	 *
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
+	 */
+	private static function hasPendingMismatch(array $mismatches): bool {
+		foreach ($mismatches as $mismatch) {
+			if (is_array($mismatch) === true
+				&& (string)($mismatch['status'] ?? 'pending') === 'pending'
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end hasPendingMismatch()
 
 	/**
 	 * Returns true iff a ConsolidationPeriod may be closed.
@@ -271,7 +302,7 @@ class ConsolidationGuard {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canClosePeriod(string $periodId, ?array $object = null): bool {
 		try {
@@ -286,19 +317,7 @@ class ConsolidationGuard {
 				->setSchema('EliminationEntry')
 				->findAll(['filters' => ['consolidationPeriodId' => $periodId]]);
 
-			$count = 0;
-			foreach ($entries as $entry) {
-				if (is_array($entry) === false) {
-					return false;
-				}
-
-				$count++;
-				if ((string)($entry['reviewStatus'] ?? 'pending') !== 'approved') {
-					return false;
-				}
-			}
-
-			return $count > 0;
+			return self::allEntriesApproved(entries: $entries);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ConsolidationGuard: close-period check failed — denying transition (fail-closed)',
@@ -307,6 +326,31 @@ class ConsolidationGuard {
 			return false;
 		}//end try
 	}//end canClosePeriod()
+
+	/**
+	 * Whether there is at least one elimination entry and every entry is approved.
+	 *
+	 * @param iterable<mixed> $entries The period's EliminationEntry rows.
+	 *
+	 * @return bool True when the period may be closed.
+	 *
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
+	 */
+	private static function allEntriesApproved(iterable $entries): bool {
+		$count = 0;
+		foreach ($entries as $entry) {
+			if (is_array($entry) === false) {
+				return false;
+			}
+
+			$count++;
+			if ((string)($entry['reviewStatus'] ?? 'pending') !== 'approved') {
+				return false;
+			}
+		}
+
+		return $count > 0;
+	}//end allEntriesApproved()
 
 	/**
 	 * Returns true iff an EliminationEntry may be approved.
@@ -319,7 +363,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the entry may be approved.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canApproveElimination(string $entryId, ?array $object = null): bool {
 		try {
@@ -353,7 +397,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the entry may be rejected.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canRejectElimination(string $entryId, ?array $object = null): bool {
 		try {
@@ -384,7 +428,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the balance may be finalised.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canFinalizeBalance(string $balanceId, ?array $object = null): bool {
 		try {
@@ -418,7 +462,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the income statement may be finalised.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canFinalizeIncomeStatement(string $statementId, ?array $object = null): bool {
 		try {
@@ -503,28 +547,9 @@ class ConsolidationGuard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
 
 	/**
@@ -533,7 +558,7 @@ class ConsolidationGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

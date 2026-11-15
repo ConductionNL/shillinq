@@ -55,6 +55,25 @@
         }
       },
       "Calendar": {
+        "authorization": {
+          "create": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "read": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator",
+            "shillinq_operator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "delete": [
+            "shillinq_booking_administrator"
+          ]
+        },
         "slug": "Calendar",
         "icon": "CalendarOutline",
         "version": "0.1.0",
@@ -116,6 +135,25 @@
         }
       },
       "Booking": {
+        "authorization": {
+          "create": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "read": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator",
+            "shillinq_operator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "delete": [
+            "shillinq_booking_administrator"
+          ]
+        },
         "slug": "Booking",
         "icon": "CalendarClockOutline",
         "version": "0.1.0",

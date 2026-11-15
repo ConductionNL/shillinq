@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Wet Fido & Treasurystatuut Lifecycle Guard
  *
  * ADR-031 exception-path lifecycle guards for the Wet Fido / Treasurystatuut
@@ -281,19 +286,37 @@ class FidoTreasuryGuard {
 			return false;
 		}
 
-		$mandates = $statuut['signingMandates'] ?? [];
+		return $this->anyMandateAuthorises(
+			mandates: ($statuut['signingMandates'] ?? []),
+			role: $role,
+			instrument: $instrument,
+			principal: (float)$principal
+		);
+	}//end isWithinSigningMandate()
+
+	/**
+	 * Whether any row of the signing-mandate matrix authorises the lening.
+	 *
+	 * @param mixed $mandates The statuut's signing mandates.
+	 * @param string $role The signer role.
+	 * @param string $instrument The lening instrument.
+	 * @param float $principal The lening principal.
+	 *
+	 * @return bool True when a matrix row authorises the lening.
+	 */
+	private function anyMandateAuthorises(mixed $mandates, string $role, string $instrument, float $principal): bool {
 		if (is_array($mandates) === false) {
 			return false;
 		}
 
 		foreach ($mandates as $mandate) {
-			if ($this->mandateAuthorises(mandate: $mandate, role: $role, instrument: $instrument, principal: (float)$principal) === true) {
+			if ($this->mandateAuthorises(mandate: $mandate, role: $role, instrument: $instrument, principal: $principal) === true) {
 				return true;
 			}
 		}
 
 		return false;
-	}//end isWithinSigningMandate()
+	}//end anyMandateAuthorises()
 
 	/**
 	 * Returns true iff the lening carries the minimal shape needed to be matched
@@ -438,28 +461,9 @@ class FidoTreasuryGuard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
 
 	/**

@@ -13,13 +13,26 @@
 // `Handler "openImportWizard" not found in context.handlers` (live pass S4).
 // So every handler is registered in both, from this one list.
 
+import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
+import { openProposeDirectDebit } from './utils/directDebitActions.js'
+import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { openImportWizard } from './utils/importWizard.js'
-import { openIntegriqConnections } from './utils/integriqConnections.js'
+import {
+	approvePayable,
+	markPayablePaid,
+	rejectPayable,
+} from './utils/inboundPayableActions.js'
+import {
+	openIntegriqConnections,
+	openIntegriqStore,
+} from './utils/integriqConnections.js'
+import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
+import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -37,11 +50,21 @@ import {
 	checkSupplierVatNumber,
 } from './utils/vatNumberCheck.js'
 import { openPrepareVatReturn } from './utils/vatReturnActions.js'
+import {
+	checkVatReturnForCorrections,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
+	prepareSupplementaryReturn,
+} from './utils/vatSuppletieActions.js'
 
 export const manifestActions = Object.freeze({
 	// The External Connections page's Add integration action leaves for
 	// integriq (adopt-connection-registry).
 	openIntegriqConnections,
+	// The Integrations page's Open in Integriq row action
+	// (platform-integration-catalogue).
+	openIntegriqStore,
 	// banking-manual-match: the "Match by hand" row action and the
 	// unmatched items bulk classification.
 	openBankLineMatch,
@@ -49,9 +72,19 @@ export const manifestActions = Object.freeze({
 	// sales-down-payments: the "New down-payment invoice" header action on
 	// Accounts Receivable.
 	openDownPaymentInvoice,
+	// Generate invoices on Sales invoices (board ShFactuurGenereren).
+	openInvoiceGenerateWizard,
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
+	// receivables-sepa-direct-debit: Propose direct debit on Direct debit
+	// batches and Download pain.008 on a generated batch.
+	openProposeDirectDebit,
+	downloadDirectDebitFile,
+	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
+	approvePayable,
+	markPayablePaid,
+	rejectPayable,
 	// planning-commitment-year-end: the "Carry open commitments to next year"
 	// header action on Commitments.
 	openCarryOverCommitments,
@@ -80,8 +113,19 @@ export const manifestActions = Object.freeze({
 	// Switch on reminders on an administration.
 	openDunningNextRun,
 	openDunningSwitchOn,
+	// ledger-multi-administration 3.2: Save as template on an administration.
+	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
+	// Prepare / Download / File on a correction, and the position's lines.
+	checkVatReturnForCorrections,
+	prepareSupplementaryReturn,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
+	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
+	openRecalculateInvestmentDeductions,
 })
 
 /**

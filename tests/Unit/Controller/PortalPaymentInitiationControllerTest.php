@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PortalPaymentInitiationController;
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
-use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
+use OCA\Shillinq\Kernel\Model\PortalPaymentSessionResult;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -90,7 +90,7 @@ final class PortalPaymentInitiationControllerTest extends TestCase {
 
 		$this->controller = new PortalPaymentInitiationController(
 			request: $this->request,
-			verifier: new PortalAssertionVerifier(config: null, secretOverride: self::SECRET),
+			verifier: new PortalAssertionVerifier(secretOverride: self::SECRET),
 			sessionService: $this->sessionService,
 			logger: $this->createMock(LoggerInterface::class),
 		);
