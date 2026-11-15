@@ -42,6 +42,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * One receipt mail per settled object request, on every settlement path.
@@ -103,7 +104,11 @@ class ObjectRequestSettledListenerTest extends TestCase {
 		);
 		$this->objectService = $this->createMock(ObjectServiceInterface::class);
 		$this->objectService->method('patchObject')->willReturnCallback(
-			function (string $objectId, array $data, $register = null, $schema = null): ObjectEntity {
+			function (ObjectPatch $patch): ObjectEntity {
+				$objectId = $patch->objectId;
+				$data = $patch->data;
+				$register = $patch->target->register;
+				$schema = $patch->target->schema;
 				$this->patches[] = ['id' => $objectId, 'data' => $data, 'register' => $register, 'schema' => $schema];
 				return new ObjectEntity();
 			}

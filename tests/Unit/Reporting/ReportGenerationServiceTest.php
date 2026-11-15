@@ -47,6 +47,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use ReflectionClass;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A fake OpenRegister ObjectService capturing every saveObject() call.
@@ -65,7 +66,9 @@ final class FakeRgsObjectService {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 		return array_merge($object, ['id' => 'saved-' . count($this->saved)]);
 	}//end saveObject()

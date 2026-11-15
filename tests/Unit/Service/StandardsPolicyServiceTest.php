@@ -13,6 +13,7 @@ use OCA\Shillinq\Service\StandardsPolicyService;
 use PHPUnit\Framework\TestCase;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Unit tests for the pure ranking logic of StandardsPolicyService (REQ-ASP-003).
@@ -135,7 +136,11 @@ class StandardsPolicyServiceTest extends TestCase {
 			)
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend, $register, $schema, ?string $uuid) use (&$saved): ObjectEntityInterface {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) use (&$saved): ObjectEntityInterface {
+				$extend = $options->extend;
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$saved[] = ['object' => $object, 'uuid' => $uuid];
 				$entity = $this->createMock(ObjectEntityInterface::class);
 				$entity->method('jsonSerialize')->willReturn(['@self' => ['id' => $uuid]] + $object);

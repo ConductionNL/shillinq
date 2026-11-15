@@ -33,6 +33,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * An object service double that also records saves.
@@ -96,7 +98,11 @@ final class WithdrawalObjectServiceFake {
 	 *
 	 * @return array<string, mixed> The row.
 	 */
-	public function find(int|string $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function find(int|string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
 		$row = ($this->data[(string)($schema ?? $this->schema)][(string)$id] ?? null);
 		if ($row === null) {
 			throw new DoesNotExistException('not found');
@@ -142,7 +148,10 @@ final class WithdrawalObjectServiceFake {
 	 *
 	 * @return array<string, mixed> The saved object.
 	 */
-	public function saveObject(array $object, string $register = '', string $schema = '', ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register ?? '';
+		$schema = $options->target->schema ?? '';
+		$uuid = $options->uuid;
 		$this->saved[] = [$schema, $uuid, $object];
 
 		return $object + ['id' => ($uuid ?? 'wd-1')];

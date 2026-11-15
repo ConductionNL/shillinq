@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use RuntimeException;
 
@@ -57,9 +58,7 @@ interface PaymentRequestLeafProviderInterface {
 	/**
 	 * Append one payment request to the host object.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The host object's register, schema and id.
 	 * @param array<string, mixed> $payload The request fields: amount, currency, requestType, description, debtor, dueAt.
 	 *
 	 * @return array<string, mixed> The created request.
@@ -69,5 +68,5 @@ interface PaymentRequestLeafProviderInterface {
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	public function create(string $register, string $schema, string $objectId, array $payload): array;
+	public function create(ObjectRef $ref, array $payload): array;
 }//end interface

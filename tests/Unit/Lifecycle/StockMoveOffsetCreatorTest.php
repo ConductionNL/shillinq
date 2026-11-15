@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Cancelling a posted stock move writes a mirror-image, locked offset move
@@ -128,7 +129,9 @@ final class StockMoveOffsetCreatorTest extends TestCase {
 			 *
 			 * @return array<string, mixed> The object.
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if ($this->saveFails !== null) {
 					throw $this->saveFails;
 				}
