@@ -464,6 +464,8 @@
 		"InventoryLots",
 		"InventoryValuation",
 		"Investeringen",
+		"InvestmentAssets",
+		"InvestmentDeductions",
 		"Jaarrekening",
 		"Journals",
 		"KorDashboard",
