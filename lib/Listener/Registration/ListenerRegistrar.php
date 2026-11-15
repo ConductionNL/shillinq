@@ -46,12 +46,14 @@ use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
+use OCA\Shillinq\Listener\ChartTemplateVersionListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
+use OCA\Shillinq\Listener\SbrFilingStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
@@ -209,6 +211,15 @@ final class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectCreatedEvent::class,
 			listener: PeppolDeliveryStatusListener::class
+		);
+
+		// Change tax-digipoort-filing task 3.3: integriq's Digipoort connector
+		// reports a filing's delivery and outcome as a
+		// `nl.conduction.sbr.filing.status` CloudEvent object, the way its
+		// Peppol access point does; the filing and its VAT return follow it.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: SbrFilingStatusListener::class
 		);
 
 		// Change receivables-payment-links design D3 / REQ-RPL-003 (#1681): integriq
@@ -495,6 +506,14 @@ final class ListenerRegistrar {
 		// Interest declared up front: the handler's own
 		// `isLeaseContractSchema()` accepts `leasecontract` or
 		// `…/leasecontract`, i.e. exactly the `LeaseContract` schema slug.
+		// ledger-multi-administration REQ-LMA-005: a template saved with a
+		// higher version queues the sync of the administrations following it.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: ChartTemplateVersionListener::class,
+			schemas: ['AdministrationTemplate']
+		);
 		$this->registerFilteredObjectListener(
 			dispatcher: $dispatcher,
 			event: ObjectCreatedEvent::class,
