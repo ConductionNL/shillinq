@@ -94,8 +94,12 @@
             "versionsSha256": "94596f1823024c3830be1bfa8322089ee4e2ceae5d0fde26ab6f201083276819"
         },
         {
-            "appVersion": "0.5.7-unstable.20261115010000",
-            "versionsSha256": "75134db54ef56109b29bca85e4912799a4333c9623ed79ffb017ff7d2a28b7ea"
+            "appVersion": "0.5.7-unstable.20261115143000",
+            "versionsSha256": "2303fe6a1ccfdbc18ddaf7c055585ddeb3ca704b6707542074eb2ad053979ff4"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115172959",
+            "versionsSha256": "8c14d8f0a0fc6f12b4fb08e4a7509bad0e9b20076c6064728a6ee0711b89503e"
         }
     ],
     "versions": {
@@ -373,8 +377,8 @@
         "schema:InventoryVarianceReason": "0.1.0",
         "schema:Investering": "0.1.0",
         "schema:InvesteringsAftrek": "0.1.0",
-        "schema:InvesteringsaftrekClaim": "0.1.0",
-        "schema:InvestmentAsset": "0.1.0",
+        "schema:InvesteringsaftrekClaim": "0.2.0",
+        "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
         "schema:IossImport": "0.1.0",
