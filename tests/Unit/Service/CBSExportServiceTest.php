@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\CBSExportService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -244,6 +245,194 @@ final class CBSExportServiceTest extends TestCase {
 		self::assertSame([], $rows);
 
 	}//end testAggregateLinesSkipsMissingAccountNumber()
+
+	/**
+	 * Pins a whole generation: the log line, the reads in order, only the
+	 * period's posted lines of the administration aggregated (another
+	 * administration's posted transaction in the period is left out), the
+	 * submission, its lines and the IV3 reference and checksum written back,
+	 * field for field.
+	 *
+	 * @return void
+	 */
+	public function testGenerateSubmissionWritesTheSubmissionItsLinesAndTheIv3Reference(): void {
+		$store = new class {
+
+			/**
+			 * Rows keyed by schema.
+			 *
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			public array $rows = [];
+
+			/**
+			 * Every read and write as "find:<schema>" or "save:<schema>".
+			 *
+			 * @var array<int,string>
+			 */
+			public array $calls = [];
+
+			/**
+			 * The schema being addressed.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
+
+			/**
+			 * Address a register.
+			 *
+			 * @param mixed $register The register.
+			 *
+			 * @return self
+			 */
+			public function setRegister($register): self {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Address a schema.
+			 *
+			 * @param mixed $schema The schema.
+			 *
+			 * @return self
+			 */
+			public function setSchema($schema): self {
+				$this->schema = (string)$schema;
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Find rows matching every filter.
+			 *
+			 * @param array<string,mixed> $config The query.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = []): array {
+				$this->calls[] = 'find:' . $this->schema;
+				$filters = (array)($config['filters'] ?? []);
+				return array_values(
+					array_filter(
+						($this->rows[$this->schema] ?? []),
+						static fn (array $row): bool => array_intersect_assoc($filters, $row) === $filters
+					)
+				);
+			}//end findAll()
+
+			/**
+			 * Save a row, giving a new one an id.
+			 *
+			 * @param array<string,mixed> $object The row.
+			 * @param mixed $register The register.
+			 * @param mixed $schema The schema.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object, $register = null, $schema = null): array {
+				$schema = (string)$schema;
+				$this->calls[] = 'save:' . $schema;
+				if (isset($object['id']) === false) {
+					$object['id'] = $schema . '-' . (count($this->rows[$schema] ?? []) + 1);
+				}
+
+				$this->rows[$schema][] = $object;
+				return $object;
+			}//end saveObject()
+		};
+		$store->rows = [
+			'Account' => [['id' => 'acc-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'active', 'accountNumber' => '4000']],
+			'CBSSubmission' => [['id' => 'old', 'submissionNumber' => 'CBS-2026-001']],
+			'GLTransaction' => [
+				['id' => 'tx-1', 'administrationId' => 'adm-1', 'state' => 'posted', 'postingDate' => '2026-02-10'],
+				['id' => 'tx-2', 'administrationId' => 'adm-1', 'state' => 'posted', 'postingDate' => '2026-04-01'],
+				['uuid' => 'tx-3', 'administrationId' => 'adm-1', 'state' => 'posted', 'postingDate' => '2026-03-31'],
+				['id' => 'tx-4', 'administrationId' => 'adm-1', 'state' => 'draft', 'postingDate' => '2026-02-11'],
+				['id' => 'tx-5', 'administrationId' => 'adm-2', 'state' => 'posted', 'postingDate' => '2026-02-12'],
+			],
+			'GLLine' => [
+				['transactionId' => 'tx-1', 'accountNumber' => '4100', 'amount' => 10.5],
+				['transactionId' => 'tx-1', 'accountNumber' => '5200', 'amount' => 3],
+				['transactionId' => 'tx-2', 'accountNumber' => '4100', 'amount' => 99],
+				['transactionId' => 'tx-3', 'accountNumber' => '4999', 'amount' => 1.25],
+				['transactionId' => 'tx-4', 'accountNumber' => '4100', 'amount' => 7],
+				['transactionId' => 'tx-5', 'accountNumber' => '4100', 'amount' => 500],
+			],
+		];
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+		$this->logger->expects(self::once())->method('info')->with(
+			'CBSExportService: generating submission',
+			['administrationId' => 'adm-1', 'periodStart' => '2026-01-01', 'periodEnd' => '2026-03-31']
+		);
+		$service = new CBSExportService(appConfig: $this->appConfig, logger: $this->logger, objectService: new DuckObjectServiceAdapter($store));
+
+		$final = $service->generateSubmission(
+			administrationId: 'adm-1',
+			periodStart: new \DateTimeImmutable('2026-01-01'),
+			periodEnd: new \DateTimeImmutable('2026-03-31'),
+			organization: ['legalName' => 'Korenbloem BV', 'kvkNumber' => '12345678']
+		);
+
+		self::assertSame(
+			[
+				'find:Account',
+				'find:GLTransaction',
+				'find:GLLine',
+				'find:GLLine',
+				'find:CBSSubmission',
+				'save:CBSSubmission',
+				'save:CBSLine',
+				'save:CBSLine',
+				'save:CBSSubmission',
+			],
+			$store->calls
+		);
+		$submission = [
+			'submissionNumber' => 'CBS-2026-002',
+			'reportingPeriodStartDate' => '2026-01-01',
+			'reportingPeriodEndDate' => '2026-03-31',
+			'organizationLegalName' => 'Korenbloem BV',
+			'kvkNumber' => '12345678',
+			'taxIdentificationNumber' => '',
+			'administrationId' => 'adm-1',
+			'status' => 'draft',
+			'submissionDate' => null,
+			'currency' => 'EUR',
+			'description' => 'Generated by CBSExportService for period 2026-01-01 — 2026-03-31',
+			'id' => 'CBSSubmission-2',
+		];
+		self::assertSame($submission, $store->rows['CBSSubmission'][1]);
+		$line = static fn (string $id, string $classification, string $number, string $start, string $end, int $amount, int $count): array => [
+			'cbsSubmissionId' => 'CBSSubmission-2',
+			'cbsLineClassification' => $classification,
+			'cbsLineNumber' => $number,
+			'accountRangeStart' => $start,
+			'accountRangeEnd' => $end,
+			'aggregatedAmount' => $amount,
+			'glLineCount' => $count,
+			'currency' => 'EUR',
+			'description' => 'Aggregated GL lines for ' . $classification,
+			'id' => $id,
+		];
+		$lines = [
+			$line('CBSLine-1', 'Revenue', '1000', '4000', '4999', 1175, 2),
+			$line('CBSLine-2', 'OperatingCosts', '2000', '5000', '5999', 300, 1),
+		];
+		self::assertSame($lines, $store->rows['CBSLine']);
+
+		$iv3 = $service->generateIV3Json(submission: $submission, lines: $lines);
+		self::assertSame(
+			$submission + [
+				'iv3FileUri' => 'shillinq://cbs-submissions/CBS-2026-002/iv3.json',
+				'iv3Checksum' => 'sha256:' . hash('sha256', json_encode($iv3, JSON_THROW_ON_ERROR)),
+			],
+			$final
+		);
+		self::assertSame($final, $store->rows['CBSSubmission'][2]);
+
+	}//end testGenerateSubmissionWritesTheSubmissionItsLinesAndTheIv3Reference()
 
 	/**
 	 * REQ-CBS-006: IV3 JSON envelope carries format, version, generation

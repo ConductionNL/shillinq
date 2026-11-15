@@ -3,6 +3,9 @@
 /**
  * NLCIUS UBL 2.1 Invoice Mapper
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure transformation of a persisted `ARInvoice` (plus its EN 16931 seller/buyer
  * identifiers and `invoiceLines`/`vatBreakdown` groups already carried on the
  * schema — see add-shillinq-invoice-lines.json) into a UBL 2.1 `Invoice` XML
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

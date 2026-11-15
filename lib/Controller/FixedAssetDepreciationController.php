@@ -27,10 +27,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DomainException;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Asset\AssetRecords;
-use OCA\Shillinq\Service\Asset\DepreciationScheduleService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
+use OCA\Shillinq\Kernel\Contracts\DepreciationScheduleServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,19 +50,19 @@ class FixedAssetDepreciationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request   The request.
-	 * @param AdministrationContextService $context   Who may see which administration.
-	 * @param AssetRecords                 $records   The register.
-	 * @param DepreciationScheduleService  $schedules The schedule.
+	 * @param AdministrationContextServiceInterface $context   Who may see which administration.
+	 * @param AssetRecordsInterface                 $records   The register.
+	 * @param DepreciationScheduleServiceInterface  $schedules The schedule.
 	 * @param ITimeFactory                 $time      The clock.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly AssetRecords $records,
-		private readonly DepreciationScheduleService $schedules,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly AssetRecordsInterface $records,
+		private readonly DepreciationScheduleServiceInterface $schedules,
 		private readonly ITimeFactory $time,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -123,24 +123,48 @@ class FixedAssetDepreciationController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		try {
-			$asset = $this->records->find(schema: DepreciationScheduleService::ASSET, id: $id);
-		} catch (Throwable $e) {
-			$asset = null;
-		}
-
+		$asset            = $this->assetOrNull(id: $id);
 		$administrationId = (string)($asset['administrationId'] ?? '');
 		if ($asset === null || $this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		if ($post === true && $this->context->canPostJournalEntry(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'You may not post journal entries in this administration.'], Http::STATUS_FORBIDDEN);
+		if ($post === true) {
+			return $this->postRefusal(administrationId: $administrationId) ?? $asset;
 		}
 
 		return $asset;
-
 	}//end authorizeAsset()
+
+	/**
+	 * The asset, or null when it is unknown or cannot be read.
+	 *
+	 * @param string $id The asset id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function assetOrNull(string $id): array|null {
+		try {
+			return $this->records->find(schema: DepreciationScheduleServiceInterface::ASSET, id: $id);
+		} catch (Throwable $e) {
+			return null;
+		}
+	}//end assetOrNull()
+
+	/**
+	 * The 403 when the caller may not post journal entries in the administration, or null.
+	 *
+	 * @param string $administrationId The asset's administration.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function postRefusal(string $administrationId): JSONResponse|null {
+		if ($this->context->canPostJournalEntry(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'You may not post journal entries in this administration.'], Http::STATUS_FORBIDDEN);
+		}
+
+		return null;
+	}//end postRefusal()
 
 	/**
 	 * Rows and their total.

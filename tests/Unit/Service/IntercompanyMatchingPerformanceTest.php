@@ -3,6 +3,9 @@
 /**
  * Performance test for IntercompanyMatchingService at REQ-ICE-010 scale.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires IntercompanyMatchingService to an in-memory ObjectService stub seeded
  * with a representative full-month dataset (12 entities, ~4 000 intercompany
  * transactions across a single IntercompanyRelation) and asserts that
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-23
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Second-order IDOR guard on InvoiceGenerationService::draftInvoice().
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-001 (security-endpoint-guards): draftInvoice() resolves every id the
  * client supplies on the request (timeEntryIds/expenseIds/meterReadingIds/
  * milestoneId, and the UsageRatePlan a MeterReading points at) through
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

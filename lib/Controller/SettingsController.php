@@ -15,6 +15,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -22,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -48,15 +51,15 @@ class SettingsController extends Controller {
 	 * Constructor for the SettingsController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SettingsService $settingsService The settings service
+	 * @param SettingsServiceInterface $settingsService The settings service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SettingsService $settingsService,
+		private SettingsServiceInterface $settingsService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -66,7 +69,7 @@ class SettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function index(): JSONResponse {
 		return new JSONResponse(
 			$this->settingsService->getSettings()
@@ -98,7 +101,7 @@ class SettingsController extends Controller {
 	 * @spec openspec/specs/app-administration/spec.md
 	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function update(): JSONResponse {
 		$data = $this->request->getParams();
 		try {
@@ -133,7 +136,7 @@ class SettingsController extends Controller {
 	 *
 	 * @spec openspec/specs/app-administration/spec.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function create(): JSONResponse {
 		return $this->update();
 	}//end create()
@@ -148,7 +151,7 @@ class SettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function load(): JSONResponse {
 		$result = $this->settingsService->loadConfigurationForced();
 

@@ -5138,7 +5138,7 @@
         "reportingPeriodEndDate": "2026-03-01",
         "organizationLegalName": "Voorbeeld Organizationlegalname 1",
         "kvkNumber": "01234567",
-        "taxIdentificationNumber": "NL0123456789B01",
+        "taxIdentificationNumber": "NL012345678B01",
         "administrationId": "Voorbeeld Administrationid 1",
         "status": "draft",
         "submissionDate": "2026-03-01T09:00:00+00:00",
@@ -33749,6 +33749,207 @@
         ],
         "callbackDeliveredAt": "2026-03-03T09:00:00+00:00",
         "callbackError": "Voorbeeld Callbackerror 3"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DocumentRetention",
+          "slug": "documentretention-documentretention-1-1"
+        },
+        "documentId": "Voorbeeld Documentid 1",
+        "policyId": "Voorbeeld Policyid 1",
+        "status": "active",
+        "scheduleId": "Voorbeeld Scheduleid 1",
+        "reviewDueDate": "2026-03-01",
+        "retentionEndDate": "2026-03-01",
+        "legalHold": false,
+        "exceptions": [],
+        "administrationId": "Voorbeeld Administrationid 1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DocumentRetention",
+          "slug": "documentretention-documentretention-2-2"
+        },
+        "documentId": "Voorbeeld Documentid 2",
+        "policyId": "Voorbeeld Policyid 2",
+        "status": "under-review",
+        "scheduleId": "Voorbeeld Scheduleid 2",
+        "reviewDueDate": "2026-03-02",
+        "retentionEndDate": "2026-03-02",
+        "legalHold": false,
+        "exceptions": [],
+        "administrationId": "Voorbeeld Administrationid 2"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DocumentRetention",
+          "slug": "documentretention-documentretention-3-3"
+        },
+        "documentId": "Voorbeeld Documentid 3",
+        "policyId": "Voorbeeld Policyid 3",
+        "status": "retained",
+        "scheduleId": "Voorbeeld Scheduleid 3",
+        "reviewDueDate": "2026-03-03",
+        "retentionEndDate": "2026-03-03",
+        "legalHold": false,
+        "exceptions": [],
+        "administrationId": "Voorbeeld Administrationid 3"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ProviderPayout",
+          "slug": "providerpayout-providerpayout-1-1"
+        },
+        "administrationId": "Voorbeeld Administrationid 1",
+        "provider": "mollie",
+        "settlementReference": "Voorbeeld Settlementreference 1",
+        "settledAt": "2026-03-01",
+        "amountNet": 1.0,
+        "state": "received",
+        "currency": "EUR",
+        "amountGross": 0.0,
+        "amountFees": 0.0,
+        "amountRefunds": 0.0,
+        "amountChargebacks": 0.0,
+        "lines": [],
+        "matchedLineCount": 0,
+        "unmatchedLineCount": 0,
+        "bankStatementLineId": "Voorbeeld Bankstatementlineid 1",
+        "glTransactionId": "Voorbeeld Gltransactionid 1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ProviderPayout",
+          "slug": "providerpayout-providerpayout-2-2"
+        },
+        "administrationId": "Voorbeeld Administrationid 2",
+        "provider": "stripe",
+        "settlementReference": "Voorbeeld Settlementreference 2",
+        "settledAt": "2026-03-02",
+        "amountNet": 2.0,
+        "state": "matched",
+        "currency": "EUR",
+        "amountGross": 1.0,
+        "amountFees": 1.0,
+        "amountRefunds": 1.0,
+        "amountChargebacks": 1.0,
+        "lines": [],
+        "matchedLineCount": 1,
+        "unmatchedLineCount": 1,
+        "bankStatementLineId": "Voorbeeld Bankstatementlineid 2",
+        "glTransactionId": "Voorbeeld Gltransactionid 2"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ProviderPayout",
+          "slug": "providerpayout-providerpayout-3-3"
+        },
+        "administrationId": "Voorbeeld Administrationid 3",
+        "provider": "mollie",
+        "settlementReference": "Voorbeeld Settlementreference 3",
+        "settledAt": "2026-03-03",
+        "amountNet": 3.0,
+        "state": "booked",
+        "currency": "EUR",
+        "amountGross": 2.0,
+        "amountFees": 2.0,
+        "amountRefunds": 2.0,
+        "amountChargebacks": 2.0,
+        "lines": [],
+        "matchedLineCount": 2,
+        "unmatchedLineCount": 2,
+        "bankStatementLineId": "Voorbeeld Bankstatementlineid 3",
+        "glTransactionId": "Voorbeeld Gltransactionid 3"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "RetentionPolicy",
+          "slug": "retentionpolicy-voorbeeld-name-1-1"
+        },
+        "name": "Voorbeeld Name 1",
+        "documentType": "financial-record",
+        "retentionYears": 0,
+        "slug": "Voorbeeld Slug 1",
+        "legalHoldAllowed": true,
+        "exemptionCategories": [],
+        "administrationId": "Voorbeeld Administrationid 1",
+        "description": "Voorbeeld Description 1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "RetentionPolicy",
+          "slug": "retentionpolicy-voorbeeld-name-2-2"
+        },
+        "name": "Voorbeeld Name 2",
+        "documentType": "tax-record",
+        "retentionYears": 1,
+        "slug": "Voorbeeld Slug 2",
+        "legalHoldAllowed": true,
+        "exemptionCategories": [],
+        "administrationId": "Voorbeeld Administrationid 2",
+        "description": "Voorbeeld Description 2"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "RetentionPolicy",
+          "slug": "retentionpolicy-voorbeeld-name-3-3"
+        },
+        "name": "Voorbeeld Name 3",
+        "documentType": "general-record",
+        "retentionYears": 2,
+        "slug": "Voorbeeld Slug 3",
+        "legalHoldAllowed": true,
+        "exemptionCategories": [],
+        "administrationId": "Voorbeeld Administrationid 3",
+        "description": "Voorbeeld Description 3"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "RetentionSchedule",
+          "slug": "retentionschedule-retentionschedule-1-1"
+        },
+        "documentId": "Voorbeeld Documentid 1",
+        "policyId": "Voorbeeld Policyid 1",
+        "startDate": "2026-03-01",
+        "retentionYears": 0,
+        "retentionEndDate": "2026-03-01",
+        "reviewDueDate": "2026-03-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "RetentionSchedule",
+          "slug": "retentionschedule-retentionschedule-2-2"
+        },
+        "documentId": "Voorbeeld Documentid 2",
+        "policyId": "Voorbeeld Policyid 2",
+        "startDate": "2026-03-02",
+        "retentionYears": 1,
+        "retentionEndDate": "2026-03-02",
+        "reviewDueDate": "2026-03-02"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "RetentionSchedule",
+          "slug": "retentionschedule-retentionschedule-3-3"
+        },
+        "documentId": "Voorbeeld Documentid 3",
+        "policyId": "Voorbeeld Policyid 3",
+        "startDate": "2026-03-03",
+        "retentionYears": 2,
+        "retentionEndDate": "2026-03-03",
+        "reviewDueDate": "2026-03-03"
       }
     ]
   }

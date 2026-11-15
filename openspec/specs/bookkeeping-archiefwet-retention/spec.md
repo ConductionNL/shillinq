@@ -25,8 +25,7 @@ Records retention enforcement per Archiefwet 1995 and Selectielijst Gemeenten 20
 
 @e2e exclude pure backend/compliance: data retention logic — not browser-testable
 
-
-### REQ-ARC-001: OR retention abstraction
+### Requirement: REQ-ARC-001: OR retention abstraction
 
 The system SHALL satisfy this requirement: OR retention abstraction.
 
@@ -38,7 +37,7 @@ This spec consumes OR's `x-openregister-lifecycle.retention` abstraction per ADR
 - **WHEN** a record bound to that schema reaches its retention deadline
 - **THEN** OR's lifecycle retention engine performs the enforcement, and Shillinq itself runs no retention logic beyond declaring the rule reference and seeding the rule definitions
 
-### REQ-ARC-002: RetentionRule register
+### Requirement: REQ-ARC-002: RetentionRule register
 
 The `RetentionRule` schema (defined in OR, seeded by Shillinq) SHALL include:
 - `selectielijstCode` (e.g. "5.1.2", Selectielijst 2020 reference)
@@ -54,7 +53,7 @@ The `RetentionRule` schema (defined in OR, seeded by Shillinq) SHALL include:
 - **WHEN** a retention rule record is created
 - **THEN** it includes `selectielijstCode`, `description`, `retentionYears`, `retentionTrigger`, `disposition`, and `legalBasis`
 
-### REQ-ARC-003: Retention rule mapping
+### Requirement: REQ-ARC-003: Retention rule mapping
 
 Every Shillinq schema (T1, T2, and all 9 other T3 schemas) MUST be mapped to a Selectielijst retention code in the spec's retention table. Mapping rules:
 
@@ -75,7 +74,7 @@ Every Shillinq schema (T1, T2, and all 9 other T3 schemas) MUST be mapped to a S
 - **WHEN** the retention mapping table in this spec is reviewed
 - **THEN** each schema has a Selectielijst retention code, retention period, and disposition (e.g. GLTransaction → 5.1.2 / 7 years / destroy, Subsidie → 5.3.1 / 10 years after settlement / archive)
 
-### REQ-ARC-004: Selectielijst seed
+### Requirement: REQ-ARC-004: Selectielijst seed
 
 The system SHALL ship `selectielijst-gemeenten-2020.json` with 30+ retention rules from Selectielijst Gemeenten 2020, each with selectielijstCode, description, retentionYears, disposition, legalBasis.
 
@@ -85,7 +84,7 @@ The system SHALL ship `selectielijst-gemeenten-2020.json` with 30+ retention rul
 - **WHEN** the seed is imported into the `RetentionRule` register
 - **THEN** 30 or more retention rules from Selectielijst Gemeenten 2020 are present, each carrying selectielijstCode, description, retentionYears, disposition, and legalBasis
 
-### REQ-ARC-005: Per-schema retention declaration
+### Requirement: REQ-ARC-005: Per-schema retention declaration
 
 Every Shillinq schema MUST declare `x-openregister-lifecycle.retention: { rule: "selectielijst:5.1.2" }` (or other applicable rule code).
 
@@ -95,7 +94,7 @@ Every Shillinq schema MUST declare `x-openregister-lifecycle.retention: { rule: 
 - **WHEN** the schema is inspected
 - **THEN** it declares `x-openregister-lifecycle.retention` with a `rule` referencing the applicable Selectielijst code (e.g. `selectielijst:5.1.2`)
 
-### REQ-ARC-006: Audit trail preservation
+### Requirement: REQ-ARC-006: Audit trail preservation
 
 When OR's retention engine purges records, audit-trail-immutable hashes MUST be preserved per OR contract. Shillinq documents this expectation in the spec.
 
@@ -105,7 +104,7 @@ When OR's retention engine purges records, audit-trail-immutable hashes MUST be 
 - **WHEN** the purge completes
 - **THEN** the audit-trail-immutable hashes for those records remain preserved per the OR contract
 
-### REQ-ARC-007: Days-until-retention derived field
+### Requirement: REQ-ARC-007: Days-until-retention derived field
 
 The system SHALL satisfy this requirement: Days-until-retention derived field.
 
@@ -117,7 +116,7 @@ Every retention-bound schema SHOULD carry a `daysUntilRetention` derived field c
 - **WHEN** an operator views the record
 - **THEN** a `daysUntilRetention` derived field is shown, computed as `(retentionUntil - today)`
 
-### REQ-ARC-008: Operator retention override
+### Requirement: REQ-ARC-008: Operator retention override
 
 The system SHALL satisfy this requirement: Operator retention override.
 
@@ -129,7 +128,7 @@ Each `RetentionRule` record per administration MAY be overridden by the operator
 - **WHEN** the operator overrides the `RetentionRule` record for that administration
 - **THEN** the override is applied for that administration and carries an audit citation of the local regulation
 
-### REQ-ARC-009: Manifest entry
+### Requirement: REQ-ARC-009: Manifest entry
 
 The `src/manifest.json` SHALL declare:
 - `Administratie > Bewaartermijnen` (type: detail, shows retention rules + daysUntilRetention for each record type)
@@ -142,7 +141,7 @@ Visibility: all administrations.
 - **WHEN** the manifest is loaded for any administration
 - **THEN** it declares an `Administratie > Bewaartermijnen` detail entry showing retention rules and `daysUntilRetention` per record type
 
-### REQ-ARC-010: Legal compliance
+### Requirement: REQ-ARC-010: Legal compliance
 
 This spec SHALL cite:
 - Archiefwet 1995, artikel 5 (retention obligation)
@@ -154,6 +153,22 @@ This spec SHALL cite:
 - **GIVEN** this retention specification
 - **WHEN** its legal basis is reviewed
 - **THEN** it cites Archiefwet 1995 artikel 5, Selectielijst Gemeenten 2020, and AVG (GDPR) art. 17 where anonymisation is required
+
+### Requirement: The retention schemas the code uses are in the register (REQ-RET-014)
+
+The `shillinq` register SHALL carry the schemas `RetentionPolicy`, `RetentionSchedule` and `DocumentRetention`, and SHALL declare them in its `schemas` list. Every default policy in `lib/Settings/seeds/retention-policies.json` SHALL be a valid `RetentionPolicy`, including the `slug` the seeder matches on, so seeding on install and on every repair run SHALL create each default once and SHALL NOT fail.
+
+#### Scenario: A fresh install seeds the three default policies
+- **GIVEN** a fresh instance with OpenRegister and shillinq
+- **WHEN** shillinq is enabled and its repair step runs
+- **THEN** `RetentionPolicy` SHALL hold `default-financial-5yr`, `tax-documents-7yr` and `general-admin-3yr`, and "retention policy seeding failed" SHALL NOT be logged
+- @e2e exclude {install-time seeding; the schema and seed fit are covered by ArchiefwetRetentionSchemasTest}
+
+#### Scenario: A second repair run seeds nothing
+- **GIVEN** the three default policies seeded
+- **WHEN** the repair step runs again
+- **THEN** no policy SHALL be created and all three SHALL be reported as skipped
+- @e2e exclude {covered by SettingsServiceTest}
 
 ## Non-Goals
 
