@@ -12,7 +12,6 @@ import { spawnDialog } from '@nextcloud/vue/functions/dialog'
 import InvoiceGenerateWizard from '../modals/InvoiceGenerateWizard.vue'
 import { loadBillableReadings } from './usageBilling.js'
 
-
 /** Billing models InvoiceGenerationRequest accepts, in the order the select shows them. */
 export const BILLING_MODELS = Object.freeze([
 	't_and_m',
@@ -22,6 +21,17 @@ export const BILLING_MODELS = Object.freeze([
 	'mixed',
 	'usage',
 ])
+
+/** Source references the request carries only when they are set, in request order. */
+const OPTIONAL_REFERENCES = Object.freeze([
+	'projectId',
+	'rateCardId',
+	'retainerScheduleId',
+	'milestoneId',
+])
+
+/** Billing models whose request carries a fixed fee. */
+const FIXED_FEE_MODELS = Object.freeze(['fixed_fee', 'mixed'])
 
 /**
  * Header action: open the Generate invoices dialog.
@@ -63,7 +73,9 @@ export async function loadCandidates(source) {
 			: Promise.resolve([]),
 	])
 	return {
-		timeEntries: Array.isArray(lines.data?.timeEntries) ? lines.data.timeEntries : [],
+		timeEntries: Array.isArray(lines.data?.timeEntries)
+			? lines.data.timeEntries
+			: [],
 		expenses: Array.isArray(lines.data?.expenses) ? lines.data.expenses : [],
 		readings,
 	}
@@ -78,7 +90,7 @@ export async function loadCandidates(source) {
  * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
  */
 export function buildGenerateRequest(source, chosen) {
-	const request = {
+	return {
 		billingModel: source.billingModel,
 		customerId: source.customerId,
 		fromDate: source.fromDate,
@@ -89,26 +101,43 @@ export function buildGenerateRequest(source, chosen) {
 			source.billingModel === 'usage'
 				? [...(chosen.meterReadingIds || [])]
 				: [],
+		...optionalReferences(source),
+		...fixedFeeFields(source),
 	}
-	for (const key of [
-		'projectId',
-		'rateCardId',
-		'retainerScheduleId',
-		'milestoneId',
-	]) {
-		if (source[key]) {
-			request[key] = source[key]
-		}
-	}
+}
+
+/**
+ * The optional references the source sets (a falsy value is left out).
+ *
+ * @param {object} source The source step.
+ * @return {object} The set references.
+ */
+function optionalReferences(source) {
+	return Object.fromEntries(
+		OPTIONAL_REFERENCES.filter((key) => source[key]).map((key) => [
+			key,
+			source[key],
+		]),
+	)
+}
+
+/**
+ * `{ fixedFeeCents }` for a fixed-fee model with a positive, finite fee
+ * (a decimal comma is read as a point); otherwise an empty object.
+ *
+ * @param {object} source The source step.
+ * @return {object} The fixed-fee field, or nothing.
+ */
+function fixedFeeFields(source) {
 	const fee = Number(String(source.fixedFee ?? '').replace(',', '.'))
 	if (
-		['fixed_fee', 'mixed'].includes(source.billingModel)
-		&& Number.isFinite(fee)
-		&& fee > 0
+		!FIXED_FEE_MODELS.includes(source.billingModel)
+		|| !Number.isFinite(fee)
+		|| fee <= 0
 	) {
-		request.fixedFeeCents = Math.round(fee * 100)
+		return {}
 	}
-	return request
+	return { fixedFeeCents: Math.round(fee * 100) }
 }
 
 /**

@@ -3,6 +3,9 @@
 /**
  * KvK Handelsregister lookup port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The Kamer van Koophandel Handelsregister-API is the canonical
  * source-of-truth for Dutch legal entities. Shillinq consumes it on
  * three lifecycles:
@@ -43,10 +46,7 @@
  *
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
- * @spec openspec/changes/bookkeeping-consolidation-commercial/proposal.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
  */
 
 declare(strict_types=1);

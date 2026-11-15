@@ -34,7 +34,8 @@ namespace OCA\Shillinq\Service\PublicSector;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FidoQuarterInterface;
 use OCP\IAppConfig;
 
 /**
@@ -42,7 +43,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
  */
-class FidoQuarter {
+class FidoQuarter implements FidoQuarterInterface {
 
 	/**
 	 * Loan states that count as outstanding debt.
@@ -513,7 +514,7 @@ class FidoQuarter {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

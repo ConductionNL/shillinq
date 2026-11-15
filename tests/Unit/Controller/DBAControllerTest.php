@@ -198,6 +198,34 @@ final class FakeDBAObjectService {
 	public array $failingSchemas = [];
 
 	/**
+	 * When true, find() throws as an unreachable OpenRegister would.
+	 *
+	 * @var bool
+	 */
+	public bool $findThrows = false;
+
+	/**
+	 * Entity-shaped answers per schema and id, served by find() before the seed rows.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
+	public array $entities = [];
+
+	/**
+	 * Extra raw findAll() rows per schema (entities, scalars), appended after the seed rows.
+	 *
+	 * @var array<string, list<mixed>>
+	 */
+	public array $rawRows = [];
+
+	/**
+	 * Schemas whose findAll() must throw.
+	 *
+	 * @var list<string>
+	 */
+	public array $failingFindAllSchemas = [];
+
+	/**
 	 * The currently selected schema slug.
 	 *
 	 * @var string
@@ -252,9 +280,17 @@ final class FakeDBAObjectService {
 	 *
 	 * @param string $id The object id.
 	 *
-	 * @return array<string,mixed>|null The row, or null when absent.
+	 * @return mixed The row or entity, or null when absent.
 	 */
-	public function find(string $id): ?array {
+	public function find(string $id): mixed {
+		if ($this->findThrows === true) {
+			throw new \RuntimeException('find failed for ' . $id);
+		}
+
+		if (array_key_exists($id, ($this->entities[$this->schema] ?? [])) === true) {
+			return $this->entities[$this->schema][$id];
+		}
+
 		foreach (($this->rows[$this->schema] ?? []) as $row) {
 			if (((string)($row['id'] ?? '')) === $id) {
 				return $row;
@@ -270,9 +306,13 @@ final class FakeDBAObjectService {
 	 *
 	 * @param array<string,mixed> $query Query with filters + limit.
 	 *
-	 * @return list<array<string,mixed>> The matching rows.
+	 * @return list<mixed> The matching rows.
 	 */
 	public function findAll(array $query): array {
+		if (in_array($this->schema, $this->failingFindAllSchemas, true) === true) {
+			throw new \RuntimeException('findAll refused for ' . $this->schema);
+		}
+
 		$filters = ($query['filters'] ?? []);
 		$limit   = (int)($query['limit'] ?? 0);
 		$out     = [];
@@ -292,6 +332,10 @@ final class FakeDBAObjectService {
 			if ($limit > 0 && count($out) >= $limit) {
 				break;
 			}
+		}
+
+		foreach (($this->rawRows[$this->schema] ?? []) as $row) {
+			$out[] = $row;
 		}
 
 		return $out;
@@ -340,6 +384,32 @@ final class FakeDBAObjectService {
 		return $out;
 
 	}//end savedFor()
+}//end class
+
+/**
+ * Entity stand-in that serves its payload through getObject(), as an
+ * OpenRegister ObjectEntity does.
+ */
+final class FakeDBAEntity {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param mixed $payload The payload getObject() returns.
+	 */
+	public function __construct(private readonly mixed $payload) {
+
+	}//end __construct()
+
+	/**
+	 * The payload.
+	 *
+	 * @return mixed The payload.
+	 */
+	public function getObject(): mixed {
+		return $this->payload;
+
+	}//end getObject()
 }//end class
 
 /**
@@ -1526,6 +1596,424 @@ final class DBAControllerTest extends TestCase {
 		self::assertStringContainsString('"opdracht"', (string)$response->render());
 
 	}//end testAuditReportHonoursPdfAcceptHeader()
+
+	/*
+	 * ---------------------------------------------------------------------
+	 * Failure and entity-shape branches
+	 * ---------------------------------------------------------------------
+	 */
+
+	/**
+	 * A failing opdracht write-back after a saved intake is logged, and the
+	 * response still carries the saved intake plus the completed opdracht.
+	 *
+	 * @return void
+	 */
+	public function testSaveIntakeKeepsIntakeWhenAssignmentWriteBackFails(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$this->objectService->failingSchemas = ['DBAOpdracht'];
+		$this->scoreCalc->method('computeTotal')->willReturn(80);
+		$this->logger->expects($this->once())->method('error')
+			->with('DBA opdracht update failed', ['exception' => 'save refused for DBAOpdracht']);
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'filledOn' => '2026-02-01'],
+			fn (): JSONResponse => $this->controller->saveIntake()
+		);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertCount(1, $this->objectService->savedFor('DBAIntake'));
+		self::assertSame([], $this->objectService->savedFor('DBAOpdracht'));
+		self::assertSame('INTAKE_COMPLETED', $response->getData()['opdracht']['intakeStatus']);
+		self::assertSame('HIGH', $response->getData()['opdracht']['riskLevel']);
+
+	}//end testSaveIntakeKeepsIntakeWhenAssignmentWriteBackFails()
+
+	/**
+	 * uploadWba returns HTTP 503 when OpenRegister is unavailable.
+	 *
+	 * @return void
+	 */
+	public function testUploadWbaReturns503WhenOpenRegisterUnavailable(): void {
+		$this->openRegisterDown = true;
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'wbaAssessmentResult' => 'ZELFSTANDIG'],
+			fn (): JSONResponse => $this->controller->uploadWba()
+		);
+
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		self::assertSame(['error' => 'OpenRegister niet beschikbaar'], $response->getData());
+
+	}//end testUploadWbaReturns503WhenOpenRegisterUnavailable()
+
+	/**
+	 * uploadWba returns HTTP 500 when the opdracht write fails.
+	 *
+	 * @return void
+	 */
+	public function testUploadWbaReturns500WhenWriteFails(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$this->objectService->failingSchemas = ['DBAOpdracht'];
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'wbaAssessmentResult' => 'ZELFSTANDIG'],
+			fn (): JSONResponse => $this->controller->uploadWba()
+		);
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'WBA-upload mislukt'], $response->getData());
+
+	}//end testUploadWbaReturns500WhenWriteFails()
+
+	/**
+	 * beeindigen returns HTTP 503 when OpenRegister is unavailable.
+	 *
+	 * @return void
+	 */
+	public function testBeeindigenReturns503WhenOpenRegisterUnavailable(): void {
+		$this->openRegisterDown = true;
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'actualEndDate' => '2026-03-31'],
+			fn (): JSONResponse => $this->controller->beeindigen()
+		);
+
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+
+	}//end testBeeindigenReturns503WhenOpenRegisterUnavailable()
+
+	/**
+	 * beeindigen returns HTTP 404 for an unknown opdracht and never asks the
+	 * guard for a retention deadline.
+	 *
+	 * @return void
+	 */
+	public function testBeeindigenReturns404ForUnknownAssignment(): void {
+		$this->seed(['DBAOpdracht' => []]);
+		$this->assignmentGuard->expects($this->never())->method('computeRetentieDeadline');
+
+		$response = $this->withBody(
+			['assignmentId' => 'ghost', 'actualEndDate' => '2026-03-31'],
+			fn (): JSONResponse => $this->controller->beeindigen()
+		);
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'Opdracht niet gevonden'], $response->getData());
+
+	}//end testBeeindigenReturns404ForUnknownAssignment()
+
+	/**
+	 * beeindigen returns HTTP 500 when the opdracht write fails.
+	 *
+	 * @return void
+	 */
+	public function testBeeindigenReturns500WhenWriteFails(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$this->objectService->failingSchemas = ['DBAOpdracht'];
+		$this->assignmentGuard->method('computeRetentieDeadline')->willReturn('2033-03-31');
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'actualEndDate' => '2026-03-31'],
+			fn (): JSONResponse => $this->controller->beeindigen()
+		);
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'Beeindiging mislukt'], $response->getData());
+
+	}//end testBeeindigenReturns500WhenWriteFails()
+
+	/**
+	 * setTussenkomstMode returns HTTP 503 when OpenRegister is unavailable.
+	 *
+	 * @return void
+	 */
+	public function testSetTussenkomstModeReturns503WhenOpenRegisterUnavailable(): void {
+		$this->openRegisterDown = true;
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'intermediaryMode' => true],
+			fn (): JSONResponse => $this->controller->setTussenkomstMode()
+		);
+
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+
+	}//end testSetTussenkomstModeReturns503WhenOpenRegisterUnavailable()
+
+	/**
+	 * setTussenkomstMode returns HTTP 404 for an unknown opdracht.
+	 *
+	 * @return void
+	 */
+	public function testSetTussenkomstModeReturns404ForUnknownAssignment(): void {
+		$this->seed(['DBAOpdracht' => []]);
+
+		$response = $this->withBody(
+			['assignmentId' => 'ghost', 'intermediaryMode' => true],
+			fn (): JSONResponse => $this->controller->setTussenkomstMode()
+		);
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame([], $this->objectService->saves);
+
+	}//end testSetTussenkomstModeReturns404ForUnknownAssignment()
+
+	/**
+	 * evidenceConsent returns HTTP 503 when OpenRegister is unavailable.
+	 *
+	 * @return void
+	 */
+	public function testEvidenceConsentReturns503WhenOpenRegisterUnavailable(): void {
+		$this->openRegisterDown = true;
+
+		$response = $this->withBody(
+			['dossierId' => 'dos-1', 'optIn' => true],
+			fn (): JSONResponse => $this->controller->evidenceConsent()
+		);
+
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+
+	}//end testEvidenceConsentReturns503WhenOpenRegisterUnavailable()
+
+	/**
+	 * evidenceConsent returns HTTP 500 when the dossier write fails.
+	 *
+	 * @return void
+	 */
+	public function testEvidenceConsentReturns500WhenWriteFails(): void {
+		$this->seed(['DBAEvidenceDossier' => [['id' => 'dos-1', 'administrationId' => 'adm-1']]]);
+		$this->objectService->failingSchemas = ['DBAEvidenceDossier'];
+
+		$response = $this->withBody(
+			['dossierId' => 'dos-1', 'optIn' => true, 'consentRecordId' => 'consent-9'],
+			fn (): JSONResponse => $this->controller->evidenceConsent()
+		);
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'Consent opslaan mislukt'], $response->getData());
+
+	}//end testEvidenceConsentReturns500WhenWriteFails()
+
+	/**
+	 * inhuurIntake returns HTTP 503 when OpenRegister is unavailable.
+	 *
+	 * @return void
+	 */
+	public function testInhuurIntakeReturns503WhenOpenRegisterUnavailable(): void {
+		$this->openRegisterDown = true;
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1'],
+			fn (): JSONResponse => $this->controller->inhuurIntake()
+		);
+
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+
+	}//end testInhuurIntakeReturns503WhenOpenRegisterUnavailable()
+
+	/**
+	 * A failing perspective write is logged as a warning and the intake save
+	 * still runs; its own opdracht write-back fails too and is logged as an
+	 * error, while the intake is persisted.
+	 *
+	 * @return void
+	 */
+	public function testInhuurIntakeContinuesWhenPerspectiveWriteFails(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$this->objectService->failingSchemas = ['DBAOpdracht'];
+		$this->scoreCalc->method('computeTotal')->willReturn(20);
+		$this->logger->expects($this->once())->method('warning')
+			->with('Inhuur-intake perspectief update failed', ['exception' => 'save refused for DBAOpdracht']);
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'filledOn' => '2026-04-01'],
+			fn (): JSONResponse => $this->controller->inhuurIntake()
+		);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertCount(1, $this->objectService->savedFor('DBAIntake'));
+		self::assertSame([], $this->objectService->savedFor('DBAOpdracht'));
+
+	}//end testInhuurIntakeContinuesWhenPerspectiveWriteFails()
+
+	/**
+	 * A find() that throws reads as a missing opdracht: HTTP 404, with the
+	 * schema and id logged.
+	 *
+	 * @return void
+	 */
+	public function testFindFailureIsLoggedAndReadsAsNotFound(): void {
+		$this->objectService->findThrows = true;
+		$this->logger->expects($this->once())->method('warning')->with(
+			'DBA controller: find failed',
+			['schema' => 'DBAOpdracht', 'id' => 'opd-1', 'exception' => 'find failed for opd-1']
+		);
+
+		$response = $this->controller->auditReport('opd-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testFindFailureIsLoggedAndReadsAsNotFound()
+
+	/**
+	 * An entity-shaped find() answer is read through getObject(), and entity
+	 * rows in the intake and flag lists are unwrapped the same way; rows that
+	 * are neither arrays nor entities are left out of the flags.
+	 *
+	 * @return void
+	 */
+	public function testAuditReportUnwrapsEntityShapedRows(): void {
+		$this->objectService->entities = [
+			'DBAOpdracht' => [
+				'opd-1' => new FakeDBAEntity(['id' => 'opd-1', 'administrationId' => 'adm-1']),
+			],
+		];
+		$this->objectService->rawRows = [
+			'DBAIntake'     => [new FakeDBAEntity(['id' => 'int-9', 'totalScore' => 55])],
+			'DBARisicoflag' => [
+				new FakeDBAEntity(['id' => 'flag-9', 'type' => 'CONCENTRATIE']),
+				'not-a-row',
+				new \stdClass(),
+			],
+		];
+
+		$response = $this->controller->auditReport('opd-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame(['id' => 'opd-1', 'administrationId' => 'adm-1'], $data['opdracht']);
+		self::assertSame(['id' => 'int-9', 'totalScore' => 55], $data['intake']);
+		self::assertSame([['id' => 'flag-9', 'type' => 'CONCENTRATIE']], $data['flags']);
+
+	}//end testAuditReportUnwrapsEntityShapedRows()
+
+	/**
+	 * An entity whose getObject() is not an array, or a scalar answer, reads
+	 * as a missing opdracht.
+	 *
+	 * @return void
+	 */
+	public function testNonArrayEntityPayloadReadsAsNotFound(): void {
+		$this->objectService->entities = [
+			'DBAOpdracht' => [
+				'opd-1' => new FakeDBAEntity('broken'),
+				'opd-2' => 'scalar',
+			],
+		];
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->auditReport('opd-1')->getStatus());
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->auditReport('opd-2')->getStatus());
+
+	}//end testNonArrayEntityPayloadReadsAsNotFound()
+
+	/**
+	 * Failing intake and flag reads are logged and leave the report with no
+	 * intake and no flags instead of failing it.
+	 *
+	 * @return void
+	 */
+	public function testAuditReportSurvivesFailingIntakeAndFlagReads(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$this->objectService->failingFindAllSchemas = ['DBAIntake', 'DBARisicoflag'];
+		$messages = [];
+		$this->logger->method('warning')->willReturnCallback(
+			static function (string $message) use (&$messages): void {
+				$messages[] = $message;
+			}
+		);
+
+		$response = $this->controller->auditReport('opd-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertNull($response->getData()['intake']);
+		self::assertSame([], $response->getData()['flags']);
+		self::assertSame(['Audit-report intake fetch failed', 'Audit-report flags fetch failed'], $messages);
+
+	}//end testAuditReportSurvivesFailingIntakeAndFlagReads()
+
+	/**
+	 * A payload that cannot be JSON-encoded (invalid UTF-8 in the opdracht)
+	 * yields HTTP 500 instead of an unsealed report.
+	 *
+	 * @return void
+	 */
+	public function testAuditReportReturns500WhenPayloadCannotBeEncoded(): void {
+		$this->seed(
+			['DBAOpdracht' => [['id' => 'opd-1', 'administrationId' => 'adm-1', 'title' => "\xB1\x31"]]]
+		);
+
+		$response = $this->controller->auditReport('opd-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'Rapport-rendering mislukt'], $response->getData());
+
+	}//end testAuditReportReturns500WhenPayloadCannotBeEncoded()
+
+	/**
+	 * An empty configured register falls back to the 'shillinq' register.
+	 *
+	 * @return void
+	 */
+	public function testEmptyConfiguredRegisterFallsBackToShillinq(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('');
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$this->assignmentGuard->method('computeRetentieDeadline')->willReturn(null);
+
+		$controller = new DBAController(
+			request: $this->request,
+			container: $this->container,
+			appConfig: $appConfig,
+			userSession: $this->userSession,
+			scoreCalc: $this->scoreCalc,
+			assignmentGuard: $this->assignmentGuard,
+			vbarMonitor: $this->vbarMonitor,
+			logger: $this->logger,
+			administrationContext: $this->administrationContext,
+			groupManager: $this->groupManager,
+		);
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'actualEndDate' => '2026-03-31'],
+			fn (): JSONResponse => $controller->beeindigen()
+		);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('shillinq', $this->objectService->saves[0]['register']);
+
+	}//end testEmptyConfiguredRegisterFallsBackToShillinq()
+
+	/**
+	 * An empty body and a body that is not a JSON object both read as no
+	 * input, so the mandatory-field check refuses them with HTTP 400.
+	 *
+	 * @return void
+	 */
+	public function testEmptyAndNonObjectBodiesReadAsNoInput(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+
+		foreach (['', '"opd-1"', '{not json'] as $raw) {
+			DBAPhpInputStream::$body = $raw;
+			stream_wrapper_unregister('php');
+			stream_wrapper_register('php', DBAPhpInputStream::class);
+			try {
+				$response = $this->controller->setTussenkomstMode();
+			} finally {
+				stream_wrapper_restore('php');
+				DBAPhpInputStream::$body = '';
+			}
+
+			self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus(), 'body: ' . $raw);
+			self::assertSame(['error' => 'opdrachtId vereist'], $response->getData());
+		}
+
+		self::assertSame([], $this->objectService->saves);
+
+	}//end testEmptyAndNonObjectBodiesReadAsNoInput()
 
 	/**
 	 * Build a second controller bound to an anonymous session.

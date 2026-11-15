@@ -3,6 +3,9 @@
 /**
  * Rule Compliance Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard that enforces the machine-checkable
  * bookkeeping rules (the RuleCatalogue / RuleEngine) at the point a record is
  * issued or posted. Referenced from the schema x-openregister-lifecycle
@@ -36,11 +39,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Lifecycle guard enforcing machine-checkable rules on issue/post.
@@ -124,43 +128,12 @@ class RuleComplianceGuard {
 	public function validateTransaction(string|array $transactionOrId): bool {
 		$id = $this->idOf(objectOrId: $transactionOrId);
 		try {
-			$transaction = $transactionOrId;
-			if (is_array($transaction) === false) {
-				$transaction = $this->loadObject('GLTransaction', $id);
-			}
-
-			if ($transaction === null || $id === '') {
+			$transaction = $this->transactionAsPosted(transactionOrId: $transactionOrId, id: $id);
+			if ($transaction === null || $this->violatesMandatoryRule(id: $id, transaction: $transaction) === true) {
 				return false;
 			}
 
-			// The page sends the draft with its state moved to posted. The lock,
-			// retention, integrity and audit-trail fields are what the post
-			// itself gives the entry (StampPostingAction persists them), so the
-			// entry is judged as the post leaves it (REQ-LPP-001, #516).
-			$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
-			$transaction['lines'] = $this->loadLines($transaction);
-
-			$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
-			if ($this->balanceGuard->isBalanced($id) === false) {
-				$violations[] = RuleEngine::violationFor('gl-double-entry-balanced');
-			}
-
-			$this->logViolations('GLTransaction', $id, $violations);
-			if (RuleEngine::hasMandatory($violations) === true) {
-				return false;
-			}
-
-			// A person's posting is checked against the booking rules. A
-			// transaction a sub-ledger prepared carries its journal code (the
-			// GR/IR and inventory posters) or the journal entry it books, which
-			// JournalEntryGuard already checked (ledger-booking-rules D2).
-			if ($this->fromSubLedger(transaction: $transaction) === false) {
-				$this->restrictions->assertAllowed(
-					lines: $transaction['lines'],
-					administrationId: (string)($transaction['administrationId'] ?? ''),
-					postingDate: (string)($transaction['postingDate'] ?? '')
-				);
-			}
+			$this->assertBookingRules(transaction: $transaction);
 
 			return true;
 		} catch (PostingRefusedException $e) {
@@ -174,6 +147,79 @@ class RuleComplianceGuard {
 		}//end try
 
 	}//end validateTransaction()
+
+	/**
+	 * Check a person's posting against the booking rules. A transaction a
+	 * sub-ledger prepared carries its journal code (the GR/IR and inventory
+	 * posters) or the journal entry it books, which JournalEntryGuard already
+	 * checked (ledger-booking-rules D2).
+	 *
+	 * @param array<string,mixed> $transaction The transaction as posted.
+	 *
+	 * @return void
+	 *
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
+	 */
+	private function assertBookingRules(array $transaction): void {
+		if ($this->fromSubLedger(transaction: $transaction) === false) {
+			$this->restrictions->assertAllowed(
+				lines: $transaction['lines'],
+				administrationId: (string)($transaction['administrationId'] ?? ''),
+				postingDate: (string)($transaction['postingDate'] ?? '')
+			);
+		}
+	}//end assertBookingRules()
+
+	/**
+	 * The transaction as the post leaves it, with its stored lines; null when
+	 * it cannot be found or carries no id.
+	 *
+	 * The page sends the draft with its state moved to posted. The lock,
+	 * retention, integrity and audit-trail fields are what the post itself
+	 * gives the entry (StampPostingAction persists them), so the entry is
+	 * judged as the post leaves it (REQ-LPP-001, #516).
+	 *
+	 * @param string|array<string,mixed> $transactionOrId The GLTransaction id, or the GLTransaction.
+	 * @param string $id The transaction's id.
+	 *
+	 * @return array<string,mixed>|null The stamped transaction with `lines`.
+	 */
+	private function transactionAsPosted(string|array $transactionOrId, string $id): array|null {
+		$transaction = $transactionOrId;
+		if (is_array($transaction) === false) {
+			$transaction = $this->loadObject('GLTransaction', $id);
+		}
+
+		if ($transaction === null || $id === '') {
+			return null;
+		}
+
+		$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
+		$transaction['lines'] = $this->loadLines($transaction);
+		return $transaction;
+
+	}//end transactionAsPosted()
+
+	/**
+	 * Evaluate the ledger rules plus the double-entry balance, logging every violation.
+	 *
+	 * @param string $id The transaction's id.
+	 * @param array<string,mixed> $transaction The stamped transaction with its lines.
+	 *
+	 * @return bool True when a mandatory rule is violated.
+	 */
+	private function violatesMandatoryRule(string $id, array $transaction): bool {
+		$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
+		if ($this->balanceGuard->isBalanced($id) === false) {
+			$violations[] = RuleEngine::violationFor('gl-double-entry-balanced');
+		}
+
+		$this->logViolations('GLTransaction', $id, $violations);
+		return RuleEngine::hasMandatory($violations) === true;
+
+	}//end violatesMandatoryRule()
 
 	/**
 	 * Whether a transaction was prepared by a sub-ledger rather than a person.
@@ -228,7 +274,10 @@ class RuleComplianceGuard {
 	 * @return array<string, mixed>|null
 	 */
 	private function loadObject(string $schema, string $id): ?array {
-		$entity = $this->objectService->find(id: $id, register: $this->register(), schema: $schema);
+		$entity = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema($schema),
+			id: $id
+		);
 		if ($entity === null) {
 			return null;
 		}
@@ -269,12 +318,8 @@ class RuleComplianceGuard {
 
 			// ADR-084: findAll() is declared `: array` — never null.
 			foreach ($rows as $row) {
-				$line = $row;
-				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-					$line = (array)$row->jsonSerialize();
-				}
-
-				if (is_array($line) === true) {
+				$line = $this->lineRow(row: $row);
+				if ($line !== null) {
 					$lineId = (string)($line['id'] ?? $line['@self']['id'] ?? count($lines));
 					$lines[$lineId] = $line;
 				}
@@ -283,6 +328,26 @@ class RuleComplianceGuard {
 
 		return array_values($lines);
 	}//end loadLines()
+
+	/**
+	 * A GLLine row as an array, or null when it is neither an array nor serialisable to one.
+	 *
+	 * @param mixed $row The findAll() row.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function lineRow(mixed $row): array|null {
+		$line = $row;
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$line = (array)$row->jsonSerialize();
+		}
+
+		if (is_array($line) === true) {
+			return $line;
+		}
+
+		return null;
+	}//end lineRow()
 
 	/**
 	 * Log violations (mandatory at warning level, others at info).
@@ -319,7 +384,7 @@ class RuleComplianceGuard {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		return $register === '' ? 'shillinq' : $register;
 	}//end register()
 }//end class

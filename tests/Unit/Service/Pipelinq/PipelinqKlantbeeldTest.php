@@ -3,6 +3,9 @@
 /**
  * Unit tests for the PipelinqContactAdapter klantbeeld read path.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 04 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Exercises {@see PipelinqContactAdapter::fetchKlantbeeld()} against the
  * three legitimate outcomes the spec defines:
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -36,8 +36,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
 use OCP\Http\Client\IClientService;
@@ -290,6 +290,38 @@ final class PipelinqKlantbeeldTest extends TestCase {
 		self::assertStringContainsString('offset=0', $dispatchUrls[0]);
 
 	}//end testKlantbeeldLoadedSuccessfully()
+
+	/**
+	 * Rows that are not objects are skipped; the object rows keep their order.
+	 *
+	 * @return void
+	 */
+	public function testNonObjectKlantbeeldRowsAreSkipped(): void {
+		$dispatchUrls = [];
+		$sleepCalls = [];
+		$script = [
+			$this->response(
+				200,
+				[
+					'transactions' => [
+						'not a row',
+						['date' => '2026-06-05', 'description' => 'First', 'amount' => 10, 'currency' => 'EUR', 'status' => 'paid'],
+						42,
+						null,
+						['date' => '2026-06-06', 'description' => 'Second', 'amount' => 20, 'currency' => 'EUR', 'status' => 'open'],
+					],
+				]
+			),
+		];
+
+		$result = $this->buildAdapter($script, $dispatchUrls, $sleepCalls)->fetchKlantbeeld('abc-123');
+
+		self::assertFalse($result->isUnavailable());
+		self::assertCount(2, $result->transactions);
+		self::assertSame('First', $result->transactions[0]->description);
+		self::assertSame('Second', $result->transactions[1]->description);
+
+	}//end testNonObjectKlantbeeldRowsAreSkipped()
 
 	/**
 	 * Empty `transactions` array is a valid result, not an error.

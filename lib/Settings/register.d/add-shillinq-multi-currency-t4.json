@@ -31,6 +31,27 @@
           ],
           "description": "Per a single rate per (transactionCurrency, baseCurrency, date, source): duplicate ingest MUST be a no-op, not an overwrite."
         },
+        "x-openregister-aggregations": {
+          "newestRateByPair": {
+            "description": "Group FxRate records by currency pair and take the newest `date`. Powers the newest-rate line on the FX rates page (banking-fx-at-booking REQ-BFX-004).",
+            "groupBy": [
+              "transactionCurrency",
+              "baseCurrency"
+            ],
+            "metrics": [
+              {
+                "field": "date",
+                "op": "max",
+                "as": "newestDate"
+              },
+              {
+                "field": "rate",
+                "op": "count",
+                "as": "rateCount"
+              }
+            ]
+          }
+        },
         "type": "object",
         "required": [
           "transactionCurrency",
