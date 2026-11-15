@@ -7050,7 +7050,27 @@ OC.L10N.register(
         "Correction posting": "Correctieboeking",
         "Filed on": "Ingediend op",
         "Digipoort reference": "Digipoort-kenmerk",
-        "File supplementary return": "Suppletie indienen"
+        "File supplementary return": "Suppletie indienen",
+        "The reporting period is missing.": "De rapportageperiode ontbreekt.",
+        "No taxonomy is effective for this period that carries the entry point %s.": "Voor deze periode geldt geen taxonomie met het entrypoint %s.",
+        "The instance has no valid XBRL document.": "De instantie heeft geen geldig XBRL-document.",
+        "The entity identifier is missing.": "De identificatie van de entiteit ontbreekt.",
+        "The instance names no period in its context.": "De context van de instantie noemt geen periode.",
+        "The required concept %s is missing.": "Het verplichte concept %s ontbreekt.",
+        "The total %1$s (%2$s) is not the sum of %3$s (%4$s).": "Het totaal %1$s (%2$s) is niet de som van %3$s (%4$s).",
+        "Concept map": "Conceptkoppeling",
+        "Concept namespaces": "Conceptnaamruimten",
+        "Entry point schemas": "Entrypoint-schema's",
+        "Entry points": "Entrypoints",
+        "Filed file": "Ingediend bestand",
+        "Hand-off reference": "Overdrachtskenmerk",
+        "Filing type": "Soort aangifte",
+        "Source VAT return": "Bron-btw-aangifte",
+        "Download XBRL": "XBRL downloaden",
+        "XBRL file downloaded.": "XBRL-bestand gedownload.",
+        "The XBRL file could not be downloaded.": "Het XBRL-bestand kon niet worden gedownload.",
+        "Download the filing's XBRL instance, in any state.": "Download de XBRL-instantie van deze aangifte, in elke status.",
+        "Parts": "Onderdelen"
     },
     "nplurals=2; plural=(n != 1);"
 )
