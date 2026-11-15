@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ObjectFindTarget stub mirroring OCA\OpenRegister\Service\Object\ObjectFindTarget (openregister #9096).
+ * ObjectFindTarget stub mirroring OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget (openregister main).
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -13,10 +13,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Object;
+namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
 /**
- * Stub for OCA\OpenRegister\Service\Object\ObjectFindTarget used by shillinq tests.
+ * Stub for OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget used by shillinq tests.
  *
  * OpenRegister types register and schema as its Register / Schema entities;
  * the stub takes any object because the test doubles' entities are not those.

@@ -115,14 +115,14 @@ class ReferencesAuditCommandTest extends TestCase {
 			}
 
 			/**
-			 * @param \OCA\OpenRegister\Service\Object\ObjectPatch $patch The object id, patch, register and schema.
+			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch $patch The object id, patch, register and schema.
 			 * @param bool $_rbac RBAC flag.
 			 * @param bool $_multitenancy Multitenancy flag.
 			 *
 			 * @return array<string, mixed> The patch, echoed.
 			 */
 			public function patchObject(
-				\OCA\OpenRegister\Service\Object\ObjectPatch $patch,
+				\OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch $patch,
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 			): array {

@@ -29,8 +29,8 @@ namespace OCA\Shillinq\Service\Tax;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\ViesService;
 use Psr\Log\LoggerInterface;

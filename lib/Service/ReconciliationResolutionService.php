@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Service\Object\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OutOfBoundsException;

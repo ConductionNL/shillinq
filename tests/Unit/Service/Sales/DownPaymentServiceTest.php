@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Sales;
 
-use OCA\OpenRegister\Service\Object\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
 use OCA\Shillinq\Service\Sales\DownPaymentService;
 use OCA\Shillinq\Service\SettingsService;

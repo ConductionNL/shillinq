@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\OpenRegister\Service\Object\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Bank\ManualMatchService;

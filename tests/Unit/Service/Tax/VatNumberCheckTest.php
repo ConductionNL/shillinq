@@ -27,8 +27,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Tax;
 
 use DomainException;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCA\Shillinq\Service\ViesService;

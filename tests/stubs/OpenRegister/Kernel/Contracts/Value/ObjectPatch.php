@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ObjectPatch stub mirroring OCA\OpenRegister\Service\Object\ObjectPatch (openregister #9096).
+ * ObjectPatch stub mirroring OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch (openregister main).
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -13,12 +13,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Object;
+namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
 use OCP\IUser;
 
 /**
- * Stub for OCA\OpenRegister\Service\Object\ObjectPatch used by shillinq tests.
+ * Stub for OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch used by shillinq tests.
  */
 final class ObjectPatch {
 	/**

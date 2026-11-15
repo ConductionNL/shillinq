@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Budget;
 
-use OCA\OpenRegister\Service\Object\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Budget\BudgetEditingService;
 use OCA\Shillinq\Budget\BudgetEditRefusedException;
 use PHPUnit\Framework\TestCase;

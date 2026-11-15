@@ -176,7 +176,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 		// (ObjectServiceInterface::updateObject is PUT semantics), so a partial
 		// payload sent to updateObject answers only what was sent.
 		$objectService->method('patchObject')->willReturnCallback(
-			static fn (\OCA\OpenRegister\Service\Object\ObjectPatch $patch): ObjectEntityInterface => $fake->updateObject($patch->objectId, $patch->data)
+			static fn (\OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch $patch): ObjectEntityInterface => $fake->updateObject($patch->objectId, $patch->data)
 		);
 		$objectService->method('updateObject')->willReturnCallback(
 			static function (string $objectId, array $data) use ($fake): ObjectEntityInterface {

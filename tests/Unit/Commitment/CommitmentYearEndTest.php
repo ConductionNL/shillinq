@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Commitment;
 
 use OCA\OpenRegister\Db\ObjectEntity;
-use OCA\OpenRegister\Service\Object\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\AppInfo\CommitmentGuardServices;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
