@@ -46,6 +46,8 @@ namespace OCA\Shillinq\Service\Pipelinq;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -237,10 +239,8 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 				->setSchema('TimelinePublishRetryEntry')
 				->saveObject(
 					object: $payload,
-					register: $registerSlug,
-					schema: 'TimelinePublishRetryEntry',
-					// The retry queue is written by the server on behalf of whoever triggered the publish.
-					_rbac: false,
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'TimelinePublishRetryEntry')),
+					_rbac: false
 				);
 
 			return $this->extractId(result: $saved);

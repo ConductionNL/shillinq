@@ -69,6 +69,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Files\File;
@@ -688,8 +690,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 
 			$saved = $objectService->saveObject(
 				object: $record,
-				register: self::REGISTER,
-				schema: self::SCHEMA,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA))
 			);
 
 			if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {

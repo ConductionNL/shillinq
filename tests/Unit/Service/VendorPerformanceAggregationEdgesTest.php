@@ -37,6 +37,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * VendorPerformanceAggregation edge-case tests.
@@ -357,7 +358,9 @@ final class VendorPerformanceAggregationEdgesTest extends TestCase {
 			}
 		);
 		$os->expects($this->once())->method('saveObject')
-			->with($this->callback(static fn (array $o): bool => $o['scoreTrend'] === 'declining' && $o['period'] === '2026-01'))
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => $this->callback(static fn (array $o): bool => $o['scoreTrend'] === 'declining' && $o['period'] === '2026-01'),
+			]))
 			->willReturn(new Support\ObjectEntityStub(payload: ['id' => 'vp-new', 'scoreTrend' => 'declining']));
 
 		$service = $this->makeService(objectService: $os, register: '');

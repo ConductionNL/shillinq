@@ -28,6 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -92,7 +94,13 @@ class FoldCustomerVatId implements IRepairStep {
 					continue;
 				}
 
-				$this->objectService->patchObject(objectId: $id, data: ['vatId' => $legacy], register: $register, schema: 'CustomerMaster');
+				$this->objectService->patchObject(
+					new ObjectPatch(
+						objectId: $id,
+						data: ['vatId' => $legacy],
+						target: new ObjectFindTarget(register: $register, schema: 'CustomerMaster')
+					)
+				);
 				$folded++;
 			}
 

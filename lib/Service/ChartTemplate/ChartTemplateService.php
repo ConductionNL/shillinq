@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\ChartTemplate;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\RegisterBinding;
 use OCP\AppFramework\Utility\ITimeFactory;
 
@@ -374,7 +375,7 @@ class ChartTemplateService {
 			$uuid = $id;
 		}
 
-		return (array)$this->binding->schema(schema: $schema)->saveObject(object: $row, uuid: $uuid)->jsonSerialize();
+		return (array)$this->binding->schema(schema: $schema)->saveObject(object: $row, options: new ObjectSaveOptions(uuid: $uuid))->jsonSerialize();
 	}//end save()
 
 	/**
