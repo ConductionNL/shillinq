@@ -1302,7 +1302,7 @@ _Complete CBS (Centraal Bureau voor de Statistiek) IV3-extended statistical subm
 | reportingPeriodEndDate | date | Yes | Last day of the reporting period |
 | organizationLegalName | string | Yes | Legal name of the reporting organization |
 | kvkNumber | string | Yes | Dutch Chamber of Commerce registration number (`^[0-9]{8}$`) |
-| taxIdentificationNumber | string | Yes | Dutch VAT/BTW identification number (`^NL[0-9]{10}B[0-9]{2}$`) |
+| taxIdentificationNumber | string | Yes | Dutch VAT/BTW identification number (`^NL[0-9]{9}B[0-9]{2}$`) |
 | administrationId | string | Yes | FK to Administration |
 | status | enum | Yes | One of draft, validated, submitted, accepted, rejected |
 | submissionDate | datetime | No | Timestamp when submission was sent to CBS |

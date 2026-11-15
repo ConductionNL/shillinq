@@ -29,7 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -45,6 +46,7 @@ use Throwable;
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-22
  */
 class CalibrationBatchJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Monthly interval in seconds (30 days).
@@ -57,13 +59,13 @@ class CalibrationBatchJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
-	 * @param SettingsService $settingsService Register-slug resolver.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -73,6 +75,21 @@ class CalibrationBatchJob extends TimedJob {
 		$this->setAllowParallelRuns(allow: false);
 
 	}//end __construct()
+
+	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
 
 	/**
 	 * Generate one calibration report per active horizon.
@@ -86,107 +103,87 @@ class CalibrationBatchJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
-		if ($this->settingsService->isOpenRegisterAvailable() === false) {
+	private function runAsJob($argument): void {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('CalibrationBatchJob: OR unavailable, skipping.');
 			return;
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
-			$period = date('Y-m', strtotime('-1 month'));
-			$generatedAt = date('c');
-
-			$horizons = $objectService
-				->setRegister($registerSlug)
-				->setSchema('CashflowForecastHorizon')
-				->findAll(
-					[
-						'filters' => ['lifecycleState' => 'active'],
-					]
-				);
-
-			$reportsCreated = 0;
-			foreach ($horizons as $horizon) {
-				$horizonId = $this->extractField(entity: $horizon, field: 'horizonId');
-				$admin = $this->extractField(entity: $horizon, field: 'administrationId');
-				if ($horizonId === null || $admin === null) {
-					continue;
-				}
-
-				$reportId = 'calib-' . $horizonId . '-' . $period;
-
-				// Idempotency: skip if a report already exists for this horizon+period.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('CashflowCalibrationReport')
-					->findAll(
-						[
-							'filters' => [
-								'reportId' => $reportId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					continue;
-				}
-
-				// The MAPE values are computed by OR aggregations (declared on
-				// CashflowCalibrationReport when the report record is created).
-				// The job creates the envelope; OR fills the metrics.
-				$objectService
-					->setRegister($registerSlug)
-					->setSchema('CashflowCalibrationReport')
-					->saveObject(
-						object: [
-							'reportId' => $reportId,
-							'horizonId' => $horizonId,
-							'calibrationPeriod' => $period,
-							'generatedAt' => $generatedAt,
-							'ar_mape' => 0.0,
-							'ap_mape' => 0.0,
-							'recurring_mape' => 0.0,
-							'tax_mape' => 0.0,
-							'administrationId' => $admin,
-						]
-					);
-
-				$reportsCreated++;
-			}//end foreach
-
-			$this->logger->info(
-				'CalibrationBatchJob: created ' . $reportsCreated . ' calibration report(s) for period ' . $period . '.'
-			);
+			$this->calibrateLastMonth();
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'CalibrationBatchJob failed: ' . $e->getMessage(),
 				['exception' => $e]
 			);
-		}//end try
+		}
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
-	 * Defensive field extractor.
+	 * Create last month's calibration report of every active horizon and log
+	 * how many were created.
 	 *
-	 * @param mixed $entity Entity or array.
-	 * @param string $field Field name.
-	 *
-	 * @return mixed
+	 * @return void
 	 */
-	private function extractField(mixed $entity, string $field): mixed {
-		if (is_array($entity) === true) {
-			return ($entity[$field] ?? null);
+	private function calibrateLastMonth(): void {
+		$run = new CashflowHorizonRun(
+			objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService'),
+			register: $this->registerLocation->getRegisterSlug(),
+		);
+		$period = new CalibrationPeriod();
+		$this->calibrate(run: $run, period: $period);
+
+		$this->logger->info(
+			'CalibrationBatchJob: created ' . $run->count . ' calibration report(s) for period ' . $period->period . '.'
+		);
+
+	}//end calibrateLastMonth()
+
+	/**
+	 * Create the period's report of every active horizon with an id and an
+	 * administration, unless it already exists.
+	 *
+	 * @param CashflowHorizonRun $run The run.
+	 * @param CalibrationPeriod $period The period.
+	 *
+	 * @return void
+	 */
+	private function calibrate(CashflowHorizonRun $run, CalibrationPeriod $period): void {
+		foreach ($run->activeHorizons() as $horizon) {
+			$report = $period->report(
+				horizonId: $run->field(entity: $horizon, field: 'horizonId'),
+				administrationId: $run->field(entity: $horizon, field: 'administrationId'),
+			);
+			if ($report !== null && $this->isNewReport(run: $run, reportId: $report['reportId']) === true) {
+				$run->scoped(schema: 'CashflowCalibrationReport')->saveObject(object: $report);
+				$run->count++;
+			}
 		}
 
-		$getter = 'get' . ucfirst($field);
-		if (method_exists($entity, $getter) === true) {
-			return $entity->{$getter}();
-		}
+	}//end calibrate()
 
-		return null;
-	}//end extractField()
+	/**
+	 * Idempotency: whether no report exists yet for this horizon and period.
+	 *
+	 * @param CashflowHorizonRun $run The run.
+	 * @param string $reportId The report id.
+	 *
+	 * @return bool
+	 */
+	private function isNewReport(CashflowHorizonRun $run, string $reportId): bool {
+		$existing = $run->scoped(schema: 'CashflowCalibrationReport')
+			->findAll(
+				[
+					'filters' => [
+						'reportId' => $reportId,
+					],
+					'limit' => 1,
+				]
+			);
+
+		return empty($existing);
+
+	}//end isNewReport()
+
 }//end class

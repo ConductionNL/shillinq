@@ -217,31 +217,25 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "payroll-officer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Salaris Feed is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "OpdrachtgeversVerklaring": {
@@ -383,31 +377,25 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "payroll-officer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Opdrachtgevers Verklaring is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "IB47Record": {
@@ -597,46 +585,6 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "payroll-officer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "fieldOverrides": {
-                "recipientBSN": {
-                  "permissions": [
-                    "read",
-                    "write"
-                  ]
-                }
-              }
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ],
-              "fieldOverrides": {
-                "recipientBSN": {
-                  "permissions": []
-                }
-              }
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "fieldOverrides": {
-                "recipientBSN": {
-                  "permissions": []
-                }
-              }
-            }
-          }
-        },
         "x-openregister-notifications": {
           "onIb47BatchSubmitted": {
             "trigger": "ib47.submitted",
@@ -657,6 +605,22 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a IB47 Record is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       }
     }

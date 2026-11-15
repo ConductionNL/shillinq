@@ -308,7 +308,10 @@
         "acceptedOn": "2025-04-20T11:30:00+02:00",
         "settledOn": "2025-05-28T14:15:00+02:00",
         "settledAmount": 120000.0,
-        "notes": "Q1 2025 — publieke dienstverlening, gemengd gebruik nutsvoorziening 50%."
+        "notes": "Q1 2025 — publieke dienstverlening, gemengd gebruik nutsvoorziening 50%.",
+        "claimNumber": "BCF-2025-Q1-AMS",
+        "periodYear": 2025,
+        "periodQuarter": 1
       },
       "bcf-claim-amsterdam-2025q2": {
         "@self": {
@@ -336,7 +339,10 @@
         "state": "accepted",
         "submittedOn": "2025-07-01T09:00:00+02:00",
         "acceptedOn": "2025-07-22T10:05:00+02:00",
-        "notes": "Q2 2025 — geaccepteerd, in afwachting van afwikkeling."
+        "notes": "Q2 2025 — geaccepteerd, in afwachting van afwikkeling.",
+        "claimNumber": "BCF-2025-Q2-AMS",
+        "periodYear": 2025,
+        "periodQuarter": 2
       },
       "bcf-claim-utrecht-2025q2": {
         "@self": {
@@ -363,7 +369,10 @@
         ],
         "state": "submitted",
         "submittedOn": "2025-07-01T09:00:00+02:00",
-        "notes": "Q2 2025 — ingediend bij Belastingdienst."
+        "notes": "Q2 2025 — ingediend bij Belastingdienst.",
+        "claimNumber": "BCF-2025-Q2-UTR",
+        "periodYear": 2025,
+        "periodQuarter": 2
       },
       "bcf-claim-utrecht-2025q3": {
         "@self": {
@@ -376,7 +385,10 @@
         "totalCompensableAmount": 0.0,
         "breakdown": [],
         "state": "draft",
-        "notes": "Q3 2025 — concept; nog geen compensabele posten geboekt."
+        "notes": "Q3 2025 — concept; nog geen compensabele posten geboekt.",
+        "claimNumber": "BCF-2025-Q3-UTR",
+        "periodYear": 2025,
+        "periodQuarter": 3
       }
     }
   }

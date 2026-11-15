@@ -1,0 +1,304 @@
+{
+    "happy": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:CreditNote",
+            {
+                "findAll": {
+                    "filters": {
+                        "linkedInvoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "happyOverdue": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:CreditNote",
+            {
+                "findAll": {
+                    "filters": {
+                        "linkedInvoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "fallbackLookup": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:BookingOrder",
+            {
+                "findAll": {
+                    "filters": {
+                        "orderId": "o1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:CreditNote",
+            {
+                "findAll": {
+                    "filters": {
+                        "linkedInvoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "orderNotFound": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:BookingOrder",
+            {
+                "findAll": {
+                    "filters": {
+                        "orderId": "o1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "noInvoice": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "BookingCancellationGuard: order has no invoice — cancelAfterInvoice not applicable",
+                {
+                    "orderId": "o1"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "noAdministration": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": ""
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:CreditNote",
+            {
+                "findAll": {
+                    "filters": {
+                        "linkedInvoiceId": "inv-1",
+                        "administrationId": ""
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "invoiceMissing": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "BookingCancellationGuard: linked invoice not found — denying cancellation",
+                {
+                    "orderId": "o1",
+                    "invoiceId": "inv-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "invoicePaid": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "BookingCancellationGuard: invoice not in a reversible state — denying cancellation",
+                {
+                    "orderId": "o1",
+                    "invoiceId": "inv-1",
+                    "state": "paid"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "invoiceStateless": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "BookingCancellationGuard: invoice not in a reversible state — denying cancellation",
+                {
+                    "orderId": "o1",
+                    "invoiceId": "inv-1",
+                    "state": ""
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "creditNoteExists": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "BookingCancellationGuard: credit note already exists — denying duplicate reversal",
+                {
+                    "orderId": "o1",
+                    "invoiceId": "inv-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:CreditNote",
+            {
+                "findAll": {
+                    "filters": {
+                        "linkedInvoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "debug",
+                "BookingCancellationGuard: schema lookup unavailable — treating as absent",
+                {
+                    "schema": "Invoice",
+                    "exception": "store down"
+                }
+            ],
+            [
+                "info",
+                "BookingCancellationGuard: linked invoice not found — denying cancellation",
+                {
+                    "orderId": "o1",
+                    "invoiceId": "inv-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Invoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    }
+}

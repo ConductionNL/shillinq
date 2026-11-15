@@ -349,4 +349,72 @@ final class FeeScheduleServiceTest extends TestCase {
 			$service->resolveForObject('dossiq', 'Zaak', ['id' => 'zaak-8', 'caseType' => 'melding'], '', '2026-06-01')
 		);
 	}//end testResolveForObjectReturnsNullForAnUnpricedType()
+
+	/**
+	 * A percentage fee is taken of the object's base value and raised to its minimum.
+	 *
+	 * @return void
+	 */
+	public function testAPercentageFeeIsWorkedOutWithItsMinimum(): void {
+		$service = $this->service(['FeeSchedule' => [$this->schedule(['calculation' => 'percentage', 'percentage' => 2.35, 'minimumAmount' => 125, 'baseProperty' => 'bouwkosten'])]]);
+
+		$large = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning', 'bouwkosten' => 100000], '', '2026-06-01');
+		$small = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning', 'bouwkosten' => 1000], '', '2026-06-01');
+		$none  = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning'], '', '2026-06-01');
+
+		self::assertSame(2350.0, $large['amount']);
+		self::assertSame(125.0, $small['amount']);
+		self::assertArrayNotHasKey('amount', $none);
+		self::assertSame('needs-base', $none['amountSource']);
+	}//end testAPercentageFeeIsWorkedOutWithItsMinimum()
+
+	/**
+	 * The fee for the object's own variant wins over the type's; another variant falls back to the type's.
+	 *
+	 * @return void
+	 */
+	public function testTheVariantsFeeWinsOverTheTypes(): void {
+		$service = $this->service(
+			[
+				'FeeSchedule' => [
+					$this->schedule(['id' => 'fs-type', 'amount' => 245.0]),
+					$this->schedule(['id' => 'fs-kap', 'variantValue' => 'Kappen', 'calculation' => 'per_unit', 'unitPrice' => 82.4, 'baseProperty' => 'aantalBomen']),
+				],
+			]
+		);
+
+		$kap  = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning', 'variant' => 'Kappen', 'aantalBomen' => 2], '', '2026-06-01');
+		$bouw = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning', 'variant' => 'Regulier'], '', '2026-06-01');
+
+		self::assertSame(['fs-kap', 164.8], [$kap['id'], $kap['amount']]);
+		self::assertSame(['fs-type', 245.0], [$bouw['id'], $bouw['amount']]);
+	}//end testTheVariantsFeeWinsOverTheTypes()
+
+	/**
+	 * A calculation that lacks a field it needs is refused at save.
+	 *
+	 * @return void
+	 */
+	public function testACalculationWithoutItsNumbersIsRefused(): void {
+		$service = $this->service(['FeeSchedule' => []]);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('A percentage fee needs percentage and baseProperty.');
+		$service->assertNoOverlap($this->schedule(['calculation' => 'percentage']), []);
+	}//end testACalculationWithoutItsNumbersIsRefused()
+
+	/**
+	 * A refund rule beside the type's charge is not an overlap, and is never charged at intake.
+	 *
+	 * @return void
+	 */
+	public function testARefundRuleSitsBesideTheCharge(): void {
+		$refund  = $this->schedule(['id' => 'fs-refund', 'calculation' => 'refund_percentage', 'percentage' => 75]);
+		$service = $this->service(['FeeSchedule' => [$this->schedule(), $refund]]);
+
+		$service->assertNoOverlap($refund, [$this->schedule()]);
+		$resolved = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning'], '', '2026-06-01');
+
+		self::assertSame('fs-1', $resolved['id']);
+	}//end testARefundRuleSitsBesideTheCharge()
 }//end class

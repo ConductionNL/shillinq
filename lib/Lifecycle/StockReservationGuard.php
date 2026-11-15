@@ -3,6 +3,9 @@
 /**
  * Stock Reservation Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path service implementing the optimistic-lock
  * compare-and-swap (CAS) reservation workflow declared in
  * REQ-SM-004 + REQ-SM-005. Three operations:
@@ -35,19 +38,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Per REQ-SM-004 reservation CAS + REQ-SM-005 stock-ledger commit.
@@ -94,54 +95,7 @@ class StockReservationGuard {
 	 */
 	public function reserveReservation(array $move): bool {
 		try {
-			$sourceLocationId = ($move['sourceLocationId'] ?? null);
-			if ($sourceLocationId === null || $sourceLocationId === '') {
-				// Receipt-only move: no source, no reservation.
-				return true;
-			}
-
-			$cents = $this->cents(value: ($move['quantity'] ?? 0));
-			if ($cents <= 0) {
-				return true;
-			}
-
-			$row = $this->findInventoryStock(
-				administrationId: (string)($move['administrationId'] ?? ''),
-				locationId: (string)$sourceLocationId,
-				sku: (string)($move['itemId'] ?? '')
-			);
-			if ($row === null) {
-				$this->logger->info(
-					'StockReservationGuard: reserve denied — no InventoryStock row',
-					[
-						'movementNumber' => ($move['movementNumber'] ?? null),
-						'sku' => ($move['itemId'] ?? null),
-						'locationId' => $sourceLocationId,
-					]
-				);
-				return false;
-			}
-
-			$availableCents = ($this->cents(value: ($row['quantity'] ?? 0)) - $this->cents(value: ($row['reservedQuantity'] ?? 0)));
-			if ($availableCents < $cents) {
-				$this->logger->info(
-					'StockReservationGuard: reserve denied — insufficient available',
-					[
-						'movementNumber' => ($move['movementNumber'] ?? null),
-						'availableCents' => $availableCents,
-						'requestedCents' => $cents,
-					]
-				);
-				return false;
-			}
-
-			$newReservedCents = ($this->cents(value: ($row['reservedQuantity'] ?? 0)) + $cents);
-			$patch = [
-				'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
-				'version' => ((int)($row['version'] ?? 0) + 1),
-			];
-
-			return $this->casUpdate(row: $row, patch: $patch);
+			return $this->applyReservation(move: $move);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'StockReservationGuard: reserveReservation failed — denying (fail-closed)',
@@ -156,6 +110,96 @@ class StockReservationGuard {
 	}//end reserveReservation()
 
 	/**
+	 * Reserve `move.quantity` on the source InventoryStock row; see reserveReservation().
+	 *
+	 * @param array<string,mixed> $move The draft StockMove triggering the reservation.
+	 *
+	 * @return bool True on successful reservation or when nothing needs reserving; false on denial / collision.
+	 *
+	 * @throws \Throwable When the InventoryStock lookup fails.
+	 *
+	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+	 */
+	private function applyReservation(array $move): bool {
+		$sourceLocationId = ($move['sourceLocationId'] ?? null);
+		if ($this->hasLocation(locationId: $sourceLocationId) === false) {
+			// Receipt-only move: no source, no reservation.
+			return true;
+		}
+
+		$cents = $this->cents(value: ($move['quantity'] ?? 0));
+		if ($cents <= 0) {
+			return true;
+		}
+
+		$row = $this->findInventoryStock(
+			administrationId: (string)($move['administrationId'] ?? ''),
+			locationId: (string)$sourceLocationId,
+			sku: (string)($move['itemId'] ?? '')
+		);
+		if ($row === null) {
+			$this->logger->info(
+				'StockReservationGuard: reserve denied — no InventoryStock row',
+				[
+					'movementNumber' => ($move['movementNumber'] ?? null),
+					'sku' => ($move['itemId'] ?? null),
+					'locationId' => $sourceLocationId,
+				]
+			);
+			return false;
+		}
+
+		return $this->reserveOnRow(move: $move, row: $row, cents: $cents);
+	}//end applyReservation()
+
+	/**
+	 * Add the reservation to an InventoryStock row when enough stock is available.
+	 *
+	 * @param array<string,mixed> $move  The draft StockMove triggering the reservation.
+	 * @param array<string,mixed> $row   The source InventoryStock row.
+	 * @param int                 $cents The quantity to reserve, in cents.
+	 *
+	 * @return bool True when the CAS succeeded; false on insufficient stock or collision.
+	 *
+	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+	 */
+	private function reserveOnRow(array $move, array $row, int $cents): bool {
+		$availableCents = ($this->cents(value: ($row['quantity'] ?? 0)) - $this->cents(value: ($row['reservedQuantity'] ?? 0)));
+		if ($availableCents < $cents) {
+			$this->logger->info(
+				'StockReservationGuard: reserve denied — insufficient available',
+				[
+					'movementNumber' => ($move['movementNumber'] ?? null),
+					'availableCents' => $availableCents,
+					'requestedCents' => $cents,
+				]
+			);
+			return false;
+		}
+
+		$newReservedCents = ($this->cents(value: ($row['reservedQuantity'] ?? 0)) + $cents);
+		$patch = [
+			'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
+			'version' => ((int)($row['version'] ?? 0) + 1),
+		];
+
+		return $this->casUpdate(row: $row, patch: $patch);
+	}//end reserveOnRow()
+
+	/**
+	 * Whether a move names a location (neither null nor empty).
+	 *
+	 * @param mixed $locationId The move's source or destination location id.
+	 *
+	 * @return bool True when the location is set.
+	 *
+	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+	 */
+	private function hasLocation(mixed $locationId): bool {
+		return $locationId !== null && $locationId !== '';
+	}//end hasLocation()
+
+	/**
 	 * Commit the reservation: release the reserved hold, decrement source
 	 * on-hand and increment destination on-hand per REQ-SM-005.
 	 *
@@ -167,83 +211,7 @@ class StockReservationGuard {
 	 */
 	public function commitReservation(array $move): bool {
 		try {
-			$cents = $this->cents(value: ($move['quantity'] ?? 0));
-			if ($cents <= 0) {
-				return true;
-			}
-
-			$administrationId = (string)($move['administrationId'] ?? '');
-			$sku = (string)($move['itemId'] ?? '');
-			$sourceLocationId = ($move['sourceLocationId'] ?? null);
-			$destLocationId = ($move['destinationLocationId'] ?? null);
-
-			// Source: release reservation + decrement on-hand.
-			if ($sourceLocationId !== null && $sourceLocationId !== '') {
-				$source = $this->findInventoryStock(
-					administrationId: $administrationId,
-					locationId: (string)$sourceLocationId,
-					sku: $sku
-				);
-				if ($source === null) {
-					return false;
-				}
-
-				$sourceReservedCents = $this->cents(value: ($source['reservedQuantity'] ?? 0));
-				$sourceOnHandCents = $this->cents(value: ($source['quantity'] ?? 0));
-				if ($sourceOnHandCents < $cents || $sourceReservedCents < $cents) {
-					$this->logger->info(
-						'StockReservationGuard: commit denied — source reservation/on-hand inconsistent',
-						[
-							'movementNumber' => ($move['movementNumber'] ?? null),
-							'sourceLocation' => $sourceLocationId,
-						]
-					);
-					return false;
-				}
-
-				$patch = [
-					'reservedQuantity' => $this->fromCents(cents: $sourceReservedCents - $cents),
-					'quantity' => $this->fromCents(cents: $sourceOnHandCents - $cents),
-					'lastMovementDate' => date('Y-m-d'),
-					'version' => ((int)($source['version'] ?? 0) + 1),
-				];
-
-				if ($this->casUpdate(row: $source, patch: $patch) === false) {
-					return false;
-				}
-			}//end if
-
-			// Destination: increment on-hand (create row if absent — first delivery
-			// to a bin).
-			if ($destLocationId !== null && $destLocationId !== '') {
-				$destination = $this->findInventoryStock(
-					administrationId: $administrationId,
-					locationId: (string)$destLocationId,
-					sku: $sku
-				);
-				if ($destination === null) {
-					return $this->createInventoryStock(
-						administrationId: $administrationId,
-						locationId: (string)$destLocationId,
-						sku: $sku,
-						quantityCents: $cents,
-						unitCost: ((float)($move['unitCost'] ?? 0))
-					);
-				}
-
-				$destOnHandCents = ($this->cents(value: ($destination['quantity'] ?? 0)) + $cents);
-				$patch = [
-					'quantity' => $this->fromCents(cents: $destOnHandCents),
-					'lastMovementDate' => date('Y-m-d'),
-					'version' => ((int)($destination['version'] ?? 0) + 1),
-				];
-
-				if ($this->casUpdate(row: $destination, patch: $patch) === false) {
-					return false;
-				}
-			}//end if
-
-			return true;
+			return $this->applyCommit(move: $move);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'StockReservationGuard: commitReservation failed — denying (fail-closed)',
@@ -258,6 +226,129 @@ class StockReservationGuard {
 	}//end commitReservation()
 
 	/**
+	 * Release the source hold and move on-hand from source to destination; see commitReservation().
+	 *
+	 * @param array<string,mixed> $move The StockMove being posted.
+	 *
+	 * @return bool True on success; false on denial or CAS collision.
+	 *
+	 * @throws \Throwable When an InventoryStock lookup or write fails.
+	 *
+	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+	 */
+	private function applyCommit(array $move): bool {
+		$cents = $this->cents(value: ($move['quantity'] ?? 0));
+		if ($cents <= 0) {
+			return true;
+		}
+
+		$sourceLocationId = ($move['sourceLocationId'] ?? null);
+		$destLocationId = ($move['destinationLocationId'] ?? null);
+
+		// Source: release reservation + decrement on-hand.
+		if ($this->hasLocation(locationId: $sourceLocationId) === true) {
+			if ($this->commitSource(move: $move, cents: $cents) === false) {
+				return false;
+			}
+		}
+
+		// Destination: increment on-hand (create row if absent — first delivery
+		// to a bin).
+		if ($this->hasLocation(locationId: $destLocationId) === true) {
+			return $this->commitDestination(move: $move, cents: $cents);
+		}
+
+		return true;
+	}//end applyCommit()
+
+	/**
+	 * Release the reservation and decrement on-hand on the source InventoryStock row.
+	 *
+	 * @param array<string,mixed> $move  The StockMove being posted (has a source location).
+	 * @param int                 $cents The moved quantity, in cents.
+	 *
+	 * @return bool True on success; false on a missing/inconsistent row or CAS collision.
+	 *
+	 * @throws \Throwable When the InventoryStock lookup fails.
+	 *
+	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+	 */
+	private function commitSource(array $move, int $cents): bool {
+		$sourceLocationId = $move['sourceLocationId'];
+		$source = $this->findInventoryStock(
+			administrationId: (string)($move['administrationId'] ?? ''),
+			locationId: (string)$sourceLocationId,
+			sku: (string)($move['itemId'] ?? '')
+		);
+		if ($source === null) {
+			return false;
+		}
+
+		$sourceReservedCents = $this->cents(value: ($source['reservedQuantity'] ?? 0));
+		$sourceOnHandCents = $this->cents(value: ($source['quantity'] ?? 0));
+		if ($sourceOnHandCents < $cents || $sourceReservedCents < $cents) {
+			$this->logger->info(
+				'StockReservationGuard: commit denied — source reservation/on-hand inconsistent',
+				[
+					'movementNumber' => ($move['movementNumber'] ?? null),
+					'sourceLocation' => $sourceLocationId,
+				]
+			);
+			return false;
+		}
+
+		$patch = [
+			'reservedQuantity' => $this->fromCents(cents: $sourceReservedCents - $cents),
+			'quantity' => $this->fromCents(cents: $sourceOnHandCents - $cents),
+			'lastMovementDate' => date('Y-m-d'),
+			'version' => ((int)($source['version'] ?? 0) + 1),
+		];
+
+		return $this->casUpdate(row: $source, patch: $patch);
+	}//end commitSource()
+
+	/**
+	 * Increment on-hand on the destination InventoryStock row, creating the row when absent.
+	 *
+	 * @param array<string,mixed> $move  The StockMove being posted (has a destination location).
+	 * @param int                 $cents The moved quantity, in cents.
+	 *
+	 * @return bool True on success; false on CAS collision or a failed create.
+	 *
+	 * @throws \Throwable When the InventoryStock lookup fails.
+	 *
+	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+	 */
+	private function commitDestination(array $move, int $cents): bool {
+		$administrationId = (string)($move['administrationId'] ?? '');
+		$sku = (string)($move['itemId'] ?? '');
+		$destLocationId = $move['destinationLocationId'];
+		$destination = $this->findInventoryStock(
+			administrationId: $administrationId,
+			locationId: (string)$destLocationId,
+			sku: $sku
+		);
+		if ($destination === null) {
+			return $this->createInventoryStock(
+				administrationId: $administrationId,
+				locationId: (string)$destLocationId,
+				sku: $sku,
+				quantityCents: $cents,
+				unitCost: ((float)($move['unitCost'] ?? 0))
+			);
+		}
+
+		$destOnHandCents = ($this->cents(value: ($destination['quantity'] ?? 0)) + $cents);
+		$patch = [
+			'quantity' => $this->fromCents(cents: $destOnHandCents),
+			'lastMovementDate' => date('Y-m-d'),
+			'version' => ((int)($destination['version'] ?? 0) + 1),
+		];
+
+		return $this->casUpdate(row: $destination, patch: $patch);
+	}//end commitDestination()
+
+	/**
 	 * Release the reservation on draft cancellation (no on-hand change).
 	 *
 	 * @param array<string,mixed> $move The draft StockMove being cancelled.
@@ -268,34 +359,7 @@ class StockReservationGuard {
 	 */
 	public function releaseReservation(array $move): bool {
 		try {
-			$sourceLocationId = ($move['sourceLocationId'] ?? null);
-			if ($sourceLocationId === null || $sourceLocationId === '') {
-				return true;
-			}
-
-			$cents = $this->cents(value: ($move['quantity'] ?? 0));
-			if ($cents <= 0) {
-				return true;
-			}
-
-			$row = $this->findInventoryStock(
-				administrationId: (string)($move['administrationId'] ?? ''),
-				locationId: (string)$sourceLocationId,
-				sku: (string)($move['itemId'] ?? '')
-			);
-			if ($row === null) {
-				// No reservation to release.
-				return true;
-			}
-
-			$currentReservedCents = $this->cents(value: ($row['reservedQuantity'] ?? 0));
-			$newReservedCents = max(0, ($currentReservedCents - $cents));
-			$patch = [
-				'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
-				'version' => ((int)($row['version'] ?? 0) + 1),
-			];
-
-			return $this->casUpdate(row: $row, patch: $patch);
+			return $this->applyRelease(move: $move);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'StockReservationGuard: releaseReservation failed — denying (fail-closed)',
@@ -308,6 +372,48 @@ class StockReservationGuard {
 		}//end try
 
 	}//end releaseReservation()
+
+	/**
+	 * Release the reservation on the source InventoryStock row; see releaseReservation().
+	 *
+	 * @param array<string,mixed> $move The draft StockMove being cancelled.
+	 *
+	 * @return bool True on success or when nothing is reserved; false on CAS collision.
+	 *
+	 * @throws \Throwable When the InventoryStock lookup fails.
+	 *
+	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+	 */
+	private function applyRelease(array $move): bool {
+		$sourceLocationId = ($move['sourceLocationId'] ?? null);
+		if ($this->hasLocation(locationId: $sourceLocationId) === false) {
+			return true;
+		}
+
+		$cents = $this->cents(value: ($move['quantity'] ?? 0));
+		if ($cents <= 0) {
+			return true;
+		}
+
+		$row = $this->findInventoryStock(
+			administrationId: (string)($move['administrationId'] ?? ''),
+			locationId: (string)$sourceLocationId,
+			sku: (string)($move['itemId'] ?? '')
+		);
+		if ($row === null) {
+			// No reservation to release.
+			return true;
+		}
+
+		$currentReservedCents = $this->cents(value: ($row['reservedQuantity'] ?? 0));
+		$newReservedCents = max(0, ($currentReservedCents - $cents));
+		$patch = [
+			'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
+			'version' => ((int)($row['version'] ?? 0) + 1),
+		];
+
+		return $this->casUpdate(row: $row, patch: $patch);
+	}//end applyRelease()
 
 	/**
 	 * Find the InventoryStock row for an (admin, location, sku) triple.
@@ -363,10 +469,12 @@ class StockReservationGuard {
 
 			// Re-read the canonical row to detect concurrent writes; abort on version
 			// mismatch (CAS) so the operator retries with fresh state.
-			$current = $this->objectService
-				->setRegister($this->register())
-				->setSchema('InventoryStock')
-				->find($id);
+			$current = ObjectIdentifier::findScoped(
+				scoped: $this->objectService
+					->setRegister($this->register())
+					->setSchema('InventoryStock'),
+				id: $id
+			);
 			if ($current === null) {
 				return false;
 			}
@@ -480,7 +588,7 @@ class StockReservationGuard {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

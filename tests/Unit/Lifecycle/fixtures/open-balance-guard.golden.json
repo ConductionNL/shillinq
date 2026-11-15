@@ -1,0 +1,377 @@
+{
+    "vendorZero": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "vendorOpen": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "vendorOpenRounded": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "vendorPaged": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            },
+            "register:shillinq",
+            "schema:APInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 500
+                }
+            }
+        ]
+    },
+    "vendorStoreDown": {
+        "result": true,
+        "logs": [
+            [
+                "debug",
+                "OpenBalanceGuard: balance query failed (schema likely absent)",
+                {
+                    "schema": "APInvoice",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "vendorNoContainer": {
+        "result": true,
+        "logs": [
+            [
+                "debug",
+                "OpenBalanceGuard: ObjectService unavailable",
+                {
+                    "exception": "no object service"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "customerZero": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:ARInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "",
+                        "administrationId": ""
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "customerOpen": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:ARInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "vendorNotBlocked": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:VendorMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": ""
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "vendorBlocked": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:VendorMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": ""
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "vendorUnknown": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:VendorMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "vendorId": "v1",
+                        "administrationId": ""
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "customerBlocked": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:CustomerMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "customerLookupDown": {
+        "result": true,
+        "logs": [
+            [
+                "debug",
+                "OpenBalanceGuard: master lookup failed",
+                {
+                    "schema": "CustomerMaster",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:CustomerMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "creditNoCustomer": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:CustomerMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "creditNoLimit": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:CustomerMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "creditWithin": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:CustomerMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:ARInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "creditExact": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:CustomerMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:ARInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    },
+    "creditOver": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:CustomerMaster",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:ARInvoice",
+            {
+                "findAll": {
+                    "filters": {
+                        "customerId": "c1",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 500,
+                    "offset": 0
+                }
+            }
+        ]
+    }
+}

@@ -52,6 +52,24 @@
         "should be mocked" concern can apply to. If a future edit gives it state
         or an injected dependency, that claim becomes false and this entry must
         be removed rather than kept — check it before trusting this line.
+
+        (g) LinkedObjectReferences is a pure function of its argument on the
+        same testable claim as (f): NO constructor, NO properties, NO
+        collaborators. Remove this entry if that stops being true.
+
+        (h) OpenRegisterAutoloader and OpenRegister's AppHost Bootstrap are
+        called from the app's register() phase, before any DI container exists
+        to inject them into: OpenRegisterAutoloader registers a class loader
+        (process-wide state by nature), and Bootstrap::aliasStoreController()
+        is OpenRegister's static registration API, category (d).
+        (i) The shared readers of the rule checks and the budget services
+        (CheckFields, GlTransactionLines, InvoiceParts, BudgetMonthFields,
+        LedgerGroupEntryKey) are pure functions of their arguments on the same
+        testable claim as (f): final, NO constructor, NO properties, NO
+        collaborators. Remove an entry if that stops being true.
+        (j) XbrlInstanceWriter writes an XBRL document from its arguments and
+        reads the taxonomy fields it needs from the record it is given: final,
+        NO constructor, NO properties, NO collaborators, as (i).
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -59,9 +77,10 @@
                 DateTimeImmutable,
                 OCP\Server,
                 OCA\Shillinq\Support\FleetAppId,
+                OCA\Shillinq\Service\Sbr\XbrlInstanceWriter,
                 OCA\Shillinq\Support\DateWindow,
                 OCA\OpenRegister\Lifecycle\GuardResult,
-                OCA\OpenRegister\Service\Aggregation\AggregationQuery,
+                OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery,
                 OCA\OpenRegister\AppHost\Observability\MetricSample,
                 OCA\Shillinq\Standards\RuleEngine,
                 OCA\Shillinq\Standards\RuleCatalogue,
@@ -69,6 +88,14 @@
                 OCA\Shillinq\Enums\DBAConstants,
                 OCA\Shillinq\Util\TokenValidator,
                 OCA\Shillinq\Util\ObjectIdentifier,
+                OCA\Shillinq\Util\LinkedObjectReferences,
+                OCA\Shillinq\Standards\Checks\CheckFields,
+                OCA\Shillinq\Standards\Checks\GlTransactionLines,
+                OCA\Shillinq\Standards\Checks\InvoiceParts,
+                OCA\Shillinq\Service\BudgetMonthFields,
+                OCA\Shillinq\Service\LedgerGroupEntryKey,
+                OCA\Shillinq\AppInfo\OpenRegisterAutoloader,
+                OCA\OpenRegister\AppHost\Bootstrap,
                 OCA\Shillinq\Request\InvoiceGenerationRequest,
                 OCA\Shillinq\Service\Pipelinq\PipelinqContact,
                 OCA\Shillinq\Service\Pipelinq\KlantbeeldResult,

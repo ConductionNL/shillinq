@@ -1,0 +1,1079 @@
+{
+    "bbv containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RGS template seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "bbv existing": {
+        "result": {
+            "success": true,
+            "message": "RGS template seeded successfully.",
+            "seeded": 56,
+            "skipped": 56
+        },
+        "calls": {
+            "count": 392,
+            "sha256": "c2b913cb023ea6ce94fcbf0cdead9b24742ca6769fcd1c0a81d9bfdb96ab6845",
+            "head": [
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0100",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0110",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "name": "Kosten onderzoek en ontwikkeling",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "0100",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Geactiveerde kosten voor onderzoek en ontwikkeling (max. 5 jaar afschrijven)."
+                        },
+                        "register": "shillinq",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0120",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RGS template seeded",
+                "context": {
+                    "variant": "bbv",
+                    "seeded": 56,
+                    "skipped": 56
+                }
+            }
+        ]
+    },
+    "bbv fresh": {
+        "result": {
+            "success": true,
+            "message": "RGS template seeded successfully.",
+            "seeded": 112,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 448,
+            "sha256": "fa3bb884983f4b94304d3fc8881d3e9578905dee87ee5a228ef0a90cbe3a4b4c",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0100",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "name": "Immateriële vaste activa",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Groepsrekening immateriële vaste activa conform BBV art. 34."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0110",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "name": "Kosten onderzoek en ontwikkeling",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "0100",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Geactiveerde kosten voor onderzoek en ontwikkeling (max. 5 jaar afschrijven)."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0120",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0120",
+                            "name": "Bijdragen activa derden",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "0100",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Bijdragen aan activa in eigendom van derden (bijv. provinciale wegen)."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RGS template seeded",
+                "context": {
+                    "variant": "bbv",
+                    "seeded": 112,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "bbv noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId must not be empty."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "bbv saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": {
+            "count": 8,
+            "sha256": "525c1c7872f527fe34de262db46b5dd5a0e0d105bea620267aedfdbd9cc1a688",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0100",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "name": "Immateriële vaste activa",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Groepsrekening immateriële vaste activa conform BBV art. 34."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "0110",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "name": "Kosten onderzoek en ontwikkeling",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "0100",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Geactiveerde kosten voor onderzoek en ontwikkeling (max. 5 jaar afschrijven)."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RGS template seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "bbv unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "mkb containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RGS template seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "mkb existing": {
+        "result": {
+            "success": true,
+            "message": "RGS template seeded successfully.",
+            "seeded": 71,
+            "skipped": 72
+        },
+        "calls": {
+            "count": 500,
+            "sha256": "78827b0dbd45735aba4bd78499abee4719210c2d44385b67293df58f02c46f7b",
+            "head": [
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1000",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1010",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1010",
+                            "name": "Kas",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Kasrekening voor contante betalingen."
+                        },
+                        "register": "shillinq",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1020",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RGS template seeded",
+                "context": {
+                    "variant": "mkb",
+                    "seeded": 71,
+                    "skipped": 72
+                }
+            }
+        ]
+    },
+    "mkb fresh": {
+        "result": {
+            "success": true,
+            "message": "RGS template seeded successfully.",
+            "seeded": 143,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 572,
+            "sha256": "0aab3fc891072803678be5757494d659c116e19c4674b55ff685111c9e8b96aa",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1000",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1000",
+                            "name": "Liquide middelen",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Groepsrekening liquide middelen (kas en bank)."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1010",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1010",
+                            "name": "Kas",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Kasrekening voor contante betalingen."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1020",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1020",
+                            "name": "Bank",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Bankrekening zakelijk."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RGS template seeded",
+                "context": {
+                    "variant": "mkb",
+                    "seeded": 143,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "mkb noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId must not be empty."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "mkb saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": {
+            "count": 8,
+            "sha256": "087ab29cc27312e4925ef69d3576a6053e453bc5699195392d914273952db074",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1000",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1000",
+                            "name": "Liquide middelen",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Groepsrekening liquide middelen (kas en bank)."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1010",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1010",
+                            "name": "Kas",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Kasrekening voor contante betalingen."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RGS template seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "mkb unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "unknown containerFails": {
+        "result": {
+            "success": false,
+            "message": "Unknown RGS template variant: unknown"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "unknown existing": {
+        "result": {
+            "success": false,
+            "message": "Unknown RGS template variant: unknown"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "unknown fresh": {
+        "result": {
+            "success": false,
+            "message": "Unknown RGS template variant: unknown"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "unknown noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId must not be empty."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "unknown saveFails": {
+        "result": {
+            "success": false,
+            "message": "Unknown RGS template variant: unknown"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "unknown unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "zzp containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RGS template seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "zzp existing": {
+        "result": {
+            "success": true,
+            "message": "RGS template seeded successfully.",
+            "seeded": 29,
+            "skipped": 30
+        },
+        "calls": {
+            "count": 206,
+            "sha256": "4d184ac626e2d44f5e44ef1669169e766f523cac2dbc74f435450d23721e4be9",
+            "head": [
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1000",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1010",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1010",
+                            "name": "Kas",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Kasrekening voor contante betalingen."
+                        },
+                        "register": "shillinq",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1020",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "Account"
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RGS template seeded",
+                "context": {
+                    "variant": "zzp",
+                    "seeded": 29,
+                    "skipped": 30
+                }
+            }
+        ]
+    },
+    "zzp fresh": {
+        "result": {
+            "success": true,
+            "message": "RGS template seeded successfully.",
+            "seeded": 59,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 236,
+            "sha256": "2729c3f6a62cb14f6169fa99f6edc09883157b04c969131962ab2f16729b689d",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1000",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1000",
+                            "name": "Liquide middelen",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Groepsrekening liquide middelen."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1010",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1010",
+                            "name": "Kas",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Kasrekening voor contante betalingen."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1020",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1020",
+                            "name": "Bankrekening zakelijk",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Zakelijke betaalrekening."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: RGS template seeded",
+                "context": {
+                    "variant": "zzp",
+                    "seeded": 59,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "zzp noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId must not be empty."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    },
+    "zzp saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": {
+            "count": 8,
+            "sha256": "44984db369cd673c192f28a783bfde3bc3f6435f9aee786eca2c370235907e93",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1000",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1000",
+                            "name": "Liquide middelen",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Groepsrekening liquide middelen."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "Account"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "accountNumber": "1010",
+                            "administrationId": "adm-7"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "1010",
+                            "name": "Kas",
+                            "accountType": "assets",
+                            "currency": "EUR",
+                            "parentAccountNumber": "1000",
+                            "administrationId": "adm-7",
+                            "lifecycleState": "active",
+                            "description": "Kasrekening voor contante betalingen."
+                        },
+                        "register": "books",
+                        "schema": "Account"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: RGS template seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "zzp unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": []
+    }
+}

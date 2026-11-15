@@ -3,6 +3,9 @@
 /**
  * Soft Close Executor
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 continuous-close orchestration (REQ-CLS-002). Per ADR-031 exception:
  * the executor is *glue code only* — each sub-step is itself either a
  * declarative rule evaluation (AutoAccrualRule via calculation/aggregation)
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -43,11 +43,12 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates the nightly soft-close execution per administratie (ADR-031 exception).
@@ -67,13 +68,37 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain logic; early-return refactor deferred pending full behavioral
  * verification of each branch.
  */
-class SoftCloseExecutor {
+class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	/**
 	 * Marker used for the postedBy field on auto-postings (REQ-CLS-010).
 	 *
 	 * @var string
 	 */
 	public const SYSTEM_ACTOR = 'SYSTEM:SoftCloseExecutor';
+
+	/**
+	 * The match statuses that write an elimination entry (REQ-ICE-011).
+	 *
+	 * @var array<int,string>
+	 */
+	private const ELIMINATED_STATUSES = ['perfect-match', 'within-tolerance'];
+
+	/**
+	 * The totals a run report starts from, after its status, administration and period.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private const NEW_REPORT_TOTALS = [
+		'postingCount' => 0,
+		'accrualPostings' => 0,
+		'fxPostings' => 0,
+		'revenuePostings' => 0,
+		'leasePostings' => 0,
+		'intercompanyMatches' => 0,
+		'trialBalanceComplete' => false,
+		'completedAt' => '',
+		'alerts' => [],
+	];
 
 	/**
 	 * Construct the executor.
@@ -116,107 +141,197 @@ class SoftCloseExecutor {
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
 	 */
 	public function execute(string $administrationId, string $periodId, DateTimeImmutable $asOf): array {
-		$report = [
+		$run = new SoftCloseRun(administrationId: $administrationId, periodId: $periodId, asOf: $asOf);
+		$report = $this->startedReport(run: $run);
+
+		foreach ($this->closeSteps(run: $run) as $step => $runStep) {
+			try {
+				$report = $runStep($report);
+			} catch (\Throwable $e) {
+				return $this->fail(report: $report, step: $step, exception: $e, asOf: $asOf);
+			}
+		}
+
+		return $this->completed(run: $run, report: $report);
+	}//end execute()
+
+	/**
+	 * The report of a run that has just started.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function startedReport(SoftCloseRun $run): array {
+		return [
 			'status' => 'running',
-			'administrationId' => $administrationId,
-			'periodId' => $periodId,
-			'postingCount' => 0,
-			'accrualPostings' => 0,
-			'fxPostings' => 0,
-			'revenuePostings' => 0,
-			'leasePostings' => 0,
-			'intercompanyMatches' => 0,
-			'trialBalanceComplete' => false,
-			'completedAt' => '',
-			'alerts' => [],
+			'administrationId' => $run->administrationId,
+			'periodId' => $run->periodId,
+		] + self::NEW_REPORT_TOTALS;
+	}//end startedReport()
+
+	/**
+	 * The steps of a soft-close in order, keyed by the step name an alert carries.
+	 *
+	 * Each step takes the report and returns it updated; a step that throws
+	 * fails the run at that step with the report as it stood before it.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 *
+	 * @return array<string,callable(array<string,mixed>):array<string,mixed>>
+	 */
+	private function closeSteps(SoftCloseRun $run): array {
+		return [
+			'accruals' => fn (array $report): array => $this->accrualStep(run: $run, report: $report),
+			'fx-revaluation' => fn (array $report): array => $this->fxRevaluationStep(run: $run, report: $report),
+			'revenue-cutoff' => fn (array $report): array => $this->revenueCutoffStep(run: $run, report: $report),
+			'lease-postings' => fn (array $report): array => $this->leaseStep(run: $run, report: $report),
+			'intercompany-matching' => fn (array $report): array => $this->intercompanyStep(run: $run, report: $report),
+			'trial-balance' => fn (array $report): array => $this->trialBalanceStep(run: $run, report: $report),
+			'mark-soft-closed' => fn (array $report): array => $this->markSoftClosedStep(run: $run, report: $report),
 		];
+	}//end closeSteps()
 
-		// Step 1: execute auto-accrual rules.
-		try {
-			$accrualResult = $this->runAccrualRules(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				asOf: $asOf
-			);
-			$report['accrualPostings'] = $accrualResult['postingCount'];
-			$report['postingCount'] += $accrualResult['postingCount'];
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'accruals', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 1: execute auto-accrual rules.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function accrualStep(SoftCloseRun $run, array $report): array {
+		$accrualResult = $this->runAccrualRules(run: $run);
+		$report['accrualPostings'] = $accrualResult['postingCount'];
+		$report['postingCount'] += $accrualResult['postingCount'];
+		return $report;
+	}//end accrualStep()
 
-		// Step 2: delegate to treasury for FX revaluation + interest accruals.
-		try {
-			$report['fxPostings'] = $this->delegateFxRevaluation(administrationId: $administrationId, periodId: $periodId);
-			$report['postingCount'] += $report['fxPostings'];
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'fx-revaluation', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 2: delegate to treasury for FX revaluation + interest accruals.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function fxRevaluationStep(SoftCloseRun $run, array $report): array {
+		$report['fxPostings'] = $this->delegateFxRevaluation(administrationId: $run->administrationId, periodId: $run->periodId);
+		$report['postingCount'] += $report['fxPostings'];
+		return $report;
+	}//end fxRevaluationStep()
 
-		// Step 3: delegate to IFRS 15 for revenue cut-off.
-		try {
-			$report['revenuePostings'] = $this->delegateRevenueCutoff(administrationId: $administrationId, periodId: $periodId);
-			$report['postingCount'] += $report['revenuePostings'];
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'revenue-cutoff', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 3: delegate to IFRS 15 for revenue cut-off.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function revenueCutoffStep(SoftCloseRun $run, array $report): array {
+		$report['revenuePostings'] = $this->delegateRevenueCutoff(administrationId: $run->administrationId, periodId: $run->periodId);
+		$report['postingCount'] += $report['revenuePostings'];
+		return $report;
+	}//end revenueCutoffStep()
 
-		// Step 4: delegate to IFRS 16 lease module (skip when unavailable).
+	/**
+	 * Step 4: delegate to IFRS 16 lease module (skip when unavailable).
+	 *
+	 * IFRS 16 not implemented yet is non-fatal per design.md D3: a failure is
+	 * logged and the run goes on with the report unchanged.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function leaseStep(SoftCloseRun $run, array $report): array {
 		try {
-			$report['leasePostings'] = $this->delegateLeasePostings(administrationId: $administrationId, periodId: $periodId);
+			$report['leasePostings'] = $this->delegateLeasePostings(administrationId: $run->administrationId, periodId: $run->periodId);
 			$report['postingCount'] += $report['leasePostings'];
 		} catch (\Throwable $e) {
-			// IFRS 16 not implemented yet is non-fatal per design.md D3.
 			$this->logger->info(
 				'SoftCloseExecutor: lease postings skipped',
-				['administrationId' => $administrationId, 'periodId' => $periodId, 'reason' => $e->getMessage()]
+				['administrationId' => $run->administrationId, 'periodId' => $run->periodId, 'reason' => $e->getMessage()]
 			);
 		}
 
-		// Step 5: intercompany matching.
-		try {
-			$report['intercompanyMatches'] = $this->runIntercompanyMatching(
-				administrationId: $administrationId,
-				periodId: $periodId
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'intercompany-matching', exception: $e, asOf: $asOf);
-		}
+		return $report;
+	}//end leaseStep()
 
-		// Step 6: trial-balance generation.
-		try {
-			$report['trialBalanceComplete'] = $this->generateTrialBalance(
-				administrationId: $administrationId,
-				periodId: $periodId
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'trial-balance', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 5: intercompany matching.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function intercompanyStep(SoftCloseRun $run, array $report): array {
+		$report['intercompanyMatches'] = $this->runIntercompanyMatching(
+			administrationId: $run->administrationId,
+			periodId: $run->periodId
+		);
+		return $report;
+	}//end intercompanyStep()
 
-		// Step 7: mark PeriodStatus as soft-closed.
-		try {
-			$this->markSoftClosed(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				asOf: $asOf
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'mark-soft-closed', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 6: trial-balance generation.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function trialBalanceStep(SoftCloseRun $run, array $report): array {
+		$report['trialBalanceComplete'] = $this->generateTrialBalance(
+			administrationId: $run->administrationId,
+			periodId: $run->periodId
+		);
+		return $report;
+	}//end trialBalanceStep()
 
+	/**
+	 * Step 7: mark PeriodStatus as soft-closed.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function markSoftClosedStep(SoftCloseRun $run, array $report): array {
+		$this->markSoftClosed(
+			administrationId: $run->administrationId,
+			periodId: $run->periodId,
+			asOf: $run->asOf
+		);
+		return $report;
+	}//end markSoftClosedStep()
+
+	/**
+	 * Mark the report completed and log the completion.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report after every step.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function completed(SoftCloseRun $run, array $report): array {
 		$report['status'] = 'completed';
-		$report['completedAt'] = $asOf->format(DateTimeInterface::ATOM);
+		$report['completedAt'] = $run->asOf->format(DateTimeInterface::ATOM);
 
 		$this->logger->info(
 			'SoftCloseExecutor: soft-close completed',
 			[
-				'administrationId' => $administrationId,
-				'periodId' => $periodId,
+				'administrationId' => $run->administrationId,
+				'periodId' => $run->periodId,
 				'postingCount' => $report['postingCount'],
 			]
 		);
 
 		return $report;
-	}//end execute()
+	}//end completed()
 
 	/**
 	 * Compute the accrual amount in integer cents for one rule (REQ-CLS-003).
@@ -234,76 +349,97 @@ class SoftCloseExecutor {
 		$method = (string)($rule['calculationMethod'] ?? '');
 		$parameters = (array)($rule['calculationParameters'] ?? []);
 
-		switch ($method) {
-			case 'fixed-amount':
-				$amount = (int)($parameters['amountCents'] ?? 0);
-				return max(0, $amount);
-			case 'percentage-of-revenue':
-				$rate = (float)($parameters['rate'] ?? 0.0);
-				$revenue = (int)($context['revenueMtdCents'] ?? 0);
-				if ($rate <= 0.0 || $revenue <= 0) {
-					return 0;
-				}
-				return (int)round($revenue * $rate);
-			case 'straight-line-from-contract':
-				// PrincipalCents × annualRate × dayCount / dayCountConvention.
-				$principal = (int)($parameters['principalCents'] ?? 0);
-				$rate = (float)($parameters['annualRate'] ?? 0.0);
-				$dayCount = (int)($parameters['dayCount'] ?? 365);
-				$days = (int)($context['daysElapsed'] ?? 0);
-				if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
-					return 0;
-				}
-				return (int)round(($principal * $rate * $days) / $dayCount);
-			case 'days-elapsed-of-period':
-				$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
-				$daysElapsed = (int)($context['daysElapsed'] ?? 0);
-				$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
-				if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
-					return 0;
-				}
-				return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
-			case 'external-lookup':
-				// Lookup amount is provided by the orchestration context.
-				$lookup = (int)($context['lookupAmountCents'] ?? 0);
-				return max(0, $lookup);
-			default:
-				return 0;
-		}//end switch
+		return match ($method) {
+			'fixed-amount' => max(0, (int)($parameters['amountCents'] ?? 0)),
+			'percentage-of-revenue' => $this->revenueAccrualCents(parameters: $parameters, context: $context),
+			'straight-line-from-contract' => $this->contractAccrualCents(parameters: $parameters, context: $context),
+			'days-elapsed-of-period' => $this->periodAccrualCents(parameters: $parameters, context: $context),
+			// Lookup amount is provided by the orchestration context.
+			'external-lookup' => max(0, (int)($context['lookupAmountCents'] ?? 0)),
+			default => 0,
+		};
 
 	}//end computeAccrualCents()
 
 	/**
+	 * Accrual as a rate of the month-to-date revenue.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function revenueAccrualCents(array $parameters, array $context): int {
+		$rate = (float)($parameters['rate'] ?? 0.0);
+		$revenue = (int)($context['revenueMtdCents'] ?? 0);
+		if ($rate <= 0.0 || $revenue <= 0) {
+			return 0;
+		}
+
+		return (int)round($revenue * $rate);
+	}//end revenueAccrualCents()
+
+	/**
+	 * Straight-line contract accrual: principalCents × annualRate × days / dayCount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function contractAccrualCents(array $parameters, array $context): int {
+		// PrincipalCents × annualRate × dayCount / dayCountConvention.
+		$principal = (int)($parameters['principalCents'] ?? 0);
+		$rate = (float)($parameters['annualRate'] ?? 0.0);
+		$dayCount = (int)($parameters['dayCount'] ?? 365);
+		$days = (int)($context['daysElapsed'] ?? 0);
+		if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
+			return 0;
+		}
+
+		return (int)round(($principal * $rate * $days) / $dayCount);
+	}//end contractAccrualCents()
+
+	/**
+	 * The elapsed share of a monthly amount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function periodAccrualCents(array $parameters, array $context): int {
+		$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
+		$daysElapsed = (int)($context['daysElapsed'] ?? 0);
+		$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
+		if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
+			return 0;
+		}
+
+		return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
+	}//end periodAccrualCents()
+
+	/**
 	 * Execute every active AutoAccrualRule for the administratie + period (REQ-CLS-002, REQ-CLS-003).
 	 *
-	 * @param string $administrationId The administration scope.
-	 * @param string $periodId The yyyy-mm period.
-	 * @param DateTimeImmutable $asOf The run timestamp.
+	 * @param SoftCloseRun $run The run (administration scope, period and timestamp).
 	 *
 	 * @return array{postingCount:int,rulesEvaluated:int} The accrual summary.
 	 */
-	private function runAccrualRules(string $administrationId, string $periodId, DateTimeImmutable $asOf): array {
-		$rules = $this->findActiveRules(administrationId: $administrationId);
-		$context = [
-			'daysElapsed' => (int)$asOf->format('j'),
-			'daysInPeriod' => (int)$asOf->format('t'),
-		];
+	private function runAccrualRules(SoftCloseRun $run): array {
+		$rules = $this->findActiveRules(administrationId: $run->administrationId);
 
 		$postings = 0;
 		foreach ($rules as $rule) {
-			$amountCents = $this->computeAccrualCents(rule: $rule, context: $context);
-			if ($amountCents <= 0) {
-				continue;
+			if ($this->postAccrual(run: $run, rule: $rule) === true) {
+				$postings++;
 			}
-
-			// Persist an AutoAccrualPosting record per execution (REQ-CLS-010).
-			$this->persistAccrualPosting(
-				rule: $rule,
-				periodId: $periodId,
-				amountCents: $amountCents,
-				asOf: $asOf
-			);
-			$postings++;
 		}
 
 		return [
@@ -312,6 +448,44 @@ class SoftCloseExecutor {
 		];
 
 	}//end runAccrualRules()
+
+	/**
+	 * Post one rule's accrual for the run, when it computes to more than zero.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $rule The AutoAccrualRule record.
+	 *
+	 * @return bool True when an AutoAccrualPosting was persisted.
+	 */
+	private function postAccrual(SoftCloseRun $run, array $rule): bool {
+		$amountCents = $this->computeAccrualCents(rule: $rule, context: $this->accrualContext(run: $run));
+		if ($amountCents <= 0) {
+			return false;
+		}
+
+		// Persist an AutoAccrualPosting record per execution (REQ-CLS-010).
+		$this->persistAccrualPosting(
+			rule: $rule,
+			periodId: $run->periodId,
+			amountCents: $amountCents,
+			asOf: $run->asOf
+		);
+		return true;
+	}//end postAccrual()
+
+	/**
+	 * The accrual context of a run: the days elapsed and the days in the period.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 *
+	 * @return array{daysElapsed:int,daysInPeriod:int}
+	 */
+	private function accrualContext(SoftCloseRun $run): array {
+		return [
+			'daysElapsed' => (int)$run->asOf->format('j'),
+			'daysInPeriod' => (int)$run->asOf->format('t'),
+		];
+	}//end accrualContext()
 
 	/**
 	 * Find every active AutoAccrualRule for an administratie.
@@ -451,28 +625,91 @@ class SoftCloseExecutor {
 	}//end delegateLeasePostings()
 
 	/**
-	 * Run intercompany matching for the administratie + period.
+	 * Run intercompany matching for every relation of the administratie in the period.
 	 *
-	 * Reuses the existing IntercompanyMatchingService when available.
+	 * Each relation goes through IntercompanyMatchingService::matchRelationPeriod,
+	 * which writes the match and, for a match within tolerance, the elimination
+	 * entry. A relation already eliminated for the period is not matched again,
+	 * so a rerun of the nightly close writes no second elimination.
 	 *
 	 * @param string $administrationId The administration scope.
 	 * @param string $periodId The yyyy-mm period.
 	 *
-	 * @return int Match count.
+	 * @return int The relations eliminated for the period.
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
 	 */
 	private function runIntercompanyMatching(string $administrationId, string $periodId): int {
-		if ($this->container->has('OCA\Shillinq\Service\IntercompanyMatchingService') === false) {
+		if ($this->container->has(IntercompanyMatchingService::class) === false) {
 			return 0;
 		}
 
-		$delegate = $this->container->get('OCA\Shillinq\Service\IntercompanyMatchingService');
-		if (method_exists($delegate, 'matchForPeriod') === false) {
-			return 0;
+		$delegate = $this->container->get(IntercompanyMatchingService::class);
+		$matched  = 0;
+		foreach ($this->intercompanyRelationIds(administrationId: $administrationId) as $relationId) {
+			if ($this->isEliminated(relationId: $relationId, periodId: $periodId) === true) {
+				$matched++;
+				continue;
+			}
+
+			$match = (array)$delegate->matchRelationPeriod(relationId: $relationId, periodId: $periodId);
+			if (in_array((string)($match['matchStatus'] ?? ''), self::ELIMINATED_STATUSES, true) === true) {
+				$matched++;
+			}
 		}
 
-		$result = (array)$delegate->matchForPeriod($administrationId, $periodId);
-		return (int)($result['matchCount'] ?? 0);
+		return $matched;
 	}//end runIntercompanyMatching()
+
+	/**
+	 * The relation ids of the administratie's intercompany relations.
+	 *
+	 * @param string $administrationId The administration scope; '' for all.
+	 *
+	 * @return array<int,string> The distinct, non-empty relation ids.
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 */
+	private function intercompanyRelationIds(string $administrationId): array {
+		$filters = [];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
+
+		$found = $this->objectService
+			->setRegister($this->register())
+			->setSchema('IntercompanyRelation')
+			->findAll(['filters' => $filters]);
+
+		$ids = [];
+		foreach ($found as $relation) {
+			$relationId = (string)(((array)$relation)['relationId'] ?? '');
+			if ($relationId !== '') {
+				$ids[$relationId] = true;
+			}
+		}
+
+		return array_map('strval', array_keys($ids));
+	}//end intercompanyRelationIds()
+
+	/**
+	 * Whether the relation already has its elimination entry for the period.
+	 *
+	 * @param string $relationId The relation.
+	 * @param string $periodId The yyyy-mm period.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 */
+	private function isEliminated(string $relationId, string $periodId): bool {
+		$found = $this->objectService
+			->setRegister($this->register())
+			->setSchema('EliminationJournal')
+			->findAll(['filters' => ['eliminationId' => 'elim-match-' . $relationId . '-' . $periodId]]);
+
+		return $found !== [];
+	}//end isEliminated()
 
 	/**
 	 * Generate the trial balance summary for the administratie + period.
@@ -644,7 +881,7 @@ class SoftCloseExecutor {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

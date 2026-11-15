@@ -12,7 +12,7 @@
 		{"id":"NavSuppliers","label":"Payees","icon":"TruckOutline","route":"Payees","order":12},
 		{"id":"NavExpenseClaims","label":"Claims","icon":"ReceiptOutline","route":"ExpenseClaims","order":12},
 		{"id":"NavBankCaption","label":"Bank","type":"caption","order":13},
-		{"id":"NavBankAndPayments","label":"Bank and payments","icon":"BankOutline","route":"BankingCashflowOverview","order":13},
+		{"id":"NavBankAndPayments","label":"Bank and payments","icon":"BankOutline","route":"BankAndPayments","order":13},
 		{"id":"NavLiquidity","label":"Liquidity","icon":"ChartLine","route":"CashflowDashboard","order":13},
 		{"id":"NavAccountingCaption","label":"Accounting","type":"caption","order":14},
 		{"id":"NavLedger","label":"General Ledger","icon":"BookOutline","route":"ChartOfAccounts","order":14},

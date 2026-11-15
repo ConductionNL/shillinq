@@ -103,7 +103,7 @@ New nested object:
 
 ## Requirements
 
-### REQ-DP-001: DepositPayment Storage & Tokenization
+### Requirement: REQ-DP-001: DepositPayment Storage & Tokenization
 
 **Requirement:** DepositPayment records MUST NOT store payment card details, CVV, or authorization tokens. All sensitive payment data is handled by OpenConnector (PCI-certified).
 
@@ -114,7 +114,7 @@ New nested object:
 - **THEN** the DepositPayment stores only paymentIntentId (opaque reference from gateway), paymentGateway (mollie|stripe), paymentMethod (ideal|card|etc), and authorization status (not token)
 - **AND** no card number, expiry, or CVV is logged anywhere
 
-### REQ-DP-002: Deposit Rule Validation
+### Requirement: REQ-DP-002: Deposit Rule Validation
 
 **Requirement:** Deposit rules MUST be validated at booking-type creation time and at quote/confirmation time to prevent invalid configurations.
 
@@ -133,7 +133,7 @@ New nested object:
 - **WHEN** a booking is created for event date 2026-05-30 (9 days away)
 - **THEN** depositRequired=true, dueDate=immediately (event is within 14 days)
 
-### REQ-DP-003: Automatic ARInvoice Creation
+### Requirement: REQ-DP-003: Automatic ARInvoice Creation
 
 **Requirement:** When a DepositPayment transitions to `authorized` state, an `ARInvoice` MUST be automatically created in Shillinq, linking back to the DepositPayment.
 
@@ -145,7 +145,7 @@ New nested object:
 - **AND** an ARInvoice is created with customerId (from Order.customerId), lineItem: "Studio Portrait Session - Deposit (50%)", amount=7500, taxRate=21%, dueDate (from DepositPayment's rule: event date minus dueOffsetDays), sourceDocumentUri: "urn:nextcloud:booking:deposit-payment:dp-XXXXX", state: "issued"
 - **AND** ARInvoice.id is stored in DepositPayment.arInvoiceId
 
-### REQ-DP-004: Booking State Transition on Payment Authorization
+### Requirement: REQ-DP-004: Booking State Transition on Payment Authorization
 
 **Requirement:** Order (booking) state MUST transition from `pending_payment` to `confirmed` only after successful payment authorization.
 
@@ -163,7 +163,7 @@ New nested object:
 - **THEN** Order.state automatically transitions to cancelled
 - **AND** cancellation email is sent to customer
 
-### REQ-DP-005: Payment-Link Generation
+### Requirement: REQ-DP-005: Payment-Link Generation
 
 **Requirement:** DepositPayment MUST have a calculated `paymentLink` field (per `x-openregister-calculations`) that generates a customer-facing payment URL.
 
@@ -176,7 +176,7 @@ New nested object:
 - **AND** the link is embedded in the email as "Complete Payment"
 - **AND** clicking the link opens OpenConnector's payment UI (Mollie iDEAL, Stripe Checkout)
 
-### REQ-DP-006: Webhook Reconciliation (Mollie, Stripe)
+### Requirement: REQ-DP-006: Webhook Reconciliation (Mollie, Stripe)
 
 **Requirement:** Async payment confirmation via webhook MUST idempotently update DepositPayment state and trigger ARInvoice generation.
 
@@ -191,7 +191,7 @@ New nested object:
 - **THEN** webhook listener looks up DepositPayment by paymentIntentId, checks current state (if already authorized, idempotent: no-op), transitions state to authorized, triggers ARInvoice creation lifecycle action, and responds with HTTP 200 OK (success) or 202 (queued) per Stripe best practices
 - **AND** if the webhook arrives twice (replay), the state check prevents double-booking of ARInvoice
 
-### REQ-DP-007: Polling Fallback for Missed Webhooks
+### Requirement: REQ-DP-007: Polling Fallback for Missed Webhooks
 
 **Requirement:** A background job (T4 async worker) MUST poll OpenConnector for pending DepositPayments to ensure webhook loss doesn't cause indefinite `pending` state.
 
@@ -205,7 +205,7 @@ New nested object:
 - **AND** DepositPayment.state is updated to authorized (if not already)
 - **AND** the webhook listener's ARInvoice creation is triggered
 
-### REQ-DP-008: Refund on Booking Cancellation
+### Requirement: REQ-DP-008: Refund on Booking Cancellation
 
 **Requirement:** When a booking is cancelled and a DepositPayment has been authorized/captured, a refund MUST be initiated per the booking-type's refund policy.
 
@@ -225,7 +225,7 @@ New nested object:
 - **AND** a CR (credit note) is automatically created in Shillinq (reversing the ARInvoice, per AR module's own lifecycle)
 - **AND** refund confirmation email is sent to customer
 
-### REQ-DP-009: Multi-Currency Preparation (T5)
+### Requirement: REQ-DP-009: Multi-Currency Preparation (T5)
 
 **Requirement:** DepositPayment.currencyCode MUST be a separate field, initialized to EUR for now, with no hardcoded currency assumptions in logic.
 
@@ -236,7 +236,7 @@ New nested object:
 - **THEN** DepositPayment.currencyCode=USD, amount is converted at spot rate
 - **AND** no existing T2 code breaks because currencyCode is a declared field
 
-### REQ-DP-010: Booking-Detail Widget & Deposits Overview
+### Requirement: REQ-DP-010: Booking-Detail Widget & Deposits Overview
 
 **Requirement:** The booking-detail manifest page MUST include a deposit widget showing DepositPayment state + payment-link. A separate `Deposits` overview page MUST list all pending/failed deposits for operator management.
 
@@ -248,7 +248,7 @@ New nested object:
 - **WHEN** the operator opens the separate `Deposits` overview page (manifest entry `type: index`)
 - **THEN** it lists all deposits with columns Customer | Booking | Amount | State | Due Date | Action, filters for State (pending, authorized, captured, failed) and Date Range, and bulk actions [Void Selected] and [Resend Payment Link]
 
-### REQ-DP-011: Error Handling & Logging
+### Requirement: REQ-DP-011: Error Handling & Logging
 
 **Requirement:** Payment failures MUST be logged with error code and message, visible in both DepositPayment record and operator UI.
 
