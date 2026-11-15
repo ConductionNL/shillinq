@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\HrmqCostRateAdapter;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Tester\CommandTester;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * The audit reports, and only ever writes an unambiguous match.
@@ -125,13 +126,14 @@ class ReferencesAuditCommandTest extends TestCase {
 			 * @return array<string, mixed> The patch, echoed.
 			 */
 			public function patchObject(
-				string $objectId,
-				array $data,
-				?string $register = null,
-				?string $schema = null,
+				ObjectPatch $patch,
 				bool $_rbac = true,
-				bool $_multitenancy = true,
+				bool $_multitenancy = true
 			): array {
+				$objectId = $patch->objectId;
+				$data = $patch->data;
+				$register = $patch->target->register;
+				$schema = $patch->target->schema;
 				$this->test->writes[] = ['id' => $objectId, 'data' => $data];
 				return $data;
 			}

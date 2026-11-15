@@ -35,6 +35,8 @@ use OCA\Shillinq\Service\RegisterBinding;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Bakkerij De Korenaar's 2026 investments, over the shipped 2026 tables.
@@ -101,7 +103,11 @@ class InvestmentDeductionServiceTest extends TestCase {
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null) {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$id = ($uuid ?? strtolower($this->schema) . '-' . (count($this->store[$this->schema] ?? []) + 1));
 				$this->store[$this->schema][$id] = $object;
 
@@ -109,7 +115,8 @@ class InvestmentDeductionServiceTest extends TestCase {
 			}
 		);
 		$objects->method('deleteObject')->willReturnCallback(
-			function (string $uuid): bool {
+			function (ObjectDeletion $deletion): bool {
+				$uuid = $deletion->uuid;
 				$this->deleted[] = $this->schema . ':' . $uuid;
 				unset($this->store[$this->schema][$uuid]);
 

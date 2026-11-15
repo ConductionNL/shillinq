@@ -31,6 +31,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * The position is read through the real VATReturnService over lines posted by
@@ -280,7 +281,8 @@ final class VatPositionServiceTest extends TestCase {
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
+				$id = $deletion->uuid;
 				$this->rows[$this->schema] = array_values(
 					array_filter(($this->rows[$this->schema] ?? []), static fn (array $row): bool => (string)($row['id'] ?? '') !== $id)
 				);

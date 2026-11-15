@@ -37,6 +37,8 @@ namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
@@ -262,10 +264,11 @@ class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 	 */
 	private function save(string $scheduleId, array $patch): void {
 		$this->objectService->patchObject(
-			objectId: $scheduleId,
-			data: $patch,
-			register: $this->settings->getRegisterSlug(),
-			schema: 'ReportSchedule',
+			new ObjectPatch(
+				objectId: $scheduleId,
+				data: $patch,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'ReportSchedule')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
