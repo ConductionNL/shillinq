@@ -28,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Schema definitions read from OpenRegister.
