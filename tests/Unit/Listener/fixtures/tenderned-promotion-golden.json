@@ -1,0 +1,39 @@
+{
+    "saves": [
+        {
+            "schema": "Commitment",
+            "object": {
+                "commitmentNumber": "TN-TN-2026-0009",
+                "description": "TN-2026-0009",
+                "source": "tenderned",
+                "sourceReference": "TN-2026-0009",
+                "amount": 1250.5,
+                "termStart": "2026-03-01",
+                "termEnd": "not-a-date",
+                "milestones": [],
+                "status": "active",
+                "administrationId": "adm-y"
+            }
+        },
+        {
+            "schema": "TenderNedProcurement",
+            "object": {
+                "status": "in-uitvoering",
+                "contractValue": "1250.5",
+                "awardedSupplier": "30280353 Conduction B.V.",
+                "tenderId": "TN-2026-0009",
+                "assignmentType": "subscription",
+                "termStart": "2026-03-01",
+                "termEnd": "not-a-date",
+                "administrationId": "adm-y",
+                "commitmentId": "TN-TN-2026-0009"
+            }
+        }
+    ],
+    "events": [
+        {
+            "name": "shillinq.obligation.activated",
+            "event": {}
+        }
+    ]
+}

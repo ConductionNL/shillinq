@@ -1,0 +1,34 @@
+{
+    "scope": {
+        "administrationIds": [],
+        "fiscalYear": null,
+        "startDate": null,
+        "endDate": null,
+        "currency": "EUR"
+    },
+    "totals": {
+        "totalBudget": 0.0,
+        "committed": 0.0,
+        "spent": 0.0,
+        "remaining": 0.0,
+        "remainingRatio": 0.0,
+        "utilisation": 0.0,
+        "status": "green",
+        "programmeCount": 0
+    },
+    "programmes": {
+        "labels": [],
+        "budget": [],
+        "spent": [],
+        "committed": [],
+        "rows": []
+    },
+    "trend": {
+        "months": [],
+        "cumulativeSpend": [],
+        "budgetReference": []
+    },
+    "exceptions": [],
+    "fiscalYears": [],
+    "generatedAt": "<now>"
+}

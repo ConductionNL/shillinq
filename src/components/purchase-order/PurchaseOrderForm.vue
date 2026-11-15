@@ -206,6 +206,7 @@ import {
 	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
+import { createdRecordId } from '../../utils/createdRecordId.js'
 
 export default {
 	name: 'PurchaseOrderForm',
@@ -344,49 +345,14 @@ export default {
 		},
 
 		async onSubmit() {
-			this.error = ''
-			if (!this.administrationId) {
-				this.error = this.t('shillinq', 'Administration is required')
-				return
-			}
-			if (!this.supplierId) {
-				this.error = this.t('shillinq', 'Supplier id is required')
-				return
-			}
-			if (!this.costCenter) {
-				this.error = this.t('shillinq', 'Cost center is required')
-				return
-			}
-			if (this.total <= 0) {
-				this.error = this.t(
-					'shillinq',
-					'Purchase order total must be positive',
-				)
+			this.error = this.submitBlocker()
+			if (this.error) {
 				return
 			}
 
 			this.submitting = true
 			try {
-				const response = await axios.post(
-					generateUrl('/apps/shillinq/api/purchase-orders'),
-					{
-						administrationId: this.administrationId,
-						supplierId: this.supplierId,
-						costCenter: this.costCenter,
-						projectCode: this.projectCode,
-						currency: this.currency,
-						notes: this.notes,
-						lines: this.lines,
-					},
-				)
-				const po = response.data || {}
-				const id = po.id || (po['@self'] && po['@self'].id) || po.poNumber
-				if (id) {
-					this.$router.push({
-						name: 'PurchaseOrderDetail',
-						params: { id },
-					})
-				}
+				await this.createPurchaseOrder()
 			} catch (e) {
 				const message =
 					e?.response?.data?.error
@@ -394,6 +360,53 @@ export default {
 				this.error = message
 			} finally {
 				this.submitting = false
+			}
+		},
+
+		/**
+		 * Why the order cannot be submitted yet: the first missing required
+		 * field, or a total that is not positive; '' when it can.
+		 *
+		 * @return {string} The translated reason.
+		 */
+		submitBlocker() {
+			if (!this.administrationId) {
+				return this.t('shillinq', 'Administration is required')
+			}
+			if (!this.supplierId) {
+				return this.t('shillinq', 'Supplier id is required')
+			}
+			if (!this.costCenter) {
+				return this.t('shillinq', 'Cost center is required')
+			}
+			if (this.total <= 0) {
+				return this.t(
+					'shillinq',
+					'Purchase order total must be positive',
+				)
+			}
+			return ''
+		},
+
+		async createPurchaseOrder() {
+			const response = await axios.post(
+				generateUrl('/apps/shillinq/api/purchase-orders'),
+				{
+					administrationId: this.administrationId,
+					supplierId: this.supplierId,
+					costCenter: this.costCenter,
+					projectCode: this.projectCode,
+					currency: this.currency,
+					notes: this.notes,
+					lines: this.lines,
+				},
+			)
+			const id = createdRecordId(response.data || {}, 'poNumber')
+			if (id) {
+				this.$router.push({
+					name: 'PurchaseOrderDetail',
+					params: { id },
+				})
 			}
 		},
 	},

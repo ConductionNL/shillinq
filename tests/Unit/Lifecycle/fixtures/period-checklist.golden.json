@@ -1,0 +1,101 @@
+{
+    "storedResolved": {
+        "resolved": true,
+        "calls": [
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "fp-1"
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "storedMissing": {
+        "resolved": false,
+        "calls": [
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "fp-404"
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "storeThrows": {
+        "resolved": false,
+        "calls": [
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "fp-boom"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "error",
+                "PeriodCloseGuard: mandatoryChecklistResolved check failed \u2014 denying close (fail-closed)",
+                {
+                    "exception": "store down"
+                }
+            ]
+        ]
+    },
+    "noItems": {
+        "resolved": true,
+        "calls": []
+    },
+    "itemsNotArray": {
+        "resolved": true,
+        "calls": []
+    },
+    "allResolved": {
+        "resolved": true,
+        "calls": []
+    },
+    "apOpen": {
+        "resolved": false,
+        "calls": []
+    },
+    "arTruthy": {
+        "resolved": false,
+        "calls": []
+    },
+    "arMissingFlag": {
+        "resolved": false,
+        "calls": []
+    },
+    "upperCase": {
+        "resolved": true,
+        "calls": []
+    },
+    "nonArrayItem": {
+        "resolved": true,
+        "calls": []
+    },
+    "noCategory": {
+        "resolved": true,
+        "calls": []
+    },
+    "objectCategory": {
+        "resolved": false,
+        "calls": [
+            [
+                "log",
+                "error",
+                "PeriodCloseGuard: mandatoryChecklistResolved check failed \u2014 denying close (fail-closed)",
+                {
+                    "exception": "Object of class stdClass could not be converted to string"
+                }
+            ]
+        ]
+    }
+}

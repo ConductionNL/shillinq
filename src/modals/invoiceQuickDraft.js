@@ -206,3 +206,41 @@ export function saveQuickDraftPrefs(customerId, prefs) {
 		// Non-fatal: preferences are a convenience, not a requirement.
 	}
 }
+
+/**
+ * Apply a customer's stored preferences to a draft form: the GL account,
+ * then the first line's blank description and price and its VAT rate.
+ *
+ * @param {object} form The draft form; changed in place.
+ * @param {object|null} prefs The stored preferences, or null.
+ */
+export function applyQuickDraftPrefs(form, prefs) {
+	if (!prefs) return
+	if (prefs.glAccount) form.glAccount = String(prefs.glAccount)
+	const line = form.lines[0]
+	if (line) applyLinePrefs(line, prefs)
+}
+
+/**
+ * Fill a line's blank description and price from the preferences, then set
+ * its VAT rate when one is stored.
+ *
+ * @param {object} line The draft line; changed in place.
+ * @param {object} prefs The stored preferences.
+ */
+function applyLinePrefs(line, prefs) {
+	fillBlankLineFields(line, prefs)
+	if (prefs.vatCode !== undefined && prefs.vatCode !== null) line.vatRate = prefs.vatCode
+}
+
+/**
+ * Fill a line's blank description and price from the preferences.
+ *
+ * @param {object} line The draft line; changed in place.
+ * @param {object} prefs The stored preferences.
+ */
+function fillBlankLineFields(line, prefs) {
+	for (const field of ['description', 'unitPrice']) {
+		if (prefs[field] && !line[field]) line[field] = prefs[field]
+	}
+}

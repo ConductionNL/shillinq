@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\LedgerPivotController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Pivot\LedgerPivotService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -54,7 +54,7 @@ class LedgerPivotControllerTest extends TestCase {
 		$context->method('currentUserId')->willReturn($userId);
 		$context->method('buildContext')->willReturn(['activeAdministrationId' => 'adm-1']);
 		$context->method('canAccess')->willReturnCallback(static fn (string $id): bool => $id === 'adm-1');
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$pivot = new LedgerPivotService(
 			new InMemoryObjectServiceStub(
