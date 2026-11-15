@@ -35,6 +35,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * A store that fails yields a logged 500 that does not leak the cause; a
@@ -196,7 +197,12 @@ final class BookingNotificationControllerGapsTest extends TestCase {
 		$this->objectService->method('findAll')->willReturn([]);
 		$this->objectService->expects(self::once())
 			->method('saveObject')
-			->with(['active' => false, 'bookingId' => 'booking-1'], [], 'shillinq', 'BookingNotificationTrigger')
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => ['active' => false, 'bookingId' => 'booking-1'],
+					'extend' => [],
+					'register' => 'shillinq',
+					'schema' => 'BookingNotificationTrigger',
+				]))
 			->willThrowException(new RuntimeException('db down'));
 		$this->expectErrorLogged(message: 'Shillinq: updateBookingTriggers failed');
 
@@ -248,7 +254,9 @@ final class BookingNotificationControllerGapsTest extends TestCase {
 		$this->signIn(admin: false);
 		$this->objectService->expects(self::once())
 			->method('find')
-			->with('booking-404')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 'booking-404',
+				]))
 			->willReturn(null);
 		$this->administrationContext->expects(self::never())->method('canAccess');
 		$this->objectService->expects(self::never())->method('findAll');

@@ -50,6 +50,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Migration\IOutput;
@@ -202,10 +204,9 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 
 			$objectService->saveObject(
 				object: $arr,
-				register: $registerSlug,
-				schema: 'ACMReport',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'ACMReport')),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			return 'updated';
 		} catch (\Throwable $e) {

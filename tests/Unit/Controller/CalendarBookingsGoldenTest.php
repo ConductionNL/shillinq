@@ -44,6 +44,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use RuntimeException;
 use Stringable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Calendar bookings golden tests.
@@ -424,7 +425,9 @@ final class GoldenCalendarObjects {
 	 *
 	 * @return mixed
 	 */
-	public function saveObject(array $object, string $register, string $schema): mixed {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = ['register' => $register, 'schema' => $schema, 'object' => $object];
 		return match ($this->save) {
 			'throws' => throw new RuntimeException('disk full'),

@@ -24,6 +24,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Seed;
 
 use Closure;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\RegisterLocation;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -274,7 +276,10 @@ class SeedImporter {
 			$row['administrationId'] = $import->administrationId;
 		}
 
-		$objectService->saveObject(object: $row, register: $registerSlug, schema: $import->schema);
+		$objectService->saveObject(
+			object: $row,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $import->schema))
+		);
 		return 'seeded';
 	}//end saveRow()
 }//end class
