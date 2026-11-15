@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Cancellation reasons and withdrawals (`sales-cancellation`). Ending a
+  subscription asks for a reason (staff must give one), the Reports page gains
+  a Cancellation reasons card with ended subscriptions per quarter and the lost
+  monthly amount per reason, and a customer can end their own subscription in
+  the portal. A consumer who booked through the widget can withdraw within 14
+  days, in the portal or through a signed link in the confirmation e-mail and
+  on the widget's confirmation step: the booking is cancelled without a fee,
+  a paid deposit is refunded or recorded as due, and the withdrawal is
+  confirmed by e-mail. A service can be marked exempt from withdrawal with a
+  reason. See `docs/user-guide/bookkeeping/subscription-cancellation-reasons.md`
+  and `docs/user-guide/bookings/withdrawals.md`.
 - Automatic payment reminders (`receivables-automatic-dunning`). A daily job
   marks issued invoices past their due date as overdue and sends each overdue
   invoice the stage that is due on its customer's ladder, by email with the

@@ -23,6 +23,6 @@
 ## 4. Cross-project and docs
 
 - [ ] 4.1 Open the portaliq issue for rendering `cancel-subscription` and `withdraw` and for the guest page of a signed link, with the label text of design.md D3 (REQ-SCX-003, REQ-SCX-004). Verify: the issue link in the PR body.
-- [ ] 4.2 User guide pages on cancellation reasons and withdrawals, including how to mark a service exempt, and a release note. Verify: the pages are in `docs/` and the note in the PR body.
+- [x] 4.2 User guide pages on cancellation reasons and withdrawals, including how to mark a service exempt, and a release note. Verify: the pages are in `docs/` and the note in the PR body. Built: `docs/user-guide/bookkeeping/subscription-cancellation-reasons.md` (ending with a reason, the reason list, customer ends in the portal and the customer link from the upgrade, the report) and `docs/user-guide/bookings/withdrawals.md` (when a booking can be withdrawn, the portal and the signed link with `portal_withdrawal_url`, what a withdrawal does and its refund statuses, marking a service exempt); the release note is under Unreleased in `CHANGELOG.md` and in the PR body.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/sales-cancellation/tasks.md#task-N` on every new method, English source strings with Dutch translations for every label, mail and message.
