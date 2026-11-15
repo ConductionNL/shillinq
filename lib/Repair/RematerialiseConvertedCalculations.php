@@ -3,6 +3,9 @@
 /**
  * Shillinq RematerialiseConvertedCalculations Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `revive-declarative-calc-layer` converted 32 `x-openregister-calculations`
  * blocks from dead infix-string expressions to the JSON-AST dialect
  * `CalculationEvaluator` actually runs, and added `materialise: true` so
@@ -49,18 +52,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -69,7 +70,6 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that re-saves every existing object on the 17 schemas whose
@@ -125,7 +125,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -133,7 +133,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 * @param IAppManager $appManager App manager (installed shillinq version).
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocationInterface $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 		private readonly ObjectServiceInterface $objectService,
@@ -167,14 +167,14 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		// One full pass per installed version: a repair without an upgrade has nothing new to materialise.
-		$version = $this->appManager->getAppVersion(Application::APP_ID);
-		if ($this->appConfig->getValueString(Application::APP_ID, self::DONE_VERSION_KEY, '') === $version) {
+		$version = $this->appManager->getAppVersion(AppIdentity::APP_ID);
+		if ($this->appConfig->getValueString(AppIdentity::APP_ID, self::DONE_VERSION_KEY, '') === $version) {
 			$output->info('Shillinq: calc rematerialisation already complete for ' . $version . ', skipped.');
 			return;
 		}
 
 		try {
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			// Re-saving an object that carries a folder association goes through
 			// the Files layer, which checks the ACTING USER's folder access — a
@@ -202,7 +202,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 			);
 
 			if ($this->failures === 0) {
-				$this->appConfig->setValueString(Application::APP_ID, self::DONE_VERSION_KEY, $version);
+				$this->appConfig->setValueString(AppIdentity::APP_ID, self::DONE_VERSION_KEY, $version);
 			}
 		} catch (\Throwable $e) {
 			// Backfill is best-effort: failing it must NOT block the app

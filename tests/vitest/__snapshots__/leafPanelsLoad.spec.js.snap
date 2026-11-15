@@ -1,0 +1,64 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the contract panel load() > keeps an empty list when the envelope has none 1`] = `[]`;
+
+exports[`the contract panel load() > reads the leaf of the host, from props or the integration context 1`] = `
+[
+  {
+    "id": "c",
+  },
+]
+`;
+
+exports[`the financial documents panel load() > keeps an empty list when the envelope has none 1`] = `
+[
+  [],
+  {
+    "administerPayments": false,
+    "createQuote": false,
+    "creditInvoice": false,
+    "issueInvoice": false,
+    "raisePayout": false,
+    "requestPayment": false,
+  },
+]
+`;
+
+exports[`the financial documents panel load() > reads the leaf of the host, from props or the integration context 1`] = `
+[
+  [
+    {
+      "id": "f",
+    },
+  ],
+  {
+    "administerPayments": false,
+    "createQuote": false,
+    "creditInvoice": false,
+    "issueInvoice": false,
+    "raisePayout": false,
+    "requestPayment": false,
+    "send": true,
+  },
+]
+`;
+
+exports[`the payment requests panel load() > keeps an empty list when the envelope has none 1`] = `
+[
+  [],
+  null,
+]
+`;
+
+exports[`the payment requests panel load() > reads the leaf of the host, from props or the integration context 1`] = `
+[
+  [
+    {
+      "id": "p",
+    },
+  ],
+  {
+    "amount": 5,
+  },
+]
+`;

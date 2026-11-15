@@ -3,6 +3,9 @@
 /**
  * Backfill AR Invoice Provenance
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ARInvoice 0.16.0 declares `recurringProfileId`, `billingPeriod`,
  * `customerReference` and `invoiceLines[].glAccount`. Before it OpenRegister
  * dropped all four, so invoices saved earlier lack them: the recurring
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/recurring-invoicing/spec.md (REQ-RIN-011)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -37,9 +37,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Repair\Support\ArInvoiceProvenance;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -71,13 +71,13 @@ class BackfillArInvoiceProvenance implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The register slug.
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param ArInvoiceProvenance $provenance The derivation rules.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ArInvoiceProvenance $provenance = new ArInvoiceProvenance(),

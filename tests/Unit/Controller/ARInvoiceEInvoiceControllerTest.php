@@ -3,6 +3,9 @@
 /**
  * Unit tests for ARInvoiceEInvoiceController.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers the security-endpoint-guards re-verification of send-einvoice's
  * authorization posture: the audit's mechanical scan flagged send() as a
  * candidate because its guard is expressed as `$this->context->canAccess()`
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

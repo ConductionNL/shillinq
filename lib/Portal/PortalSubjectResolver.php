@@ -3,6 +3,9 @@
 /**
  * Portal Subject Resolver
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The ownership chain every portal write receiver in shillinq starts with: the
  * target must be an opaque object id (never a URL or a path), and the subject's
  * `customerMasterId` comes from their OWN portalAccount row in portaliq's
@@ -27,9 +30,6 @@
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003)
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -123,11 +123,36 @@ final class PortalSubjectResolver {
 				_multitenancy: false,
 			);
 
+		return $this->customerMasterIdFromClaims(claims: $this->firstAccountClaims(rows: $rows));
+	}//end customerMasterId()
+
+	/**
+	 * The claims of the first portal account found, or null when none was found.
+	 *
+	 * @param mixed $rows The findAll() result.
+	 *
+	 * @return mixed The account's claims, or null.
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 */
+	private function firstAccountClaims(mixed $rows): mixed {
 		if (is_array($rows) === false || empty($rows) === true) {
 			return null;
 		}
 
-		$claims = ($rows[0]['claims'] ?? null);
+		return ($rows[0]['claims'] ?? null);
+	}//end firstAccountClaims()
+
+	/**
+	 * The `shillinq.customerMasterId` claim, or null when absent or malformed.
+	 *
+	 * @param mixed $claims The account's claims.
+	 *
+	 * @return string|null The customer, or null.
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 */
+	private function customerMasterIdFromClaims(mixed $claims): string|null {
 		$appClaims = null;
 		if (is_array($claims) === true) {
 			$appClaims = ($claims[self::CLAIM_APP_ID] ?? null);
@@ -143,5 +168,5 @@ final class PortalSubjectResolver {
 		}
 
 		return $value;
-	}//end customerMasterId()
+	}//end customerMasterIdFromClaims()
 }//end class

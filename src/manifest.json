@@ -15,7 +15,7 @@
 			{ "id": "demo-data", "type": "choice", "display": "cards", "optionsSource": "datasets", "configKey": "demo_dataset", "loadAction": "load-demo-data", "title": "Load example data?", "required": false, "body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install." },
 			{ "id": "country", "type": "choice", "title": "Legal region (country)", "body": "In which country is this organisation legally established? This determines the available organisation types and standards.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Netherlands" }, { "value": "be", "label": "Belgium" }, { "value": "de", "label": "Germany" } ] },
 			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
-			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
+			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "optionsSource": "chartTemplates", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
 			{ "id": "administration", "type": "run-action", "title": "Create administration", "body": "Create the default administration. This registers your organisation as an administration in OpenRegister, so bookings, invoices and reports can be linked to it. Click \"Run\" to create the administration.", "action": "init-administration", "required": true },
 			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration. This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
 			{ "id": "done", "type": "summary", "title": "Done", "body": "Review your choices below and complete the installation.", "healthCheck": true }
@@ -1021,7 +1021,7 @@
 		},
 		{
 		  "id": "StoreMenu",
-		  "label": "Store",
+		  "label": "Marketplace",
 		  "icon": "StoreOutline",
 		  "route": "Store",
 		  "section": "footer",
@@ -1187,10 +1187,10 @@
 		  "id": "Store",
 		  "route": "/store",
 		  "type": "store",
-		  "title": "Store",
+		  "title": "Marketplace",
 		  "config": {
 		    "app": "shillinq",
-		    "title": "Store",
+		    "title": "Marketplace",
 		    "description": "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them."
 		  },
 		  "_note": "ADR-114 Decision 4 / ADR-080. Declarative: openregister hosts the store plane, so this app writes NO store controller. With no registry configured the page renders the app's built-in items and makes NO network call."
@@ -2681,6 +2681,14 @@
 						"route": "FinancialPivot"
 					},
 					{
+						"id": "CancellationReasons",
+						"label": "Cancellation reasons",
+						"description": "Why subscriptions ended, per quarter.",
+						"icon": "AccountCancelOutline",
+						"category": "financial",
+						"route": "CancellationReasons"
+					},
+					{
 						"id": "GeneratedReportsIndex",
 						"label": "Generated reports",
 						"description": "Everything Reporting & Compliance has already produced.",
@@ -2931,7 +2939,7 @@
 			"title": "SBR/XBRL Filing",
 			"config": {
 				"register": "shillinq",
-				"_note": "SBR/XBRL filing detail — an XBRL instance filed via Digipoort (entry point, taxonomy version, instance hash, receipt). The instance XML is available under Files; audit trail evidences submission and Digipoort acceptance/rejection.",
+				"_note": "SBR/XBRL filing detail — an XBRL instance filed via Digipoort (entry point, taxonomy version, instance hash, receipt). The instance XML is available under Files; audit trail evidences submission and Digipoort acceptance/rejection. The filing type, the Digipoort reference, the errors of a rejection and the Download XBRL action follow the filing through integriq (tax-digipoort-filing REQ-TDF-002, REQ-TDF-004).",
 				"auditTrail": true,
 				"schema": "XbrlInstance",
 				"fields": [
@@ -2943,6 +2951,11 @@
 					{
 						"key": "entryPoint",
 						"label": "Entry point",
+						"type": "string"
+					},
+					{
+						"key": "filingType",
+						"label": "Filing type",
 						"type": "string"
 					},
 					{
@@ -2966,6 +2979,11 @@
 						"type": "string"
 					},
 					{
+						"key": "sourceReturnId",
+						"label": "Source VAT return",
+						"type": "string"
+					},
+					{
 						"key": "mappingId",
 						"label": "Mapping",
 						"type": "string"
@@ -2982,7 +3000,12 @@
 					},
 					{
 						"key": "digipoortReceiptId",
-						"label": "Digipoort receipt id",
+						"label": "Digipoort reference",
+						"type": "string"
+					},
+					{
+						"key": "handOffReference",
+						"label": "Hand-off reference",
 						"type": "string"
 					},
 					{
@@ -2997,7 +3020,7 @@
 					},
 					{
 						"key": "rejectionReason",
-						"label": "Rejection reason",
+						"label": "Errors",
 						"type": "string"
 					},
 					{
@@ -3006,9 +3029,29 @@
 						"type": "string"
 					},
 					{
+						"key": "payloadFileUri",
+						"label": "Filed file",
+						"type": "string"
+					},
+					{
 						"key": "instanceXml",
 						"label": "XBRL instance",
 						"type": "code"
+					}
+				],
+				"actions": [
+					{
+						"id": "download-xbrl",
+						"label": "Download XBRL",
+						"icon": "DownloadOutline",
+						"type": "api-call",
+						"method": "GET",
+						"url": "/apps/shillinq/api/sbr-filings/@objectId/xbrl",
+						"download": true,
+						"filename": "sbr-filing.xbrl",
+						"successMessage": "XBRL file downloaded.",
+						"errorMessage": "The XBRL file could not be downloaded.",
+						"description": "Download the filing's XBRL instance, in any state."
 					}
 				],
 				"indexRoute": "SbrXbrlFilings",
@@ -3233,6 +3276,62 @@
 			"title": "Bank Connection",
 			"config": {
 				"register": "shillinq",
+				"widgets": [
+					{
+						"id": "data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"register": "shillinq",
+							"schema": "BankConnection",
+							"columns": 3
+						}
+					},
+					{
+						"id": "related",
+						"type": "related",
+						"title": "Related",
+						"content": {
+							"title": "",
+							"groups": []
+						}
+					},
+					{
+						"id": "connection-statement-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Imported statements",
+						"icon": "FileDocumentMultipleOutline"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "related",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "connection-statement-files",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				],
 				"_note": "Bank Connection detail — a linked bank account feed (PSD2/statement import). Imported bank statements from this connection are listed; audit trail evidences connection and mandate changes.",
 				"relatedLists": [
 					{
@@ -4395,6 +4494,66 @@
 						]
 					}
 				],
+				"relatedCollections": [
+					{
+						"title": "Booked lines",
+						"register": "shillinq",
+						"schema": "GLLine",
+						"filter": {
+							"transactionId": "@objectId"
+						},
+						"sort": {
+							"field": "lineNumber",
+							"dir": "asc"
+						},
+						"columns": [
+						{
+							"key": "lineNumber",
+							"label": "#"
+						},
+						{
+							"key": "accountNumber",
+							"label": "Account"
+						},
+						{
+							"key": "side",
+							"label": "D/C"
+						},
+						{
+							"key": "transactionAmount",
+							"label": "Transaction amount"
+						},
+						{
+							"key": "transactionCurrency",
+							"label": "Transaction currency"
+						},
+						{
+							"key": "fxRate",
+							"label": "Exchange rate"
+						},
+						{
+							"key": "fxRateSource",
+							"label": "Rate source"
+						},
+						{
+							"key": "fxRateDate",
+							"label": "Rate date"
+						},
+						{
+							"key": "amount",
+							"label": "Base amount"
+						},
+						{
+							"key": "baseCurrency",
+							"label": "Base currency"
+						},
+						{
+							"key": "description",
+							"label": "Description"
+						}
+						]
+					}
+				],
 				"lifecycleActions": true,
 				"indexRoute": "GeneralLedger",
 				"sidebarProps": {
@@ -4556,6 +4715,66 @@
 						"key": "lines",
 						"label": "Lines",
 						"type": "array"
+					}
+				],
+				"relatedCollections": [
+					{
+						"title": "Posted lines",
+						"register": "shillinq",
+						"schema": "GLLine",
+						"filter": {
+							"transactionId": "@object.glTransactionId"
+						},
+						"sort": {
+							"field": "lineNumber",
+							"dir": "asc"
+						},
+						"columns": [
+						{
+							"key": "lineNumber",
+							"label": "#"
+						},
+						{
+							"key": "accountNumber",
+							"label": "Account"
+						},
+						{
+							"key": "side",
+							"label": "D/C"
+						},
+						{
+							"key": "transactionAmount",
+							"label": "Transaction amount"
+						},
+						{
+							"key": "transactionCurrency",
+							"label": "Transaction currency"
+						},
+						{
+							"key": "fxRate",
+							"label": "Exchange rate"
+						},
+						{
+							"key": "fxRateSource",
+							"label": "Rate source"
+						},
+						{
+							"key": "fxRateDate",
+							"label": "Rate date"
+						},
+						{
+							"key": "amount",
+							"label": "Base amount"
+						},
+						{
+							"key": "baseCurrency",
+							"label": "Base currency"
+						},
+						{
+							"key": "description",
+							"label": "Description"
+						}
+						]
 					}
 				],
 				"lifecycleActions": true,
@@ -7349,20 +7568,23 @@
 				"widgets": [
 					{
 						"id": "nearing-retention",
-						"title": "Retention periods expiring soon",
-						"type": "stats-block",
-						"iconClass": "icon-calendar",
-						"props": {
-							"countLabel": "bewaartermijnen",
-							"variant": "warning"
-						},
-						"dataSource": {
-							"register": "shillinq",
-							"schema": "RetentionRule",
-							"filter": {
-								"daysUntilRetention_lt": 90
+						"title": "Records due for destruction",
+						"type": "stat",
+						"content": {
+							"label": "Records due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/retention/due"
 							},
-							"aggregate": "count"
+							"valueField": "total",
+							"clickRoute": "RetentionDueRecords",
+							"variantWhen": [
+								{
+									"op": "gt",
+									"value": 0,
+									"variant": "warning"
+								}
+							]
 						}
 					}
 				],
@@ -10944,6 +11166,62 @@
 			"title": "Expense Claim",
 			"config": {
 				"register": "shillinq",
+				"widgets": [
+					{
+						"id": "data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"register": "shillinq",
+							"schema": "ExpenseClaimEntry",
+							"columns": 3
+						}
+					},
+					{
+						"id": "related",
+						"type": "related",
+						"title": "Related",
+						"content": {
+							"title": "",
+							"groups": []
+						}
+					},
+					{
+						"id": "claim-receipt-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Receipt evidence",
+						"icon": "Receipt"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "related",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "claim-receipt-files",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				],
 				"_note": "Expense Claim detail — an employee reimbursement claim aggregating receipts, per-diems and mileage into one approvable total. Related receipts and mileage entries list the underlying evidence; source receipt images live under Files. Audit trail evidences the approval workflow.",
 				"relatedLists": [
 					{
@@ -11116,6 +11394,18 @@
 										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
 										"collapsed": true
 									}
+								}
+							]
+						},
+						{
+							"id": "talk",
+							"label": "Chat",
+							"icon": "ChatOutline",
+							"order": 85,
+							"widgets": [
+								{
+									"type": "integration",
+									"integrationId": "talk"
 								}
 							]
 						},
@@ -11370,6 +11660,62 @@
 			"title": "BTW return",
 			"config": {
 				"register": "shillinq",
+				"widgets": [
+					{
+						"id": "data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"register": "shillinq",
+							"schema": "VatReturn",
+							"columns": 3
+						}
+					},
+					{
+						"id": "related",
+						"type": "related",
+						"title": "Related",
+						"content": {
+							"title": "",
+							"groups": []
+						}
+					},
+					{
+						"id": "vat-return-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Filed return attachment",
+						"icon": "FileDocument"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "related",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "vat-return-files",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				],
 				"_note": "BTW return detail — a periodic VAT return (rubrieken, verschuldigde omzetbelasting, voorbelasting, te betalen/teruggave) filed via Digipoort. The filed attachment lives under Files; audit trail evidences submission and acceptance.",
 				"auditTrail": true,
 				"schema": "VatReturn",
@@ -20196,8 +20542,8 @@
 			"route": "/flows",
 			"type": "index",
 			"title": "Flows",
-			"config": { "entitySource": "flows", "app": "shillinq" },
-			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. An ordinary index over the named `flows` source (config.entitySource) rather than the deprecated `flows` page type, reading OpenRegister's one native flow store (ADR-065), scoped to this app by config.app."
+			"config": { "entitySource": "flows", "app": "shillinq", "rowRoute": "FlowDetail" },
+			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. An ordinary index over the named `flows` source (config.entitySource) rather than the deprecated `flows` page type, reading OpenRegister's one native flow store (ADR-065), scoped to this app by config.app. rowRoute names the FlowDetail page (a route name, not a path): a named-source page has no register and schema, so without it a row click opens nothing and Edit falls back to the source's own /flows path."
 		},
 		{
 			"id": "FlowDetail",

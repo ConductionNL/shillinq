@@ -42,6 +42,20 @@ final class InvoiceGenerationRequest {
 	public const MODELS = ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed', 'usage'];
 
 	/**
+	 * Refusal message per billing model when its required input is missing.
+	 *
+	 * @var array<string,string>
+	 */
+	private const MODEL_INPUT_MESSAGES = [
+		't_and_m' => 'rateCardId is required for t_and_m model.',
+		'retainer' => 'retainerScheduleId is required for retainer model.',
+		'mixed' => 'retainerScheduleId is required for mixed model.',
+		'fixed_fee' => 'fixedFeeCents > 0 is required for fixed_fee model.',
+		'milestone' => 'milestoneId is required for milestone model.',
+		'usage' => 'meterReadingIds is required for usage model.',
+	];
+
+	/**
 	 * Construct a validated invoice-generation request.
 	 *
 	 * @param string $administrationId Server-resolved tenant scope (NOT client-supplied).
@@ -97,70 +111,82 @@ final class InvoiceGenerationRequest {
 			$fixedFee = (int)$fixedFee;
 		}
 
-		if (isset($body['rateCardId']) === true) {
-			$rateCardId = (string)$body['rateCardId'];
-		} else {
-			$rateCardId = null;
-		}
-
-		if (isset($body['retainerScheduleId']) === true) {
-			$retainerScheduleId = (string)$body['retainerScheduleId'];
-		} else {
-			$retainerScheduleId = null;
-		}
-
-		if (isset($body['milestoneId']) === true) {
-			$milestoneId = (string)$body['milestoneId'];
-		} else {
-			$milestoneId = null;
-		}
-
-		if (isset($body['projectId']) === true) {
-			$projectId = (string)$body['projectId'];
-		} else {
-			$projectId = null;
-		}
-
-		if (isset($body['notes']) === true) {
-			$notes = (string)$body['notes'];
-		} else {
-			$notes = null;
-		}
-
-		if (isset($body['usageRatePlanId']) === true) {
-			$usageRatePlanId = (string)$body['usageRatePlanId'];
-		} else {
-			$usageRatePlanId = null;
-		}
-
 		return new self(
 			administrationId: $administrationId,
 			billingModel: (string)($body['billingModel'] ?? ''),
 			customerId: (string)($body['customerId'] ?? ''),
 			fromDate: (string)($body['fromDate'] ?? ''),
 			toDate: (string)($body['toDate'] ?? ''),
-			timeEntryIds: array_values(array_map('strval', (array)($body['timeEntryIds'] ?? []))),
-			expenseIds: array_values(array_map('strval', (array)($body['expenseIds'] ?? []))),
-			rateCardId: $rateCardId,
-			retainerScheduleId: $retainerScheduleId,
+			timeEntryIds: self::stringList(body: $body, key: 'timeEntryIds'),
+			expenseIds: self::stringList(body: $body, key: 'expenseIds'),
+			rateCardId: self::optionalString(body: $body, key: 'rateCardId'),
+			retainerScheduleId: self::optionalString(body: $body, key: 'retainerScheduleId'),
 			fixedFeeCents: $fixedFee,
-			milestoneId: $milestoneId,
-			projectId: $projectId,
-			notes: $notes,
-			meterReadingIds: array_values(array_map('strval', (array)($body['meterReadingIds'] ?? []))),
-			usageRatePlanId: $usageRatePlanId,
+			milestoneId: self::optionalString(body: $body, key: 'milestoneId'),
+			projectId: self::optionalString(body: $body, key: 'projectId'),
+			notes: self::optionalString(body: $body, key: 'notes'),
+			meterReadingIds: self::stringList(body: $body, key: 'meterReadingIds'),
+			usageRatePlanId: self::optionalString(body: $body, key: 'usageRatePlanId'),
 		);
 
 	}//end fromArray()
 
 	/**
-	 * Assert structural validity per the billing-model contract.
+	 * Read an optional string field: null when it is absent or null.
+	 *
+	 * @param array<string,mixed> $body Decoded request body.
+	 * @param string              $key  The field name.
+	 *
+	 * @return string|null The value as a string, or null.
+	 */
+	private static function optionalString(array $body, string $key): string|null {
+		if (isset($body[$key]) === true) {
+			return (string)$body[$key];
+		}
+
+		return null;
+
+	}//end optionalString()
+
+	/**
+	 * Read an id-list field as a list of strings (a scalar becomes one entry).
+	 *
+	 * @param array<string,mixed> $body Decoded request body.
+	 * @param string              $key  The field name.
+	 *
+	 * @return array<int,string> The ids.
+	 */
+	private static function stringList(array $body, string $key): array {
+		return array_values(array_map('strval', (array)($body[$key] ?? [])));
+
+	}//end stringList()
+
+	/**
+	 * Assert structural validity per the billing-model contract: scope first,
+	 * then the period, then the inputs the billing model needs.
 	 *
 	 * @throws InvalidArgumentException
 	 *
 	 * @return void
 	 */
 	private function assertValid(): void {
+		$this->assertScope();
+		$this->assertPeriod();
+
+		if ($this->hasModelInputs() === false) {
+			throw new InvalidArgumentException(self::MODEL_INPUT_MESSAGES[$this->billingModel]);
+		}
+
+	}//end assertValid()
+
+	/**
+	 * Administration, a known billing model and a customer are required.
+	 *
+	 * @throws InvalidArgumentException
+	 *
+	 * @return void
+	 */
+	private function assertScope(): void {
 		if ($this->administrationId === '') {
 			throw new InvalidArgumentException('administrationId is required.');
 		}
@@ -173,6 +199,16 @@ final class InvoiceGenerationRequest {
 			throw new InvalidArgumentException('customerId is required.');
 		}
 
+	}//end assertScope()
+
+	/**
+	 * Both dates are required and fromDate must not lie after toDate.
+	 *
+	 * @throws InvalidArgumentException
+	 *
+	 * @return void
+	 */
+	private function assertPeriod(): void {
 		if ($this->fromDate === '' || $this->toDate === '') {
 			throw new InvalidArgumentException('fromDate and toDate are required.');
 		}
@@ -181,25 +217,22 @@ final class InvoiceGenerationRequest {
 			throw new InvalidArgumentException('fromDate must be <= toDate.');
 		}
 
-		if ($this->billingModel === 't_and_m' && $this->rateCardId === null) {
-			throw new InvalidArgumentException('rateCardId is required for t_and_m model.');
-		}
+	}//end assertPeriod()
 
-		if (in_array($this->billingModel, ['retainer', 'mixed'], true) === true && $this->retainerScheduleId === null) {
-			throw new InvalidArgumentException(sprintf('retainerScheduleId is required for %s model.', $this->billingModel));
-		}
+	/**
+	 * True when the request carries the input its billing model needs.
+	 *
+	 * @return bool True when the model's required input is present.
+	 */
+	private function hasModelInputs(): bool {
+		return match ($this->billingModel) {
+			't_and_m' => $this->rateCardId !== null,
+			'retainer', 'mixed' => $this->retainerScheduleId !== null,
+			'fixed_fee' => $this->fixedFeeCents !== null && $this->fixedFeeCents > 0,
+			'milestone' => $this->milestoneId !== null,
+			'usage' => $this->meterReadingIds !== [],
+			default => true,
+		};
 
-		if ($this->billingModel === 'fixed_fee' && ($this->fixedFeeCents === null || $this->fixedFeeCents <= 0)) {
-			throw new InvalidArgumentException('fixedFeeCents > 0 is required for fixed_fee model.');
-		}
-
-		if ($this->billingModel === 'milestone' && $this->milestoneId === null) {
-			throw new InvalidArgumentException('milestoneId is required for milestone model.');
-		}
-
-		if ($this->billingModel === 'usage' && $this->meterReadingIds === []) {
-			throw new InvalidArgumentException('meterReadingIds is required for usage model.');
-		}
-
-	}//end assertValid()
+	}//end hasModelInputs()
 }//end class

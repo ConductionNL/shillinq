@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\AppInfo\LedgerPostingRegistration;
+use OCA\Shillinq\Lifecycle\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\Action\EvaluateAllocationRulesAction;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Lifecycle\Action\StampPostingAction;

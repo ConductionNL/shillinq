@@ -4,6 +4,9 @@
  * Aggregation + compliance integration test for member 02 of the
  * bookkeeping-waterschappen-bbv-variant chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Loads the slice-02 register fragment via the same deep-merge that
  * SettingsService runs at install time, asserts that the
  * x-openregister-aggregations block on BBVProgramme materialises with the
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

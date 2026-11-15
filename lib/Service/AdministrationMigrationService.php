@@ -3,6 +3,9 @@
 /**
  * Administration Migration Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic helper for the AdministrationMigration audit-trail dual-post
  * flow (REQ-MA-006 / Task 20). A migration captures an asset / contract /
  * employee transfer between two administraties; the bookkeeping side is a
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

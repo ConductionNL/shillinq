@@ -32,9 +32,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\KorMonitorService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\KorMonitorServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,19 +52,19 @@ class KorController extends Controller {
 	 * Constructor for the KorController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param KorMonitorService $korMonitorService The KOR drempel-bewaking service.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param KorMonitorServiceInterface $korMonitorService The KOR drempel-bewaking service.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly KorMonitorService $korMonitorService,
-		private readonly AdministrationContextService $context,
+		private readonly KorMonitorServiceInterface $korMonitorService,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -96,59 +96,123 @@ class KorController extends Controller {
 		}
 
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$yearParam = trim((string)$this->request->getParam('year', ''));
 
+		$refusal = $this->administrationRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$year = $this->requestedYear();
+		if ($year instanceof JSONResponse) {
+			return $year;
+		}
+
+		return $this->status(administrationId: $administrationId, year: $year);
+	}//end monitor()
+
+	/**
+	 * The 400 for a missing or malformed administration, or the masked 404
+	 * when the caller may not access it.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function administrationRefusal(string $administrationId): ?JSONResponse {
 		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'administration_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'administration_id is required');
 		}
 
 		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(
-				['error' => 'administration_id must be a valid administration identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'administration_id must be a valid administration identifier');
 		}
 
 		if ($this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$year = (int)date('Y');
-		if ($yearParam !== '') {
-			if (preg_match('/^[0-9]{4}$/', $yearParam) !== 1) {
-				return new JSONResponse(
-					['error' => 'year must be a four-digit calendar year'],
-					Http::STATUS_BAD_REQUEST
-				);
-			}
+		return null;
+	}//end administrationRefusal()
 
-			$year = (int)$yearParam;
+	/**
+	 * The requested calendar year (the current year when none is given), or
+	 * the 400 for one that is not four digits.
+	 *
+	 * @return int|JSONResponse
+	 */
+	private function requestedYear(): int|JSONResponse {
+		$yearParam = trim((string)$this->request->getParam('year', ''));
+		$year = (int)date('Y');
+		if ($yearParam === '') {
+			return $year;
 		}
 
+		if (preg_match('/^[0-9]{4}$/', $yearParam) !== 1) {
+			return $this->badRequest(error: 'year must be a four-digit calendar year');
+		}
+
+		return (int)$yearParam;
+	}//end requestedYear()
+
+	/**
+	 * A 400 with an error.
+	 *
+	 * @param string $error The error.
+	 *
+	 * @return JSONResponse
+	 */
+	private function badRequest(string $error): JSONResponse {
+		return new JSONResponse(
+			['error' => $error],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end badRequest()
+
+	/**
+	 * Compute the KOR threshold status of the year; a failure is a logged 500.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 * @param int    $year             The calendar year.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+	 */
+	private function status(string $administrationId, int $year): JSONResponse {
 		try {
 			$result = $this->korMonitorService->status(
 				administrationId: $administrationId,
 				year: $year
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'KorController: failed to compute KOR drempel-status',
-				[
-					'administrationId' => $administrationId,
-					'year' => $year,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to compute KOR threshold status'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
+			return $this->statusFailed(
+				context: ['administrationId' => $administrationId, 'year' => $year],
+				e: $e
 			);
 		}//end try
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end monitor()
+	}//end status()
+
+	/**
+	 * Log a failed status computation and answer 500 without a stack trace.
+	 *
+	 * @param array<string, string|int> $context The administration and year, as log context.
+	 * @param \Throwable                $e       The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function statusFailed(array $context, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'KorController: failed to compute KOR drempel-status',
+			$context + ['exception' => $e->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute KOR threshold status'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end statusFailed()
 }//end class

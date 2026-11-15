@@ -3,6 +3,9 @@
 /**
  * Fixed-Asset Disposal Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (shillinq#417 / #446): the missing
  * disposal-journal trigger. {@see \OCA\Shillinq\Service\DisposalJournalEmitter}
  * fully implements the closing `GLTransaction` payload for a retired
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\FixedAssetDisposalService;
+use OCA\Shillinq\Kernel\Contracts\FixedAssetDisposalServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -71,13 +71,20 @@ class FixedAssetDisposalListener implements IEventListener {
 	private const STATE_RETIRED = 'retired';
 
 	/**
+	 * The schema slugs a FixedAsset transition may carry (lower-cased).
+	 *
+	 * @var array<int,string>
+	 */
+	private const FIXED_ASSET_SCHEMAS = ['fixedasset', 'fixed-asset', 'fixed_asset'];
+
+	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param FixedAssetDisposalService $disposalService The disposal posting orchestrator.
+	 * @param FixedAssetDisposalServiceInterface $disposalService The disposal posting orchestrator.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly FixedAssetDisposalService $disposalService,
+		private readonly FixedAssetDisposalServiceInterface $disposalService,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -98,34 +105,10 @@ class FixedAssetDisposalListener implements IEventListener {
 		}
 
 		try {
-			$schema = strtolower(trim((string)$event->getSchema()));
-			if ($schema !== 'fixedasset' && $schema !== 'fixed-asset' && $schema !== 'fixed_asset') {
-				return;
+			$asset = $this->retiredAsset(event: $event);
+			if ($asset !== null) {
+				$this->postDisposal(asset: $asset);
 			}
-
-			if ((string)$event->getTo() !== self::STATE_RETIRED) {
-				return;
-			}
-
-			$entity = $event->getObject();
-			$object = $entity->getObject();
-			if (is_array($object) === false) {
-				return;
-			}
-
-			$administrationId = trim((string)($object['administrationId'] ?? ''));
-			if ($administrationId === '') {
-				$this->logger->warning(
-					'FixedAssetDisposalListener: retired FixedAsset carries no administrationId; disposal journal skipped',
-					['assetNumber' => ($object['assetNumber'] ?? null)]
-				);
-				return;
-			}
-
-			$this->disposalService->postDisposalJournal(
-				administrationId: $administrationId,
-				asset: $object
-			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'FixedAssetDisposalListener: failed to post the fixed-asset disposal journal',
@@ -134,4 +117,50 @@ class FixedAssetDisposalListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The FixedAsset this transition retired, or null for any other transition.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition event.
+	 *
+	 * @return array<string,mixed>|null The asset.
+	 */
+	private function retiredAsset(ObjectTransitionedEvent $event): array|null {
+		$schema = strtolower(trim((string)$event->getSchema()));
+		if (in_array($schema, self::FIXED_ASSET_SCHEMAS, true) === false || (string)$event->getTo() !== self::STATE_RETIRED) {
+			return null;
+		}
+
+		$object = $event->getObject()->getObject();
+		if (is_array($object) === false) {
+			return null;
+		}
+
+		return $object;
+
+	}//end retiredAsset()
+
+	/**
+	 * Post the retired asset's disposal journal; an asset without administration is skipped.
+	 *
+	 * @param array<string,mixed> $asset The retired FixedAsset.
+	 *
+	 * @return void
+	 */
+	private function postDisposal(array $asset): void {
+		$administrationId = trim((string)($asset['administrationId'] ?? ''));
+		if ($administrationId === '') {
+			$this->logger->warning(
+				'FixedAssetDisposalListener: retired FixedAsset carries no administrationId; disposal journal skipped',
+				['assetNumber' => ($asset['assetNumber'] ?? null)]
+			);
+			return;
+		}
+
+		$this->disposalService->postDisposalJournal(
+			administrationId: $administrationId,
+			asset: $asset
+		);
+
+	}//end postDisposal()
 }//end class

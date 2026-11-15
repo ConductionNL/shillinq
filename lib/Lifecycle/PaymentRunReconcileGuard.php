@@ -28,16 +28,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\OpenRegister\Lifecycle\GuardResult;
-use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Service\ServerWriteAuthority;
-
 /**
  * Lets a payment run become reconciled only through a CAMT.053 match.
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.3
  */
-final class PaymentRunReconcileGuard implements LifecycleGuardInterface {
+final class PaymentRunReconcileGuard extends ServerWriteGrantGuard {
 
 	/**
 	 * The grant PaymentRunReconciliationService holds while it saves a full match.
@@ -52,36 +48,4 @@ final class PaymentRunReconcileGuard implements LifecycleGuardInterface {
 	 * @var string
 	 */
 	public const MESSAGE = 'A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it.';
-
-	/**
-	 * Construct the guard.
-	 *
-	 * @param ServerWriteAuthority $authority The request-scoped write grants.
-	 */
-	public function __construct(
-		private readonly ServerWriteAuthority $authority,
-	) {
-	}//end __construct()
-
-	/**
-	 * Allow the transition only under the CAMT match grant.
-	 *
-	 * @param array<string, mixed> $object The run as it would be saved.
-	 * @param string               $action The transition, `reconcile`.
-	 * @param string               $userId The caller.
-	 *
-	 * @return GuardResult
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
-	 *
-	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.3
-	 */
-	public function check(array $object, string $action, string $userId): GuardResult {
-		$id = (string)($object['id'] ?? ($object['@self']['id'] ?? ''));
-		if ($this->authority->holds(purpose: self::PURPOSE, objectId: $id) === true) {
-			return GuardResult::allow();
-		}
-
-		return GuardResult::deny(self::MESSAGE);
-	}//end check()
 }//end class

@@ -28,7 +28,7 @@ use OCA\Shillinq\Service\Commitment\CommitmentCarryOverService;
 use OCA\Shillinq\Service\Commitment\CommitmentInvoicing;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -128,7 +128,7 @@ trait CommitmentYearEndFixture {
 	 * @return CommitmentLedger
 	 */
 	private function ledger(): CommitmentLedger {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$time = $this->createMock(ITimeFactory::class);
 		$time->method('getDateTime')->willReturn(new DateTime('2026-12-31'));

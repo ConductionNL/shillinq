@@ -25,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\InboundPayableService;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -47,8 +47,8 @@ class InboundPayableController extends Controller {
 	 *
 	 * @param string                  $appName    The app id.
 	 * @param IRequest                $request    The request.
-	 * @param PaymentActionAuthorizer $authorizer The payment action matrix.
-	 * @param InboundPayableService   $payables   Books and records the steps.
+	 * @param PaymentActionAuthorizerInterface $authorizer The payment action matrix.
+	 * @param InboundPayableServiceInterface   $payables   Books and records the steps.
 	 * @param LoggerInterface         $logger     Logs a step that failed for another reason.
 	 *
 	 * @return void
@@ -56,8 +56,8 @@ class InboundPayableController extends Controller {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly PaymentActionAuthorizer $authorizer,
-		private readonly InboundPayableService $payables,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
+		private readonly InboundPayableServiceInterface $payables,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -74,7 +74,7 @@ class InboundPayableController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function approve(string $id): JSONResponse {
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Approving a payout needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
 		}
 
@@ -95,7 +95,7 @@ class InboundPayableController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function markPaid(string $id, string $bankReference = '', string $bankAccount = '', string $paidOn = ''): JSONResponse {
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Marking a payout paid needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
 		}
 
@@ -116,7 +116,7 @@ class InboundPayableController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function reject(string $id, string $reason = ''): JSONResponse {
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Rejecting a payout needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
 		}
 
