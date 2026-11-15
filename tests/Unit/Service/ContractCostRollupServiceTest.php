@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\SubjectCostService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Covers the roll-up, its timestamp, the unlink and, above all, that the unlink
@@ -80,7 +81,9 @@ final class ContractCostRollupServiceTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->saved[] = ['schema' => $schema, 'object' => $object];
 				return $object;
 			}

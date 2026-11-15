@@ -31,6 +31,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Run the job over a fake store: which lots raise which alerts, how existing
@@ -175,7 +176,9 @@ class LotExpiryAlertJobRunTest extends TestCase {
 			 * @param string $schema   The schema.
 			 * @return array
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->test->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 				return $object;
 			}
