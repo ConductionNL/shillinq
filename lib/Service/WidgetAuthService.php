@@ -31,6 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
@@ -636,9 +638,8 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 			$registerSlug = $this->settings->getRegisterSlug();
 			$saved = $objectService->saveObject(
 				object: $data,
-				register: $registerSlug,
-				schema: $schema,
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema)),
+				_rbac: false
 			);
 
 			return $this->toArray(object: $saved);
@@ -674,9 +675,10 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 			$registerSlug = $this->settings->getRegisterSlug();
 			$saved = $objectService->saveObject(
 				object: $data,
-				register: $registerSlug,
-				schema: $schema,
-				uuid: $id,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: $schema),
+					uuid: $id
+				)
 			);
 
 			return $this->toArray(object: $saved);
