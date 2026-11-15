@@ -412,7 +412,7 @@ class PortalAssertionVerifierTest extends TestCase {
 	 * @return void
 	 */
 	public function testSignedNonObjectClaimsAreRejectedAndLogged(): void {
-		$logger = $this->createMock(LoggerInterface::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$logger->expects($this->once())
 			->method('debug')
 			->with('Shillinq: portal assertion rejected', ['reason' => 'malformed claims']);
@@ -421,8 +421,8 @@ class PortalAssertionVerifierTest extends TestCase {
 		$cPart = $this->b64UrlEncode(bytes: 'not-json');
 		$sig   = $this->b64UrlEncode(bytes: hash_hmac('sha256', $hPart . '.' . $cPart, self::SECRET, true));
 
-		$verifier = new PortalAssertionVerifier(config: null, secretOverride: self::SECRET, logger: $logger);
-		$this->assertNull($verifier->verify($hPart . '.' . $cPart . '.' . $sig));
+		$verifier = new PortalAssertionVerifier(secretOverride: self::SECRET, logger: $logger);
+		$this->assertNull(actual: $verifier->verify($hPart . '.' . $cPart . '.' . $sig));
 
 	}//end testSignedNonObjectClaimsAreRejectedAndLogged()
 
@@ -433,26 +433,26 @@ class PortalAssertionVerifierTest extends TestCase {
 	 */
 	public function testRejectionReasonIsLoggedAndSuccessIsSilent(): void {
 		$reasons = [];
-		$logger  = $this->createMock(LoggerInterface::class);
+		$logger  = $this->createMock(originalClassName: LoggerInterface::class);
 		$logger->method('debug')->willReturnCallback(
 			static function (string $message, array $context) use (&$reasons): void {
 				$reasons[] = $context['reason'];
 			}
 		);
 
-		$verifier = new PortalAssertionVerifier(config: null, secretOverride: self::SECRET, logger: $logger);
+		$verifier = new PortalAssertionVerifier(secretOverride: self::SECRET, logger: $logger);
 
-		$this->assertIsArray($verifier->verify($this->mintAssertion(secret: self::SECRET)));
-		$this->assertSame([], $reasons);
+		$this->assertIsArray(actual: $verifier->verify($this->mintAssertion(secret: self::SECRET)));
+		$this->assertSame(expected: [], actual: $reasons);
 
-		$this->assertNull($verifier->verify($this->mintAssertion(secret: self::OTHER_SECRET)));
-		$this->assertNull($verifier->verify($this->mintAssertion(secret: self::SECRET, overrides: ['iss' => 'elsewhere'])));
-		$this->assertNull($verifier->verify('a.b'));
-		$this->assertSame(['signature mismatch', 'unexpected issuer', 'malformed structure'], $reasons);
+		$this->assertNull(actual: $verifier->verify($this->mintAssertion(secret: self::OTHER_SECRET)));
+		$this->assertNull(actual: $verifier->verify($this->mintAssertion(secret: self::SECRET, overrides: ['iss' => 'elsewhere'])));
+		$this->assertNull(actual: $verifier->verify('a.b'));
+		$this->assertSame(expected: ['signature mismatch', 'unexpected issuer', 'malformed structure'], actual: $reasons);
 
-		$noSecret = new PortalAssertionVerifier(config: null, secretOverride: 'short', logger: $logger);
-		$this->assertNull($noSecret->verify($this->mintAssertion(secret: 'short')));
-		$this->assertSame('no usable signing secret', end($reasons));
+		$noSecret = new PortalAssertionVerifier(secretOverride: 'short', logger: $logger);
+		$this->assertNull(actual: $noSecret->verify($this->mintAssertion(secret: 'short')));
+		$this->assertSame(expected: 'no usable signing secret', actual: end($reasons));
 
 	}//end testRejectionReasonIsLoggedAndSuccessIsSilent()
 }//end class
