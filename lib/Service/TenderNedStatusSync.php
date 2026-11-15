@@ -3,6 +3,9 @@
 /**
  * TenderNed Status Sync Integration.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-006 — when an aanbestedende dienst approves the eindoplevering of a
  * `bron: tenderned` obligation, send a status update to TenderNed via
  * openconnector so the public dossier reflects completion
@@ -40,16 +43,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TenderNedStatusSyncInterface;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -63,7 +64,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
  */
-class TenderNedStatusSync {
+class TenderNedStatusSync implements TenderNedStatusSyncInterface {
 
 	/**
 	 * Openconnector outbound source binding name. Resolved lazily so the
@@ -166,6 +167,20 @@ class TenderNedStatusSync {
 			return null;
 		}
 
+		$rows = $this->tenderRows(objectService: $objectService, commitmentId: $commitmentId);
+
+		return $this->firstArrayRow(rows: $rows);
+	}//end resolveAanbestedingFor()
+
+	/**
+	 * The TenderNedProcurement rows linked to a Commitment, or null when the read fails.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $commitmentId  The linked obligation identifier.
+	 *
+	 * @return mixed
+	 */
+	private function tenderRows(object $objectService, string $commitmentId): mixed {
 		try {
 			$rows = $objectService
 				->setRegister(register: $this->getRegisterSlug())
@@ -179,6 +194,17 @@ class TenderNedStatusSync {
 			return null;
 		}
 
+		return $rows;
+	}//end tenderRows()
+
+	/**
+	 * The first array row, or null.
+	 *
+	 * @param mixed $rows The rows, or null.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function firstArrayRow(mixed $rows): array|null {
 		if (is_array($rows) === false) {
 			return null;
 		}
@@ -190,7 +216,7 @@ class TenderNedStatusSync {
 		}
 
 		return null;
-	}//end resolveAanbestedingFor()
+	}//end firstArrayRow()
 
 	/**
 	 * Check whether the tenant is the aanbestedende dienst on the dossier.
@@ -201,7 +227,7 @@ class TenderNedStatusSync {
 	 */
 	private function isContractingDienst(array $tender): bool {
 		$tenantKvk = trim(
-			$this->appConfig->getValueString(Application::APP_ID, 'tenant_kvk', '')
+			$this->appConfig->getValueString(AppIdentity::APP_ID, 'tenant_kvk', '')
 		);
 		if ($tenantKvk === '') {
 			return false;
@@ -306,7 +332,7 @@ class TenderNedStatusSync {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

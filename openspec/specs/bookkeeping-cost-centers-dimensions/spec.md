@@ -17,7 +17,7 @@ This specification defines the requirements for bookkeeping cost centers dimensi
 
 ## Requirements
 
-### REQ-CC-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
+### Requirement: REQ-CC-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
 
 The system SHALL satisfy this requirement: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest.
 
@@ -49,7 +49,7 @@ than write a parallel dimension table).
   form alongside the built-in cost-center and kostendrager
   dimensions, with no shillinq PHP edits.
 
-### REQ-CC-002: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy
+### Requirement: REQ-CC-002: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy
 
 The system SHALL satisfy this requirement: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy.
 
@@ -75,7 +75,7 @@ and surfaces in the UI labels.
   **AND** the segment P&L (per REQ-CC-005) MUST roll child amounts
   up to the parent.
 
-### REQ-CC-003: The `GLLine` schema SHALL carry optional dimension references additively
+### Requirement: REQ-CC-003: The `GLLine` schema SHALL carry optional dimension references additively
 
 The T1 `GLLine` schema MUST be extended additively with the
 following optional fields (the T1 `costCenter` field is the
@@ -107,7 +107,7 @@ written in PHP.
 - **WHEN** a `GLLine` is saved with `dimensions: {"campaign": "SUMMER2026"}`
 - **THEN** the save MUST fail with an "unknown dimension value" error.
 
-### REQ-CC-004: Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes
+### Requirement: REQ-CC-004: Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes
 
 The system SHALL satisfy this requirement: Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes.
 
@@ -160,7 +160,7 @@ ADR-031). No PHP `AllocationService.allocate()` ever runs the rule.
   cost-center-tagged lines splitting €500/€500, keeping the
   transaction balanced.
 
-### REQ-CC-005: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
+### Requirement: REQ-CC-005: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
 
 The system SHALL satisfy this requirement: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`.
 
@@ -188,7 +188,7 @@ ledger lines — the aggregation is declarative.
 - **THEN** the result MUST include the sum of both children's
   amounts under `KC-100`.
 
-### REQ-CC-006: Cost centers and other dimensions SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-CC-006: Cost centers and other dimensions SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare navigation entries (under
 `Bookkeeping > Dimensions`) with `type: index` + `type: detail`
@@ -207,7 +207,7 @@ components — no bespoke Vue files (per ADR-024 Tier-4).
 - **THEN** the `Bookkeeping > Dimensions > Campaign` entry MUST
   appear with no PHP / Vue edits.
 
-### REQ-CC-007: This capability SHALL pre-position `time-per-cost-center` as the data shape WBSO (T4-specialized) will consume
+### Requirement: REQ-CC-007: This capability SHALL pre-position `time-per-cost-center` as the data shape WBSO (T4-specialized) will consume
 
 The fields and aggregations declared here MUST be sufficient for a
 later T4-specialized WBSO capability to derive `hours-per-project`

@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Ledger;
 
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
@@ -147,7 +147,7 @@ class GlLineResultStampsTest extends TestCase {
 	 * @return GlLineResultStamps
 	 */
 	private function stamps(): GlLineResultStamps {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new GlLineResultStamps($this->store, $settings);

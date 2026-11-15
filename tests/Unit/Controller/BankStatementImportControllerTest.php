@@ -26,6 +26,7 @@ use OCA\Shillinq\Controller\BankStatementImportController;
 use OCA\Shillinq\Lifecycle\StatementParser;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Bank\StatementIntakeService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -212,7 +213,7 @@ class BankStatementImportControllerTest extends TestCase {
 			l10n: $this->l10n,
 			intake: new StatementIntakeService(
 				objectService: new DuckObjectServiceAdapter($this->objectService),
-				settings: $this->createConfiguredMock(SettingsService::class, ['getRegisterSlug' => 'shillinq']),
+				registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 				logger: $this->logger,
 			),
 		);

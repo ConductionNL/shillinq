@@ -70,7 +70,10 @@ class SuggestedMappingConfirmation {
 		$register = $this->settings->getRegisterSlug();
 		$entity = null;
 		try {
-			$entity = $this->objectService->find($batchId, [], false, $register, 'ImportBatch');
+			$entity = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($register)->setSchema('ImportBatch'),
+				id: $batchId
+			);
 		} catch (\Throwable $e) {
 			$entity = null;
 		}

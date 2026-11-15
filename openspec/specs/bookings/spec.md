@@ -22,7 +22,7 @@ Shillinq is a Nextcloud-based business accounting and management application. Th
 @e2e exclude unbuilt UI: booking/resource management pages not yet implemented
 
 
-### REQ-001: Resource entity and type classification
+### Requirement: REQ-001: Resource entity and type classification
 
 Shillinq SHALL support a `Resource` entity representing any bookable item: staff members, rooms, equipment, furniture, or other resources.
 
@@ -48,7 +48,7 @@ Shillinq SHALL support a `Resource` entity representing any bookable item: staff
 - WHEN the user creates a resource with type `room` and name "Vergaderruimte A"
 - THEN the resource is stored and appears in the resource list
 
-### REQ-002: Calendar entity with time zone and working hours
+### Requirement: REQ-002: Calendar entity with time zone and working hours
 
 Shillinq SHALL support a `Calendar` entity representing a time zone and working hours configuration for a single resource.
 
@@ -75,7 +75,7 @@ Shillinq SHALL support a `Calendar` entity representing a time zone and working 
 - WHEN the API endpoint `GET /api/v2/calendars?resource=res-001` is called
 - THEN the calendar is returned with all properties including working hours
 
-### REQ-003: Booking entity with time and attendee
+### Requirement: REQ-003: Booking entity with time and attendee
 
 Shillinq SHALL support a `Booking` entity representing a scheduled appointment on a resource's calendar.
 
@@ -105,7 +105,7 @@ Shillinq SHALL support a `Booking` entity representing a scheduled appointment o
 - WHEN the API endpoint `GET /api/v2/calendars/cal-001/bookings?start=2026-05-21&end=2026-05-31` is called
 - THEN all bookings in that date range are returned in order by startTime
 
-### REQ-004: Conflict detection for double-booking prevention
+### Requirement: REQ-004: Conflict detection for double-booking prevention
 
 Shillinq SHALL implement automated conflict detection that prevents double-booking of the same resource.
 
@@ -140,7 +140,7 @@ Shillinq SHALL implement automated conflict detection that prevents double-booki
 - WHEN the user attempts to create booking B
 - THEN no conflict is detected (adjacent time slots are allowed)
 
-### REQ-005: Calendar API endpoints for reading calendars and bookings
+### Requirement: REQ-005: Calendar API endpoints for reading calendars and bookings
 
 Shillinq SHALL provide REST API endpoints for querying calendars and bookings.
 
@@ -232,7 +232,7 @@ Creates a new booking.
 - 201 Created: Booking created successfully
 - 409 Conflict: Overlap detected with existing bookings; returns list of conflicts
 
-### REQ-006: Calendar UI component for month/week/day views
+### Requirement: REQ-006: Calendar UI component for month/week/day views
 
 Shillinq SHALL provide a Vue 3 calendar component (`CalendarView`) that displays a resource's bookings in month, week, and day views.
 
@@ -264,7 +264,7 @@ Shillinq SHALL provide a Vue 3 calendar component (`CalendarView`) that displays
 - WHEN the calendar is rendered
 - THEN the conflicting booking is visually highlighted (e.g., red background)
 
-### REQ-007: Booking form for creating and editing appointments
+### Requirement: REQ-007: Booking form for creating and editing appointments
 
 Shillinq SHALL provide a form component that allows users to create and edit bookings.
 
@@ -301,7 +301,7 @@ Shillinq SHALL provide a form component that allows users to create and edit boo
 - AND clicks Submit
 - THEN a dialog appears showing the conflicting booking; user can cancel or confirm to proceed
 
-### REQ-008: Ensure all times are stored and queried in UTC
+### Requirement: REQ-008: Ensure all times are stored and queried in UTC
 
 Shillinq SHALL store all booking times (`startTime`, `endTime`) in UTC (ISO 8601 format) in the database. Display times SHALL be converted to the calendar's configured time zone on the client.
 
