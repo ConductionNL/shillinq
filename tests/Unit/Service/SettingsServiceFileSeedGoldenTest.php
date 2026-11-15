@@ -39,6 +39,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use RuntimeException;
 use Stringable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * File seed golden tests.
@@ -264,7 +265,9 @@ class RecordingFileSeedObjectService {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(mixed $object, mixed $register, mixed $schema): array {
+	public function saveObject(mixed $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->calls[] = ['saveObject' => ['object' => $object, 'register' => $register, 'schema' => $schema]];
 		$this->saves++;
 		if (in_array($this->mode, ['saveFails', 'systemSaveFails'], true) === true && $this->saves === 2) {

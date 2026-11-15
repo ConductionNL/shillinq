@@ -39,6 +39,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -147,11 +149,12 @@ class BackfillControlAccountRoles implements IRepairStep {
 			$account['controlAccountFor'] = $role;
 			$this->objectService->saveObject(
 				object: $this->withoutMetadata(row: $account),
-				register: $registerSlug,
-				schema: 'Account',
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'Account'),
+					uuid: $uuid
+				),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			$marked++;
 			$output->info(

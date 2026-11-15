@@ -28,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * An object service double: rows per register and schema, read by id or filter.
@@ -92,7 +93,11 @@ final class SubscriptionObjectServiceFake {
 	 *
 	 * @return array<string, mixed> The row.
 	 */
-	public function find(int|string $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function find(int|string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
 		$row = ($this->data[(string)($register ?? $this->register)][(string)($schema ?? $this->schema)][(string)$id] ?? null);
 		if ($row === null) {
 			throw new DoesNotExistException('not found');

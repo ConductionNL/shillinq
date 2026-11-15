@@ -29,6 +29,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -318,9 +320,11 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	private function save(string $schema, array $object): mixed {
 		return $this->objectService->saveObject(
 			object: $object,
-			register: $this->appConfig->getValueString('shillinq', 'register', 'shillinq'),
-			schema: $schema,
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(
+					register: $this->appConfig->getValueString('shillinq', 'register', 'shillinq'),
+					schema: $schema
+				)),
+			_rbac: false
 		);
 	}//end save()
 

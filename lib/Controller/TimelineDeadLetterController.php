@@ -42,6 +42,8 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
@@ -342,8 +344,7 @@ class TimelineDeadLetterController extends Controller {
 			->setSchema($schema)
 			->saveObject(
 				object: $object,
-				register: $registerSlug,
-				schema: $schema
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema))
 			);
 	}//end saveTo()
 
