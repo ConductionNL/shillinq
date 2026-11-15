@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Service\InvestmentDeduction;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Guard\AssetEligibilityCheck;
 use OCA\Shillinq\Guard\InvesteringsaftrekEligibilityGuard;
 use OCA\Shillinq\Guard\KiaSchalenLookup;
@@ -260,7 +261,7 @@ class InvestmentDeductionService {
 			}
 
 			if (isset($wanted[$key]) === false) {
-				$this->binding->schema(schema: 'InvesteringsaftrekClaim')->deleteObject(uuid: self::idOf(row: $claim));
+				$this->binding->schema(schema: 'InvesteringsaftrekClaim')->deleteObject(deletion: new ObjectDeletion(uuid: self::idOf(row: $claim)));
 			}
 		}
 

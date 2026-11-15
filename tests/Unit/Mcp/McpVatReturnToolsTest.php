@@ -202,7 +202,8 @@ class McpVatReturnToolsTest extends TestCase {
 				return $this;
 			}
 
-			public function deleteObject(string $id): bool {
+			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): bool {
+				$id = $deletion->uuid;
 				$this->calls[] = 'delete:' . $id;
 				return true;
 			}
