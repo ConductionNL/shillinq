@@ -202,6 +202,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
              due date move to overdue and each overdue invoice gets the ladder
              stage that is due. Ships off for every administration. -->
         <job>OCA\Shillinq\BackgroundJob\DunningTickJob</job>
+        <!-- tax-cbcr-and-pillar2-returns task 3.2: weekly, assesses each group's
+             CbCR and Pillar Two scope and notifies when it changes. -->
+        <job>OCA\Shillinq\BackgroundJob\GroupScopeAssessmentJob</job>
     </background-jobs>
 
     <repair-steps>
