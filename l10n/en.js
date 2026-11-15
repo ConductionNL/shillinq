@@ -49,6 +49,7 @@ OC.L10N.register(
         "All pending": "All pending",
         "Request failed": "Request failed",
         "Pending confirmations": "Pending confirmations",
+        "Marketplace": "Marketplace",
         "New quote": "New quote",
         "Raise payout": "Raise payout",
         "Credit invoice": "Credit invoice",
