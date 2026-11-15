@@ -41,6 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Budget;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\BudgetEditingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -602,7 +603,7 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 				$patch[$this->monthField(month: $month)] = (int)($line[$this->monthField(month: $month)] ?? 0);
 			}
 
-			$this->scoped(schema: 'BudgetLine')->patchObject($lineId, $patch);
+			$this->scoped(schema: 'BudgetLine')->patchObject(new ObjectPatch(objectId: $lineId, data: $patch));
 		}
 
 		if ($lineId === '') {

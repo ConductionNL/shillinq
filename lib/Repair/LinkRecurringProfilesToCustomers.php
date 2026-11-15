@@ -37,6 +37,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\ContactCustomerResolver;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -114,11 +116,12 @@ class LinkRecurringProfilesToCustomers implements IRepairStep {
 				$profile['customerMasterId'] = $customerId;
 				$this->objectService->saveObject(
 					object: self::withoutMetadata(row: $profile),
-					register: $registerSlug,
-					schema: self::SCHEMA,
-					uuid: $uuid,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: self::SCHEMA),
+						uuid: $uuid
+					),
 					_rbac: false,
-					_multitenancy: false,
+					_multitenancy: false
 				);
 				$linked++;
 			}//end foreach

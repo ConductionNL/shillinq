@@ -36,6 +36,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use RuntimeException;
 use Stringable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Widget appointment golden tests.
@@ -307,7 +308,9 @@ final class GoldenWidgetObjects {
 	 *
 	 * @return mixed
 	 */
-	public function saveObject(array $object, string $register, string $schema, bool $_rbac = true): mixed {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac];
 		return match ($this->save) {
 			'throws' => throw new RuntimeException('disk full'),

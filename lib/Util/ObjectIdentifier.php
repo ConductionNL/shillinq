@@ -75,6 +75,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Util;
 
+use OCA\OpenRegister\Kernel\Contracts\RegisterInterface;
+use OCA\OpenRegister\Kernel\Contracts\SchemaInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Throwable;
 
@@ -244,7 +247,7 @@ final class ObjectIdentifier {
 	private static function findById(object $scoped, string $id, array $scope): array|null {
 		$target = self::lookupTarget(scoped: $scoped);
 		try {
-			$found  = $scoped->find($id, ...$target, ...$scope);
+			$found  = $scoped->find($id, ...self::findOptions(target: $target), ...$scope);
 			$record = null;
 			if (self::isInSchema(found: $found, target: $target) === true) {
 				$record = self::record(candidate: $found);
@@ -334,7 +337,7 @@ final class ObjectIdentifier {
 	 */
 	public static function findScoped(object $scoped, string $id, array $named = []): mixed {
 		$target = self::lookupTarget(scoped: $scoped);
-		$found  = $scoped->find($id, ...$target, ...$named);
+		$found  = $scoped->find($id, ...self::findOptions(target: $target), ...$named);
 		if (self::isInSchema(found: $found, target: $target) === false) {
 			return null;
 		}
@@ -358,7 +361,7 @@ final class ObjectIdentifier {
 	 */
 	public static function findScopedOrThrow(object $scoped, string $id): mixed {
 		$target = self::lookupTarget(scoped: $scoped);
-		$found  = $scoped->find($id, ...$target);
+		$found  = $scoped->find($id, ...self::findOptions(target: $target));
 		if ($found !== null && self::isInSchema(found: $found, target: $target) === false) {
 			throw new DoesNotExistException('No object with this id in the schema asked for.');
 		}
@@ -390,6 +393,31 @@ final class ObjectIdentifier {
 
 		return ['register' => $register, 'schema' => $schema];
 	}//end lookupTarget()
+
+	/**
+	 * The find() options argument for a lookup target: the register and schema, or nothing.
+	 *
+	 * @param array<string, mixed> $target The register and schema, or empty.
+	 *
+	 * @return array<string, ObjectFindOptions> The named options argument, or none.
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	private static function findOptions(array $target): array {
+		if ($target === []) {
+			return [];
+		}
+
+		// Only OpenRegister's own register/schema rows travel in the options; the
+		// scoped service already carries its register and schema either way.
+		$register = $target['register'];
+		$schema   = $target['schema'];
+		if (($register instanceof RegisterInterface) === false || ($schema instanceof SchemaInterface) === false) {
+			return [];
+		}
+
+		return ['options' => new ObjectFindOptions(register: $register, schema: $schema)];
+	}//end findOptions()
 
 	/**
 	 * Whether find()'s answer is an object of the schema asked for.
