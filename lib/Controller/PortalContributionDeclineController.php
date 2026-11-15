@@ -31,9 +31,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Portal\PortalAssertionVerifier;
-use OCA\Shillinq\Service\ContributionDeclineService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -49,6 +49,7 @@ use Throwable;
  * contribution.
  *
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PortalContributionDeclineController extends Controller {
 	/**
@@ -63,17 +64,17 @@ class PortalContributionDeclineController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request.
-	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
-	 * @param ContributionDeclineService $declineService Closes the guardian's own voluntary contribution.
+	 * @param PortalAssertionVerifierInterface $verifier Verifies the X-Portal-Subject assertion.
+	 * @param ContributionDeclineServiceInterface $declineService Closes the guardian's own voluntary contribution.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PortalAssertionVerifier $verifier,
-		private readonly ContributionDeclineService $declineService,
+		private readonly PortalAssertionVerifierInterface $verifier,
+		private readonly ContributionDeclineServiceInterface $declineService,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -97,7 +98,7 @@ class PortalContributionDeclineController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function decline(): JSONResponse {
-		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifier::HEADER));
+		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
 		if ($claims === null) {
 			return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
 		}
@@ -106,23 +107,45 @@ class PortalContributionDeclineController extends Controller {
 			return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
 		}
 
+		return $this->declined(claims: $claims, invoiceId: $this->invoiceId());
+	}//end decline()
+
+	/**
+	 * The body's invoice id; a non-string counts as absent ('').
+	 *
+	 * @return string
+	 */
+	private function invoiceId(): string {
 		$invoiceId = $this->request->getParam('invoiceId');
 		if (is_string($invoiceId) === false) {
-			$invoiceId = '';
+			return '';
 		}
 
+		return $invoiceId;
+	}//end invoiceId()
+
+	/**
+	 * Decline the contribution and answer the outcome, or the logged 502.
+	 *
+	 * Never leaks internals from a #[PublicPage] endpoint (ADR-005).
+	 *
+	 * @param array<string, mixed> $claims    The verified assertion claims.
+	 * @param string               $invoiceId The invoice to decline.
+	 *
+	 * @return JSONResponse
+	 */
+	private function declined(array $claims, string $invoiceId): JSONResponse {
 		try {
 			$result = $this->declineService->decline(claims: $claims, target: $invoiceId);
 		} catch (Throwable $e) {
-			// Never leak internals from a #[PublicPage] endpoint (ADR-005).
 			$this->logger->error('Shillinq: portal contribution decline failed unexpectedly', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
 		}
 
 		return match ($result) {
-			ContributionDeclineService::DECLINED => new JSONResponse(['status' => 'declined']),
-			ContributionDeclineService::DOWNSTREAM_ERROR => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
+			ContributionDeclineServiceInterface::DECLINED => new JSONResponse(['status' => 'declined']),
+			ContributionDeclineServiceInterface::DOWNSTREAM_ERROR => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
 			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
 		};
-	}//end decline()
+	}//end declined()
 }//end class

@@ -1,0 +1,233 @@
+{
+    "balanced": [
+        {
+            "linked": true,
+            "mirrorCreated": false,
+            "varianceAmount": 0.0,
+            "balanced": true,
+            "message": "Intercompany pair linked and reconciled"
+        },
+        [
+            [
+                "find",
+                {
+                    "filters": {
+                        "intercompanyNumber": "IC-1"
+                    }
+                }
+            ],
+            [
+                "save",
+                {
+                    "id": "e1",
+                    "intercompanyNumber": "IC-1",
+                    "sourceAdministrationId": "A",
+                    "destinationAdministrationId": "B",
+                    "amount": 100,
+                    "description": "Fee",
+                    "varianceAmount": 0.0,
+                    "status": "gekoppeld"
+                }
+            ],
+            [
+                "save",
+                {
+                    "id": "c1",
+                    "sourceAdministrationId": "B",
+                    "destinationAdministrationId": "A",
+                    "amount": "99.995",
+                    "status": "concept",
+                    "varianceAmount": 0.0
+                }
+            ]
+        ]
+    ],
+    "mirrored": [
+        {
+            "linked": true,
+            "mirrorCreated": true,
+            "varianceAmount": 0.0,
+            "balanced": true,
+            "message": "Intercompany pair linked and reconciled"
+        },
+        [
+            [
+                "find",
+                {
+                    "filters": {
+                        "intercompanyNumber": "IC-1"
+                    }
+                }
+            ],
+            [
+                "save",
+                {
+                    "intercompanyNumber": "IC-1",
+                    "date": "",
+                    "kind": "other",
+                    "sourceAdministrationId": "B",
+                    "destinationAdministrationId": "A",
+                    "amount": 100,
+                    "currency": "EUR",
+                    "exchangeRate": 1.0,
+                    "vatTreatment": "standard",
+                    "eliminateOnConsolidation": false,
+                    "eliminationAccount": null,
+                    "status": "gekoppeld",
+                    "varianceAmount": 0.0,
+                    "description": "Fee"
+                }
+            ],
+            [
+                "save",
+                {
+                    "id": "e1",
+                    "intercompanyNumber": "IC-1",
+                    "sourceAdministrationId": "A",
+                    "destinationAdministrationId": "B",
+                    "amount": 100,
+                    "description": "Fee",
+                    "status": "gekoppeld",
+                    "varianceAmount": 0.0
+                }
+            ],
+            [
+                "save",
+                {
+                    "intercompanyNumber": "IC-1",
+                    "date": "",
+                    "kind": "other",
+                    "sourceAdministrationId": "B",
+                    "destinationAdministrationId": "A",
+                    "amount": 100,
+                    "currency": "EUR",
+                    "exchangeRate": 1.0,
+                    "vatTreatment": "standard",
+                    "eliminateOnConsolidation": false,
+                    "eliminationAccount": null,
+                    "status": "gekoppeld",
+                    "varianceAmount": 0.0,
+                    "description": "Fee",
+                    "id": "new-2"
+                }
+            ]
+        ]
+    ],
+    "failed": [
+        {
+            "linked": true,
+            "mirrorCreated": true,
+            "varianceAmount": 0.0,
+            "balanced": true,
+            "message": "Intercompany pair linked and reconciled"
+        },
+        [
+            [
+                "find",
+                {
+                    "filters": {
+                        "intercompanyNumber": "IC-2"
+                    }
+                }
+            ],
+            [
+                "error",
+                "IntercompanyLinkService: failed to query OpenRegister",
+                {
+                    "schema": "IntercompanyJournalEntry",
+                    "exception": "down"
+                }
+            ],
+            [
+                "save",
+                {
+                    "intercompanyNumber": "IC-2",
+                    "date": "",
+                    "kind": "other",
+                    "sourceAdministrationId": "",
+                    "destinationAdministrationId": "",
+                    "amount": 5,
+                    "currency": "EUR",
+                    "exchangeRate": 1.0,
+                    "vatTreatment": "standard",
+                    "eliminateOnConsolidation": false,
+                    "eliminationAccount": null,
+                    "status": "gekoppeld",
+                    "varianceAmount": 0.0,
+                    "description": ""
+                }
+            ],
+            [
+                "save",
+                {
+                    "intercompanyNumber": "IC-2",
+                    "date": "",
+                    "kind": "other",
+                    "sourceAdministrationId": "",
+                    "destinationAdministrationId": "",
+                    "amount": 5,
+                    "currency": "EUR",
+                    "exchangeRate": 1.0,
+                    "vatTreatment": "standard",
+                    "eliminateOnConsolidation": false,
+                    "eliminationAccount": null,
+                    "status": "gekoppeld",
+                    "varianceAmount": 0.0,
+                    "description": "",
+                    "id": "new-3"
+                }
+            ]
+        ]
+    ],
+    "unbalanced": [
+        {
+            "linked": true,
+            "mirrorCreated": false,
+            "varianceAmount": 10.0,
+            "balanced": false,
+            "message": "Intercompany pair linked and reconciled"
+        },
+        [
+            [
+                "find",
+                {
+                    "filters": {
+                        "intercompanyNumber": "IC-1"
+                    }
+                }
+            ],
+            [
+                "save",
+                {
+                    "id": "e1",
+                    "intercompanyNumber": "IC-1",
+                    "sourceAdministrationId": "A",
+                    "destinationAdministrationId": "B",
+                    "amount": 100,
+                    "description": "Fee",
+                    "varianceAmount": 10.0,
+                    "status": "gekoppeld"
+                }
+            ],
+            [
+                "save",
+                {
+                    "id": "c9",
+                    "sourceAdministrationId": "B",
+                    "destinationAdministrationId": "A",
+                    "amount": 90,
+                    "varianceAmount": 10.0,
+                    "status": "gekoppeld"
+                }
+            ],
+            [
+                "warning",
+                "IntercompanyLinkService: intercompany pair does not reconcile",
+                {
+                    "intercompanyNumber": "IC-1",
+                    "varianceAmount": 10.0
+                }
+            ]
+        ]
+    ]
+}

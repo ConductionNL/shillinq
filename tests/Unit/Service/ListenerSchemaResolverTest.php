@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -73,7 +73,7 @@ class ListenerSchemaResolverTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn($ownSlug);
 
 		$contract = $this->createMock(ListenerSlugContract::class);
@@ -81,7 +81,7 @@ class ListenerSchemaResolverTest extends TestCase {
 
 		return new ListenerSchemaResolver(
 			container: $container,
-			settingsService: $settings,
+			registerLocation: $settings,
 			contract: $contract,
 			logger: $this->createMock(LoggerInterface::class),
 		);

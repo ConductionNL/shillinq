@@ -3,6 +3,9 @@
 /**
  * Annual Budget Default Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the `AnnualBudget` schema's
  * `activate` transition (`draft` -> `active`,
  * `lib/Settings/register.d/budget-core-schema.json`, REQ-BCS-006). Enforces
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-006
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -107,43 +107,8 @@ class AnnualBudgetDefaultGuard {
 			return true;
 		}
 
-		$administrationId = (string)($budget['administrationId'] ?? '');
-		$fiscalYear = (int)($budget['fiscalYear'] ?? 0);
-
 		try {
-			$siblings = $this->objectService
-				->setRegister($this->register())
-				->setSchema(self::SCHEMA_ANNUAL_BUDGET)
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'fiscalYear' => $fiscalYear,
-							'isDefault' => true,
-						],
-					]
-				);
-
-			$currentId = ($budget['id'] ?? $budget['@self']['id'] ?? null);
-			foreach ($siblings as $sibling) {
-				$siblingId = ($sibling['id'] ?? $sibling['@self']['id'] ?? null);
-				if ($currentId !== null && $siblingId === $currentId) {
-					// The record being activated itself — not a conflict.
-					continue;
-				}
-
-				$this->logger->info(
-					'AnnualBudgetDefaultGuard: another default AnnualBudget already exists — denying activate',
-					[
-						'administrationId' => $administrationId,
-						'fiscalYear' => $fiscalYear,
-						'conflictingId' => $siblingId,
-					]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->noOtherDefault(budget: $budget);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'AnnualBudgetDefaultGuard: isUniqueDefault check failed — denying (fail-closed)',
@@ -155,12 +120,74 @@ class AnnualBudgetDefaultGuard {
 	}//end isUniqueDefault()
 
 	/**
+	 * Whether no other default budget exists for the budget's administration and year.
+	 *
+	 * @param array<string, mixed> $budget The AnnualBudget claiming `isDefault`.
+	 *
+	 * @return bool False, with the conflict logged, when another default exists.
+	 */
+	private function noOtherDefault(array $budget): bool {
+		$administrationId = (string)($budget['administrationId'] ?? '');
+		$fiscalYear = (int)($budget['fiscalYear'] ?? 0);
+		$siblings = $this->objectService
+			->setRegister($this->register())
+			->setSchema(self::SCHEMA_ANNUAL_BUDGET)
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'fiscalYear' => $fiscalYear,
+						'isDefault' => true,
+					],
+				]
+			);
+
+		$conflict = $this->firstOtherSibling(budget: $budget, siblings: $siblings);
+		if ($conflict === null) {
+			return true;
+		}
+
+		$this->logger->info(
+			'AnnualBudgetDefaultGuard: another default AnnualBudget already exists — denying activate',
+			[
+				'administrationId' => $administrationId,
+				'fiscalYear' => $fiscalYear,
+				'conflictingId' => $conflict['id'],
+			]
+		);
+		return false;
+
+	}//end noOtherDefault()
+
+	/**
+	 * The first sibling that is not the budget being activated itself.
+	 *
+	 * @param array<string, mixed> $budget The AnnualBudget being activated.
+	 * @param iterable<mixed> $siblings The default budgets for the same scope.
+	 *
+	 * @return array{id: mixed}|null The conflicting sibling's id, or null when none.
+	 */
+	private function firstOtherSibling(array $budget, iterable $siblings): array|null {
+		$currentId = ($budget['id'] ?? $budget['@self']['id'] ?? null);
+		foreach ($siblings as $sibling) {
+			$siblingId = ($sibling['id'] ?? $sibling['@self']['id'] ?? null);
+			// The record being activated itself is not a conflict.
+			if ($currentId === null || $siblingId !== $currentId) {
+				return ['id' => $siblingId];
+			}
+		}
+
+		return null;
+
+	}//end firstOtherSibling()
+
+	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
 	 *
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

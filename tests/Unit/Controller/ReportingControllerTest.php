@@ -257,26 +257,21 @@ final class ReportingControllerTest extends TestCase {
 	}//end testGenerateRejectsAnonymousCaller()
 
 	/**
-	 * Generating with no administrationId at all is left to the service (a
-	 * caller-scoped report, e.g. stored under the caller's own Files home) —
-	 * it is not a bypass since no OTHER tenant's scope is ever named or
-	 * checked against.
+	 * Generating with no administrationId is refused before the service runs:
+	 * the generators would otherwise read every administration's ledger.
 	 *
 	 * @return void
 	 */
-	public function testGenerateWithNoAdministrationIdSkipsTheGuardAndReachesTheService(): void {
-		$this->withParams(['reportType' => 'vat-return', 'period' => '2026-Q2', 'format' => 'pdf']);
-		$this->context->expects($this->never())->method('canAccess');
-		$this->service->expects($this->once())
-			->method('generate')
-			->with('vat-return', '2026-Q2', '', 'pdf')
-			->willReturn(['id' => 'gen-2']);
+	public function testGenerateWithNoAdministrationIdIsRefused(): void {
+		$this->withParams(['reportType' => 'general-ledger', 'period' => '2026-Q2', 'format' => 'pdf']);
+		$this->service->expects($this->never())->method('generate');
 
 		$response = $this->controller->generate();
 
-		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame('missing-administration', $response->getData()['error']);
 
-	}//end testGenerateWithNoAdministrationIdSkipsTheGuardAndReachesTheService()
+	}//end testGenerateWithNoAdministrationIdIsRefused()
 
 	/**
 	 * Without an explicit administrationId the listing is scoped to the caller's

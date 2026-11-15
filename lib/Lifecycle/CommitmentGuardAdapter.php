@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Service\Commitment\CommitmentLedger;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -51,14 +51,14 @@ final class CommitmentGuardAdapter implements LifecycleGuardInterface {
 	 * @param MandateEnforcer|BudgetBlocker $guard       The wrapped guard.
 	 * @param string                        $method      `requiresApproval` or `canCommit`.
 	 * @param string                        $denyMessage The refusal when no better reason is known.
-	 * @param CommitmentLedger              $ledger      Reads lines and budgets for the shortfall.
+	 * @param CommitmentLedgerInterface              $ledger      Reads lines and budgets for the shortfall.
 	 * @param LoggerInterface               $logger      Fail-closed diagnostics.
 	 */
 	public function __construct(
 		private readonly MandateEnforcer|BudgetBlocker $guard,
 		private readonly string $method,
 		private readonly string $denyMessage,
-		private readonly CommitmentLedger $ledger,
+		private readonly CommitmentLedgerInterface $ledger,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

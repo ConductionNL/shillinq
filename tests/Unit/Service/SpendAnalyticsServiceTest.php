@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Service\Aggregation\AggregationQuery;
+use OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCA\Shillinq\Service\SpendAnalyticsService;
 use OCP\IAppConfig;
@@ -137,6 +137,7 @@ final class InMemoryAggregationRunner {
 
 /**
  * @covers \OCA\Shillinq\Service\SpendAnalyticsService
+ * @uses   \OCA\Shillinq\Service\SpendAggregation
  */
 final class SpendAnalyticsServiceTest extends TestCase {
 	/**
