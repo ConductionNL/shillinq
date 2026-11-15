@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Profit and loss (winst- en verliesrekening) report generator
  *
  * Produces a resultatenrekening over the period, rendered as editable DOCX/ODT

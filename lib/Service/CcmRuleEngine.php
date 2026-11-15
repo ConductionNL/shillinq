@@ -3,6 +3,9 @@
 /**
  * CCM Rule Engine
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception: a pure, deterministic Continuous Controls Monitoring rule
  * evaluator (REQ-CCM-002). Rules are authored as a constrained JSON DSL on the
  * CcmRule schema (lib/Settings/register.d/bookkeeping-ccm-rule-engine.json); this

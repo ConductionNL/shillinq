@@ -3,6 +3,9 @@
 /**
  * Payment-Run Duplicate-Payment Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side duplicate-payment control on the `PaymentRun.export` lifecycle
  * transition (approved -> exported). Export is the transition that generates the
  * SEPA pain.001 / CSV bank file and disburses money; it is the last declarative
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/payment-control-guards/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -56,8 +56,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PaymentBlockCheckerInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -130,13 +130,13 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution (ADR-022).
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface     $logger       Logger for fail-closed diagnostics.
-	 * @param PaymentBlockChecker $blockChecker Names blocked and disputed lines (banking-payment-run REQ-BPR-005).
+	 * @param PaymentBlockCheckerInterface $blockChecker Names blocked and disputed lines (banking-payment-run REQ-BPR-005).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly PaymentBlockChecker $blockChecker,
+		private readonly PaymentBlockCheckerInterface $blockChecker,
 	) {
 	}//end __construct()
 

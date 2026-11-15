@@ -3,6 +3,9 @@
 /**
  * Disposal Journal Emitter
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Shapes the closing `GLTransaction` payload the OR
  * `x-openregister-lifecycle.dispose.action.emit-journal-entry` action
  * materialises when a `FixedAsset` transitions from `active` to
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

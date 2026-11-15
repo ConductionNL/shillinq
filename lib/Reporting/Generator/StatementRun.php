@@ -3,6 +3,9 @@
 /**
  * Statement run
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * One rendering of a financial statement: the section being filled, the
  * reporting currency, and the two side totals as they are computed (debit
  * side: assets / expenses; credit side: equity and liabilities / revenue).

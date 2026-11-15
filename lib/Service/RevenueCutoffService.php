@@ -3,6 +3,9 @@
 /**
  * Revenue Cutoff Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 nightly IFRS 15 revenue cut-off (REQ-IFRS15-007, REQ-IFRS15-008). For each
  * contract in an administration it sums cumulative recognised revenue (from
  * RevenueRecognitionEvent) and cumulative billed amount, derives the contract
@@ -31,18 +34,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RevenueCutoffServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes per-contract revenue cut-off balances and waterfall rows.
@@ -56,7 +57,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
  */
-class RevenueCutoffService {
+class RevenueCutoffService implements RevenueCutoffServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

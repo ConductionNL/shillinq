@@ -3,6 +3,9 @@
 /**
  * Cashflow Export Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Gathers a CashflowForecastHorizon and everything REQ-CF-016 says the export
  * must contain out of OpenRegister, and hands it to
  * {@see CashflowPdfRenderer::renderPdf()}. This is the caller the renderer
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -53,6 +53,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\CashflowExportServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -61,7 +62,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
  */
-class CashflowExportService {
+class CashflowExportService implements CashflowExportServiceInterface {
 	/**
 	 * CashflowForecastHorizon schema slug.
 	 *

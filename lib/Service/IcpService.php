@@ -3,6 +3,9 @@
 /**
  * ICP Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 intra-community supplies (ICP) computation (REQ-ICP-002, REQ-ICP-003,
  * REQ-ICP-004). Reads IcpSupply / IcpOpgaaf / VatReturn / ViesValidation data for
  * one administration from OpenRegister via the real ObjectService API
@@ -26,18 +29,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes the ICP ledger, periodicity decision, and reconciliation for a period.
@@ -49,7 +50,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class IcpService {
+class IcpService implements IcpServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

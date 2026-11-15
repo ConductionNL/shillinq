@@ -32,7 +32,7 @@ use OCA\Shillinq\Listener\GLLineResultStampListener;
 use OCA\Shillinq\Repair\StampGlLineResults;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Ledger\GlLineResultStampsTest as Seed;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Migration\IOutput;
@@ -75,10 +75,10 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return GlLineResultStamps
 	 */
 	private function stamps(): GlLineResultStamps {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-		return new GlLineResultStamps($this->store, $settings);
+		return new GlLineResultStamps($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']));
 
 	}//end stamps()
 
@@ -189,7 +189,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheRepairStepStampsHistory(): void {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$output = $this->createMock(IOutput::class);
 		$output->expects($this->once())->method('info')->with('Shillinq: 5 ledger line(s) stamped over 1 posted or reversed transaction(s).');
@@ -208,8 +208,8 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListenerAndTheRepairStep(): void {
 		$root = __DIR__ . '/../../..';
-		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
+		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php') . (string)file_get_contents($root . '/lib/Listener/Registration/ListenerRegistrar.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
 		$info = (string)file_get_contents($root . '/appinfo/info.xml');
 
 		$this->assertStringContainsString('(new ReportingRegistration())->register(context: $context);', $application);

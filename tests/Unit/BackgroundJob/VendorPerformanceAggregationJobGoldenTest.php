@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\VendorPerformanceAggregationJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\VendorPerformanceAggregation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
@@ -124,7 +124,7 @@ class VendorPerformanceAggregationJobGoldenTest extends TestCase {
 			$time->method('getDateTime')->willReturn($now);
 		}
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('reg-a');
 		$container = $this->createMock(ContainerInterface::class);

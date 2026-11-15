@@ -33,11 +33,12 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Document-register helper service (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009).
@@ -47,7 +48,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
  *     #506): changing this signature would ripple to callers; deferred.
  */
-class WbsoDocumentService {
+class WbsoDocumentService implements WbsoDocumentServiceInterface {
 
 	/**
 	 * Seven calendar years in days (REQ-WBSO-009).
@@ -159,7 +160,6 @@ class WbsoDocumentService {
 
 		$this->validateDocumentPayload(payload: $payload);
 
-
 		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
 		// this method declares — returning it raised a TypeError on every call.
 		return (array)$this->objectService
@@ -204,7 +204,6 @@ class WbsoDocumentService {
 		$document['status'] = 'filed';
 		$document['filedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 		$document['filedBy'] = $approver;
-
 
 		// ADR-084: see createDocument() — the contract returns an entity.
 		return (array)$this->objectService

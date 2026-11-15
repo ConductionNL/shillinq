@@ -3,6 +3,9 @@
 /**
  * Budget vs. Actuals Reader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The OpenRegister half of `budget-core-schema`'s budget-vs-actuals roll-up
  * (REQ-BCS-008). {@see BudgetVsActualsCalculator} does the arithmetic (the
  * parent-rollup rule, budgeted-vs-actual per line/month); this class is the
@@ -74,9 +77,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

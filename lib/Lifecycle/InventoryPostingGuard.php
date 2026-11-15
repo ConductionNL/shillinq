@@ -3,6 +3,9 @@
 /**
  * Inventory Posting Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception path lifecycle guard for the perpetual inventory
  * GL-posting envelope (inventory-cogs-posting REQ-CG-002 / REQ-CG-003 /
  * REQ-CG-004). Four predicates:
@@ -49,16 +52,13 @@
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-7
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-8
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -413,7 +413,17 @@ class InventoryPostingGuard {
 			return null;
 		}
 
-		$row = $matches[0];
+		return self::configPayload(row: $matches[0]);
+	}//end resolveActiveConfig()
+
+	/**
+	 * The payload of a findAll() row: the array itself, or a serialisable entity's array.
+	 *
+	 * @param mixed $row One InventoryGLConfig row.
+	 *
+	 * @return array<string,mixed>|null The payload, or null when the row is unusable.
+	 */
+	private static function configPayload(mixed $row): array|null {
 		if (is_array($row) === true) {
 			return $row;
 		}
@@ -426,7 +436,7 @@ class InventoryPostingGuard {
 		}
 
 		return null;
-	}//end resolveActiveConfig()
+	}//end configPayload()
 
 	/**
 	 * Extract the inventory delta from the proposed valuation. Accepts

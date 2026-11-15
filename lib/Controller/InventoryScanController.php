@@ -3,6 +3,9 @@
 /**
  * Shillinq Inventory Scan Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative API for the inventory mobile scanner. Three endpoints:
  *   - GET  /api/inventory/resolve?barcode=...  resolve a scanned barcode (or
  *          typed SKU) to its InventoryItem (REQ-SKU-001 / REQ-BARCODE-002).
@@ -38,18 +41,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T5.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\InventoryScanService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InventoryScanServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -90,16 +90,16 @@ class InventoryScanController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IUserSession $userSession The user session (acting user identity).
 	 * @param IGroupManager $groupManager Group membership for role checks.
-	 * @param InventoryScanService $scanService Server-authoritative scan logic.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param InventoryScanServiceInterface $scanService Server-authoritative scan logic.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly InventoryScanService $scanService,
-		private readonly AdministrationContextService $context,
+		private readonly InventoryScanServiceInterface $scanService,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

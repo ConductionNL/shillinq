@@ -3,6 +3,9 @@
 /**
  * Inventory Valuation Report Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Read-only reporting views over the existing immutable `StockMove` ledger
  * for the jaarrekening (Titel 9 BW2) and management reporting. Answers the
  * three questions the stock ledger could not surface before:
@@ -41,19 +44,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InventoryValuationReportServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Ledger-replay valuation reporting (as-of-date / ageing / turnover).
@@ -66,7 +67,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class InventoryValuationReportService {
+class InventoryValuationReportService implements InventoryValuationReportServiceInterface {
 	/**
 	 * Construct the service.
 	 *

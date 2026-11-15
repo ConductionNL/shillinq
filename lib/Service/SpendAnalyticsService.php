@@ -3,6 +3,9 @@
 /**
  * Spend Analytics Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Single-dimension spend analysis over the Accounts-Payable sub-ledger,
  * built by CONSUMING OpenRegister's aggregation-api primitive (ADR-022) —
  * it does NOT re-implement grouping or summing in the leaf. Every view is
@@ -83,9 +86,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/spend-analytics/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -93,7 +93,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SpendAnalyticsServiceInterface;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -105,7 +106,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/spend-analytics/spec.md
  */
-class SpendAnalyticsService {
+class SpendAnalyticsService implements SpendAnalyticsServiceInterface {
 	/**
 	 * FQCN of OpenRegister's aggregation runner (fetched lazily from the DI
 	 * container so the leaf does not hard-link the class at boot).

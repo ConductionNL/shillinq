@@ -3,6 +3,9 @@
 /**
  * Requisition Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative create / submit / approve / reject for the purchase
  * requisition (aanvraag) sub-ledger (REQ-REQ-001..004). A Requisition is the
  * internal pre-PO document: an employee raises it, it is submitted for
@@ -31,28 +34,26 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/purchase-requisition/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Lifecycle\BudgetBlocker;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetBlockerInterface;
+use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Requisition create / submit / approve / reject (REQ-REQ-001..004).
  *
  * @spec openspec/specs/purchase-requisition/spec.md
  */
-class RequisitionService {
+class RequisitionService implements RequisitionServiceInterface {
 
 	/**
 	 * How a creation refusal names a required field that is not called by
@@ -69,7 +70,7 @@ class RequisitionService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-	 * @param BudgetBlocker $budgetBlocker Reused, unmodified budget/mandate guard.
+	 * @param BudgetBlockerInterface $budgetBlocker Reused, unmodified budget/mandate guard.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
@@ -78,7 +79,7 @@ class RequisitionService {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
-		private readonly BudgetBlocker $budgetBlocker,
+		private readonly BudgetBlockerInterface $budgetBlocker,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

@@ -3,6 +3,9 @@
 /**
  * Booking-created timeline publish listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 07 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Listens to OpenRegister's {@see ObjectCreatedEvent} on the Appointment
  * schema; when the new booking carries a non-empty `pipelinqContactId`,
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -42,11 +42,11 @@ namespace OCA\Shillinq\Listener;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -64,18 +64,18 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 	/**
 	 * Construct the listener with its DI deps.
 	 *
-	 * @param PipelinqContactAdapter $pipelinq Slice-02 adapter (publishTimelineEvent).
+	 * @param PipelinqContactAdapterInterface $pipelinq Slice-02 adapter (publishTimelineEvent).
 	 * @param TimelineRetryQueue $retryQueue Async-retry queue (slice 09 binding).
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger PSR logger for fail-soft observability.
-	 * @param CustomerBridgeMetricsService|null $metrics Optional metrics aggregator (slice 11); NULL-safe for existing tests.
+	 * @param CustomerBridgeMetricsServiceInterface|null $metrics Optional metrics aggregator (slice 11); NULL-safe for existing tests.
 	 */
 	public function __construct(
-		private readonly PipelinqContactAdapter $pipelinq,
+		private readonly PipelinqContactAdapterInterface $pipelinq,
 		private readonly TimelineRetryQueue $retryQueue,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
-		private readonly ?CustomerBridgeMetricsService $metrics = null,
+		private readonly ?CustomerBridgeMetricsServiceInterface $metrics = null,
 	) {
 
 	}//end __construct()

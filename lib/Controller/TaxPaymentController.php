@@ -3,6 +3,9 @@
 /**
  * Tax Payment Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 Vpb payment-reconciliation API (REQ-VPB-008). Exposes a single POST
  * endpoint that reconciles a TaxPaymentTracking record against the general
  * ledger and reports the variance. CRUD for payment records themselves is served
@@ -28,18 +31,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\TaxPaymentReconciliationService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\TaxPaymentReconciliationServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -58,18 +58,18 @@ class TaxPaymentController extends Controller {
 	 * Constructor for the TaxPaymentController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param TaxPaymentReconciliationService $reconciliation The reconciliation service.
+	 * @param TaxPaymentReconciliationServiceInterface $reconciliation The reconciliation service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly TaxPaymentReconciliationService $reconciliation,
+		private readonly TaxPaymentReconciliationServiceInterface $reconciliation,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

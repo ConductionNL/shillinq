@@ -3,6 +3,9 @@
 /**
  * Dunning Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 credit-control & dunning ladder API (REQ-CCD-002 .. REQ-CCD-010).
  * Exposes a handful of imperative endpoints layered on top of the declarative
  * registers + the DunningRunService orchestrator:
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -44,11 +44,11 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BIKStaffelCalculator;
-use OCA\Shillinq\Service\Dunning\IncassoDossierComposer;
-use OCA\Shillinq\Service\DunningRunService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BIKStaffelCalculatorInterface;
+use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -69,10 +69,10 @@ class DunningController extends Controller {
 	 * Wire the dunning controller dependencies.
 	 *
 	 * @param IRequest $request NC request.
-	 * @param BIKStaffelCalculator $bik Pure BIK + rente calculator.
-	 * @param DunningRunService $runs Run orchestrator.
-	 * @param IncassoDossierComposer $dossier Stage-5 dossier composer.
-	 * @param AdministrationContextService $context Admin-scope context.
+	 * @param BIKStaffelCalculatorInterface $bik Pure BIK + rente calculator.
+	 * @param DunningRunServiceInterface $runs Run orchestrator.
+	 * @param IncassoDossierComposerInterface $dossier Stage-5 dossier composer.
+	 * @param AdministrationContextServiceInterface $context Admin-scope context.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IAppConfig $appConfig App config for the register slug (security-endpoint-guards).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per
@@ -83,10 +83,10 @@ class DunningController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BIKStaffelCalculator $bik,
-		private readonly DunningRunService $runs,
-		private readonly IncassoDossierComposer $dossier,
-		private readonly AdministrationContextService $context,
+		private readonly BIKStaffelCalculatorInterface $bik,
+		private readonly DunningRunServiceInterface $runs,
+		private readonly IncassoDossierComposerInterface $dossier,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 		private readonly IAppConfig $appConfig,
 		private readonly ObjectServiceInterface $objectService,

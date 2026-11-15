@@ -3,6 +3,9 @@
 /**
  * No-Show Fee Capture Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Closes the bookings-depth "no-show-fee-capture" gap: the
  * bookings-cancellation-rules change DEFINES `CancellationPolicy.noShowFee`
  * (a 0-100 percentage of the appointment cost, snapshotted onto the
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-cancellation-rules/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,8 +39,9 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\NoShowFeeCaptureServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,14 +54,7 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class NoShowFeeCaptureService {
-
-	/**
-	 * No fee defined / nothing to capture.
-	 *
-	 * @var string
-	 */
-	public const STATUS_NONE = 'none';
+class NoShowFeeCaptureService implements NoShowFeeCaptureServiceInterface {
 
 	/**
 	 * Fee captured through the provider.

@@ -3,6 +3,9 @@
 /**
  * General-ledger (grootboekkaarten) data-report generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renders the general ledger natively as CSV: every GLLine row, grouped (sorted) by
  * accountNumber, with the running per-account balance carried down each card. The
  * account name is joined from the Account schema. Rendering is byte-native
@@ -42,7 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;

@@ -3,6 +3,9 @@
 /**
  * AR Invoice ICP PDF Renderer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 intra-community supplies (ICP) PDF representation (REQ-ICP-007). Given
  * an ARInvoice that carries `icpContext.treatAsIcp: true`, this service builds
  * the printed/PDF document with the legally required reverse-charge notice
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -43,6 +43,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
 use OCP\IL10N;
 
 /**
@@ -55,14 +56,7 @@ use OCP\IL10N;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class ArInvoiceIcpPdfRenderer {
-	/**
-	 * Error code raised when a treatAsIcp invoice lacks a buyer VAT-ID
-	 * (REQ-ICP-007, REQ-ICP-001).
-	 *
-	 * @var string
-	 */
-	public const ERROR_VATID_MISSING = 'icp.invoice.vatid.missing';
+class ArInvoiceIcpPdfRenderer implements ArInvoiceIcpPdfRendererInterface {
 
 	/**
 	 * Translation provider for the buyer-language label set.

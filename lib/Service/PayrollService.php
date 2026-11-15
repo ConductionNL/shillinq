@@ -34,11 +34,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PayrollServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Period-scoped Dutch payroll processing over OpenRegister.
@@ -51,7 +52,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
-class PayrollService {
+class PayrollService implements PayrollServiceInterface {
 	/**
 	 * The journal totals (integer cents) before any payslip is added.
 	 *
@@ -637,6 +638,31 @@ class PayrollService {
 	private function resolveTabelRules(string $administrationId, array $period, array $employee): array {
 		unset($administrationId);
 
+		$referenced = $this->referencedTableRules(period: $period);
+		if ($referenced !== null) {
+			return $referenced;
+		}
+
+		$tabellen = $this->rawFindAll(
+			schema: 'LoonheffingTabel2026',
+			filters: [
+				'colour' => self::taxTableColour(employee: $employee),
+				'period' => (string)($period['periodType'] ?? 'MONTH'),
+				'withDiscount' => (bool)($employee['payrollTaxTableDiscount'] ?? true),
+			]
+		);
+
+		return self::firstTableRules(tabellen: $tabellen);
+	}//end resolveTabelRegels()
+
+	/**
+	 * The bracket rows of the table the period references, when it references a usable one.
+	 *
+	 * @param array<string,mixed> $period Period record.
+	 *
+	 * @return array<int,mixed>|null The bracket rows, or null to fall back to a lookup.
+	 */
+	private function referencedTableRules(array $period): array|null {
 		$tabelId = (string)($period['payrollTaxTableId'] ?? '');
 		if ($tabelId !== '') {
 			$tabel = $this->findOneGlobal(schema: 'LoonheffingTabel2026', filters: ['id' => $tabelId]);
@@ -645,19 +671,33 @@ class PayrollService {
 			}
 		}
 
+		return null;
+	}//end referencedTableRules()
+
+	/**
+	 * The wage-tax table colour of the employee.
+	 *
+	 * @param array<string,mixed> $employee Employee record.
+	 *
+	 * @return string `GREEN` for a green table, otherwise `WHITE`.
+	 */
+	private static function taxTableColour(array $employee): string {
 		$colour = 'WHITE';
 		if (str_starts_with((string)($employee['payrollTaxTable'] ?? 'WHITE'), 'GREEN') === true) {
 			$colour = 'GREEN';
 		}
 
-		$tabellen = $this->rawFindAll(
-			schema: 'LoonheffingTabel2026',
-			filters: [
-				'colour' => $colour,
-				'period' => (string)($period['periodType'] ?? 'MONTH'),
-				'withDiscount' => (bool)($employee['payrollTaxTableDiscount'] ?? true),
-			]
-		);
+		return $colour;
+	}//end taxTableColour()
+
+	/**
+	 * The bracket rows of the first table that has them.
+	 *
+	 * @param iterable<mixed> $tabellen Candidate tables.
+	 *
+	 * @return array<int,mixed> The bracket rows, or [] when none has them.
+	 */
+	private static function firstTableRules(iterable $tabellen): array {
 		foreach ($tabellen as $tabel) {
 			if (is_array(($tabel['tableRules'] ?? null)) === true) {
 				return $tabel['tableRules'];
@@ -665,7 +705,7 @@ class PayrollService {
 		}
 
 		return [];
-	}//end resolveTabelRegels()
+	}//end firstTableRules()
 
 	/**
 	 * Compute the remittance due date: last day of the month after the period.

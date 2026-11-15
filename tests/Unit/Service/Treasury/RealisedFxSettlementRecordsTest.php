@@ -25,6 +25,8 @@ use RuntimeException;
  * Pins postRealisedFxOnSettlement() before it is split into named steps.
  *
  * @covers \OCA\Shillinq\Service\Treasury\RealisedFxSettlementService
+ * @uses   \OCA\Shillinq\Service\Treasury\RealisedFxSettlementRun
+ * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

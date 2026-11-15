@@ -3,6 +3,9 @@
 /**
  * Reconciliation Resolution Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * T4 bookkeeping-reconciliation-reports — REQ-REC-004 unmatched-item
  * resolution endpoint. Accepts a classification (matched / timing / pending
  * / adjustment) plus operator-supplied reason text and writes both onto
@@ -27,17 +30,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ReconciliationResolutionService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -65,7 +65,7 @@ class ReconciliationResolutionController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Inbound request.
-	 * @param ReconciliationResolutionService $service Encapsulates the
+	 * @param ReconciliationResolutionServiceInterface $service Encapsulates the
 	 *                                                 write logic + audit
 	 *                                                 trail.
 	 * @param IUserSession $userSession Current Nextcloud
@@ -82,7 +82,7 @@ class ReconciliationResolutionController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ReconciliationResolutionService $service,
+		private readonly ReconciliationResolutionServiceInterface $service,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,

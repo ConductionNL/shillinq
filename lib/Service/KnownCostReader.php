@@ -3,6 +3,9 @@
 /**
  * Known Cost Reader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The OpenRegister half of `budget-known-costs` (REQ-BKC-008): every read
  * {@see KnownCostBudgetWriter} needs to derive `BudgetLine` rows from
  * `CashflowRecurring` schedules, and nothing else.
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -52,7 +52,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;

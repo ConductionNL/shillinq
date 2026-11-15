@@ -3,6 +3,9 @@
 /**
  * Auditfile (XAF 3.2) Parser
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Deterministic, XXE-safe parser for the Dutch XML Auditfile Financieel
  * (XAF 3.2 — http://www.auditfiles.nl/XAF/3.2). It is the load-bearing,
  * fully-real deliverable of the administration-import-migration change
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-6
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

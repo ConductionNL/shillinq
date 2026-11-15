@@ -3,6 +3,9 @@
 /**
  * AP Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Lifecycle preconditions for the APTransaction schema's `receive` and
  * `writeOff` transitions (lib/Settings/register.d/
  * bookkeeping-accounts-payable-core.json, REQ-AP-003 scenario 2, REQ-AP-005).
@@ -26,16 +29,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;

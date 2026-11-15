@@ -27,7 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -41,7 +42,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
  */
-class IncassoDossierComposer {
+class IncassoDossierComposer implements IncassoDossierComposerInterface {
 	/**
 	 * Construct the composer with its DI dependencies.
 	 *

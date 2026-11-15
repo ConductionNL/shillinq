@@ -3,6 +3,9 @@
 /**
  * Bank Statement Import Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The real import endpoint behind the BankStatementWizard
  * (shillinq-bank-statement-wizard, REQ-BSW-004). It accepts a CAMT.053 /
  * MT940 / CSV bank-statement file (multipart upload OR a JSON body carrying
@@ -29,19 +32,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Lifecycle\StatementParser;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Bank\StatementIntakeService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,21 +62,21 @@ class BankStatementImportController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
-	 * @param StatementParser $parser Deterministic CAMT.053/MT940/CSV parser.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
+	 * @param StatementParserInterface $parser Deterministic CAMT.053/MT940/CSV parser.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope.
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
-	 * @param StatementIntakeService $intake Writes the statement and its lines (REQ-BCON-002).
+	 * @param StatementIntakeServiceInterface $intake Writes the statement and its lines (REQ-BCON-002).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly StatementParser $parser,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly StatementParserInterface $parser,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
-		private readonly StatementIntakeService $intake,
+		private readonly StatementIntakeServiceInterface $intake,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

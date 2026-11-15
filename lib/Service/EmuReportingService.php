@@ -24,12 +24,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\EmuReportingServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -41,7 +45,7 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class EmuReportingService {
+class EmuReportingService implements EmuReportingServiceInterface {
 
 	/**
 	 * Maps a GL account-number prefix to a Wet Hof art. 3 adjustment type and

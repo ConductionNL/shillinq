@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -174,7 +174,7 @@ final class PaymentRunDuplicateGuardGoldenTest extends TestCase {
 		$container->method('get')->willReturn($store);
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('');
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$blockRecords = $records;
 		unset($blockRecords['*throw*']);

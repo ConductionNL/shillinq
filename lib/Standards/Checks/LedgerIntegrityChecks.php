@@ -3,6 +3,9 @@
 /**
  * Ledger Integrity & Retention check provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Contributes executable checks for the GoBD / audit-trail / retention / SAF-T
  * integrity corpus (lib/Standards/rules/integrity-retention.json) to the
  * RuleEngine. Each predicate is a real, deterministic test over the structured
@@ -40,8 +43,6 @@
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
-
-use DateTimeImmutable;
 
 /**
  * Executable ledger-integrity, immutability and retention checks.
@@ -207,7 +208,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function glDoubleEntryBalanced(array $o): bool {
-		return self::balanced($o);
+		return GlTransactionLines::balanced(transaction: $o);
 
 	}//end glDoubleEntryBalanced()
 
@@ -220,7 +221,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function glTrialBalanceReconciles(array $o): bool {
-		return self::balanced($o);
+		return GlTransactionLines::balanced(transaction: $o);
 
 	}//end glTrialBalanceReconciles()
 
@@ -365,7 +366,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function deGobdDatenzugriffZ3(array $o): bool {
-		return self::isTrue($o, 'saftExportable');
+		return CheckFields::isTrue($o, 'saftExportable');
 
 	}//end deGobdDatenzugriffZ3()
 
@@ -377,7 +378,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function frFecMandatoryExport(array $o): bool {
-		return self::isTrue($o, 'saftExportable');
+		return CheckFields::isTrue($o, 'saftExportable');
 
 	}//end frFecMandatoryExport()
 
@@ -413,7 +414,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function frPcgChronologicalIrreversible(array $o): bool {
-		return (self::present($o, 'postingDate') && self::isTrue($o, 'irreversible'));
+		return (self::present($o, 'postingDate') && CheckFields::isTrue($o, 'irreversible'));
 
 	}//end frPcgChronologicalIrreversible()
 
@@ -485,7 +486,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function itCadDigitalConservazione(array $o): bool {
-		return (self::isTrue($o, 'integrityVerified') && self::present($o, 'validationDate'));
+		return (CheckFields::isTrue($o, 'integrityVerified') && self::present($o, 'validationDate'));
 
 	}//end itCadDigitalConservazione()
 
@@ -497,7 +498,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function euVat2006112Art233Integrity(array $o): bool {
-		return self::isTrue($o, 'integrityVerified');
+		return CheckFields::isTrue($o, 'integrityVerified');
 
 	}//end euVat2006112Art233Integrity()
 
@@ -521,7 +522,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function euVat2006112Art248aAccess(array $o): bool {
-		return self::isTrue($o, 'archiveAvailable');
+		return CheckFields::isTrue($o, 'archiveAvailable');
 
 	}//end euVat2006112Art248aAccess()
 
@@ -533,7 +534,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function euSaftOecdAuditFile(array $o): bool {
-		return self::isTrue($o, 'saftExportable');
+		return CheckFields::isTrue($o, 'saftExportable');
 
 	}//end euSaftOecdAuditFile()
 
@@ -545,7 +546,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function ptSaftPtMandatory(array $o): bool {
-		return self::isTrue($o, 'saftExportable');
+		return CheckFields::isTrue($o, 'saftExportable');
 
 	}//end ptSaftPtMandatory()
 
@@ -557,7 +558,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function plJpkVatMandatory(array $o): bool {
-		return self::isTrue($o, 'saftExportable');
+		return CheckFields::isTrue($o, 'saftExportable');
 
 	}//end plJpkVatMandatory()
 
@@ -569,7 +570,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function roD406SaftMandatory(array $o): bool {
-		return self::isTrue($o, 'saftExportable');
+		return CheckFields::isTrue($o, 'saftExportable');
 
 	}//end roD406SaftMandatory()
 
@@ -581,7 +582,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function usIrsElectronicRecords(array $o): bool {
-		return self::isTrue($o, 'archiveAvailable');
+		return CheckFields::isTrue($o, 'archiveAvailable');
 
 	}//end usIrsElectronicRecords()
 
@@ -916,23 +917,6 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	}//end present()
 
 	/**
-	 * True when a boolean-ish field is strictly truthy (true / 1 / "1" / "true").
-	 *
-	 * @param array<string, mixed> $o Object.
-	 * @param string $key Field.
-	 *
-	 * @return bool
-	 */
-	private static function isTrue(array $o, string $key): bool {
-		$value = ($o[$key] ?? null);
-		if (is_bool($value) === true) {
-			return $value;
-		}
-
-		return in_array($value, [1, '1', 'true'], true);
-	}//end isTrue()
-
-	/**
 	 * True when a field carries an explicit boolean value (true OR false), i.e. the
 	 * locking decision has been recorded rather than left unset.
 	 *
@@ -947,54 +931,6 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	}//end isBool()
 
 	/**
-	 * The GLLine children of the transaction (injected under `lines`), normalised
-	 * to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The GL transaction.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function lines(array $o): array {
-		$lines = ($o['lines'] ?? []);
-		if (is_array($lines) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($lines, 'is_array'));
-	}//end lines()
-
-	/**
-	 * Double-entry balance: Σ debit-side amounts = Σ credit-side amounts (to the
-	 * cent). Fail-closed on no lines.
-	 *
-	 * @param array<string, mixed> $o The GL transaction, with `lines`.
-	 *
-	 * @return bool
-	 */
-	private static function balanced(array $o): bool {
-		$lines = self::lines($o);
-		if ($lines === []) {
-			return false;
-		}
-
-		$debit = 0;
-		$credit = 0;
-		foreach ($lines as $line) {
-			$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-			$side = (string)($line['side'] ?? '');
-			if ($side === 'debit') {
-				$debit += $cents;
-			} elseif ($side === 'credit') {
-				$credit += $cents;
-			} else {
-				return false;
-			}
-		}
-
-		return $debit === $credit;
-	}//end balanced()
-
-	/**
 	 * Completeness + timeliness: at least two lines (each accounted + sided +
 	 * non-zero) and a posting date present.
 	 *
@@ -1003,7 +939,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function completeAndDated(array $o): bool {
-		$lines = self::lines($o);
+		$lines = GlTransactionLines::of(transaction: $o);
 		if (count($lines) < 2) {
 			return false;
 		}
@@ -1052,7 +988,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 		}
 
 		if ($state === 'posted') {
-			return self::isTrue($o, 'postingLocked');
+			return CheckFields::isTrue($o, 'postingLocked');
 		}
 
 		// Draft entries are still editable by design — not yet subject to the lock.
@@ -1114,7 +1050,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 			return false;
 		}
 
-		return self::present($o, 'validationDate') && self::isTrue($o, 'irreversible');
+		return self::present($o, 'validationDate') && CheckFields::isTrue($o, 'irreversible');
 	}//end validatedEntry()
 
 	/**
@@ -1134,7 +1070,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 			return false;
 		}
 
-		$lines = self::lines($o);
+		$lines = GlTransactionLines::of(transaction: $o);
 		if ($lines === []) {
 			return false;
 		}
@@ -1161,8 +1097,8 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function retainsYears(array $o, int $years): bool {
-		$posting = self::parseDate((string)($o['postingDate'] ?? ''));
-		$retention = self::parseDate((string)($o['retentionUntil'] ?? ''));
+		$posting = CheckFields::parseDate((string)($o['postingDate'] ?? ''));
+		$retention = CheckFields::parseDate((string)($o['retentionUntil'] ?? ''));
 		if ($posting === null || $retention === null) {
 			return false;
 		}
@@ -1174,26 +1110,4 @@ final class LedgerIntegrityChecks implements CheckProvider {
 
 		return $retention >= $required;
 	}//end retainsYears()
-
-	/**
-	 * Parse a Y-m-d (or ISO 8601) date string to an immutable date, or null when
-	 * empty / unparseable.
-	 *
-	 * @param string $value The date string.
-	 *
-	 * @return DateTimeImmutable|null
-	 */
-	private static function parseDate(string $value): ?DateTimeImmutable {
-		$value = trim($value);
-		if ($value === '') {
-			return null;
-		}
-
-		try {
-			return new DateTimeImmutable($value);
-		} catch (\Exception $e) {
-			return null;
-		}
-
-	}//end parseDate()
 }//end class

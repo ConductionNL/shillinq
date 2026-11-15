@@ -3,6 +3,9 @@
 /**
  * Extraction Completed Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-001) — consumes docudesk's
  * cross-app {@see \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent}
  * (canonical wire contract `nl.conduction.docudesk.extraction.completed`,
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -46,10 +46,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
 use OCA\Shillinq\Support\FleetAppId;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -57,7 +58,6 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Turns a docudesk extraction-completed event into a confidence-scored
@@ -96,18 +96,18 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @param ContainerInterface $container DI container — OR ObjectService
 	 *                                      pulled lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param ExtractionPrefillService $prefillService Field-mapping service.
+	 * @param ExtractionPrefillServiceInterface $prefillService Field-mapping service.
 	 * @param INotificationManager $notificationManager NC notification dispatcher.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
-	 * @param AdministrationContextService $administrationContext Resolves the requester's administration.
+	 * @param AdministrationContextServiceInterface $administrationContext Resolves the requester's administration.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
-		private readonly ExtractionPrefillService $prefillService,
+		private readonly ExtractionPrefillServiceInterface $prefillService,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 
 	}//end __construct()
@@ -195,14 +195,47 @@ class ExtractionCompletedListener implements IEventListener {
 		}
 
 		$existing = $this->findBySourceDocumentUri(schema: $schema, documentUri: $documentUri);
+		if ($this->refreshRefused(schema: $schema, existing: $existing, payload: $payload, documentUri: $documentUri) === true) {
+			return;
+		}
+
+		$this->persistDraft(schema: $schema, payload: $payload, existing: $existing, documentUri: $documentUri);
+
+	}//end apply()
+
+	/**
+	 * Whether an existing record may not be refreshed by this requester (logged).
+	 *
+	 * @param string                    $schema      The draft schema.
+	 * @param array<string, mixed>|null $existing    The record for the document, if any.
+	 * @param array<string, mixed>      $payload     The normalised event payload.
+	 * @param string                    $documentUri The trimmed document URI.
+	 *
+	 * @return bool
+	 */
+	private function refreshRefused(string $schema, array|null $existing, array $payload, string $documentUri): bool {
 		if ($existing !== null && $this->mayRefresh(schema: $schema, existing: $existing, requestedBy: $payload['requestedBy']) === false) {
 			$this->logger->info(
 				'ExtractionCompletedListener: existing record is not a draft of the requester, not refreshed',
 				['schema' => $schema, 'documentUri' => $documentUri, 'requestedBy' => $payload['requestedBy']]
 			);
-			return;
+			return true;
 		}
 
+		return false;
+	}//end refreshRefused()
+
+	/**
+	 * Save the draft and, for a new one, notify the requester.
+	 *
+	 * @param string                    $schema      The draft schema.
+	 * @param array<string, mixed>      $payload     The normalised event payload.
+	 * @param array<string, mixed>|null $existing    The record for the document, if any.
+	 * @param string                    $documentUri The trimmed document URI.
+	 *
+	 * @return void
+	 */
+	private function persistDraft(string $schema, array $payload, array|null $existing, string $documentUri): void {
 		$saved = $this->saveObject(schema: $schema, object: $this->draftFor(payload: $payload, existing: $existing));
 
 		$this->logger->info(
@@ -224,8 +257,7 @@ class ExtractionCompletedListener implements IEventListener {
 				draft: $saved
 			);
 		}
-
-	}//end apply()
+	}//end persistDraft()
 
 	/**
 	 * The draft schema for a docType; an unknown docType is logged and skipped.
@@ -263,7 +295,7 @@ class ExtractionCompletedListener implements IEventListener {
 			return false;
 		}
 
-		if ($schema !== ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE) {
+		if ($schema !== ExtractionPrefillServiceInterface::SCHEMA_SUPPLIER_INVOICE) {
 			return true;
 		}
 
@@ -368,7 +400,7 @@ class ExtractionCompletedListener implements IEventListener {
 		try {
 			$notification = $this->notificationManager->createNotification();
 			$notification
-				->setApp(Application::APP_ID)
+				->setApp(AppIdentity::APP_ID)
 				->setUser($requestedBy)
 				->setDateTime(new DateTime())
 				->setObject(self::NOTIFICATION_OBJECT_TYPE, $reference)
@@ -422,7 +454,7 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

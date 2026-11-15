@@ -3,6 +3,9 @@
 /**
  * E-Invoice Pre-Send Validation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Runs the KvK / BTW-nummer (VIES) / Peppol participant checks that MUST pass
  * before an ARInvoice is transmitted over Peppol (REQ-EINV-003). Reuses the
  * existing {@see \OCA\Shillinq\Service\ViesService} VIES integration and the
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

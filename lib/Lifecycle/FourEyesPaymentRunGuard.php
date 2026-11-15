@@ -3,6 +3,9 @@
 /**
  * Four-Eyes Payment-Run Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side segregation-of-duties control on the `PaymentRun.approve`
  * lifecycle transition (draft -> approved). Approval is the hard control point
  * before an outgoing SEPA batch can be exported and money leaves the
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/payment-run-four-eyes/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

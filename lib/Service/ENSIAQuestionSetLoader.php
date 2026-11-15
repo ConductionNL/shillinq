@@ -3,6 +3,9 @@
 /**
  * ENSIA Question-Set Loader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-ENSIA-001 — load the BIO + domain-specific VNG question set for a
  * given verslagjaar and verantwoordingsdomeinen selection, and produce
  * Evaluatievraag record shapes that the caller persists via OR's
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

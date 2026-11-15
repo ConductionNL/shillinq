@@ -25,6 +25,9 @@
  *
  * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
  * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

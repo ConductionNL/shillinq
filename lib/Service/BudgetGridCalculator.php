@@ -3,6 +3,9 @@
 /**
  * Budget Grid Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The arithmetic half of the begroting grid (`budget-grid-view`,
  * REQ-BGV-003/004/005/008). No OpenRegister calls — every input is a
  * {@see BudgetGridReader::loadGrid()} bundle plus
@@ -43,14 +46,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\Kernel\Contracts\BudgetGridCalculatorInterface;
 
 /**
  * Pure begroting-grid arithmetic: per-column deviation with the
@@ -59,7 +61,7 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
  */
-class BudgetGridCalculator {
+class BudgetGridCalculator implements BudgetGridCalculatorInterface {
 
 	/**
 	 * Construct the calculator.
@@ -512,12 +514,7 @@ class BudgetGridCalculator {
 		}
 
 		$entry = ($bvaContext['ledgerGroupEntries'][$index] ?? null);
-		foreach (($entry['memberAccountNumbers'] ?? []) as $accountNumber) {
-			$type = ($accountTypeByNumber[$accountNumber] ?? null);
-			if ($type !== null) {
-				$types[$type] = true;
-			}
-		}
+		$types += self::memberAccountTypes(entry: $entry, accountTypeByNumber: $accountTypeByNumber);
 
 		foreach (($bvaContext['ledgerGroupChildrenByIndex'][$index] ?? []) as $childIndex) {
 			$childEntry = ($bvaContext['ledgerGroupEntries'][$childIndex] ?? null);
@@ -525,12 +522,8 @@ class BudgetGridCalculator {
 				continue;
 			}
 
-			$childKey = $childEntry['slug'];
-			if ($childEntry['id'] !== '') {
-				$childKey = $childEntry['id'];
-			}
 			$this->collectSubtreeAccountTypes(
-				ledgerGroupKey: $childKey,
+				ledgerGroupKey: self::ledgerGroupKeyOf(entry: $childEntry),
 				bvaContext: $bvaContext,
 				accountTypeByNumber: $accountTypeByNumber,
 				types: $types
@@ -538,6 +531,42 @@ class BudgetGridCalculator {
 		}
 
 	}//end collectSubtreeAccountTypes()
+
+	/**
+	 * The distinct accountTypes of a LedgerGroup entry's own member accounts.
+	 *
+	 * @param array<string,mixed>|null $entry               The LedgerGroup entry.
+	 * @param array<string,string>     $accountTypeByNumber Account number => accountType.
+	 *
+	 * @return array<string,bool> accountType => true.
+	 */
+	private static function memberAccountTypes(array|null $entry, array $accountTypeByNumber): array {
+		$types = [];
+		foreach (($entry['memberAccountNumbers'] ?? []) as $accountNumber) {
+			$type = ($accountTypeByNumber[$accountNumber] ?? null);
+			if ($type !== null) {
+				$types[$type] = true;
+			}
+		}
+
+		return $types;
+	}//end memberAccountTypes()
+
+	/**
+	 * A LedgerGroup entry's key: its id, or its slug when it has no id.
+	 *
+	 * @param array<string,mixed> $entry The LedgerGroup entry.
+	 *
+	 * @return string The key.
+	 */
+	private static function ledgerGroupKeyOf(array $entry): string {
+		$childKey = $entry['slug'];
+		if ($entry['id'] !== '') {
+			$childKey = $entry['id'];
+		}
+
+		return $childKey;
+	}//end ledgerGroupKeyOf()
 
 	/**
 	 * Resolve a `LedgerGroup`'s budgeted amount for one calendar month

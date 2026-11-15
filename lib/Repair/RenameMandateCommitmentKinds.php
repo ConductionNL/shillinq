@@ -3,6 +3,9 @@
 /**
  * Shillinq RenameMandateCommitmentKinds Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Translates the Dutch commitment-kind values stored INSIDE the
  * `Mandate.kind_commitment` JSON ARRAY to their English names.
  *
@@ -50,9 +53,6 @@
  *
  * Registered AFTER RenameDutchValues, which moves the scalar
  * `Commitment.kind` column this list mirrors.
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V.
  *
  * @category Repair
  * @package  OCA\Shillinq\Repair

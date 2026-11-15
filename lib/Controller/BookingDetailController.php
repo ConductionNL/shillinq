@@ -3,6 +3,9 @@
 /**
  * Booking Detail Controller — pipelinq customer-bridge slice 05.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REST surface for the booking detail view: GET /api/v1/bookings/{id}
  * returns the Appointment record hydrated with the linked pipelinq
  * Contact profile and the most recent klantbeeld transactions. This is
@@ -31,22 +34,20 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-05-detail-controller-inject/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\KlantbeeldResultInterface;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -99,17 +100,17 @@ class BookingDetailController extends Controller {
 	 *
 	 * @param IRequest $request Inbound request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
-	 * @param AdministrationContextService $context Per-administration IDOR guard (ADR-005).
-	 * @param PipelinqContactAdapter $pipelinq Slice 02-04 adapter (getContact + fetchKlantbeeld).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param AdministrationContextServiceInterface $context Per-administration IDOR guard (ADR-005).
+	 * @param PipelinqContactAdapterInterface $pipelinq Slice 02-04 adapter (getContact + fetchKlantbeeld).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
-		private readonly AdministrationContextService $context,
-		private readonly PipelinqContactAdapter $pipelinq,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly PipelinqContactAdapterInterface $pipelinq,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -243,7 +244,7 @@ class BookingDetailController extends Controller {
 	private function appointmentRecords(string $appointmentId): iterable {
 		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 		return $objectService
-			->setRegister($this->settings->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema('Appointment')
 			->findAll(
 				[
@@ -304,11 +305,11 @@ class BookingDetailController extends Controller {
 	 * Preserves the three legitimate outcomes (available, empty,
 	 * unavailable) via dedicated booleans so the slice-06 UI can branch.
 	 *
-	 * @param KlantbeeldResult $result Adapter-returned envelope.
+	 * @param KlantbeeldResultInterface $result Adapter-returned envelope.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function presentKlantbeeld(KlantbeeldResult $result): array {
+	private function presentKlantbeeld(KlantbeeldResultInterface $result): array {
 		$serialised = $result->jsonSerialize();
 		$serialised['empty'] = $result->isEmpty();
 
@@ -409,7 +410,7 @@ class BookingDetailController extends Controller {
 			return new JSONResponse(['error' => 'id is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
@@ -607,9 +608,9 @@ class BookingDetailController extends Controller {
 	 *
 	 * @param BookingDetailRun $run The run.
 	 *
-	 * @return KlantbeeldResult
+	 * @return KlantbeeldResultInterface
 	 */
-	private function historyPage(BookingDetailRun $run): KlantbeeldResult {
+	private function historyPage(BookingDetailRun $run): KlantbeeldResultInterface {
 		return $this->pipelinq->fetchKlantbeeld(
 			externalId: $run->contactId,
 			limit: $run->limit,
@@ -624,9 +625,9 @@ class BookingDetailController extends Controller {
 	 * @param BookingDetailRun $run The run.
 	 * @param Throwable $failure The failure.
 	 *
-	 * @return KlantbeeldResult
+	 * @return KlantbeeldResultInterface
 	 */
-	private function historyUnavailable(BookingDetailRun $run, Throwable $failure): KlantbeeldResult {
+	private function historyUnavailable(BookingDetailRun $run, Throwable $failure): KlantbeeldResultInterface {
 		$this->logger->warning(
 			'BookingDetailController: klantbeeld fetch threw unexpectedly',
 			[

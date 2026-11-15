@@ -3,6 +3,9 @@
 /**
  * Budget Projection Reader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The OpenRegister half of the `budget-projection-engine` change
  * (REQ-BPE-003, REQ-BPE-009): every read the projection engine needs,
  * batched into a fixed, small query count independent of how many
@@ -67,9 +70,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-009
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

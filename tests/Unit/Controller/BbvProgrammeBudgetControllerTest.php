@@ -3,6 +3,9 @@
 /**
  * Unit tests for BbvProgrammeBudgetController — the route half of #866/#862.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The interesting behaviour here is the REQ-BBC-002 filter parsing, and one
  * distinction in it is load-bearing: an "All" selection means NO filter
  * (`null`), a genuinely empty selection means SHOW NOTHING (`[]`), and a value
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

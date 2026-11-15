@@ -23,7 +23,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 use OCA\Shillinq\Lifecycle\APTransactionSettlementGuard;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -59,11 +59,9 @@ final class APTransactionSettlementGuardTest extends TestCase {
 				$verdicts[] = $guard->check(['id' => $objectId], $action, 'bookkeeper1')->isAllowed();
 			}
 		);
-		$settings = $this->createMock(SettingsService::class);
-		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$store = new InMemoryObjectServiceStub(['APTransaction' => [['id' => 'ap-1', 'state' => 'issued', 'totalAmount' => 10.0]]]);
 
-		(new InvoiceSettlementService(objectService: $store, transitions: $runner, settings: $settings, logger: new NullLogger()))
+		(new InvoiceSettlementService(objectService: $store, transitions: $runner, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: new NullLogger()))
 			->settle(['targetType' => 'ap-invoice', 'targetRefs' => ['ap-1'], 'isPartial' => false]);
 
 		self::assertSame([true], $verdicts);

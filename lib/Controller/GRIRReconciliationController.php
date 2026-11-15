@@ -3,6 +3,9 @@
 /**
  * GR/IR Reconciliation Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (shillinq#424 / #446): the missing
  * operator surface for the GR/IR period-end reconciliation.
  * {@see \OCA\Shillinq\Service\GRIRClearingService::reconcileGRIRSaldoForPeriod()}
@@ -30,18 +33,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\GRIRClearingService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -69,8 +69,8 @@ class GRIRReconciliationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param GRIRClearingService $grirClearingService The GR/IR clearing service.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
+	 * @param GRIRClearingServiceInterface $grirClearingService The GR/IR clearing service.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param IUserSession $userSession User-session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to the client).
 	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
@@ -82,8 +82,8 @@ class GRIRReconciliationController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly GRIRClearingService $grirClearingService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly GRIRClearingServiceInterface $grirClearingService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,

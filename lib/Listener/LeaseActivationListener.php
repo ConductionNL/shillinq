@@ -3,6 +3,9 @@
 /**
  * Lease Activation Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-lease-capabilities (shillinq#446): the missing IFRS-16 lease
  * schedule trigger. {@see \OCA\Shillinq\Service\LeasePaymentScheduleService::generateSchedule()}
  * fully materialises the per-period amortization schedule (interest /
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,8 +48,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\Shillinq\Service\LeasePaymentScheduleService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\LeasePaymentScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -74,13 +74,13 @@ class LeaseActivationListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param LeasePaymentScheduleService $scheduleService The amortization schedule generator.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LeasePaymentScheduleServiceInterface $scheduleService The amortization schedule generator.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly LeasePaymentScheduleService $scheduleService,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LeasePaymentScheduleServiceInterface $scheduleService,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 

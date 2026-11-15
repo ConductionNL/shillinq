@@ -3,6 +3,9 @@
 /**
  * WBSO Administratie Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-1 read-only WBSO realisatie API (REQ-WBSO-010). Exposes a single GET
  * endpoint that returns, per WbsoBeschikking, the granted versus realised S&O
  * hours for one administration. The endpoint is available to any authenticated
@@ -27,18 +30,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\WbsoAdministratieService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoAdministratieServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -56,17 +56,17 @@ class WbsoAdministratieController extends Controller {
 	 * Constructor for the WbsoAdministratieController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param WbsoAdministratieService $service The realisatie computation service.
+	 * @param WbsoAdministratieServiceInterface $service The realisatie computation service.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
-	 * @param AdministrationContextService $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
+	 * @param AdministrationContextServiceInterface $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WbsoAdministratieService $service,
+		private readonly WbsoAdministratieServiceInterface $service,
 		private readonly LoggerInterface $logger,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

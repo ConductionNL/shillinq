@@ -3,6 +3,9 @@
 /**
  * XAF 3.2 Auditfile Financieel generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renders the Dutch **Auditfile Financieel (XAF 3.2)** — the national hand-over
  * format between a bookkeeping package and an accountant or the Belastingdienst,
  * maintained by XBRL Nederland / the Belastingdienst under the namespace
@@ -42,9 +45,6 @@
  *
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
@@ -52,7 +52,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -65,7 +66,7 @@ use XMLWriter;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-final class XafAuditfileGenerator implements ReportGeneratorInterface {
+final class XafAuditfileGenerator implements ReportGeneratorInterface, XafAuditfileGeneratorInterface {
 
 	use ReportDataTrait;
 

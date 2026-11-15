@@ -3,6 +3,9 @@
 /**
  * Unit tests for the BookingLifecycleTransitionListener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Verifies the listener's contract:
  *
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -47,8 +47,8 @@ use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\Pipelinq\TimelinePublishOutcome;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;

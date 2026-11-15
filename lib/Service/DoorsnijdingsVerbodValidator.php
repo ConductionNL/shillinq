@@ -3,6 +3,9 @@
 /**
  * Doorsnijdingsverbod Validator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Enforces the doorsnijdingsverbod (non-duplication rule, Wet Vpb art. 12bd
  * lid 2, REQ-IBA-004): costs allocated to an innovatiebox asset
  * (IBExpenseAllocation with exclusief_in_winstbepaling=true) MUST NOT be
@@ -26,18 +29,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DoorsnijdingsVerbodValidatorInterface;
+use OCP\IAppConfig;
 
 /**
  * Detects innovatiebox/GL cost duplication (doorsnijdingsverbod, REQ-IBA-004).
@@ -48,7 +49,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class DoorsnijdingsVerbodValidator {
+class DoorsnijdingsVerbodValidator implements DoorsnijdingsVerbodValidatorInterface {
 
 	/**
 	 * The message of a duplication finding: amount, account, kostenplaats.

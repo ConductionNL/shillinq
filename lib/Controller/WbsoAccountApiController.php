@@ -3,6 +3,9 @@
 /**
  * WBSO Account API Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REST surface for the Account register declared by the
  * bookkeeping-financial-administration spec (REQ-WBSO-001 / REQ-WBSO-005 /
  * REQ-WBSO-006). Endpoints:
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -37,10 +37,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\WbsoAccountService;
-use OCA\Shillinq\Service\WbsoRbacResolver;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoAccountServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -97,21 +97,21 @@ class WbsoAccountApiController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
-	 * @param WbsoAccountService $accounts Account service.
-	 * @param WbsoRbacResolver $rbac Role resolver.
+	 * @param WbsoAccountServiceInterface $accounts Account service.
+	 * @param WbsoRbacResolverInterface $rbac Role resolver.
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
-	 * @param AdministrationContextService $administrationContext Membership check on the requested administration.
+	 * @param AdministrationContextServiceInterface $administrationContext Membership check on the requested administration.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WbsoAccountService $accounts,
-		private readonly WbsoRbacResolver $rbac,
+		private readonly WbsoAccountServiceInterface $accounts,
+		private readonly WbsoRbacResolverInterface $rbac,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

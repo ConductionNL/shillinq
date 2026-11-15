@@ -3,6 +3,9 @@
 /**
  * Fixed-Asset Disposal Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (shillinq#417 / #446): the missing
  * disposal-journal trigger. {@see \OCA\Shillinq\Service\DisposalJournalEmitter}
  * fully implements the closing `GLTransaction` payload for a retired
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\FixedAssetDisposalService;
+use OCA\Shillinq\Kernel\Contracts\FixedAssetDisposalServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -80,11 +80,11 @@ class FixedAssetDisposalListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param FixedAssetDisposalService $disposalService The disposal posting orchestrator.
+	 * @param FixedAssetDisposalServiceInterface $disposalService The disposal posting orchestrator.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly FixedAssetDisposalService $disposalService,
+		private readonly FixedAssetDisposalServiceInterface $disposalService,
 		private readonly LoggerInterface $logger,
 	) {
 

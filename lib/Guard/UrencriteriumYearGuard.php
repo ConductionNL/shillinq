@@ -3,6 +3,9 @@
 /**
  * Urencriterium Year Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the UrencriteriumYear save precondition.
  * Before any UrencriteriumYear record is persisted, this guard validates and
  * normalises the fiscal-compliance invariants that the declarative OpenRegister
@@ -35,15 +38,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\Kernel\Contracts\UrencriteriumYearGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
  */
-class UrencriteriumYearGuard {
+class UrencriteriumYearGuard implements UrencriteriumYearGuardInterface {
 
 	/**
 	 * The regular urencriterium norm in hours (art. 3.6 lid 1 Wet IB 2001).

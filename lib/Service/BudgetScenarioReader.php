@@ -3,6 +3,9 @@
 /**
  * Budget Scenario Reader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The OpenRegister half of `budget-scenarios`' evaluation pipeline
  * (REQ-BSC-007). {@see BudgetScenarioEvaluator} does the arithmetic (pure, no
  * store access); this class is the only one that talks to the store —
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -45,6 +45,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioReaderInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -54,7 +55,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
  */
-class BudgetScenarioReader {
+class BudgetScenarioReader implements BudgetScenarioReaderInterface {
 	/**
 	 * BudgetScenario schema slug.
 	 *

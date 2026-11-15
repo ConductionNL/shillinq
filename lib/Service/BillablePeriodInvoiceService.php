@@ -3,6 +3,9 @@
 /**
  * Invoice Ingest Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Answers BillablePeriodClosedEvent: another app's customer month becomes a
  * draft BillableInvoice for the one CustomerMaster that carries that app's
  * reference (decision 174: a dossiq tenant bills under the customer whose
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -42,17 +42,18 @@ namespace OCA\Shillinq\Service;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Event\BillablePeriodClosedEvent;
+use OCA\Shillinq\Kernel\Contracts\BillablePeriodInvoiceServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Drafts the invoice an BillablePeriodClosedEvent asks for, or refuses it.
  *
  * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  */
-class BillablePeriodInvoiceService {
+class BillablePeriodInvoiceService implements BillablePeriodInvoiceServiceInterface {
 
 	/**
 	 * The only currency this path bills in.
@@ -66,13 +67,13 @@ class BillablePeriodInvoiceService {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param InvoiceGenerationService $invoices The unchanged draftInvoice() machinery.
-	 * @param SettingsService $settings Resolves the register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly InvoiceGenerationService $invoices,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -534,6 +535,6 @@ class BillablePeriodInvoiceService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 	}//end scoped()
 }//end class

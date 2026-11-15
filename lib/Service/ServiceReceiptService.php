@@ -3,6 +3,9 @@
 /**
  * Service Receipt Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative service-entry-sheet (prestatieverklaring) capture for
  * the 3-way-match Purchase Order sub-ledger (REQ-PO3W-011). Implements
  * member 12 of the bookkeeping-purchase-order-3way chain: the SvcReceipt +
@@ -41,19 +44,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ServiceReceiptServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 12 of bookkeeping-purchase-order-3way: SvcReceipt (prestatieverklaring)
@@ -83,7 +84,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; deferred pending a dedicated refactor.
  */
-class ServiceReceiptService {
+class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	/**
 	 * Schema slug for the SvcReceipt register (declared in member 12).
 	 *
@@ -220,39 +221,13 @@ class ServiceReceiptService {
 		$this->assertAccess(administrationId: $administrationId);
 		$approver = $this->requireSessionUser();
 
-		$receipt = $this->records()->findOne(
-			schema: self::SCHEMA_SVC_RECEIPT,
-			filters: [
-				'id' => $receiptId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($receipt === null) {
-			throw new RuntimeException('Service receipt not found');
-		}
+		$receipt = $this->findReceipt(administrationId: $administrationId, receiptId: $receiptId);
 
-		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
-		if ($poLineId === '') {
-			throw new RuntimeException('poLineId is required');
-		}
+		$poLineId = $this->poLineIdOf(payload: $payload);
 
-		$poLine = $this->records()->findOne(
-			schema: self::SCHEMA_PO_LINE,
-			filters: [
-				'id' => $poLineId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($poLine === null) {
-			throw new RuntimeException('Purchase order line not found');
-		}
+		$poLine = $this->findPoLine(administrationId: $administrationId, poLineId: $poLineId);
 
-		// Cross-validate: the PO line MUST belong to one of the receipt's po_ids.
-		$parentPoId = (string)($poLine['poId'] ?? '');
-		$receiptPoIds = $this->stringArray(input: ($receipt['poIds'] ?? []));
-		if ($parentPoId === '' || in_array($parentPoId, $receiptPoIds, true) === false) {
-			throw new RuntimeException('Purchase order line does not belong to this service receipt');
-		}
+		$this->assertPoLineOnReceipt(poLine: $poLine, receipt: $receipt);
 
 		$effectiveQuantity = $this->deriveQuantity(payload: $payload, poLine: $poLine);
 
@@ -276,6 +251,92 @@ class ServiceReceiptService {
 
 		return $this->records()->saveObject(schema: self::SCHEMA_SVC_RECEIPT_LINE, object: $line);
 	}//end addServiceReceiptLine()
+
+	/**
+	 * The service receipt in the administration.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $receiptId        SvcReceipt id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \RuntimeException When the receipt is missing.
+	 */
+	private function findReceipt(string $administrationId, string $receiptId): array {
+		$receipt = $this->records()->findOne(
+			schema: self::SCHEMA_SVC_RECEIPT,
+			filters: [
+				'id' => $receiptId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($receipt === null) {
+			throw new RuntimeException('Service receipt not found');
+		}
+
+		return $receipt;
+	}//end findReceipt()
+
+	/**
+	 * The PO line id a receipt line payload names.
+	 *
+	 * @param array<string,mixed> $payload The receipt line payload.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When it names none.
+	 */
+	private function poLineIdOf(array $payload): string {
+		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
+		if ($poLineId === '') {
+			throw new RuntimeException('poLineId is required');
+		}
+
+		return $poLineId;
+	}//end poLineIdOf()
+
+	/**
+	 * The purchase order line in the administration.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $poLineId         PO line id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \RuntimeException When the PO line is missing.
+	 */
+	private function findPoLine(string $administrationId, string $poLineId): array {
+		$poLine = $this->records()->findOne(
+			schema: self::SCHEMA_PO_LINE,
+			filters: [
+				'id' => $poLineId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($poLine === null) {
+			throw new RuntimeException('Purchase order line not found');
+		}
+
+		return $poLine;
+	}//end findPoLine()
+
+	/**
+	 * Cross-validate: the PO line MUST belong to one of the receipt's po_ids.
+	 *
+	 * @param array<string,mixed> $poLine  The PO line.
+	 * @param array<string,mixed> $receipt The service receipt.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When it does not.
+	 */
+	private function assertPoLineOnReceipt(array $poLine, array $receipt): void {
+		$parentPoId = (string)($poLine['poId'] ?? '');
+		$receiptPoIds = $this->stringArray(input: ($receipt['poIds'] ?? []));
+		if ($parentPoId === '' || in_array($parentPoId, $receiptPoIds, true) === false) {
+			throw new RuntimeException('Purchase order line does not belong to this service receipt');
+		}
+	}//end assertPoLineOnReceipt()
 
 	/**
 	 * Transition the SvcReceipt to "confirmed" (approver confirms delivery).

@@ -3,6 +3,9 @@
 /**
  * FIFO Valuation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-INV-003 imperative FIFO cost-layer engine for InventoryValuation.
  *
  * Listens (via {@see \OCA\Shillinq\Listener\StockMoveTransitionedListener})
@@ -44,19 +47,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-7
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FifoValuationServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative FIFO cost layer engine driving {@see CogsPosterService}.
@@ -65,7 +66,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-7
  */
-class FifoValuationService {
+class FifoValuationService implements FifoValuationServiceInterface {
 	/**
 	 * Construct the service.
 	 *

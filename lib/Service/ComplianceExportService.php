@@ -3,6 +3,9 @@
 /**
  * Compliance Export Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Backs the REQ-RAP-005 Compliance Export API surface — the manifest
  * entry `BookkeepingComplianceExport` (form binding) and the
  * `ComplianceExportController` (GET /api/audit/export) both call this
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -45,7 +45,8 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ListQuery;
 use OCA\OpenRegister\Db\RegisterMapper;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -67,7 +68,23 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */
-class ComplianceExportService {
+class ComplianceExportService implements ComplianceExportServiceInterface {
+
+	/**
+	 * The export's columns, in order.
+	 *
+	 * @var array<int,string>
+	 */
+	private const EXPORT_HEADERS = [
+		'timestamp',
+		'objectType',
+		'objectId',
+		'action',
+		'actor',
+		'fields_changed',
+		'beforeValue',
+		'afterValue',
+	];
 
 	/**
 	 * PII field names that MUST be stripped before rendering per
@@ -91,25 +108,11 @@ class ComplianceExportService {
 	];
 
 	/**
-	 * Default scope when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const SCOPE_ALL = 'all';
-
-	/**
 	 * GDPR subject-access scope per REQ-RAP-009.
 	 *
 	 * @var string
 	 */
 	public const SCOPE_SUBJECT = 'subject';
-
-	/**
-	 * Default format when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const FORMAT_CSV = 'csv';
 
 	/**
 	 * JSON output format.
@@ -181,6 +184,47 @@ class ComplianceExportService {
 	): array {
 		$this->assertDateRange(from: $from, to: $to);
 
+		$this->assertExportOptions(scope: $scope, format: $format);
+
+		if ($scope === self::SCOPE_SUBJECT && $actorFilter === null) {
+			$actorFilter = $this->currentUserId();
+		}
+
+		$rows = $this->exportRows(
+			events: $this->queryAuditTrail(from: $from, to: $to),
+			scope: $scope,
+			actorFilter: $actorFilter,
+		);
+
+		$generatedAt = date(format: 'c');
+		$generatedBy = $this->currentUserId();
+
+		return [
+			'from' => $from,
+			'to' => $to,
+			'scope' => $scope,
+			'format' => $format,
+			'actorFilter' => $actorFilter,
+			'generatedAt' => $generatedAt,
+			'generatedBy' => $generatedBy,
+			'eventCount' => count($rows),
+			'headers' => self::EXPORT_HEADERS,
+			'rows' => $rows,
+		];
+
+	}//end generateExport()
+
+	/**
+	 * Refuse a scope or format the export does not know.
+	 *
+	 * @param string $scope  The requested scope.
+	 * @param string $format The requested format.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When either is unknown.
+	 */
+	private function assertExportOptions(string $scope, string $format): void {
 		if ($scope !== self::SCOPE_ALL && $scope !== self::SCOPE_SUBJECT) {
 			throw new RuntimeException(message: 'Invalid scope (must be all or subject)');
 		}
@@ -189,14 +233,21 @@ class ComplianceExportService {
 			throw new RuntimeException(message: 'Invalid format (must be csv or json)');
 		}
 
-		if ($scope === self::SCOPE_SUBJECT && $actorFilter === null) {
-			$actorFilter = $this->currentUserId();
-		}
+	}//end assertExportOptions()
 
-		$rawEvents = $this->queryAuditTrail(from: $from, to: $to);
-
+	/**
+	 * Render the events as export rows; a subject export with an actor keeps
+	 * only that actor's events.
+	 *
+	 * @param array<int,mixed> $events      The audit-trail events.
+	 * @param string           $scope       The export scope.
+	 * @param string|null      $actorFilter The actor a subject export is narrowed to.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function exportRows(array $events, string $scope, ?string $actorFilter): array {
 		$rows = [];
-		foreach ($rawEvents as $event) {
+		foreach ($events as $event) {
 			if (is_array($event) === false) {
 				continue;
 			}
@@ -211,32 +262,9 @@ class ComplianceExportService {
 			$rows[] = $this->renderRow(event: $event);
 		}
 
-		$generatedAt = date(format: 'c');
-		$generatedBy = $this->currentUserId();
+		return $rows;
 
-		return [
-			'from' => $from,
-			'to' => $to,
-			'scope' => $scope,
-			'format' => $format,
-			'actorFilter' => $actorFilter,
-			'generatedAt' => $generatedAt,
-			'generatedBy' => $generatedBy,
-			'eventCount' => count($rows),
-			'headers' => [
-				'timestamp',
-				'objectType',
-				'objectId',
-				'action',
-				'actor',
-				'fields_changed',
-				'beforeValue',
-				'afterValue',
-			],
-			'rows' => $rows,
-		];
-
-	}//end generateExport()
+	}//end exportRows()
 
 	/**
 	 * Render the in-memory export as a single CSV blob (RFC 4180).
@@ -382,19 +410,7 @@ class ComplianceExportService {
 		$before = $this->stripPii(value: ($event['before'] ?? ($event['beforeValue'] ?? [])));
 		$after = $this->stripPii(value: ($event['after'] ?? ($event['afterValue'] ?? [])));
 
-		$fieldsChanged = [];
-		if (is_array($before) === true && is_array($after) === true) {
-			$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
-			foreach ($keys as $key) {
-				if (in_array($key, self::PII_FIELDS, true) === true) {
-					continue;
-				}
-
-				if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
-					$fieldsChanged[] = (string)$key;
-				}
-			}
-		}
+		$fieldsChanged = $this->changedFields(before: $before, after: $after);
 
 		return [
 			'timestamp' => (string)($event['created'] ?? ($event['timestamp'] ?? '')),
@@ -408,6 +424,46 @@ class ComplianceExportService {
 		];
 
 	}//end renderRow()
+
+	/**
+	 * The non-PII fields whose value differs between before and after.
+	 *
+	 * @param mixed $before The PII-stripped before value.
+	 * @param mixed $after  The PII-stripped after value.
+	 *
+	 * @return list<string>
+	 */
+	private function changedFields(mixed $before, mixed $after): array {
+		if (is_array($before) === false || is_array($after) === false) {
+			return [];
+		}
+
+		return $this->differingKeys(before: $before, after: $after);
+	}//end changedFields()
+
+	/**
+	 * The non-PII keys whose value differs between two arrays.
+	 *
+	 * @param array<string,mixed> $before The before value.
+	 * @param array<string,mixed> $after  The after value.
+	 *
+	 * @return list<string>
+	 */
+	private function differingKeys(array $before, array $after): array {
+		$fieldsChanged = [];
+		$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
+		foreach ($keys as $key) {
+			if (in_array($key, self::PII_FIELDS, true) === true) {
+				continue;
+			}
+
+			if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
+				$fieldsChanged[] = (string)$key;
+			}
+		}
+
+		return $fieldsChanged;
+	}//end differingKeys()
 
 	/**
 	 * Validate the [from, to] window — both dates required, ISO format,

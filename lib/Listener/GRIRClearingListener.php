@@ -3,6 +3,9 @@
 /**
  * GR/IR Clearing Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change grir-accrual-wiring: the missing GR/IR accrual-posting trigger.
  * {@see \OCA\Shillinq\Service\GRIRClearingService} fully implements the
  * clearing (`createGRIRPosting()`) and settlement (`settleGRIRPosting()`)
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/grir-accrual-wiring/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -50,7 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\GRIRClearingService;
+use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -80,11 +80,11 @@ class GRIRClearingListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param GRIRClearingService $grirClearingService The GR/IR posting orchestration service.
+	 * @param GRIRClearingServiceInterface $grirClearingService The GR/IR posting orchestration service.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly GRIRClearingService $grirClearingService,
+		private readonly GRIRClearingServiceInterface $grirClearingService,
 		private readonly LoggerInterface $logger,
 	) {
 

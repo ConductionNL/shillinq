@@ -3,6 +3,9 @@
 /**
  * BBV Compliance Widget Envelope Builder.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the `bookkeeping-waterschappen-bbv-variant` chain
  * (ADR-032). Assembles the per-programme widget envelope the slice-05
  * dashboard widgets (`BBVKPICards`, `BBVComplianceChart`,
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -45,8 +45,9 @@ namespace OCA\Shillinq\Dashboard;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\Service\ComplianceService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
+use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -56,7 +57,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
-final class BBVComplianceWidget {
+final class BBVComplianceWidget implements BBVComplianceWidgetInterface {
 	/**
 	 * The status buckets every envelope starts with, in display order.
 	 *
@@ -73,14 +74,14 @@ final class BBVComplianceWidget {
 	 * Construct the widget with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
-	 * @param ComplianceService $compliance Compliance envelope source.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param ComplianceServiceInterface $compliance Compliance envelope source.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
-		private readonly ComplianceService $compliance,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly ComplianceServiceInterface $compliance,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -290,7 +291,7 @@ final class BBVComplianceWidget {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function findAllRows(string $schema, array $filters): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return [];
 		}
 
@@ -314,7 +315,7 @@ final class BBVComplianceWidget {
 	private function lookup(string $schema, array $filters): ?array {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			return $objectService->setRegister($registerSlug)->setSchema($schema)->findAll(['filters' => $filters, 'limit' => 1000]);
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq BBV compliance widget: register lookup failed', ['schema' => $schema, 'exception' => $e->getMessage()]);

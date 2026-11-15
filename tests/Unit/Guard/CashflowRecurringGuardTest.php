@@ -14,6 +14,9 @@
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-29
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Commitment Materialisation Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-VPL-010 (Tasks 1+2) — thin event-glue that reacts to a PurchaseOrder
  * reaching `approved` or a Contract reaching `active`, and forwards to
  * {@see CommitmentMaterialisationService} to auto-materialise the matching
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -45,9 +45,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
-use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\CommitmentMaterialisationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -75,13 +75,13 @@ class CommitmentMaterialisationListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param CommitmentMaterialisationService $materialiser Thin materialisation service.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param CommitmentMaterialisationServiceInterface $materialiser Thin materialisation service.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly CommitmentMaterialisationService $materialiser,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly CommitmentMaterialisationServiceInterface $materialiser,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

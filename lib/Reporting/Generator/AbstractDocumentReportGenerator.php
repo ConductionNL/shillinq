@@ -3,6 +3,9 @@
 /**
  * Abstract base for DOCUMENT report generators
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Shared machinery for the "document" flavour of the report catalogue — the
  * jaarrekening, balans, winst-en-verliesrekening, management letter and BBV
  * jaarstukken. A document generator loads and classifies real OpenRegister
@@ -49,9 +52,6 @@
  * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-004
  * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Commenting.InlineComment, Squiz.PHP.DisallowInlineIf
  */
 
@@ -60,7 +60,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\DocudeskUnavailableException;
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Reporting\ReportSection;

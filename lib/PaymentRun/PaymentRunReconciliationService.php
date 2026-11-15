@@ -3,6 +3,9 @@
 /**
  * Payment-run reconciliation service (CAMT.053 match)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reconciles a PaymentRun in lifecycle state `exported` against an imported
  * CAMT.053 bank statement. It parses the statement's booked outgoing entries
  * (Camt053StatementParser) and matches each back to the run's paymentLines[]:
@@ -32,9 +35,6 @@
  *
  * @link https://conduction.nl
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @spec openspec/specs/payment-run-sepa-export/spec.md
  */
 
@@ -42,6 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\PaymentRun;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
 use OCA\Shillinq\Lifecycle\PaymentRunReconcileGuard;
 use OCA\Shillinq\Service\ServerWriteAuthority;
 use Psr\Container\ContainerInterface;
@@ -50,7 +51,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Matches CAMT.053 booked entries to a PaymentRun and drives exported → reconciled.
  */
-class PaymentRunReconciliationService {
+class PaymentRunReconciliationService implements PaymentRunReconciliationServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.

@@ -3,6 +3,9 @@
 /**
  * WBSO Document Archive Cron.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Nightly background job that scans `Document` records in `filed` whose
  * `documentDate` (or `filedAt`, whichever is later) has crossed the seven-
  * year Archiefwet 1995 retention boundary, and routes each match through
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,8 +39,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\WbsoDocumentService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -76,15 +76,15 @@ class DocumentArchiveCron extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
-	 * @param SettingsService $settings Settings (register slug + OR availability).
-	 * @param WbsoDocumentService $documents Document archival service.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param WbsoDocumentServiceInterface $documents Document archival service.
 	 * @param ContainerInterface $container DI container (OR ObjectService).
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
-		private readonly WbsoDocumentService $documents,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly WbsoDocumentServiceInterface $documents,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -123,7 +123,7 @@ class DocumentArchiveCron extends TimedJob {
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
 	private function runAsJob($argument): void {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('DocumentArchiveCron: OpenRegister not available, skipping.');
 			return;
 		}
@@ -162,7 +162,7 @@ class DocumentArchiveCron extends TimedJob {
 	 */
 	private function filedDocuments(): array {
 		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$registerSlug = $this->settings->getRegisterSlug();
+		$registerSlug = $this->registerLocation->getRegisterSlug();
 
 		return $objectService
 			->setRegister($registerSlug)

@@ -3,6 +3,9 @@
 /**
  * VAT Suppletie Detection Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Detection + compilation engine behind REQ-VBTW-009 (issue: `VatCorrection`
  * register + REQ-VBTW-009 landed, but no code ever created one —
  * `grep -ril VatCorrection lib/` returned only register JSON).
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -63,7 +63,7 @@ namespace OCA\Shillinq\Service;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -602,7 +602,10 @@ class VatSuppletieDetectionService {
 				);
 			}
 
-			$delta['glAccountNumber'] = $account;
+			// '' rather than null: the stored correction's categoryDeltas
+			// declare glAccountNumber a string, and deltaAccount() books an
+			// empty one on the clearing account either way.
+			$delta['glAccountNumber'] = (string)$account;
 			$result[] = $delta;
 		}//end foreach
 
@@ -921,6 +924,29 @@ class VatSuppletieDetectionService {
 
 		return $correction->jsonSerialize();
 	}//end fetchCorrection()
+
+	/**
+	 * A VatCorrection by id, or null when there is none, for a caller that
+	 * has to check the correction's administration before acting on it.
+	 *
+	 * @param string $vatCorrectionId The VatCorrection id.
+	 *
+	 * @return array<string,mixed>|null The correction, or null when it does not exist.
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+	 */
+	public function findCorrection(string $vatCorrectionId): ?array {
+		$correction = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('VatCorrection'),
+			id: $vatCorrectionId
+		);
+
+		if ($correction === null) {
+			return null;
+		}
+
+		return $correction->jsonSerialize();
+	}//end findCorrection()
 
 	/**
 	 * Persist a record via the real OR ObjectService API.

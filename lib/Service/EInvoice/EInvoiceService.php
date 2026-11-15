@@ -3,6 +3,9 @@
 /**
  * E-Invoice Orchestrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Drives the "Send e-invoice" flow (REQ-EINV-005) for an issued `ARInvoice`:
  * pre-send validation (KvK/BTW/Peppol participant, REQ-EINV-003) -> NLCIUS UBL
  * 2.1 rendering (REQ-EINV-001) -> hybrid PDF embed (REQ-EINV-002; NL/Peppol
@@ -28,16 +31,15 @@
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\EInvoice;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
@@ -48,14 +50,13 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates ARInvoice e-invoice generation, validation and Peppol dispatch.
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-final class EInvoiceService {
+final class EInvoiceService implements EInvoiceServiceInterface {
 	/**
 	 * Cross-app cloud-event name emitted on a successful pre-send validation
 	 * (REQ-EINV-005). Consumed by openconnector's Peppol access point.

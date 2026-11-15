@@ -3,6 +3,9 @@
 /**
  * CSRD / ESRS + IFRS S2 Sustainability-Reporting Check Provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Contributes executable checks for the `sustainability` rule domain to the
  * RuleEngine. The predicates map the structured datapoints of the European
  * Sustainability Reporting Standards (ESRS, the technical annex of the CSRD,

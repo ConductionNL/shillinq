@@ -3,6 +3,9 @@
 /**
  * Programmabegroting Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Programmabegroting register
  * (bookkeeping-programmabegroting, T2). Two preconditions are referenced from
  * the Programmabegroting schema's x-openregister-lifecycle transitions because
@@ -33,16 +36,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;

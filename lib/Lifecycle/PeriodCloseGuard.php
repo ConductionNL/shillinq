@@ -3,6 +3,9 @@
 /**
  * Period Close Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the period-close feature. Four
  * declarative-precondition methods, each referenced from a register fragment
  * lifecycle transition that the OpenRegister x-openregister-lifecycle engine
@@ -37,17 +40,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\SuspenseAgeingService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SuspenseAgeingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -366,7 +366,7 @@ class PeriodCloseGuard {
 				return true;
 			}
 
-			$ageing = $this->container->get(SuspenseAgeingService::class);
+			$ageing = $this->container->get(SuspenseAgeingServiceInterface::class);
 			if ($ageing->hasUnresolvedItems($administrationId) === true) {
 				$this->logger->info(
 					'PeriodCloseGuard: suspense worklist non-empty — denying close',

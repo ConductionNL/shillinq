@@ -3,6 +3,9 @@
 /**
  * BCF Claim Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 Btw-compensatiefonds (BCF) compensable-VAT computation (REQ-BCF-002,
  * REQ-BCF-012). Materialises the per-account compensable-VAT breakdown and
  * quarter total for a BcfClaim from existing GLLine + GLTransaction +
@@ -27,18 +30,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes a quarter-scoped, per-account BCF compensable-VAT claim from the GL.
@@ -52,7 +53,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
-class BcfClaimService {
+class BcfClaimService implements BcfClaimServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

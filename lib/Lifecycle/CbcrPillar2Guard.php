@@ -3,6 +3,9 @@
 /**
  * CbCR / Pillar Two Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the CbCR / Pillar 2 (GloBE)
  * registers (bookkeeping-cbcr-pillar2, T3). The bulk of the CbCR / Pillar 2
  * measurement model is declarative (schema metadata + x-openregister-lifecycle +
@@ -44,9 +47,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -148,20 +148,7 @@ class CbcrPillar2Guard {
 				return false;
 			}
 
-			$jurisdiction = strtoupper((string)($computation['jurisdiction'] ?? ''));
-			$etr = (float)($computation['etrJurisdiction'] ?? 0);
-			$minimumRate = (float)($computation['minimumRate'] ?? 0.15);
-			$topUpAmount = (float)($computation['topUpTaxAmount'] ?? 0);
-			$qdmttAmount = (float)($computation['qdmttAmount'] ?? 0);
-
-			// QDMTT priority only bites for NL-resident low-taxed income with a top-up.
-			if ($jurisdiction === 'NL' && $etr < $minimumRate && $topUpAmount > 0) {
-				if ($qdmttAmount <= 0) {
-					return false;
-				}
-			}
-
-			return true;
+			return self::qdmttPriorityMet(computation: $computation);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CbcrPillar2Guard: computation approve check failed — denying transition (fail-closed)',
@@ -171,6 +158,29 @@ class CbcrPillar2Guard {
 		}//end try
 
 	}//end canApproveComputation()
+
+	/**
+	 * QDMTT priority only bites for NL-resident low-taxed income with a top-up: then a QDMTT amount is required.
+	 *
+	 * @param array<string, mixed> $computation The Pillar2JurisdictionComputation.
+	 *
+	 * @return bool
+	 */
+	private static function qdmttPriorityMet(array $computation): bool {
+		$jurisdiction = strtoupper((string)($computation['jurisdiction'] ?? ''));
+		$etr          = (float)($computation['etrJurisdiction'] ?? 0);
+		$minimumRate  = (float)($computation['minimumRate'] ?? 0.15);
+		$topUpAmount  = (float)($computation['topUpTaxAmount'] ?? 0);
+		$qdmttAmount  = (float)($computation['qdmttAmount'] ?? 0);
+
+		if ($jurisdiction === 'NL' && $etr < $minimumRate && $topUpAmount > 0) {
+			if ($qdmttAmount <= 0) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end qdmttPriorityMet()
 
 	/**
 	 * Returns true iff the QdmttReturn may be submitted.

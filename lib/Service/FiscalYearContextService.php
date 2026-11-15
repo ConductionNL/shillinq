@@ -3,6 +3,9 @@
 /**
  * Fiscal Year Context Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 09 of the bookkeeping-waterschappen-bbv-variant chain (ADR-032).
  * Resolves the *active fiscal year* for an administration so every BBV
  * query (dashboard, mapping index, mapping detail, ComplianceService
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -51,19 +51,20 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Active-fiscal-year resolver for the BBV consumers (slices 05–08).
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
-class FiscalYearContextService {
+class FiscalYearContextService implements FiscalYearContextServiceInterface {
 	/**
 	 * Construct the service with DI dependencies.
 	 *

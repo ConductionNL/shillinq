@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Shared data-access + formatting helpers for native report generators
  *
  * Every native (data) report generator pulls its rows from the same OpenRegister

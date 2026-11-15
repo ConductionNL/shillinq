@@ -3,6 +3,9 @@
 /**
  * ACMReport Sign Transition Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change shillinq-signing-via-events (REQ-SIGN-001) — wires the declarative
  * `ACMReport.sign` lifecycle transition
  * ({@see lib/Settings/register.d/bookkeeping-market-government-separation.json},
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -54,9 +54,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\Signing\SigningDelegationService;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SigningDelegationServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -96,9 +96,9 @@ class ACMReportSignTransitionListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
-	 * @param SigningDelegationService $signingService The document-signing request service.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param SigningDelegationServiceInterface $signingService The document-signing request service.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's published object
 	 *                                              surface (ADR-084), aliased in
@@ -107,9 +107,9 @@ class ACMReportSignTransitionListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
-		private readonly SigningDelegationService $signingService,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly SigningDelegationServiceInterface $signingService,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -269,7 +269,7 @@ class ACMReportSignTransitionListener implements IEventListener {
 	 */
 	private function persist(string $id, array $updates): void {
 		$this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema(self::SCHEMA)
 			->updateObject($id, $updates);
 

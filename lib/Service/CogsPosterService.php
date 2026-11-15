@@ -3,6 +3,9 @@
 /**
  * COGS Poster Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-INV-007 Cost-of-Goods-Sold poster for the shillinq general ledger.
  *
  * Called by {@see FifoValuationService} or
@@ -45,19 +48,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CogsPosterServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * COGS GLTransaction poster.
@@ -66,7 +67,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
  */
-class CogsPosterService {
+class CogsPosterService implements CogsPosterServiceInterface {
 
 	/**
 	 * App-config key for the COGS account number override per

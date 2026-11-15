@@ -18,7 +18,7 @@ This specification defines the requirements for inventory valuation fifo avg in 
 @e2e exclude unbuilt UI: valuation index/detail pages not yet implemented
 
 
-### REQ-INV-001: The system SHALL store inventory valuation as an OpenRegister-managed `InventoryValuation` register
+### Requirement: REQ-INV-001: The system SHALL store inventory valuation as an OpenRegister-managed `InventoryValuation` register
 
 Inventory valuation per item per warehouse MUST be declared as a
 register in `lib/Settings/shillinq_register.json`, using the
@@ -46,7 +46,7 @@ shillinq adds no per-app endpoint for basic reads.
   naming `inventory_valuations`
 - **THEN** no such classes or declarations SHALL exist.
 
-### REQ-INV-002: The `InventoryValuation` schema SHALL declare the ADR-000 minimum field set
+### Requirement: REQ-INV-002: The `InventoryValuation` schema SHALL declare the ADR-000 minimum field set
 
 The `InventoryValuation` schema MUST declare the following fields,
 matching the `adr-000-data-model.md` entry exactly:
@@ -82,7 +82,7 @@ per `adr-000-data-model.md` preamble.
 - **THEN** validation MUST fail with an enum-violation error naming the
   unsupported method.
 
-### REQ-INV-003: The system SHALL compute FIFO valuation on each stock movement
+### Requirement: REQ-INV-003: The system SHALL compute FIFO valuation on each stock movement
 
 The system SHALL satisfy this requirement: The system SHALL compute FIFO valuation on each stock movement.
 
@@ -119,7 +119,7 @@ The `InventoryValuation` snapshot MUST be updated after every movement:
 - **THEN** the `InventoryValuation` record and COGS posting MUST NOT be
   duplicated; the engine MUST detect prior processing and skip.
 
-### REQ-INV-004: The system SHALL compute moving-average valuation on each inbound receipt
+### Requirement: REQ-INV-004: The system SHALL compute moving-average valuation on each inbound receipt
 
 The system SHALL satisfy this requirement: The system SHALL compute moving-average valuation on each inbound receipt.
 
@@ -156,7 +156,7 @@ the current `unitCost` (no lot traversal required).
 - **WHEN** an outbound movement of qty 50 is processed
 - **THEN** COGS MUST be posted at 50 × EUR 3,8333 = EUR 191,67.
 
-### REQ-INV-005: Each item SHALL have exactly one active `InventoryValuation` per warehouse
+### Requirement: REQ-INV-005: Each item SHALL have exactly one active `InventoryValuation` per warehouse
 
 Per item identifier (linked `Product`) per `warehouse`, there MUST be
 exactly one `InventoryValuation` record with `status: active`. Multiple
@@ -173,7 +173,7 @@ precondition if OR cannot express cross-field uniqueness declaratively).
 - **THEN** the save MUST fail with a "duplicate active valuation"
   error.
 
-### REQ-INV-006: Valuation method change SHALL be blocked when on-hand quantity is non-zero
+### Requirement: REQ-INV-006: Valuation method change SHALL be blocked when on-hand quantity is non-zero
 
 The system SHALL satisfy this requirement: Valuation method change SHALL be blocked when on-hand quantity is non-zero.
 
@@ -202,7 +202,7 @@ legitimate seam".
 - **THEN** the transition MUST succeed and `valuationMethod` MUST be
   `average` on the updated record.
 
-### REQ-INV-007: On each outbound stock movement, the system SHALL post a COGS JournalEntry to the shillinq GL
+### Requirement: REQ-INV-007: On each outbound stock movement, the system SHALL post a COGS JournalEntry to the shillinq GL
 
 `CogsPosterService` MUST post one `JournalEntry` per outbound
 `StockMovement`, with:
@@ -237,7 +237,7 @@ silently skip the posting without marking the record.
 - **THEN** `InventoryValuation.status` MUST be set to `adjusted` and a
   WARNING MUST be logged; no silent skip.
 
-### REQ-INV-008: Inventory valuation SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-INV-008: Inventory valuation SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry
 (`Inventory > Valuation` or equivalent top-level placement confirmed
@@ -264,7 +264,7 @@ existing `customComponents.js` convention).
 - **THEN** the detail page MUST render via `CnDetailPage` showing all
   fields from REQ-INV-002 and the lifecycle actions from REQ-INV-009.
 
-### REQ-INV-009: `InventoryValuation` SHALL have a declarative active/adjusted/obsolete lifecycle
+### Requirement: REQ-INV-009: `InventoryValuation` SHALL have a declarative active/adjusted/obsolete lifecycle
 
 The `InventoryValuation` schema MUST declare an
 `x-openregister-lifecycle` block per ADR-031 with the following states

@@ -3,6 +3,9 @@
 /**
  * Shillinq Realised FX Settlement Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Posts the REALISED foreign-exchange gain or loss that arises when a
  * foreign-currency AR invoice is settled at a payment-date rate that differs
  * from the invoice-date rate it was booked at (REQ-MC-010).
@@ -41,9 +44,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-multi-currency/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -52,7 +52,7 @@ namespace OCA\Shillinq\Service\Treasury;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -610,6 +610,23 @@ class RealisedFxSettlementService {
 			return null;
 		}
 
+		$rows = $this->fxRateRows(foreignCurrency: $foreignCurrency, functionalCurrency: $functionalCurrency);
+		if ($rows === []) {
+			return null;
+		}
+
+		return $this->bestRateOnOrBefore(rows: $rows, onDate: $onDate);
+	}//end resolveRate()
+
+	/**
+	 * The FxRate rows for the currency pair; empty when there are none or the lookup fails.
+	 *
+	 * @param string $foreignCurrency    The foreign currency.
+	 * @param string $functionalCurrency The functional currency.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function fxRateRows(string $foreignCurrency, string $functionalCurrency): array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$rows = $objectService
@@ -628,15 +645,15 @@ class RealisedFxSettlementService {
 				'RealisedFxSettlementService: FxRate lookup failed',
 				['foreignCurrency' => $foreignCurrency, 'exception' => $e->getMessage()]
 			);
-			return null;
+			return [];
 		}
 
-		if (is_array($rows) === false || $rows === []) {
-			return null;
+		if (is_array($rows) === false) {
+			return [];
 		}
 
-		return $this->bestRateOnOrBefore(rows: $rows, onDate: $onDate);
-	}//end resolveRate()
+		return $rows;
+	}//end fxRateRows()
 
 	/**
 	 * The rate of the row dated exactly $onDate, else of the most recent row

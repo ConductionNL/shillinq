@@ -16,13 +16,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -50,6 +53,12 @@ final class PaymentWebhookIntake {
 	 * Refusal status: the body is not a JSON object or array.
 	 */
 	public const MALFORMED_PAYLOAD = 'malformed-payload';
+
+	/**
+	 * How far, in seconds, a Stripe signature timestamp may lie from now
+	 * (Stripe's documented default tolerance).
+	 */
+	public const STRIPE_TOLERANCE_SECONDS = 300;
 
 	/**
 	 * Constructor.
@@ -115,7 +124,7 @@ final class PaymentWebhookIntake {
 		}
 
 		if ($gateway === 'stripe') {
-			$provided = self::stripeV1Signature(provided: $provided);
+			return $this->verifyStripeSignature(provided: $provided, rawBody: $rawBody, secret: $secret);
 		}
 
 		$expected = hash_hmac('sha256', $rawBody, $secret);
@@ -123,6 +132,91 @@ final class PaymentWebhookIntake {
 		return hash_equals($expected, strtolower(trim($provided)));
 
 	}//end verifySignature()
+
+	/**
+	 * Verify a Stripe "t=<unix>,v1=<hex>[,v1=<hex>]" header the way Stripe
+	 * signs it: HMAC-SHA256 over "<t>.<raw body>", accepted when any v1 value
+	 * matches and t lies within the tolerance of now.
+	 *
+	 * @param string $provided The Stripe-Signature header.
+	 * @param string $rawBody The raw request body.
+	 * @param string $secret The endpoint secret.
+	 *
+	 * @return bool
+	 */
+	private function verifyStripeSignature(string $provided, string $rawBody, string $secret): bool {
+		$timestamp = $this->stripeTimestamp(provided: $provided);
+		$signatures = $this->stripeSignatures(provided: $provided);
+
+		if ($timestamp === null || $signatures === []) {
+			return false;
+		}
+
+		if (abs(time() - (int)$timestamp) > self::STRIPE_TOLERANCE_SECONDS) {
+			return false;
+		}
+
+		$expected = hash_hmac('sha256', $timestamp . '.' . $rawBody, $secret);
+
+		return $this->anySignatureMatches(expected: $expected, signatures: $signatures);
+
+	}//end verifyStripeSignature()
+
+	/**
+	 * The last numeric `t=` value of a Stripe-Signature header, or null.
+	 *
+	 * @param string $provided The Stripe-Signature header.
+	 *
+	 * @return string|null
+	 */
+	private function stripeTimestamp(string $provided): string|null {
+		$timestamp = null;
+		foreach (explode(',', $provided) as $part) {
+			[$key, $value] = array_pad(explode('=', trim($part), 2), 2, '');
+			if ($key === 't' && ctype_digit($value) === true) {
+				$timestamp = $value;
+			}
+		}
+
+		return $timestamp;
+	}//end stripeTimestamp()
+
+	/**
+	 * The non-empty `v1=` values of a Stripe-Signature header, lower-cased.
+	 *
+	 * @param string $provided The Stripe-Signature header.
+	 *
+	 * @return list<string>
+	 */
+	private function stripeSignatures(string $provided): array {
+		$signatures = [];
+		foreach (explode(',', $provided) as $part) {
+			[$key, $value] = array_pad(explode('=', trim($part), 2), 2, '');
+			if ($key === 'v1' && $value !== '') {
+				$signatures[] = strtolower($value);
+			}
+		}
+
+		return $signatures;
+	}//end stripeSignatures()
+
+	/**
+	 * Whether any signature equals the expected HMAC (timing-safe).
+	 *
+	 * @param string $expected The expected HMAC.
+	 * @param list<string> $signatures The provided signatures.
+	 *
+	 * @return bool
+	 */
+	private function anySignatureMatches(string $expected, array $signatures): bool {
+		foreach ($signatures as $signature) {
+			if (hash_equals($expected, $signature) === true) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end anySignatureMatches()
 
 	/**
 	 * The configured shared secret of a gateway, '' when not provisioned.
@@ -157,29 +251,5 @@ final class PaymentWebhookIntake {
 		return 'X-Mollie-Signature';
 
 	}//end signatureHeader()
-
-	/**
-	 * Take the v1 segment of a Stripe "t=...,v1=<hex>" header; any other
-	 * header value is returned as sent.
-	 *
-	 * @param string $provided The Stripe-Signature header.
-	 *
-	 * @return string
-	 */
-	private static function stripeV1Signature(string $provided): string {
-		if (str_contains($provided, 'v1=') === false) {
-			return $provided;
-		}
-
-		foreach (explode(',', $provided) as $part) {
-			$part = trim($part);
-			if (str_starts_with($part, 'v1=') === true) {
-				return substr($part, 3);
-			}
-		}
-
-		return $provided;
-
-	}//end stripeV1Signature()
 
 }//end class

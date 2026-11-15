@@ -5,6 +5,9 @@
  * integration test for slice 07 of the bookkeeping-purchase-order-3way
  * chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires {@see MultiPoConsolidationService} on top of an in-memory
  * OpenRegister ObjectService stub seeded with a single SupplierInvoice
  * whose lines span several POs/GRNs of the same supplier. The test then:
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Shillinq Portal Assertion Verifier (portal-payment-initiation, A6 receiver).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * When portaliq forwards the `pay` endpoint-forward action server-to-server
  * (ADR-046 contract v2, A6) it attaches an `X-Portal-Subject` header: a
  * short-lived (60s TTL) HS256 JWT assertion carrying the resolved portal
@@ -41,9 +44,6 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
@@ -55,6 +55,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Portal;
 
+use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -68,11 +69,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
  */
-class PortalAssertionVerifier {
-	/**
-	 * The header portaliq attaches the assertion to (contract v2, A6).
-	 */
-	public const HEADER = 'X-Portal-Subject';
+class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 
 	/**
 	 * The only accepted JWS algorithm — exact-match kills `none` and any

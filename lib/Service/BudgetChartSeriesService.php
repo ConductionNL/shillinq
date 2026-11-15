@@ -3,6 +3,9 @@
 /**
  * Budget Chart Series Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The composition layer behind `GET /api/budget-charts/series`
  * (REQ-BCH-003, REQ-BCH-008): shapes the actual / projected / begroot
  * trend+cumulative envelope both `BudgetTrendChart` placements consume, for
@@ -81,9 +84,6 @@
  * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
  * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 
@@ -93,7 +93,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetChartSeriesServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -106,7 +107,7 @@ use Throwable;
  *
  * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
-class BudgetChartSeriesService {
+class BudgetChartSeriesService implements BudgetChartSeriesServiceInterface {
 	/**
 	 * AnnualBudget schema slug.
 	 *

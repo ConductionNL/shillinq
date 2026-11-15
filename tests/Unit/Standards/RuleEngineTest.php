@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Standards;
@@ -46,6 +51,9 @@ use PHPUnit\Framework\TestCase;
  * @uses \OCA\Shillinq\Standards\Checks\SustainabilityChecks
  * @uses \OCA\Shillinq\Standards\Checks\VatBbvLedgerTailChecks
  * @uses \OCA\Shillinq\Standards\Checks\VatChecks
+ * @uses \OCA\Shillinq\Standards\Checks\CheckFields
+ * @uses \OCA\Shillinq\Standards\Checks\GlTransactionLines
+ * @uses \OCA\Shillinq\Standards\Checks\InvoiceParts
  */
 class RuleEngineTest extends TestCase {
 

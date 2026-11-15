@@ -3,6 +3,9 @@
 /**
  * BADO Controleprotocol Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol
  * computation + lifecycle guards (REQ-001, REQ-004, REQ-006, REQ-007, REQ-008).
  * Materialises the per-topic finding aggregation and the mechanically-derived
@@ -32,20 +35,18 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BadoControleprotocolServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes BADO finding aggregation + opinion and guards the protocol/finding
@@ -64,7 +65,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * aggregation/opinion derivation for the 7 BADO schemas; each guard is small
  * and the cohesion is by design.
  */
-class BadoControleprotocolService {
+class BadoControleprotocolService implements BadoControleprotocolServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

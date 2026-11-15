@@ -3,6 +3,9 @@
 /**
  * BCF Claim Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the BcfClaim register
  * (bookkeeping-bcf-vat-compensation, T3). One precondition is referenced from
  * the BcfClaim schema's x-openregister-lifecycle transition because it requires
@@ -33,21 +36,18 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\BcfClaimService;
-use OCA\Shillinq\Service\BcfCompensationCalculator;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BcfCompensationCalculatorInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for the BcfClaim draft -> submitted transition.
@@ -63,15 +63,15 @@ class BcfClaimGuard {
 	 * Construct the guard with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param BcfClaimService $claimService Server-authoritative claim computation.
-	 * @param BcfCompensationCalculator $calculator Pure-logic submit-precondition helper.
+	 * @param BcfClaimServiceInterface $claimService Server-authoritative claim computation.
+	 * @param BcfCompensationCalculatorInterface $calculator Pure-logic submit-precondition helper.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly BcfClaimService $claimService,
-		private readonly BcfCompensationCalculator $calculator,
+		private readonly BcfClaimServiceInterface $claimService,
+		private readonly BcfCompensationCalculatorInterface $calculator,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

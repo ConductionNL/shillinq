@@ -3,6 +3,9 @@
 /**
  * Destruction Schedule Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-RAP-008 — enforces the destruction-schedule state machine
  * documented in `bookkeeping-rekenkamer-audit-pack/design.md` D3
  * across every register that has destruction-eligible records (T1
@@ -48,9 +51,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

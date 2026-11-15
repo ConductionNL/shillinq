@@ -26,7 +26,7 @@ use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\BillablePeriodInvoiceService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -77,13 +77,13 @@ final class BillablePeriodInvoiceServiceTest extends TestCase {
 	 * @return BillablePeriodInvoiceService
 	 */
 	private function service(InMemoryObjectServiceStub $store): BillablePeriodInvoiceService {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new BillablePeriodInvoiceService(
 			objectService: $store,
 			invoices: $this->invoices,
-			settings: $settings,
+			registerLocation: $settings,
 			logger: $this->createMock(LoggerInterface::class),
 		);
 	}//end service()

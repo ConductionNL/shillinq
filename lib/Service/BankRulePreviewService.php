@@ -3,6 +3,9 @@
 /**
  * Bank Rule Preview Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Bank-rule-automation-ux — the read-only evaluator behind the
  * MatchingRule authoring "test / dry-run" UX (REQ-BR-011). Given a
  * (possibly unsaved) MatchingRule and a window of unmatched
@@ -32,14 +35,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\Kernel\Contracts\BankRulePreviewServiceInterface;
 
 /**
  * Read-only evaluator of MatchingRule predicates against BankStatementLine
@@ -54,7 +56,7 @@ namespace OCA\Shillinq\Service;
  * Pre-existing debt (issue #506): the `@` suppresses a PHP warning on an externally-supplied, possibly-malformed
  * regex pattern, and the return value is explicitly checked (fail-closed).
  */
-class BankRulePreviewService {
+class BankRulePreviewService implements BankRulePreviewServiceInterface {
 	/**
 	 * Dry-run a draft rule against a window of candidate bank lines.
 	 *

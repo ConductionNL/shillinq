@@ -28,7 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Usage;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\MeterReadingImportServiceInterface;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
 use Throwable;
@@ -38,7 +39,7 @@ use Throwable;
  *
  * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
  */
-class MeterReadingImportService {
+class MeterReadingImportService implements MeterReadingImportServiceInterface {
 
 	/**
 	 * The text columns a row may carry, besides quantity and the dates.
@@ -51,12 +52,12 @@ class MeterReadingImportService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IL10N                  $l10n          Translates the refusal reasons.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly IL10N $l10n,
 	) {
 	}//end __construct()
@@ -272,7 +273,7 @@ class MeterReadingImportService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

@@ -3,6 +3,9 @@
 /**
  * Unit tests for AbstractDocumentReportGenerator's docudesk hand-off.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Proves reports-via-docudesk REQ-RVD-002 (the built ReportSection tree
  * reaches docudesk's adHocData, and the returned bytes come from docudesk
  * verbatim), REQ-RVD-003 (odt/pdf format mapping to docudesk's odf/pdf
@@ -27,9 +30,6 @@
  * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-003
  * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-004
  * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */

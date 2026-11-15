@@ -3,6 +3,9 @@
 /**
  * Stock Move Transitioned Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reacts to OpenRegister's ObjectTransitionedEvent on the `StockMove`
  * schema. When a draft StockMove transitions to `posted`, dispatches
  * the move into the valuation engine:
@@ -33,26 +36,23 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\CogsPosterService;
-use OCA\Shillinq\Service\FifoValuationService;
-use OCA\Shillinq\Service\MovingAverageValuationService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CogsPosterServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FifoValuationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\MovingAverageValuationServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatcher from posted StockMove -> valuation engine + COGS poster.
@@ -72,17 +72,17 @@ class StockMoveTransitionedListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param FifoValuationService $fifo FIFO engine.
-	 * @param MovingAverageValuationService $average Moving-average engine.
-	 * @param CogsPosterService $cogs COGS poster.
+	 * @param FifoValuationServiceInterface $fifo FIFO engine.
+	 * @param MovingAverageValuationServiceInterface $average Moving-average engine.
+	 * @param CogsPosterServiceInterface $cogs COGS poster.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private readonly FifoValuationService $fifo,
-		private readonly MovingAverageValuationService $average,
-		private readonly CogsPosterService $cogs,
+		private readonly FifoValuationServiceInterface $fifo,
+		private readonly MovingAverageValuationServiceInterface $average,
+		private readonly CogsPosterServiceInterface $cogs,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

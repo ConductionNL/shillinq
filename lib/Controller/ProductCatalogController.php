@@ -3,6 +3,9 @@
 /**
  * Product Catalog Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The route half of the inventory product catalog (#860). Serves the two
  * read-only surfaces `/inventory/products` and `/inventory/product-attributes`
  * that `shillinq-product-vendor-to-pipelinq` REQ-SPVP-004 requires to stay
@@ -36,17 +39,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ProductCatalogService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ProductCatalogServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -66,13 +66,13 @@ class ProductCatalogController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request.
-	 * @param ProductCatalogService $catalogService Resolves the catalog.
+	 * @param ProductCatalogServiceInterface $catalogService Resolves the catalog.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ProductCatalogService $catalogService,
+		private readonly ProductCatalogServiceInterface $catalogService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

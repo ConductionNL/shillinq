@@ -3,6 +3,9 @@
 /**
  * Budget Scenario Default Promoter
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Enforces "only one BudgetScenario can be default" per `administrationId`
  * (REQ-BSC-002), by ATOMIC DEMOTION rather than rejection — a deliberately
  * different enforcement style than `budget-core-schema`'s
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -55,19 +55,20 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioDefaultPromoterInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Atomically-demoting default-scenario promoter (REQ-BSC-002).
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
-class BudgetScenarioDefaultPromoter {
+class BudgetScenarioDefaultPromoter implements BudgetScenarioDefaultPromoterInterface {
 	/**
 	 * The BudgetScenario schema slug.
 	 *

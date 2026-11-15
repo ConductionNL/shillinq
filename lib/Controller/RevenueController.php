@@ -3,6 +3,9 @@
 /**
  * Revenue Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 read-only IFRS 15 revenue cut-off API (REQ-IFRS15-007, REQ-IFRS15-008).
  * Exposes a single GET endpoint that returns the per-contract revenue cut-off for
  * one administration + period end: cumulative recognised, contract asset /
@@ -30,18 +33,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\RevenueCutoffService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RevenueCutoffServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -60,18 +60,18 @@ class RevenueController extends Controller {
 	 * Constructor for the RevenueController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param RevenueCutoffService $cutoffService The revenue cut-off computation service.
+	 * @param RevenueCutoffServiceInterface $cutoffService The revenue cut-off computation service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly RevenueCutoffService $cutoffService,
+		private readonly RevenueCutoffServiceInterface $cutoffService,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -3,6 +3,9 @@
 /**
  * Inventory GL Adjustment Poster
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Shared balanced-posting adapter used by the two inventory
  * balance-sheet-correctness adjustment engines
  * ({@see LandedCostAllocationService} and {@see NrvWriteDownService}).
@@ -33,16 +36,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;

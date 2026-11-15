@@ -3,6 +3,9 @@
 /**
  * ENSIA Validation Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Single declarative-precondition seam the OpenRegister lifecycle engine
  * cannot yet express for the ENSIA (Eenduidige Normatiek Single Information
  * Audit) annual cycle (REQ-ENSIA-001..010).
@@ -40,16 +43,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -214,14 +214,10 @@ class ENSIAValidationGuard {
 			return true;
 		}
 
-		$supportingDocuments = $question['supportingDocuments'] ?? [];
-		if (is_array($supportingDocuments) === false || count($supportingDocuments) === 0) {
+		if (self::hasSupportingDocuments(question: $question) === false) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires evidence',
-				[
-					'questionCode' => (string)($question['questionCode'] ?? ''),
-					'score' => $score,
-				]
+				['questionCode' => (string)($question['questionCode'] ?? ''), 'score' => $score]
 			);
 			return false;
 		}
@@ -230,16 +226,25 @@ class ENSIAValidationGuard {
 		if (mb_strlen($notes) < 50) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires toelichting ≥ 50 chars',
-				[
-					'questionCode' => (string)($question['questionCode'] ?? ''),
-					'toelichtingChars' => mb_strlen($notes),
-				]
+				['questionCode' => (string)($question['questionCode'] ?? ''), 'toelichtingChars' => mb_strlen($notes)]
 			);
 			return false;
 		}
 
 		return true;
 	}//end maturityEvidenceSatisfied()
+
+	/**
+	 * Whether the question carries at least one supporting document.
+	 *
+	 * @param array<string, mixed> $question The ENSIA question.
+	 *
+	 * @return bool
+	 */
+	private static function hasSupportingDocuments(array $question): bool {
+		$supportingDocuments = $question['supportingDocuments'] ?? [];
+		return (is_array($supportingDocuments) === true && count($supportingDocuments) !== 0);
+	}//end hasSupportingDocuments()
 
 	/**
 	 * Precondition enforcing REQ-ENSIA-008 post-peer-review reden requirement

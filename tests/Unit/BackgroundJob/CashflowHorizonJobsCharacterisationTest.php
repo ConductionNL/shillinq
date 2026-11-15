@@ -26,7 +26,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\CalibrationBatchJob;
 use OCA\Shillinq\BackgroundJob\CrisisModeRefreshJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -148,10 +148,10 @@ final class CashflowHorizonJobsCharacterisationTest extends TestCase {
 	 *
 	 * @param bool $available Whether OpenRegister is available.
 	 *
-	 * @return array{0:ITimeFactory,1:SettingsService,2:ContainerInterface,3:LoggerInterface}
+	 * @return array{0:ITimeFactory,1:RegisterLocation,2:ContainerInterface,3:LoggerInterface}
 	 */
 	private function collaborators(bool $available): array {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn($available);
 		$settings->method('getRegisterSlug')->willReturn('books');
 		$container = $this->createMock(ContainerInterface::class);

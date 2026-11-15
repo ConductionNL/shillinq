@@ -3,6 +3,9 @@
 /**
  * Cashflow Recurring Cost Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the CashflowRecurring save precondition.
  * Validates, before any CashflowRecurring record is persisted, that the declarative
  * recurring-cost definition is internally consistent so the horizon-expansion
@@ -46,9 +49,6 @@
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-5
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -57,7 +57,7 @@ namespace OCA\Shillinq\Guard;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;

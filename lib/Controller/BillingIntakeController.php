@@ -3,6 +3,9 @@
 /**
  * Billing Intake Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * HTTP ingress for the time-expense-invoice-intake change: a single
  * authenticated endpoint another Conduction app (pipelinq, via its
  * time-billing-handoff-emit change) POSTs a batch of externally-approved
@@ -28,18 +31,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\TimeIntakeService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\TimeIntakeServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -54,22 +54,23 @@ use Psr\Log\LoggerInterface;
  * HTTP API for the pipelinq time-billing handoff ingress.
  *
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class BillingIntakeController extends Controller {
 	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param TimeIntakeService $service Validates/materialises/delegates the batch.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param TimeIntakeServiceInterface $service Validates/materialises/delegates the batch.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly TimeIntakeService $service,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly TimeIntakeServiceInterface $service,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,

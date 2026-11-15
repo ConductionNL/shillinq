@@ -3,6 +3,9 @@
 /**
  * Budget Blocker
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Commitment `aangaan` /
  * `goedkeuren` transitions. Budget-blocking is the core verplichtingen-
  * administratie rule: a commitment reduces available budget the moment it is
@@ -28,15 +31,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\BudgetBlockerInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,7 +50,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
  */
-class BudgetBlocker {
+class BudgetBlocker implements BudgetBlockerInterface {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
@@ -96,19 +97,7 @@ class BudgetBlocker {
 				return false;
 			}
 
-			// Override-mandate holders (e.g. CFO) may force-accept a budget-exceeding
-			// commitment; the override reason is recorded on the commitment (REQ-VPL-001).
-			if ($this->hasOverrideMandate(commitment: $commitment) === true) {
-				return true;
-			}
-
-			$unfit = $this->firstUnfitRule(commitment: $commitment);
-			if ($unfit !== null) {
-				$this->logInsufficientBudget(commitmentNumber: $commitmentNumber, rule: $unfit);
-				return false;
-			}
-
-			return true;
+			return $this->fitsBudgetOrOverride(commitmentNumber: $commitmentNumber, commitment: $commitment);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BudgetBlocker: canCommit failed — denying commitment (fail-closed)',
@@ -118,6 +107,32 @@ class BudgetBlocker {
 		}//end try
 
 	}//end canCommit()
+
+	/**
+	 * Whether every rule fits its budget, or the signer may override the budget.
+	 *
+	 * @param string $commitmentNumber The commitment identifier.
+	 * @param array<string,mixed> $commitment The Commitment.
+	 *
+	 * @return bool True when the commitment may be signed.
+	 *
+	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+	 */
+	private function fitsBudgetOrOverride(string $commitmentNumber, array $commitment): bool {
+		// Override-mandate holders (e.g. CFO) may force-accept a budget-exceeding
+		// commitment; the override reason is recorded on the commitment (REQ-VPL-001).
+		if ($this->hasOverrideMandate(commitment: $commitment) === true) {
+			return true;
+		}
+
+		$unfit = $this->firstUnfitRule(commitment: $commitment);
+		if ($unfit !== null) {
+			$this->logInsufficientBudget(commitmentNumber: $commitmentNumber, rule: $unfit);
+			return false;
+		}
+
+		return true;
+	}//end fitsBudgetOrOverride()
 
 	/**
 	 * The first of the commitment's rules that does not fit its budget, or

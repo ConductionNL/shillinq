@@ -3,6 +3,9 @@
 /**
  * GR/IR Clearing Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 09 of the bookkeeping-purchase-order-3way chain
  * (REQ-PO3W-009). Materialises the two-stage Goods-Received/Invoice-Received
  * clearing GL postings that make the "no GRN -> no invoice approval"
@@ -69,20 +72,18 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 09 of bookkeeping-purchase-order-3way: GR/IR clearing + settlement
@@ -127,8 +128,9 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
-class GRIRClearingService {
+class GRIRClearingService implements GRIRClearingServiceInterface {
 
 	/**
 	 * App-config key for the GR/IR clearing account number.
@@ -816,12 +818,13 @@ class GRIRClearingService {
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
 	public function postGRIRForGoodsReceiptAccept(string $administrationId, array $grn): array {
-		return $this->postGRIRForReceiptLines(
+		$fanOut = new GRIRReceiptFanOut(
 			administrationId: $administrationId,
 			receipt: $grn,
 			lineSchema: self::SCHEMA_GRN_LINE,
 			parentField: 'grnId'
 		);
+		return $this->postGRIRForReceiptLines(fanOut: $fanOut);
 
 	}//end postGRIRForGoodsReceiptAccept()
 
@@ -843,21 +846,13 @@ class GRIRClearingService {
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
 	public function postGRIRForServiceReceiptAccept(string $administrationId, array $receipt): array {
-		$normalised = $receipt;
-		if (trim((string)($normalised['grnNumber'] ?? '')) === '') {
-			$normalised['grnNumber'] = (string)($receipt['receiptNumber'] ?? '');
-		}
-
-		if (trim((string)($normalised['receivedAt'] ?? '')) === '') {
-			$normalised['receivedAt'] = (string)($receipt['periodEnd'] ?? ($receipt['confirmedAt'] ?? ''));
-		}
-
-		return $this->postGRIRForReceiptLines(
+		$fanOut = new GRIRReceiptFanOut(
 			administrationId: $administrationId,
-			receipt: $normalised,
+			receipt: $receipt,
 			lineSchema: self::SCHEMA_SVC_RECEIPT_LINE,
 			parentField: 'serviceReceiptId'
 		);
+		return $this->postGRIRForReceiptLines(fanOut: $fanOut->grnShaped());
 
 	}//end postGRIRForServiceReceiptAccept()
 
@@ -896,20 +891,7 @@ class GRIRClearingService {
 			]
 		);
 
-		$candidate = null;
-		$candidateTime = '';
-		foreach ($matches as $match) {
-			$status = (string)($match['matchStatus'] ?? '');
-			if ($status !== self::MATCH_STATUS_AUTO_APPROVED && $status !== self::MATCH_STATUS_WITHIN_TOLERANCE) {
-				continue;
-			}
-
-			$createdAt = (string)($match['createdAt'] ?? '');
-			if ($candidate === null || $createdAt > $candidateTime) {
-				$candidate = $match;
-				$candidateTime = $createdAt;
-			}
-		}
+		$candidate = $this->latestApprovedMatch(matches: $matches);
 
 		if ($candidate === null) {
 			$this->logger->debug(
@@ -926,71 +908,91 @@ class GRIRClearingService {
 	}//end settleGRIRForMatchedInvoice()
 
 	/**
+	 * The most recently created auto_approved / within_tolerance match.
+	 *
+	 * @param iterable<mixed> $matches The invoice's ThreeWayMatch records.
+	 *
+	 * @return array<string,mixed>|null The match, or null when none qualifies.
+	 *
+	 * @spec openspec/specs/grir-accrual-wiring/spec.md
+	 */
+	private function latestApprovedMatch(iterable $matches): array|null {
+		$candidate = null;
+		$candidateTime = '';
+		foreach ($matches as $match) {
+			if ($this->isApprovedMatch(threeWayMatch: $match) === false) {
+				continue;
+			}
+
+			$createdAt = (string)($match['createdAt'] ?? '');
+			if ($candidate === null || $createdAt > $candidateTime) {
+				$candidate = $match;
+				$candidateTime = $createdAt;
+			}
+		}
+
+		return $candidate;
+	}//end latestApprovedMatch()
+
+	/**
+	 * Whether a match's status lets it settle the GR/IR posting.
+	 *
+	 * @param array<string,mixed> $threeWayMatch A ThreeWayMatch record.
+	 *
+	 * @return bool True for auto_approved and within_tolerance.
+	 *
+	 * @spec openspec/specs/grir-accrual-wiring/spec.md
+	 */
+	private function isApprovedMatch(array $threeWayMatch): bool {
+		$status = (string)($threeWayMatch['matchStatus'] ?? '');
+		return $status === self::MATCH_STATUS_AUTO_APPROVED || $status === self::MATCH_STATUS_WITHIN_TOLERANCE;
+	}//end isApprovedMatch()
+
+	/**
 	 * Shared per-line fan-out for {@see postGRIRForGoodsReceiptAccept()}
 	 * and {@see postGRIRForServiceReceiptAccept()}: loads every child line
 	 * row for the given receipt (by parent-FK field) and posts
 	 * {@see createGRIRPosting()} for every line with `quantityAccepted > 0`.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param array<string,mixed> $receipt The accepted receipt (GRN or SvcReceipt).
-	 * @param string $lineSchema Child line schema slug.
-	 * @param string $parentField FK field on the line row that references the receipt id.
+	 * @param GRIRReceiptFanOut $fanOut The receipt, its line schema and parent field, in its administration.
 	 *
 	 * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
 	 */
-	private function postGRIRForReceiptLines(
-		string $administrationId,
-		array $receipt,
-		string $lineSchema,
-		string $parentField,
-	): array {
-		$receiptId = (string)($receipt['id'] ?? ($receipt['@self']['id'] ?? ''));
+	private function postGRIRForReceiptLines(GRIRReceiptFanOut $fanOut): array {
+		$tally = new GRIRFanOutTally();
+		$receiptId = $fanOut->receiptId();
 		if ($receiptId === '') {
-			return [
-				'posted' => 0,
-				'skipped' => 0,
-				'results' => [],
-			];
+			return $tally->envelope();
 		}
 
-		$lines = $this->records()->findAll(
-			schema: $lineSchema,
-			filters: [
-				$parentField => $receiptId,
-				'administrationId' => $administrationId,
-			]
-		);
-
-		$posted = 0;
-		$skipped = 0;
-		$results = [];
+		$lines = $this->records()->findAll(schema: $fanOut->lineSchema, filters: $fanOut->lineFilters(receiptId: $receiptId));
 		foreach ($lines as $line) {
-			$accepted = (float)($line['quantityAccepted'] ?? 0);
-			if ($accepted <= 0.0) {
-				$skipped++;
-				continue;
-			}
+			$tally->count(result: $this->postAcceptedReceiptLine(fanOut: $fanOut, line: $line));
+		}
 
-			$result = $this->createGRIRPosting(
-				administrationId: $administrationId,
-				grn: $receipt,
-				grnLine: $line
-			);
-			$results[] = $result;
-			if (($result['posted'] ?? false) === true) {
-				$posted++;
-			} else {
-				$skipped++;
-			}
-		}//end foreach
-
-		return [
-			'posted' => $posted,
-			'skipped' => $skipped,
-			'results' => $results,
-		];
+		return $tally->envelope();
 
 	}//end postGRIRForReceiptLines()
+
+	/**
+	 * Post one receipt line to GR/IR; null when nothing on it was accepted.
+	 *
+	 * @param GRIRReceiptFanOut $fanOut The fan-out.
+	 * @param array<string,mixed> $line The receipt line row.
+	 *
+	 * @return array<string,mixed>|null The createGRIRPosting() result, or null.
+	 */
+	private function postAcceptedReceiptLine(GRIRReceiptFanOut $fanOut, array $line): ?array {
+		if ((float)($line['quantityAccepted'] ?? 0) <= 0.0) {
+			return null;
+		}
+
+		return $this->createGRIRPosting(
+			administrationId: $fanOut->administrationId,
+			grn: $fanOut->receipt,
+			grnLine: $line
+		);
+	}//end postAcceptedReceiptLine()
 
 	/**
 	 * Compute the clearing line amount in integer cents.
@@ -1038,6 +1040,36 @@ class GRIRClearingService {
 		array $transaction,
 		array $lines,
 	): array {
+		$debitCents = $this->assertBalanced(lines: $lines);
+
+		try {
+			return $this->persistPosting(administrationId: $administrationId, transaction: $transaction, lines: $lines, debitCents: $debitCents);
+		} catch (RuntimeException $e) {
+			// Re-raise balance failure as-is.
+			throw $e;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GRIRClearingService: failed to persist GL posting',
+				[
+					'transactionNumber' => ($transaction['transactionNumber'] ?? null),
+					'exception' => $e->getMessage(),
+				]
+			);
+			throw new RuntimeException('Failed to persist GR/IR posting');
+		}//end try
+
+	}//end postBalancedTransaction()
+
+	/**
+	 * Assert the double-entry balance invariant over the lines and return the debit total.
+	 *
+	 * @param array<int,array> $lines Per-line entries.
+	 *
+	 * @return int The debit (= credit) total in cents.
+	 *
+	 * @throws \RuntimeException When the lines do not balance.
+	 */
+	private function assertBalanced(array $lines): int {
 		$debitCents = 0;
 		$creditCents = 0;
 		foreach ($lines as $line) {
@@ -1058,55 +1090,56 @@ class GRIRClearingService {
 			);
 		}
 
-		try {
-			$header = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
-			$headerId = (string)($header['id'] ?? ($header['@self']['id'] ?? ''));
+		return $debitCents;
+	}//end assertBalanced()
 
-			$lineNumber = 1;
-			$persistedLines = [];
-			foreach ($lines as $line) {
-				$persistedLines[] = $this->saveOnSchema(
-					schema: self::SCHEMA_GL_LINE,
-					data: [
-						'transactionId' => $headerId,
-						'lineNumber' => $lineNumber,
-						'accountNumber' => $line['accountNumber'],
-						'side' => $line['side'],
-						'amount' => round(($line['amountCents'] / 100.0), 2),
-						'currency' => 'EUR',
-						'description' => $line['description'],
-						'costCenter' => $line['costCenter'],
-						'costCenterCode' => $line['costCenter'],
-						'projectCode' => $line['projectCode'],
-						'periodId' => ($transaction['periodId'] ?? ''),
-						'administrationId' => $administrationId,
-					]
-				);
-				$lineNumber++;
-			}
+	/**
+	 * Save the balanced GLTransaction header and its GLLines.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $transaction      Header data.
+	 * @param array<int,array>    $lines            Per-line entries.
+	 * @param int                 $debitCents       The posting total in cents.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 *
+	 * @throws \Throwable When a save fails.
+	 */
+	private function persistPosting(string $administrationId, array $transaction, array $lines, int $debitCents): array {
+		$header = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
+		$headerId = (string)($header['id'] ?? ($header['@self']['id'] ?? ''));
 
-			return [
-				'posted' => true,
-				'transaction' => $header,
-				'lines' => $persistedLines,
-				'amountCents' => $debitCents,
-				'message' => 'GR/IR posting materialised',
-			];
-		} catch (RuntimeException $e) {
-			// Re-raise balance failure as-is.
-			throw $e;
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GRIRClearingService: failed to persist GL posting',
-				[
-					'transactionNumber' => ($transaction['transactionNumber'] ?? null),
-					'exception' => $e->getMessage(),
+		$lineNumber = 1;
+		$persistedLines = [];
+		foreach ($lines as $line) {
+			$persistedLines[] = $this->saveOnSchema(
+				schema: self::SCHEMA_GL_LINE,
+				data: [
+					'transactionId' => $headerId,
+					'lineNumber' => $lineNumber,
+					'accountNumber' => $line['accountNumber'],
+					'side' => $line['side'],
+					'amount' => round(($line['amountCents'] / 100.0), 2),
+					'currency' => 'EUR',
+					'description' => $line['description'],
+					'costCenter' => $line['costCenter'],
+					'costCenterCode' => $line['costCenter'],
+					'projectCode' => $line['projectCode'],
+					'periodId' => ($transaction['periodId'] ?? ''),
+					'administrationId' => $administrationId,
 				]
 			);
-			throw new RuntimeException('Failed to persist GR/IR posting');
-		}//end try
+			$lineNumber++;
+		}
 
-	}//end postBalancedTransaction()
+		return [
+			'posted' => true,
+			'transaction' => $header,
+			'lines' => $persistedLines,
+			'amountCents' => $debitCents,
+			'message' => 'GR/IR posting materialised',
+		];
+	}//end persistPosting()
 
 	/**
 	 * Resolve the GL account number from the PO line, with a defensive

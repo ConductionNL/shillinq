@@ -3,6 +3,9 @@
 /**
  * Budget Grid Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REST surface for the begroting grid (`budget-grid-view`, REQ-BGV-001..009):
  * `GET /api/budget-grid` returns the fully pre-computed row tree + column
  * set + computed-row waterfall for one render, in ONE request — the grid's
@@ -33,19 +36,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BudgetGridCalculator;
-use OCA\Shillinq\Service\BudgetGridReader;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetGridCalculatorInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetGridReaderInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -120,18 +120,18 @@ class BudgetGridController extends Controller {
 	 * @param IRequest $request Request.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 * @param LoggerInterface $logger Logger — never receives a record body.
-	 * @param BudgetGridReader $reader Resolves rows/columns/past-boundary.
-	 * @param BudgetGridCalculator $calculator Pure arithmetic over the reader's bundle.
-	 * @param AdministrationContextService $administrationContext IDOR guard (REQ-MA-001).
+	 * @param BudgetGridReaderInterface $reader Resolves rows/columns/past-boundary.
+	 * @param BudgetGridCalculatorInterface $calculator Pure arithmetic over the reader's bundle.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly BudgetGridReader $reader,
-		private readonly BudgetGridCalculator $calculator,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly BudgetGridReaderInterface $reader,
+		private readonly BudgetGridCalculatorInterface $calculator,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -154,14 +154,49 @@ class BudgetGridController extends Controller {
 		}
 
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($administrationId === '' || preg_match(self::ID_PATTERN, $administrationId) !== 1) {
-			return new JSONResponse(['error' => $this->l10n->t('administrationId is required')], Http::STATUS_BAD_REQUEST);
+		$idError = $this->administrationIdRefusal(administrationId: $administrationId);
+		if ($idError !== null) {
+			return $idError;
 		}
 
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => $this->l10n->t('Administration not found')], Http::STATUS_NOT_FOUND);
 		}
 
+		$query = $this->gridQuery();
+		if ($query instanceof JSONResponse) {
+			return $query;
+		}
+
+		return $this->gridResponse(administrationId: $administrationId, query: $query);
+
+	}//end index()
+
+	/**
+	 * The 400 for a missing or malformed administrationId, or null when it is valid.
+	 *
+	 * @param string $administrationId The trimmed administrationId parameter.
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function administrationIdRefusal(string $administrationId): JSONResponse|null {
+		if ($administrationId === '' || preg_match(self::ID_PATTERN, $administrationId) !== 1) {
+			return new JSONResponse(['error' => $this->l10n->t('administrationId is required')], Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
+	}//end administrationIdRefusal()
+
+	/**
+	 * Read and validate the granularity and period parameters.
+	 *
+	 * @return array{granularity: string, startPeriod: string, endPeriod: string}|JSONResponse The query, or the 400.
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function gridQuery(): array|JSONResponse {
 		$granularity = (string)$this->request->getParam('granularity', 'month');
 		if ((self::GRANULARITIES[$granularity] ?? false) === false) {
 			return new JSONResponse(['error' => $this->l10n->t('granularity must be month, quarter, or year')], Http::STATUS_BAD_REQUEST);
@@ -173,12 +208,26 @@ class BudgetGridController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('startPeriod and endPeriod must be YYYY-MM')], Http::STATUS_BAD_REQUEST);
 		}
 
+		return ['granularity' => $granularity, 'startPeriod' => $startPeriod, 'endPeriod' => $endPeriod];
+	}//end gridQuery()
+
+	/**
+	 * Load the grid and wrap it in the response envelope; a load failure is logged and answered with a 500.
+	 *
+	 * @param string $administrationId The accessible administration.
+	 * @param array{granularity: string, startPeriod: string, endPeriod: string} $query The validated query.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function gridResponse(string $administrationId, array $query): JSONResponse {
 		try {
 			$grid = $this->reader->loadGrid(
 				administrationId: $administrationId,
-				startPeriod: $startPeriod,
-				endPeriod: $endPeriod,
-				granularity: $granularity
+				startPeriod: $query['startPeriod'],
+				endPeriod: $query['endPeriod'],
+				granularity: $query['granularity']
 			);
 		} catch (Throwable $e) {
 			$this->logger->error('BudgetGridController: failed to load grid', ['exception' => $e->getMessage()]);
@@ -186,8 +235,7 @@ class BudgetGridController extends Controller {
 		}
 
 		return new JSONResponse($this->buildEnvelope(grid: $grid));
-
-	}//end index()
+	}//end gridResponse()
 
 	/**
 	 * Build the response envelope: column descriptors, the ledger-group rows

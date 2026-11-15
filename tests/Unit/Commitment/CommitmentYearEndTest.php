@@ -26,7 +26,8 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
 use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
-use OCA\Shillinq\AppInfo\CommitmentGuardServices;
+use OCA\Shillinq\Lifecycle\CommitmentGuardServices;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -36,7 +37,7 @@ use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -120,11 +121,11 @@ final class CommitmentYearEndTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturn(true);
 		$container->method('get')->willReturn($mapper);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$contract = $this->createMock(ListenerSlugContract::class);
 		$contract->method('isEnabled')->willReturn(true);
-		$resolver = new ListenerSchemaResolver(container: $container, settingsService: $settings, contract: $contract, logger: $this->createMock(LoggerInterface::class));
+		$resolver = new ListenerSchemaResolver(container: $container, registerLocation: $settings, contract: $contract, logger: $this->createMock(LoggerInterface::class));
 
 		return new InvoiceCommitmentListener($this->invoicing(), $resolver, $this->createMock(LoggerInterface::class));
 	}//end listener()
@@ -315,6 +316,7 @@ final class CommitmentYearEndTest extends TestCase {
 			CommitmentLedger::class => $this->ledger(),
 			LoggerInterface::class => $logger,
 		];
+		$services[CommitmentLedgerInterface::class] = $services[CommitmentLedger::class];
 		$inner = $this->createMock(ContainerInterface::class);
 		$inner->method('get')->willReturn($store);
 		$services[MandateEnforcer::class] = new MandateEnforcer($inner, $config, $logger);

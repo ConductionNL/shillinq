@@ -3,6 +3,9 @@
 /**
  * Unit tests for SupplierInvoiceService (slice 05 of bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers REQ-PO3W-004 (UBL ingestion) + REQ-PO3W-007 (OCR ingestion) +
  * REQ-SI-002 (lifecycle transitions):
  *  - parseUblInvoice maps header + lines from a minimal UBL Invoice XML;
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -41,6 +41,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
@@ -129,7 +130,7 @@ final class SupplierInvoiceServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $this->logger,
 			objectService: $stub,
-			checks: new SupplierInvoiceChecks($stub, $settings),
+			checks: new SupplierInvoiceChecks($stub, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 			vatNumberCheck: $this->vatNumberCheck(store: $stub, settings: $settings, answer: $vies),
 		);
 
@@ -738,7 +739,7 @@ XML;
 		$clients = $this->createMock(IClientService::class);
 		$clients->method('newClient')->willReturn($client);
 
-		return new VatNumberCheck(new ViesService($this->appConfig, $clients, $this->logger, $store), $store, $settings, $this->logger);
+		return new VatNumberCheck(new ViesService($this->appConfig, $clients, $this->logger, $store), $store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->logger);
 
 	}//end vatNumberCheck()
 

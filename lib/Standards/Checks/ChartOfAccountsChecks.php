@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Chart-of-Accounts Check Provider
  *
  * Contributes executable checks for the `chart-of-accounts` rule domain to the

@@ -3,6 +3,9 @@
 /**
  * Budget Overrun Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the budget-overrun precondition on
  * GL posting (REQ-010). When a JournalEntry is materialised (boekstuk posted),
  * the system validates that the cumulative lasten posted to a programma /
@@ -27,20 +30,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\BegrotingswijzigingStacker;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BegrotingswijzigingStackerInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Precondition guard preventing GL lasten postings beyond the authorized budget.
@@ -52,13 +52,13 @@ class BudgetOverrunGuard {
 	 * Construct the guard with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param BegrotingswijzigingStacker $stacker Computes the stacked authorized lasten.
+	 * @param BegrotingswijzigingStackerInterface $stacker Computes the stacked authorized lasten.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly BegrotingswijzigingStacker $stacker,
+		private readonly BegrotingswijzigingStackerInterface $stacker,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

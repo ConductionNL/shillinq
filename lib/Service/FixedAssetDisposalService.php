@@ -3,6 +3,9 @@
 /**
  * Fixed-Asset Disposal Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities: the missing disposal-posting trigger.
  * {@see \OCA\Shillinq\Service\DisposalJournalEmitter} shapes a balanced
  * closing `GLTransaction` for a retired `FixedAsset` (REQ-FA-006 /
@@ -46,21 +49,19 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FixedAssetDisposalServiceInterface;
 use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Posts the closing GL journal for a disposed FixedAsset (REQ-GLTAX-001).
@@ -70,7 +71,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class FixedAssetDisposalService {
+class FixedAssetDisposalService implements FixedAssetDisposalServiceInterface {
 
 	/**
 	 * App-config key holding the disposal-gain P&L account.

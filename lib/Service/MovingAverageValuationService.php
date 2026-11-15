@@ -3,6 +3,9 @@
 /**
  * Moving-Average Valuation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-INV-004 imperative weighted-moving-average engine for
  * InventoryValuation.
  *
@@ -39,19 +42,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\MovingAverageValuationServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative moving-average engine driving {@see CogsPosterService}.
@@ -60,7 +61,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
  */
-class MovingAverageValuationService {
+class MovingAverageValuationService implements MovingAverageValuationServiceInterface {
 	/**
 	 * Construct the service.
 	 *

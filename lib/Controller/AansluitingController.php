@@ -30,8 +30,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AansluitingService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AansluitingServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,7 +57,7 @@ class AansluitingController extends Controller {
 	 * Construct the controller with its service dependency.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param AansluitingService $reconciliationService The tie-out compute/explain/resolve/reopen service.
+	 * @param AansluitingServiceInterface $reconciliationService The tie-out compute/explain/resolve/reopen service.
 	 * @param IUserSession $userSession The session for the acting user id (auth + audit actor).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
@@ -65,7 +65,7 @@ class AansluitingController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AansluitingService $reconciliationService,
+		private readonly AansluitingServiceInterface $reconciliationService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

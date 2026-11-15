@@ -3,6 +3,9 @@
 /**
  * Financial Dashboard Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side data layer for the Wave-4 financial dashboard endpoints
  * (financial-series + financial-summary). Replaces the client-side
  * useFinancialData.js fetch layer: each schema the dashboard consumes
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,7 +39,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FinancialDashboardServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,7 +50,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
-class FinancialDashboardService {
+class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	/**
 	 * Trailing months used when no explicit from/to range is given
 	 * (mirrors the client widgets' FALLBACK_MONTHS).

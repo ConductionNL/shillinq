@@ -3,6 +3,9 @@
 /**
  * Supplier Invoice Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 05 of the bookkeeping-purchase-order-3way chain: server-authoritative
  * ingestion of supplier invoices from a Peppol-received UBL Invoice XML or a
  * PDF invoice processed through OCR (REQ-PO3W-004 + REQ-PO3W-007). Persists
@@ -35,23 +38,21 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\Tax\VatNumberCheck;
 
 /**
  * Slice 05 — Supplier invoice ingestion from UBL (Peppol) and PDF (OCR).
@@ -91,13 +92,7 @@ use OCA\Shillinq\Service\Tax\VatNumberCheck;
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
-class SupplierInvoiceService {
-	/**
-	 * Initial lifecycle state of a newly ingested invoice (REQ-SI-002).
-	 *
-	 * @var string
-	 */
-	public const STATUS_RECEIVED = 'received';
+class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 
 	/**
 	 * Source-format tag stored on the SupplierInvoice record indicating the
@@ -201,13 +196,7 @@ class SupplierInvoiceService {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function ingestUBLInvoice(string $administrationId, string $ublXml, array $context = []): array {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Administration not found');
-		}
+		$this->requireAccessibleAdministration(administrationId: $administrationId, deniedMessage: 'Administration not found');
 
 		$parsed = $this->resolveSupplier(administrationId: $administrationId, parsed: $this->parseUblInvoice(ublXml: $ublXml));
 
@@ -224,15 +213,7 @@ class SupplierInvoiceService {
 			return $existing;
 		}
 
-		$peppolReceivedAt = trim((string)($context['peppolReceivedAt'] ?? ''));
-		if ($peppolReceivedAt === '') {
-			$peppolReceivedAt = $this->nowIso();
-		}
-
-		$ublSourceUri = trim((string)($context['ublSourceUri'] ?? ''));
-		if ($ublSourceUri === '' && isset($context['peppolMessageId']) === true) {
-			$ublSourceUri = 'peppol:' . trim((string)$context['peppolMessageId']);
-		}
+		[$peppolReceivedAt, $ublSourceUri] = $this->peppolProvenance(context: $context);
 
 		$record = array_merge(
 			$parsed,
@@ -681,13 +662,7 @@ class SupplierInvoiceService {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function setStatus(string $administrationId, string $invoiceId, string $toStatus): array {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Supplier invoice not found');
-		}
+		$this->requireAccessibleAdministration(administrationId: $administrationId, deniedMessage: 'Supplier invoice not found');
 
 		if ($invoiceId === '') {
 			throw new RuntimeException('Supplier invoice not found');
@@ -705,6 +680,49 @@ class SupplierInvoiceService {
 		}
 
 		$fromStatus = (string)($invoice['statusCode'] ?? '');
+		$this->assertAllowedTransition(fromStatus: $fromStatus, toStatus: $toStatus);
+
+		$invoice['statusCode'] = $toStatus;
+		$invoice[$toStatus . 'At'] = $this->nowIso();
+
+		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
+	}//end setStatus()
+
+	/**
+	 * Require a non-empty administration the caller may access.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $deniedMessage The message when the caller has no access.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the id is empty or the administration is inaccessible.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function requireAccessibleAdministration(string $administrationId, string $deniedMessage): void {
+		if ($administrationId === '') {
+			throw new RuntimeException('administrationId is required');
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			throw new RuntimeException($deniedMessage);
+		}
+	}//end requireAccessibleAdministration()
+
+	/**
+	 * Require the status transition to be allowed.
+	 *
+	 * @param string $fromStatus The current status.
+	 * @param string $toStatus The target status.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException On an unknown current status or an illegal transition.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function assertAllowedTransition(string $fromStatus, string $toStatus): void {
 		if (isset(self::ALLOWED_TRANSITIONS[$fromStatus]) === false) {
 			throw new RuntimeException('Invalid current statusCode: ' . $fromStatus);
 		}
@@ -712,12 +730,30 @@ class SupplierInvoiceService {
 		if (in_array($toStatus, self::ALLOWED_TRANSITIONS[$fromStatus], true) === false) {
 			throw new RuntimeException('Illegal transition from ' . $fromStatus . ' to ' . $toStatus);
 		}
+	}//end assertAllowedTransition()
 
-		$invoice['statusCode'] = $toStatus;
-		$invoice[$toStatus . 'At'] = $this->nowIso();
+	/**
+	 * When the invoice arrived over Peppol (default now) and where its UBL came from.
+	 *
+	 * @param array<string,mixed> $context The ingestion context.
+	 *
+	 * @return array{0: string, 1: string} The received-at timestamp and the UBL source URI.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function peppolProvenance(array $context): array {
+		$peppolReceivedAt = trim((string)($context['peppolReceivedAt'] ?? ''));
+		if ($peppolReceivedAt === '') {
+			$peppolReceivedAt = $this->nowIso();
+		}
 
-		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
-	}//end setStatus()
+		$ublSourceUri = trim((string)($context['ublSourceUri'] ?? ''));
+		if ($ublSourceUri === '' && isset($context['peppolMessageId']) === true) {
+			$ublSourceUri = 'peppol:' . trim((string)$context['peppolMessageId']);
+		}
+
+		return [$peppolReceivedAt, $ublSourceUri];
+	}//end peppolProvenance()
 
 	/**
 	 * Parse a UBL Invoice XML document into the structured field shape used

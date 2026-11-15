@@ -3,6 +3,9 @@
 /**
  * Exception Resolution Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the bookkeeping-purchase-order-3way chain — owns the
  * resolution side of out-of-tolerance 3-way matches (REQ-PO3W-005).
  * When a ThreeWayMatch carries an `exception_*` status (price, quantity,
@@ -51,16 +54,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ExceptionResolutionServiceInterface;
 use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
@@ -69,7 +71,6 @@ use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 08 — resolution-side workflow for out-of-tolerance ThreeWayMatch
@@ -94,7 +95,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
-class ExceptionResolutionService {
+class ExceptionResolutionService implements ExceptionResolutionServiceInterface {
 
 	/**
 	 * Resolution action recorded for accept-with-motivation. The enum value

@@ -3,6 +3,9 @@
 /**
  * AnnualReport Sign-off Request Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change shillinq-delegation-via-events (REQ-SIGN-005) — the REAL production
  * trigger for {@see \OCA\Shillinq\Service\Signing\SignoffDecisionService::requestSignoff}.
  * Without this listener the decidesk Decision dispatch was an orphaned
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -53,8 +53,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\Signing\SignoffDecisionService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SignoffDecisionServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -88,16 +88,16 @@ final class AnnualReportSignoffRequestListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
-	 * @param SignoffDecisionService $signoffService The sign-off request service.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param SignoffDecisionServiceInterface $signoffService The sign-off request service.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's published object
 	 *                                              surface (ADR-084), aliased in
 	 *                                              Application.php.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
-		private readonly SignoffDecisionService $signoffService,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly SignoffDecisionServiceInterface $signoffService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -243,7 +243,7 @@ final class AnnualReportSignoffRequestListener implements IEventListener {
 	 */
 	private function persist(string $id, array $updates): void {
 		$this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema(self::TARGET_SCHEMA)
 			->updateObject($id, $updates);
 

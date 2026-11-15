@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\ComplianceService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;
@@ -112,7 +112,7 @@ final class ComplianceStatusGoldenTest extends TestCase {
 		};
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($store);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(($opts['or'] ?? true));
 		$settings->method('getRegisterSlug')->willReturn('reg');
 		$logger = $this->createMock(LoggerInterface::class);

@@ -3,6 +3,9 @@
 /**
  * Approval Activity Emitter Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-RAP-006 — emit Nextcloud Activity events on approval / signing /
  * decision lifecycle transitions so the `BookkeepingActivityFeed`
  * manifest entry (and the Nextcloud dashboard / email-notification /
@@ -34,16 +37,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\Activity\IManager as IActivityManager;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;

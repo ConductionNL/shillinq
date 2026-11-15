@@ -35,12 +35,12 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\BookingDetailController;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -65,9 +65,9 @@ final class BookingDetailControllerTest extends TestCase {
 	/**
 	 * Mocked settings service.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Mocked context service.
@@ -113,7 +113,7 @@ final class BookingDetailControllerTest extends TestCase {
 		parent::setUp();
 
 		$this->request = $this->createMock(IRequest::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->pipelinq = $this->createMock(PipelinqContactAdapter::class);
 
@@ -543,7 +543,7 @@ final class BookingDetailControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testOrUnavailableReturns503(): void {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(false);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
@@ -561,4 +561,129 @@ final class BookingDetailControllerTest extends TestCase {
 
 	}//end testOrUnavailableReturns503()
 
+
+	/**
+	 * The contact error is chosen by the upstream status class and never
+	 * carries the raw upstream message: a connect failure (0) and a 404 read
+	 * as generic, 401/403 as an authentication problem.
+	 *
+	 * @return void
+	 */
+	public function testContactErrorMessageFollowsTheUpstreamStatus(): void {
+		$expected = [
+			0   => 'Customer profile temporarily unavailable.',
+			401 => 'Customer profile cannot be loaded (authentication required).',
+			403 => 'Customer profile cannot be loaded (authentication required).',
+			404 => 'Customer profile temporarily unavailable.',
+		];
+
+		foreach ($expected as $status => $message) {
+			$this->pipelinq = $this->createMock(PipelinqContactAdapter::class);
+			$this->pipelinq->method('getContact')->willThrowException(
+				new PipelinqTransportException(message: 'raw upstream body ' . $status, statusCode: $status)
+			);
+			$this->pipelinq->expects(self::never())->method('fetchKlantbeeld');
+
+			$data = $this->buildController()->show(id: 'apt-linked')->getData();
+
+			self::assertSame($message, $data['contactError'], 'status ' . $status);
+			self::assertNull($data['contact']);
+		}
+
+	}//end testContactErrorMessageFollowsTheUpstreamStatus()
+
+	/**
+	 * Entity-shaped appointment rows are normalised before rendering: a
+	 * jsonSerialize() array, a getObject() array, and a plain object (cast).
+	 *
+	 * @return void
+	 */
+	public function testEntityShapedAppointmentRowsAreNormalised(): void {
+		$fields = ['administrationId' => 'adm-1', 'pipelinqContactId' => null, 'status' => 'confirmed'];
+		$serialisable = new class($fields) implements \JsonSerializable {
+			public function __construct(private array $fields) {
+			}
+			public function jsonSerialize(): mixed {
+				return ['appointmentId' => 'apt-json'] + $this->fields;
+			}
+		};
+		$entity = new class($fields) {
+			public function __construct(private array $fields) {
+			}
+			public function jsonSerialize(): mixed {
+				return null;
+			}
+			public function getObject(): array {
+				return ['appointmentId' => 'apt-entity'] + $this->fields;
+			}
+		};
+		$opaque = new class {
+			public string $appointmentId = 'apt-cast';
+			public string $administrationId = 'adm-1';
+			public ?string $pipelinqContactId = null;
+			public function getObject(): mixed {
+				return 'not-an-array';
+			}
+		};
+
+		foreach (['apt-json' => $serialisable, 'apt-entity' => $entity, 'apt-cast' => $opaque] as $id => $row) {
+			// phpcs:disable
+			$objectService = new class($row) {
+				public function __construct(private object $row) {
+				}
+				public function setRegister(string $_): self {
+					return $this;
+				}
+				public function setSchema(string $_): self {
+					return $this;
+				}
+				public function findAll(array $_ = []): array {
+					return [$this->row];
+				}
+			};
+			// phpcs:enable
+			$this->container = $this->createMock(ContainerInterface::class);
+			$this->container->method('get')->willReturn($objectService);
+
+			$response = $this->buildController()->show(id: $id);
+
+			self::assertSame(Http::STATUS_OK, $response->getStatus(), $id);
+			self::assertSame($id, $response->getData()['booking']['appointmentId']);
+			self::assertTrue($response->getData()['notLinkedToPipelinq']);
+		}
+
+	}//end testEntityShapedAppointmentRowsAreNormalised()
+
+	/**
+	 * A scalar appointment row normalises to an empty row, which carries no
+	 * administration and is masked as not found.
+	 *
+	 * @return void
+	 */
+	public function testScalarAppointmentRowIsMaskedAsNotFound(): void {
+		// phpcs:disable
+		$objectService = new class() {
+			public function setRegister(string $_): self {
+				return $this;
+			}
+			public function setSchema(string $_): self {
+				return $this;
+			}
+			public function findAll(array $_ = []): array {
+				return ['scalar-row'];
+			}
+		};
+		// phpcs:enable
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->container->method('get')->willReturn($objectService);
+		$this->pipelinq->expects(self::never())->method('getContact');
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->context->method('currentUserId')->willReturn('alice');
+		$this->context->expects(self::once())->method('canAccess')->with('')->willReturn(false);
+
+		$response = $this->buildController()->show(id: 'apt-x');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testScalarAppointmentRowIsMaskedAsNotFound()
 }//end class

@@ -19,6 +19,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -34,6 +37,7 @@ use Psr\Log\LoggerInterface;
  * Shared flow of the signature-verified payment webhooks.
  *
  * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 abstract class PaymentWebhookReceiver extends Controller {
 	/**

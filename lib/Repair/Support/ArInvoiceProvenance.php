@@ -3,6 +3,9 @@
 /**
  * AR invoice provenance derivation
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The pure half of BackfillArInvoiceProvenance: given an invoice saved before
  * ARInvoice 0.16.0, the recurring profiles and the invoice's audit trail, work
  * out which of `recurringProfileId`, `billingPeriod`, `customerReference` and
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/recurring-invoicing/spec.md (REQ-RIN-011)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

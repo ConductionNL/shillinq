@@ -3,6 +3,9 @@
 /**
  * Purchase Order Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative create / approval-chain routing / send-block guard for the
  * 3-way-match Purchase Order sub-ledger (REQ-PO3W-001). Implements member 02 of
  * the bookkeeping-purchase-order-3way chain: the schemas + registers were declared
@@ -35,9 +38,6 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -45,7 +45,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
@@ -57,7 +59,6 @@ use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 02 of bookkeeping-purchase-order-3way: PO creation + approval routing.
@@ -80,8 +81,9 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.LongVariable)
  * Pre-existing debt (issue #506): broad domain surface area; variable
  * renames deferred pending a dedicated pass.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
-class PurchaseOrderService {
+class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	/**
 	 * Approval-chain threshold for the single-approver tier (Teamleider only).
 	 * A PO with a total strictly below this amount needs ONE approver.
@@ -767,32 +769,16 @@ class PurchaseOrderService {
 		$tasksAssigned = false;
 
 		foreach ($chain as $entry) {
-			$role = $entry['role'];
-			$order = $entry['order'];
-			if ($role === '' || $order === 0) {
-				continue;
-			}
-
-			$task = [
-				'purchaseOrderId' => $purchaseOrderId,
-				'administrationId' => $administrationId,
-				'role' => $role,
-				'order' => $order,
-				'status' => 'pending',
-				'createdAt' => $this->nowIso(),
-			];
-
-			$this->saveObject(schema: 'ApprovalTask', object: $task);
-
-			$this->notifyApprovers(
+			if ($this->assignApprovalTask(
 				administrationId: $administrationId,
 				purchaseOrderId: $purchaseOrderId,
 				poNumber: $poNumber,
-				role: $role
-			);
-
-			$tasksAssigned = true;
-		}//end foreach
+				entry: $entry
+			) === true
+			) {
+				$tasksAssigned = true;
+			}
+		}
 
 		// REQ-RAP-006 row 1 (`approval_requested`): the ApprovalTask records
 		// that put this PO in front of an approver have just been created, so
@@ -813,6 +799,47 @@ class PurchaseOrderService {
 		}
 
 	}//end assignApprovalTasks()
+
+	/**
+	 * Persist and notify one approval task of the chain; an entry without a
+	 * role or order is skipped.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $purchaseOrderId PO id.
+	 * @param string $poNumber PO number for the notification subject params.
+	 * @param array{role:string,order:int} $entry The chain entry.
+	 *
+	 * @return bool True when a task was assigned.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 */
+	private function assignApprovalTask(string $administrationId, string $purchaseOrderId, string $poNumber, array $entry): bool {
+		$role = $entry['role'];
+		$order = $entry['order'];
+		if ($role === '' || $order === 0) {
+			return false;
+		}
+
+		$task = [
+			'purchaseOrderId' => $purchaseOrderId,
+			'administrationId' => $administrationId,
+			'role' => $role,
+			'order' => $order,
+			'status' => 'pending',
+			'createdAt' => $this->nowIso(),
+		];
+
+		$this->saveObject(schema: 'ApprovalTask', object: $task);
+
+		$this->notifyApprovers(
+			administrationId: $administrationId,
+			purchaseOrderId: $purchaseOrderId,
+			poNumber: $poNumber,
+			role: $role
+		);
+
+		return true;
+	}//end assignApprovalTask()
 
 	/**
 	 * Dispatch a notification to every user in the administration who carries the

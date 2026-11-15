@@ -29,9 +29,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TaxPaymentReconciliationServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Reconciles a Vpb payment record against the general ledger (REQ-VPB-008).
@@ -44,7 +45,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
  */
-class TaxPaymentReconciliationService {
+class TaxPaymentReconciliationService implements TaxPaymentReconciliationServiceInterface {
 	/**
 	 * The answer for a payment that is not found in the administration.
 	 *

@@ -34,8 +34,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -45,7 +46,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
-class InvoiceSettlementService {
+class InvoiceSettlementService implements InvoiceSettlementServiceInterface {
 	/**
 	 * Outcome: the named transition ran.
 	 *
@@ -89,13 +90,13 @@ class InvoiceSettlementService {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param ObjectTransitionRunner $transitions   Runs the invoices' declared transitions.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger for skipped and failed settlements.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -220,7 +221,7 @@ class InvoiceSettlementService {
 	private function findInvoice(string $schema, string $invoiceId): array|null {
 		try {
 			return ObjectIdentifier::findOne(
-				scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema),
+				scoped: $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema),
 				id: $invoiceId
 			);
 		} catch (Throwable $e) {

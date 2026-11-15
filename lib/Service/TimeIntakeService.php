@@ -3,6 +3,9 @@
 /**
  * Time Intake Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * External-integration ingress adapter (ADR-031 documented exception) for
  * the shillinq half of the pipelinq time-billing handoff
  * (time-expense-invoice-intake). Validates a batch of externally-approved
@@ -55,9 +58,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -65,13 +65,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TimeIntakeServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Validates, materialises, and delegates a pipelinq time-billing batch.
@@ -88,7 +89,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; deferred pending a dedicated refactor.
  */
-class TimeIntakeService {
+class TimeIntakeService implements TimeIntakeServiceInterface {
 	/**
 	 * Only billing model accepted by this slice.
 	 *

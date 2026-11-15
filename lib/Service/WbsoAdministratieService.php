@@ -3,6 +3,9 @@
 /**
  * WBSO Administratie Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-1 read-only realisatie computation for the WBSO S&O-administratie
  * (bookkeeping-wbso-sno-administratie). For one administration it aggregates the
  * realised speur- en ontwikkelingswerk hours per WbsoBeschikking from the
@@ -26,18 +29,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WbsoAdministratieServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes a per-beschikking realisatie summary from the S&O hour administration.
@@ -46,7 +47,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class WbsoAdministratieService {
+class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -141,16 +142,7 @@ class WbsoAdministratieService {
 
 		$byDecision = [];
 		foreach ($entries as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$state = (string)($entry['state'] ?? '');
-			if ($state !== 'confirmed' && $state !== 'locked') {
-				continue;
-			}
-
-			$decisionNumber = (string)($entry['decisionNumber'] ?? '');
+			$decisionNumber = self::countedDecisionNumber(entry: $entry);
 			if ($decisionNumber === '') {
 				continue;
 			}
@@ -169,6 +161,26 @@ class WbsoAdministratieService {
 
 		return $byDecision;
 	}//end realisedHoursByBeschikking()
+
+	/**
+	 * The decision number of a confirmed or locked hours entry, or '' when the entry does not count.
+	 *
+	 * @param mixed $entry The SoUurregistratie row.
+	 *
+	 * @return string
+	 */
+	private static function countedDecisionNumber(mixed $entry): string {
+		if (is_array($entry) === false) {
+			return '';
+		}
+
+		$state = (string)($entry['state'] ?? '');
+		if ($state !== 'confirmed' && $state !== 'locked') {
+			return '';
+		}
+
+		return (string)($entry['decisionNumber'] ?? '');
+	}//end countedDecisionNumber()
 
 	/**
 	 * Fetch the administration's WbsoBeschikking records keyed by beschikkingNumber.

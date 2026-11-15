@@ -3,6 +3,9 @@
 /**
  * Lease Reassessment Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-lease-capabilities (shillinq#446): the missing operator
  * surface for IFRS-16 lease remeasurements.
  * {@see \OCA\Shillinq\Service\LeaseReassessmentService} fully implements the
@@ -33,18 +36,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\LeaseReassessmentService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\LeaseReassessmentServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -71,8 +71,8 @@ class LeaseReassessmentController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param LeaseReassessmentService $reassessmentService The remeasurement service.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
+	 * @param LeaseReassessmentServiceInterface $reassessmentService The remeasurement service.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param IUserSession $userSession User-session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to the client).
 	 *
@@ -82,8 +82,8 @@ class LeaseReassessmentController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly LeaseReassessmentService $reassessmentService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly LeaseReassessmentServiceInterface $reassessmentService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

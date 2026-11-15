@@ -3,6 +3,9 @@
 /**
  * OrderFulfilment Transition Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Task 5.3 / REQ-005 / REQ-006 — emit the cross-app `milestone.completed`
  * CloudEvent and trigger the outbound status-sync to TenderNed when an
  * OrderFulfilment transitions to `completed` AND the eindoplevering of
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -46,9 +46,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\TenderNedStatusSync;
-use OCA\Shillinq\Service\BudgetImpactEmitter;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\TenderNedStatusSyncInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -66,15 +66,15 @@ class OrderFulfilmentTransitionListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param BudgetImpactEmitter $emitter Shared cross-app CloudEvent emitter.
-	 * @param TenderNedStatusSync $sync Outbound status-sync integration (REQ-006).
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param BudgetImpactEmitterInterface $emitter Shared cross-app CloudEvent emitter.
+	 * @param TenderNedStatusSyncInterface $sync Outbound status-sync integration (REQ-006).
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly BudgetImpactEmitter $emitter,
-		private readonly TenderNedStatusSync $sync,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly BudgetImpactEmitterInterface $emitter,
+		private readonly TenderNedStatusSyncInterface $sync,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 

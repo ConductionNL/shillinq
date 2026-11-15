@@ -3,6 +3,9 @@
 /**
  * Revenue Recognition Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception service for the order-revenue-recognition chain. Computes
  * recognized RECURRING revenue for a runtime reporting period [from, to] as the
  * whole-month-overlap-prorated, frequency-normalized sum of a SalesOrder's
@@ -33,16 +36,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/order-revenue-recognition-engine/tasks.md#task-1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RevenueRecognitionServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -59,7 +60,7 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class RevenueRecognitionService {
+class RevenueRecognitionService implements RevenueRecognitionServiceInterface {
 
 	/**
 	 * Per-month normalization factors keyed by frequentie enum.

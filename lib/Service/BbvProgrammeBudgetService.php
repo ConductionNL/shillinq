@@ -3,6 +3,9 @@
 /**
  * BBV Provincie Programme Budget Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The `programmeBudgetVsActuals` aggregation the provincies-BBV Compliance
  * Dashboard was written against and which no code ever computed (#866/#862).
  *
@@ -65,35 +68,20 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BbvProgrammeBudgetServiceInterface;
+
 /**
  * Assembles the provincies-BBV dashboard envelopes (REQ-BBC-001..003, REQ-BBL-001).
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
-class BbvProgrammeBudgetService {
-	/**
-	 * The seven BBV programme codes REQ-BBC-002 enumerates.
-	 *
-	 * @var array<int,string>
-	 */
-	public const PROGRAMMES = [
-		'ruimte',
-		'mobiliteit',
-		'water',
-		'milieu',
-		'cultuur',
-		'economie',
-		'bestuur',
-	];
+class BbvProgrammeBudgetService implements BbvProgrammeBudgetServiceInterface {
 
 	/**
 	 * The scope of an envelope with nothing to report.
@@ -186,11 +174,7 @@ class BbvProgrammeBudgetService {
 		?array $statuses = null,
 	): array {
 		$administrationIds = $this->adminContext->accessibleAdministrationIds();
-		if ($administrationIds === []) {
-			return $this->emptyEnvelope();
-		}
-
-		$window = $this->resolveWindow(administrationIds: $administrationIds, fiscalYear: $fiscalYear);
+		$window            = $this->windowFor(administrationIds: $administrationIds, fiscalYear: $fiscalYear);
 		if ($window === null) {
 			return $this->emptyEnvelope();
 		}
@@ -213,6 +197,22 @@ class BbvProgrammeBudgetService {
 		return $this->envelope(run: $run, figures: $figures);
 
 	}//end programmeBudgetVsActuals()
+
+	/**
+	 * The fiscal-year window over the caller's administrations, or null when there are none or no window resolves.
+	 *
+	 * @param array<int, string> $administrationIds The caller's administrations.
+	 * @param int|null           $fiscalYear        The requested fiscal year, or null for the current one.
+	 *
+	 * @return array{fiscalYear:int,startDate:string,endDate:string}|null The window, or null.
+	 */
+	private function windowFor(array $administrationIds, int|null $fiscalYear): array|null {
+		if ($administrationIds === []) {
+			return null;
+		}
+
+		return $this->resolveWindow(administrationIds: $administrationIds, fiscalYear: $fiscalYear);
+	}//end windowFor()
 
 	/**
 	 * Read budget, spend and commitments per programme, in that order.
