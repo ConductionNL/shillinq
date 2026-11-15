@@ -51,6 +51,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * REQ-USB-001 and REQ-USB-002.
@@ -132,7 +133,7 @@ class SalesUsageBillingTest extends TestCase {
 		$all = $this->store->setSchema('MeterReading')->findAll();
 		$this->assertCount(($before + 2), $all);
 		foreach ($result['created'] as $id) {
-			$created = $this->store->find(id: $id, schema: 'MeterReading')->getObject();
+			$created = $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'MeterReading'))->getObject();
 			$this->assertSame('unrated', $created['status']);
 			$this->assertSame(self::PLAN, $created['ratePlanId'], 'the plan is found from the resource type');
 			unset($created['id']);
@@ -213,7 +214,7 @@ class SalesUsageBillingTest extends TestCase {
 		$this->assertCount(2, $lines);
 		$invoiceId = (string)$invoice['id'];
 		foreach ([self::SEPT_A, self::SEPT_B] as $id) {
-			$reading = $this->store->find(id: $id, schema: 'MeterReading')->getObject();
+			$reading = $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'MeterReading'))->getObject();
 			$this->assertSame('invoiced', $reading['status']);
 			$this->assertSame($invoiceId, $reading['invoiceId']);
 			unset($reading['id']);
@@ -238,7 +239,7 @@ class SalesUsageBillingTest extends TestCase {
 		}
 
 		$this->assertSame([], $this->store->setSchema('BillableInvoice')->findAll());
-		$this->assertSame('rated', $this->store->find(id: self::SEPT_A, schema: 'MeterReading')->getObject()['status']);
+		$this->assertSame('rated', $this->store->find(id: self::SEPT_A, options: new ObjectFindOptions(schema: 'MeterReading'))->getObject()['status']);
 
 	}//end testAnInvoicedReadingIsRefused()
 
