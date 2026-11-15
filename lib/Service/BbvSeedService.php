@@ -28,6 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\BbvSeedServiceInterface;
 use OCP\IAppConfig;
@@ -225,7 +227,10 @@ class BbvSeedService implements BbvSeedServiceInterface {
 				continue;
 			}
 
-			$objectService->saveObject(object: $row, register: $registerSlug, schema: $schema);
+			$objectService->saveObject(
+				object: $row,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema))
+			);
 			$seeded++;
 		}//end foreach
 

@@ -39,6 +39,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Booking;
 
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
 use OCA\Shillinq\Service\IcsService;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -428,9 +430,11 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$saved = $objectService->saveObject(
 				object: $token,
-				register: $this->settings->getRegisterSlug(),
-				schema: 'ConfirmationToken',
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(
+						register: $this->settings->getRegisterSlug(),
+						schema: 'ConfirmationToken'
+					)),
+				_rbac: false
 			);
 			return $this->toArray(object: $saved);
 		} catch (Throwable $e) {
@@ -487,9 +491,8 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 		try {
 			$this->container->get('OCA\\OpenRegister\\Service\\ObjectService')->saveObject(
 				object: $appointment,
-				register: $this->settings->getRegisterSlug(),
-				schema: 'Appointment',
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'Appointment')),
+				_rbac: false
 			);
 		} catch (Throwable $e) {
 			$this->logger->error(

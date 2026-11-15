@@ -37,6 +37,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A received web shop order becomes one invoice, once (REQ-SWO-001), on the right debtor (REQ-SWO-002).
@@ -150,7 +151,11 @@ final class WebshopOrderInvoicerTest extends TestCase {
 			}
 		);
 		$objectService->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null): ObjectEntity {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntity {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->saves[] = [(string)$schema, $object, $uuid];
 				$saved = new ObjectEntity();
 				$saved->setObject(['id' => ($uuid ?? strtolower((string)$schema) . '-' . count($this->saves))] + $object);
