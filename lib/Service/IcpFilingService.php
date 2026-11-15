@@ -35,6 +35,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
 use OCP\IAppConfig;
@@ -305,8 +307,7 @@ class IcpFilingService implements IcpFilingServiceInterface {
 		try {
 			$this->objectService->saveObject(
 				object: $return,
-				register: $this->register(),
-				schema: 'IcpOpgaaf',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'IcpOpgaaf'))
 			);
 
 			return true;

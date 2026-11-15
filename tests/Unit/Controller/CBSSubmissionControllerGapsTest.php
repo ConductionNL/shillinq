@@ -40,6 +40,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Anonymous callers get 401 everywhere, malformed ids and missing fields 400,
@@ -336,7 +337,12 @@ final class CBSSubmissionControllerGapsTest extends TestCase {
 		);
 		$this->objectService->expects(self::once())
 			->method('saveObject')
-			->with($body + ['status' => 'draft', 'currency' => 'EUR'], [], 'shillinq', 'CBSSubmission')
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $body + ['status' => 'draft', 'currency' => 'EUR'],
+					'extend' => [],
+					'register' => 'shillinq',
+					'schema' => 'CBSSubmission',
+				]))
 			->willReturn($saved);
 
 		$response = $this->controller()->create();
@@ -420,7 +426,12 @@ final class CBSSubmissionControllerGapsTest extends TestCase {
 		$this->exportService->method('validateSubmission')->willReturn(['valid' => true, 'errors' => [], 'warnings' => ['w']]);
 		$this->objectService->expects(self::once())
 			->method('saveObject')
-			->with(['status' => 'validated', 'id' => 'sub-1'], [], 'shillinq', 'CBSSubmission')
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => ['status' => 'validated', 'id' => 'sub-1'],
+					'extend' => [],
+					'register' => 'shillinq',
+					'schema' => 'CBSSubmission',
+				]))
 			->willReturn($this->entity(row: ['id' => 'sub-1', 'status' => 'validated']));
 
 		$response = $this->controller()->update(id: 'sub-1');
