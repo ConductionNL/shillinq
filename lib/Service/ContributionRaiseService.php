@@ -42,6 +42,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -324,9 +326,8 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 	private function save(array $object, string $schema): string {
 		$saved = $this->objectService->saveObject(
 			object: $object,
-			register: $this->registerSlug(),
-			schema: $schema,
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema)),
+			_rbac: false
 		);
 
 		$uuid = ObjectIdentifier::resolve(saved: $saved);

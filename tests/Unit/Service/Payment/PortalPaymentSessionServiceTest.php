@@ -42,6 +42,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Duck-typed ObjectService stub keyed by register + schema. Parameter names
@@ -186,7 +188,11 @@ final class PortalPaymentObjectServiceStub {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function find(int|string $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function find(int|string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
 		if ($this->throwOnFind === true) {
 			throw new RuntimeException('OpenRegister read failed');
 		}
@@ -213,13 +219,14 @@ final class PortalPaymentObjectServiceStub {
 	 */
 	public function saveObject(
 		array|object $object,
-		?array $extend = [],
-		mixed $register = null,
-		mixed $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
+		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		if ($this->throwOnSaveObject === true) {
 			throw new RuntimeException('OpenRegister write failed');
 		}

@@ -37,7 +37,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\OpenRegister\Service\Integration\RefIntegrationProvider;
 use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
@@ -60,7 +64,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
  */
-final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRequestLeafProviderInterface {
+final class PaymentRequestLeafProvider implements RefIntegrationProvider, PaymentRequestLeafProviderInterface {
 
 	/**
 	 * The schema holding payment requests.
@@ -199,9 +203,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	/**
 	 * The requests standing on this host object, newest first.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $filters Optional list filters; unknown keys are ignored.
 	 *
 	 * @return array<string, mixed> The `{items, total, nextCursor, fee}` envelope.
@@ -212,7 +214,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
 	 * this leaf returns every request on the object and filters nothing yet.
 	 */
-	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
+	public function list(ObjectRef $ref, array $filters = []): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: false);
 
 		$projected = [];
@@ -319,17 +324,15 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * One request by id, scoped to the host object so a request on another
 	 * object cannot be read through this host.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The request id.
 	 *
 	 * @return array<string, mixed> The request.
 	 *
 	 * @throws RuntimeException When no such request stands on this object.
 	 */
-	public function get(string $register, string $schema, string $objectId, string $entityId): array {
-		$listed = $this->list(register: $register, schema: $schema, objectId: $objectId);
+	public function get(ObjectRef $ref, string $entityId): array {
+		$listed = $this->list(ref: $ref);
 		foreach ($listed['items'] as $request) {
 			if ($request['id'] === $entityId) {
 				return $request;
@@ -342,9 +345,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	/**
 	 * Append one payment request to the host object.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $payload The request fields: amount, currency, requestType, description, debtor, dueAt.
 	 *
 	 * @return array<string, mixed> The created request.
@@ -354,7 +355,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	public function create(string $register, string $schema, string $objectId, array $payload): array {
+	public function create(ObjectRef $ref, array $payload): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		if ($this->authorizer->may(self::ACTION_REQUEST) === false) {
 			throw new RuntimeException('403 Raising a payment request needs the payment.request action.');
 		}
@@ -640,10 +644,9 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	private function saveRequest(array $request, bool $asSystem): array {
 		$saved = $this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
-			_rbac: ($asSystem === false),
-			_multitenancy: ($asSystem === false),
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA)),
+			_rbac: $asSystem === false,
+			_multitenancy: $asSystem === false
 		);
 
 		// OpenRegister answers a save with an ObjectEntity, not the array that
@@ -661,9 +664,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * The leaf appends; it never rewrites a request in place. A request changes
 	 * state through its own lifecycle, which is where the audit trail is.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The request id.
 	 * @param array<string, mixed> $payload Ignored.
 	 *
@@ -675,16 +676,14 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * IntegrationProvider's. The method refuses every call, so it reads none of
 	 * its arguments; dropping them would break the contract.
 	 */
-	public function update(string $register, string $schema, string $objectId, string $entityId, array $payload): array {
+	public function update(ObjectRef $ref, string $entityId, array $payload): array {
 		throw new RuntimeException('A payment request changes state through its lifecycle, not through the leaf.');
 	}//end update()
 
 	/**
 	 * A payment request is evidence and is never deleted through the leaf.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The request id.
 	 *
 	 * @return void
@@ -695,7 +694,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * IntegrationProvider's. The method refuses every call, so it reads none of
 	 * its arguments; dropping them would break the contract.
 	 */
-	public function delete(string $register, string $schema, string $objectId, string $entityId): void {
+	public function delete(ObjectRef $ref, string $entityId): void {
 		throw new RuntimeException('A payment request is payment evidence and is voided, never deleted.');
 	}//end delete()
 

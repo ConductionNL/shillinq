@@ -13,6 +13,7 @@
 // `Handler "openImportWizard" not found in context.handlers` (live pass S4).
 // So every handler is registered in both, from this one list.
 
+import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
@@ -30,6 +31,8 @@ import {
 	openIntegriqConnections,
 	openIntegriqStore,
 } from './utils/integriqConnections.js'
+import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
+import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
@@ -72,6 +75,10 @@ export const manifestActions = Object.freeze({
 	openDownPaymentInvoice,
 	// Generate invoices on Sales invoices (board ShFactuurGenereren).
 	openInvoiceGenerateWizard,
+	// sales-invoice-sending 3.2: Send selected on Accounts Receivable.
+	sendSelectedInvoices,
+	// sales-invoice-sending 3.3: New invoice batch on Sales invoices and Invoice batches.
+	openInvoiceBatchCreate,
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
@@ -111,6 +118,8 @@ export const manifestActions = Object.freeze({
 	// Switch on reminders on an administration.
 	openDunningNextRun,
 	openDunningSwitchOn,
+	// ledger-multi-administration 3.2: Save as template on an administration.
+	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
 	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
@@ -120,6 +129,8 @@ export const manifestActions = Object.freeze({
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
 	openVatPositionLines,
+	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
+	openRecalculateInvestmentDeductions,
 })
 
 /**

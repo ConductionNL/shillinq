@@ -33,6 +33,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\LeaseDisclosureServiceInterface;
 use OCP\IAppConfig;
@@ -224,9 +226,10 @@ class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 
 		$this->objectService()->saveObject(
 			object: $table,
-			register: $this->register(),
-			schema: self::TABLE_SCHEMA,
-			uuid: $uuid
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register(), schema: self::TABLE_SCHEMA),
+				uuid: $uuid
+			)
 		);
 
 		return $table;

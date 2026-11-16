@@ -46,6 +46,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * SettingsService seeding tests.
@@ -273,7 +274,9 @@ final class SettingsServiceSeedingTest extends TestCase {
 		$os->method('findAll')->willReturn([]);
 		$os->method('runAsSystem')->willReturnCallback(static fn (callable $operation) => $operation());
 		$os->expects($this->once())->method('saveObject')
-			->with($this->callback(static fn (array $o): bool => $o['administrationCode'] === 'ADM-001'))
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => $this->callback(static fn (array $o): bool => $o['administrationCode'] === 'ADM-001'),
+			]))
 			->willReturn(new ObjectEntityStub(payload: ['id' => 'adm-uuid']));
 
 		$result = $this->makeService(objectService: $os)->seedDefaultAdministration();

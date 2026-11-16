@@ -61,6 +61,9 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionMethod;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 
 /**
  * The daily dunning pass.
@@ -512,7 +515,7 @@ final class DunningTickRunnerTest extends TestCase {
 			$this->addInvoice(id: sprintf('inv-p%03d', $i), number: sprintf('2026-1%03d', $i), dueDate: '2026-10-21');
 		}
 
-		$this->store->deleteObject('inv-0412', schema: 'ARInvoice');
+		$this->store->deleteObject(new ObjectDeletion(uuid: 'inv-0412', target: new ObjectFindTarget(schema: 'ARInvoice')));
 
 		$reports = $this->runner()->runAll(now: new DateTimeImmutable(self::TODAY));
 
@@ -787,20 +790,21 @@ final class DunningTickRunnerTest extends TestCase {
 			 */
 			public function find(
 				int|string $id,
-				?array $_extend = [],
-				bool $files = false,
-				mixed $register = null,
-				mixed $schema = null,
+				?ObjectFindOptions $options = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true,
-				bool $_render = true,
-				bool $_audit = true
+				bool $_multitenancy = true
 			): ?\OCA\OpenRegister\Contract\ObjectEntityInterface {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
+				$_render = $options?->render ?? true;
+				$_audit = $options?->audit ?? true;
 				if ($_multitenancy === true && $this->trusted() === false) {
 					return null;
 				}
 
-				return parent::find($id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy, $_render, $_audit);
+				return parent::find($id, $options, $_rbac, $_multitenancy);
 			}
 		};
 	}//end userlessStore()

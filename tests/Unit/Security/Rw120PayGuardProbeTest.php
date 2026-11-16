@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * RW120 probe: SupplierInvoicePayGuard over an OpenRegister-faithful ObjectService double.
@@ -109,15 +110,16 @@ final class Rw120PayGuardProbeTest extends TestCase {
 			}
 			public function find(
 				int|string $id,
-				?array $_extend = [],
-				bool $files = false,
-				$register = null,
-				$schema = null,
+				?ObjectFindOptions $options = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true,
-				bool $_render = true,
-				bool $_audit = true
+				bool $_multitenancy = true
 			): ObjectEntity {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
+				$_render = $options?->render ?? true;
+				$_audit = $options?->audit ?? true;
 				$this->test->calls[] = ['find', $id, $register, $schema, $_rbac, $_multitenancy, $_audit];
 				// find() scopes only by its arguments (OR callFindScope), never the setters' state.
 				$hit = $this->lookup($id, $register, $schema, $_multitenancy);

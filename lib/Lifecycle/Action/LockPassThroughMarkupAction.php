@@ -31,6 +31,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\PassThroughMarkupResolver;
@@ -101,18 +104,15 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	 * reimbursable item is left alone, and so is a pass-through item that no
 	 * rule applies to, apart from recording that none did (amount 0).
 	 *
-	 * @param array<string, mixed> $objectData   The claim being submitted.
-	 * @param array<string, mixed> $previousData The claim before the transition.
-	 * @param array<string, mixed> $parameters   The action parameters (none are read).
-	 * @param string               $actionName   The registered action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the claim being submitted.
 	 *
 	 * @return array<string, mixed> The claim, unchanged.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is OpenRegister's.
-	 *
 	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$this->registerSlug = $this->register();
 		$this->rules        = [];
 		foreach (self::ITEM_SOURCES as $schema => $source) {
@@ -173,7 +173,10 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 				cost: (float)($data[$item['source']['amount']] ?? 0.0)
 			);
 
-			$this->objectService->saveObject(object: array_merge($data, $locked), register: $this->registerSlug, schema: $item['schema']);
+			$this->objectService->saveObject(
+				object: array_merge($data, $locked),
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug, schema: $item['schema']))
+			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'[LockPassThroughMarkup] Could not lock the markup of a claim item: '.$e->getMessage(),

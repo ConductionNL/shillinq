@@ -167,6 +167,14 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\SbrFilingStatusListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\IntegriqCloudEventListener'",
             "0"
         ]
@@ -1027,6 +1035,48 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ContributionDeclineServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ContributionDeclineService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\DirectDebitBatchServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Receivables\\\\DirectDebitBatchService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\DirectDebitFileServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Receivables\\\\DirectDebitFileService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\FxRateFeedStatusInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Treasury\\\\FxRateFeedStatus'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PensionValuationPostingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PensionValuationPostingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RecurringInvoiceGeneratorInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\RecurringInvoiceGenerator'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RetentionDueServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\RetentionDueService'"
         ]
     ],
     [
@@ -1991,6 +2041,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TaskFieldRealisationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\TaskFieldRealisation'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TaxNotificationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\TaxNotificationService'"
         ]
@@ -2063,6 +2120,20 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatNumberCheckInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\VatNumberCheck'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatSuppletieDetectionServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\VatSuppletieDetectionService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatSuppletieFilingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\VatSuppletieFilingService'"
         ]
     ],
     [
@@ -2228,10 +2299,11 @@
         ]
     ],
     [
-        "registerServiceAlias",
+        "registerService",
         [
             "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Digipoort\\\\DigipoortSbrAdapterInterface'",
-            "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Digipoort\\\\LogDigipoortSbrAdapter'"
+            "Closure",
+            "true"
         ]
     ],
     [
@@ -2515,6 +2587,30 @@
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Guard\\\\BudgetScenarioModifierGuard::validateOnSave'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\XbrlInstanceValidationGuard::requireValidInstance'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\XbrlDeliveryGuard::requireDeliveryReference'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\XbrlDeliveryGuard::requireFilingReference'",
             "Closure",
             "true"
         ]

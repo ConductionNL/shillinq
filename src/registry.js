@@ -111,7 +111,6 @@ import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboar
 // with dimmed projection columns — a genuinely custom two-source transform
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
-import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
 // bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
 // the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
 // flow with rejection-reason picker + delivery-photo upload, and the detail
@@ -328,15 +327,6 @@ import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue
 // the page is registered as a kind:"page" custom component per ADR-024.
 import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
 import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
-// add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
-// declarative FxRate index grid with a cron-status overlay (last-run
-// timestamp + TreasuryRateAdapter dormancy flag) read from
-// /api/admin/fx-rate-import-status. The header strip + dormancy hint do
-// not fit any built-in `index` / `detail` / `dashboard` page type, so the
-// page is registered as a kind:"page" custom component per ADR-024.
-// Admin-only — the controller is gated by
-// #[AuthorizedAdminSetting(Application::class)].
-import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 // budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
 // verzamelpost rows (LedgerGroup tree, expandable to child groups or
@@ -438,7 +428,6 @@ export default {
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
-	GoodsReceiptNoteDetail: { kind: 'page', component: GoodsReceiptNoteDetail },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 
@@ -486,7 +475,6 @@ export default {
 	PeriodCloseDetail: { kind: 'page', component: PeriodCloseDetail },
 
 	// add-shillinq-multi-currency Task 14: FxRates admin overlay (cron status).
-	FxRatesAdmin: { kind: 'page', component: FxRatesAdmin },
 
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },

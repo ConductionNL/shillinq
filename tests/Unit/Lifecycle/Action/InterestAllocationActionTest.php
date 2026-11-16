@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\InterestAllocationAction;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +48,14 @@ final class InterestAllocationActionTest extends TestCase {
 
 		$this->assertSame(
 			['id' => 'run-1', 'status' => 'posted'],
-			(new InterestAllocationAction($service))->execute(self::RUN, [], ['step' => 'post'], 'post')
+			(new InterestAllocationAction($service))->execute(
+				new LifecycleActionContext(
+					objectData: self::RUN,
+					previousData: [],
+					parameters: ['step' => 'post'],
+					actionName: 'post'
+				)
+			)
 		);
 
 	}//end testThePostStepPostsTheRun()
@@ -82,7 +90,14 @@ final class InterestAllocationActionTest extends TestCase {
 
 		$this->assertSame(
 			['id' => 'run-1', 'total' => 42.0],
-			(new InterestAllocationAction($service))->execute(self::RUN, [], $parameters, 'post')
+			(new InterestAllocationAction($service))->execute(
+				new LifecycleActionContext(
+					objectData: self::RUN,
+					previousData: [],
+					parameters: $parameters,
+					actionName: 'post'
+				)
+			)
 		);
 
 	}//end testAnyOtherStepCalculates()

@@ -31,6 +31,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieFilingServiceInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -41,7 +42,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
  */
-class VatSuppletieFilingService {
+class VatSuppletieFilingService implements VatSuppletieFilingServiceInterface {
 
 	/**
 	 * The filing type handed to the Digipoort port.

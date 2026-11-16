@@ -33,7 +33,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Webshop;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -68,12 +71,14 @@ class WebshopOrderInvoicer {
 	 * @param ObjectTransitionRunnerInterface $transitions   Runs the order's declared transitions.
 	 * @param IAppConfig                      $appConfig     App config for the register slug.
 	 * @param LoggerInterface                 $logger        Logger.
+	 * @param WebshopVatRoute                 $vatRoute      Decides the order's VAT route (REQ-SWO-003).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly WebshopVatRoute $vatRoute,
 	) {
 	}//end __construct()
 
@@ -108,7 +113,12 @@ class WebshopOrderInvoicer {
 			return $this->refuse(order: ['refusalReason' => $refusal] + $order, orderId: $orderId);
 		}
 
-		$built = self::invoiceLines(order: $order, channel: $channel);
+		$route = $this->vatRoute->routeFor(order: $order, invoiceDate: $today, adminId: (string)($channel['administrationId'] ?? ''));
+		if ($route['refusal'] !== null) {
+			return $this->refuse(order: ['refusalReason' => $route['refusal']] + $order, orderId: $orderId);
+		}
+
+		$built = self::invoiceLines(order: $order, channel: $channel, route: $route);
 		$computed = $built['grossCents'];
 		$stated = (int)round(((float)($order['totals']['gross'] ?? ($computed / 100))) * 100);
 		if (abs($computed - $stated) > self::TOTAL_TOLERANCE_CENTS) {
@@ -124,15 +134,444 @@ class WebshopOrderInvoicer {
 		$invoiceId = $this->writeInvoice(
 			invoice: self::invoice(
 				order: $order,
-				context: ['orderId' => $orderId, 'channel' => $channel, 'debtorId' => $debtorId, 'built' => $built, 'today' => $today]
+				context: ['orderId' => $orderId, 'channel' => $channel, 'debtorId' => $debtorId, 'built' => $built, 'today' => $today, 'route' => $route]
 			)
 		);
 
-		$this->saveOrder(order: ['arInvoiceId' => $invoiceId] + $order, orderId: $orderId);
+		$invoiced = ['arInvoiceId' => $invoiceId] + $order;
+		$this->saveOrder(order: $invoiced, orderId: $orderId);
 		$this->transitions->run(objectId: $orderId, action: 'invoice');
+		$this->settle(order: ['intakeState' => 'invoiced'] + $invoiced, orderId: $orderId);
 
 		return 'invoiced';
 	}//end handle()
+
+	/**
+	 * Settle the invoice of a paid order on the channel's clearing account
+	 * (REQ-SWO-004).
+	 *
+	 * A paid order whose invoice is issued gets one receipt journal entry,
+	 * debit the channel's clearing account and credit receivables, posted
+	 * through its `postDirect` transition; the invoice keeps the provider's
+	 * payment id as its payment reference for the payout match and is marked
+	 * paid, and the order keeps the journal entry so it is settled once. A
+	 * pending order only passes its payment id on to the invoice.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param string              $orderId Its id.
+	 *
+	 * @return string settled, pending, or skipped (no invoice, already settled, invoice not issued, no clearing account).
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public function settle(array $order, string $orderId): string {
+		$invoiceId = (string)($order['arInvoiceId'] ?? '');
+		if ($orderId === '' || self::awaitsSettlement(order: $order) === false) {
+			return 'skipped';
+		}
+
+		$invoice = $this->record(schema: 'ARInvoice', id: $invoiceId);
+		if ($invoice === null) {
+			return 'skipped';
+		}
+
+		$payment   = (array)($order['payment'] ?? []);
+		$reference = trim((string)($payment['providerPaymentId'] ?? ''));
+		$webshop   = (array)($invoice['webshop'] ?? []);
+		if (($payment['status'] ?? '') !== 'paid') {
+			$this->keepPaymentReference(order: $order, invoice: $invoice);
+			return 'pending';
+		}
+
+		$channel  = $this->record(schema: 'WebshopChannel', id: (string)($order['channelId'] ?? ''));
+		$clearing = trim((string)($channel['clearingAccount'] ?? ''));
+		if (($invoice['lifecycleState'] ?? '') !== 'issued' || $clearing === '') {
+			return 'skipped';
+		}
+
+		$journalId = $this->postReceipt(
+			journal: self::receiptJournal(
+				order: $order,
+				invoice: $invoice,
+				accounts: ['clearing' => $clearing, 'receivables' => $this->receivablesAccount()],
+				reference: $reference
+			)
+		);
+
+		$this->saveInvoice(invoice: ['webshop' => ['paymentReference' => $reference] + $webshop] + $invoice, invoiceId: $invoiceId);
+		$this->transitions->run(objectId: $invoiceId, action: 'mark-paid');
+		$this->saveOrder(order: ['settlementJournalId' => $journalId] + $order, orderId: $orderId);
+
+		return 'settled';
+	}//end settle()
+
+	/**
+	 * Whether an order is invoiced and not yet settled.
+	 *
+	 * @param array<string,mixed> $order The order.
+	 *
+	 * @return bool
+	 */
+	private static function awaitsSettlement(array $order): bool {
+		return (string)($order['arInvoiceId'] ?? '') !== ''
+			&& ($order['intakeState'] ?? '') === 'invoiced'
+			&& (string)($order['settlementJournalId'] ?? '') === '';
+	}//end awaitsSettlement()
+
+	/**
+	 * Keep the provider's payment id of a pending order on its invoice, when it changed.
+	 *
+	 * @param array<string,mixed> $order   The order, with the provider's payment id and its invoice id.
+	 * @param array<string,mixed> $invoice The invoice.
+	 *
+	 * @return void
+	 */
+	private function keepPaymentReference(array $order, array $invoice): void {
+		$invoiceId = (string)($order['arInvoiceId'] ?? '');
+		$reference = trim((string)($order['payment']['providerPaymentId'] ?? ''));
+		$webshop   = (array)($invoice['webshop'] ?? []);
+		if ($reference !== '' && (string)($webshop['paymentReference'] ?? '') !== $reference) {
+			$this->saveInvoice(invoice: ['webshop' => ['paymentReference' => $reference] + $webshop] + $invoice, invoiceId: $invoiceId);
+		}
+	}//end keepPaymentReference()
+
+	/**
+	 * Credit a refunded or cancelled order (REQ-SWO-005).
+	 *
+	 * An invoiced order whose payment status becomes refunded or cancelled
+	 * gets one ARInvoice of type credit-note referencing the original invoice:
+	 * for the whole invoice, or, when the shop names the refunded lines in
+	 * `payment.refundedLines` (and `payment.refundedShipping`), for those
+	 * lines and quantities only. The order keeps the credit note's id and
+	 * moves to credited, so it is credited once.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param string              $orderId Its id.
+	 * @param string              $today   The credit note date (Y-m-d).
+	 *
+	 * @return string credited, or skipped (not invoiced, not refunded or cancelled, already credited, invoice gone, nothing to credit).
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public function credit(array $order, string $orderId, string $today): string {
+		$invoiceId = (string)($order['arInvoiceId'] ?? '');
+		$status    = (string)($order['payment']['status'] ?? '');
+		if ($orderId === '' || $invoiceId === '' || ($order['intakeState'] ?? '') !== 'invoiced'
+			|| in_array($status, ['refunded', 'cancelled'], true) === false
+			|| trim((string)($order['creditNoteId'] ?? '')) !== ''
+		) {
+			return 'skipped';
+		}
+
+		$invoice = $this->record(schema: 'ARInvoice', id: $invoiceId);
+		if ($invoice === null) {
+			return 'skipped';
+		}
+
+		$credit = self::creditNote(order: $order, invoice: $invoice, today: $today);
+		if ($credit === null) {
+			return 'skipped';
+		}
+
+		$creditId = $this->writeInvoice(invoice: $credit);
+		$this->saveOrder(order: ['creditNoteId' => $creditId] + $order, orderId: $orderId);
+		$this->transitions->run(objectId: $orderId, action: 'credit');
+
+		return 'credited';
+	}//end credit()
+
+	/**
+	 * The credit note of a refunded order, or null when no line is refunded.
+	 *
+	 * A refund that names no lines credits the whole invoice, its totals
+	 * negated. A partial refund credits the named order lines (`line`, the
+	 * 1-based position in the order, with an optional `quantity`) and the
+	 * shipping line when `refundedShipping` is true, each at its invoiced net
+	 * price and VAT rate.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param array<string,mixed> $invoice Its invoice.
+	 * @param string              $today   The credit note date (Y-m-d).
+	 *
+	 * @return array<string,mixed>|null The ARInvoice payload of the credit note.
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
+	 */
+	public static function creditNote(array $order, array $invoice, string $today): ?array {
+		$credited = self::creditedLines(order: $order, invoice: $invoice);
+		if ($credited['lines'] === []) {
+			return null;
+		}
+
+		$number = (string)($invoice['invoiceNumber'] ?? '');
+		$state  = self::creditState(invoice: $invoice);
+
+		$credit = [
+			'invoiceNumber' => $number . '-C',
+			'invoiceType' => 'credit-note',
+			'lifecycleState' => $state,
+			'administrationId' => (string)($invoice['administrationId'] ?? ''),
+			'periodId' => substr($today, 0, 7),
+			'customerId' => (string)($invoice['customerId'] ?? ''),
+			'invoiceDate' => $today,
+			'dueDate' => $today,
+			'currency' => (string)($invoice['currency'] ?? 'EUR'),
+			'netAmount' => (0 - $credited['netCents']) / 100.0,
+			'vatAmount' => (0 - $credited['vatCents']) / 100.0,
+			'grossAmount' => (0 - ($credited['netCents'] + $credited['vatCents'])) / 100.0,
+			'precedingInvoiceReferences' => [['reference' => $number, 'issueDate' => (string)($invoice['invoiceDate'] ?? '')]],
+			'invoiceLines' => $credited['lines'],
+		];
+		$credit = self::withInvoiceContext(credit: $credit, invoice: $invoice);
+
+		$webshop = (array)($invoice['webshop'] ?? []);
+		$webshop['refundStatus'] = (string)($order['payment']['status'] ?? '');
+		$credit['webshop'] = $webshop;
+
+		return $credit;
+	}//end creditNote()
+
+	/**
+	 * The lifecycle state a credit note starts in: draft while its invoice is a draft, else issued.
+	 *
+	 * @param array<string,mixed> $invoice The credited invoice.
+	 *
+	 * @return string
+	 */
+	private static function creditState(array $invoice): string {
+		if ((string)($invoice['lifecycleState'] ?? 'draft') === 'draft') {
+			return 'draft';
+		}
+
+		return 'issued';
+	}//end creditState()
+
+	/**
+	 * A credit note with the buyer name, OSS context and VAT breakdown of the invoice it credits.
+	 *
+	 * @param array<string,mixed> $credit  The credit note, with its netAmount.
+	 * @param array<string,mixed> $invoice The credited invoice.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function withInvoiceContext(array $credit, array $invoice): array {
+		foreach (['buyerName', 'ossContext'] as $key) {
+			if (($invoice[$key] ?? null) !== null) {
+				$credit[$key] = $invoice[$key];
+			}
+		}
+
+		if (is_array($invoice['vatBreakdown'] ?? null) === true) {
+			$taxable = (float)$credit['netAmount'];
+			$credit['vatBreakdown'] = array_map(
+				static fn (array $group): array => ['taxableAmount' => $taxable, 'taxAmount' => 0.0] + $group,
+				array_values(array_filter((array)$invoice['vatBreakdown'], 'is_array'))
+			);
+		}
+
+		return $credit;
+	}//end withInvoiceContext()
+
+	/**
+	 * The negated invoice lines a refund credits, with their net and VAT cents.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param array<string,mixed> $invoice Its invoice.
+	 *
+	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int}
+	 */
+	private static function creditedLines(array $order, array $invoice): array {
+		$invoiceLines = array_values(array_filter((array)($invoice['invoiceLines'] ?? []), 'is_array'));
+		$payment      = (array)($order['payment'] ?? []);
+		$named        = array_values(array_filter((array)($payment['refundedLines'] ?? []), 'is_array'));
+		if ($named === [] && ($payment['refundedShipping'] ?? false) !== true) {
+			return self::wholeCredit(invoice: $invoice, invoiceLines: $invoiceLines);
+		}
+
+		$orderLineCount = count((array)($order['lines'] ?? []));
+		$wanted         = self::namedRefunds(order: $order, invoiceLines: $invoiceLines);
+
+		$shipping = $invoiceLines[$orderLineCount] ?? null;
+		if (($payment['refundedShipping'] ?? false) === true && $shipping !== null) {
+			$wanted[] = [$shipping, (float)($shipping['quantity'] ?? 1)];
+		}
+
+		return self::negatedLines(wanted: $wanted);
+	}//end creditedLines()
+
+	/**
+	 * The credit of a whole refunded invoice: every line, at the invoice's own totals.
+	 *
+	 * @param array<string,mixed>            $invoice      The invoice.
+	 * @param array<int,array<string,mixed>> $invoiceLines Its lines.
+	 *
+	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int}
+	 */
+	private static function wholeCredit(array $invoice, array $invoiceLines): array {
+		$wanted = [];
+		foreach ($invoiceLines as $line) {
+			$wanted[] = [$line, (float)($line['quantity'] ?? 1)];
+		}
+
+		return [
+			'lines' => self::negatedLines(wanted: $wanted)['lines'],
+			'netCents' => (int)round((float)($invoice['netAmount'] ?? 0) * 100),
+			'vatCents' => (int)round((float)($invoice['vatAmount'] ?? 0) * 100),
+		];
+	}//end wholeCredit()
+
+	/**
+	 * The [invoice line, credited quantity] pairs of the order lines the shop names as refunded.
+	 *
+	 * The shop names them in `payment.refundedLines` by 1-based `line` and `quantity`.
+	 *
+	 * @param array<string,mixed>            $order        The order.
+	 * @param array<int,array<string,mixed>> $invoiceLines The invoice's lines (shipping follows the order lines).
+	 *
+	 * @return array<int,array{0: array<string,mixed>, 1: float}>
+	 */
+	private static function namedRefunds(array $order, array $invoiceLines): array {
+		$orderLineCount = count((array)($order['lines'] ?? []));
+		$wanted         = [];
+		foreach ((array)($order['payment']['refundedLines'] ?? []) as $refund) {
+			if (is_array($refund) === false) {
+				continue;
+			}
+
+			$position = (int)($refund['line'] ?? 0);
+			$line     = $invoiceLines[$position - 1] ?? null;
+			if ($position < 1 || $position > $orderLineCount || $line === null) {
+				continue;
+			}
+
+			$quantity = min((float)($line['quantity'] ?? 1), (float)($refund['quantity'] ?? ($line['quantity'] ?? 1)));
+			if ($quantity > 0.0) {
+				$wanted[] = [$line, $quantity];
+			}
+		}
+
+		return $wanted;
+	}//end namedRefunds()
+
+	/**
+	 * Negated credit note lines for [invoice line, credited quantity] pairs.
+	 *
+	 * @param array<int,array{0: array<string,mixed>, 1: float}> $wanted The lines and quantities to credit.
+	 *
+	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int}
+	 */
+	private static function negatedLines(array $wanted): array {
+		$lines = [];
+		$net   = 0;
+		$vat   = 0;
+		foreach ($wanted as [$line, $quantity]) {
+			$invoiced = (float)($line['quantity'] ?? 1);
+			$netCents = (int)round((float)($line['netAmount'] ?? 0) * 100);
+			if ($invoiced > 0.0 && $quantity < $invoiced) {
+				$netCents = (int)round($netCents * $quantity / $invoiced);
+			}
+
+			$net += $netCents;
+			$vat += (int)round($netCents * (float)($line['vatRate'] ?? 0) / 100);
+			$lines[] = [
+				'lineId' => (string)(count($lines) + 1),
+				'quantity' => $quantity,
+				'netAmount' => (0 - $netCents) / 100.0,
+				'netPrice' => (0 - (float)($line['netPrice'] ?? 0)),
+			] + $line;
+		}
+
+		return ['lines' => $lines, 'netCents' => $net, 'vatCents' => $vat];
+	}//end negatedLines()
+
+	/**
+	 * The receipt journal entry of a paid order: debit the clearing account,
+	 * credit receivables, for the invoice's gross amount.
+	 *
+	 * @param array<string,mixed>                          $order     The order.
+	 * @param array<string,mixed>                          $invoice   Its issued invoice.
+	 * @param array{clearing: string, receivables: string} $accounts  The two accounts.
+	 * @param string                                       $reference The provider's payment id.
+	 *
+	 * @return array<string,mixed> The draft JournalEntry.
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public static function receiptJournal(array $order, array $invoice, array $accounts, string $reference): array {
+		$amount = round((float)($invoice['grossAmount'] ?? 0), 2);
+		$date   = substr((string)($order['payment']['paidAt'] ?? ($invoice['invoiceDate'] ?? gmdate('Y-m-d'))), 0, 10);
+		$memo   = sprintf('Web shop order %s paid, invoice %s', (string)($order['shopOrderId'] ?? ''), (string)($invoice['invoiceNumber'] ?? ''));
+		if ($reference !== '') {
+			$memo .= ', reference ' . $reference;
+		}
+
+		return [
+			'journalNumber' => 'WEB-PAY-' . (string)($order['shopOrderId'] ?? ''),
+			'entryDate' => $date,
+			'description' => $memo,
+			'journalType' => 'manual',
+			'approvalState' => 'not-required',
+			'administrationId' => (string)($invoice['administrationId'] ?? ($order['administrationId'] ?? '')),
+			'state' => 'draft',
+			'lines' => [
+				['accountNumber' => $accounts['clearing'], 'side' => 'debit', 'amount' => $amount, 'description' => $memo],
+				['accountNumber' => $accounts['receivables'], 'side' => 'credit', 'amount' => $amount, 'description' => $memo],
+			],
+		];
+	}//end receiptJournal()
+
+	/**
+	 * Save the receipt journal entry and post it.
+	 *
+	 * @param array<string,mixed> $journal The draft JournalEntry.
+	 *
+	 * @return string Its id.
+	 *
+	 * @throws RuntimeException When the save answers without an id.
+	 */
+	private function postReceipt(array $journal): string {
+		$saved = $this->objectService->saveObject(
+			object: $journal,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'JournalEntry'))
+		);
+		$id = ObjectIdentifier::resolve(saved: $saved);
+		if ($id === '') {
+			throw new RuntimeException('The web shop receipt was saved but OpenRegister answered without an id.');
+		}
+
+		$this->transitions->run(objectId: $id, action: 'postDirect');
+		return $id;
+	}//end postReceipt()
+
+	/**
+	 * The receivables control account, as the ledger posting is configured.
+	 *
+	 * @return string
+	 */
+	private function receivablesAccount(): string {
+		$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, MaterialiseGlTransactionAction::CFG_AR_CONTROL_ACCOUNT, ''));
+		if ($configured !== '') {
+			return $configured;
+		}
+
+		return '1100';
+	}//end receivablesAccount()
+
+	/**
+	 * Save an invoice back under its own id.
+	 *
+	 * @param array<string,mixed> $invoice   The invoice with the change.
+	 * @param string              $invoiceId Its id.
+	 *
+	 * @return void
+	 */
+	private function saveInvoice(array $invoice, string $invoiceId): void {
+		unset($invoice['@self']);
+		$this->objectService->saveObject(
+			object: $invoice,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ARInvoice'), uuid: $invoiceId)
+		);
+	}//end saveInvoice()
 
 	/**
 	 * Whether an order still waits for its invoice: received, with no invoice and no refusal.
@@ -170,11 +609,6 @@ class WebshopOrderInvoicer {
 			return 'The order names another administration than its web shop channel.';
 		}
 
-		$country = strtoupper(trim((string)($order['buyer']['countryCode'] ?? 'NL')));
-		if ($country !== '' && $country !== 'NL') {
-			return sprintf('The buyer is in %s; orders to another country are not invoiced until their VAT route is set up.', $country);
-		}
-
 		return null;
 	}//end refusalOf()
 
@@ -185,14 +619,21 @@ class WebshopOrderInvoicer {
 	 * dividing out the rate, so the invoice total equals what the buyer paid.
 	 * Shipping is one more line at the highest rate of the order lines.
 	 *
-	 * @param array<string,mixed> $order   The order.
-	 * @param array<string,mixed> $channel Its channel.
+	 * The route (from WebshopVatRoute::routeFor()) maps each shop rate to the
+	 * rate the invoice charges: the destination rate of an OSS sale, whose
+	 * net is derived from what the buyer paid, or 0 under reverse charge,
+	 * whose net is the shop's price without its own VAT. Without a route a
+	 * line keeps the shop's rate.
+	 *
+	 * @param array<string,mixed>      $order   The order.
+	 * @param array<string,mixed>      $channel Its channel.
+	 * @param array<string,mixed>|null $route   The VAT route; null keeps the shop's rates.
 	 *
 	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int, grossCents: int}
 	 *
-	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.1
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.3
 	 */
-	public static function invoiceLines(array $order, array $channel): array {
+	public static function invoiceLines(array $order, array $channel, ?array $route = null): array {
 		$includesVat = (($order['pricesIncludeVat'] ?? false) === true);
 		$lines = [];
 		$totals = ['net' => 0, 'vat' => 0];
@@ -201,42 +642,30 @@ class WebshopOrderInvoicer {
 			$quantity = (float)($line['quantity'] ?? 1);
 			$rate = max(0.0, (float)($line['vatRate'] ?? 0));
 			$highestRate = max($highestRate, $rate);
-			$name = trim((string)($line['description'] ?? ''));
-			if ($name === '') {
-				$name = (string)($line['sku'] ?? 'Item');
-			}
-
 			$lines[] = self::line(
 				spec: [
 					'number' => (count($lines) + 1),
-					'name' => $name,
+					'name' => self::lineName(line: $line),
 					'quantity' => $quantity,
 					'unitPrice' => (float)($line['unitPrice'] ?? 0),
-					'rate' => $rate,
 					'includesVat' => $includesVat,
 					'account' => (string)($channel['revenueAccount'] ?? ''),
-				],
+				] + self::routedRate(shopRate: $rate, route: $route),
 				totals: $totals
 			);
 		}
 
 		$shipping = (float)($order['shipping'] ?? 0);
 		if ($shipping > 0.0) {
-			$account = (string)($channel['shippingAccount'] ?? '');
-			if ($account === '') {
-				$account = (string)($channel['revenueAccount'] ?? '');
-			}
-
 			$lines[] = self::line(
 				spec: [
 					'number' => (count($lines) + 1),
 					'name' => 'Shipping',
 					'quantity' => 1.0,
 					'unitPrice' => $shipping,
-					'rate' => $highestRate,
 					'includesVat' => $includesVat,
-					'account' => $account,
-				],
+					'account' => self::shippingAccount(channel: $channel),
+				] + self::routedRate(shopRate: $highestRate, route: $route),
 				totals: $totals
 			);
 		}
@@ -245,13 +674,77 @@ class WebshopOrderInvoicer {
 	}//end invoiceLines()
 
 	/**
+	 * The invoice line name of an order line: its description, else its SKU.
+	 *
+	 * @param array<string,mixed> $line The order line.
+	 *
+	 * @return string
+	 */
+	private static function lineName(array $line): string {
+		$name = trim((string)($line['description'] ?? ''));
+		if ($name === '') {
+			return (string)($line['sku'] ?? 'Item');
+		}
+
+		return $name;
+	}//end lineName()
+
+	/**
+	 * The account shipping is booked on: the channel's shipping account, else its revenue account.
+	 *
+	 * @param array<string,mixed> $channel The WebshopChannel.
+	 *
+	 * @return string
+	 */
+	private static function shippingAccount(array $channel): string {
+		$account = (string)($channel['shippingAccount'] ?? '');
+		if ($account === '') {
+			return (string)($channel['revenueAccount'] ?? '');
+		}
+
+		return $account;
+	}//end shippingAccount()
+
+	/**
+	 * The rate a line charges, the rate its net is derived with, and its VAT category.
+	 *
+	 * @param float                    $shopRate The rate the shop applied, in percent.
+	 * @param array<string,mixed>|null $route    The VAT route; null keeps the shop's rate.
+	 *
+	 * @return array{rate: float, netRate: float, category: string}
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.3
+	 */
+	private static function routedRate(float $shopRate, ?array $route): array {
+		$rate = $shopRate;
+		$rates = (array)($route['rates'] ?? []);
+		$key = WebshopVatRoute::rateKey(rate: $shopRate);
+		if ($route !== null && array_key_exists($key, $rates) === true) {
+			$rate = (float)$rates[$key];
+		}
+
+		if (($route['route'] ?? '') === 'icp') {
+			return ['rate' => 0.0, 'netRate' => $shopRate, 'category' => 'K'];
+		}
+
+		$category = 'Z';
+		if ($rate > 0.0) {
+			$category = 'S';
+		}
+
+		return ['rate' => $rate, 'netRate' => $rate, 'category' => $category];
+	}//end routedRate()
+
+	/**
 	 * One invoice line, adding its net and VAT cents to the running totals.
 	 *
 	 * The spec holds the line number, the line text (name), the quantity, the
-	 * unit price as the shop sent it, the VAT rate in percent, whether the unit
-	 * price includes VAT (includesVat) and the revenue account.
+	 * unit price as the shop sent it, the VAT rate in percent the line charges
+	 * (rate), the rate its net is derived with when the price includes VAT
+	 * (netRate), its VAT category, whether the unit price includes VAT
+	 * (includesVat) and the revenue account.
 	 *
-	 * @param array<string,mixed>       $spec   The line: number, name, quantity, unitPrice, rate, includesVat, account.
+	 * @param array<string,mixed>       $spec   The line: number, name, quantity, unitPrice, rate, netRate, category, includesVat, account.
 	 * @param array{net: int, vat: int} $totals The running totals.
 	 *
 	 * @return array<string,mixed>
@@ -262,9 +755,12 @@ class WebshopOrderInvoicer {
 		$account = (string)$spec['account'];
 		$amountCents = (int)round($quantity * (float)$spec['unitPrice'] * 100);
 		$netCents = $amountCents;
-		$vatCents = (int)round($amountCents * $rate / 100);
 		if ($spec['includesVat'] === true) {
-			$netCents = (int)round($amountCents / (1 + ($rate / 100)));
+			$netCents = (int)round($amountCents / (1 + ((float)$spec['netRate'] / 100)));
+		}
+
+		$vatCents = (int)round($netCents * $rate / 100);
+		if ($spec['includesVat'] === true && $rate === (float)$spec['netRate']) {
 			$vatCents = ($amountCents - $netCents);
 		}
 
@@ -283,12 +779,9 @@ class WebshopOrderInvoicer {
 			'itemName' => (string)$spec['name'],
 			'netPrice' => $netPrice,
 			'netAmount' => ($netCents / 100.0),
-			'vatCategory' => 'Z',
+			'vatCategory' => (string)$spec['category'],
 			'vatRate' => $rate,
 		];
-		if ($rate > 0.0) {
-			$line['vatCategory'] = 'S';
-		}
 
 		if ($account !== '') {
 			$line['glAccount'] = $account;
@@ -302,10 +795,12 @@ class WebshopOrderInvoicer {
 	 *
 	 * The context holds the order's id (orderId), its channel, the
 	 * CustomerMaster to book on (debtorId), the lines and totals from
-	 * invoiceLines() (built) and the invoice date as Y-m-d (today).
+	 * invoiceLines() (built), the invoice date as Y-m-d (today) and the VAT
+	 * route (route): an OSS sale carries its ossContext for the OSS return, a
+	 * reverse-charged one the mention "Btw verlegd" in its VAT breakdown.
 	 *
 	 * @param array<string,mixed> $order   The order.
-	 * @param array<string,mixed> $context The invoice context: orderId, channel, debtorId, built, today.
+	 * @param array<string,mixed> $context The invoice context: orderId, channel, debtorId, built, today, route.
 	 *
 	 * @return array<string,mixed>
 	 *
@@ -353,6 +848,28 @@ class WebshopOrderInvoicer {
 			$webshop['paymentReference'] = $reference;
 		}
 
+		$route = (array)($context['route'] ?? []);
+		if (($route['route'] ?? '') !== '') {
+			$webshop['vatRoute'] = (string)$route['route'];
+		}
+
+		if (is_array($route['ossContext'] ?? null) === true) {
+			$invoice['ossContext'] = $route['ossContext'];
+		}
+
+		if (($route['route'] ?? '') === 'icp') {
+			$mention = (string)($route['mention'] ?? WebshopVatRoute::REVERSE_CHARGE_MENTION);
+			$webshop['vatMention'] = $mention;
+			$invoice['vatBreakdown'] = [[
+				'category' => 'K',
+				'taxableAmount' => ($built['netCents'] / 100.0),
+				'taxAmount' => 0.0,
+				'rate' => 0.0,
+				'exemptionReasonCode' => 'VATEX-EU-IC',
+				'exemptionReasonText' => $mention,
+			]];
+		}
+
 		$invoice['webshop'] = $webshop;
 
 		return $invoice;
@@ -395,7 +912,7 @@ class WebshopOrderInvoicer {
 			}
 		}
 
-		return $this->createCustomer(buyer: $buyer, administrationId: $administrationId);
+		return $this->createCustomer(buyer: $buyer, administrationId: $administrationId, channelId: ObjectIdentifier::resolve(saved: $channel));
 	}//end debtorId()
 
 	/**
@@ -410,16 +927,20 @@ class WebshopOrderInvoicer {
 	}//end normalised()
 
 	/**
-	 * Create the CustomerMaster of a business buyer.
+	 * Create the CustomerMaster of a business buyer, marked as created by the
+	 * web shop channel so a bookkeeper can find and review it (REQ-SWO-002).
 	 *
 	 * @param array<string,mixed> $buyer            The buyer.
 	 * @param string              $administrationId The administration.
+	 * @param string              $channelId        The web shop channel the order came from.
 	 *
 	 * @return string The new customer's id.
 	 *
 	 * @throws RuntimeException When the save answers without an id.
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.2
 	 */
-	private function createCustomer(array $buyer, string $administrationId): string {
+	private function createCustomer(array $buyer, string $administrationId, string $channelId): string {
 		$legalName = trim((string)($buyer['companyName'] ?? ''));
 		if ($legalName === '') {
 			$legalName = trim((string)($buyer['name'] ?? ''));
@@ -432,6 +953,10 @@ class WebshopOrderInvoicer {
 			'administrationId' => $administrationId,
 			'lifecycleState' => 'active',
 		];
+		if ($channelId !== '') {
+			$customer['createdByWebshopChannelId'] = $channelId;
+		}
+
 		foreach (['vatId', 'kvkNumber'] as $key) {
 			$value = trim((string)($buyer[$key] ?? ''));
 			if ($value !== '') {
@@ -439,7 +964,10 @@ class WebshopOrderInvoicer {
 			}
 		}
 
-		$saved = $this->objectService->saveObject(object: $customer, register: $this->register(), schema: 'CustomerMaster');
+		$saved = $this->objectService->saveObject(
+			object: $customer,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'CustomerMaster'))
+		);
 		$id = ObjectIdentifier::resolve(saved: $saved);
 		if ($id === '') {
 			throw new RuntimeException('The web shop buyer was saved as a customer but OpenRegister answered without an id.');
@@ -517,7 +1045,10 @@ class WebshopOrderInvoicer {
 	 * @throws RuntimeException When the save answers without an id.
 	 */
 	private function writeInvoice(array $invoice): string {
-		$saved = $this->objectService->saveObject(object: $invoice, register: $this->register(), schema: 'ARInvoice');
+		$saved = $this->objectService->saveObject(
+			object: $invoice,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ARInvoice'))
+		);
 		$id = ObjectIdentifier::resolve(saved: $saved);
 		if ($id === '') {
 			throw new RuntimeException('The web shop invoice was saved but OpenRegister answered without an id.');
@@ -536,7 +1067,10 @@ class WebshopOrderInvoicer {
 	 */
 	private function saveOrder(array $order, string $orderId): void {
 		unset($order['@self']);
-		$this->objectService->saveObject(object: $order, register: $this->register(), schema: 'WebshopOrder', uuid: $orderId);
+		$this->objectService->saveObject(
+			object: $order,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'WebshopOrder'), uuid: $orderId)
+		);
 	}//end saveOrder()
 
 	/**

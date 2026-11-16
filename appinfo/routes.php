@@ -166,11 +166,16 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
             ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
             ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+            ['name' => 'investmentDeduction#calculate', 'url' => '/api/investment-deductions/{year}/calculate', 'verb' => 'POST'],
+            ['name' => 'administrationTemplate#index', 'url' => '/api/administration-templates', 'verb' => 'GET'],
+            ['name' => 'administrationTemplate#saveAs', 'url' => '/api/administrations/{id}/template', 'verb' => 'POST'],
+            ['name' => 'administrationTemplate#seed', 'url' => '/api/administrations/{id}/seed-template', 'verb' => 'POST'],
             ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
             ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#show', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#update', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'PUT'],
             ['name' => 'administrationMember#create', 'url' => '/api/administrations/{administrationId}/members', 'verb' => 'POST'],
+            ['name' => 'importBatch#confirmSuggestions', 'url' => '/api/import-batches/{id}/confirm-suggestions', 'verb' => 'POST'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
             ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],
@@ -197,6 +202,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // appointments (skipping availability/conflict violations).
             ['name' => 'bookingDepth#captureNoShow', 'url' => '/api/v1/appointments/{appointmentId}/no-show', 'verb' => 'POST'],
             ['name' => 'bookingDepth#createSeries', 'url' => '/api/v1/appointment-series', 'verb' => 'POST'],
+        // The XBRL file of an SBR filing, in any state (tax-digipoort-filing task 4.2).
+            ['name' => 'sbrFiling#download', 'url' => '/api/sbr-filings/{id}/xbrl', 'verb' => 'GET'],
+
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.
@@ -328,6 +336,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // ARInvoice: pre-send validation, NLCIUS UBL 2.1 + PDF/A-3 hybrid, Peppol
         // submit via the generalised transmission port, delivery-status queued.
             ['name' => 'aRInvoiceEInvoice#send', 'url' => '/api/ar-invoices/{invoiceNumber}/send-einvoice', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-001, REQ-SIS-002): send one issued invoice by the customer's delivery method.
+            ['name' => 'invoiceSending#send', 'url' => '/api/ar-invoices/{id}/send', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-003): send the selected invoices in a queued batch.
+            ['name' => 'invoiceSending#sendBatch', 'url' => '/api/ar-invoices/send-batch', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-004): one invoice per selected customer from one set of lines.
+            ['name' => 'invoiceBatch#create', 'url' => '/api/ar-invoices/batch', 'verb' => 'POST'],
 
             // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
             // down payment on an order, show the order's position, deduct on the final invoice.

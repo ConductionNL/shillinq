@@ -53,6 +53,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Payment;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
@@ -777,10 +779,9 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 
 		$saved = $objectService->saveObject(
 			object: $paymentRequest,
-			register: self::REGISTER,
-			schema: self::SCHEMA_PAYMENT_REQUEST,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA_PAYMENT_REQUEST)),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 
 		return (array)$saved;
@@ -982,11 +983,12 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 
 		$objectService->saveObject(
 			object: $data,
-			register: self::REGISTER,
-			schema: self::SCHEMA_PAYMENT_REQUEST,
-			uuid: $saveUuid,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA_PAYMENT_REQUEST),
+				uuid: $saveUuid
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end persistPaymentIntentId()
 

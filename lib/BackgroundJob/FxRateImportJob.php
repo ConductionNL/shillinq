@@ -43,6 +43,8 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
@@ -367,7 +369,10 @@ class FxRateImportJob extends TimedJob {
 		try {
 			$objectService->setRegister($register);
 			$objectService->setSchema('FxRate');
-			$objectService->saveObject($record, $register, 'FxRate');
+			$objectService->saveObject(
+				object: $record,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'FxRate'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq FxRateImportJob: failed to save FxRate',
