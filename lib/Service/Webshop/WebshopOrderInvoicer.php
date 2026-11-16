@@ -444,7 +444,10 @@ class WebshopOrderInvoicer {
 	 * @throws RuntimeException When the save answers without an id.
 	 */
 	private function postReceipt(array $journal): string {
-		$saved = $this->objectService->saveObject(object: $journal, register: $this->register(), schema: 'JournalEntry');
+		$saved = $this->objectService->saveObject(
+			object: $journal,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'JournalEntry'))
+		);
 		$id = ObjectIdentifier::resolve(saved: $saved);
 		if ($id === '') {
 			throw new RuntimeException('The web shop receipt was saved but OpenRegister answered without an id.');
@@ -478,7 +481,10 @@ class WebshopOrderInvoicer {
 	 */
 	private function saveInvoice(array $invoice, string $invoiceId): void {
 		unset($invoice['@self']);
-		$this->objectService->saveObject(object: $invoice, register: $this->register(), schema: 'ARInvoice', uuid: $invoiceId);
+		$this->objectService->saveObject(
+			object: $invoice,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ARInvoice'), uuid: $invoiceId)
+		);
 	}//end saveInvoice()
 
 	/**
