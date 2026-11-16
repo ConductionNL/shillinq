@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -115,7 +116,14 @@ final class MaterialiseGlTransactionFxTest extends TestCase {
 	 * @return void
 	 */
 	private function post(array $entry): void {
-		$this->action()->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $entry,
+				previousData: [],
+				parameters: ['sourceSchema' => 'JournalEntry'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 	}//end post()
 

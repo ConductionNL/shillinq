@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Tests\Unit\Asset;
 
 use DateTimeImmutable;
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\ApplyReinvestmentReserveAction;
 use OCA\Shillinq\Lifecycle\Action\ExtraDepreciationAction;
 use OCA\Shillinq\Lifecycle\Action\ReviseDepreciationAction;
@@ -96,7 +97,14 @@ class AssetsMethodChangeAndReserveTest extends TestCase {
 				$declared = RegisterSchema::schema($record['schema'])['x-openregister-lifecycle']['transitions'][$record['action']];
 				foreach (($declared['actions'] ?? []) as $step) {
 					if (isset($executors[$step['action']]) === true) {
-						$object = $executors[$step['action']]->execute($object, [], ($step['actionParameters'] ?? []), $step['action']);
+						$object = $executors[$step['action']]->execute(
+							new LifecycleActionContext(
+								objectData: $object,
+								previousData: [],
+								parameters: ($step['actionParameters'] ?? []),
+								actionName: $step['action']
+							)
+						);
 						$store->setSchema($record['schema'])->saveObject($object);
 					}
 				}

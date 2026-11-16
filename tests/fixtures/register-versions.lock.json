@@ -98,8 +98,16 @@
             "versionsSha256": "2303fe6a1ccfdbc18ddaf7c055585ddeb3ca704b6707542074eb2ad053979ff4"
         },
         {
-            "appVersion": "0.5.7-unstable.20261115180000",
-            "versionsSha256": "a31a55e01f5868d355c39a9b93cfc1aa311536f1bcb3359a0d01f799db91840f"
+            "appVersion": "0.5.7-unstable.20261115172959",
+            "versionsSha256": "8c14d8f0a0fc6f12b4fb08e4a7509bad0e9b20076c6064728a6ee0711b89503e"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116210000",
+            "versionsSha256": "6c97f494bc5065099ec8b4bb68152167fe8305c3607c4f85e6c19e626f669f29"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116220000",
+            "versionsSha256": "9ad60554c06336a266899950d102f6feb6849370b9568d70efface708c7ed271"
         }
     ],
     "versions": {
@@ -108,7 +116,7 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.4.0",
-        "schema:ARInvoice": "0.17.0",
+        "schema:ARInvoice": "0.18.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
         "schema:Account": "0.4.0",
@@ -246,7 +254,7 @@
         "schema:CreditNote": "0.1.0",
         "schema:CreditScore": "0.1.0",
         "schema:CurrencyBalance": "0.1.0",
-        "schema:CustomerMaster": "0.3.0",
+        "schema:CustomerMaster": "0.4.0",
         "schema:DBAEvidenceDossier": "0.1.0",
         "schema:DBAIntake": "0.1.0",
         "schema:DBAModelovereenkomst": "0.1.0",
@@ -382,6 +390,7 @@
         "schema:InvesteringsaftrekClaim": "0.2.0",
         "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
+        "schema:InvoiceBatch": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
         "schema:IossImport": "0.1.0",
         "schema:IroRecord": "0.1.0",
@@ -623,7 +632,7 @@
         "schema:WbsoBeschikking": "0.1.0",
         "schema:WbsoMededeling": "0.1.0",
         "schema:WebshopChannel": "0.1.0",
-        "schema:WebshopOrder": "0.1.0",
+        "schema:WebshopOrder": "0.3.0",
         "schema:Werkgever": "0.1.0",
         "schema:Werknemer": "0.1.0",
         "schema:WidgetAccessKey": "0.1.0",

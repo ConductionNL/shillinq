@@ -59,6 +59,7 @@ use OCA\Shillinq\Integration\IntegrationContractRegistrar;
 use OCA\Shillinq\Budget\BudgetContractRegistrar;
 use OCA\Shillinq\Portal\PortalContractRegistrar;
 use OCA\Shillinq\Dashboard\DashboardContractRegistrar;
+use OCA\Shillinq\Receivables\ReceivablesContractRegistrar;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
@@ -152,6 +153,7 @@ class Application extends App implements IBootstrap {
 		(new BudgetContractRegistrar())->register(context: $context);
 		(new PortalContractRegistrar())->register(context: $context);
 		(new DashboardContractRegistrar())->register(context: $context);
+		(new ReceivablesContractRegistrar())->register(context: $context);
 
 	}//end register()
 

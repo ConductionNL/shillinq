@@ -29,7 +29,7 @@ use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
-use OCA\Shillinq\Service\RecurringInvoiceGenerator;
+use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -75,7 +75,7 @@ class McpInvoiceTools {
 	 * @param BillableLinesServiceInterface     $billableLines Says which chosen lines are not the customer's.
 	 * @param InvoicePdfGeneratorInterface      $pdf           Renders an invoice.
 	 * @param EInvoiceServiceInterface          $eInvoices     Sends a sales invoice as an e-invoice.
-	 * @param RecurringInvoiceGenerator         $recurring     Generates a profile's due invoice.
+	 * @param RecurringInvoiceGeneratorInterface         $recurring     Generates a profile's due invoice.
 	 * @param ObjectServiceInterface            $objectService Loads invoices, their lines and profiles.
 	 * @param LoggerInterface                   $logger        Logs a refusal or an unexpected failure.
 	 */
@@ -85,7 +85,7 @@ class McpInvoiceTools {
 		private readonly BillableLinesServiceInterface $billableLines,
 		private readonly InvoicePdfGeneratorInterface $pdf,
 		private readonly EInvoiceServiceInterface $eInvoices,
-		private readonly RecurringInvoiceGenerator $recurring,
+		private readonly RecurringInvoiceGeneratorInterface $recurring,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly LoggerInterface $logger,
 	) {

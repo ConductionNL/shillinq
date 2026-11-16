@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ContactCustomerResolverInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Contacts\IManager as IContactsManager;
 use Throwable;
@@ -38,7 +39,7 @@ use Throwable;
  *
  * @spec openspec/changes/sales-cancellation/design.md
  */
-class ContactCustomerResolver {
+class ContactCustomerResolver implements ContactCustomerResolverInterface {
 
 	/**
 	 * The prefix a contact reference may carry before the contact's UID.
