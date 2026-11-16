@@ -447,6 +447,7 @@ export default {
 		 * Show a loaded grid: its columns and rows, every row collapsed and no chart open.
 		 *
 		 * @param {object} data The budget-grid response body.
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		applyGrid(data) {
 			this.activeScenario = data?.scenario || null
@@ -464,6 +465,7 @@ export default {
 		 *
 		 * @param {object} error The request error.
 		 * @return {string}
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		gridLoadError(error) {
 			const status = error?.response?.status
@@ -479,7 +481,11 @@ export default {
 			return this.t('shillinq', 'Failed to load the budget grid.')
 		},
 
-		/** Empty the grid after a failed load. */
+		/**
+		 * Empty the grid after a failed load.
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+		 */
 		clearGrid() {
 			this.columns = []
 			this.rows = []
