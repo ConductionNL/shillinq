@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -51,13 +51,13 @@ class AdministrationTemplateController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request   The request.
-	 * @param AdministrationContextService $context   Who may do what in which administration.
+	 * @param AdministrationContextServiceInterface $context   Who may do what in which administration.
 	 * @param ChartTemplateService         $templates The templates.
 	 * @param LoggerInterface              $logger    Where failures are logged.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly ChartTemplateService $templates,
 		private readonly LoggerInterface $logger,
 	) {

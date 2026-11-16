@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Receivables;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
 use OCA\Shillinq\PaymentRun\RenderedFile;
 use OCA\Shillinq\Receivables\SepaPain008Generator;
 use OCA\Shillinq\Receivables\SepaPain008Validator;
@@ -42,7 +43,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  */
-class DirectDebitFileService {
+class DirectDebitFileService implements DirectDebitFileServiceInterface {
 
 	/**
 	 * The most records read of one schema for one administration.
