@@ -48,6 +48,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
+use OCA\Shillinq\Service\Pipelinq\StoredRecord;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
@@ -472,7 +473,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			return null;
 		}
 
-		return $this->toArray(object: $record);
+		return (new StoredRecord())->toArray(object: $record);
 	}//end loadEntry()
 
 	/**
@@ -622,90 +623,4 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 		)->setTimezone(new DateTimeZone('UTC'));
 
 	}//end nowDateTime()
-
-	/**
-	 * Normalise an OR record into a flat array, copying the id through under
-	 * `@self.id` when present (the form OR returns when the entity has an id).
-	 *
-	 * @param mixed $object OR ObjectService payload.
-	 *
-	 * @return array<string, mixed>|null
-	 */
-	private function toArray(mixed $object): ?array {
-		if ($object === null) {
-			return null;
-		}
-
-		if (is_array($object) === true) {
-			return $object;
-		}
-
-		if (is_object($object) === true) {
-			return $this->objectToArray(object: $object);
-		}
-
-		return null;
-	}//end toArray()
-
-	/**
-	 * Normalise an OR entity or result object into a flat array.
-	 *
-	 * @param object $object OR ObjectService payload object.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private function objectToArray(object $object): array {
-		if (method_exists($object, 'jsonSerialize') === true) {
-			$serialised = $object->jsonSerialize();
-			if (is_array($serialised) === true) {
-				return $serialised;
-			}
-		}
-
-		$inner = $this->innerObjectPayload(object: $object);
-		if ($inner !== null) {
-			return $inner;
-		}
-
-		return (array)$object;
-	}//end objectToArray()
-
-	/**
-	 * The entity's getObject() payload with its uuid folded in, or null when it has none.
-	 *
-	 * @param object $object OR ObjectService payload object.
-	 *
-	 * @return array<string, mixed>|null
-	 */
-	private function innerObjectPayload(object $object): array|null {
-		if (method_exists($object, 'getObject') === false) {
-			return null;
-		}
-
-		$inner = $object->getObject();
-		if (is_array($inner) === false) {
-			return null;
-		}
-
-		return $this->withEntityUuid(object: $object, inner: $inner);
-	}//end innerObjectPayload()
-
-	/**
-	 * The id lives on the entity, fold it into the payload so subsequent saveObject() targets the same row.
-	 *
-	 * @param object               $object OR entity.
-	 * @param array<string, mixed> $inner  The entity's object payload.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private function withEntityUuid(object $object, array $inner): array {
-		if (method_exists($object, 'getUuid') === true) {
-			$uuid = (string)$object->getUuid();
-			if ($uuid !== '' && isset($inner['id']) === false) {
-				$inner['id'] = $uuid;
-			}
-		}
-
-		return $inner;
-	}//end withEntityUuid()
 }//end class
