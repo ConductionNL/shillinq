@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Payment;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\Payment\PayLinkService;
 use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
 use OCA\Shillinq\Service\Payment\PaymentSessionRequest;
@@ -148,6 +149,7 @@ final class PayLinkObjectServiceStub {
 
 	/**
 	 * @param array|object $object The object.
+	 * @param ObjectSaveOptions|null $options The target and uuid, as main's API passes them.
 	 * @param array|null $extend Unused.
 	 * @param mixed $register The register.
 	 * @param mixed $schema The schema.
@@ -157,7 +159,12 @@ final class PayLinkObjectServiceStub {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array|object $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function saveObject(array|object $object, ?ObjectSaveOptions $options = null, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		if ($options !== null) {
+			$schema = $options->target->schema;
+			$uuid   = $options->uuid;
+		}
+
 		$row           = (array)$object;
 		$this->saved[] = ['schema' => $schema, 'object' => $row, 'uuid' => $uuid];
 		$row['id']     = ($uuid ?? ('generated-' . count($this->saved)));

@@ -290,11 +290,11 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		foreach ([[false, ['live' => true, 'reason' => '']], [true, ['live' => false, 'reason' => 'not-set-up']]] as [$dormant, $expected]) {
 			$adapter = $this->createMock(MolliePaymentAdapterInterface::class);
 			$adapter->method('isDormant')->willReturn($dormant);
-			$listed = $this->makeProvider(stored: $stored, paymentAdapter: $adapter)->list('dossiq', 'Zaak', 'zaak-7');
+			$listed = $this->makeProvider(stored: $stored, paymentAdapter: $adapter)->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'));
 			self::assertSame($expected, $listed['onlinePayment']);
 		}
 
-		self::assertSame(['live' => false, 'reason' => 'not-set-up'], $this->makeProvider(stored: $stored)->list('dossiq', 'Zaak', 'zaak-7')['onlinePayment']);
+		self::assertSame(['live' => false, 'reason' => 'not-set-up'], $this->makeProvider(stored: $stored)->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['onlinePayment']);
 	}//end testListSaysWhetherOnlinePaymentIsLive()
 
 	/**
@@ -342,7 +342,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			};
 
 			$leaf    = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance'], inner: $inner, linkCreator: $creator);
-			$created = $leaf->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'leges', 'amount' => 97.5, 'description' => 'Omgevingsvergunning kappen, 1 boom']);
+			$created = $leaf->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'leges', 'amount' => 97.5, 'description' => 'Omgevingsvergunning kappen, 1 boom']);
 
 			if ($dormant === true) {
 				self::assertCount(1, $inner->saves);

@@ -594,9 +594,10 @@ final class PaymentRequestLeafProvider implements RefIntegrationProvider, Paymen
 
 		$this->objectService->saveObject(
 			object: array_merge($data, $fields),
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
-			uuid: (string)$created['id'],
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA),
+				uuid: (string)$created['id']
+			),
 			_rbac: ($asSystem === false),
 			_multitenancy: ($asSystem === false),
 		);

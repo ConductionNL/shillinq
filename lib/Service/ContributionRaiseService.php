@@ -362,9 +362,10 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 
 		$this->objectService->saveObject(
 			object: array_merge($request, $fields),
-			register: $this->registerSlug(),
-			schema: 'PaymentRequest',
-			uuid: $requestId,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'PaymentRequest'),
+				uuid: $requestId
+			),
 			_rbac: false,
 		);
 	}//end storePaymentLink()
