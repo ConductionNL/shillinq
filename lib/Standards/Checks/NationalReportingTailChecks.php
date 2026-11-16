@@ -56,6 +56,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use OCA\Shillinq\Standards\Support\ChecksStatementLayout;
+
 /**
  * Executable tail national-reporting checks over the FinancialStatement object.
  *
@@ -65,6 +67,8 @@ namespace OCA\Shillinq\Standards\Checks;
  *     follow-up.
  */
 class NationalReportingTailChecks implements CheckProvider {
+	use ChecksStatementLayout;
+
 	/**
 	 * The data seedSpec() returns; see there.
 	 *
@@ -1063,27 +1067,4 @@ class NationalReportingTailChecks implements CheckProvider {
 
 		return (bool)$tagged($o);
 	}//end notListedOr()
-
-	/**
-	 * The nested balanceSheet carries all five statutory components as numbers
-	 * (fixed/current assets; equity, provisions, liabilities).
-	 *
-	 * @param array<string, mixed> $o The object.
-	 *
-	 * @return bool
-	 */
-	private static function balanceLayoutComplete(array $o): bool {
-		$bs = ($o['balanceSheet'] ?? null);
-		if (is_array($bs) === false) {
-			return false;
-		}
-
-		foreach (['fixedAssets', 'currentAssets', 'equity', 'provisions', 'liabilities'] as $key) {
-			if (array_key_exists($key, $bs) === false || is_numeric($bs[$key]) === false) {
-				return false;
-			}
-		}
-
-		return true;
-	}//end balanceLayoutComplete()
 }//end class
