@@ -243,7 +243,7 @@ class RetireSubsidieSchema implements IRepairStep {
 			$objectService
 				->setRegister($registerSlug)
 				->setSchema(self::SCHEMA)
-				->deleteObject(deletion: new ObjectDeletion(uuid: $subsidyId), _rbac: false, _multitenancy: false);
+				->deleteObject(new ObjectDeletion(uuid: $subsidyId), _rbac: false, _multitenancy: false);
 
 			return 'deleted';
 		} catch (\Throwable $e) {

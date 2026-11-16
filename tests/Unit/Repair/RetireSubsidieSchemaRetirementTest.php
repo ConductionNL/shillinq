@@ -40,6 +40,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Pins RetireSubsidieSchema's guards and the schema-row drop.
@@ -149,13 +150,13 @@ final class RetireSubsidieSchemaRetirementTest extends TestCase {
 			/**
 			 * Delete one object.
 			 *
-			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The object to delete.
+			 * @param string $id            The id.
 			 * @param bool   $_rbac         RBAC flag.
 			 * @param bool   $_multitenancy Multitenancy flag.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion, bool $_rbac, bool $_multitenancy): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
 				$id = $deletion->uuid;
 				if (in_array($id, $this->failDeletes, true) === true) {
 					throw new RuntimeException('locked');

@@ -825,7 +825,7 @@ class VATReturnService implements VATReturnServiceInterface {
 		foreach ($lines as $line) {
 			$id = (string)($line['id'] ?? ($line['@self']['id'] ?? ''));
 			if ($id !== '') {
-				$this->objectService->setRegister($register)->setSchema('VATLine')->deleteObject(deletion: new ObjectDeletion(uuid: $id));
+				$this->objectService->setRegister($register)->setSchema('VATLine')->deleteObject(new ObjectDeletion(uuid: $id));
 			}
 		}
 
@@ -836,7 +836,7 @@ class VATReturnService implements VATReturnServiceInterface {
 		foreach ($declarations as $declaration) {
 			$id = (string)($declaration['id'] ?? ($declaration['@self']['id'] ?? ''));
 			if ($id !== '') {
-				$this->objectService->setRegister($register)->setSchema('VATDeclaration')->deleteObject(deletion: new ObjectDeletion(uuid: $id));
+				$this->objectService->setRegister($register)->setSchema('VATDeclaration')->deleteObject(new ObjectDeletion(uuid: $id));
 			}
 		}
 

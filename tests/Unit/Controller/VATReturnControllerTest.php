@@ -39,6 +39,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Tests the VAT-return API controller.
@@ -335,11 +336,11 @@ final class VATReturnControllerTest extends TestCase {
 			/**
 			 * Delete by id.
 			 *
-			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The uuid to delete.
+			 * @param string $id Record id.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
 				$id = $deletion->uuid;
 				foreach (($this->data[$this->schema] ?? []) as $idx => $row) {
 					if (((string)($row['id'] ?? '')) === $id) {

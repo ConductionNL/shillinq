@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\BbvSeedServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RevenueContractRenameMigratorInterface;
 use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
@@ -454,16 +456,16 @@ class InitializeSettings implements IRepairStep {
 			try {
 				$objectService->saveObject(
 					object: $row,
-					register: $registerSlug,
-					schema: $rename['to'],
-					uuid: $objectId,
-					// System migration inside a no-session repair step — bypass RBAC.
-					_rbac: false,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: $rename['to']),
+						uuid: $objectId
+					),
+					_rbac: false
 				);
 				$objectService
 					->setRegister($registerSlug)
 					->setSchema($rename['from'])
-					->deleteObject(deletion: new ObjectDeletion(uuid: $objectId));
+					->deleteObject(new ObjectDeletion(uuid: $objectId));
 				$migrated++;
 			} catch (\Throwable $e) {
 				$output->warning(
@@ -683,10 +685,8 @@ class InitializeSettings implements IRepairStep {
 		try {
 			$objectService->saveObject(
 				object: $project,
-				register: $registerSlug,
-				schema: 'AnalyticalDimension',
-				// System seed inside a no-session repair step — bypass RBAC.
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AnalyticalDimension')),
+				_rbac: false
 			);
 			return 'seeded';
 		} catch (\Throwable $e) {
@@ -773,10 +773,8 @@ class InitializeSettings implements IRepairStep {
 		try {
 			$objectService->saveObject(
 				object: $costCenter,
-				register: $registerSlug,
-				schema: 'AnalyticalDimension',
-				// System seed inside a no-session repair step — bypass RBAC.
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AnalyticalDimension')),
+				_rbac: false
 			);
 			return 'seeded';
 		} catch (\Throwable $e) {
@@ -1229,13 +1227,8 @@ class InitializeSettings implements IRepairStep {
 
 			$objectService->saveObject(
 				object: $threshold,
-				register: $registerSlug,
-				schema: 'KorThreshold',
-				// System seeding runs inside a repair step with no user
-				// session, so the acting identity is Anonymous. Bypass RBAC
-				// (as OpenRegister's own config import does) — otherwise the
-				// KorThreshold schema's create permission denies the seed.
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'KorThreshold')),
+				_rbac: false
 			);
 			$seeded++;
 		}//end foreach
@@ -1704,10 +1697,8 @@ class InitializeSettings implements IRepairStep {
 			$row['administrationId'] = $administrationId;
 			$objectService->saveObject(
 				object: $row,
-				register: $registerSlug,
-				schema: $schema,
-				// System seed inside a no-session repair step — bypass RBAC.
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema)),
+				_rbac: false
 			);
 			$seeded++;
 		}//end foreach

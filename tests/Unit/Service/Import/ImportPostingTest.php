@@ -38,6 +38,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * The refusals, warnings and unwinding of ImportPosting.
@@ -307,21 +309,30 @@ final class ImportPostingTest extends TestCase {
 			/**
 			 * Refuse every delete.
 			 *
-			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The object to delete.
+			 * @param string          $uuid            The object.
+			 * @param string|int|null $register        The register.
+			 * @param string|int|null $schema          The schema.
 			 * @param bool            $_rbac           RBAC.
 			 * @param bool            $_multitenancy   Multitenancy.
 			 * @param bool            $_retentionSweep Retention sweep.
+			 * @param IUser|null      $currentUser     The user.
+			 * @param bool            $permanent       Permanent.
 			 *
 			 * @return bool
 			 *
 			 * @throws RuntimeException Always.
 			 */
 			public function deleteObject(
-				\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion,
+				ObjectDeletion $deletion,
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 				bool $_retentionSweep = false
 			): bool {
+				$uuid = $deletion->uuid;
+				$register = $deletion->target->register;
+				$schema = $deletion->target->schema;
+				$currentUser = $deletion->currentUser;
+				$permanent = $deletion->permanent ?? false;
 				throw new RuntimeException('locked');
 			}
 		};
@@ -393,7 +404,16 @@ final class ImportPostingTest extends TestCase {
 			 *
 			 * @return ObjectEntityInterface
 			 */
-			public function saveObject(array $object, ?array $extend = [], string|int|null $register = null, string|int|null $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true, bool $silent = false, bool $_validation = true, ?array $uploadedFiles = null, ?IUser $currentUser = null, bool $failIfExists = false): ObjectEntityInterface {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): ObjectEntityInterface {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
+				$silent = $options->policy->silent ?? false;
+				$_validation = $options->policy->validation ?? true;
+				$uploadedFiles = $options->uploadedFiles;
+				$currentUser = $options->actor->currentUser;
+				$failIfExists = $options->policy->failIfExists ?? false;
 				return new ObjectEntityStub(payload: ['journalNumber' => (string)($object['journalNumber'] ?? '')]);
 			}
 		};

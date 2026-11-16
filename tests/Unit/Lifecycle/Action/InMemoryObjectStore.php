@@ -25,6 +25,8 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Wires a PHPUnit mock of the REAL contract interface (so only real method
@@ -115,15 +117,13 @@ final class InMemoryObjectStore {
 			}
 		);
 		$service->method('saveObject')->willReturnCallback(
-			function (
-				array $object,
-				?array $extend = [],
-				string|int|null $register = null,
-				string|int|null $schema = null
-			) use (
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) use (
 				$create,
 				$test
 			): ObjectEntityInterface {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$slug = (string)$schema;
 				if ($slug === $this->failOnSchema) {
 					throw new \RuntimeException('store refused ' . $slug);
@@ -139,8 +139,11 @@ final class InMemoryObjectStore {
 			}
 		);
 		$service->method('deleteObject')->willReturnCallback(
-			function (\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): bool {
-				$this->deleted[] = [(string)$deletion->target->schema, $deletion->uuid];
+			function (ObjectDeletion $deletion): bool {
+				$uuid = $deletion->uuid;
+				$register = $deletion->target->register;
+				$schema = $deletion->target->schema;
+				$this->deleted[] = [(string)$schema, $uuid];
 				return true;
 			}
 		);

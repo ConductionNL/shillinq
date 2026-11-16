@@ -560,7 +560,7 @@ class VATReturnController extends Controller {
 		}
 
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject(deletion: new ObjectDeletion(uuid: $returnId));
+		$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject(new ObjectDeletion(uuid: $returnId));
 
 		return new JSONResponse(['data' => ['id' => $returnId, 'deleted' => true]], Http::STATUS_OK);
 	}//end deleteAccessibleDraft()

@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for InitializeSettings repair step.
@@ -646,12 +648,15 @@ class InitializeSettingsTest extends TestCase {
 			 * @param array<string,mixed> $object
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->saved[] = $uuid;
 				return $object;
 			}
 
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
 				$uuid = $deletion->uuid;
 				$this->deleted[] = $uuid;
 				return true;
@@ -738,7 +743,10 @@ class InitializeSettingsTest extends TestCase {
 			 * @param array<string,mixed> $object
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				if ($uuid === 'obj-fail') {
 					throw new \RuntimeException('save failed');
 				}
@@ -747,7 +755,7 @@ class InitializeSettingsTest extends TestCase {
 				return $object;
 			}
 
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
 				$uuid = $deletion->uuid;
 				$this->deleted[] = $uuid;
 				return true;

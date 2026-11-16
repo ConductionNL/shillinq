@@ -43,6 +43,8 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
@@ -348,8 +350,7 @@ class CBSSubmissionController extends Controller {
 			compute: fn (): array => $this->toArray(
 				row: $this->objectService()->saveObject(
 					object: $body,
-					register: $this->register(),
-					schema: 'CBSSubmission',
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'CBSSubmission'))
 				)
 			),
 			context: ['administrationId' => (string)$body['administrationId']],
@@ -393,8 +394,7 @@ class CBSSubmissionController extends Controller {
 			compute: fn (): array => $this->toArray(
 				row: $this->objectService()->saveObject(
 					object: $body,
-					register: $this->register(),
-					schema: 'CBSSubmission',
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'CBSSubmission'))
 				)
 			),
 			context: ['id' => $id],
@@ -434,7 +434,7 @@ class CBSSubmissionController extends Controller {
 				$this->objectService()
 					->setRegister($this->register())
 					->setSchema('CBSSubmission')
-					->deleteObject(deletion: new ObjectDeletion(uuid: $id));
+					->deleteObject(new ObjectDeletion(uuid: $id));
 				return ['id' => $id, 'deleted' => true];
 			},
 			context: ['id' => $id],

@@ -27,7 +27,6 @@ namespace OCA\Shillinq\Tests\Unit\Service\InvestmentDeduction;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Guard\InvesteringsaftrekEligibilityGuard;
 use OCA\Shillinq\Guard\KiaSchalenLookup;
 use OCA\Shillinq\Service\InvestmentDeduction\InvestmentDeductionService;
@@ -36,6 +35,8 @@ use OCA\Shillinq\Service\RegisterBinding;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Bakkerij De Korenaar's 2026 investments, over the shipped 2026 tables.
@@ -102,7 +103,11 @@ class InvestmentDeductionServiceTest extends TestCase {
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null) {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$id = ($uuid ?? strtolower($this->schema) . '-' . (count($this->store[$this->schema] ?? []) + 1));
 				$this->store[$this->schema][$id] = $object;
 

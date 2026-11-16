@@ -43,6 +43,8 @@ use OCP\BackgroundJob\IJobList;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Verifies the per-tick branch table.
@@ -155,7 +157,9 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$effectiveSchema = ($schema ?? (string)$this->schema);
 				$id = (string)($object['id'] ?? ('row-' . count($this->store[$effectiveSchema] ?? [])));
 				$object['id'] = $id;
@@ -169,11 +173,11 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 			}//end saveObject()
 
 			/**
-			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The uuid to delete.
+			 * @param string $id Id.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
 				$id = $deletion->uuid;
 				$schema = (string)$this->schema;
 				unset($this->store[$schema][$id]);

@@ -41,6 +41,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Tests for RetireSubsidieSchema.
@@ -201,7 +202,7 @@ class RetireSubsidieSchemaTest extends TestCase {
 				return array_values($rows);
 			}//end findAll()
 
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion, bool $_rbac, bool $_multitenancy): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
 				$id = $deletion->uuid;
 				$this->deleted[] = $id;
 

@@ -48,9 +48,15 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 use LogicException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCP\IUser;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\LockRequest;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
 
 /**
  * Minimal in-memory store supporting equality + `{in: [...]}` reads AND
@@ -204,15 +210,16 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$_render = $options?->render ?? true;
+		$_audit = $options?->audit ?? true;
 		$target = $this->schema;
 		if ($schema !== null) {
 			$target = (string)$schema;
@@ -248,18 +255,19 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$silent = $options->policy->silent ?? false;
+		$_validation = $options->policy->validation ?? true;
+		$uploadedFiles = $options->uploadedFiles;
+		$currentUser = $options->actor->currentUser;
+		$failIfExists = $options->policy->failIfExists ?? false;
 		$target = $this->schema;
 		if ($schema !== null) {
 			$target = (string)$schema;
@@ -344,14 +352,15 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$register = $patch->target->register;
+		$schema = $patch->target->schema;
+		$currentUser = $patch->currentUser;
 		$target = $this->schema;
 		if ($schema !== null) {
 			$target = (string)$schema;
@@ -503,6 +512,11 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 		bool $_multitenancy = true,
 		bool $_retentionSweep = false
 	): bool {
+		$uuid = $deletion->uuid;
+		$register = $deletion->target->register;
+		$schema = $deletion->target->schema;
+		$currentUser = $deletion->currentUser;
+		$permanent = $deletion->permanent ?? false;
 		$this->unsupported(method: 'deleteObject');
 
 	}//end deleteObject()
@@ -571,16 +585,17 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		BulkSaveOptions $options = new BulkSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): array {
+		$register = $options->defaults->register;
+		$schema = $options->defaults->schema;
+		$validation = $options->validation ?? false;
+		$events = $options->events ?? false;
+		$deduplicateIds = true;
+		$enrich = true;
+		$_audit = $options->audit ?? true;
 		$this->unsupported(method: 'saveObjects');
 
 	}//end saveObjects()
@@ -633,7 +648,10 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
+	public function unlockObject(UnlockRequest $request): bool {
+		$identifier = $request->identifier;
+		$advisory = $request->advisory ?? false;
+		$runUuid = $request->runUuid;
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -651,11 +669,14 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * @return array
 	 */
 	public function lockObject(
-		string $identifier,
-		?string $process = null,
-		?int $duration = null,
-		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
+		LockRequest $request,
+		bool $advisory = false
 	): array {
+		$identifier = $request->identifier;
+		$process = $request->process;
+		$duration = $request->duration;
+		$runUuid = $request->runUuid;
+		$nodeId = $request->nodeId;
 		$this->unsupported(method: 'lockObject');
 
 	}//end lockObject()
@@ -757,14 +778,15 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function findSilent(
 		string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		$found = $this->find(id: $id, schema: $schema);
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$found = $this->find(id: $id, options: new ObjectFindOptions(schema: $schema));
 		if ($found === null) {
 			throw new RuntimeException('KnownCostFixtureObjectServiceStub: no object ' . $id);
 		}
@@ -804,4 +826,11 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 		return null;
 
 	}//end getObject()
+	/**
+	 * Not used by this double.
+	 */
+	public function validateObject(array $object, string|int $register, string|int $schema, ?string $id=null): \OCA\OpenRegister\Kernel\Contracts\Value\ObjectValidationVerdict {
+		throw new \LogicException('validateObject() is not modelled by this double');
+	}
+
 }//end class

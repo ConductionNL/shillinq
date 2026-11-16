@@ -39,8 +39,14 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCP\IUser;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\LockRequest;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
 
 /**
  * Forwarding decorator that injects a racing default on the FIRST
@@ -175,16 +181,17 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 */
 	public function find(
 		int|string $id,
-		?array $extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $rbac = true,
-		bool $multitenancy = true,
-		bool $render = true,
-		bool $audit = true
+		bool $multitenancy = true
 	): ?ObjectEntityInterface {
-		return $this->inner->find($id, $extend, $files, $register, $schema, $rbac, $multitenancy, $render, $audit);
+		$extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$render = $options?->render ?? true;
+		$audit = $options?->audit ?? true;
+		return $this->inner->find($id, $options);
 
 	}//end find()
 
@@ -206,32 +213,20 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $rbac = true,
-		bool $multitenancy = true,
-		bool $silent = false,
-		bool $validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
+		bool $multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->saveObject(
-			$object,
-			$extend,
-			$register,
-			$schema,
-			$uuid,
-			$rbac,
-			$multitenancy,
-			$silent,
-			$validation,
-			$uploadedFiles,
-			$currentUser,
-			$failIfExists
-		);
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$silent = $options->policy->silent ?? false;
+		$validation = $options->policy->validation ?? true;
+		$uploadedFiles = $options->uploadedFiles;
+		$currentUser = $options->actor->currentUser;
+		$failIfExists = $options->policy->failIfExists ?? false;
+		return $this->inner->saveObject($object, $options);
 
 	}//end saveObject()
 
@@ -297,15 +292,16 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $rbac = true,
-		bool $multitenancy = true,
-		?IUser $currentUser = null
+		bool $multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->patchObject($objectId, $data, $register, $schema, $rbac, $multitenancy, $currentUser);
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$register = $patch->target->register;
+		$schema = $patch->target->schema;
+		$currentUser = $patch->currentUser;
+		return $this->inner->patchObject($patch);
 
 	}//end patchObject()
 
@@ -322,14 +318,15 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 */
 	public function findSilent(
 		string $id,
-		?array $extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $rbac = true,
 		bool $multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->findSilent($id, $extend, $files, $register, $schema, $rbac, $multitenancy);
+		$extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		return $this->inner->findSilent($id, $options);
 
 	}//end findSilent()
 
@@ -374,10 +371,14 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	}//end searchObjects()
 
 	/**
-	 * @param ObjectDeletion $deletion The uuid, the register and schema, the acting user and whether to delete permanently.
+	 * @param string $uuid The object UUID.
+	 * @param string|int|null $register Register id, UUID or slug.
+	 * @param string|int|null $schema Schema id, UUID or slug.
 	 * @param bool $rbac Apply register RBAC.
 	 * @param bool $multitenancy Apply organisation scoping.
 	 * @param bool $retentionSweep Run as part of a retention sweep.
+	 * @param ?IUser $currentUser Explicit acting user.
+	 * @param bool $permanent Delete permanently.
 	 *
 	 * @return bool
 	 */
@@ -387,7 +388,12 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 		bool $multitenancy = true,
 		bool $retentionSweep = false
 	): bool {
-		return $this->inner->deleteObject(deletion: $deletion, _rbac: $rbac, _multitenancy: $multitenancy, _retentionSweep: $retentionSweep);
+		$uuid = $deletion->uuid;
+		$register = $deletion->target->register;
+		$schema = $deletion->target->schema;
+		$currentUser = $deletion->currentUser;
+		$permanent = $deletion->permanent ?? false;
+		return $this->inner->deleteObject($deletion);
 
 	}//end deleteObject()
 
@@ -449,17 +455,18 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		BulkSaveOptions $options = new BulkSaveOptions(),
 		bool $rbac = true,
-		bool $multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $audit = true
+		bool $multitenancy = true
 	): array {
-		return $this->inner->saveObjects($objects, $register, $schema, $rbac, $multitenancy, $validation, $events, $deduplicateIds, $enrich, $audit);
+		$register = $options->defaults->register;
+		$schema = $options->defaults->schema;
+		$validation = $options->validation ?? false;
+		$events = $options->events ?? false;
+		$deduplicateIds = true;
+		$enrich = true;
+		$audit = $options->audit ?? true;
+		return $this->inner->saveObjects($objects, $options);
 
 	}//end saveObjects()
 
@@ -497,8 +504,11 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
-		return $this->inner->unlockObject($identifier, $advisory, $runUuid);
+	public function unlockObject(UnlockRequest $request): bool {
+		$identifier = $request->identifier;
+		$advisory = $request->advisory ?? false;
+		$runUuid = $request->runUuid;
+		return $this->inner->unlockObject($request);
 
 	}//end unlockObject()
 
@@ -513,12 +523,15 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 * @return array
 	 */
 	public function lockObject(
-		string $identifier,
-		?string $process = null,
-		?int $duration = null,
-		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
+		LockRequest $request,
+		bool $advisory = false
 	): array {
-		return $this->inner->lockObject($identifier, $process, $duration, $advisory, $runUuid, $nodeId);
+		$identifier = $request->identifier;
+		$process = $request->process;
+		$duration = $request->duration;
+		$runUuid = $request->runUuid;
+		$nodeId = $request->nodeId;
+		return $this->inner->lockObject($request);
 
 	}//end lockObject()
 
@@ -613,4 +626,11 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 		return $this->inner->countSearchObjects($query, $rbac, $multitenancy, $ids, $uses);
 
 	}//end countSearchObjects()
+	/**
+	 * Not used by this double.
+	 */
+	public function validateObject(array $object, string|int $register, string|int $schema, ?string $id=null): \OCA\OpenRegister\Kernel\Contracts\Value\ObjectValidationVerdict {
+		throw new \LogicException('validateObject() is not modelled by this double');
+	}
+
 }//end class

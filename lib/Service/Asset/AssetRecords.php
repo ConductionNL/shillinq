@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\Asset;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -139,7 +140,13 @@ class AssetRecords implements AssetRecordsInterface {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function patch(string $schema, string $id, array $fields): void {
-		$this->objectService->patchObject(objectId: $id, data: $fields, register: $this->settings->getRegisterSlug(), schema: $schema);
+		$this->objectService->patchObject(
+			new ObjectPatch(
+				objectId: $id,
+				data: $fields,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema)
+			)
+		);
 
 	}//end patch()
 
@@ -155,7 +162,7 @@ class AssetRecords implements AssetRecordsInterface {
 	 */
 	public function delete(string $schema, string $id): void {
 		$this->objectService->deleteObject(
-			deletion: new ObjectDeletion(uuid: $id, target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema))
+			new ObjectDeletion(uuid: $id, target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema))
 		);
 
 	}//end delete()

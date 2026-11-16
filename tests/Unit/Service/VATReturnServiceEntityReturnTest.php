@@ -28,6 +28,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * OpenRegister's ObjectService declares
@@ -290,11 +291,11 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 			/**
 			 * Delete a row by id.
 			 *
-			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The uuid to delete.
+			 * @param string $id Row id.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
 				$id = $deletion->uuid;
 				$this->data[$this->schema] = array_values(
 					array_filter(

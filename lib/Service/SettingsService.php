@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
 use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
@@ -629,8 +631,7 @@ class SettingsService implements SettingsServiceInterface {
 				'validUntil' => null,
 				'grantedBy' => $userId,
 			],
-			register: $registerSlug,
-			schema: 'AdministrationMembership',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AdministrationMembership'))
 		);
 	}//end saveOwnerMembership()
 
@@ -938,8 +939,7 @@ class SettingsService implements SettingsServiceInterface {
 
 		$saved = $objectService->saveObject(
 			object: $asset,
-			register: $registerSlug,
-			schema: 'FixedAsset',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'FixedAsset'))
 		);
 
 		return ['seeded' => true, 'uuid' => ObjectIdentifier::resolve(saved: $saved)];
@@ -971,8 +971,7 @@ class SettingsService implements SettingsServiceInterface {
 
 		$objectService->saveObject(
 			object: $schedule,
-			register: $registerSlug,
-			schema: 'DepreciationSchedule',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'DepreciationSchedule'))
 		);
 
 		return true;
@@ -1898,8 +1897,7 @@ class SettingsService implements SettingsServiceInterface {
 
 		$objectService->saveObject(
 			object: $record,
-			register: $registerSlug,
-			schema: $schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema))
 		);
 
 		return true;

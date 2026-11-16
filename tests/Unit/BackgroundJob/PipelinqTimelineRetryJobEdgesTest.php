@@ -41,6 +41,8 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use ReflectionMethod;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Guards, entry shapes and failing side effects of one retry tick.
@@ -143,7 +145,9 @@ final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $object The object.
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if (isset($this->failures['saveObject']) === true) {
 					throw $this->failures['saveObject'];
 				}
@@ -152,7 +156,7 @@ final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
 				return $object;
 			}
 
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
 				$id = $deletion->uuid;
 				if (isset($this->failures['deleteObject']) === true) {
 					throw $this->failures['deleteObject'];

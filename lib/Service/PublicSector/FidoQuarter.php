@@ -34,6 +34,8 @@ namespace OCA\Shillinq\Service\PublicSector;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\FidoQuarterInterface;
 use OCP\IAppConfig;
@@ -480,7 +482,10 @@ class FidoQuarter implements FidoQuarterInterface {
 			$uuid = null;
 		}
 
-		$this->objectService->saveObject(object: $object, register: $this->register(), schema: $schema, uuid: $uuid);
+		$this->objectService->saveObject(
+			object: $object,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: $schema), uuid: $uuid)
+		);
 
 	}//end save()
 

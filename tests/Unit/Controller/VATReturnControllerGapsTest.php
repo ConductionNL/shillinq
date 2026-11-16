@@ -42,6 +42,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Tests the VAT-return controller's refusal and failure branches.
@@ -225,11 +226,11 @@ final class VATReturnControllerGapsTest extends TestCase {
 			/**
 			 * Delete.
 			 *
-			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The object to delete.
+			 * @param string $id Id.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
 				$id = $deletion->uuid;
 				$this->calls[] = ['deleteObject', $id];
 				if ($this->failing === 'deleteObject') {

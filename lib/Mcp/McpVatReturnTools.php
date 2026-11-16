@@ -166,7 +166,7 @@ class McpVatReturnTools {
 			}
 
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject(deletion: new ObjectDeletion(uuid: $returnId));
+			$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject(new ObjectDeletion(uuid: $returnId));
 		} catch (Throwable $e) {
 			return $this->failed(action: 'destroy', args: $args, exception: $e, message: 'Failed to delete VAT return');
 		}
