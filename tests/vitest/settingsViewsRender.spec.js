@@ -52,7 +52,7 @@ vi.mock('@nextcloud/vue', () => {
 vi.mock('@conduction/nextcloud-vue', () => ({
 	CnSettingsFieldsSection: {
 		name: 'CnSettingsFieldsSection',
-		props: ['name', 'description'],
+		props: ['appId', 'name', 'description', 'url', 'fields'],
 		render() {
 			return h('section', { 'data-stub': 'CnSettingsFieldsSection' }, [h('h3', this.name)])
 		},

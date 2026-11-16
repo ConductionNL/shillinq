@@ -551,6 +551,8 @@
 		"VpbDeadlines",
 		"VpbPayments",
 		"VpbReports",
+		"WebshopChannels",
+		"WebshopOrders",
 		"Werkgevers",
 		"Werknemers",
 		"WmoAuditLog",
