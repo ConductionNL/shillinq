@@ -42,7 +42,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
 use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
-use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
+use OCA\Shillinq\Kernel\Contracts\TaskFieldRealisationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -108,7 +108,7 @@ class BBVDashboardController extends Controller {
 	 *                                                    the active window
 	 *                                                    inherited from the
 	 *                                                    Administration context.
-	 * @param TaskFieldRealisation|null $realisation The year per task field (public-sector-task-field-allocation REQ-BBV-012).
+	 * @param TaskFieldRealisationInterface|null $realisation The year per task field (public-sector-task-field-allocation REQ-BBV-012).
 	 *
 	 * @return void
 	 */
@@ -119,7 +119,7 @@ class BBVDashboardController extends Controller {
 		private readonly BBVComplianceWidgetInterface $widget,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly FiscalYearContextServiceInterface $fiscalYearContext,
-		private readonly ?TaskFieldRealisation $realisation = null,
+		private readonly ?TaskFieldRealisationInterface $realisation = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

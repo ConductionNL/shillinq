@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Tax\VatPositionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -61,14 +61,14 @@ class VatPositionController extends Controller {
 	 * @param IRequest                     $request  The request.
 	 * @param VatPositionService           $position The position service.
 	 * @param IUserSession                 $session  The user session.
-	 * @param AdministrationContextService $context  The caller's administrations.
+	 * @param AdministrationContextServiceInterface $context  The caller's administrations.
 	 * @param LoggerInterface              $logger   The logger.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly VatPositionService $position,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
