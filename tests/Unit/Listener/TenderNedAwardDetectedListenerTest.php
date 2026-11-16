@@ -52,6 +52,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * Tests for the REQ-002 auto-promotion path.
@@ -209,11 +210,14 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			 */
 			public function find(
 				string | int $id,
-				?array $_extend = [],
-				bool $files = false,
-				string | null $register = null,
-				string | null $schema = null,
+				?ObjectFindOptions $options = null,
+				bool $_rbac = true,
+				bool $_multitenancy = true
 			): ?object {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => ($schema ?? $this->currentSchema)];
 				if (in_array('find', $this->failOn, true) === true) {
 					throw new \RuntimeException('database gone');

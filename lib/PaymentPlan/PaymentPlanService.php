@@ -40,6 +40,7 @@ namespace OCA\Shillinq\PaymentPlan;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
@@ -301,7 +302,7 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 				hardDeadline: $deadline
 			);
 			$pauseIds[] = (string)($pause['id'] ?? '');
-			$this->scoped(schema: 'ARInvoice')->patchObject($invoiceId, ['paymentPlanId' => $planId]);
+			$this->scoped(schema: 'ARInvoice')->patchObject(new ObjectPatch(objectId: $invoiceId, data: ['paymentPlanId' => $planId]));
 		}
 
 		$mail = $this->mailer->confirmation(
@@ -315,7 +316,7 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 			$patch['confirmationSentAt'] = $this->time->getDateTime()->format(DATE_ATOM);
 		}
 
-		$this->scoped(schema: 'PaymentPlan')->patchObject($planId, $patch);
+		$this->scoped(schema: 'PaymentPlan')->patchObject(new ObjectPatch(objectId: $planId, data: $patch));
 		return $this->plan(planId: $planId);
 
 	}//end activate()
@@ -543,7 +544,9 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 			}
 		}
 
-		$this->scoped(schema: 'PaymentPlan')->patchObject($planId, ['endedOn' => $this->today(), 'endReason' => $reason]);
+		$this->scoped(schema: 'PaymentPlan')->patchObject(
+			new ObjectPatch(objectId: $planId, data: ['endedOn' => $this->today(), 'endReason' => $reason])
+		);
 		if ($action === 'break') {
 			$plan = $this->refresh(planId: $planId);
 			$this->mailer->send(recipient: (string)($plan['customerEmail'] ?? ''), mail: $this->mailer->ended(plan: $plan, reason: $reason));
@@ -590,7 +593,7 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 
 		$patch = ['paidAmount' => ($paid / 100.0), 'arrears' => ($arrears / 100.0)] + $thisMonth;
 		$patch += ($next ?? ['nextDueDate' => null, 'nextDueAmount' => null]);
-		$this->scoped(schema: 'PaymentPlan')->patchObject($planId, $patch);
+		$this->scoped(schema: 'PaymentPlan')->patchObject(new ObjectPatch(objectId: $planId, data: $patch));
 		return $this->plan(planId: $planId);
 
 	}//end refresh()

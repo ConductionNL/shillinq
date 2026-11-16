@@ -33,6 +33,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Stores a balance sheet named by the case and records what the storage did.
@@ -51,7 +52,9 @@ final class ReportFileStorageTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn(
 			new class {
-				public function saveObject(array $object, string $register, string $schema): array {
+				public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+					$register = $options->target->register;
+					$schema = $options->target->schema;
 					return $object;
 				}
 			}
