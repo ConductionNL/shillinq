@@ -100,6 +100,10 @@
         {
             "appVersion": "0.5.7-unstable.20261115172959",
             "versionsSha256": "8c14d8f0a0fc6f12b4fb08e4a7509bad0e9b20076c6064728a6ee0711b89503e"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116210000",
+            "versionsSha256": "6c97f494bc5065099ec8b4bb68152167fe8305c3607c4f85e6c19e626f669f29"
         }
     ],
     "versions": {
@@ -108,7 +112,7 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.4.0",
-        "schema:ARInvoice": "0.17.0",
+        "schema:ARInvoice": "0.18.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
         "schema:Account": "0.2.0",
@@ -380,6 +384,7 @@
         "schema:InvesteringsaftrekClaim": "0.2.0",
         "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
+        "schema:InvoiceBatch": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
         "schema:IossImport": "0.1.0",
         "schema:IroRecord": "0.1.0",
