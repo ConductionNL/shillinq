@@ -1026,8 +1026,22 @@
 							"id": "BookingsPendingConfirmations",
 							"label": "Pending confirmations",
 							"icon": "EmailCheckOutline",
-							"route": "BookingsPendingConfirmations",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation"
+							},
 							"order": 14
+						},
+						{
+							"id": "BookingsConfirmationRequestFailed",
+							"label": "Confirmation request failed",
+							"icon": "EmailAlertOutline",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation",
+								"confirmationRequestStatus": "failed"
+							},
+							"order": 15
 						}
 					]
 				}
@@ -1039,13 +1053,6 @@
 					"route": "/confirm/:appointmentId",
 					"type": "custom",
 					"title": "Confirm your appointment"
-				},
-				{
-					"_fragment": "bookings-confirm-flow",
-					"id": "BookingsPendingConfirmations",
-					"route": "/verkoop/openstaande-bevestigingen",
-					"type": "custom",
-					"title": "Pending confirmations"
 				}
 			]
 		},

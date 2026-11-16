@@ -25,7 +25,7 @@ use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\IntegriqSbrHandoffAdapter;
-use OCA\Shillinq\Service\Sbr\SbrFilingFileStore;
+use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
 use RuntimeException;
 
 /**
@@ -51,14 +51,14 @@ class HandToDigipoortAction implements LifecycleActionInterface {
 	 * Constructor.
 	 *
 	 * @param DigipoortSbrAdapterInterface $adapter  The Digipoort port.
-	 * @param SbrFilingFileStore           $files    Stores the XML.
+	 * @param SbrFilingFileStoreInterface  $files    Stores the XML.
 	 * @param RegisterLocationInterface    $location The register, for the object URI.
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.2
 	 */
 	public function __construct(
 		private readonly DigipoortSbrAdapterInterface $adapter,
-		private readonly SbrFilingFileStore $files,
+		private readonly SbrFilingFileStoreInterface $files,
 		private readonly RegisterLocationInterface $location,
 	) {
 	}//end __construct()

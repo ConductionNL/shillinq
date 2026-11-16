@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Service\Receivables;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
 use OCA\Shillinq\PaymentRun\RenderedFile;
-use OCA\Shillinq\Receivables\SepaPain008Generator;
-use OCA\Shillinq\Receivables\SepaPain008Validator;
+use OCA\Shillinq\Kernel\Contracts\SepaPain008GeneratorInterface;
+use OCA\Shillinq\Kernel\Contracts\SepaPain008ValidatorInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use RuntimeException;
@@ -55,16 +55,16 @@ class DirectDebitFileService implements DirectDebitFileServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ObjectServiceInterface $objectService    OpenRegister's object service.
-	 * @param RegisterLocation       $registerLocation Where the register lives.
-	 * @param SepaPain008Generator   $generator        Writes the pain.008 document.
-	 * @param SepaPain008Validator   $validator        Checks it before it is stored.
+	 * @param ObjectServiceInterface        $objectService    OpenRegister's object service.
+	 * @param RegisterLocation              $registerLocation Where the register lives.
+	 * @param SepaPain008GeneratorInterface $generator        Writes the pain.008 document.
+	 * @param SepaPain008ValidatorInterface $validator        Checks it before it is stored.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly RegisterLocation $registerLocation,
-		private readonly SepaPain008Generator $generator,
-		private readonly SepaPain008Validator $validator,
+		private readonly SepaPain008GeneratorInterface $generator,
+		private readonly SepaPain008ValidatorInterface $validator,
 	) {
 
 	}//end __construct()
@@ -123,7 +123,7 @@ class DirectDebitFileService implements DirectDebitFileServiceInterface {
 		return new RenderedFile(
 			fileName: $stem . '.pain008.xml',
 			mimeType: 'text/xml',
-			format: SepaPain008Generator::FORMAT,
+			format: SepaPain008GeneratorInterface::FORMAT,
 			content: $xml,
 		);
 

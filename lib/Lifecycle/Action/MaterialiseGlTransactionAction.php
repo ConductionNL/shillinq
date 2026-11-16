@@ -81,6 +81,7 @@ use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -94,13 +95,6 @@ use RuntimeException;
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
 class MaterialiseGlTransactionAction implements LifecycleActionInterface, MaterialiseGlTransactionActionInterface {
-
-	/**
-	 * App-config key: receivables control account (RGS 3.5 MKB 1100 Debiteuren).
-	 *
-	 * @var string
-	 */
-	public const CFG_AR_CONTROL_ACCOUNT = 'ledger_ar_control_account';
 
 	/**
 	 * App-config key: revenue account (RGS 3.5 MKB 8000 Netto-omzet).
@@ -1193,11 +1187,6 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class
