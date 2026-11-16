@@ -746,6 +746,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\AnnualAccountsXbrlBuilderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\AnnualAccountsXbrlBuilder'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\AppointmentConfirmationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\AppointmentConfirmationService'"
         ]
@@ -949,6 +956,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ChartTemplateServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\ChartTemplate\\\\ChartTemplateService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CogsPosterServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\CogsPosterService'"
         ]
@@ -1026,6 +1040,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ContactCustomerResolverInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\ContactCustomerResolver'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ContractCostRollupServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ContractCostRollupService'"
         ]
@@ -1054,6 +1075,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\FiledReturnDriftCheckInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\FiledReturnDriftCheck'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\FxRateFeedStatusInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Treasury\\\\FxRateFeedStatus'"
         ]
@@ -1077,6 +1105,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RetentionDueServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\RetentionDueService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SbrFilingFileStoreInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\SbrFilingFileStore'"
         ]
     ],
     [
@@ -2125,6 +2160,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatReturnXbrlBuilderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\VatReturnXbrlBuilder'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatSuppletieDetectionServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\VatSuppletieDetectionService'"
         ]
@@ -2202,6 +2244,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WebshopOrderInvoicerInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Webshop\\\\WebshopOrderInvoicer'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WidgetAuthServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\WidgetAuthService'"
         ]
@@ -2211,6 +2260,20 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WidgetServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\WidgetService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\XbrlInstanceCheckInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\XbrlInstanceCheck'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\XbrlTaxonomyLookupInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\XbrlTaxonomyLookup'"
         ]
     ],
     [
@@ -2953,6 +3016,20 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\BBVComplianceWidgetInterface'",
             "'OCA\\\\Shillinq\\\\Dashboard\\\\BBVComplianceWidget'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SepaPain008GeneratorInterface'",
+            "'OCA\\\\Shillinq\\\\Receivables\\\\SepaPain008Generator'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SepaPain008ValidatorInterface'",
+            "'OCA\\\\Shillinq\\\\Receivables\\\\SepaPain008Validator'"
         ]
     ]
 ]

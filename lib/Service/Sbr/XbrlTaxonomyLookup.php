@@ -22,6 +22,7 @@ namespace OCA\Shillinq\Service\Sbr;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\XbrlTaxonomyLookupInterface;
 use OCP\IAppConfig;
 
 /**
@@ -34,7 +35,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/tax-digipoort-filing/specs/bookkeeping-sbr-xbrl-reporting/spec.md#requirement-an-instance-is-validated-against-its-entry-point-before-submission-req-tdf-003
  */
-class XbrlTaxonomyLookup {
+class XbrlTaxonomyLookup implements XbrlTaxonomyLookupInterface {
 
 	/**
 	 * The taxonomy schema.

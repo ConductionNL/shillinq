@@ -27,9 +27,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Treasury;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -234,12 +234,7 @@ class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 
 	}//end register()
 }//end class
