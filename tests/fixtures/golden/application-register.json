@@ -2547,6 +2547,14 @@
         ]
     ],
     [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\VatReturnChecksGuard::canSubmit'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
         "registerNotifierService",
         [
             "'OCA\\\\Shillinq\\\\Notification\\\\DeadlineReminderNotifier'"

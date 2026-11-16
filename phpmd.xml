@@ -70,7 +70,11 @@
         (j) XbrlInstanceWriter writes an XBRL document from its arguments and
         reads the taxonomy fields it needs from the record it is given: final,
         NO constructor, NO properties, NO collaborators, as (i).
-        (k) RegisterSlug reads the register slug from the IAppConfig it is
+        (k) Standards\Checks\VatReturnChecks is a rule registry of category (b)
+        and holds pure functions of their arguments: it declares NO constructor,
+        NO properties and NO collaborators. If an edit gives it state or an
+        injected dependency, remove this entry.
+        (l) RegisterSlug reads the register slug from the IAppConfig it is
         given, so a test still mocks that config: final, NO constructor, NO
         properties, NO collaborators of its own, as (i).
     -->
@@ -88,6 +92,7 @@
                 OCA\OpenRegister\AppHost\Observability\MetricSample,
                 OCA\Shillinq\Standards\RuleEngine,
                 OCA\Shillinq\Standards\RuleCatalogue,
+                OCA\Shillinq\Standards\Checks\VatReturnChecks,
                 OCA\Shillinq\Reporting\ReportCatalogue,
                 OCA\Shillinq\Enums\DBAConstants,
                 OCA\Shillinq\Util\TokenValidator,

@@ -200,6 +200,18 @@ class Application extends App implements IBootstrap {
 
 		(new LifecycleRegistrar())->register(context: $context);
 
+		$this->registerDomainContracts(context: $context);
+
+	}//end register()
+
+	/**
+	 * Bind the Kernel contracts of each domain to its implementation.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerDomainContracts(IRegistrationContext $context): void {
 		(new LifecycleContractRegistrar())->register(context: $context);
 		(new ReportingContractRegistrar())->register(context: $context);
 		(new ListenerContractRegistrar())->register(context: $context);
@@ -212,8 +224,7 @@ class Application extends App implements IBootstrap {
 		(new PortalContractRegistrar())->register(context: $context);
 		(new DashboardContractRegistrar())->register(context: $context);
 		(new ReceivablesContractRegistrar())->register(context: $context);
-
-	}//end register()
+	}//end registerDomainContracts()
 
 	/**
 	 * Register the action-tool provider under OpenRegister's per-app discovery key.

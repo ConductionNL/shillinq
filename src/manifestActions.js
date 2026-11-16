@@ -14,6 +14,7 @@
 // So every handler is registered in both, from this one list.
 
 import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
+import { openRepeatAppointment } from './utils/appointmentSeriesActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
 import { openAuditSampleDraw } from './utils/auditSampleApi.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
@@ -136,6 +137,9 @@ export const manifestActions = Object.freeze({
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
 	openVatPositionLines,
+	// bookings-messages-and-embedding 1.4: New repeating appointment on
+	// Appointments.
+	openRepeatAppointment,
 	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
 	openRecalculateInvestmentDeductions,
 })

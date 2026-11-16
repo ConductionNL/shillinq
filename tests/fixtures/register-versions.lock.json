@@ -106,8 +106,16 @@
             "versionsSha256": "6c97f494bc5065099ec8b4bb68152167fe8305c3607c4f85e6c19e626f669f29"
         },
         {
-            "appVersion": "0.5.7-unstable.20261116214500",
-            "versionsSha256": "0c1cf7fe7edf6b8ce906cfdf8968d5db70743e23d6fcc68667f1b75230dc2f03"
+            "appVersion": "0.5.7-unstable.20261116220000",
+            "versionsSha256": "e2e41df56b632cc9a414210e6b0551f51e90126895d69b9116f117aff99e3005"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116230000",
+            "versionsSha256": "b83468d10ec63d9aac329c3b3771a0f8b0ab3c9ab5aebf6946aa63d7724bd9e7"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116233000",
+            "versionsSha256": "a3d11b8b45cbeebce6affc0de824641a65be9cdc23c8790b8397c5f793ecde5a"
         }
     ],
     "versions": {
@@ -182,7 +190,7 @@
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",
         "schema:BookingSmsReminderChannel": "0.1.0",
-        "schema:BtwAangifte": "0.1.0",
+        "schema:BtwAangifte": "0.2.0",
         "schema:BudgetBBVMapping": "0.3.0",
         "schema:BudgetLine": "0.1.0",
         "schema:BudgetLineDerivation": "0.1.0",
@@ -456,7 +464,7 @@
         "schema:Payment": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
-        "schema:PaymentRequest": "0.10.0",
+        "schema:PaymentRequest": "0.11.0",
         "schema:PaymentRun": "0.3.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",
