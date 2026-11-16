@@ -243,7 +243,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 					_rbac: false
 				);
 
-			return (new StoredRecord())->idOf(result: $saved);
+			return $this->extractId(result: $saved);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'PersistentTimelineRetryQueue: failed to persist retry entry',
@@ -258,6 +258,109 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 		}//end try
 
 	}//end persistEntry()
+
+	/**
+	 * Pull a string id out of an OR saveObject() return value (entity or array).
+	 *
+	 * @param mixed $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function extractId(mixed $result): ?string {
+		if (is_array($result) === true) {
+			$id = (string)($result['id'] ?? '');
+			if ($id !== '') {
+				return $id;
+			}
+
+			return null;
+		}
+
+		if (is_object($result) === true) {
+			return $this->extractObjectId(result: $result);
+		}
+
+		return null;
+	}//end extractId()
+
+	/**
+	 * Pull a string id out of an object saveObject() return value.
+	 *
+	 * Tries getUuid(), then the serialised payload, then getId().
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function extractObjectId(object $result): string|null {
+		$id = $this->uuidIdOf(result: $result);
+		if ($id === null) {
+			$id = $this->payloadIdOf(result: $result);
+		}
+
+		if ($id === null) {
+			$id = $this->getIdOf(result: $result);
+		}
+
+		return $id;
+	}//end extractObjectId()
+
+	/**
+	 * Non-empty getUuid() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function uuidIdOf(object $result): string|null {
+		if (method_exists($result, 'getUuid') === true) {
+			$uuid = (string)$result->getUuid();
+			if ($uuid !== '') {
+				return $uuid;
+			}
+		}
+
+		return null;
+	}//end uuidIdOf()
+
+	/**
+	 * Non-empty id from an object's jsonSerialize() payload.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function payloadIdOf(object $result): string|null {
+		if (method_exists($result, 'jsonSerialize') === true) {
+			$payload = $result->jsonSerialize();
+			if (is_array($payload) === true) {
+				$id = (string)($payload['id'] ?? ($payload['@self']['id'] ?? ''));
+				if ($id !== '') {
+					return $id;
+				}
+			}
+		}
+
+		return null;
+	}//end payloadIdOf()
+
+	/**
+	 * Non-empty getId() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function getIdOf(object $result): string|null {
+		if (method_exists($result, 'getId') === true) {
+			$id = (string)$result->getId();
+			if ($id !== '') {
+				return $id;
+			}
+		}
+
+		return null;
+	}//end getIdOf()
 
 	/**
 	 * Current UTC time as ISO-8601.

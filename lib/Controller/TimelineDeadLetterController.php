@@ -40,7 +40,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Service\Pipelinq\StoredRecord;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -124,7 +123,7 @@ class TimelineDeadLetterController extends Controller {
 
 			$results = [];
 			foreach ($rows as $row) {
-				$payload = (new StoredRecord())->toArray(object: $row);
+				$payload = $this->toArray(object: $row);
 				if ($payload === null) {
 					continue;
 				}
@@ -285,7 +284,7 @@ class TimelineDeadLetterController extends Controller {
 
 		$saved = $this->saveTo(objectService: $objectService, registerSlug: $registerSlug, schema: 'TimelinePublishRetryEntry', object: $retry);
 
-		$entryId = (new StoredRecord())->idOf(result: $saved);
+		$entryId = $this->extractId(result: $saved);
 		if ($entryId === null || $entryId === '') {
 			return new JSONResponse(['error' => 'Failed to persist re-queued entry'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -424,8 +423,111 @@ class TimelineDeadLetterController extends Controller {
 			return null;
 		}
 
-		return (new StoredRecord())->toArray(object: $record);
+		return $this->toArray(object: $record);
 	}//end loadDead()
+
+	/**
+	 * Extract a string id from a saveObject() return value.
+	 *
+	 * @param mixed $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function extractId(mixed $result): ?string {
+		if (is_array($result) === true) {
+			$id = (string)($result['id'] ?? '');
+			if ($id !== '') {
+				return $id;
+			}
+
+			return null;
+		}
+
+		if (is_object($result) === true) {
+			return $this->extractObjectId(result: $result);
+		}
+
+		return null;
+	}//end extractId()
+
+	/**
+	 * Extract a string id from an object saveObject() return value.
+	 *
+	 * Tries getUuid(), then the serialised payload, then getId().
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function extractObjectId(object $result): string|null {
+		$id = $this->uuidIdOf(result: $result);
+		if ($id === null) {
+			$id = $this->payloadIdOf(result: $result);
+		}
+
+		if ($id === null) {
+			$id = $this->getIdOf(result: $result);
+		}
+
+		return $id;
+	}//end extractObjectId()
+
+	/**
+	 * Non-empty getUuid() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function uuidIdOf(object $result): string|null {
+		if (method_exists($result, 'getUuid') === true) {
+			$uuid = (string)$result->getUuid();
+			if ($uuid !== '') {
+				return $uuid;
+			}
+		}
+
+		return null;
+	}//end uuidIdOf()
+
+	/**
+	 * Non-empty id from an object's jsonSerialize() payload.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function payloadIdOf(object $result): string|null {
+		if (method_exists($result, 'jsonSerialize') === true) {
+			$payload = $result->jsonSerialize();
+			if (is_array($payload) === true) {
+				$id = (string)($payload['id'] ?? ($payload['@self']['id'] ?? ''));
+				if ($id !== '') {
+					return $id;
+				}
+			}
+		}
+
+		return null;
+	}//end payloadIdOf()
+
+	/**
+	 * Non-empty getId() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function getIdOf(object $result): string|null {
+		if (method_exists($result, 'getId') === true) {
+			$id = (string)$result->getId();
+			if ($id !== '') {
+				return $id;
+			}
+		}
+
+		return null;
+	}//end getIdOf()
 
 	/**
 	 * Current UTC time as ISO-8601.
@@ -438,4 +540,89 @@ class TimelineDeadLetterController extends Controller {
 		)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
 	}//end nowIso()
+
+	/**
+	 * Normalise an OR record into a flat array (copying id through).
+	 *
+	 * @param mixed $object OR ObjectService payload.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function toArray(mixed $object): ?array {
+		if ($object === null) {
+			return null;
+		}
+
+		if (is_array($object) === true) {
+			return $object;
+		}
+
+		if (is_object($object) === true) {
+			return $this->objectToArray(object: $object);
+		}
+
+		return null;
+	}//end toArray()
+
+	/**
+	 * Normalise an OR record object into a flat array.
+	 *
+	 * @param object $object OR ObjectService payload.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function objectToArray(object $object): array {
+		if (method_exists($object, 'jsonSerialize') === true) {
+			$serialised = $object->jsonSerialize();
+			if (is_array($serialised) === true) {
+				return $serialised;
+			}
+		}
+
+		$inner = $this->innerObjectOf(object: $object);
+		if ($inner !== null) {
+			return $inner;
+		}
+
+		return (array)$object;
+	}//end objectToArray()
+
+	/**
+	 * The getObject() array of a record, with its uuid copied in as id.
+	 *
+	 * @param object $object OR ObjectService payload.
+	 *
+	 * @return array<string, mixed>|null Null when the record has no array getObject().
+	 */
+	private function innerObjectOf(object $object): array|null {
+		if (method_exists($object, 'getObject') === false) {
+			return null;
+		}
+
+		$inner = $object->getObject();
+		if (is_array($inner) === false) {
+			return null;
+		}
+
+		return $this->withUuidId(object: $object, inner: $inner);
+	}//end innerObjectOf()
+
+	/**
+	 * Copy the record's uuid into the inner array as id when it has none.
+	 *
+	 * @param object               $object OR ObjectService payload.
+	 * @param array<string, mixed> $inner  The record's getObject() array.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withUuidId(object $object, array $inner): array {
+		if (method_exists($object, 'getUuid') === true) {
+			$uuid = (string)$object->getUuid();
+			if ($uuid !== '' && isset($inner['id']) === false) {
+				$inner['id'] = $uuid;
+			}
+		}
+
+		return $inner;
+	}//end withUuidId()
 }//end class
