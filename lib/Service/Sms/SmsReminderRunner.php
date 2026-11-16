@@ -35,6 +35,8 @@ namespace OCA\Shillinq\Service\Sms;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -304,9 +306,10 @@ class SmsReminderRunner {
 		try {
 			$this->objectService->saveObject(
 				object: $object,
-				register: $this->registerSlug(),
-				schema: $schema,
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema),
+					uuid: $uuid
+				),
 				_rbac: false,
 			);
 		} catch (Throwable $e) {

@@ -314,9 +314,10 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 		try {
 			$this->objectService->saveObject(
 				object: $booking,
-				register: $this->notificationRegister(),
-				schema: 'Booking',
-				uuid: $id,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->notificationRegister(), schema: 'Booking'),
+					uuid: $id
+				),
 				_rbac: false,
 			);
 		} catch (\Throwable $e) {

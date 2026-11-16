@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Sms;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\Sms\LogSmsProviderAdapter;
 use OCA\Shillinq\Service\Sms\SmsOptOutPolicy;
 use OCA\Shillinq\Service\Sms\SmsPhoneNumberNormalizer;
@@ -33,6 +34,7 @@ use OCA\Shillinq\Service\Sms\SmsReminderDispatcher;
 use OCA\Shillinq\Service\Sms\SmsReminderRunner;
 use OCA\Shillinq\Service\Sms\SmsSendResult;
 use OCA\Shillinq\Service\Sms\SmsTemplateRenderer;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -120,9 +122,9 @@ final class SmsReminderRunnerTest extends TestCase {
 			}
 		);
 		$store->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true): array {
-				$this->saves[] = [(string)$register, (string)$schema, $object, $uuid, $_rbac];
-				return $object;
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true): ObjectEntityStub {
+				$this->saves[] = [(string)$options->target->register, (string)$options->target->schema, $object, $options->uuid, $_rbac];
+				return new ObjectEntityStub(payload: $object);
 			}
 		);
 

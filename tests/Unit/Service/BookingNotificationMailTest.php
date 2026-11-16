@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\BookingNotificationService;
 use OCA\Shillinq\Service\NotificationDispatch;
 use OCA\Shillinq\Service\NotificationMailer;
@@ -81,7 +82,10 @@ final class BookingNotificationMailTest extends TestCase {
 
 		$objectService = $this->createMock(ObjectServiceInterface::class);
 		$objectService->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true) use ($saveFails): ObjectEntityStub {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true) use ($saveFails): ObjectEntityStub {
+				$register = $options->target->register;
+				$schema   = $options->target->schema;
+				$uuid     = $options->uuid;
 				if ($saveFails === true && $schema === 'Booking') {
 					throw new RuntimeException('store down');
 				}
