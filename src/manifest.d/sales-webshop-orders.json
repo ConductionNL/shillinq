@@ -1,0 +1,154 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "sales-webshop-orders",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Web shop orders under Sales (REQ-SWO-001, REQ-SWO-006): an index over WebshopOrder with quick filters per intake state (received, invoiced, refused, duplicate, credited) and a detail page that shows the order as the shop sent it, the refusal reason, and links to its invoice and credit note. Web shop channels sit under the settings gear (menu-layout.json#settingsSection): an index and a detail over WebshopChannel, the shop's administration, collective debtor, accounts and issue mode."
+	},
+	"menu": [
+		{
+			"id": "WebshopOrders",
+			"label": "Web shop orders",
+			"icon": "StorefrontOutline",
+			"route": "WebshopOrders",
+			"order": 26
+		},
+		{
+			"id": "WebshopChannels",
+			"label": "Web shop channels",
+			"icon": "Storefront",
+			"route": "WebshopChannels",
+			"order": 46
+		}
+	],
+	"pages": [
+		{
+			"id": "WebshopOrders",
+			"route": "/verkoop/webshop-orders",
+			"type": "index",
+			"title": "Web shop orders",
+			"config": {
+				"register": "shillinq",
+				"schema": "WebshopOrder",
+				"quickFilters": [
+					{ "label": "All", "filter": {}, "default": true, "showCount": true },
+					{ "label": "Received", "filter": { "intakeState": "received" }, "showCount": true },
+					{ "label": "Invoiced", "filter": { "intakeState": "invoiced" }, "showCount": true },
+					{ "label": "Refused", "filter": { "intakeState": "refused" }, "showCount": true },
+					{ "label": "Duplicate", "filter": { "intakeState": "duplicate" }, "showCount": true },
+					{ "label": "Credited", "filter": { "intakeState": "credited" }, "showCount": true }
+				],
+				"columns": [
+					{ "key": "shopOrderId", "label": "Shop order number", "sortable": true },
+					{ "key": "channelId", "label": "Channel", "sortable": true, "labelField": "name" },
+					{ "key": "orderedAt", "label": "Ordered", "sortable": true },
+					{ "key": "currency", "label": "Currency", "sortable": true, "hidden": true },
+					{ "key": "intakeState", "label": "Status", "sortable": true },
+					{ "key": "refusalReason", "label": "Refusal reason" }
+				],
+				"defaultSort": "orderedAt",
+				"detailRoute": "WebshopOrderDetail"
+			}
+		},
+		{
+			"id": "WebshopOrderDetail",
+			"route": "/verkoop/webshop-orders/:id",
+			"type": "detail",
+			"title": "Web shop order",
+			"config": {
+				"_note": "An intake record integriq's shop connector writes; shillinq turns it into one sales invoice. Body leads with the order as the shop sent it and the intake state; the refusal reason names why an order was not invoiced; the related panel links the invoice (arInvoiceId) and the credit note (creditNoteId). No edit actions: the order is the shop's, the intake lifecycle is moved by the invoicer, never by hand.",
+				"register": "shillinq",
+				"schema": "WebshopOrder",
+				"indexRoute": "WebshopOrders",
+				"widgets": [
+					{
+						"id": "webshop-order-data",
+						"type": "data",
+						"title": "Order details",
+						"icon": "StorefrontOutline",
+						"content": { "columns": 2 }
+					},
+					{
+						"id": "webshop-order-related",
+						"type": "related",
+						"title": "Invoice and credit note",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "webshop-order-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 8 },
+					{ "id": "2", "widgetId": "webshop-order-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 8 }
+				]
+			}
+		},
+		{
+			"id": "WebshopChannels",
+			"route": "/configuratie/webshop-channels",
+			"type": "index",
+			"title": "Web shop channels",
+			"config": {
+				"register": "shillinq",
+				"schema": "WebshopChannel",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "platform", "label": "Platform", "sortable": true },
+					{ "key": "issueMode", "label": "Issue mode", "sortable": true },
+					{ "key": "clearingAccount", "label": "Clearing account" }
+				],
+				"defaultSort": "name",
+				"detailRoute": "WebshopChannelDetail",
+				"headerActions": [
+					{ "id": "new-webshop-channel", "label": "New web shop channel", "type": "open-form", "register": "shillinq", "schema": "WebshopChannel", "icon": "Plus" }
+				]
+			}
+		},
+		{
+			"id": "WebshopChannelDetail",
+			"route": "/configuratie/webshop-channels/:id",
+			"type": "detail",
+			"title": "Web shop channel",
+			"config": {
+				"_note": "One connected shop: what the shop does not know (administration, collective debtor, revenue, shipping and clearing accounts, issue mode). The order list shows what came in through this channel.",
+				"register": "shillinq",
+				"schema": "WebshopChannel",
+				"indexRoute": "WebshopChannels",
+				"widgets": [
+					{
+						"id": "webshop-channel-data",
+						"type": "data",
+						"title": "Channel",
+						"icon": "Storefront",
+						"content": { "columns": 2 }
+					},
+					{
+						"id": "webshop-channel-orders",
+						"type": "object-list",
+						"title": "Orders",
+						"icon": "StorefrontOutline",
+						"content": {
+							"register": "shillinq",
+							"schema": "WebshopOrder",
+							"filter": { "channelId": "@objectId" },
+							"sort": { "field": "orderedAt", "dir": "desc" },
+							"columns": [
+								{ "key": "shopOrderId", "label": "Shop order number" },
+								{ "key": "orderedAt", "label": "Ordered" },
+								{ "key": "intakeState", "label": "Status" }
+							],
+							"limit": 20,
+							"rowRoute": "WebshopOrderDetail",
+							"viewAllRoute": "WebshopOrders",
+							"viewAllQuery": { "channelId": "@objectId" },
+							"emptyText": "No orders came in through this channel yet."
+						}
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "webshop-channel-data", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 6 },
+					{ "id": "2", "widgetId": "webshop-channel-orders", "gridX": 0, "gridY": 6, "gridWidth": 12, "gridHeight": 6 }
+				]
+			}
+		}
+	]
+}

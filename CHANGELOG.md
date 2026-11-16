@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Web shop orders become sales invoices (`sales-webshop-orders`). An order a
+  shop connector in integriq writes is invoiced once per channel and shop
+  order number, on a matched or new business customer or the channel's
+  consumer debtor, at the domestic, OSS or reverse-charge VAT its buyer
+  routes to; a paid order is settled on the channel's clearing account and a
+  refund or cancellation becomes a credit note. Orders that cannot be
+  invoiced are refused with the reason. New pages: Sales → Web shop orders,
+  and Web shop channels under the settings gear.
 - Automatic payment reminders (`receivables-automatic-dunning`). A daily job
   marks issued invoices past their due date as overdue and sends each overdue
   invoice the stage that is due on its customer's ladder, by email with the

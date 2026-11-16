@@ -42,6 +42,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Db\AuditTrail\NamedActor;
+use OCA\OpenRegister\Db\AuditTrail\RegisterAuditEvent;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ListQuery;
 use OCA\OpenRegister\Db\RegisterMapper;
@@ -120,6 +122,13 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 	 * @var string
 	 */
 	public const FORMAT_JSON = 'json';
+
+	/**
+	 * Audit-trail action for a requested compliance export.
+	 *
+	 * @var string
+	 */
+	public const EXPORT_REQUESTED_ACTION = 'compliance.export_requested';
 
 	/**
 	 * Constructor.
@@ -265,6 +274,39 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 		return $rows;
 
 	}//end exportRows()
+
+	/**
+	 * Record an export request on the register's hash-chained audit trail.
+	 *
+	 * REQ-RAP-005 scenario 3: the trail answers "who exported what, when". The
+	 * entry names the register and no object, so it stays off every object's
+	 * timeline.
+	 *
+	 * @param string $scope  The requested export scope.
+	 * @param string $format The requested output format.
+	 * @param string $uid    The caller.
+	 *
+	 * @return void
+	 *
+	 * @throws \Throwable When OpenRegister is absent or the entry cannot be written.
+	 *
+	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
+	 */
+	public function recordExportRequest(string $scope, string $format, string $uid): void {
+		$registerMapper = $this->container->get(RegisterMapper::class);
+		$auditTrailMapper = $this->container->get(AuditTrailMapper::class);
+		$registerId = (int)$registerMapper->find($this->register())->getId();
+
+		$auditTrailMapper->recordRegisterEvent(
+			new RegisterAuditEvent(
+				register: $registerId,
+				action: self::EXPORT_REQUESTED_ACTION,
+				details: ['scope' => $scope, 'format' => $format],
+				actor: new NamedActor(id: $uid),
+			)
+		);
+
+	}//end recordExportRequest()
 
 	/**
 	 * Render the in-memory export as a single CSV blob (RFC 4180).
