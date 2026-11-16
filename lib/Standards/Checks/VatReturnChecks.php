@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * VAT return check provider
  *
  * The checks a BTW return (BtwAangifte) must pass before it is filed
@@ -32,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
