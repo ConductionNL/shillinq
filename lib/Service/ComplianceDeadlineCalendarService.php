@@ -81,6 +81,7 @@ use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;
@@ -1096,12 +1097,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 * @return string The register slug.
 	 */
 	private function registerSlug(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end registerSlug()
 
 }//end class

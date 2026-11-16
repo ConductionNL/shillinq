@@ -38,12 +38,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\EInvoice;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -476,11 +476,6 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

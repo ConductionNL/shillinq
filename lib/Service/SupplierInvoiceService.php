@@ -45,10 +45,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -1325,12 +1325,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	/**
