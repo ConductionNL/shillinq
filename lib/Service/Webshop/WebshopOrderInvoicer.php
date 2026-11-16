@@ -166,9 +166,7 @@ class WebshopOrderInvoicer {
 	 */
 	public function settle(array $order, string $orderId): string {
 		$invoiceId = (string)($order['arInvoiceId'] ?? '');
-		if ($orderId === '' || $invoiceId === '' || ($order['intakeState'] ?? '') !== 'invoiced'
-			|| (string)($order['settlementJournalId'] ?? '') !== ''
-		) {
+		if ($orderId === '' || self::awaitsSettlement(order: $order) === false) {
 			return 'skipped';
 		}
 
@@ -181,10 +179,7 @@ class WebshopOrderInvoicer {
 		$reference = trim((string)($payment['providerPaymentId'] ?? ''));
 		$webshop   = (array)($invoice['webshop'] ?? []);
 		if (($payment['status'] ?? '') !== 'paid') {
-			if ($reference !== '' && (string)($webshop['paymentReference'] ?? '') !== $reference) {
-				$this->saveInvoice(invoice: ['webshop' => ['paymentReference' => $reference] + $webshop] + $invoice, invoiceId: $invoiceId);
-			}
-
+			$this->keepPaymentReference(order: $order, invoice: $invoice);
 			return 'pending';
 		}
 
@@ -209,6 +204,36 @@ class WebshopOrderInvoicer {
 
 		return 'settled';
 	}//end settle()
+
+	/**
+	 * Whether an order is invoiced and not yet settled.
+	 *
+	 * @param array<string,mixed> $order The order.
+	 *
+	 * @return bool
+	 */
+	private static function awaitsSettlement(array $order): bool {
+		return (string)($order['arInvoiceId'] ?? '') !== ''
+			&& ($order['intakeState'] ?? '') === 'invoiced'
+			&& (string)($order['settlementJournalId'] ?? '') === '';
+	}//end awaitsSettlement()
+
+	/**
+	 * Keep the provider's payment id of a pending order on its invoice, when it changed.
+	 *
+	 * @param array<string,mixed> $order   The order, with the provider's payment id and its invoice id.
+	 * @param array<string,mixed> $invoice The invoice.
+	 *
+	 * @return void
+	 */
+	private function keepPaymentReference(array $order, array $invoice): void {
+		$invoiceId = (string)($order['arInvoiceId'] ?? '');
+		$reference = trim((string)($order['payment']['providerPaymentId'] ?? ''));
+		$webshop   = (array)($invoice['webshop'] ?? []);
+		if ($reference !== '' && (string)($webshop['paymentReference'] ?? '') !== $reference) {
+			$this->saveInvoice(invoice: ['webshop' => ['paymentReference' => $reference] + $webshop] + $invoice, invoiceId: $invoiceId);
+		}
+	}//end keepPaymentReference()
 
 	/**
 	 * Credit a refunded or cancelled order (REQ-SWO-005).
@@ -279,10 +304,7 @@ class WebshopOrderInvoicer {
 		}
 
 		$number = (string)($invoice['invoiceNumber'] ?? '');
-		$state  = 'issued';
-		if ((string)($invoice['lifecycleState'] ?? 'draft') === 'draft') {
-			$state = 'draft';
-		}
+		$state  = self::creditState(invoice: $invoice);
 
 		$credit = [
 			'invoiceNumber' => $number . '-C',
@@ -300,18 +322,7 @@ class WebshopOrderInvoicer {
 			'precedingInvoiceReferences' => [['reference' => $number, 'issueDate' => (string)($invoice['invoiceDate'] ?? '')]],
 			'invoiceLines' => $credited['lines'],
 		];
-		foreach (['buyerName', 'ossContext'] as $key) {
-			if (($invoice[$key] ?? null) !== null) {
-				$credit[$key] = $invoice[$key];
-			}
-		}
-
-		if (is_array($invoice['vatBreakdown'] ?? null) === true) {
-			$credit['vatBreakdown'] = array_map(
-				static fn (array $group): array => ['taxableAmount' => (0 - $credited['netCents']) / 100.0, 'taxAmount' => 0.0] + $group,
-				array_values(array_filter((array)$invoice['vatBreakdown'], 'is_array'))
-			);
-		}
+		$credit = self::withInvoiceContext(credit: $credit, invoice: $invoice);
 
 		$webshop = (array)($invoice['webshop'] ?? []);
 		$webshop['refundStatus'] = (string)($order['payment']['status'] ?? '');
@@ -319,6 +330,47 @@ class WebshopOrderInvoicer {
 
 		return $credit;
 	}//end creditNote()
+
+	/**
+	 * The lifecycle state a credit note starts in: draft while its invoice is a draft, else issued.
+	 *
+	 * @param array<string,mixed> $invoice The credited invoice.
+	 *
+	 * @return string
+	 */
+	private static function creditState(array $invoice): string {
+		if ((string)($invoice['lifecycleState'] ?? 'draft') === 'draft') {
+			return 'draft';
+		}
+
+		return 'issued';
+	}//end creditState()
+
+	/**
+	 * A credit note with the buyer name, OSS context and VAT breakdown of the invoice it credits.
+	 *
+	 * @param array<string,mixed> $credit  The credit note, with its netAmount.
+	 * @param array<string,mixed> $invoice The credited invoice.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function withInvoiceContext(array $credit, array $invoice): array {
+		foreach (['buyerName', 'ossContext'] as $key) {
+			if (($invoice[$key] ?? null) !== null) {
+				$credit[$key] = $invoice[$key];
+			}
+		}
+
+		if (is_array($invoice['vatBreakdown'] ?? null) === true) {
+			$taxable = (float)$credit['netAmount'];
+			$credit['vatBreakdown'] = array_map(
+				static fn (array $group): array => ['taxableAmount' => $taxable, 'taxAmount' => 0.0] + $group,
+				array_values(array_filter((array)$invoice['vatBreakdown'], 'is_array'))
+			);
+		}
+
+		return $credit;
+	}//end withInvoiceContext()
 
 	/**
 	 * The negated invoice lines a refund credits, with their net and VAT cents.
@@ -332,21 +384,60 @@ class WebshopOrderInvoicer {
 		$invoiceLines = array_values(array_filter((array)($invoice['invoiceLines'] ?? []), 'is_array'));
 		$payment      = (array)($order['payment'] ?? []);
 		$named        = array_values(array_filter((array)($payment['refundedLines'] ?? []), 'is_array'));
-		$wanted       = [];
 		if ($named === [] && ($payment['refundedShipping'] ?? false) !== true) {
-			foreach ($invoiceLines as $line) {
-				$wanted[] = [$line, (float)($line['quantity'] ?? 1)];
-			}
-
-			$whole = [
-				'netCents' => (int)round((float)($invoice['netAmount'] ?? 0) * 100),
-				'vatCents' => (int)round((float)($invoice['vatAmount'] ?? 0) * 100),
-			];
-			return ['lines' => self::negatedLines(wanted: $wanted)['lines']] + $whole;
+			return self::wholeCredit(invoice: $invoice, invoiceLines: $invoiceLines);
 		}
 
 		$orderLineCount = count((array)($order['lines'] ?? []));
-		foreach ($named as $refund) {
+		$wanted         = self::namedRefunds(order: $order, invoiceLines: $invoiceLines);
+
+		$shipping = $invoiceLines[$orderLineCount] ?? null;
+		if (($payment['refundedShipping'] ?? false) === true && $shipping !== null) {
+			$wanted[] = [$shipping, (float)($shipping['quantity'] ?? 1)];
+		}
+
+		return self::negatedLines(wanted: $wanted);
+	}//end creditedLines()
+
+	/**
+	 * The credit of a whole refunded invoice: every line, at the invoice's own totals.
+	 *
+	 * @param array<string,mixed>            $invoice      The invoice.
+	 * @param array<int,array<string,mixed>> $invoiceLines Its lines.
+	 *
+	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int}
+	 */
+	private static function wholeCredit(array $invoice, array $invoiceLines): array {
+		$wanted = [];
+		foreach ($invoiceLines as $line) {
+			$wanted[] = [$line, (float)($line['quantity'] ?? 1)];
+		}
+
+		return [
+			'lines' => self::negatedLines(wanted: $wanted)['lines'],
+			'netCents' => (int)round((float)($invoice['netAmount'] ?? 0) * 100),
+			'vatCents' => (int)round((float)($invoice['vatAmount'] ?? 0) * 100),
+		];
+	}//end wholeCredit()
+
+	/**
+	 * The [invoice line, credited quantity] pairs of the order lines the shop names as refunded.
+	 *
+	 * The shop names them in `payment.refundedLines` by 1-based `line` and `quantity`.
+	 *
+	 * @param array<string,mixed>            $order        The order.
+	 * @param array<int,array<string,mixed>> $invoiceLines The invoice's lines (shipping follows the order lines).
+	 *
+	 * @return array<int,array{0: array<string,mixed>, 1: float}>
+	 */
+	private static function namedRefunds(array $order, array $invoiceLines): array {
+		$orderLineCount = count((array)($order['lines'] ?? []));
+		$wanted         = [];
+		foreach ((array)($order['payment']['refundedLines'] ?? []) as $refund) {
+			if (is_array($refund) === false) {
+				continue;
+			}
+
 			$position = (int)($refund['line'] ?? 0);
 			$line     = $invoiceLines[$position - 1] ?? null;
 			if ($position < 1 || $position > $orderLineCount || $line === null) {
@@ -359,13 +450,8 @@ class WebshopOrderInvoicer {
 			}
 		}
 
-		$shipping = $invoiceLines[$orderLineCount] ?? null;
-		if (($payment['refundedShipping'] ?? false) === true && $shipping !== null) {
-			$wanted[] = [$shipping, (float)($shipping['quantity'] ?? 1)];
-		}
-
-		return self::negatedLines(wanted: $wanted);
-	}//end creditedLines()
+		return $wanted;
+	}//end namedRefunds()
 
 	/**
 	 * Negated credit note lines for [invoice line, credited quantity] pairs.
@@ -556,15 +642,10 @@ class WebshopOrderInvoicer {
 			$quantity = (float)($line['quantity'] ?? 1);
 			$rate = max(0.0, (float)($line['vatRate'] ?? 0));
 			$highestRate = max($highestRate, $rate);
-			$name = trim((string)($line['description'] ?? ''));
-			if ($name === '') {
-				$name = (string)($line['sku'] ?? 'Item');
-			}
-
 			$lines[] = self::line(
 				spec: [
 					'number' => (count($lines) + 1),
-					'name' => $name,
+					'name' => self::lineName(line: $line),
 					'quantity' => $quantity,
 					'unitPrice' => (float)($line['unitPrice'] ?? 0),
 					'includesVat' => $includesVat,
@@ -576,11 +657,6 @@ class WebshopOrderInvoicer {
 
 		$shipping = (float)($order['shipping'] ?? 0);
 		if ($shipping > 0.0) {
-			$account = (string)($channel['shippingAccount'] ?? '');
-			if ($account === '') {
-				$account = (string)($channel['revenueAccount'] ?? '');
-			}
-
 			$lines[] = self::line(
 				spec: [
 					'number' => (count($lines) + 1),
@@ -588,7 +664,7 @@ class WebshopOrderInvoicer {
 					'quantity' => 1.0,
 					'unitPrice' => $shipping,
 					'includesVat' => $includesVat,
-					'account' => $account,
+					'account' => self::shippingAccount(channel: $channel),
 				] + self::routedRate(shopRate: $highestRate, route: $route),
 				totals: $totals
 			);
@@ -596,6 +672,38 @@ class WebshopOrderInvoicer {
 
 		return ['lines' => $lines, 'netCents' => $totals['net'], 'vatCents' => $totals['vat'], 'grossCents' => ($totals['net'] + $totals['vat'])];
 	}//end invoiceLines()
+
+	/**
+	 * The invoice line name of an order line: its description, else its SKU.
+	 *
+	 * @param array<string,mixed> $line The order line.
+	 *
+	 * @return string
+	 */
+	private static function lineName(array $line): string {
+		$name = trim((string)($line['description'] ?? ''));
+		if ($name === '') {
+			return (string)($line['sku'] ?? 'Item');
+		}
+
+		return $name;
+	}//end lineName()
+
+	/**
+	 * The account shipping is booked on: the channel's shipping account, else its revenue account.
+	 *
+	 * @param array<string,mixed> $channel The WebshopChannel.
+	 *
+	 * @return string
+	 */
+	private static function shippingAccount(array $channel): string {
+		$account = (string)($channel['shippingAccount'] ?? '');
+		if ($account === '') {
+			return (string)($channel['revenueAccount'] ?? '');
+		}
+
+		return $account;
+	}//end shippingAccount()
 
 	/**
 	 * The rate a line charges, the rate its net is derived with, and its VAT category.

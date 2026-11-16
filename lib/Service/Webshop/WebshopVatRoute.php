@@ -96,19 +96,12 @@ class WebshopVatRoute {
 			return self::refusal(country: $country, text: sprintf('The buyer is in %s; shillinq has no VAT route for a sale outside the EU.', $country));
 		}
 
-		$type   = 'b2c';
-		$status = '';
+		$type = 'b2c';
 		if (($buyer['type'] ?? 'consumer') === 'business') {
-			$type  = 'b2b';
-			$vatId = trim((string)($buyer['vatId'] ?? ''));
-			if ($vatId !== '') {
-				$status = 'invalid';
-				if (($this->vies->validate(administrationId: $adminId, vatId: $vatId)['valid'] ?? false) === true) {
-					$status = 'valid';
-				}
-			}
+			$type = 'b2b';
 		}
 
+		$status   = $this->vatIdStatus(buyer: $buyer, adminId: $adminId);
 		$decision = $this->router->route(customerType: $type, destinationCountry: $country, vatValidationStatus: $status);
 		if (($decision['route'] ?? '') === 'icp') {
 			return self::result(
@@ -125,6 +118,27 @@ class WebshopVatRoute {
 
 		return $this->ossRoute(country: $country, shopRates: $shopRates, invoiceDate: $invoiceDate);
 	}//end routeFor()
+
+	/**
+	 * The VIES status of a business buyer's VAT id: valid, invalid, or empty for a consumer or a buyer without one.
+	 *
+	 * @param array<string,mixed> $buyer   The order's buyer.
+	 * @param string              $adminId The administration the VAT id check is recorded for.
+	 *
+	 * @return string
+	 */
+	private function vatIdStatus(array $buyer, string $adminId): string {
+		$vatId = trim((string)($buyer['vatId'] ?? ''));
+		if (($buyer['type'] ?? 'consumer') !== 'business' || $vatId === '') {
+			return '';
+		}
+
+		if (($this->vies->validate(administrationId: $adminId, vatId: $vatId)['valid'] ?? false) === true) {
+			return 'valid';
+		}
+
+		return 'invalid';
+	}//end vatIdStatus()
 
 	/**
 	 * The key a shop rate is looked up under.
