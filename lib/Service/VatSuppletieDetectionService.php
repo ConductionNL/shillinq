@@ -64,6 +64,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -80,7 +81,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class VatSuppletieDetectionService {
+class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterface {
 	/**
 	 * Statutory suppletie threshold in euros. Verified 2026-07-13 via
 	 * WebSearch against belastingdienst.nl (not from training-data memory):
