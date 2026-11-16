@@ -154,49 +154,12 @@ final class SigningConcludedListener implements IEventListener {
 			return;
 		}
 
-		$found = $this->locateSubject(payload: $payload);
+		$found = $this->lookup()->find(payload: $payload);
 		if ($found !== null) {
 			$this->recordOutcome(found: $found, conclusion: ($payload + ['outcome' => $outcome]));
 		}
 
 	}//end project()
-
-	/**
-	 * Find the finance object the signing request belongs to, logging and
-	 * answering null when there is no subject id or no matching object.
-	 *
-	 * @param array<string,string> $payload The normalised payload.
-	 *
-	 * @return FoundSubject|null The finance object, or null.
-	 */
-	private function locateSubject(array $payload): FoundSubject|null {
-		$subjectId = $this->subjects()->subjectId(payload: $payload);
-		if ($subjectId === '') {
-			$this->log()->noSubjectId(payload: $payload, request: 'signing request');
-			return null;
-		}
-
-		return $this->locateOrLog(payload: $payload, subjectId: $subjectId);
-
-	}//end locateSubject()
-
-	/**
-	 * Search the subject schemas, logging when nothing matches.
-	 *
-	 * @param array<string,string> $payload   The normalised payload.
-	 * @param string               $subjectId The resolved subject id.
-	 *
-	 * @return FoundSubject|null The finance object, or null.
-	 */
-	private function locateOrLog(array $payload, string $subjectId): FoundSubject|null {
-		$found = $this->subjects()->locate(payload: $payload, knownSchemas: self::SUBJECT_SCHEMAS);
-		if ($found === null) {
-			$this->log()->noMatch(payload: $payload, subjectId: $subjectId);
-		}
-
-		return $found;
-
-	}//end locateOrLog()
 
 	/**
 	 * Record the outcome through the signing service, persist the mirror
@@ -289,6 +252,16 @@ final class SigningConcludedListener implements IEventListener {
 		return new ConcludedSubjectStore(registerLocation: $this->registerLocation, objectService: $this->objectService);
 
 	}//end subjects()
+
+	/**
+	 * The subject lookup of this listener.
+	 *
+	 * @return ConcludedSubjectLookup The lookup.
+	 */
+	private function lookup(): ConcludedSubjectLookup {
+		return new ConcludedSubjectLookup(store: $this->subjects(), log: $this->log(), knownSchemas: self::SUBJECT_SCHEMAS, request: 'signing request');
+
+	}//end lookup()
 
 	/**
 	 * The log lines of this listener.
