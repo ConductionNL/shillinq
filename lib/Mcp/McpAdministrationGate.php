@@ -25,7 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Mcp;
 
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\IUserSession;
 
 /**
@@ -45,11 +45,11 @@ class McpAdministrationGate {
 	 * Constructor.
 	 *
 	 * @param IUserSession                 $userSession           The caller's session.
-	 * @param AdministrationContextService $administrationContext The administrations the caller may access.
+	 * @param AdministrationContextServiceInterface $administrationContext The administrations the caller may access.
 	 */
 	public function __construct(
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 	}//end __construct()
 

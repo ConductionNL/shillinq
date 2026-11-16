@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -48,7 +49,7 @@ use Throwable;
  *
  * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
  */
-class PensionValuationPostingService {
+class PensionValuationPostingService implements PensionValuationPostingServiceInterface {
 
 	/**
 	 * App-config key of the profit-and-loss pension cost account.
