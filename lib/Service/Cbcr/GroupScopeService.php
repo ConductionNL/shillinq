@@ -32,6 +32,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 
@@ -500,7 +501,7 @@ class GroupScopeService {
 		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
-			->saveObject(object: $object, uuid: $uuid);
+			->saveObject(object: $object, options: new ObjectSaveOptions(uuid: $uuid));
 
 		return self::rowOf(row: $saved) + $object;
 	}//end save()

@@ -31,6 +31,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -137,7 +139,13 @@ class BackfillGroupEntityCbcFields implements IRepairStep {
 					continue;
 				}
 
-				$this->objectService->patchObject(objectId: $id, data: $patch, register: $register, schema: 'GroupEntityRegistry');
+				$this->objectService->patchObject(
+					patch: new ObjectPatch(
+						objectId: $id,
+						data: $patch,
+						target: new ObjectFindTarget(register: $register, schema: 'GroupEntityRegistry')
+					)
+				);
 				$changed++;
 			}
 

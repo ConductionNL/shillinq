@@ -45,6 +45,7 @@ namespace OCA\Shillinq\Service\Cbcr;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -535,7 +536,10 @@ class Pillar2SafeHarbourService {
 			$object['id'] = $uuid;
 		}
 
-		$saved = $this->objectService->setRegister($this->register())->setSchema($schema)->saveObject(object: $object, uuid: $uuid);
+		$saved = $this->objectService->setRegister($this->register())->setSchema($schema)->saveObject(
+			object: $object,
+			options: new ObjectSaveOptions(uuid: $uuid)
+		);
 
 		return (ObjectIdentifier::recordWithId(candidate: $saved) ?? []) + $object;
 	}//end save()

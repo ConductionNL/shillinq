@@ -49,6 +49,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -987,7 +988,10 @@ class CbcrFiguresService {
 			$object['id'] = $uuid;
 		}
 
-		$saved = $this->objectService->setRegister($this->register())->setSchema($schema)->saveObject(object: $object, uuid: $uuid);
+		$saved = $this->objectService->setRegister($this->register())->setSchema($schema)->saveObject(
+			object: $object,
+			options: new ObjectSaveOptions(uuid: $uuid)
+		);
 
 		return (ObjectIdentifier::recordWithId(candidate: $saved) ?? []) + $object;
 	}//end save()
