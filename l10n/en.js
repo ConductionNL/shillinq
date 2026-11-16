@@ -5001,6 +5001,7 @@ OC.L10N.register(
         "No Peppol participant was found for this customer. Send the invoice by email instead.": "No Peppol participant was found for this customer. Send the invoice by email instead.",
         "Invoice %s": "Invoice %s",
         "Dear customer,\n\nAttached is invoice %1$s of %2$s %3$s, due on %4$s.\n\nKind regards": "Dear customer,\n\nAttached is invoice %1$s of %2$s %3$s, due on %4$s.\n\nKind regards",
+        "Dear customer,\n\nAttached is invoice %1$s of %2$s %3$s, due on %4$s.\n\nPay online: %5$s\n\nKind regards": "Dear customer,\n\nAttached is invoice %1$s of %2$s %3$s, due on %4$s.\n\nPay online: %5$s\n\nKind regards",
         "The mail could not be sent: %s": "The mail could not be sent: %s",
         "The mail server refused the address %s.": "The mail server refused the address %s.",
         "Only an issued invoice can be sent.": "Only an issued invoice can be sent.",

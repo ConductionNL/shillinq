@@ -34,6 +34,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
+use OCA\Shillinq\Service\Payment\PayLinkService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -107,6 +108,7 @@ class InvoiceSendingService {
 	 * @param IL10N                        $l10n                  The mail's words.
 	 * @param ITimeFactory                 $time                  The moment of the send.
 	 * @param LoggerInterface              $logger                A failed send, without the mail body.
+	 * @param PayLinkService|null          $payLinks              The pay link an open invoice's mail carries; without it none.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -119,6 +121,7 @@ class InvoiceSendingService {
 		private readonly IL10N $l10n,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
+		private readonly ?PayLinkService $payLinks = null,
 	) {
 	}//end __construct()
 
@@ -424,17 +427,7 @@ class InvoiceSendingService {
 			$message = $this->mailer->createMessage();
 			$message->setTo([$address => $delivery['name']]);
 			$message->setSubject($this->l10n->t('Invoice %s', [$number]));
-			$message->setPlainBody(
-				$this->l10n->t(
-					"Dear customer,\n\nAttached is invoice %1\$s of %2\$s %3\$s, due on %4\$s.\n\nKind regards",
-					[
-						$number,
-						(string)($invoice['currency'] ?? 'EUR'),
-						number_format((float)($invoice['grossAmount'] ?? 0), 2, ',', '.'),
-						(string)($invoice['dueDate'] ?? ''),
-					]
-				)
-			);
+			$message->setPlainBody($this->mailBody(invoice: $invoice));
 			$message->attach($this->mailer->createAttachment($delivery['pdf'], $delivery['filename'], 'application/pdf'));
 			$refused = $this->mailer->send($message);
 		} catch (Throwable $e) {
@@ -448,6 +441,41 @@ class InvoiceSendingService {
 
 		return '';
 	}//end mail()
+
+	/**
+	 * The plain mail body: the invoice, its amount and due date, and the pay
+	 * link when the invoice gets one (receivables-payment-links D4, D5: no link
+	 * with a dormant or absent payment adapter, or for an invoice that is not open).
+	 *
+	 * @param array<string, mixed> $invoice The ARInvoice.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.2
+	 */
+	private function mailBody(array $invoice): string {
+		$parameters = [
+			(string)($invoice['invoiceNumber'] ?? ''),
+			(string)($invoice['currency'] ?? 'EUR'),
+			number_format((float)($invoice['grossAmount'] ?? 0), 2, ',', '.'),
+			(string)($invoice['dueDate'] ?? ''),
+		];
+
+		$payLink = null;
+		if ($this->payLinks !== null) {
+			$payLink = $this->payLinks->forOpenInvoice(invoice: $invoice);
+		}
+
+		if ($payLink === null) {
+			return $this->l10n->t("Dear customer,\n\nAttached is invoice %1\$s of %2\$s %3\$s, due on %4\$s.\n\nKind regards", $parameters);
+		}
+
+		$parameters[] = $payLink;
+		return $this->l10n->t(
+			"Dear customer,\n\nAttached is invoice %1\$s of %2\$s %3\$s, due on %4\$s.\n\nPay online: %5\$s\n\nKind regards",
+			$parameters
+		);
+	}//end mailBody()
 
 	/**
 	 * The invoice as a PDF named `Factuur-<invoiceNumber>.pdf`, with its UBL
