@@ -29,6 +29,7 @@ use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Http;
 use OCP\IGroup;
 use OCP\IGroupManager;
@@ -135,7 +136,7 @@ class ReportScheduleControllerTest extends TestCase {
 	 * @return array<string, mixed> The schedule.
 	 */
 	private function stored(string $id): array {
-		$found = $this->store->find(id: $id, schema: 'ReportSchedule');
+		$found = ObjectIdentifier::findScoped(scoped: $this->store->setRegister('shillinq')->setSchema('ReportSchedule'), id: $id);
 		self::assertNotNull($found);
 
 		return $found->getObject();

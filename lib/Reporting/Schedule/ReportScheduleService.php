@@ -30,9 +30,13 @@ namespace OCA\Shillinq\Reporting\Schedule;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
 use OutOfBoundsException;
 use Throwable;
@@ -126,8 +130,9 @@ class ReportScheduleService {
 
 		$saved = $this->objectService->saveObject(
 			object: $schedule,
-			register: $this->settings->getRegisterSlug(),
-			schema: self::SCHEMA
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: self::SCHEMA)
+			)
 		);
 
 		return $saved->getObject();
@@ -152,12 +157,10 @@ class ReportScheduleService {
 	public function update(string $ownerId, string $scheduleId, array $input, DateTimeImmutable $now): array {
 		$found = null;
 		try {
-			$found = $this->objectService->find(
+			$found = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema(self::SCHEMA),
 				id: $scheduleId,
-				register: $this->settings->getRegisterSlug(),
-				schema: self::SCHEMA,
-				_rbac: false,
-				_multitenancy: false
+				named: ['_rbac' => false, '_multitenancy' => false]
 			);
 		} catch (Throwable) {
 			$found = null;
@@ -192,10 +195,11 @@ class ReportScheduleService {
 		}
 
 		$saved = $this->objectService->patchObject(
-			objectId: $scheduleId,
-			data: $patch,
-			register: $this->settings->getRegisterSlug(),
-			schema: self::SCHEMA,
+			patch: new ObjectPatch(
+				objectId: $scheduleId,
+				data: $patch,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: self::SCHEMA)
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
