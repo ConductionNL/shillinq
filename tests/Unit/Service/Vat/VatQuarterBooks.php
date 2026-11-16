@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Vat;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Tests\Unit\Lifecycle\Action\InMemoryObjectStore;
 use OCP\IAppConfig;
@@ -106,7 +107,14 @@ trait VatQuarterBooks {
 
 		$action = new MaterialiseGlTransactionAction($posting->mock($this), $this->defaultsConfig(), $this->createMock(LoggerInterface::class));
 		foreach ($documents as [$document, $schema]) {
-			$action->execute($document, [], ['sourceSchema' => $schema], MaterialiseGlTransactionAction::class);
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $document,
+					previousData: [],
+					parameters: ['sourceSchema' => $schema],
+					actionName: MaterialiseGlTransactionAction::class
+				)
+			);
 		}
 
 		return [
