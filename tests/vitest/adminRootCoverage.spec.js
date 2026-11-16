@@ -51,6 +51,7 @@ async function stub(name, tag) {
 
 vi.mock('@conduction/nextcloud-vue', async () => ({
 	CnAdminSettingsShell: await stub('CnAdminSettingsShell', 'div'),
+	CnSettingsFieldsSection: await stub('CnSettingsFieldsSection', 'section'),
 	CnSettingsSection: await stub('CnSettingsSection', 'section'),
 	CnToggleTableWidget: await stub('CnToggleTableWidget', 'table'),
 }))
@@ -101,9 +102,9 @@ describe('AdminRoot render', () => {
 			breadcrumbNote: 'only for administrators, each section saves on its own',
 			docUrl: 'https://shillinq.conduction.nl/docs/intro',
 		})
-		expect(shell.attrs.tabs.map((tab) => [tab.id, tab.count])).toEqual([['general', undefined], ['required-fields', 3], ['connections', undefined], ['appointments', undefined]])
+		expect(shell.attrs.tabs.map((tab) => [tab.id, tab.count])).toEqual([['general', undefined], ['required-fields', 3], ['connections', undefined], ['appointments', undefined], ['exchange-rates', undefined]])
 		expect(shell.attrs.breadcrumbs.map((crumb) => crumb.label)).toEqual(['Administration settings', 'Shillinq', 'General'])
-		expect(Object.keys(shell.slots)).toEqual(['default', 'tab-required-fields', 'tab-connections', 'tab-appointments'])
+		expect(Object.keys(shell.slots)).toEqual(['tab-exchange-rates', 'default', 'tab-required-fields', 'tab-connections', 'tab-appointments'])
 	})
 
 	it('shows the embedded settings forms only once the stores are ready', async () => {

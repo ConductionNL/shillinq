@@ -799,13 +799,6 @@
 							"icon": "CurrencyUsd",
 							"route": "FXRates",
 							"order": 28
-						},
-						{
-							"id": "FxRatesAdmin",
-							"label": "FX Rates (Admin)",
-							"icon": "CogOutline",
-							"route": "FxRatesAdmin",
-							"order": 29
 						}
 					]
 				}
@@ -824,13 +817,6 @@
 					"route": "/bookkeeping/multi-currency/fx-rates/:id",
 					"type": "detail",
 					"title": "FX Rate"
-				},
-				{
-					"_fragment": "add-shillinq-multi-currency-t4",
-					"id": "FxRatesAdmin",
-					"route": "/bookkeeping/multi-currency/fx-rates/admin",
-					"type": "custom",
-					"title": "FX Rates (Admin)"
 				}
 			]
 		},
