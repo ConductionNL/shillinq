@@ -98,20 +98,21 @@ class GroupScopeAssessmentJob extends TimedJob {
 		}
 
 		foreach ($due as $upe) {
-			$this->assessOne(upe: $upe, year: $year, now: $now);
+			$this->assessOne(upe: $upe, run: ['year' => $year, 'now' => $now]);
 		}
 	}//end run()
 
 	/**
 	 * Assess one ultimate parent and notify its owner on a changed outcome.
 	 *
-	 * @param array<string,mixed> $upe  The ultimate parent.
-	 * @param int                 $year The fiscal year.
-	 * @param DateTimeImmutable   $now  The moment of assessment.
+	 * @param array<string,mixed>                     $upe The ultimate parent.
+	 * @param array{year:int,now:DateTimeImmutable} $run The fiscal year and the moment of assessment.
 	 *
 	 * @return void
 	 */
-	private function assessOne(array $upe, int $year, DateTimeImmutable $now): void {
+	private function assessOne(array $upe, array $run): void {
+		$year  = $run['year'];
+		$now   = $run['now'];
 		$upeId = (string)($upe['id'] ?? ($upe['@self']['id'] ?? ''));
 		try {
 			$assessment = $this->scope->assess(upeId: $upeId, fiscalYear: $year, entered: [], actor: 'system', now: $now);
@@ -131,7 +132,10 @@ class GroupScopeAssessmentJob extends TimedJob {
 			return;
 		}
 
-		$this->notify(owner: $owner, upeId: $upeId, upe: $upe, year: $year, assessment: $assessment);
+		$this->notify(
+			target: ['owner' => $owner, 'upeId' => $upeId, 'group' => (string)($upe['entityName'] ?? $upeId), 'year' => $year],
+			assessment: $assessment
+		);
 	}//end assessOne()
 
 	/**
@@ -150,25 +154,25 @@ class GroupScopeAssessmentJob extends TimedJob {
 	/**
 	 * Tell the owner the outcome changed.
 	 *
-	 * @param string              $owner      The owner's user id.
-	 * @param string              $upeId      The ultimate parent's id.
-	 * @param array<string,mixed> $upe        The ultimate parent.
-	 * @param int                 $year       The fiscal year.
-	 * @param array<string,mixed> $assessment The assessment.
+	 * @param array{owner:string,upeId:string,group:string,year:int} $target     The owner's user id, the ultimate
+	 *                                                                     parent's id and name, and the fiscal year.
+	 * @param array<string,mixed>                                    $assessment The assessment.
 	 *
 	 * @return void
 	 */
-	private function notify(string $owner, string $upeId, array $upe, int $year, array $assessment): void {
+	private function notify(array $target, array $assessment): void {
+		$upeId = $target['upeId'];
+		$year  = $target['year'];
 		try {
 			$notification = $this->notifications->createNotification();
 			$notification->setApp(AppIdentity::APP_ID)
-				->setUser($owner)
+				->setUser($target['owner'])
 				->setDateTime(new DateTime('@' . $this->time->getTime()))
 				->setObject('group_scope_assessment', $upeId . ':' . $year)
 				->setSubject(
 					self::SUBJECT,
 					[
-						'group' => (string)($upe['entityName'] ?? $upeId),
+						'group' => $target['group'],
 						'year' => $year,
 						'cbcrInScope' => (bool)($assessment['cbcrInScope'] ?? false),
 						'pillar2InScope' => (bool)($assessment['pillar2InScope'] ?? false),

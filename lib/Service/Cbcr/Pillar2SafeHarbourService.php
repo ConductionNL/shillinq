@@ -151,36 +151,52 @@ class Pillar2SafeHarbourService {
 			);
 		}
 
-		$start  = substr((string)($assessment['fiscalYearStart'] ?? sprintf('%04d-01-01', $fiscalYear)), 0, 10);
-		$end    = substr((string)($assessment['fiscalYearEnd'] ?? sprintf('%04d-12-31', $fiscalYear)), 0, 10);
-		$window = self::inTransitionalWindow(start: $start, end: $end);
-		$period = 'FY' . $fiscalYear;
-		$rates  = self::carveOutRates(startYear: (int)substr($start, 0, 4));
+		$start = substr((string)($assessment['fiscalYearStart'] ?? sprintf('%04d-01-01', $fiscalYear)), 0, 10);
+		$end   = substr((string)($assessment['fiscalYearEnd'] ?? sprintf('%04d-12-31', $fiscalYear)), 0, 10);
+		$year  = [
+			'upe' => $upeId,
+			'period' => 'FY' . $fiscalYear,
+			'window' => self::inTransitionalWindow(start: $start, end: $end),
+			'startYear' => (int)substr($start, 0, 4),
+			'rates' => self::carveOutRates(startYear: (int)substr($start, 0, 4)),
+		];
 
 		$outcome = [];
-		foreach ($this->all(schema: 'CbcrJurisdictionSummary', filters: ['ultimateParentEntity' => $upeId, 'period' => $period]) as $summary) {
-			$code   = (string)($summary['jurisdiction'] ?? '');
-			$passed = [];
-			if ($window === true) {
-				foreach (self::evaluate(summary: $summary, startYear: (int)substr($start, 0, 4), rates: $rates) as $test => $result) {
-					$this->writeTest(upeId: $upeId, period: $period, jurisdiction: $code, test: $test, result: $result);
-					if ($result['pass'] === true) {
-						$passed[] = $test;
-					}
-				}
-			}
-
-			$computation = null;
-			if ($passed === []) {
-				$computation = $this->draftComputation(upeId: $upeId, period: $period, summary: $summary, rates: $rates);
-			}
-
-			$outcome[$code] = ['passed' => $passed, 'computation' => $computation];
-		}//end foreach
+		foreach ($this->all(schema: 'CbcrJurisdictionSummary', filters: ['ultimateParentEntity' => $upeId, 'period' => $year['period']]) as $summary) {
+			$outcome[(string)($summary['jurisdiction'] ?? '')] = $this->testJurisdiction(year: $year, summary: $summary);
+		}
 
 		ksort($outcome);
 		return $outcome;
 	}//end test()
+
+	/**
+	 * Run the tests on one jurisdiction summary, and draft its computation when it passes none.
+	 *
+	 * @param array{upe:string,period:string,window:bool,startYear:int,rates:array{payroll:float,tangible:float}} $year    The year.
+	 * @param array<string,mixed>                                                                                  $summary The jurisdiction summary.
+	 *
+	 * @return array{passed:array<int,string>,computation:string|null}
+	 */
+	private function testJurisdiction(array $year, array $summary): array {
+		$key    = ['ultimateParentEntity' => $year['upe'], 'period' => $year['period'], 'jurisdiction' => (string)($summary['jurisdiction'] ?? '')];
+		$passed = [];
+		if ($year['window'] === true) {
+			foreach (self::evaluate(summary: $summary, year: $year) as $test => $result) {
+				$this->writeTest(key: $key + ['testApplied' => $test], result: $result);
+				if ($result['pass'] === true) {
+					$passed[] = $test;
+				}
+			}
+		}
+
+		$computation = null;
+		if ($passed === []) {
+			$computation = $this->draftComputation(key: $key, summary: $summary, rates: $year['rates']);
+		}
+
+		return ['passed' => $passed, 'computation' => $computation];
+	}//end testJurisdiction()
 
 	/**
 	 * Apply the Dutch QDMTT to an NL computation whose effective tax rate is below the minimum.
@@ -205,6 +221,27 @@ class Pillar2SafeHarbourService {
 			throw new InvalidArgumentException('Unknown jurisdiction computation: ' . $computationId);
 		}
 
+		$figures = $this->qdmttFigures(computation: $computation);
+		if ($figures === null) {
+			return null;
+		}
+
+		$computation['qdmttApplicable'] = true;
+		$computation['qdmttAmount']     = $figures['topUpTax'];
+		$this->save(schema: 'Pillar2JurisdictionComputation', object: $computation, uuid: $computationId);
+
+		return $this->writeQdmttReturn(computation: $computation, figures: $figures);
+	}//end applyQdmtt()
+
+	/**
+	 * The computed figures of an NL computation not under a safe harbour whose
+	 * effective tax rate is below the minimum, or null when no QDMTT applies.
+	 *
+	 * @param array<string,mixed> $computation The computation.
+	 *
+	 * @return array{globeIncome:float,etr:float,sbie:float,topUpTax:float}|null
+	 */
+	private function qdmttFigures(array $computation): ?array {
 		$upeId  = (string)($computation['ultimateParentEntity'] ?? '');
 		$period = (string)($computation['period'] ?? '');
 		if (strtoupper((string)($computation['jurisdiction'] ?? '')) !== 'NL'
@@ -218,10 +255,20 @@ class Pillar2SafeHarbourService {
 			return null;
 		}
 
-		$computation['qdmttApplicable'] = true;
-		$computation['qdmttAmount']     = $figures['topUpTax'];
-		$this->save(schema: 'Pillar2JurisdictionComputation', object: $computation, uuid: $computationId);
+		return $figures;
+	}//end qdmttFigures()
 
+	/**
+	 * Create or update the QDMTT return of the Dutch filing entity for a computation.
+	 *
+	 * @param array<string,mixed>                                         $computation The computation.
+	 * @param array{globeIncome:float,etr:float,sbie:float,topUpTax:float} $figures     Its computed figures.
+	 *
+	 * @return array<string,mixed> The QDMTT return.
+	 */
+	private function writeQdmttReturn(array $computation, array $figures): array {
+		$upeId      = (string)($computation['ultimateParentEntity'] ?? '');
+		$period     = (string)($computation['period'] ?? '');
 		$fiscalYear = (int)substr($period, 2);
 		$assessment = $this->first(schema: 'GroupScopeAssessment', filters: ['ultimateParentEntity' => $upeId, 'fiscalYear' => $fiscalYear]);
 		$deadline   = ($assessment['bijheffingReturnDeadline'] ?? null);
@@ -240,7 +287,7 @@ class Pillar2SafeHarbourService {
 		];
 
 		return $this->save(schema: 'QdmttReturn', object: $return, uuid: self::idOf(row: $existing));
-	}//end applyQdmtt()
+	}//end writeQdmttReturn()
 
 	/**
 	 * The jurisdiction-level computation: GloBE income, ETR, SBIE and top-up tax.
@@ -312,19 +359,52 @@ class Pillar2SafeHarbourService {
 	/**
 	 * The three tests on one summary.
 	 *
-	 * @param array<string,mixed>                $summary   The jurisdiction summary.
-	 * @param int                                $startYear The calendar year the fiscal year begins in.
-	 * @param array{payroll:float,tangible:float} $rates     The carve-out rates.
+	 * @param array<string,mixed>                                               $summary The jurisdiction summary.
+	 * @param array{startYear:int,rates:array{payroll:float,tangible:float}} $year    The year the fiscal year begins in and its carve-out rates.
 	 *
 	 * @return array<string,array{pass:bool,inputs:array<string,mixed>}>
 	 */
-	private static function evaluate(array $summary, int $startYear, array $rates): array {
-		$revenue = (float)($summary['unrelatedPartyRevenue'] ?? 0) + (float)($summary['relatedPartyRevenue'] ?? 0);
-		$profit  = (float)($summary['profitBeforeTax'] ?? 0);
-		$taxes   = (float)($summary['incomeTaxAccrued'] ?? 0) + (float)($summary['deferredTaxExpense'] ?? 0);
-		$sbie    = round(((float)($summary['eligiblePayroll'] ?? 0) * $rates['payroll'])
-			+ ((float)($summary['tangibleAssetsOtherThanCash'] ?? 0) * $rates['tangible']), 2);
+	private static function evaluate(array $summary, array $year): array {
+		$profit = (float)($summary['profitBeforeTax'] ?? 0);
+		return [
+			'de-minimis' => self::deMinimisTest(summary: $summary, profit: $profit),
+			'simplified-etr' => self::simplifiedEtrTest(summary: $summary, startYear: $year['startYear']),
+			'routine-profits' => self::routineProfitsTest(summary: $summary, rates: $year['rates']),
+		];
+	}//end evaluate()
 
+	/**
+	 * The de minimis test: revenue and profit both below their thresholds.
+	 *
+	 * @param array<string,mixed> $summary The jurisdiction summary.
+	 * @param float               $profit  Its profit before tax.
+	 *
+	 * @return array{pass:bool,inputs:array<string,mixed>}
+	 */
+	private static function deMinimisTest(array $summary, float $profit): array {
+		$revenue = (float)($summary['unrelatedPartyRevenue'] ?? 0) + (float)($summary['relatedPartyRevenue'] ?? 0);
+		return [
+			'pass' => ($revenue < self::DE_MINIMIS_REVENUE && $profit < self::DE_MINIMIS_PROFIT),
+			'inputs' => [
+				'totalRevenue' => $revenue,
+				'profitBeforeTax' => $profit,
+				'revenueThreshold' => self::DE_MINIMIS_REVENUE,
+				'profitThreshold' => self::DE_MINIMIS_PROFIT,
+			],
+		];
+	}//end deMinimisTest()
+
+	/**
+	 * The simplified effective tax rate test: covered taxes over profit at or above the year's threshold.
+	 *
+	 * @param array<string,mixed> $summary   The jurisdiction summary.
+	 * @param int                 $startYear The calendar year the fiscal year begins in.
+	 *
+	 * @return array{pass:bool,inputs:array<string,mixed>}
+	 */
+	private static function simplifiedEtrTest(array $summary, int $startYear): array {
+		$profit    = (float)($summary['profitBeforeTax'] ?? 0);
+		$taxes     = (float)($summary['incomeTaxAccrued'] ?? 0) + (float)($summary['deferredTaxExpense'] ?? 0);
 		$threshold = (self::SIMPLIFIED_ETR[$startYear] ?? self::SIMPLIFIED_ETR[2026]);
 		$etr       = null;
 		if ($profit > 0.0) {
@@ -332,47 +412,44 @@ class Pillar2SafeHarbourService {
 		}
 
 		return [
-			'de-minimis' => [
-				'pass' => ($revenue < self::DE_MINIMIS_REVENUE && $profit < self::DE_MINIMIS_PROFIT),
-				'inputs' => [
-					'totalRevenue' => $revenue,
-					'profitBeforeTax' => $profit,
-					'revenueThreshold' => self::DE_MINIMIS_REVENUE,
-					'profitThreshold' => self::DE_MINIMIS_PROFIT,
-				],
-			],
-			'simplified-etr' => [
-				'pass' => ($etr !== null && $etr >= $threshold),
-				'inputs' => ['coveredTaxes' => $taxes, 'profitBeforeTax' => $profit, 'simplifiedEtr' => $etr, 'threshold' => $threshold],
-			],
-			'routine-profits' => [
-				'pass' => ($profit <= $sbie),
-				'inputs' => [
-					'profitBeforeTax' => $profit,
-					'substanceBasedIncomeExclusion' => $sbie,
-					'carveOutRatePayroll' => $rates['payroll'],
-					'carveOutRateTangible' => $rates['tangible'],
-				],
+			'pass' => ($etr !== null && $etr >= $threshold),
+			'inputs' => ['coveredTaxes' => $taxes, 'profitBeforeTax' => $profit, 'simplifiedEtr' => $etr, 'threshold' => $threshold],
+		];
+	}//end simplifiedEtrTest()
+
+	/**
+	 * The routine profits test: profit at most the substance-based income exclusion.
+	 *
+	 * @param array<string,mixed>                 $summary The jurisdiction summary.
+	 * @param array{payroll:float,tangible:float} $rates   The carve-out rates.
+	 *
+	 * @return array{pass:bool,inputs:array<string,mixed>}
+	 */
+	private static function routineProfitsTest(array $summary, array $rates): array {
+		$profit = (float)($summary['profitBeforeTax'] ?? 0);
+		$sbie   = round(((float)($summary['eligiblePayroll'] ?? 0) * $rates['payroll'])
+			+ ((float)($summary['tangibleAssetsOtherThanCash'] ?? 0) * $rates['tangible']), 2);
+		return [
+			'pass' => ($profit <= $sbie),
+			'inputs' => [
+				'profitBeforeTax' => $profit,
+				'substanceBasedIncomeExclusion' => $sbie,
+				'carveOutRatePayroll' => $rates['payroll'],
+				'carveOutRateTangible' => $rates['tangible'],
 			],
 		];
-	}//end evaluate()
+	}//end routineProfitsTest()
 
 	/**
 	 * Write one safe harbour record, in place when the test was run before.
 	 *
-	 * @param string                                       $upeId        The ultimate parent.
-	 * @param string                                       $period       FY<year>.
-	 * @param string                                       $jurisdiction The jurisdiction.
-	 * @param string                                       $test         The test.
-	 * @param array{pass:bool,inputs:array<string,mixed>} $result       The outcome.
+	 * @param array{ultimateParentEntity:string,period:string,jurisdiction:string,testApplied:string} $key    The record's key.
+	 * @param array{pass:bool,inputs:array<string,mixed>}                                             $result The outcome.
 	 *
 	 * @return void
 	 */
-	private function writeTest(string $upeId, string $period, string $jurisdiction, string $test, array $result): void {
-		$existing = $this->first(
-			schema: 'Pillar2SafeHarbour',
-			filters: ['ultimateParentEntity' => $upeId, 'period' => $period, 'jurisdiction' => $jurisdiction, 'testApplied' => $test]
-		);
+	private function writeTest(array $key, array $result): void {
+		$existing   = $this->first(schema: 'Pillar2SafeHarbour', filters: $key);
 		$testResult = 'fail';
 		if ($result['pass'] === true) {
 			$testResult = 'pass';
@@ -380,15 +457,7 @@ class Pillar2SafeHarbourService {
 
 		$this->save(
 			schema: 'Pillar2SafeHarbour',
-			object: [
-				'ultimateParentEntity' => $upeId,
-				'period' => $period,
-				'jurisdiction' => $jurisdiction,
-				'testApplied' => $test,
-				'testResult' => $testResult,
-				'dataSource' => 'qualified-cbcr',
-				'supportingCalculations' => $result['inputs'],
-			],
+			object: $key + ['testResult' => $testResult, 'dataSource' => 'qualified-cbcr', 'supportingCalculations' => $result['inputs']],
 			uuid: self::idOf(row: $existing)
 		);
 	}//end writeTest()
@@ -396,28 +465,20 @@ class Pillar2SafeHarbourService {
 	/**
 	 * Create or refresh the draft computation of a jurisdiction that passes no test.
 	 *
-	 * @param string                              $upeId   The ultimate parent.
-	 * @param string                              $period  FY<year>.
-	 * @param array<string,mixed>                 $summary The jurisdiction summary.
-	 * @param array{payroll:float,tangible:float} $rates   The carve-out rates.
+	 * @param array{ultimateParentEntity:string,period:string,jurisdiction:string} $key     The computation's key.
+	 * @param array<string,mixed>                                                $summary The jurisdiction summary.
+	 * @param array{payroll:float,tangible:float}                                $rates   The carve-out rates.
 	 *
 	 * @return string The computation id.
 	 */
-	private function draftComputation(string $upeId, string $period, array $summary, array $rates): string {
-		$code     = (string)($summary['jurisdiction'] ?? '');
-		$existing = $this->first(
-			schema: 'Pillar2JurisdictionComputation',
-			filters: ['ultimateParentEntity' => $upeId, 'period' => $period, 'jurisdiction' => $code]
-		);
+	private function draftComputation(array $key, array $summary, array $rates): string {
+		$existing = $this->first(schema: 'Pillar2JurisdictionComputation', filters: $key);
 		if ($existing !== null && ($existing['state'] ?? 'draft') !== 'draft') {
 			return (string)self::idOf(row: $existing);
 		}
 
 		$taxes = round((float)($summary['incomeTaxAccrued'] ?? 0) + (float)($summary['deferredTaxExpense'] ?? 0), 2);
-		$draft = [
-			'ultimateParentEntity' => $upeId,
-			'period' => $period,
-			'jurisdiction' => $code,
+		$draft = $key + [
 			'commercialProfitBeforeTax' => (float)($summary['profitBeforeTax'] ?? 0),
 			'globeIncomeAdjustments' => ($existing['globeIncomeAdjustments'] ?? []),
 			'coveredTaxAdjustments' => [

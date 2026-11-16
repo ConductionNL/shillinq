@@ -128,25 +128,9 @@ class BackfillGroupEntityCbcFields implements IRepairStep {
 			$entities = $this->objectService->setRegister($register)->setSchema('GroupEntityRegistry')->findAll(['limit' => 100000]);
 			$changed  = 0;
 			foreach ($entities as $row) {
-				$entity = ObjectIdentifier::recordWithId(candidate: $row);
-				$id     = (string)($entity['id'] ?? '');
-				if ($entity === null || $id === '') {
-					continue;
+				if ($this->backfillOne(row: $row, register: $register) === true) {
+					$changed++;
 				}
-
-				$patch = $this->patchFor(entity: $entity, register: $register);
-				if ($patch === []) {
-					continue;
-				}
-
-				$this->objectService->patchObject(
-					patch: new ObjectPatch(
-						objectId: $id,
-						data: $patch,
-						target: new ObjectFindTarget(register: $register, schema: 'GroupEntityRegistry')
-					)
-				);
-				$changed++;
 			}
 
 			$output->info(sprintf('Shillinq: %d group entit(y/ies) given country-by-country activity codes or a TIN.', $changed));
@@ -156,6 +140,36 @@ class BackfillGroupEntityCbcFields implements IRepairStep {
 		}//end try
 
 	}//end backfill()
+
+	/**
+	 * Patch one entity with the fields it lacks.
+	 *
+	 * @param mixed  $row      The entity row as found.
+	 * @param string $register The register slug.
+	 *
+	 * @return bool Whether the entity was patched.
+	 */
+	private function backfillOne(mixed $row, string $register): bool {
+		$entity = ObjectIdentifier::recordWithId(candidate: $row);
+		$id     = (string)($entity['id'] ?? '');
+		if ($entity === null || $id === '') {
+			return false;
+		}
+
+		$patch = $this->patchFor(entity: $entity, register: $register);
+		if ($patch === []) {
+			return false;
+		}
+
+		$this->objectService->patchObject(
+			patch: new ObjectPatch(
+				objectId: $id,
+				data: $patch,
+				target: new ObjectFindTarget(register: $register, schema: 'GroupEntityRegistry')
+			)
+		);
+		return true;
+	}//end backfillOne()
 
 	/**
 	 * The fields to write on one entity; empty when it needs nothing.

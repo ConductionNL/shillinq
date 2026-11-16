@@ -88,28 +88,40 @@ class GroupScopeService {
 	public function dueUltimateParents(int $fiscalYear): array {
 		$due = [];
 		foreach ($this->all(schema: 'GroupEntityRegistry', filters: []) as $entity) {
-			$id     = $this->idOf(row: $entity);
-			$parent = trim((string)($entity['ultimateParentEntity'] ?? ''));
-			if ($id === null || ($parent !== '' && $parent !== $id)) {
-				continue;
-			}
-
-			$group   = $this->groupOf(upe: $entity);
-			$groupId = $this->idOf(row: $group);
-			if ($groupId === null
-				|| $this->first(schema: 'GroupScopeAssessment', filters: ['ultimateParentEntity' => $id, 'fiscalYear' => $fiscalYear]) !== null
-			) {
-				continue;
-			}
-
-			$statements = $this->all(schema: 'ConsolidatedIncomeStatement', filters: ['consolidationGroupId' => $groupId]);
-			if ($this->statementRevenue(statements: $statements, group: $group, year: ($fiscalYear - 1)) !== null) {
+			if ($this->isDue(entity: $entity, fiscalYear: $fiscalYear) === true) {
 				$due[] = $entity;
 			}
 		}
 
 		return $due;
 	}//end dueUltimateParents()
+
+	/**
+	 * Whether the weekly job assesses a group entity for a fiscal year.
+	 *
+	 * @param array<string,mixed> $entity     The group entity.
+	 * @param int                 $fiscalYear The fiscal year.
+	 *
+	 * @return bool
+	 */
+	private function isDue(array $entity, int $fiscalYear): bool {
+		$id     = $this->idOf(row: $entity);
+		$parent = trim((string)($entity['ultimateParentEntity'] ?? ''));
+		if ($id === null || ($parent !== '' && $parent !== $id)) {
+			return false;
+		}
+
+		$group   = $this->groupOf(upe: $entity);
+		$groupId = $this->idOf(row: $group);
+		if ($groupId === null
+			|| $this->first(schema: 'GroupScopeAssessment', filters: ['ultimateParentEntity' => $id, 'fiscalYear' => $fiscalYear]) !== null
+		) {
+			return false;
+		}
+
+		$statements = $this->all(schema: 'ConsolidatedIncomeStatement', filters: ['consolidationGroupId' => $groupId]);
+		return ($this->statementRevenue(statements: $statements, group: $group, year: ($fiscalYear - 1)) !== null);
+	}//end isDue()
 
 	/**
 	 * Assess one group for one fiscal year and store the outcome.
@@ -138,20 +150,44 @@ class GroupScopeService {
 			throw new InvalidArgumentException('Unknown ultimate parent entity: ' . $upeId);
 		}
 
-		$group    = $this->groupOf(upe: $upe);
 		$existing = $this->first(schema: 'GroupScopeAssessment', filters: ['ultimateParentEntity' => $upeId, 'fiscalYear' => $fiscalYear]);
-		$entered  = $entered + $this->enteredOn(assessment: $existing);
+		$context  = [
+			'upeId' => $upeId,
+			'fiscalYear' => $fiscalYear,
+			'entered' => ($entered + $this->enteredOn(assessment: $existing)),
+			'actor' => $actor,
+			'moment' => ($now ?? new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+			'fxRates' => ($existing['fxRates'] ?? null),
+		];
 
-		$revenue  = $this->revenueByYear(group: $group, fiscalYear: $fiscalYear, entered: $entered);
-		$yearEnd  = $this->yearEnd(group: $group, fiscalYear: $fiscalYear);
-		$outcome  = $this->outcome(revenue: $revenue, fiscalYear: $fiscalYear);
-		$moment   = ($now ?? new DateTimeImmutable())->format(DateTimeInterface::ATOM);
+		$assessment = $this->assessmentRecord(group: $this->groupOf(upe: $upe), context: $context);
+		$stored     = $this->save(schema: 'GroupScopeAssessment', object: $assessment, uuid: $this->idOf(row: $existing));
+		$this->markUpe(upe: $upe, assessment: $assessment, moment: $context['moment']);
+
+		$stored['previous'] = $this->first(schema: 'GroupScopeAssessment', filters: ['ultimateParentEntity' => $upeId, 'fiscalYear' => ($fiscalYear - 1)]);
+
+		return $stored;
+	}//end assess()
+
+	/**
+	 * The assessment record of one group for one fiscal year.
+	 *
+	 * @param array<string,mixed>|null $group   The ConsolidationGroup, or null.
+	 * @param array<string,mixed>      $context The ultimate parent id, fiscal year, entered revenue, actor, moment and fxRates.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function assessmentRecord(?array $group, array $context): array {
+		$fiscalYear = $context['fiscalYear'];
+		$revenue    = $this->revenueByYear(group: $group, context: $context);
+		$yearEnd    = $this->yearEnd(group: $group, fiscalYear: $fiscalYear);
+		$outcome    = $this->outcome(revenue: $revenue, fiscalYear: $fiscalYear);
 
 		$girMonths   = $this->firstYearMonths(outcome: $outcome, fiscalYear: $fiscalYear, usual: 15, first: 18);
 		$topUpMonths = $this->firstYearMonths(outcome: $outcome, fiscalYear: $fiscalYear, usual: 17, first: 20);
 
-		$assessment = [
-			'ultimateParentEntity' => $upeId,
+		return [
+			'ultimateParentEntity' => $context['upeId'],
 			'fiscalYear' => $fiscalYear,
 			'fiscalYearStart' => $yearEnd->modify('-1 year')->modify('+1 day')->format('Y-m-d'),
 			'fiscalYearEnd' => $yearEnd->format('Y-m-d'),
@@ -163,18 +199,11 @@ class GroupScopeService {
 			'cbcrFilingDeadline' => $this->deadline(yearEnd: $yearEnd, months: 12, applies: $outcome['cbcrInScope']),
 			'girFilingDeadline' => $this->deadline(yearEnd: $yearEnd, months: $girMonths, applies: $outcome['pillar2InScope']),
 			'bijheffingReturnDeadline' => $this->deadline(yearEnd: $yearEnd, months: $topUpMonths, applies: $outcome['pillar2InScope']),
-			'fxRates' => ($existing['fxRates'] ?? null),
-			'assessedAt' => $moment,
-			'assessedBy' => $actor,
+			'fxRates' => $context['fxRates'],
+			'assessedAt' => $context['moment'],
+			'assessedBy' => $context['actor'],
 		];
-
-		$stored = $this->save(schema: 'GroupScopeAssessment', object: $assessment, uuid: $this->idOf(row: $existing));
-		$this->markUpe(upe: $upe, assessment: $assessment, moment: $moment);
-
-		$stored['previous'] = $this->first(schema: 'GroupScopeAssessment', filters: ['ultimateParentEntity' => $upeId, 'fiscalYear' => ($fiscalYear - 1)]);
-
-		return $stored;
-	}//end assess()
+	}//end assessmentRecord()
 
 	/**
 	 * In scope or not for one year, and the first year of the current run.
@@ -309,13 +338,14 @@ class GroupScopeService {
 	/**
 	 * The revenue of the YEARS_BACK years before and of the year itself.
 	 *
-	 * @param array<string,mixed>|null $group      The ConsolidationGroup, or null.
-	 * @param int                      $fiscalYear The assessed year.
-	 * @param array<int,float>         $entered    Entered amounts per year.
+	 * @param array<string,mixed>|null                             $group   The ConsolidationGroup, or null.
+	 * @param array{fiscalYear:int,entered:array<int,float>} $context The assessed year and the amounts entered per year.
 	 *
 	 * @return array<int,array{year:int,amount:?float,source:string}> Keyed by year, oldest first.
 	 */
-	private function revenueByYear(?array $group, int $fiscalYear, array $entered): array {
+	private function revenueByYear(?array $group, array $context): array {
+		$fiscalYear = $context['fiscalYear'];
+		$entered    = $context['entered'];
 		$statements = [];
 		$groupId    = $this->idOf(row: $group);
 		if ($groupId !== null) {
@@ -371,17 +401,26 @@ class GroupScopeService {
 		$latest = null;
 		foreach ($statements as $statement) {
 			$date = substr((string)($statement['reportDate'] ?? ''), 0, 10);
-			if ($date < $start || $date > $end || is_numeric($statement['totalRevenue'] ?? null) === false) {
-				continue;
-			}
-
-			if ($latest === null || $date > $latest['date']) {
+			if (self::countsIn(statement: $statement, range: [$start, $end]) === true && ($latest === null || $date > $latest['date'])) {
 				$latest = ['date' => $date, 'amount' => (float)$statement['totalRevenue']];
 			}
 		}
 
 		return $latest['amount'] ?? null;
 	}//end statementRevenue()
+
+	/**
+	 * Whether a statement is dated inside a range and states a numeric total revenue.
+	 *
+	 * @param array<string,mixed>     $statement The statement.
+	 * @param array{0:string,1:string} $range     First and last day, Y-m-d.
+	 *
+	 * @return bool
+	 */
+	private static function countsIn(array $statement, array $range): bool {
+		$date = substr((string)($statement['reportDate'] ?? ''), 0, 10);
+		return ($date >= $range[0] && $date <= $range[1] && is_numeric($statement['totalRevenue'] ?? null) === true);
+	}//end countsIn()
 
 	/**
 	 * The last day of a fiscal year: the group's year-end day and month, else 31 December.

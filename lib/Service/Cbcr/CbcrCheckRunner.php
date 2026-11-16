@@ -170,29 +170,57 @@ class CbcrCheckRunner {
 			$upeId = $reporting;
 		}
 
-		$year     = self::yearOf(period: (string)($return['period'] ?? ''));
+		$year = self::yearOf(period: (string)($return['period'] ?? ''));
+
+		return $return + [
+			'_entities' => $this->groupMembers(upeId: $upeId, year: $year),
+			'_summaries' => $this->listedSummaries(return: $return, filters: ['ultimateParentEntity' => $upeId, 'period' => 'FY' . $year]),
+		];
+	}//end joinCbc()
+
+	/**
+	 * The group's entities included in the CbC report, each with its figures for the year.
+	 *
+	 * @param string $upeId The ultimate parent.
+	 * @param int    $year  The fiscal year.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function groupMembers(string $upeId, int $year): array {
 		$entities = [];
 		foreach ($this->all(schema: 'GroupEntityRegistry', filters: []) as $member) {
-			$id = (string)($member['id'] ?? '');
+			$id      = (string)($member['id'] ?? '');
 			$inGroup = ($id === $upeId || (string)($member['ultimateParentEntity'] ?? '') === $upeId);
 			if ($inGroup === false || ($member['cbcrIncluded'] ?? true) === false) {
 				continue;
 			}
 
 			$member['figures'] = ($this->all(schema: 'CbcrEntityFigures', filters: ['entity' => $id, 'fiscalYear' => $year])[0] ?? null);
-			$entities[] = $member;
+			$entities[]        = $member;
 		}
 
+		return $entities;
+	}//end groupMembers()
+
+	/**
+	 * The group's summaries for the period: those the return lists, or all when it lists none.
+	 *
+	 * @param array<string,mixed>  $return  The CbcrReturn.
+	 * @param array<string,string> $filters The ultimate parent and period.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function listedSummaries(array $return, array $filters): array {
 		$summaries = [];
 		$listed    = array_values(array_filter(array_map('strval', (array)($return['jurisdictionSummaries'] ?? []))));
-		foreach ($this->all(schema: 'CbcrJurisdictionSummary', filters: ['ultimateParentEntity' => $upeId, 'period' => 'FY' . $year]) as $summary) {
+		foreach ($this->all(schema: 'CbcrJurisdictionSummary', filters: $filters) as $summary) {
 			if ($listed === [] || in_array((string)($summary['id'] ?? ''), $listed, true) === true) {
 				$summaries[] = $summary;
 			}
 		}
 
-		return $return + ['_entities' => $entities, '_summaries' => $summaries];
-	}//end joinCbc()
+		return $summaries;
+	}//end listedSummaries()
 
 	/**
 	 * The GIR return joined with its jurisdictions' safe harbour and computation state.

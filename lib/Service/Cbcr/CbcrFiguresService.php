@@ -118,6 +118,35 @@ class CbcrFiguresService {
 	private const TAX_EXPENSE = ['income-tax-current', 'income-tax-deferred'];
 
 	/**
+	 * The figures read from the books, in the order they are stored.
+	 */
+	private const BOOK_FIGURES = [
+		'unrelatedPartyRevenue',
+		'relatedPartyRevenue',
+		'profitBeforeTax',
+		'incomeTaxPaidCash',
+		'incomeTaxAccrued',
+		'statedCapital',
+		'accumulatedEarnings',
+		'tangibleAssetsOtherThanCash',
+		'deferredTaxExpense',
+		'eligiblePayroll',
+	];
+
+	/**
+	 * Per account category: the figure it adds to, the sign it adds with, and whether only
+	 * lines posted in the year count (those add the negated amount).
+	 */
+	private const LEDGER_FIGURES = [
+		'income-tax-current' => ['incomeTaxAccrued', -1.0, true],
+		'income-tax-deferred' => ['deferredTaxExpense', -1.0, true],
+		'eligible-payroll' => ['eligiblePayroll', -1.0, true],
+		'stated-capital' => ['statedCapital', 1.0, false],
+		'accumulated-earnings' => ['accumulatedEarnings', 1.0, false],
+		'tangible-asset' => ['tangibleAssetsOtherThanCash', -1.0, false],
+	];
+
+	/**
 	 * How many rows one read looks at.
 	 *
 	 * @var int
@@ -182,7 +211,9 @@ class CbcrFiguresService {
 		$presentation = $this->presentationCurrency(upeId: $upeId);
 		$rates        = $this->ratesFor(currency: $currency, presentation: $presentation, assessment: $assessment);
 
-		$book    = $this->readBook(entityId: $entityId, upeId: $upeId, administrationId: $administrationId, start: $start, end: $end);
+		$book    = $this->readBook(
+			scope: ['entity' => $entityId, 'upe' => $upeId, 'administration' => $administrationId, 'start' => $start, 'end' => $end]
+		);
 		$figures = $this->convert(figures: $book['figures'], rates: $rates);
 
 		$existing  = $this->first(schema: 'CbcrEntityFigures', filters: ['entity' => $entityId, 'fiscalYear' => $fiscalYear]);
@@ -245,66 +276,135 @@ class CbcrFiguresService {
 		}
 
 		ksort($byJurisdiction);
-		$period    = 'FY' . $fiscalYear;
 		$summaries = [];
 		$skipped   = [];
 		foreach ($byJurisdiction as $code => $members) {
-			$existing = $this->first(
-				schema: 'CbcrJurisdictionSummary',
-				filters: ['ultimateParentEntity' => $upeId, 'period' => $period, 'jurisdiction' => $code]
-			);
-			if (in_array((string)($existing['state'] ?? ''), ['reconciled', 'locked'], true) === true) {
+			$key     = ['ultimateParentEntity' => $upeId, 'period' => 'FY' . $fiscalYear, 'jurisdiction' => (string)$code];
+			$summary = $this->writeSummary(key: $key, members: $members);
+			if ($summary === null) {
 				$skipped[] = $code;
 				continue;
 			}
 
-			$summary = ['ultimateParentEntity' => $upeId, 'period' => $period, 'jurisdiction' => $code]
-				+ self::sum(members: $members)
-				+ ['state' => (string)($existing['state'] ?? 'draft')];
-
-			$summaries[] = $this->save(schema: 'CbcrJurisdictionSummary', object: $summary, uuid: self::idOf(row: $existing));
+			$summaries[] = $summary;
 		}
 
 		return ['summaries' => $summaries, 'skipped' => $skipped, 'withoutFigures' => $withoutFigures];
 	}//end summarise()
 
 	/**
+	 * Write one jurisdiction summary, unless it is reconciled or locked.
+	 *
+	 * @param array{ultimateParentEntity:string,period:string,jurisdiction:string}             $key     The summary's key.
+	 * @param array<int,array{entity:array<string,mixed>,figures:array<string,mixed>}> $members The entities and their figures.
+	 *
+	 * @return array<string,mixed>|null The stored summary, or null when it was left as it is.
+	 */
+	private function writeSummary(array $key, array $members): ?array {
+		$existing = $this->first(schema: 'CbcrJurisdictionSummary', filters: $key);
+		$state    = (string)($existing['state'] ?? '');
+		if (in_array($state, ['reconciled', 'locked'], true) === true) {
+			return null;
+		}
+
+		$summary = $key + self::sum(members: $members) + ['state' => (string)($existing['state'] ?? 'draft')];
+		return $this->save(schema: 'CbcrJurisdictionSummary', object: $summary, uuid: self::idOf(row: $existing));
+	}//end writeSummary()
+
+	/**
 	 * Read the ledger of one administration for a year.
 	 *
-	 * @param string $entityId         The entity.
-	 * @param string $upeId            Its ultimate parent.
-	 * @param string $administrationId Its administration.
-	 * @param string $start            First day of the year, Y-m-d.
-	 * @param string $end              Last day of the year, Y-m-d.
+	 * @param array{entity:string,upe:string,administration:string,start:string,end:string} $scope The entity,
+	 *        its ultimate parent, its administration and the first and last day of the year (Y-m-d).
 	 *
 	 * @return array{figures:array<string,float>,yearClosed:bool,unmapped:array<int,string>,counterparties:array<int,array<string,mixed>>}
 	 */
-	private function readBook(string $entityId, string $upeId, string $administrationId, string $start, string $end): array {
-		$transactions = $this->keyed(rows: $this->all(schema: 'GLTransaction', filters: ['administrationId' => $administrationId]));
+	private function readBook(array $scope): array {
+		$lines   = $this->ledgerLines(scope: $scope);
+		$context = [
+			'related' => $this->relatedRefs(upeId: $scope['upe'], entityId: $scope['entity']),
+			'intercompany' => $this->intercompanyJournals(administrationId: $scope['administration']),
+			'taxTransactions' => self::taxTransactions(lines: $lines),
+		];
+
+		$totals = ['figures' => array_fill_keys(self::BOOK_FIGURES, 0.0), 'result' => 0.0, 'unmapped' => [], 'counterparties' => []];
+		foreach ($lines as $entry) {
+			$this->apply(entry: $entry, totals: $totals, context: $context);
+		}
+
+		$closed = $this->yearClosed(administrationId: $scope['administration'], end: $scope['end']);
+		if ($closed === false) {
+			$totals['figures']['accumulatedEarnings'] += $totals['result'];
+		}
+
+		$unmapped = $totals['unmapped'];
+		ksort($unmapped);
+		return [
+			'figures' => array_map(static fn (float $amount): float => round($amount, 2), $totals['figures']),
+			'yearClosed' => $closed,
+			'unmapped' => array_map('strval', array_keys($unmapped)),
+			'counterparties' => self::top(counterparties: $totals['counterparties']),
+		];
+	}//end readBook()
+
+	/**
+	 * The administration's ledger lines up to the year end that count, each with its transaction,
+	 * category, sign and whether it falls in the year.
+	 *
+	 * @param array{administration:string,start:string,end:string} $scope The administration and the year.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function ledgerLines(array $scope): array {
+		$filters      = ['administrationId' => $scope['administration']];
+		$transactions = $this->keyed(rows: $this->all(schema: 'GLTransaction', filters: $filters));
 		$accounts     = $this->accountIndex();
-		$related      = $this->relatedRefs(upeId: $upeId, entityId: $entityId);
-		$intercompany = $this->intercompanyJournals(administrationId: $administrationId);
 
 		$lines = [];
-		foreach ($this->all(schema: 'GLLine', filters: ['administrationId' => $administrationId]) as $line) {
+		foreach ($this->all(schema: 'GLLine', filters: $filters) as $line) {
 			$transaction = ($transactions[(string)($line['transactionId'] ?? '')] ?? null);
 			$date        = substr((string)($transaction['postingDate'] ?? ''), 0, 10);
-			if ($date === '' || $date > $end || self::counts(line: $line, transaction: $transaction) === false) {
+			if ($date === '' || $date > $scope['end'] || self::counts(line: $line, transaction: $transaction) === false) {
 				continue;
 			}
 
-			$account = ($accounts[(string)($line['accountRef'] ?? '')] ?? ($accounts['#' . (string)($line['accountNumber'] ?? '')] ?? []));
-			$lines[] = [
-				'line' => $line,
-				'transaction' => $transaction,
-				'inYear' => ($date >= $start),
-				'category' => self::categoryOf(account: $account),
-				'number' => (string)($line['accountNumber'] ?? ($account['accountNumber'] ?? '')),
-				'signed' => self::signed(line: $line),
-				'pnl' => self::isResultLine(line: $line, account: $account),
-			];
+			$lines[] = self::ledgerEntry(line: $line, transaction: $transaction, inYear: ($date >= $scope['start']), accounts: $accounts);
 		}
 
+		return $lines;
+	}//end ledgerLines()
+
+	/**
+	 * One counted ledger line with what the figures need of it.
+	 *
+	 * @param array<string,mixed>               $line        The ledger line.
+	 * @param array<string,mixed>|null          $transaction Its transaction.
+	 * @param bool                              $inYear      Whether it is posted in the year.
+	 * @param array<string,array<string,mixed>> $accounts    The account index.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function ledgerEntry(array $line, ?array $transaction, bool $inYear, array $accounts): array {
+		$account = ($accounts[(string)($line['accountRef'] ?? '')] ?? ($accounts['#' . (string)($line['accountNumber'] ?? '')] ?? []));
+		return [
+			'line' => $line,
+			'transaction' => $transaction,
+			'inYear' => $inYear,
+			'category' => self::categoryOf(account: $account),
+			'number' => (string)($line['accountNumber'] ?? ($account['accountNumber'] ?? '')),
+			'signed' => self::signed(line: $line),
+			'pnl' => self::isResultLine(line: $line, account: $account),
+		];
+	}//end ledgerEntry()
+
+	/**
+	 * The transactions that book an income tax expense in the year, keyed by id.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The counted ledger lines.
+	 *
+	 * @return array<string,bool>
+	 */
+	private static function taxTransactions(array $lines): array {
 		$taxTransactions = [];
 		foreach ($lines as $entry) {
 			if ($entry['inYear'] === true && in_array($entry['category'], self::TAX_EXPENSE, true) === true) {
@@ -312,134 +412,137 @@ class CbcrFiguresService {
 			}
 		}
 
-		$figures = array_fill_keys(
-			[
-				'unrelatedPartyRevenue', 'relatedPartyRevenue', 'profitBeforeTax', 'incomeTaxPaidCash', 'incomeTaxAccrued',
-				'statedCapital', 'accumulatedEarnings', 'tangibleAssetsOtherThanCash', 'deferredTaxExpense', 'eligiblePayroll',
-			],
-			0.0
-		);
-		$result         = 0.0;
-		$unmapped       = [];
-		$counterparties = [];
-		foreach ($lines as $entry) {
-			$this->apply(
-				entry: $entry,
-				figures: $figures,
-				result: $result,
-				unmapped: $unmapped,
-				counterparties: $counterparties,
-				context: ['related' => $related, 'intercompany' => $intercompany, 'taxTransactions' => $taxTransactions]
-			);
-		}
-
-		$closed = $this->yearClosed(administrationId: $administrationId, end: $end);
-		if ($closed === false) {
-			$figures['accumulatedEarnings'] += $result;
-		}
-
-		ksort($unmapped);
-		return [
-			'figures' => array_map(static fn (float $amount): float => round($amount, 2), $figures),
-			'yearClosed' => $closed,
-			'unmapped' => array_map('strval', array_keys($unmapped)),
-			'counterparties' => self::top(counterparties: $counterparties),
-		];
-	}//end readBook()
+		return $taxTransactions;
+	}//end taxTransactions()
 
 	/**
-	 * Add one ledger line to the figures.
+	 * Add one ledger line to the totals.
 	 *
-	 * @param array<string,mixed>               $entry          The line with its transaction, category and sign.
-	 * @param array<string,float>               $figures        The figures so far.
-	 * @param float                             $result         The year's result so far.
-	 * @param array<string,bool>                $unmapped       Accounts without a category so far, keyed by account number.
-	 * @param array<string,array<string,mixed>> $counterparties Revenue per counterparty so far.
-	 * @param array<string,array<string,bool>>  $context        Related refs, intercompany journals, tax transactions.
-	 *
-	 * @param-out array<array-key,bool> $unmapped
+	 * @param array<string,mixed>              $entry   The line with its transaction, category and sign.
+	 * @param array<string,mixed>              $totals  The figures, the year's result, the unmapped accounts
+	 *                                                  and the revenue per counterparty so far.
+	 * @param array<string,array<string,bool>> $context Related refs, intercompany journals, tax transactions.
 	 *
 	 * @return void
 	 */
-	private function apply(array $entry, array &$figures, float &$result, array &$unmapped, array &$counterparties, array $context): void {
-		$category = $entry['category'];
-		$signed   = $entry['signed'];
-		$inYear   = $entry['inYear'];
-		if ($category === null && ($inYear === true || $entry['pnl'] === false) && $signed !== 0.0) {
-			$unmapped[$entry['number']] = true;
-		}
-
-		if ($inYear === true && $entry['pnl'] === true) {
-			$result += $signed;
-			if (in_array($category, self::TAX_EXPENSE, true) === false) {
-				$figures['profitBeforeTax'] += $signed;
+	private function apply(array $entry, array &$totals, array $context): void {
+		self::track(entry: $entry, totals: $totals);
+		if ($entry['category'] === 'revenue') {
+			if ($entry['inYear'] === true) {
+				$this->addRevenue(entry: $entry, totals: $totals, context: $context);
 			}
+
+			return;
 		}
 
-		switch ($category) {
-			case 'revenue':
-				if ($inYear === true) {
-					$this->addRevenue(entry: $entry, figures: $figures, counterparties: $counterparties, context: $context);
-				}
-				return;
-			case 'income-tax-current':
-				$figures['incomeTaxAccrued'] += self::when(applies: $inYear, amount: -$signed);
-				return;
-			case 'income-tax-deferred':
-				$figures['deferredTaxExpense'] += self::when(applies: $inYear, amount: -$signed);
-				return;
-			case 'eligible-payroll':
-				$figures['eligiblePayroll'] += self::when(applies: $inYear, amount: -$signed);
-				return;
-			case 'income-tax-payable':
-				$paid = ($inYear === true && $signed < 0.0 && isset($context['taxTransactions'][(string)($entry['line']['transactionId'] ?? '')]) === false);
-				$figures['incomeTaxPaidCash'] += self::when(applies: $paid, amount: -$signed);
-				return;
-			case 'stated-capital':
-				$figures['statedCapital'] += $signed;
-				return;
-			case 'accumulated-earnings':
-				$figures['accumulatedEarnings'] += $signed;
-				return;
-			case 'tangible-asset':
-				$figures['tangibleAssetsOtherThanCash'] -= $signed;
-				return;
+		$figure = self::figureOf(entry: $entry, context: $context);
+		if ($figure !== null) {
+			$totals['figures'][$figure[0]] += $figure[1];
 		}
 	}//end apply()
 
 	/**
-	 * Add a revenue line, split into related and unrelated.
+	 * Track an unmapped account and the year's result for one ledger line.
 	 *
-	 * @param array<string,mixed>               $entry          The line.
-	 * @param array<string,float>               $figures        The figures so far.
-	 * @param array<string,array<string,mixed>> $counterparties Revenue per counterparty so far.
-	 * @param array<string,array<string,bool>>  $context        Related refs and intercompany journals.
+	 * @param array<string,mixed> $entry  The line.
+	 * @param array<string,mixed> $totals The totals so far.
 	 *
 	 * @return void
 	 */
-	private function addRevenue(array $entry, array &$figures, array &$counterparties, array $context): void {
-		$refs    = $this->counterpartyRefsOf(line: $entry['line']);
-		$related = (($entry['transaction']['journalType'] ?? '') === 'intercompany'
-			|| isset($context['intercompany'][(string)($entry['transaction']['journalEntryId'] ?? '')]) === true);
-		foreach ($refs as $ref) {
-			$related = ($related || isset($context['related'][$ref]) === true);
+	private static function track(array $entry, array &$totals): void {
+		$category = $entry['category'];
+		$signed   = $entry['signed'];
+		if ($category === null && ($entry['inYear'] === true || $entry['pnl'] === false) && $signed !== 0.0) {
+			$totals['unmapped'][$entry['number']] = true;
 		}
+
+		if ($entry['inYear'] === false || $entry['pnl'] === false) {
+			return;
+		}
+
+		$totals['result'] += $signed;
+		if (in_array($category, self::TAX_EXPENSE, true) === false) {
+			$totals['figures']['profitBeforeTax'] += $signed;
+		}
+	}//end track()
+
+	/**
+	 * The figure a non-revenue ledger line adds to, and the amount, or null when it adds to none.
+	 *
+	 * @param array<string,mixed>              $entry   The line.
+	 * @param array<string,array<string,bool>> $context The tax transactions.
+	 *
+	 * @return array{0:string,1:float}|null
+	 */
+	private static function figureOf(array $entry, array $context): ?array {
+		$category = (string)$entry['category'];
+		$signed   = $entry['signed'];
+		if ($category === 'income-tax-payable') {
+			$paid = ($entry['inYear'] === true && $signed < 0.0
+				&& isset($context['taxTransactions'][(string)($entry['line']['transactionId'] ?? '')]) === false);
+			return ['incomeTaxPaidCash', self::when(applies: $paid, amount: -$signed)];
+		}
+
+		$target = (self::LEDGER_FIGURES[$category] ?? null);
+		if ($target === null) {
+			return null;
+		}
+
+		[$figure, $sign, $inYearOnly] = $target;
+		if ($inYearOnly === true) {
+			return [$figure, self::when(applies: $entry['inYear'], amount: -$signed)];
+		}
+
+		return [$figure, ($sign * $signed)];
+	}//end figureOf()
+
+	/**
+	 * Add a revenue line, split into related and unrelated.
+	 *
+	 * @param array<string,mixed>              $entry   The line.
+	 * @param array<string,mixed>              $totals  The totals so far.
+	 * @param array<string,array<string,bool>> $context Related refs and intercompany journals.
+	 *
+	 * @return void
+	 */
+	private function addRevenue(array $entry, array &$totals, array $context): void {
+		$refs    = $this->counterpartyRefsOf(line: $entry['line']);
+		$related = self::isRelated(entry: $entry, refs: $refs, context: $context);
 
 		$figure = 'unrelatedPartyRevenue';
 		if ($related === true) {
 			$figure = 'relatedPartyRevenue';
 		}
 
-		$figures[$figure] += $entry['signed'];
+		$totals['figures'][$figure] += $entry['signed'];
 		if ($refs === []) {
 			return;
 		}
 
 		$key = $refs[(count($refs) - 1)];
 
-		$counterparties[$key] ??= ['ref' => $key, 'amount' => 0.0, 'related' => $related];
-		$counterparties[$key]['amount'] += $entry['signed'];
+		$totals['counterparties'][$key] ??= ['ref' => $key, 'amount' => 0.0, 'related' => $related];
+		$totals['counterparties'][$key]['amount'] += $entry['signed'];
 	}//end addRevenue()
+
+	/**
+	 * Whether a revenue line is with a related party: an intercompany entry, or a counterparty of the group.
+	 *
+	 * @param array<string,mixed>              $entry   The line.
+	 * @param array<int,string>                $refs    Its counterparty refs.
+	 * @param array<string,array<string,bool>> $context Related refs and intercompany journals.
+	 *
+	 * @return bool
+	 */
+	private static function isRelated(array $entry, array $refs, array $context): bool {
+		$related = (($entry['transaction']['journalType'] ?? '') === 'intercompany'
+			|| isset($context['intercompany'][(string)($entry['transaction']['journalEntryId'] ?? '')]) === true);
+		foreach ($refs as $ref) {
+			$related = ($related || isset($context['related'][$ref]) === true);
+		}
+
+		return $related;
+	}//end isRelated()
 
 	/**
 	 * The counterparty refs of a line: the sub-ledger document and the customer or payee it names.
@@ -546,16 +649,27 @@ class CbcrFiguresService {
 		$sum = array_map(static fn (float $amount): float => round($amount, 2), $sum);
 		$sum['numberOfEmployees'] = (int)round($sum['numberOfEmployees']);
 		ksort($activities);
-		ksort($methods);
 
+		return $sum + ['mainBusinessActivities' => array_keys($activities), 'employeeMethodologyNote' => self::methodologyNote(methods: $methods)];
+	}//end sum()
+
+	/**
+	 * The note naming how each entity's employees were counted.
+	 *
+	 * @param array<string,array<int,string>> $methods Entity names per employee method.
+	 *
+	 * @return string
+	 */
+	private static function methodologyNote(array $methods): string {
+		ksort($methods);
 		$labels = ['humaniq' => 'Headcount at year end from humaniq: ', 'entered' => 'Entered: '];
 		$notes  = [];
 		foreach ($methods as $method => $names) {
 			$notes[] = ($labels[$method] ?? 'Entered: ') . implode(', ', $names);
 		}
 
-		return $sum + ['mainBusinessActivities' => array_keys($activities), 'employeeMethodologyNote' => implode('; ', $notes)];
-	}//end sum()
+		return implode('; ', $notes);
+	}//end methodologyNote()
 
 	/**
 	 * Headcount at year end from humaniq: employees of the administration in service on the last day.
@@ -575,22 +689,32 @@ class CbcrFiguresService {
 			return null;
 		}
 
-		$count = 0;
-		foreach ($rows as $row) {
-			$employee = ObjectIdentifier::recordWithId(candidate: $row);
-			$from     = substr((string)($employee['startDate'] ?? ''), 0, 10);
-			$until    = substr((string)($employee['endDate'] ?? ''), 0, 10);
-			if ($employee !== null && $from !== '' && $from <= $end && ($until === '' || $until >= $end)) {
-				$count++;
-			}
-		}
-
+		$count = count(array_filter($rows, static fn ($row): bool => self::inServiceOn(row: $row, day: $end)));
 		if ($count === 0) {
 			return null;
 		}
 
 		return $count;
 	}//end headcount()
+
+	/**
+	 * Whether an employee row is in service on a day.
+	 *
+	 * @param mixed  $row The employee row.
+	 * @param string $day The day, Y-m-d.
+	 *
+	 * @return bool
+	 */
+	private static function inServiceOn(mixed $row, string $day): bool {
+		$employee = ObjectIdentifier::recordWithId(candidate: $row);
+		if ($employee === null) {
+			return false;
+		}
+
+		$from  = substr((string)($employee['startDate'] ?? ''), 0, 10);
+		$until = substr((string)($employee['endDate'] ?? ''), 0, 10);
+		return ($from !== '' && $from <= $day && ($until === '' || $until >= $day));
+	}//end inServiceOn()
 
 	/**
 	 * Whether the administration's fiscal year ending on the date is closed.
