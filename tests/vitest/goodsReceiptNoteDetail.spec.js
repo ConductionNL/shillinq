@@ -36,5 +36,8 @@ describe('GoodsReceiptNoteDetail', () => {
 		const [check, accept] = page.config.headerActions
 		expect(check).toMatchObject({ type: 'api-call', method: 'POST', url: '/apps/shillinq/api/goods-receipt-notes/@objectId/quality-check', visibleWhen: { field: 'statusCode', op: 'eq', value: 'received' } })
 		expect(accept).toMatchObject({ type: 'api-call', method: 'POST', url: '/apps/shillinq/api/goods-receipt-notes/@objectId/accept', visibleWhen: { field: 'statusCode', op: 'in', value: ['received', 'quality_checked'] } })
+		// Both endpoints read the administration from the body (ReceiptRequestScope) and answer 400 without it.
+		expect(check.payload).toEqual({ administrationId: '@object.administrationId' })
+		expect(accept.payload).toEqual({ administrationId: '@object.administrationId' })
 	})
 })
