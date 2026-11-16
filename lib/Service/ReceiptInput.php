@@ -42,8 +42,8 @@ final class ReceiptInput {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	public static function poIds(mixed $rawIds): array {
-		return array_values(array_unique(self::strings(input: $rawIds)));
+	public function poIds(mixed $rawIds): array {
+		return array_values(array_unique($this->strings(input: $rawIds)));
 
 	}//end poIds()
 
@@ -57,7 +57,7 @@ final class ReceiptInput {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	public static function strings(mixed $input): array {
+	public function strings(mixed $input): array {
 		if (is_array($input) === false) {
 			return [];
 		}
@@ -84,7 +84,7 @@ final class ReceiptInput {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	public static function quantity(mixed $value): float {
+	public function quantity(mixed $value): float {
 		$float = (float)$value;
 		if ($float < 0.0) {
 			return 0.0;

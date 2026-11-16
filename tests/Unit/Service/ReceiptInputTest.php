@@ -36,7 +36,7 @@ final class ReceiptInputTest extends TestCase {
 	 * @return void
 	 */
 	public function testPoIdsAreTrimmedAndDistinct(): void {
-		self::assertSame(['po-1', 'po-2'], ReceiptInput::poIds(rawIds: [' po-1 ', '', 'po-2', 'po-1', '  ']));
+		self::assertSame(['po-1', 'po-2'], (new ReceiptInput())->poIds(rawIds: [' po-1 ', '', 'po-2', 'po-1', '  ']));
 
 	}//end testPoIdsAreTrimmedAndDistinct()
 
@@ -46,7 +46,7 @@ final class ReceiptInputTest extends TestCase {
 	 * @return void
 	 */
 	public function testAScalarPoIdInputIsEmpty(): void {
-		self::assertSame([], ReceiptInput::poIds(rawIds: 'po-1'));
+		self::assertSame([], (new ReceiptInput())->poIds(rawIds: 'po-1'));
 
 	}//end testAScalarPoIdInputIsEmpty()
 
@@ -56,8 +56,8 @@ final class ReceiptInputTest extends TestCase {
 	 * @return void
 	 */
 	public function testStringsKeepDuplicatesAndDropEmpties(): void {
-		self::assertSame(['a', 'b', 'a', '7'], ReceiptInput::strings(input: ['a', ' b ', '', 'a', 7]));
-		self::assertSame([], ReceiptInput::strings(input: null));
+		self::assertSame(['a', 'b', 'a', '7'], (new ReceiptInput())->strings(input: ['a', ' b ', '', 'a', 7]));
+		self::assertSame([], (new ReceiptInput())->strings(input: null));
 
 	}//end testStringsKeepDuplicatesAndDropEmpties()
 
@@ -67,10 +67,10 @@ final class ReceiptInputTest extends TestCase {
 	 * @return void
 	 */
 	public function testQuantitiesRoundToThousandthsAndClampAtZero(): void {
-		self::assertSame(1.235, ReceiptInput::quantity(value: '1.2346'));
-		self::assertSame(3.0, ReceiptInput::quantity(value: 3));
-		self::assertSame(0.0, ReceiptInput::quantity(value: -2.5));
-		self::assertSame(0.0, ReceiptInput::quantity(value: 'n/a'));
+		self::assertSame(1.235, (new ReceiptInput())->quantity(value: '1.2346'));
+		self::assertSame(3.0, (new ReceiptInput())->quantity(value: 3));
+		self::assertSame(0.0, (new ReceiptInput())->quantity(value: -2.5));
+		self::assertSame(0.0, (new ReceiptInput())->quantity(value: 'n/a'));
 
 	}//end testQuantitiesRoundToThousandthsAndClampAtZero()
 }//end class

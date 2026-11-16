@@ -197,7 +197,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$receivedBy = $this->scope()->requireSessionUser();
 
-		$poIds = ReceiptInput::poIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
+		$poIds = $this->input()->poIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
 		if ($poIds === []) {
 			throw new RuntimeException('At least one purchase order id is required');
 		}
@@ -217,10 +217,10 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 			'receivedBy' => $receivedBy,
 			'deliveryNoteReference' => trim((string)($payload['deliveryNoteReference'] ?? $payload['delivery_note_ref'] ?? '')),
 			'carrier' => trim((string)($payload['carrier'] ?? '')),
-			'lotNumbers' => ReceiptInput::strings(input: ($payload['lotNumbers'] ?? [])),
-			'serialNumbers' => ReceiptInput::strings(input: ($payload['serialNumbers'] ?? [])),
+			'lotNumbers' => $this->input()->strings(input: ($payload['lotNumbers'] ?? [])),
+			'serialNumbers' => $this->input()->strings(input: ($payload['serialNumbers'] ?? [])),
 			'temperatureLog' => $this->temperatureLog(input: ($payload['temperatureLog'] ?? [])),
-			'photos' => ReceiptInput::strings(input: ($payload['photos'] ?? [])),
+			'photos' => $this->input()->strings(input: ($payload['photos'] ?? [])),
 			'costCenter' => trim((string)($payload['costCenter'] ?? '')),
 			'projectCode' => trim((string)($payload['projectCode'] ?? '')),
 			'statusCode' => 'received',
@@ -260,9 +260,9 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 
 		$poLineId = $this->requireGrnPoLineId(administrationId: $administrationId, grn: $grn, payload: $payload);
 
-		$quantityReceived = ReceiptInput::quantity(value: ($payload['quantityReceived'] ?? $payload['quantity_received'] ?? 0));
-		$quantityAccepted = ReceiptInput::quantity(value: ($payload['quantityAccepted'] ?? $payload['quantity_accepted'] ?? $quantityReceived));
-		$quantityRejected = ReceiptInput::quantity(value: ($payload['quantityRejected'] ?? $payload['quantity_rejected'] ?? 0));
+		$quantityReceived = $this->input()->quantity(value: ($payload['quantityReceived'] ?? $payload['quantity_received'] ?? 0));
+		$quantityAccepted = $this->input()->quantity(value: ($payload['quantityAccepted'] ?? $payload['quantity_accepted'] ?? $quantityReceived));
+		$quantityRejected = $this->input()->quantity(value: ($payload['quantityRejected'] ?? $payload['quantity_rejected'] ?? 0));
 		$rejectionReason = trim((string)($payload['rejectionReason'] ?? $payload['rejection_reason'] ?? ''));
 		$batchReference = trim((string)($payload['batchReference'] ?? $payload['batch_ref'] ?? ''));
 
@@ -361,7 +361,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 
 		// Cross-validate: the PO line MUST belong to one of the GRN's po_ids.
 		$parentPoId = (string)($poLine['poId'] ?? '');
-		$grnPoIds = ReceiptInput::strings(input: ($grn['poIds'] ?? []));
+		$grnPoIds = $this->input()->strings(input: ($grn['poIds'] ?? []));
 		if ($parentPoId === '' || in_array($parentPoId, $grnPoIds, true) === false) {
 			throw new RuntimeException('Purchase order line does not belong to this GRN');
 		}
@@ -583,7 +583,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 * @return void
 	 */
 	private function updateReceivedPurchaseOrders(GrnAcceptance $acceptance, array $persisted): void {
-		$poIds = ReceiptInput::strings(input: ($persisted['poIds'] ?? $acceptance->grn['poIds'] ?? []));
+		$poIds = $this->input()->strings(input: ($persisted['poIds'] ?? $acceptance->grn['poIds'] ?? []));
 		foreach ($poIds as $poId) {
 			$this->updatePurchaseOrderReceiptLifecycle(
 				administrationId: $acceptance->administrationId,
@@ -614,8 +614,8 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$grn = $this->findGrn(administrationId: $administrationId, grnId: $grnId);
 
-		$existing = ReceiptInput::strings(input: ($grn['photos'] ?? []));
-		$incoming = ReceiptInput::strings(input: $photoFileIds);
+		$existing = $this->input()->strings(input: ($grn['photos'] ?? []));
+		$incoming = $this->input()->strings(input: $photoFileIds);
 		$merged = array_values(array_unique(array_merge($existing, $incoming)));
 
 		$grn['photos'] = $merged;
@@ -883,6 +883,16 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 			source: 'GoodsReceiptNoteService'
 		);
 	}//end stockMovePosting()
+
+	/**
+	 * The receipt input normalisers.
+	 *
+	 * @return ReceiptInput The normalisers.
+	 */
+	private function input(): ReceiptInput {
+		return new ReceiptInput();
+
+	}//end input()
 
 	/**
 	 * The administration, caller and purchase order checks.

@@ -159,7 +159,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$approver = $this->scope()->requireSessionUser();
 
-		$poIds = ReceiptInput::poIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
+		$poIds = $this->input()->poIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
 		if ($poIds === []) {
 			throw new RuntimeException('At least one purchase order id is required');
 		}
@@ -332,7 +332,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 */
 	private function assertPoLineOnReceipt(array $poLine, array $receipt): void {
 		$parentPoId = (string)($poLine['poId'] ?? '');
-		$receiptPoIds = ReceiptInput::strings(input: ($receipt['poIds'] ?? []));
+		$receiptPoIds = $this->input()->strings(input: ($receipt['poIds'] ?? []));
 		if ($parentPoId === '' || in_array($parentPoId, $receiptPoIds, true) === false) {
 			throw new RuntimeException('Purchase order line does not belong to this service receipt');
 		}
@@ -429,7 +429,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 		$receipt['statusCode'] = 'accepted';
 		$persisted = $this->records()->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
 
-		$poIds = ReceiptInput::strings(input: ($persisted['poIds'] ?? $receipt['poIds'] ?? []));
+		$poIds = $this->input()->strings(input: ($persisted['poIds'] ?? $receipt['poIds'] ?? []));
 		foreach ($poIds as $poId) {
 			$this->updatePurchaseOrderReceiptLifecycle(
 				administrationId: $administrationId,
@@ -455,14 +455,14 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 */
 	private function deriveQuantity(array $payload, array $poLine): float {
 		if (isset($payload['quantityConfirmed']) === true && $payload['quantityConfirmed'] !== '') {
-			return ReceiptInput::quantity(value: $payload['quantityConfirmed']);
+			return $this->input()->quantity(value: $payload['quantityConfirmed']);
 		}
 
 		$orderedQuantity = (float)($poLine['quantityOrdered'] ?? 0);
 
 		if (isset($payload['percentageComplete']) === true && $payload['percentageComplete'] !== '') {
 			$basisPoints = (int)$payload['percentageComplete'];
-			return ReceiptInput::quantity(value: (($orderedQuantity * $basisPoints) / 10000.0));
+			return $this->input()->quantity(value: (($orderedQuantity * $basisPoints) / 10000.0));
 		}
 
 		$amountSupplied = (isset($payload['amountConfirmedCents']) === true
@@ -474,7 +474,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 			}
 
 			$amountCents = (int)$payload['amountConfirmedCents'];
-			return ReceiptInput::quantity(value: ($amountCents / $unitPriceCents));
+			return $this->input()->quantity(value: ($amountCents / $unitPriceCents));
 		}
 
 		throw new RuntimeException('One of quantityConfirmed, percentageComplete or amountConfirmedCents is required');
@@ -578,6 +578,16 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 
 		return $received;
 	}//end receivedQuantities()
+
+	/**
+	 * The receipt input normalisers.
+	 *
+	 * @return ReceiptInput The normalisers.
+	 */
+	private function input(): ReceiptInput {
+		return new ReceiptInput();
+
+	}//end input()
 
 	/**
 	 * The administration, caller and purchase order checks.
