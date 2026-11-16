@@ -12492,7 +12492,12 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "The origin is allowed; the CORS headers are set."
+                        "description": "The origin is allowed; the CORS headers are set.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        }
                     },
                     "403": {
                         "description": "The origin is not allowed for this business."
@@ -12546,7 +12551,12 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "The origin is allowed; the CORS headers are set."
+                        "description": "The origin is allowed; the CORS headers are set.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        }
                     },
                     "403": {
                         "description": "The origin is not allowed for this business."
@@ -12633,7 +12643,12 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "The origin is allowed; the CORS headers are set."
+                        "description": "The origin is allowed; the CORS headers are set.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        }
                     },
                     "403": {
                         "description": "The origin is not allowed for this business."
