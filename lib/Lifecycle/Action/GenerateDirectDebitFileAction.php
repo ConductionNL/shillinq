@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Receivables\DirectDebitFileService;
+use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
 
 /**
  * Writes the pain.008 file of a batch as it is generated.
@@ -41,10 +41,10 @@ class GenerateDirectDebitFileAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param DirectDebitFileService $files Renders and validates the file.
+	 * @param DirectDebitFileServiceInterface $files Renders and validates the file.
 	 */
 	public function __construct(
-		private readonly DirectDebitFileService $files,
+		private readonly DirectDebitFileServiceInterface $files,
 	) {
 	}//end __construct()
 
