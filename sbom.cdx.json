@@ -19275,8 +19275,8 @@
     {
       "type": "library",
       "name": "pinia",
-      "version": "4.0.3",
-      "bom-ref": "shillinq@0.2.1|pinia@4.0.3",
+      "version": "4.1.0",
+      "bom-ref": "shillinq@0.2.1|pinia@4.1.0",
       "licenses": [
         {
           "license": {
@@ -19284,15 +19284,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/pinia@4.0.3",
+      "purl": "pkg:npm/pinia@4.1.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/pinia/-/pinia-4.0.3.tgz",
+          "url": "https://registry.npmjs.org/pinia/-/pinia-4.1.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "5cc42aa6f8e01bb2cca95861154cca2d3e0a11bb186df659d02654f4f81d166d4ed9528198893290bf3e49f36139a4fbb11d304fa04480a4f460d0d85a099544"
+              "content": "fb9fc732e5636107ca9420f9c50ef37d79f5c54cd81446bba5dd0340ae5268c7d909a1514c795a1ff734d8dd45a0639d9734a2c1fe4438f809c7fff5403c3a83"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
