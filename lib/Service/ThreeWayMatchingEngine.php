@@ -70,7 +70,6 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ThreeWayMatchingEngineInterface;
-use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -370,7 +369,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 
 		$invoice = null;
 		if ($invoiceId !== '') {
-			$invoice = $this->findOne(
+			$invoice = $this->records()->findOne(
 				schema: self::SCHEMA_SUPPLIER_INVOICE,
 				filters: [
 					'id' => $invoiceId,
@@ -427,11 +426,11 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 	 */
 	private function matchAgainstPo(ThreeWayMatchRun $run, string $poId): array {
 		$run->poId = $poId;
-		$run->po = $this->findOne(
+		$run->po = $this->records()->findOne(
 			schema: self::SCHEMA_PO,
 			filters: ['id' => $poId, 'administrationId' => $run->administrationId]
 		);
-		$run->poLines = $this->findAll(
+		$run->poLines = $this->records()->findAll(
 			schema: self::SCHEMA_PO_LINE,
 			filters: ['poId' => $poId, 'administrationId' => $run->administrationId]
 		);
@@ -467,7 +466,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 		);
 		$scored = $this->scoreTuples(tuples: $tuples, profile: $this->profileFor(run: $run));
 
-		$saved = $this->saveObject(
+		$saved = $this->records()->saveObject(
 			schema: self::SCHEMA_THREE_WAY_MATCH,
 			object: [
 				'invoiceId' => $run->invoiceId,
@@ -506,7 +505,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 		$poId = $run->poId;
 		$receipts = [];
 		foreach (array_keys(self::RECEIPT_LINES) as $schema) {
-			$rows = $this->findAll(schema: $schema, filters: ['administrationId' => $run->administrationId]);
+			$rows = $this->records()->findAll(schema: $schema, filters: ['administrationId' => $run->administrationId]);
 			$receipts[$schema] = array_values(
 				array_filter(
 					$rows,
@@ -585,7 +584,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 				$receiptId = $this->idOf(row: $row);
 				$accepted = in_array((string)($row['statusCode'] ?? ''), self::ACCEPTED_RECEIPT_STATUSES[$schema], true);
 				if ($receiptId !== '' && $accepted === true) {
-					$found = $this->findAll(
+					$found = $this->records()->findAll(
 						schema: $lineSchema,
 						filters: [$receiptKey => $receiptId, 'administrationId' => $run->administrationId]
 					);
@@ -1171,7 +1170,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 			'administrationId' => $administrationId,
 		];
 
-		$saved = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
+		$saved = $this->records()->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
 		$this->safeTransition(administrationId: $administrationId, invoiceId: $invoiceId, toStatus: 'exception');
 
 		// Alert the crediteuren-administrateur. REQ-PO3W-004
@@ -1431,7 +1430,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 		// Filter by tenant scope.
 		$validated = [];
 		foreach (array_values(array_unique($ids)) as $id) {
-			$po = $this->findOne(
+			$po = $this->records()->findOne(
 				schema: self::SCHEMA_PO,
 				filters: ['id' => $id, 'administrationId' => $administrationId]
 			);
@@ -1547,98 +1546,6 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 	}//end safeTransition()
 
 	/**
-	 * Persist an object via OR's real ObjectService API (saveObject).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object to persist.
-	 *
-	 * @return array<string,mixed>
-	 *
-	 * @throws \RuntimeException When the persistence call fails.
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ThreeWayMatchingEngine: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ThreeWayMatchingEngine: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OR register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		return RegisterSlug::of(config: $this->appConfig);
-	}//end register()
-
-	/**
 	 * Current timestamp in ISO-8601 (Y-m-d\TH:i:sP) — server-authoritative.
 	 *
 	 * @return string
@@ -1646,4 +1553,17 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 	private function nowIso(): string {
 		return date('c');
 	}//end nowIso()
+
+	/**
+	 * The register records of this service.
+	 *
+	 * @return SchemaRecordStore The store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'ThreeWayMatchingEngine')
+		);
+
+	}//end records()
 }//end class

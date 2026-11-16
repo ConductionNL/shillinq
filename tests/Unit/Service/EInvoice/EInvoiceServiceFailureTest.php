@@ -47,6 +47,9 @@ use RuntimeException;
  * @uses   \OCA\Shillinq\Service\EInvoice\EInvoiceSend
  * @uses   \OCA\Shillinq\Service\EInvoice\DebtorCheck
  * @uses   \OCA\Shillinq\Service\InvoicePdfGenerator
+ * @uses   \OCA\Shillinq\Service\RecordStoreLog
+ * @uses   \OCA\Shillinq\Service\RegisterBinding
+ * @uses   \OCA\Shillinq\Service\SchemaRecordStore
  */
 final class EInvoiceServiceFailureTest extends TestCase {
 
