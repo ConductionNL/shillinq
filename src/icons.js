@@ -288,6 +288,8 @@ import SourceBranch from 'vue-material-design-icons/SourceBranch.vue'
 import SpeedometerSlow from 'vue-material-design-icons/SpeedometerSlow.vue'
 import StairsUp from 'vue-material-design-icons/StairsUp.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
+import Storefront from 'vue-material-design-icons/Storefront.vue'
+import StorefrontOutline from 'vue-material-design-icons/StorefrontOutline.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import SwapHorizontal from 'vue-material-design-icons/SwapHorizontal.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
@@ -610,6 +612,8 @@ export default {
 	StairsUp,
 	StarOutline,
 	StoreOutline,
+	Storefront,
+	StorefrontOutline,
 	SwapHorizontal,
 	SwapHorizontalBold,
 	SwapVerticalBold,

@@ -26,7 +26,7 @@ function instance(state = {}) {
 		requiredFieldCount: null,
 		...state,
 	}
-	for (const name of ['pageSections', 'tabs', 'breadcrumbs']) {
+	for (const name of ['pageSections', 'tabs', 'breadcrumbs', 'fxImportStatusFields', 'fxImportStatusUrl']) {
 		Object.defineProperty(vm, name, {
 			get: () => AdminRoot.computed[name].call(vm),
 		})
@@ -41,6 +41,7 @@ describe('admin settings tabs', () => {
 			'required-fields',
 			'connections',
 			'appointments',
+			'exchange-rates',
 		])
 	})
 
@@ -50,6 +51,13 @@ describe('admin settings tabs', () => {
 			label: 'Required fields',
 			count: 2,
 		})
+	})
+
+	it('reads the exchange-rate import state on its own tab, without a Save', () => {
+		const fields = instance().fxImportStatusFields
+		expect(fields.map((f) => f.type)).toEqual(['status', 'status'])
+		expect(fields[0].textMap.dormant).toBeTruthy()
+		expect(instance().fxImportStatusUrl).toContain('/apps/shillinq/api/admin/fx-rate-import-status')
 	})
 
 	it('draws a switch per required field on the Required fields tab', () => {

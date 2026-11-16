@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Lifecycle\Action\HandToDigipoortAction;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
@@ -71,7 +72,14 @@ final class HandToDigipoortActionTest extends TestCase {
 		$files = $this->createMock(SbrFilingFileStore::class);
 		$files->expects($this->once())->method('store')->with('adm-1', 'OB-BTW-2026-Q3.xbrl', '<xbrli:xbrl/>')->willReturn('nextcloud://files/42');
 
-		$result = (new HandToDigipoortAction($adapter, $files, $this->location()))->execute(self::INSTANCE, [], [], 'hand-to-digipoort');
+		$result = (new HandToDigipoortAction($adapter, $files, $this->location()))->execute(
+			new LifecycleActionContext(
+				objectData: self::INSTANCE,
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-digipoort'
+			)
+		);
 
 		$this->assertSame('nextcloud://files/42', $result['payloadFileUri']);
 		$this->assertSame('digipoort-sbr', $result['digipoortSourceSlug']);
@@ -91,7 +99,14 @@ final class HandToDigipoortActionTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('SBR filing is not configured');
 
-		(new HandToDigipoortAction($adapter, $files, $this->location()))->execute(self::INSTANCE, [], [], 'hand-to-digipoort');
+		(new HandToDigipoortAction($adapter, $files, $this->location()))->execute(
+			new LifecycleActionContext(
+				objectData: self::INSTANCE,
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-digipoort'
+			)
+		);
 	}
 
 	public function testAnInstanceWithoutXmlIsNotHandedOff(): void {
@@ -102,7 +117,14 @@ final class HandToDigipoortActionTest extends TestCase {
 		$this->expectExceptionMessage('The XBRL instance has no document to file.');
 
 		(new HandToDigipoortAction($adapter, $this->createMock(SbrFilingFileStore::class), $this->location()))
-			->execute(['instanceXml' => ' '] + self::INSTANCE, [], [], 'hand-to-digipoort');
+			->execute(
+				new LifecycleActionContext(
+					objectData: ['instanceXml' => ' '] + self::INSTANCE,
+					previousData: [],
+					parameters: [],
+					actionName: 'hand-to-digipoort'
+				)
+			);
 	}
 
 	public function testAKvkFilingGoesToTheKvkAndAnUnnumberedOneIsNamedByItsId(): void {
@@ -114,7 +136,14 @@ final class HandToDigipoortActionTest extends TestCase {
 		$files->expects($this->once())->method('store')->with('', 'xbrl-2.xbrl', '<x/>')->willReturn('nextcloud://files/7');
 
 		(new HandToDigipoortAction($adapter, $files, $this->location()))
-			->execute(['id' => 'xbrl-2', 'entryPoint' => 'kvk-jaarrekening', 'instanceXml' => '<x/>'], [], [], 'hand-to-digipoort');
+			->execute(
+				new LifecycleActionContext(
+					objectData: ['id' => 'xbrl-2', 'entryPoint' => 'kvk-jaarrekening', 'instanceXml' => '<x/>'],
+					previousData: [],
+					parameters: [],
+					actionName: 'hand-to-digipoort'
+				)
+			);
 
 		$this->assertSame('belastingdienst', HandToDigipoortAction::recipient('belastingdienst-ob'));
 	}
