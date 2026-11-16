@@ -41,7 +41,6 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionConversionGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
-use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -125,7 +124,7 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 			throw new RuntimeException('Requisition not found');
 		}
 
-		$requisition = $this->findOne(schema: 'Requisition', filters: ['id' => $requisitionId, 'administrationId' => $administrationId]);
+		$requisition = $this->records()->findOne(schema: 'Requisition', filters: ['id' => $requisitionId, 'administrationId' => $administrationId]);
 		if ($requisition === null) {
 			throw new RuntimeException('Requisition not found');
 		}
@@ -172,7 +171,10 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 	 * @throws \RuntimeException When the requisition has no lines.
 	 */
 	private function requisitionLines(string $administrationId, string $requisitionId): array {
-		$lines = $this->findAll(schema: 'RequisitionLine', filters: ['requisitionId' => $requisitionId, 'administrationId' => $administrationId]);
+		$lines = $this->records()->findAll(
+			schema: 'RequisitionLine',
+			filters: ['requisitionId' => $requisitionId, 'administrationId' => $administrationId]
+		);
 		if ($lines === []) {
 			throw new RuntimeException('Requisition has no lines to convert');
 		}
@@ -242,7 +244,7 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 		$requisition['convertedPurchaseOrderId'] = $poId;
 		$requisition['convertedAt']              = date('c');
 
-		$updatedRequisition = $this->saveObject(schema: 'Requisition', object: $requisition);
+		$updatedRequisition = $this->records()->saveObject(schema: 'Requisition', object: $requisition);
 
 		return [
 			'requisition' => $updatedRequisition,
@@ -252,92 +254,15 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 	}//end markConverted()
 
 	/**
-	 * Persist an object via OpenRegister's real ObjectService API (saveObject).
+	 * The register records of this service.
 	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object The object to persist.
-	 *
-	 * @return array<string,mixed> The persisted record.
+	 * @return SchemaRecordStore The store.
 	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'RequisitionConversionService')
+		);
 
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionConversionService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionConversionService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		return RegisterSlug::of(config: $this->appConfig);
-	}//end register()
+	}//end records()
 }//end class

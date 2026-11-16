@@ -62,7 +62,6 @@ use DateInterval;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\MultiPoConsolidationServiceInterface;
-use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -272,7 +271,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	 * @return array<string,true> The supplier PO ids, or [] when there are none.
 	 */
 	private function supplierPoIds(string $administrationId, string $supplierId): array {
-		$supplierPos = $this->findAll(
+		$supplierPos = $this->records()->findAll(
 			schema: self::SCHEMA_PURCHASE_ORDER,
 			filters: [
 				'administrationId' => $administrationId,
@@ -300,7 +299,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	 * @return array<int,array<string,mixed>> The candidate tuples.
 	 */
 	private function candidateTuples(CandidateTupleSearch $search): array {
-		$candidatePoLines = $this->findAll(
+		$candidatePoLines = $this->records()->findAll(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'administrationId' => $search->administrationId,
@@ -358,7 +357,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 			'productCode' => $search->productCode,
 			'expectedDeliveryDate' => trim((string)($poLine['expectedDeliveryDate'] ?? '')),
 		];
-		$grnLines = $this->findAll(
+		$grnLines = $this->records()->findAll(
 			schema: self::SCHEMA_GRN_LINE,
 			filters: [
 				'administrationId' => $search->administrationId,
@@ -636,7 +635,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 			throw new RuntimeException('Supplier invoice not found');
 		}
 
-		$invoice = $this->findOne(
+		$invoice = $this->records()->findOne(
 			schema: self::SCHEMA_SUPPLIER_INVOICE,
 			filters: [
 				'id' => $invoiceId,
@@ -749,7 +748,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	 * @return array<string,mixed> The persisted match record.
 	 */
 	private function writeMatchRecord(InvoiceLineMatch $lineMatch): array {
-		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $this->matchPayload(lineMatch: $lineMatch));
+		$persisted = $this->records()->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $this->matchPayload(lineMatch: $lineMatch));
 
 		// Slice 07 — write the PO link back to the SupplierInvoice document so
 		// a consumer reading the invoice sees the per-line PO links inline
@@ -1015,96 +1014,6 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	}//end currentUserId()
 
 	/**
-	 * Persist via the real ObjectService API (saveObject).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object to persist.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'MultiPoConsolidationService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'MultiPoConsolidationService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OR register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		return RegisterSlug::of(config: $this->appConfig);
-	}//end register()
-
-	/**
 	 * Current timestamp in ISO-8601 (Y-m-d\TH:i:sP) — server-authoritative.
 	 *
 	 * @return string
@@ -1112,4 +1021,17 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	private function nowIso(): string {
 		return date('c');
 	}//end nowIso()
+
+	/**
+	 * The register records of this service.
+	 *
+	 * @return SchemaRecordStore The store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'MultiPoConsolidationService')
+		);
+
+	}//end records()
 }//end class
