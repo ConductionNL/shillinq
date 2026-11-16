@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Kernel\Contracts\EnsiaCycleStepsInterface;
 use OCA\Shillinq\Lifecycle\Action\CreateEnsiaFindingsAction;
 use OCA\Shillinq\Lifecycle\Action\ExportEnsiaSubmissionAction;
@@ -55,7 +56,7 @@ final class EnsiaCycleActionsTest extends TestCase {
 		$steps = $this->createMock(EnsiaCycleStepsInterface::class);
 		$steps->expects($this->once())->method('createFindings')->with(self::CYCLE)->willReturn(['b1', 'b2']);
 
-		$this->assertSame(self::CYCLE, (new CreateEnsiaFindingsAction(steps: $steps))->execute(self::CYCLE, [], [], 'naarPeerReview'));
+		$this->assertSame(self::CYCLE, (new CreateEnsiaFindingsAction(steps: $steps))->execute(new LifecycleActionContext(self::CYCLE, [], [], 'naarPeerReview')));
 	}//end testPeerReviewCreatesTheFindings()
 
 	/**
@@ -70,7 +71,7 @@ final class EnsiaCycleActionsTest extends TestCase {
 
 		$this->assertSame(
 			self::CYCLE + ['declarationDocx' => 'UEs='],
-			(new RenderEnsiaStatementAction(steps: $steps))->execute(self::CYCLE, [], [], 'naarCollegeAkkoord')
+			(new RenderEnsiaStatementAction(steps: $steps))->execute(new LifecycleActionContext(self::CYCLE, [], [], 'naarCollegeAkkoord'))
 		);
 	}//end testCollegeApprovalStoresTheStatement()
 
@@ -87,9 +88,9 @@ final class EnsiaCycleActionsTest extends TestCase {
 		);
 		$action = new ExportEnsiaSubmissionAction(steps: $steps);
 
-		$this->assertSame(self::CYCLE + ['submissionXml' => '<ensia/>'], $action->execute(self::CYCLE, [], [], 'indienen'));
+		$this->assertSame(self::CYCLE + ['submissionXml' => '<ensia/>'], $action->execute(new LifecycleActionContext(self::CYCLE, [], [], 'indienen')));
 		$this->expectException(DomainException::class);
-		$action->execute(self::CYCLE, [], [], 'indienen');
+		$action->execute(new LifecycleActionContext(self::CYCLE, [], [], 'indienen'));
 	}//end testSubmittingStoresTheXmlOrStops()
 
 	/**

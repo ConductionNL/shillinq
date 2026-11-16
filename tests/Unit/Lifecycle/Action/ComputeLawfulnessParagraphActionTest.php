@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Kernel\Contracts\LawfulnessParagraphInterface;
 use OCA\Shillinq\Lifecycle\Action\ComputeLawfulnessParagraphAction;
 use PHPUnit\Framework\TestCase;
@@ -45,12 +46,12 @@ final class ComputeLawfulnessParagraphActionTest extends TestCase {
 		$paragraphs->expects($this->once())->method('compute')->with('gem', 2026)
 			->willReturn(['within_tolerance' => false, 'total_identified_errors' => 2500000.0]);
 
-		$result = (new ComputeLawfulnessParagraphAction(paragraphs: $paragraphs))->execute(
+		$result = (new ComputeLawfulnessParagraphAction(paragraphs: $paragraphs))->execute(new LifecycleActionContext(
 			['id' => 'p1', 'administrationId' => 'gem', 'financialYear' => '2026', 'status' => 'draft', 'within_tolerance' => true],
 			[],
 			[],
 			'compute'
-		);
+		));
 
 		$this->assertSame(
 			['id' => 'p1', 'administrationId' => 'gem', 'financialYear' => '2026', 'status' => 'draft', 'within_tolerance' => false, 'total_identified_errors' => 2500000.0],
@@ -68,6 +69,6 @@ final class ComputeLawfulnessParagraphActionTest extends TestCase {
 		$paragraphs->method('compute')->willThrowException(new DomainException('Record the tolerance for 2026 first.'));
 
 		$this->expectException(DomainException::class);
-		(new ComputeLawfulnessParagraphAction(paragraphs: $paragraphs))->execute(['administrationId' => 'gem', 'financialYear' => 2026], [], [], 'compute');
+		(new ComputeLawfulnessParagraphAction(paragraphs: $paragraphs))->execute(new LifecycleActionContext(['administrationId' => 'gem', 'financialYear' => 2026], [], [], 'compute'));
 	}//end testARefusalStopsTheTransition()
 }//end class

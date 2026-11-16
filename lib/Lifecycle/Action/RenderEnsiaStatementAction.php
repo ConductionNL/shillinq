@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\EnsiaCycleStepsInterface;
 
@@ -47,18 +48,15 @@ class RenderEnsiaStatementAction implements LifecycleActionInterface {
 	/**
 	 * Render the college statement and keep it on the cycle.
 	 *
-	 * @param array<string, mixed> $objectData   The cycle after the transition.
-	 * @param array<string, mixed> $previousData The cycle before it.
-	 * @param array<string, mixed> $parameters   The action parameters (none).
-	 * @param string               $actionName   The transition.
+	 * @param LifecycleActionContext $context The transition; its objectData is the cycle after the transition.
 	 *
 	 * @return array<string, mixed> The cycle with its statement.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		return $this->steps->withStatement(cycle: $objectData);
 	}//end execute()
 }//end class

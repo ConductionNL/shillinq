@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\LawfulnessParagraphInterface;
 
@@ -49,16 +50,15 @@ class ComputeLawfulnessParagraphAction implements LifecycleActionInterface {
 	/**
 	 * Compute the paragraph's totals and answer the paragraph with them.
 	 *
-	 * @param array<string, mixed> $objectData   The paragraph.
-	 * @param array<string, mixed> $previousData The paragraph before the transition.
-	 * @param array<string, mixed> $parameters   The action parameters (none).
-	 * @param string               $actionName   The transition.
+	 * @param LifecycleActionContext $context The transition; its objectData is the paragraph.
 	 *
 	 * @return array<string, mixed> The paragraph with its totals.
 	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$totals = $this->paragraphs->compute(
 			administrationId: (string)($objectData['administrationId'] ?? ''),
 			financialYear: (int)($objectData['financialYear'] ?? 0)
