@@ -786,15 +786,17 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 			array_filter($this->store->rows['VatTariff'], static fn (array $t): bool => $t['code'] !== 'high')
 		);
 		$action->execute(
-			[
-				'id' => 'ap-12', 'invoiceNumber' => 'INK-92', 'invoiceDate' => '2026-08-04', 'administrationId' => 'adm-1',
-				'totalAmount' => 2000.0, 'taxAmount' => 0,
-				'lines' => [['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge']],
-				'state' => 'posted',
-			],
-			[],
-			['sourceSchema' => 'APInvoice'],
-			MaterialiseGlTransactionAction::class
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-12', 'invoiceNumber' => 'INK-92', 'invoiceDate' => '2026-08-04', 'administrationId' => 'adm-1',
+					'totalAmount' => 2000.0, 'taxAmount' => 0,
+					'lines' => [['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge']],
+					'state' => 'posted',
+				],
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		self::assertSame(
