@@ -85,7 +85,7 @@ const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8')
 const { attachManifestActions, manifestActions } =
 	await import('../../src/manifestActions.js')
 const CnPageRenderer = (
-	await import('@conduction/nextcloud-vue/dist/esm/components/CnPageRenderer/CnPageRenderer.vue2.js')
+	await import('@conduction/nextcloud-vue/dist/esm/components/CnPageRenderer/CnPageRenderer.vue.js')
 ).default
 const { resolveRegisteredHandler } =
 	await import('@conduction/nextcloud-vue/dist/esm/utils/actionsDispatcher.js')

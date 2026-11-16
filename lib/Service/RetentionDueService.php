@@ -31,6 +31,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCA\Shillinq\Service\Relation\RelationRecords;
 use Throwable;
 
@@ -39,7 +40,7 @@ use Throwable;
  *
  * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
  */
-class RetentionDueService {
+class RetentionDueService implements RetentionDueServiceInterface {
 
 	/**
 	 * The retention-bound schemas: the field holding each record's reference

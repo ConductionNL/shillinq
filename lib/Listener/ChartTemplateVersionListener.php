@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\BackgroundJob\ChartTemplateSyncJob;
 use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\BackgroundJob\IJobList;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -47,11 +47,11 @@ class ChartTemplateVersionListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param IJobList               $jobList        The queue.
-	 * @param ListenerSchemaResolver $schemaResolver Which schema an event's object is.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Which schema an event's object is.
 	 */
 	public function __construct(
 		private readonly IJobList $jobList,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 	) {
 	}//end __construct()
 
