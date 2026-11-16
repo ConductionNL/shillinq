@@ -36,6 +36,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Exercises the WidgetAccessKey lifecycle against an in-memory ObjectService.
@@ -388,7 +389,11 @@ final class WidgetAuthServiceKeysTest extends TestCase {
 		);
 		$saved = [];
 		$objectService->expects(self::exactly(2))->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true) use (&$saved) {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true) use (&$saved) {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$saved[] = ['schema' => $schema, 'register' => $register, 'uuid' => $uuid, 'rbac' => $_rbac];
 				return new ObjectEntityStub(payload: $object);
 			}

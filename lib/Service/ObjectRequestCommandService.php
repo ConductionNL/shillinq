@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Event\PaymentCreditRequestedEvent;
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Event\PaymentSettlementCommandEvent;
@@ -198,10 +200,9 @@ class ObjectRequestCommandService implements ObjectRequestCommandServiceInterfac
 			$changed = $change($request);
 			$this->objectService->saveObject(
 				object: $changed,
-				register: $this->registerSlug(),
-				schema: 'PaymentRequest',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'PaymentRequest')),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 		} catch (InvalidArgumentException $e) {
 			$event->refuse(error: $e->getMessage());
