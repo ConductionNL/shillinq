@@ -2,10 +2,10 @@
     "plain": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1306,
-            "machineCheckable": 699,
-            "enforceableRules": 621,
-            "coveragePct": 88.8,
+            "corpusTotal": 1307,
+            "machineCheckable": 700,
+            "enforceableRules": 622,
+            "coveragePct": 88.9,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -450,10 +450,10 @@
     "jurisdiction": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1306,
-            "machineCheckable": 699,
-            "enforceableRules": 621,
-            "coveragePct": 88.8,
+            "corpusTotal": 1307,
+            "machineCheckable": 700,
+            "enforceableRules": 622,
+            "coveragePct": 88.9,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -898,10 +898,10 @@
     "failing": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1306,
-            "machineCheckable": 699,
-            "enforceableRules": 621,
-            "coveragePct": 88.8,
+            "corpusTotal": 1307,
+            "machineCheckable": 700,
+            "enforceableRules": 622,
+            "coveragePct": 88.9,
             "types": {
                 "ARInvoice": {
                     "checked": 3,

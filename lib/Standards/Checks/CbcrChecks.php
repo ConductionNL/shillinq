@@ -43,6 +43,13 @@ final class CbcrChecks implements CheckProvider {
 	public const RESIDUAL_LIMIT = 1000000.0;
 
 	/**
+	 * The largest share by which tangible assets may differ from the fixed asset register.
+	 *
+	 * @var float
+	 */
+	public const ASSET_REGISTER_TOLERANCE = 0.01;
+
+	/**
 	 * The checks for CbcrReturn.
 	 *
 	 * @return array<string, array<string, callable>>
@@ -72,6 +79,7 @@ final class CbcrChecks implements CheckProvider {
 					o: $o,
 					test: static fn (array $entity): bool => in_array((string)($entity['figures']['source'] ?? 'books'), ['entered', 'imported'], true) === false
 				),
+				'cbc-tangible-assets-register' => static fn (array $o): bool => self::everyEntity(o: $o, test: [self::class, 'assetsMatchRegister']),
 			],
 		];
 	}//end checks()
@@ -104,6 +112,30 @@ final class CbcrChecks implements CheckProvider {
 
 		return $tin !== '';
 	}//end hasTin()
+
+	/**
+	 * Whether an entity's tangible assets agree with its fixed asset register within 1%.
+	 *
+	 * An entity without a register value (no administration here, or no assets
+	 * in the register) or without a figure for tangible assets is not judged.
+	 *
+	 * @param array<string,mixed> $entity The entity, with `figures` and `fixedAssetBookValue`.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
+	 */
+	public static function assetsMatchRegister(array $entity): bool {
+		$register = ($entity['fixedAssetBookValue'] ?? null);
+		$figure   = ($entity['figures']['tangibleAssetsOtherThanCash'] ?? null);
+		if (is_numeric($register) === false || is_numeric($figure) === false) {
+			return true;
+		}
+
+		$difference = abs((float)$figure - (float)$register);
+
+		return $difference <= 0.01 || $difference <= (abs((float)$register) * self::ASSET_REGISTER_TOLERANCE);
+	}//end assetsMatchRegister()
 
 	/**
 	 * Whether a summary's total revenue, when stated, is unrelated plus related within a cent.

@@ -28,7 +28,7 @@
 ## 5. Checks and guards
 
 - [ ] 5.1 Add `lib/Standards/Checks/CbcrChecks.php` and `GirChecks.php` with the checks and severities of design D7, registered with `RuleEngine`; make Generate XML refuse on a failing blocking check, naming it (REQ-CBC-012). Verify: PHPUnit per check, pass and fail.
-  - In so far: `CbcrChecks` and `GirChecks` (rules in `lib/Standards/rules/cbcr-pillar2.json`) and `CbcrCheckRunner` with pass/fail per check, tested; the Generate XML refusal waits for the generators of 4.1 and 4.3. The fixed-asset register comparison (warning) is not built.
+  - In so far: `CbcrChecks` and `GirChecks` (rules in `lib/Standards/rules/cbcr-pillar2.json`) and `CbcrCheckRunner` with pass/fail per check, tested; the Generate XML refusal waits for the generators of 4.1 and 4.3. The fixed-asset register comparison is the warning `cbc-tangible-assets-register`: an entity's tangible assets against the summed `currentBookValue` of its administration's assets in use, 1% either way (`CbcrGirChecksTest`, `CbcrCheckRunnerTest`).
 - [x] 5.2 Add `canSubmitCbcrReturn` and `canApproveGir` to `CbcrPillar2Guard` as the `requires` of `CbcrReturn.submit` and `GlobeInformationReturn.approve`, failing closed (REQ-CBC-012). Verify: PHPUnit with the real guard and lifecycle interfaces; a live submit without a valid file is refused.
 
 ## 6. Pages

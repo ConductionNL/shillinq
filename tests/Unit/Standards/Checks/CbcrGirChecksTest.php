@@ -53,7 +53,10 @@ final class CbcrGirChecksTest extends TestCase {
 			'reconciliationResidual' => 2500000.0,
 			'reconciliationItems' => [['description' => 'Consolidation eliminations', 'amount' => 2500000.0]],
 			'_entities' => [
-				['id' => 'ge-holding', 'tin' => '001234567', 'figures' => ['source' => 'books', 'unmappedAccounts' => []]],
+				[
+					'id' => 'ge-holding', 'tin' => '001234567', 'fixedAssetBookValue' => 1000000.0,
+					'figures' => ['source' => 'books', 'unmappedAccounts' => [], 'tangibleAssetsOtherThanCash' => 1009000.0],
+				],
 				['id' => 'ge-trust', 'tin' => 'NOTIN', 'tinMissingReason' => 'A trust without a tax number', 'figures' => ['source' => 'books']],
 			],
 			'_summaries' => [
@@ -99,6 +102,10 @@ final class CbcrGirChecksTest extends TestCase {
 				'cbc-figures-from-books',
 				static fn (array $o): array => array_replace_recursive($o, ['_entities' => [1 => ['figures' => ['source' => 'entered']]]]),
 			],
+			'tangible assets off the register by more than 1%' => [
+				'cbc-tangible-assets-register',
+				static fn (array $o): array => array_replace_recursive($o, ['_entities' => [0 => ['figures' => ['tangibleAssetsOtherThanCash' => 1011000.0]]]]),
+			],
 		];
 	}//end cbcBreaks()
 
@@ -113,7 +120,7 @@ final class CbcrGirChecksTest extends TestCase {
 			[
 				'cbc-figures-every-entity', 'cbc-accounts-mapped', 'cbc-entity-tin',
 				'cbc-jurisdiction-activity', 'cbc-revenue-total', 'cbc-residual-explained',
-				'cbc-figures-from-books',
+				'cbc-figures-from-books', 'cbc-tangible-assets-register',
 			],
 			array_keys(CbcrChecks::checks()['CbcrReturn'])
 		);
@@ -134,12 +141,34 @@ final class CbcrGirChecksTest extends TestCase {
 
 		$this->assertSame([$ruleId], array_map(static fn (Violation $violation): string => $violation->ruleId, $violations));
 		$expected = 'mandatory';
-		if ($ruleId === 'cbc-figures-from-books') {
+		if (in_array($ruleId, ['cbc-figures-from-books', 'cbc-tangible-assets-register'], true) === true) {
 			$expected = 'recommended';
 		}
 
 		$this->assertSame($expected, $violations[0]->severity);
 	}//end testBreakingOneThingFailsItsCheck()
+
+	/**
+	 * The register comparison judges only an entity with both a register value and a figure, and allows 1% either way.
+	 *
+	 * @return void
+	 */
+	public function testTangibleAssetsAreComparedWithTheRegisterWithinOnePercent(): void {
+		$entity = static fn (mixed $register, mixed $figure): array => [
+			'fixedAssetBookValue' => $register,
+			'figures' => ['tangibleAssetsOtherThanCash' => $figure],
+		];
+
+		$this->assertTrue(CbcrChecks::assetsMatchRegister($entity(200000.0, 198000.0)));
+		$this->assertTrue(CbcrChecks::assetsMatchRegister($entity(200000.0, 202000.0)));
+		$this->assertFalse(CbcrChecks::assetsMatchRegister($entity(200000.0, 197999.0)));
+		$this->assertFalse(CbcrChecks::assetsMatchRegister($entity(200000.0, 202001.0)));
+		$this->assertFalse(CbcrChecks::assetsMatchRegister($entity(0.0, 5.0)));
+		$this->assertTrue(CbcrChecks::assetsMatchRegister($entity(0.0, 0.0)));
+		$this->assertTrue(CbcrChecks::assetsMatchRegister($entity(null, 5.0)));
+		$this->assertTrue(CbcrChecks::assetsMatchRegister($entity(200000.0, null)));
+		$this->assertTrue(CbcrChecks::assetsMatchRegister(['figures' => null]));
+	}//end testTangibleAssetsAreComparedWithTheRegisterWithinOnePercent()
 
 	/**
 	 * A residual within EUR 1M needs no explanation.

@@ -179,6 +179,34 @@ class CbcrCheckRunner {
 	}//end joinCbc()
 
 	/**
+	 * The net book value in an administration's fixed asset register: the sum of
+	 * `currentBookValue` over the assets not disposed or archived.
+	 *
+	 * @param string $administrationId The entity's administration; '' when it keeps no books here.
+	 *
+	 * @return float|null Null when there is no administration or no asset with a book value.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
+	 */
+	private function fixedAssetBookValue(string $administrationId): ?float {
+		if ($administrationId === '') {
+			return null;
+		}
+
+		$total = null;
+		foreach ($this->all(schema: 'FixedAsset', filters: ['administrationId' => $administrationId]) as $asset) {
+			$state = (string)($asset['lifecycleState'] ?? '');
+			if (in_array($state, ['disposed', 'archived'], true) === true || is_numeric($asset['currentBookValue'] ?? null) === false) {
+				continue;
+			}
+
+			$total = (($total ?? 0.0) + (float)$asset['currentBookValue']);
+		}
+
+		return $total;
+	}//end fixedAssetBookValue()
+
+	/**
 	 * The group's entities included in the CbC report, each with its figures for the year.
 	 *
 	 * @param string $upeId The ultimate parent.
@@ -195,8 +223,9 @@ class CbcrCheckRunner {
 				continue;
 			}
 
-			$member['figures'] = ($this->all(schema: 'CbcrEntityFigures', filters: ['entity' => $id, 'fiscalYear' => $year])[0] ?? null);
-			$entities[]        = $member;
+			$member['figures']             = ($this->all(schema: 'CbcrEntityFigures', filters: ['entity' => $id, 'fiscalYear' => $year])[0] ?? null);
+			$member['fixedAssetBookValue'] = $this->fixedAssetBookValue(administrationId: trim((string)($member['administrationId'] ?? '')));
+			$entities[]                    = $member;
 		}
 
 		return $entities;

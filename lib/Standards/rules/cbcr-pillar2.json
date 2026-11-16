@@ -87,6 +87,18 @@
       "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
     },
     {
+      "id": "cbc-tangible-assets-register",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-cbc",
+      "source": "OECD CbC XML Schema User Guide v2.0 (2019), Summary/Assets",
+      "statement": "The tangible assets other than cash of an entity that keeps its books here differ by no more than 1% from the net book value in its fixed asset register.",
+      "severity": "recommended",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
+    },
+    {
       "id": "gir-jurisdiction-covered",
       "domain": "tax",
       "jurisdiction": "global",

@@ -147,6 +147,7 @@ final class CbcrCheckRunnerTest extends TestCase {
 			[
 				'cbc-figures-every-entity' => true, 'cbc-accounts-mapped' => false, 'cbc-entity-tin' => true, 'cbc-jurisdiction-activity' => true,
 				'cbc-revenue-total' => true, 'cbc-residual-explained' => true, 'cbc-figures-from-books' => true,
+				'cbc-tangible-assets-register' => true,
 			],
 			$byId
 		);
@@ -154,6 +155,48 @@ final class CbcrCheckRunnerTest extends TestCase {
 		$this->assertSame('mandatory', $results[1]['severity']);
 		$this->assertStringContainsString('country-by-country category', $results[1]['statement']);
 	}//end testTheCbcChecksJudgeTheGroupsRecords()
+
+	/**
+	 * Tangible assets are compared with the register of the entity's own
+	 * administration, counting only assets in use with a book value; a gap
+	 * over 1% warns and does not block.
+	 *
+	 * @return void
+	 */
+	public function testTangibleAssetsAreComparedWithTheEntitysFixedAssetRegister(): void {
+		$this->store->setSchema('GroupEntityRegistry');
+		$this->store->saveObject(
+			[
+				'id' => 'ge-productie', 'entityName' => 'Voorbeeld Productie B.V.', 'tin' => '009876543',
+				'ultimateParentEntity' => 'ge-holding', 'administrationId' => 'adm-p',
+			]
+		);
+		$this->store->setSchema('CbcrEntityFigures');
+		$figures = ['id' => 'f-p', 'entity' => 'ge-productie', 'fiscalYear' => 2026, 'source' => 'books', 'unmappedAccounts' => []];
+		$this->store->saveObject($figures + ['tangibleAssetsOtherThanCash' => 151000.0]);
+		$this->store->setSchema('FixedAsset');
+		foreach ([
+			['id' => 'fa-1', 'administrationId' => 'adm-p', 'lifecycleState' => 'active', 'currentBookValue' => 100000.0],
+			['id' => 'fa-2', 'administrationId' => 'adm-p', 'lifecycleState' => 'proposed', 'currentBookValue' => 50000.0],
+			['id' => 'fa-3', 'administrationId' => 'adm-p', 'lifecycleState' => 'disposed', 'currentBookValue' => 900000.0],
+			['id' => 'fa-4', 'administrationId' => 'adm-p', 'lifecycleState' => 'archived', 'currentBookValue' => 900000.0],
+			['id' => 'fa-5', 'administrationId' => 'adm-p', 'lifecycleState' => 'active'],
+			['id' => 'fa-6', 'administrationId' => 'adm-other', 'lifecycleState' => 'active', 'currentBookValue' => 900000.0],
+		] as $asset) {
+			$this->store->saveObject($asset);
+		}
+
+		$return  = ['id' => 'r-2026', 'reportingEntity' => 'ge-productie', 'period' => 'FY2026'];
+		$results = array_column($this->runner()->runCbc($return), null, 'id');
+		$this->assertTrue($results['cbc-tangible-assets-register']['passed']);
+		$this->assertSame('recommended', $results['cbc-tangible-assets-register']['severity']);
+
+		$this->store->setSchema('CbcrEntityFigures');
+		$this->store->saveObject($figures + ['tangibleAssetsOtherThanCash' => 152000.0]);
+		$results = $this->runner()->runCbc($return);
+		$this->assertFalse(array_column($results, 'passed', 'id')['cbc-tangible-assets-register']);
+		$this->assertSame([], CbcrCheckRunner::blockingFailures($results));
+	}//end testTangibleAssetsAreComparedWithTheEntitysFixedAssetRegister()
 
 	/**
 	 * The GIR checks see a jurisdiction with no safe harbour and no approved computation.
