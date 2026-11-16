@@ -7293,7 +7293,21 @@
         "The customer this row is about (a create batch).": "De klant waar deze regel over gaat (bij een aanmaakbatch).",
         "The invoice this row is about: the one sent, or the one a create batch wrote or found.": "De factuur waar deze regel over gaat: de verzonden factuur, of de factuur die een aanmaakbatch schreef of vond.",
         "Why the invoice was skipped or failed; empty when it went through.": "Waarom de factuur is overgeslagen of mislukt; leeg wanneer die is gelukt.",
-        "created, existing, sent, skipped or failed.": "aangemaakt (created), bestaand (existing), verzonden (sent), overgeslagen (skipped) of mislukt (failed)."
+        "created, existing, sent, skipped or failed.": "aangemaakt (created), bestaand (existing), verzonden (sent), overgeslagen (skipped) of mislukt (failed).",
+        "Checks": "Controles",
+        "Every VAT line has a box": "Elke btw-regel heeft een rubriek",
+        "Failed, blocks submitting": "Niet gehaald, blokkeert indienen",
+        "Failed, warning only": "Niet gehaald, alleen een waarschuwing",
+        "Nothing in the period is still a draft": "Niets in de periode is nog een concept",
+        "Passed": "Gehaald",
+        "Posted VAT equals base times rate": "Geboekte btw is grondslag maal tarief",
+        "Reverse-charge VAT is owed and deducted": "Verlegde btw is verschuldigd en afgetrokken",
+        "Running the checks…": "De controles lopen…",
+        "The VAT accounts agree with the return": "De btw-rekeningen sluiten aan op de aangifte",
+        "The checks could not be run.": "De controles konden niet worden uitgevoerd.",
+        "The previous return is submitted": "De vorige aangifte is ingediend",
+        "Unable to rebase VAT return": "De btw-aangifte kon niet worden heropend",
+        "Unable to submit VAT return": "De btw-aangifte kon niet worden ingediend"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

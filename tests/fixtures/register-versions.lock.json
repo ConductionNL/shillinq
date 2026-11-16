@@ -108,6 +108,10 @@
         {
             "appVersion": "0.5.7-unstable.20261116220000",
             "versionsSha256": "e2e41df56b632cc9a414210e6b0551f51e90126895d69b9116f117aff99e3005"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116230000",
+            "versionsSha256": "b83468d10ec63d9aac329c3b3771a0f8b0ab3c9ab5aebf6946aa63d7724bd9e7"
         }
     ],
     "versions": {
@@ -182,7 +186,7 @@
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",
         "schema:BookingSmsReminderChannel": "0.1.0",
-        "schema:BtwAangifte": "0.1.0",
+        "schema:BtwAangifte": "0.2.0",
         "schema:BudgetBBVMapping": "0.3.0",
         "schema:BudgetLine": "0.1.0",
         "schema:BudgetLineDerivation": "0.1.0",
