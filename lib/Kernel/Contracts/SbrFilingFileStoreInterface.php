@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Contract of RuleAuditService
+ * Contract of SbrFilingFileStore
  *
- * The public surface of RuleAuditService that other components call, so they depend
+ * The public surface of SbrFilingFileStore that other components call, so they depend
  * on this contract instead of the implementation.
  *
  * @category  Kernel
@@ -24,8 +24,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
+use RuntimeException;
+
 /**
- * Contract of RuleAuditService.
+ * Contract of SbrFilingFileStore.
  *
  * @category Kernel
  * @package  OCA\Shillinq\Kernel\Contracts
@@ -35,16 +37,20 @@ namespace OCA\Shillinq\Kernel\Contracts;
  *
  * @spec exclude Structural contract, no functional requirement.
  */
-interface RuleAuditServiceInterface {
+interface SbrFilingFileStoreInterface {
 
 	/**
-	 * Run the audit and return the structured report.
+	 * Store (or replace) the filing's file and return its URI.
 	 *
-	 * @param array<string, mixed> $context Evaluation context (e.g. jurisdiction).
+	 * @param string $administrationId The administration.
+	 * @param string $fileName         The file name.
+	 * @param string $content          The XML.
 	 *
-	 * @return array<string, mixed>
+	 * @return string The file's URI.
 	 *
-	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
+	 * @throws RuntimeException When no user is signed in or the folder is taken by a file.
+	 *
+	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.2
 	 */
-	public function audit(array $context = []): array;
+	public function store(string $administrationId, string $fileName, string $content): string;
 }//end interface

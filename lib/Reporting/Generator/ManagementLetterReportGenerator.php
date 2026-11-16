@@ -51,7 +51,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\ReportSection;
-use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
+use OCA\Shillinq\Service\RuleAuditService;
 use Throwable;
 
 /**
@@ -313,8 +313,8 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	 */
 	private function runAudit(array $context): array {
 		try {
-			$service = $this->container->get(RuleAuditServiceInterface::class);
-			if ($service instanceof RuleAuditServiceInterface) {
+			$service = $this->container->get(RuleAuditService::class);
+			if ($service instanceof RuleAuditService) {
 				$auditContext = [];
 				$administrationId = $this->str($context, 'administrationId');
 				if ($administrationId !== '') {

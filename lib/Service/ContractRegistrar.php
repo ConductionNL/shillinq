@@ -80,7 +80,7 @@ use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
 use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
-use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
 use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
@@ -246,6 +246,7 @@ use OCA\Shillinq\Kernel\Contracts\WebshopOrderInvoicerInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\XbrlInstanceCheckInterface;
+use OCA\Shillinq\Kernel\Contracts\XbrlTaxonomyLookupInterface;
 use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
 use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\Shillinq\Service\Asset\DepreciationRun;
@@ -303,8 +304,10 @@ use OCA\Shillinq\Service\Relation\RelationLinkService;
 use OCA\Shillinq\Service\Sales\DownPaymentService;
 use OCA\Shillinq\Service\Sales\QuickDraftInvoiceService;
 use OCA\Shillinq\Service\Sbr\AnnualAccountsXbrlBuilder;
+use OCA\Shillinq\Service\Sbr\SbrFilingFileStore;
 use OCA\Shillinq\Service\Sbr\VatReturnXbrlBuilder;
 use OCA\Shillinq\Service\Sbr\XbrlInstanceCheck;
+use OCA\Shillinq\Service\Sbr\XbrlTaxonomyLookup;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCA\Shillinq\Service\Tax\FiledReturnDriftCheck;
@@ -405,7 +408,7 @@ final class ContractRegistrar {
 		$context->registerServiceAlias(PensionValuationPostingServiceInterface::class, PensionValuationPostingService::class);
 		$context->registerServiceAlias(RecurringInvoiceGeneratorInterface::class, RecurringInvoiceGenerator::class);
 		$context->registerServiceAlias(RetentionDueServiceInterface::class, RetentionDueService::class);
-		$context->registerServiceAlias(RuleAuditServiceInterface::class, RuleAuditService::class);
+		$context->registerServiceAlias(SbrFilingFileStoreInterface::class, SbrFilingFileStore::class);
 		$context->registerServiceAlias(SubscriptionCancellationServiceInterface::class, SubscriptionCancellationService::class);
 		$context->registerServiceAlias(ContributionRaiseServiceInterface::class, ContributionRaiseService::class);
 		$context->registerServiceAlias(CustomerBridgeMetricsServiceInterface::class, CustomerBridgeMetricsService::class);
@@ -571,5 +574,6 @@ final class ContractRegistrar {
 		$context->registerServiceAlias(WidgetAuthServiceInterface::class, WidgetAuthService::class);
 		$context->registerServiceAlias(WidgetServiceInterface::class, WidgetService::class);
 		$context->registerServiceAlias(XbrlInstanceCheckInterface::class, XbrlInstanceCheck::class);
+		$context->registerServiceAlias(XbrlTaxonomyLookupInterface::class, XbrlTaxonomyLookup::class);
 	}//end register()
 }//end class

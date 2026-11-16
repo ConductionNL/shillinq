@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
-use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
+use OCA\Shillinq\Service\RuleAuditService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -42,10 +42,10 @@ class RulesAuditCommand extends Command {
 	/**
 	 * Construct the rule-audit command.
 	 *
-	 * @param RuleAuditServiceInterface $auditService The compliance auditor.
+	 * @param RuleAuditService $auditService The compliance auditor.
 	 */
 	public function __construct(
-		private readonly RuleAuditServiceInterface $auditService,
+		private readonly RuleAuditService $auditService,
 	) {
 		parent::__construct();
 

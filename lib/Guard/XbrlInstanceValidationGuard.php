@@ -22,7 +22,7 @@ namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\Lifecycle\PostingRefusedException;
 use OCA\Shillinq\Kernel\Contracts\XbrlInstanceCheckInterface;
-use OCA\Shillinq\Service\Sbr\XbrlTaxonomyLookup;
+use OCA\Shillinq\Kernel\Contracts\XbrlTaxonomyLookupInterface;
 
 /**
  * The `requires` of XbrlInstance `validate`: refused, naming each failing
@@ -41,13 +41,13 @@ class XbrlInstanceValidationGuard {
 	/**
 	 * Constructor.
 	 *
-	 * @param XbrlTaxonomyLookup         $taxonomies Finds the taxonomy effective for the period.
-	 * @param XbrlInstanceCheckInterface $check      Lists the failing items.
+	 * @param XbrlTaxonomyLookupInterface $taxonomies Finds the taxonomy effective for the period.
+	 * @param XbrlInstanceCheckInterface  $check      Lists the failing items.
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-2.1
 	 */
 	public function __construct(
-		private readonly XbrlTaxonomyLookup $taxonomies,
+		private readonly XbrlTaxonomyLookupInterface $taxonomies,
 		private readonly XbrlInstanceCheckInterface $check,
 	) {
 	}//end __construct()

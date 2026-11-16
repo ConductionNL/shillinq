@@ -1110,8 +1110,8 @@
     [
         "registerServiceAlias",
         [
-            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RuleAuditServiceInterface'",
-            "'OCA\\\\Shillinq\\\\Service\\\\RuleAuditService'"
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SbrFilingFileStoreInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\SbrFilingFileStore'"
         ]
     ],
     [
@@ -2267,6 +2267,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\XbrlInstanceCheckInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\XbrlInstanceCheck'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\XbrlTaxonomyLookupInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\XbrlTaxonomyLookup'"
         ]
     ],
     [
