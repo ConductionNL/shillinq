@@ -39,6 +39,7 @@ use OCP\IUserManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * RuleTestDataSeeder golden tests.
@@ -396,13 +397,14 @@ final class RecordingSeederObjectService {
 	 */
 	public function saveObject(
 		array $object,
-		string $register = '',
-		string $schema = '',
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): array {
+		$register = $options->target->register ?? '';
+		$schema = $options->target->schema ?? '';
+		$uuid = $options->uuid;
+		$currentUser = $options->actor->currentUser;
 		$this->calls[] = [
 			'call' => 'saveObject',
 			'register' => $register,

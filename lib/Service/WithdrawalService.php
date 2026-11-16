@@ -27,6 +27,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
@@ -352,7 +354,12 @@ class WithdrawalService {
 	 * @return array<string, mixed> The saved object.
 	 */
 	private function save(object $objects, string $schema, ?string $id, array $data): array {
-		$saved = $objects->saveObject(object: $data, register: self::REGISTER, schema: $schema, uuid: $id, _rbac: false, _multitenancy: false);
+		$saved = $objects->saveObject(
+			object: $data,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: $schema), uuid: $id),
+			_rbac: false,
+			_multitenancy: false
+		);
 
 		return (ObjectIdentifier::recordWithId(candidate: $saved) ?? $data);
 	}//end save()

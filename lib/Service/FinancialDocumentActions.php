@@ -29,6 +29,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -196,9 +198,8 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 
 		$saved = $this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: 'PaymentRequest',
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'PaymentRequest')),
+			_rbac: false
 		);
 
 		return ['id' => ObjectIdentifier::resolve(saved: $saved)] + $request;

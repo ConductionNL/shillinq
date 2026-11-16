@@ -35,6 +35,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\IAppConfig;
@@ -273,7 +275,10 @@ class InitializeBbvAdministration implements IRepairStep {
 		];
 
 		try {
-			$objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Reserve');
+			$objectService->saveObject(
+				object: $payload,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'Reserve'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: failed to seed algemene reserve',
@@ -336,7 +341,10 @@ class InitializeBbvAdministration implements IRepairStep {
 		];
 
 		try {
-			$objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Taakveld');
+			$objectService->saveObject(
+				object: $payload,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'Taakveld'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: failed to seed reserve-taakveld',

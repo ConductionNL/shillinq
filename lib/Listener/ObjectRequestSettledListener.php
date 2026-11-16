@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestReceiptMailerInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
@@ -144,12 +146,13 @@ class ObjectRequestSettledListener implements IEventListener {
 		}
 
 		$this->objectService->patchObject(
-			objectId: $id,
-			data: ['receiptSentAt' => gmdate('Y-m-d\TH:i:s\Z')],
-			register: $this->settings->getRegisterSlug(),
-			schema: 'PaymentRequest',
+			new ObjectPatch(
+				objectId: $id,
+				data: ['receiptSentAt' => gmdate('Y-m-d\TH:i:s\Z')],
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'PaymentRequest')
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end sendReceipt()
 }//end class
