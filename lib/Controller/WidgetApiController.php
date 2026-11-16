@@ -407,44 +407,6 @@ class WidgetApiController extends Controller {
 		?string $phone = null,
 		?string $notes = null,
 	): JSONResponse {
-		return $this->withCors(
-			response: $this->appointmentsAnswer(
-				serviceId: $serviceId,
-				resourceId: $resourceId,
-				startTime: $startTime,
-				endTime: $endTime,
-				customerName: $customerName,
-				email: $email,
-				phone: $phone,
-				notes: $notes,
-			)
-		);
-	}//end appointments()
-
-	/**
-	 * The answer of appointments(), before the CORS headers.
-	 *
-	 * @param string      $serviceId    The service.
-	 * @param string      $resourceId   The resource.
-	 * @param string      $startTime    The start.
-	 * @param string      $endTime      The end.
-	 * @param string      $customerName The customer's name.
-	 * @param string      $email        The customer's email.
-	 * @param string|null $phone        The customer's phone.
-	 * @param string|null $notes        The notes.
-	 *
-	 * @return JSONResponse
-	 */
-	private function appointmentsAnswer(
-		string $serviceId = '',
-		string $resourceId = '',
-		string $startTime = '',
-		string $endTime = '',
-		string $customerName = '',
-		string $email = '',
-		?string $phone = null,
-		?string $notes = null,
-	): JSONResponse {
 		$payload = [
 			'serviceId' => $serviceId,
 			'resourceId' => $resourceId,
@@ -456,6 +418,17 @@ class WidgetApiController extends Controller {
 			'notes' => ($notes ?? ''),
 		];
 
+		return $this->withCors(response: $this->appointmentsAnswer(payload: $payload));
+	}//end appointments()
+
+	/**
+	 * The answer of appointments(), before the CORS headers.
+	 *
+	 * @param array<string,string> $payload The booking request as the widget sent it.
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentsAnswer(array $payload): JSONResponse {
 		$refusal = $this->refuseAppointment(payload: $payload);
 		if ($refusal !== null) {
 			return $refusal;
