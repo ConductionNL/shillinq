@@ -26,8 +26,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Exception\HookStoppedException;
 use OCA\OpenRegister\Exception\NotAuthorizedException;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Listener\PaymentBlockReleaseListener;
 use OCA\Shillinq\PaymentRun\PaymentBlockService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -85,6 +87,13 @@ class PaymentBlockController extends Controller {
 				['error' => 'not-allowed', 'message' => $this->message(code: 'not-allowed')],
 				403
 			);
+		} catch (HookStoppedException $e) {
+			// A save-path rule refused the write, such as a release by someone
+			// who is neither a controller nor a treasurer: a refusal, not a fault.
+			return new JSONResponse(
+				['error' => 'refused', 'message' => $this->refusal(hook: $e)],
+				403
+			);
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq: the payment block could not be saved', ['exception' => $e->getMessage()]);
 			return new JSONResponse(
@@ -103,6 +112,22 @@ class PaymentBlockController extends Controller {
 		return new JSONResponse($result['object'] ?? []);
 
 	}//end update()
+
+	/**
+	 * The sentence for a refusal by a save-path rule.
+	 *
+	 * @param HookStoppedException $hook The refusal.
+	 *
+	 * @return string
+	 */
+	private function refusal(HookStoppedException $hook): string {
+		if ($hook->getMessage() === PaymentBlockReleaseListener::MESSAGE_ROLE) {
+			return $this->l10n->t('Only a controller or a treasurer can release a payment block.');
+		}
+
+		return $this->l10n->t('This change to the payment block is not allowed.');
+
+	}//end refusal()
 
 	/**
 	 * The sentence for a refusal.

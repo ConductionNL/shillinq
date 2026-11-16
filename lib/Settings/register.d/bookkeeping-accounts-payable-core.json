@@ -199,7 +199,7 @@
           "paymentReleasedBy": {
             "type": "string",
             "nullable": true,
-            "description": "User who released the last payment block; never the user who set it. Written by the block endpoint.",
+            "description": "User who released the last payment block. Written by the block endpoint.",
             "title": "Payment released by"
           },
           "paymentReleasedAt": {
@@ -541,7 +541,7 @@
           "paymentReleasedBy": {
             "type": "string",
             "nullable": true,
-            "description": "User who released the last payment block; never the user who set it. Written by the block endpoint.",
+            "description": "User who released the last payment block. Written by the block endpoint.",
             "title": "Payment released by"
           },
           "paymentReleasedAt": {

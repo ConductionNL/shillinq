@@ -4,8 +4,9 @@
  * Payment Block Lock Listener
  *
  * Pre-save veto on APTransaction and Payee updates: the payment block fields
- * change only through PaymentBlockService, which checks the payment action,
- * the administration, the reason and four-eyes. A write that leaves them out
+ * change only through PaymentBlockService, which saves under the caller's own
+ * rights, within the record's administration and with a reason; a release then
+ * still passes PaymentBlockReleaseListener's role check. A write that leaves them out
  * keeps the stored values. A record may still be created with a block on,
  * which is the safe direction.
  *
