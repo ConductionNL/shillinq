@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Service\Tax;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\VatPositionServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
 
 /**
@@ -38,7 +39,7 @@ use OCA\Shillinq\Service\VATReturnService;
  *
  * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
  */
-class VatPositionService {
+class VatPositionService implements VatPositionServiceInterface {
 
 	/**
 	 * Constructor.

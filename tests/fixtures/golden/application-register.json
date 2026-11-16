@@ -1089,6 +1089,20 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\InvoiceBatchServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\InvoiceBatchService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\InvoiceSendingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\InvoiceSendingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PensionValuationPostingServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\PensionValuationPostingService'"
         ]
@@ -1110,8 +1124,22 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RuleAuditServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\RuleAuditService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SbrFilingFileStoreInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\SbrFilingFileStore'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SmsReminderRunnerInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sms\\\\SmsReminderRunner'"
         ]
     ],
     [
@@ -2055,6 +2083,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SuggestedMappingConfirmationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Import\\\\SuggestedMappingConfirmation'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SupplierInvoiceChecksInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Purchasing\\\\SupplierInvoiceChecks'"
         ]
@@ -2134,6 +2169,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TrialBalanceServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\TrialBalanceService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatPositionServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\VatPositionService'"
         ]
     ],
     [
@@ -2253,6 +2295,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WidgetAuthServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\WidgetAuthService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WidgetCorsPolicyInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\WidgetCorsPolicy'"
         ]
     ],
     [

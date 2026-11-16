@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Service\Sms\SmsReminderRunner;
+use OCA\Shillinq\Kernel\Contracts\SmsReminderRunnerInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -50,13 +50,13 @@ class SmsReminderJob extends TimedJob {
 	/**
 	 * Constructor.
 	 *
-	 * @param ITimeFactory      $time   The time factory.
-	 * @param SmsReminderRunner $runner Sends the due reminders.
-	 * @param LoggerInterface   $logger Logger.
+	 * @param ITimeFactory               $time   The time factory.
+	 * @param SmsReminderRunnerInterface $runner Sends the due reminders.
+	 * @param LoggerInterface            $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SmsReminderRunner $runner,
+		private readonly SmsReminderRunnerInterface $runner,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
