@@ -88,7 +88,6 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
-use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -254,7 +253,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		$scorecard = $this->withExistingScorecardId(run: $run, scorecard: $scorecard);
 		$scorecard = $this->withReviewEligibility(run: $run, scorecard: $scorecard);
 
-		$saved = $this->saveObject(schema: self::SCHEMA_VENDOR_PERFORMANCE, object: $scorecard);
+		$saved = $this->records()->saveObject(schema: self::SCHEMA_VENDOR_PERFORMANCE, object: $scorecard);
 		if ($scorecard['automatedReviewEligible'] === true) {
 			$this->relaxSupplierTolerance(run: $run);
 		}
@@ -313,7 +312,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 */
 	private function collectPeriodFacts(VendorScorecardRun $run): void {
 		$run->poIds = $this->supplierPurchaseOrdersById(run: $run);
-		$supplierInvoices = $this->findAll(
+		$supplierInvoices = $this->records()->findAll(
 			schema: self::SCHEMA_SUPPLIER_INVOICE,
 			filters: ['supplierId' => $run->supplierId, 'administrationId' => $run->administrationId]
 		);
@@ -330,7 +329,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @return array<string,array<string,mixed>>
 	 */
 	private function supplierPurchaseOrdersById(VendorScorecardRun $run): array {
-		$purchaseOrders = $this->findAll(
+		$purchaseOrders = $this->records()->findAll(
 			schema: self::SCHEMA_PURCHASE_ORDER,
 			filters: ['supplierId' => $run->supplierId, 'administrationId' => $run->administrationId]
 		);
@@ -393,7 +392,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 */
 	private function administrationRowsInPeriod(VendorScorecardRun $run, string $schema): array {
 		return $this->filterByDate(
-			rows:  $this->findAll(
+			rows:  $this->records()->findAll(
 				schema: $schema,
 				filters: ['administrationId' => $run->administrationId]
 			),
@@ -559,7 +558,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @return string
 	 */
 	private function trendAgainstPriorPeriod(VendorScorecardRun $run, int $overallBp): string {
-		$priorCard = $this->findOne(
+		$priorCard = $this->records()->findOne(
 			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
 			filters: [
 				'supplierId' => $run->supplierId,
@@ -580,7 +579,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @return array<string,mixed>
 	 */
 	private function withExistingScorecardId(VendorScorecardRun $run, array $scorecard): array {
-		$existing = $this->findOne(
+		$existing = $this->records()->findOne(
 			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
 			filters: [
 				'supplierId' => $run->supplierId,
@@ -715,7 +714,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 */
 	private function grnQuantityTally(string $grnId, string $administrationId): array {
 		$tally = ['eligible' => 0, 'accurate' => 0];
-		$lines = $this->findAll(schema: self::SCHEMA_GRN_LINE, filters: ['grnId' => $grnId, 'administrationId' => $administrationId]);
+		$lines = $this->records()->findAll(schema: self::SCHEMA_GRN_LINE, filters: ['grnId' => $grnId, 'administrationId' => $administrationId]);
 		foreach ($lines as $line) {
 			$poLine = $this->poLineOf(line: $line, administrationId: $administrationId);
 			if ($poLine === null) {
@@ -747,7 +746,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			return null;
 		}
 
-		return $this->findOne(
+		return $this->records()->findOne(
 			schema:  self::SCHEMA_PO_LINE,
 			filters: ['id' => $poLineId, 'administrationId' => $administrationId]
 		);
@@ -953,7 +952,10 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		// Find the supplier's earliest scorecard for this administration —
 		// VendorPerformance carries no createdAt by schema design, so the
 		// "first scorecard" is reconstructed by sorting on the period code.
-		$cards = $this->findAll(schema: self::SCHEMA_VENDOR_PERFORMANCE, filters: ['supplierId' => $supplierId, 'administrationId' => $administrationId]);
+		$cards = $this->records()->findAll(
+			schema: self::SCHEMA_VENDOR_PERFORMANCE,
+			filters: ['supplierId' => $supplierId, 'administrationId' => $administrationId]
+		);
 
 		$firstPeriod = self::earliestPeriod(cards: $cards);
 		if ($firstPeriod === '') {
@@ -1027,7 +1029,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
 	 */
 	public function autoRelaxToleranceProfile(string $administrationId, string $supplierId): ?array {
-		$profile = $this->findOne(
+		$profile = $this->records()->findOne(
 			schema:  self::SCHEMA_TOLERANCE_PROFILE,
 			filters: [
 				'scope' => 'supplier',
@@ -1048,7 +1050,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		$profile['quantityTolerancePercentage'] = $qtyBp;
 		$profile['dateToleranceDays'] = $dateDays;
 
-		return $this->saveObject(schema: self::SCHEMA_TOLERANCE_PROFILE, object: $profile);
+		return $this->records()->saveObject(schema: self::SCHEMA_TOLERANCE_PROFILE, object: $profile);
 	}//end autoRelaxToleranceProfile()
 
 	/**
@@ -1084,7 +1086,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		}
 
 		$window   = $this->resolvePeriodWindow(period: $period);
-		$rows     = $this->findAll(schema: self::SCHEMA_SUPPLIER_INVOICE, filters: ['administrationId' => $administrationId]);
+		$rows     = $this->records()->findAll(schema: self::SCHEMA_SUPPLIER_INVOICE, filters: ['administrationId' => $administrationId]);
 		$invoices = $this->filterByDate(rows: $rows, field: 'invoiceDate', from: $window['from'], to: $window['to']);
 
 		return $this->scorecardsFor(administrationId: $administrationId, period: $period, supplierIds: self::supplierIdsOf(invoices: $invoices));
@@ -1459,94 +1461,15 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	}//end idOf()
 
 	/**
-	 * Persist an object via OR's real ObjectService API (saveObject).
+	 * The register records of this service.
 	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object to persist.
-	 *
-	 * @return array<string,mixed>
-	 *
-	 * @throws \RuntimeException When the persistence call fails.
+	 * @return SchemaRecordStore The store.
 	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'VendorPerformanceAggregation')
+		);
 
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'VendorPerformanceAggregation: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'VendorPerformanceAggregation: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OR register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		return RegisterSlug::of(config: $this->appConfig);
-	}//end register()
+	}//end records()
 }//end class
