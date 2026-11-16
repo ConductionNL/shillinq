@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Receivables;
 
+use OCA\Shillinq\Kernel\Contracts\SepaPain008GeneratorInterface;
 use OCA\Shillinq\PaymentRun\RenderedFile;
 use XMLWriter;
 
@@ -45,7 +46,7 @@ use XMLWriter;
  *
  * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  */
-final class SepaPain008Generator {
+final class SepaPain008Generator implements SepaPain008GeneratorInterface {
 
 	/**
 	 * The pain.008.001.02 namespace URI.
@@ -53,13 +54,6 @@ final class SepaPain008Generator {
 	 * @var string
 	 */
 	public const PAIN_NS = 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02';
-
-	/**
-	 * The short format label of the rendered file.
-	 *
-	 * @var string
-	 */
-	public const FORMAT = 'sepa-pain008';
 
 	/**
 	 * The longest identifier the message carries (Max35Text).

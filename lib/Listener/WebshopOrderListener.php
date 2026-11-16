@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\Webshop\WebshopOrderInvoicer;
+use OCA\Shillinq\Kernel\Contracts\WebshopOrderInvoicerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -51,12 +51,12 @@ class WebshopOrderListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param WebshopOrderInvoicer            $invoicer       Writes the order's invoice.
+	 * @param WebshopOrderInvoicerInterface   $invoicer       Writes the order's invoice.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface                 $logger         Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly WebshopOrderInvoicer $invoicer,
+		private readonly WebshopOrderInvoicerInterface $invoicer,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
@@ -88,7 +88,7 @@ class WebshopOrderListener implements IEventListener {
 
 		$orderId = ObjectIdentifier::resolve(saved: $entity);
 		try {
-			if (WebshopOrderInvoicer::isWaiting(order: $order) === true) {
+			if ($this->invoicer::isWaiting(order: $order) === true) {
 				$this->invoicer->handle(order: $order, orderId: $orderId, today: gmdate('Y-m-d'));
 				return;
 			}

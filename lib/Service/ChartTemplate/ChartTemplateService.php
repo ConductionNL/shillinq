@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\ChartTemplate;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\ChartTemplateServiceInterface;
 use OCA\Shillinq\Service\RegisterBinding;
 use OCP\AppFramework\Utility\ITimeFactory;
 
@@ -39,9 +40,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
  *
  * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md
  */
-class ChartTemplateService {
-
-	public const TEMPLATE_SCHEMA = 'AdministrationTemplate';
+class ChartTemplateService implements ChartTemplateServiceInterface {
 
 	/**
 	 * The account fields a template carries. Everything else (ids, balances,
