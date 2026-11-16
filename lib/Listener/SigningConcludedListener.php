@@ -129,10 +129,7 @@ final class SigningConcludedListener implements IEventListener {
 		try {
 			$this->project(payload: $this->readPayload(event: $event));
 		} catch (Throwable $e) {
-			$this->logger->warning(
-				'SigningConcludedListener: projection failed (fail-soft)',
-				['exception' => $e->getMessage()]
-			);
+			$this->log()->projectionFailed(error: $e);
 		}
 
 	}//end handle()
@@ -175,10 +172,7 @@ final class SigningConcludedListener implements IEventListener {
 	private function locateSubject(array $payload): FoundSubject|null {
 		$subjectId = $this->subjects()->subjectId(payload: $payload);
 		if ($subjectId === '') {
-			$this->logger->info(
-				'SigningConcludedListener: no subject id on concluded signing request (skipping)',
-				['signingRequestRef' => $payload['signingRequestId']]
-			);
+			$this->log()->noSubjectId(payload: $payload, request: 'signing request');
 			return null;
 		}
 
@@ -197,10 +191,7 @@ final class SigningConcludedListener implements IEventListener {
 	private function locateOrLog(array $payload, string $subjectId): FoundSubject|null {
 		$found = $this->subjects()->locate(payload: $payload, knownSchemas: self::SUBJECT_SCHEMAS);
 		if ($found === null) {
-			$this->logger->info(
-				'SigningConcludedListener: no matching finance object (skipping)',
-				['signingRequestRef' => $payload['signingRequestId'], 'subjectId' => $subjectId]
-			);
+			$this->log()->noMatch(payload: $payload, subjectId: $subjectId);
 		}
 
 		return $found;
@@ -230,30 +221,9 @@ final class SigningConcludedListener implements IEventListener {
 
 		$this->subjects()->persist(ref: $found->ref, updates: ($updates + $consequence));
 
-		$this->logConsumed(found: $found, conclusion: $conclusion);
+		$this->log()->consumed(found: $found, conclusion: $conclusion);
 
 	}//end recordOutcome()
-
-	/**
-	 * Log the consumed outcome.
-	 *
-	 * @param FoundSubject          $found      The finance object.
-	 * @param array<string,string> $conclusion The payload plus the mapped outcome.
-	 *
-	 * @return void
-	 */
-	private function logConsumed(FoundSubject $found, array $conclusion): void {
-		$this->logger->info(
-			'SigningConcludedListener: outcome consumed',
-			[
-				'schema' => $found->ref->schema,
-				'subjectId' => $found->ref->id,
-				'outcome' => $conclusion['outcome'],
-				'signingRequestRef' => $conclusion['signingRequestId'],
-			]
-		);
-
-	}//end logConsumed()
 
 	/**
 	 * Hand the outcome to the signing service.
@@ -279,7 +249,7 @@ final class SigningConcludedListener implements IEventListener {
 			$this->signedDocumentValue(signedDocumentRef: $conclusion['signedDocumentRef']),
 			function (array $object) use ($found, $conclusion, &$consequence): array {
 				$object = $this->applyAccountingConsequence(schema: $found->ref->schema, object: $object, outcome: $conclusion['outcome']);
-				$consequence = $this->consequenceDelta(object: $object, outcome: $conclusion['outcome']);
+				$consequence = $this->consequence()->delta(object: $object, outcome: $conclusion['outcome']);
 				return $object;
 			},
 			// Activity object type for the REQ-RAP-006 `document_signed`
@@ -319,6 +289,26 @@ final class SigningConcludedListener implements IEventListener {
 		return new ConcludedSubjectStore(registerLocation: $this->registerLocation, objectService: $this->objectService);
 
 	}//end subjects()
+
+	/**
+	 * The log lines of this listener.
+	 *
+	 * @return ConcludedOutcomeLog The log.
+	 */
+	private function log(): ConcludedOutcomeLog {
+		return new ConcludedOutcomeLog(logger: $this->logger, listener: 'SigningConcludedListener', refKey: 'signingRequestRef', idKey: 'signingRequestId');
+
+	}//end log()
+
+	/**
+	 * The accounting consequence of a completing outcome (REQ-SIGN-006).
+	 *
+	 * @return ConcludedOutcomeConsequence The consequence.
+	 */
+	private function consequence(): ConcludedOutcomeConsequence {
+		return new ConcludedOutcomeConsequence(completing: 'signed', stampField: 'signedAt', gateField: 'submissionGateOpen');
+
+	}//end consequence()
 
 	/**
 	 * Read the cross-app event into a shape this app owns.
@@ -363,50 +353,12 @@ final class SigningConcludedListener implements IEventListener {
 	 * @return array<string,mixed> The (possibly mutated) finance object.
 	 */
 	private function applyAccountingConsequence(string $schema, array $object, string $outcome): array {
-		if ($outcome !== 'signed') {
+		if ($this->consequence()->appliesTo(outcome: $outcome) === false) {
 			return $object;
 		}
 
-		// The accounting consequence opens the finance submission gate through
-		// the existing OR write path. shillinq owns no signing engine — it
-		// records the docudesk outcome and opens its own downstream gate
-		// (submission) exactly once.
-		$object['signedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-		$object['submissionGateOpen'] = true;
+		$this->log()->consequenceApplied(schema: $schema, outcome: $outcome);
 
-		$this->logger->info(
-			'SigningConcludedListener: accounting consequence applied',
-			[
-				'schema' => $schema,
-				'outcome' => $outcome,
-			]
-		);
-
-		return $object;
+		return $this->consequence()->apply(object: $object, outcome: $outcome);
 	}//end applyAccountingConsequence()
-
-	/**
-	 * Extract the accounting-consequence fields written by
-	 * {@see self::applyAccountingConsequence} so they can be persisted with the
-	 * mirror in a single OR write.
-	 *
-	 * @param array<string,mixed> $object The finance object after the consequence.
-	 * @param string $outcome 'signed' | 'declined' | 'expired'.
-	 *
-	 * @return array<string,mixed> The consequence delta (empty on non-signed).
-	 */
-	private function consequenceDelta(array $object, string $outcome): array {
-		if ($outcome !== 'signed') {
-			return [];
-		}
-
-		$delta = [];
-		foreach (['signedAt', 'submissionGateOpen'] as $key) {
-			if (array_key_exists($key, $object) === true) {
-				$delta[$key] = $object[$key];
-			}
-		}
-
-		return $delta;
-	}//end consequenceDelta()
 }//end class

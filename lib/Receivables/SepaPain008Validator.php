@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Receivables;
 
 use DOMDocument;
 use LibXMLError;
+use OCA\Shillinq\Kernel\Contracts\SepaPain008ValidatorInterface;
 use OCA\Shillinq\Validation\IbanValidator;
 
 /**
@@ -37,7 +38,7 @@ use OCA\Shillinq\Validation\IbanValidator;
  *
  * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  */
-final class SepaPain008Validator {
+final class SepaPain008Validator implements SepaPain008ValidatorInterface {
 
 	/**
 	 * The shape of a SEPA creditor identifier: country, check digits, business code, national id.

@@ -34,6 +34,7 @@ import {
 	openIntegriqStore,
 } from './utils/integriqConnections.js'
 import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
+import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
@@ -76,6 +77,10 @@ export const manifestActions = Object.freeze({
 	openDownPaymentInvoice,
 	// Generate invoices on Sales invoices (board ShFactuurGenereren).
 	openInvoiceGenerateWizard,
+	// sales-invoice-sending 3.2: Send selected on Accounts Receivable.
+	sendSelectedInvoices,
+	// sales-invoice-sending 3.3: New invoice batch on Sales invoices and Invoice batches.
+	openInvoiceBatchCreate,
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,

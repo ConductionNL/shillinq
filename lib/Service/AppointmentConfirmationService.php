@@ -34,8 +34,8 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AppointmentConfirmationServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\IAppConfig;
@@ -97,12 +97,7 @@ class AppointmentConfirmationService implements AppointmentConfirmationServiceIn
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**

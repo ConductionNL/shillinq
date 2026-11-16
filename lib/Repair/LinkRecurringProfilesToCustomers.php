@@ -40,7 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\ContactCustomerResolver;
+use OCA\Shillinq\Kernel\Contracts\ContactCustomerResolverInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
@@ -61,16 +61,16 @@ class LinkRecurringProfilesToCustomers implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation        $settingsService The register slug.
-	 * @param LoggerInterface         $logger          Logger.
-	 * @param ObjectServiceInterface  $objectService   OpenRegister's objects.
-	 * @param ContactCustomerResolver $resolver        Contact to customer.
+	 * @param RegisterLocation                 $settingsService The register slug.
+	 * @param LoggerInterface                  $logger          Logger.
+	 * @param ObjectServiceInterface           $objectService   OpenRegister's objects.
+	 * @param ContactCustomerResolverInterface $resolver        Contact to customer.
 	 */
 	public function __construct(
 		private readonly RegisterLocation $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly ContactCustomerResolver $resolver,
+		private readonly ContactCustomerResolverInterface $resolver,
 	) {
 	}//end __construct()
 

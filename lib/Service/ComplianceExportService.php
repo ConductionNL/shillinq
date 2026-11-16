@@ -47,8 +47,8 @@ use OCA\OpenRegister\Db\AuditTrail\RegisterAuditEvent;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ListQuery;
 use OCA\OpenRegister\Db\RegisterMapper;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -556,11 +556,6 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class
