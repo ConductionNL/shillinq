@@ -2925,7 +2925,7 @@
 					"_fragment": "bookkeeping-purchase-order-3way-04-goods-receipt-note",
 					"id": "GoodsReceiptNoteDetail",
 					"route": "/inkoop/goods-receipt-notes/:id",
-					"type": "custom",
+					"type": "detail",
 					"title": "Goods Receipt Note"
 				}
 			]
