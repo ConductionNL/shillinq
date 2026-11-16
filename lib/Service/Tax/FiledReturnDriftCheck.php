@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Service\Tax;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
 use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -43,7 +44,7 @@ use Throwable;
  *
  * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
  */
-class FiledReturnDriftCheck {
+class FiledReturnDriftCheck implements FiledReturnDriftCheckInterface {
 
 	/**
 	 * The schema a VAT return is stored in.

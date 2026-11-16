@@ -96,13 +96,6 @@ use RuntimeException;
 class MaterialiseGlTransactionAction implements LifecycleActionInterface, MaterialiseGlTransactionActionInterface {
 
 	/**
-	 * App-config key: receivables control account (RGS 3.5 MKB 1100 Debiteuren).
-	 *
-	 * @var string
-	 */
-	public const CFG_AR_CONTROL_ACCOUNT = 'ledger_ar_control_account';
-
-	/**
 	 * App-config key: revenue account (RGS 3.5 MKB 8000 Netto-omzet).
 	 *
 	 * @var string

@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Sbr;
 
+use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
@@ -33,7 +34,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/tax-digipoort-filing/specs/bookkeeping-sbr-xbrl-reporting/spec.md#requirement-submission-hands-the-instance-to-integriq-and-follows-its-reports-req-tdf-004
  */
-class SbrFilingFileStore {
+class SbrFilingFileStore implements SbrFilingFileStoreInterface {
 
 	/**
 	 * The URI prefix of a stored filing, followed by the Nextcloud file id.
