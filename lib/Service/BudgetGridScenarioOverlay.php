@@ -3,18 +3,7 @@
 /**
  * Budget Grid Scenario Overlay
  *
- * Swaps the begroting grid's budget column to one scenario's figures
- * (Q-shillinq-1, answered 9 Oct): for every fiscal year in view that has a
- * default AnnualBudget, the year's real BudgetLines plus the scenario's own
- * modifiers are run through {@see BudgetScenarioEvaluator} (the same
- * arithmetic the standalone comparison page shows), and the year's
- * BudgetLine slice is replaced by one synthetic line per LedgerGroup that
- * carries the evaluator's resolved scenario amount for each month.
- *
- * Read-only and non-destructive: nothing is written, the synthetic lines
- * exist only inside one grid response. A year without a default
- * AnnualBudget stays empty (a scenario is base plus modifiers; with no base
- * there is nothing to modify).
+ * Swaps the begroting grid's budget column to one scenario's figures.
  *
  * @category Service
  * @package  OCA\Shillinq\Service
@@ -37,6 +26,19 @@ namespace OCA\Shillinq\Service;
 
 /**
  * Pure overlay of one scenario onto the grid's per-year BudgetLine slices.
+ *
+ * Swaps the begroting grid's budget column to one scenario's figures
+ * (Q-shillinq-1, answered 9 Oct): for every fiscal year in view that has a
+ * default AnnualBudget, the year's real BudgetLines plus the scenario's own
+ * modifiers are run through {@see BudgetScenarioEvaluator} (the same
+ * arithmetic the standalone comparison page shows), and the year's
+ * BudgetLine slice is replaced by one synthetic line per LedgerGroup that
+ * carries the evaluator's resolved scenario amount for each month.
+ *
+ * Read-only and non-destructive: nothing is written, the synthetic lines
+ * exist only inside one grid response. A year without a default
+ * AnnualBudget stays empty (a scenario is base plus modifiers; with no base
+ * there is nothing to modify).
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
  */
