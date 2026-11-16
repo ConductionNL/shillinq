@@ -36,8 +36,10 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
+use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
+use OCA\Shillinq\Kernel\Contracts\WebshopOrderInvoicerInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -48,7 +50,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The intake checks, the debtor and the invoice belong to one decision per order.
  */
-class WebshopOrderInvoicer {
+class WebshopOrderInvoicer implements WebshopOrderInvoicerInterface {
 
 	/**
 	 * Days between the invoice date and its due date.
@@ -549,7 +551,7 @@ class WebshopOrderInvoicer {
 	 * @return string
 	 */
 	private function receivablesAccount(): string {
-		$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, MaterialiseGlTransactionAction::CFG_AR_CONTROL_ACCOUNT, ''));
+		$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, MaterialiseGlTransactionActionInterface::CFG_AR_CONTROL_ACCOUNT, ''));
 		if ($configured !== '') {
 			return $configured;
 		}
@@ -1118,11 +1120,6 @@ class WebshopOrderInvoicer {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

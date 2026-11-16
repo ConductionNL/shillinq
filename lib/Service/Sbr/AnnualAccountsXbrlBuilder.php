@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Sbr;
 
+use OCA\Shillinq\Kernel\Contracts\AnnualAccountsXbrlBuilderInterface;
 use RuntimeException;
 
 /**
@@ -38,7 +39,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/tax-digipoort-filing/specs/bookkeeping-sbr-xbrl-reporting/spec.md#requirement-annual-accounts-produce-their-kvk-xbrl-instance-req-tdf-002
  */
-class AnnualAccountsXbrlBuilder {
+class AnnualAccountsXbrlBuilder implements AnnualAccountsXbrlBuilderInterface {
 
 	/**
 	 * The entry point annual accounts are filed on.
