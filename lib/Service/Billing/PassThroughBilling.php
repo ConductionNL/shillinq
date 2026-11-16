@@ -28,6 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Billing;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Lifecycle\Action\LockPassThroughMarkupAction;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PassThroughMarkupResolver;
@@ -217,7 +219,10 @@ class PassThroughBilling {
 				cost: (float)($item[$source['amount']] ?? 0.0)
 			)
 		);
-		$this->objectService->saveObject(object: $item, register: $this->location->getRegisterSlug(), schema: $schema);
+		$this->objectService->saveObject(
+			object: $item,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->location->getRegisterSlug(), schema: $schema))
+		);
 
 		return $item;
 	}//end locked()

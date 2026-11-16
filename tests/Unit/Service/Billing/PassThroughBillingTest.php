@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Billing;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PassThroughMarkupResolver;
@@ -223,7 +225,7 @@ final class PassThroughBillingTest extends TestCase {
 		$this->transitions->expects(self::once())->method('run')->with('c-1', 'markInvoiced');
 
 		self::assertSame([], $this->billing()->markBilledClaims(invoice: $first));
-		$this->store->saveObject(object: $first, schema: 'BillableInvoice');
+		$this->store->saveObject(object: $first, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'BillableInvoice')));
 		self::assertSame(['c-1'], $this->billing()->markBilledClaims(invoice: $second));
 	}//end testAClaimBilledInTwoInvoicesIsMarkedInvoicedAfterTheSecond()
 
@@ -236,7 +238,7 @@ final class PassThroughBillingTest extends TestCase {
 		$this->store->saveObject(
 			object: ['id' => 'inv-d', 'administrationId' => 'adm-1', 'status' => 'draft',
 				'expenseItemRefs' => [['schema' => 'Receipt', 'id' => 'r-train', 'claimId' => 'c-1']]],
-			schema: 'BillableInvoice'
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'BillableInvoice'))
 		);
 		$this->transitions->expects(self::never())->method('run');
 

@@ -26,6 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCA\Shillinq\Service\BillingModelEngine;
@@ -239,7 +241,7 @@ final class InvoiceGenerationRechargeTest extends TestCase {
 	public function testAnItemOfAClaimBilledWholeIsRefused(): void {
 		$this->store->saveObject(
 			object: ['id' => 'inv-old', 'administrationId' => 'adm-kade', 'status' => 'posted', 'expenseIds' => ['c-vries']],
-			schema: 'BillableInvoice'
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'BillableInvoice'))
 		);
 
 		$this->expectException(RuntimeException::class);
