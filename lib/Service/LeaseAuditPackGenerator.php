@@ -235,33 +235,11 @@ class LeaseAuditPackGenerator {
 	 * @return array<string,mixed>|null The lease, or null when out of scope.
 	 */
 	private function fetchLease(string $leaseContractId, string $administrationId): ?array {
-		try {
-			$matches = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('LeaseContract')
-				->findAll(['filters' => ['administrationId' => $administrationId]]);
-		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'LeaseAuditPackGenerator: failed to read lease',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-
-			return null;
-		}
-
-		foreach ($matches as $lease) {
-			if (is_array($lease) === false) {
-				continue;
-			}
-
-			$id = (string)($lease['id'] ?? ($lease['@self']['id'] ?? ''));
-			$slug = (string)($lease['@self']['slug'] ?? '');
-			if ($id === $leaseContractId || $slug === $leaseContractId) {
-				return $lease;
-			}
-		}
-
-		return null;
+		return $this->leases()->lease(
+			leaseContractId: $leaseContractId,
+			administrationId: $administrationId,
+			failure: 'LeaseAuditPackGenerator: failed to read lease'
+		);
 	}//end fetchLease()
 
 	/**
@@ -274,17 +252,7 @@ class LeaseAuditPackGenerator {
 	 */
 	private function fetchEvents(string $sourceLease, string $administrationId): array {
 		try {
-			$events = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('LeaseReassessmentEvent')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'sourceLease' => $sourceLease,
-						],
-					]
-				);
+			$events = $this->leases()->events(sourceLease: $sourceLease, administrationId: $administrationId);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'LeaseAuditPackGenerator: failed to read reassessment events',
@@ -302,13 +270,13 @@ class LeaseAuditPackGenerator {
 	}//end fetchEvents()
 
 	/**
-	 * Resolve OpenRegister's ObjectService lazily.
+	 * The lease and event reads on the configured register.
 	 *
-	 * @return object The ObjectService instance.
+	 * @return LeaseRecords The reader.
 	 */
-	private function objectService(): object {
-		return $this->objectService;
-	}//end objectService()
+	private function leases(): LeaseRecords {
+		return new LeaseRecords(objectService: $this->objectService, register: $this->register(), logger: $this->logger);
+	}//end leases()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
