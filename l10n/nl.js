@@ -7413,7 +7413,18 @@ OC.L10N.register(
         "The customer this row is about (a create batch).": "De klant waar deze regel over gaat (bij een aanmaakbatch).",
         "The invoice this row is about: the one sent, or the one a create batch wrote or found.": "De factuur waar deze regel over gaat: de verzonden factuur, of de factuur die een aanmaakbatch schreef of vond.",
         "Why the invoice was skipped or failed; empty when it went through.": "Waarom de factuur is overgeslagen of mislukt; leeg wanneer die is gelukt.",
-        "created, existing, sent, skipped or failed.": "aangemaakt (created), bestaand (existing), verzonden (sent), overgeslagen (skipped) of mislukt (failed)."
+        "created, existing, sent, skipped or failed.": "aangemaakt (created), bestaand (existing), verzonden (sent), overgeslagen (skipped) of mislukt (failed).",
+        "Entities": "Entiteiten",
+        "Checks": "Controles",
+        "Passed": "Geslaagd",
+        "Blocking": "Blokkerend",
+        "Fails": "Mislukt",
+        "Blocks the file": "Blokkeert het bestand",
+        "Warning only": "Alleen een waarschuwing",
+        "No checks apply to this return yet.": "Er zijn nog geen controles van toepassing op deze aangifte.",
+        "The checks could not be run.": "De controles konden niet worden uitgevoerd.",
+        "You have no access to the books of this group.": "Je hebt geen toegang tot de administratie van deze groep.",
+        "No reconciliation items are recorded on this report.": "Er zijn geen afstemmingsposten vastgelegd op dit rapport."
     },
     "nplurals=2; plural=(n != 1);"
 )

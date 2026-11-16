@@ -5247,7 +5247,18 @@ OC.L10N.register(
         "The customer this row is about (a create batch).": "The customer this row is about (a create batch).",
         "The invoice this row is about: the one sent, or the one a create batch wrote or found.": "The invoice this row is about: the one sent, or the one a create batch wrote or found.",
         "Why the invoice was skipped or failed; empty when it went through.": "Why the invoice was skipped or failed; empty when it went through.",
-        "created, existing, sent, skipped or failed.": "created, existing, sent, skipped or failed."
+        "created, existing, sent, skipped or failed.": "created, existing, sent, skipped or failed.",
+        "Entities": "Entities",
+        "Checks": "Checks",
+        "Passed": "Passed",
+        "Blocking": "Blocking",
+        "Fails": "Fails",
+        "Blocks the file": "Blocks the file",
+        "Warning only": "Warning only",
+        "No checks apply to this return yet.": "No checks apply to this return yet.",
+        "The checks could not be run.": "The checks could not be run.",
+        "You have no access to the books of this group.": "You have no access to the books of this group.",
+        "No reconciliation items are recorded on this report.": "No reconciliation items are recorded on this report."
     },
     "nplurals=2; plural=(n != 1);"
 )
