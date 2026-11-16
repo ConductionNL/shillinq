@@ -74,6 +74,9 @@
         and holds pure functions of their arguments: it declares NO constructor,
         NO properties and NO collaborators. If an edit gives it state or an
         injected dependency, remove this entry.
+        (l) RegisterSlug reads the register slug from the IAppConfig it is
+        given, so a test still mocks that config: final, NO constructor, NO
+        properties, NO collaborators of its own, as (i).
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -83,6 +86,7 @@
                 OCA\Shillinq\Support\FleetAppId,
                 OCA\Shillinq\Service\Sbr\XbrlInstanceWriter,
                 OCA\Shillinq\Support\DateWindow,
+                OCA\Shillinq\Support\RegisterSlug,
                 OCA\OpenRegister\Lifecycle\GuardResult,
                 OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery,
                 OCA\OpenRegister\AppHost\Observability\MetricSample,

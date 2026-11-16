@@ -49,6 +49,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateResult;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -530,11 +531,6 @@ class FxRateImportJob extends TimedJob {
 	 * @return string Register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 }//end class
