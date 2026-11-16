@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * @covers \OCA\Shillinq\Command\ReferencesAuditCommand
@@ -126,7 +127,11 @@ class ReferencesAuditCommandFailureTest extends TestCase {
 			 *
 			 * @return array
 			 */
-			public function patchObject(string $objectId, array $data, ?string $register = null, ?string $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+			public function patchObject(ObjectPatch $patch, bool $_rbac = true, bool $_multitenancy = true): array {
+				$objectId = $patch->objectId;
+				$data = $patch->data;
+				$register = $patch->target->register;
+				$schema = $patch->target->schema;
 				if ($this->writeError !== null) {
 					throw new RuntimeException($this->writeError);
 				}

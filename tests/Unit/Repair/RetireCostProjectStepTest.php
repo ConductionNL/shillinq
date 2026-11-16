@@ -34,6 +34,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for RetireCostProjectStep.
@@ -496,7 +497,9 @@ class RetireCostProjectStepTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac = true, bool $_multitenancy = true): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saves[] = ['object' => $object, 'schema' => $schema];
 				// Simulate the saved dimension appearing in existingDimensions for subsequent code-exists checks.
 				$this->existingDimensions[] = $object;
