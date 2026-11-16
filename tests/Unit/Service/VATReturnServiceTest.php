@@ -38,6 +38,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Tests VATReturnService against an inline ObjectService fake.
@@ -249,7 +250,8 @@ final class VATReturnServiceTest extends TestCase {
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
+				$id = $deletion->uuid;
 				foreach (($this->data[$this->schema] ?? []) as $idx => $row) {
 					if (((string)($row['id'] ?? '')) === $id) {
 						unset($this->data[$this->schema][$idx]);

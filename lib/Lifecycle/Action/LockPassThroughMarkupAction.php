@@ -31,6 +31,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
@@ -171,7 +173,10 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 				cost: (float)($data[$item['source']['amount']] ?? 0.0)
 			);
 
-			$this->objectService->saveObject(object: array_merge($data, $locked), register: $this->registerSlug, schema: $item['schema']);
+			$this->objectService->saveObject(
+				object: array_merge($data, $locked),
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug, schema: $item['schema']))
+			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'[LockPassThroughMarkup] Could not lock the markup of a claim item: '.$e->getMessage(),

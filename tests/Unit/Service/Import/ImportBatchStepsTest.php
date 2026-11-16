@@ -62,6 +62,8 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
@@ -227,7 +229,7 @@ final class ImportBatchStepsTest extends TestCase {
 			 * @return object
 			 */
 			public function transition(string $objectId, string $action, array $data = []): object {
-				$entry = $this->store->find($objectId, schema: 'JournalEntry');
+				$entry = $this->store->find($objectId, new ObjectFindOptions(schema: 'JournalEntry'));
 				if ($entry !== null && $this->guard->canPost($entry->getObject()) !== true) {
 					throw new \RuntimeException('The journal entry ' . $objectId . ' cannot be posted.');
 				}
@@ -636,7 +638,7 @@ final class ImportBatchStepsTest extends TestCase {
 		);
 		$action = $this->action();
 		$posted = $this->step(action: $action, batch: $this->throughDryRun(action: $action, batch: $this->batch(status: 'draft')), to: 'posting', step: 'post');
-		$this->store->setSchema('FiscalYear')->patchObject((string)$year->getObject()['id'], ['state' => 'closed']);
+		$this->store->setSchema('FiscalYear')->patchObject(new ObjectPatch(objectId: (string)$year->getObject()['id'], data: ['state' => 'closed']));
 
 		try {
 			$this->step(action: $action, batch: $posted, to: 'reversed', step: 'reverse');

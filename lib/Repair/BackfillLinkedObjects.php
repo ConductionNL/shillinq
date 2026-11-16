@@ -32,6 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -113,11 +115,12 @@ class BackfillLinkedObjects implements IRepairStep {
 				$payload['linkedObjects'] = [$subject];
 				$this->objectService->saveObject(
 					object: $payload,
-					register: $registerSlug,
-					schema: self::SCHEMA,
-					uuid: $uuid,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: self::SCHEMA),
+						uuid: $uuid
+					),
 					_rbac: false,
-					_multitenancy: false,
+					_multitenancy: false
 				);
 				$listed++;
 			}
