@@ -5611,6 +5611,54 @@
 		{
 			"menu": [
 				{
+					"id": "WebshopOrders",
+					"label": "Web shop orders",
+					"icon": "StorefrontOutline",
+					"route": "WebshopOrders",
+					"order": 26
+				},
+				{
+					"id": "WebshopChannels",
+					"label": "Web shop channels",
+					"icon": "Storefront",
+					"route": "WebshopChannels",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrders",
+					"route": "/verkoop/webshop-orders",
+					"type": "index",
+					"title": "Web shop orders"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrderDetail",
+					"route": "/verkoop/webshop-orders/:id",
+					"type": "detail",
+					"title": "Web shop order"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannels",
+					"route": "/configuratie/webshop-channels",
+					"type": "index",
+					"title": "Web shop channels"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannelDetail",
+					"route": "/configuratie/webshop-channels/:id",
+					"type": "detail",
+					"title": "Web shop channel"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "ReportingCompliance",
 					"children": [
 						{
