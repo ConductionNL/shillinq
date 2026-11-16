@@ -31,6 +31,9 @@ use RuntimeException;
  * @covers \OCA\Shillinq\Service\SupplierInvoiceService
  * @uses   \OCA\Shillinq\Service\InvoiceLineLink
  * @uses   \OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks
+ * @uses   \OCA\Shillinq\Service\RecordStoreLog
+ * @uses   \OCA\Shillinq\Service\RegisterBinding
+ * @uses   \OCA\Shillinq\Service\SchemaRecordStore
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

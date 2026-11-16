@@ -28,6 +28,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Service\RecordStoreLog;
+use OCA\Shillinq\Service\RegisterBinding;
+use OCA\Shillinq\Service\SchemaRecordStore;
 use OCA\Shillinq\Service\VendorPerformanceAggregation;
 use OCA\Shillinq\Service\VendorScorecardRun;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -43,6 +46,9 @@ use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
  * VendorPerformanceAggregation edge-case tests.
  */
 #[CoversClass(VendorPerformanceAggregation::class)]
+#[UsesClass(RecordStoreLog::class)]
+#[UsesClass(RegisterBinding::class)]
+#[UsesClass(SchemaRecordStore::class)]
 #[UsesClass(VendorScorecardRun::class)]
 final class VendorPerformanceAggregationEdgesTest extends TestCase {
 
