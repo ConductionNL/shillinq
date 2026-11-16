@@ -799,13 +799,6 @@
 							"icon": "CurrencyUsd",
 							"route": "FXRates",
 							"order": 28
-						},
-						{
-							"id": "FxRatesAdmin",
-							"label": "FX Rates (Admin)",
-							"icon": "CogOutline",
-							"route": "FxRatesAdmin",
-							"order": 29
 						}
 					]
 				}
@@ -824,13 +817,6 @@
 					"route": "/bookkeeping/multi-currency/fx-rates/:id",
 					"type": "detail",
 					"title": "FX Rate"
-				},
-				{
-					"_fragment": "add-shillinq-multi-currency-t4",
-					"id": "FxRatesAdmin",
-					"route": "/bookkeeping/multi-currency/fx-rates/admin",
-					"type": "custom",
-					"title": "FX Rates (Admin)"
 				}
 			]
 		},
@@ -2939,7 +2925,7 @@
 					"_fragment": "bookkeeping-purchase-order-3way-04-goods-receipt-note",
 					"id": "GoodsReceiptNoteDetail",
 					"route": "/inkoop/goods-receipt-notes/:id",
-					"type": "custom",
+					"type": "detail",
 					"title": "Goods Receipt Note"
 				}
 			]
@@ -5619,6 +5605,54 @@
 					"route": "/sales/rate-plans/:id",
 					"type": "detail",
 					"title": "Rate plan"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "WebshopOrders",
+					"label": "Web shop orders",
+					"icon": "StorefrontOutline",
+					"route": "WebshopOrders",
+					"order": 26
+				},
+				{
+					"id": "WebshopChannels",
+					"label": "Web shop channels",
+					"icon": "Storefront",
+					"route": "WebshopChannels",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrders",
+					"route": "/verkoop/webshop-orders",
+					"type": "index",
+					"title": "Web shop orders"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrderDetail",
+					"route": "/verkoop/webshop-orders/:id",
+					"type": "detail",
+					"title": "Web shop order"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannels",
+					"route": "/configuratie/webshop-channels",
+					"type": "index",
+					"title": "Web shop channels"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannelDetail",
+					"route": "/configuratie/webshop-channels/:id",
+					"type": "detail",
+					"title": "Web shop channel"
 				}
 			]
 		},

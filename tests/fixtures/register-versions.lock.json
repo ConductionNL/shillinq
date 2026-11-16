@@ -94,16 +94,16 @@
             "versionsSha256": "94596f1823024c3830be1bfa8322089ee4e2ceae5d0fde26ab6f201083276819"
         },
         {
-            "appVersion": "0.5.7-unstable.20261114230000",
-            "versionsSha256": "b9ffecce1f7bc9a59f100b47e42a4561f75c63cf798c646a44667a079447fbdd"
-        },
-        {
             "appVersion": "0.5.7-unstable.20261115143000",
             "versionsSha256": "2303fe6a1ccfdbc18ddaf7c055585ddeb3ca704b6707542074eb2ad053979ff4"
         },
         {
-            "appVersion": "0.5.7-unstable.20261115180000",
-            "versionsSha256": "1ef064fb63723c92394caaab98e53974c57a379ea23e75c61960ea46bd8212a2"
+            "appVersion": "0.5.7-unstable.20261115172959",
+            "versionsSha256": "8c14d8f0a0fc6f12b4fb08e4a7509bad0e9b20076c6064728a6ee0711b89503e"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116201500",
+            "versionsSha256": "80831f05ac5ca700616d820811f899c79b826e3c8014bdc003916c70253e3eff"
         }
     ],
     "versions": {
@@ -249,7 +249,7 @@
         "schema:CreditNote": "0.1.0",
         "schema:CreditScore": "0.1.0",
         "schema:CurrencyBalance": "0.1.0",
-        "schema:CustomerMaster": "0.3.0",
+        "schema:CustomerMaster": "0.4.0",
         "schema:DBAEvidenceDossier": "0.1.0",
         "schema:DBAIntake": "0.1.0",
         "schema:DBAModelovereenkomst": "0.1.0",
@@ -625,7 +625,7 @@
         "schema:WbsoBeschikking": "0.1.0",
         "schema:WbsoMededeling": "0.1.0",
         "schema:WebshopChannel": "0.1.0",
-        "schema:WebshopOrder": "0.1.0",
+        "schema:WebshopOrder": "0.3.0",
         "schema:Werkgever": "0.1.0",
         "schema:Werknemer": "0.1.0",
         "schema:WidgetAccessKey": "0.1.0",
