@@ -323,7 +323,10 @@ class InvoiceBatchSendService {
 			$uuid = $id;
 		}
 
-		$saved = $this->objectService->setRegister($this->register())->setSchema('InvoiceBatch')->saveObject(object: $batch, options: new ObjectSaveOptions(uuid: $uuid));
+		$saved = $this->objectService->setRegister($this->register())->setSchema('InvoiceBatch')->saveObject(
+			object: $batch,
+			options: new ObjectSaveOptions(uuid: $uuid)
+		);
 		$out = $saved->jsonSerialize();
 		if (is_array($out) === false) {
 			return $batch;
