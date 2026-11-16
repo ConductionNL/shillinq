@@ -49,6 +49,7 @@
         "Whether an SMS provider is bound that can send (connected) or not (not-connected); while not connected no reminder is sent. Written by the reminder job.": "Whether an SMS provider is bound that can send (connected) or not (not-connected); while not connected no reminder is sent. Written by the reminder job.",
         "Confirmation request": "Confirmation request",
         "Confirmation request tried at": "Confirmation request tried at",
+        "Confirmation request failed": "Confirmation request failed",
         "Confirm before": "Confirm before",
         "Request sent at": "Request sent at",
         "All pending": "All pending",

@@ -7,72 +7,6 @@
 			"component": "BookingsConfirmationPortal",
 			"title": "Confirm your appointment",
 			"_note": "Anonymous, token-scoped confirm/decline surface. Every standard page type assumes an authenticated Nextcloud shell and an OpenRegister object the viewer is allowed to read; this page has neither. It resolves one appointment from a single-use token against the #[PublicPage] endpoints in appinfo/routes.php (confirmationApi#lookupByToken / validate-confirmation-token) and offers only confirm or decline. The page's public reachability comes from those #[PublicPage] attributes, NOT from the manifest — the `public: true` key that used to sit here was read by nothing (it appears nowhere in the shipped nc-vue dist, nor in src/main.js or src/registry.js) and has been removed."
-		},
-		{
-			"id": "BookingsPendingConfirmations",
-			"route": "/verkoop/openstaande-bevestigingen",
-			"type": "index",
-			"title": "Pending confirmations",
-			"_note": "Operator-side list of the appointments still awaiting the customer's confirmation, with whether the confirmation request reached the mail server (REQ-BCF-013, bookings-messages-and-embedding). It used to mount the customer's token-driven BookingsConfirmationPortal, which without a token in the URL listed nothing. A failed send shows as Failed in the Request column and under the Request failed filter; the appointment page offers the resend.",
-			"config": {
-				"register": "shillinq",
-				"schema": "Appointment",
-				"columns": [
-					{
-						"key": "appointmentId",
-						"label": "Reference",
-						"sortable": true
-					},
-					{
-						"key": "startTime",
-						"label": "Start",
-						"sortable": true
-					},
-					{
-						"key": "customerName",
-						"label": "Customer",
-						"sortable": true
-					},
-					{
-						"key": "customerEmail",
-						"label": "Email",
-						"sortable": true
-					},
-					{
-						"key": "confirmationDeadline",
-						"label": "Confirm before",
-						"sortable": true
-					},
-					{
-						"key": "confirmationRequestStatus",
-						"label": "Request",
-						"sortable": true
-					},
-					{
-						"key": "confirmationRequestAt",
-						"label": "Request sent at",
-						"sortable": true
-					}
-				],
-				"defaultSort": "startTime",
-				"rowRoute": "AfspraakDetail",
-				"quickFilters": [
-					{
-						"label": "All pending",
-						"filter": {
-							"status": "pending_confirmation"
-						},
-						"default": true
-					},
-					{
-						"label": "Request failed",
-						"filter": {
-							"status": "pending_confirmation",
-							"confirmationRequestStatus": "failed"
-						}
-					}
-				]
-			}
 		}
 	],
 	"menu": [
@@ -86,8 +20,22 @@
 					"id": "BookingsPendingConfirmations",
 					"label": "Pending confirmations",
 					"icon": "EmailCheckOutline",
-					"route": "BookingsPendingConfirmations",
+					"route": "Afspraken",
+					"query": {
+						"status": "pending_confirmation"
+					},
 					"order": 14
+				},
+				{
+					"id": "BookingsConfirmationRequestFailed",
+					"label": "Confirmation request failed",
+					"icon": "EmailAlertOutline",
+					"route": "Afspraken",
+					"query": {
+						"status": "pending_confirmation",
+						"confirmationRequestStatus": "failed"
+					},
+					"order": 15
 				}
 			]
 		}
