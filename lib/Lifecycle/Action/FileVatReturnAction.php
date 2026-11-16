@@ -24,7 +24,7 @@ use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
-use OCA\Shillinq\Service\Sbr\VatReturnXbrlBuilder;
+use OCA\Shillinq\Kernel\Contracts\VatReturnXbrlBuilderInterface;
 use RuntimeException;
 
 /**
@@ -48,14 +48,14 @@ class FileVatReturnAction implements LifecycleActionInterface {
 	 * Constructor.
 	 *
 	 * @param DigipoortSbrAdapterInterface    $adapter     The Digipoort port: is filing configured.
-	 * @param VatReturnXbrlBuilder            $builder     Builds the return's instance.
+	 * @param VatReturnXbrlBuilderInterface   $builder     Builds the return's instance.
 	 * @param ObjectTransitionRunnerInterface $transitions Validates and submits it.
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.4
 	 */
 	public function __construct(
 		private readonly DigipoortSbrAdapterInterface $adapter,
-		private readonly VatReturnXbrlBuilder $builder,
+		private readonly VatReturnXbrlBuilderInterface $builder,
 		private readonly ObjectTransitionRunnerInterface $transitions,
 	) {
 	}//end __construct()

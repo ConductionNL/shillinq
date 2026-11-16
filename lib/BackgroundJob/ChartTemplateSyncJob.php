@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
+use OCA\Shillinq\Kernel\Contracts\ChartTemplateServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
 use Psr\Log\LoggerInterface;
@@ -43,13 +43,13 @@ class ChartTemplateSyncJob extends QueuedJob {
 	/**
 	 * Constructor.
 	 *
-	 * @param ITimeFactory         $time      The job clock.
-	 * @param ChartTemplateService $templates The sync.
-	 * @param LoggerInterface      $logger    Where a failed run is logged.
+	 * @param ITimeFactory                  $time      The job clock.
+	 * @param ChartTemplateServiceInterface $templates The sync.
+	 * @param LoggerInterface               $logger    Where a failed run is logged.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly ChartTemplateService $templates,
+		private readonly ChartTemplateServiceInterface $templates,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
