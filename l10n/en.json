@@ -5154,5 +5154,6 @@
         "Only a submitted country-by-country report can be corrected.": "Only a submitted country-by-country report can be corrected."
     },
     "plurals": "",
-    "pluralForm": "nplurals=2; plural=(n != 1);"
+    "pluralForm": "nplurals=2; plural=(n != 1);",
+        "Entities": "Entities"
 }

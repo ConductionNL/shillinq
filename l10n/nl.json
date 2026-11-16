@@ -7322,5 +7322,6 @@
         "Only a submitted country-by-country report can be corrected.": "Alleen een ingediend landenrapport kan worden gecorrigeerd."
     },
     "plurals": "",
-    "pluralForm": "nplurals=2; plural=(n != 1);"
+    "pluralForm": "nplurals=2; plural=(n != 1);",
+        "Entities": "Entiteiten"
 }
