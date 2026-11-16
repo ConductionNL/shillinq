@@ -51,6 +51,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
 use OCP\IAppConfig;
@@ -844,8 +846,7 @@ class CBSExportService implements CBSExportServiceInterface {
 		try {
 			$saved = $this->objectService()->saveObject(
 				object: $object,
-				register: $this->register(),
-				schema: $schema,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: $schema))
 			);
 
 			if (is_array($saved) === true) {

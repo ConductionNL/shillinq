@@ -30,6 +30,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * An arrived invoice without an id is not checked, a VIES failure never
@@ -111,12 +112,12 @@ class VatNumberCheckFallbacksTest extends TestCase {
 		$check = $this->check();
 		$this->vies->method('validate')->willReturn(self::answer(valid: false, outage: false));
 		$this->vies->expects($this->never())->method('findRecentValid');
-		$this->objects->expects($this->once())->method('patchObject')->with(
-			'bill-1',
-			['sellerVatIdValidationStatus' => 'invalid', 'sellerVatIdValidatedAt' => null],
-			'shillinq',
-			'SupplierInvoice'
-		);
+		$this->objects->expects($this->once())->method('patchObject')->with(...LegacyObjectArgs::with(method: 'patchObject', expected: [
+				'objectId' => 'bill-1',
+				'data' => ['sellerVatIdValidationStatus' => 'invalid', 'sellerVatIdValidatedAt' => null],
+				'register' => 'shillinq',
+				'schema' => 'SupplierInvoice',
+			]));
 
 		$this->assertSame(
 			['sellerVatIdValidationStatus' => 'invalid', 'sellerVatIdValidatedAt' => null],

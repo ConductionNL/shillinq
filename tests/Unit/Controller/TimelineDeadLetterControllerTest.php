@@ -42,6 +42,7 @@ use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Verifies the dead-letter dashboard endpoints.
@@ -131,7 +132,9 @@ final class TimelineDeadLetterControllerTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$effectiveSchema = ($schema ?? (string)$this->schema);
 				$id = (string)($object['id'] ?? ('row-' . count($this->store[$effectiveSchema] ?? [])));
 				$object['id'] = $id;

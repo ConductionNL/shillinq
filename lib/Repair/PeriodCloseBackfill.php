@@ -51,6 +51,8 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Migration\IOutput;
@@ -192,10 +194,9 @@ class PeriodCloseBackfill implements IRepairStep {
 			// does not have permission to 'create'".
 			$this->objectService->saveObject(
 				object: $record,
-				register: $registerSlug,
-				schema: 'FiscalPeriod',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'FiscalPeriod')),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			$created++;
 		}//end foreach
