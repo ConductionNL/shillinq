@@ -3880,6 +3880,173 @@
                 }
             }
         },
+        "/cbcr/entities/{entityId}/figures": {
+            "post": {
+                "operationId": "cbcr-enter-figures",
+                "summary": "Enter an entity's figures",
+                "description": "Store the country-by-country figures of an entity whose books are not kept here, for the fiscal year, as entered. Replaces the figures stored for that year. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    },
+                                    "currency": {
+                                        "description": "Three-letter currency of the figures; EUR when empty."
+                                    },
+                                    "unrelatedPartyRevenue": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "relatedPartyRevenue": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "profitBeforeTax": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "incomeTaxPaidCash": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "incomeTaxAccrued": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "statedCapital": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "accumulatedEarnings": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "numberOfEmployees": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "tangibleAssetsOtherThanCash": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "deferredTaxExpense": {
+                                        "description": "A figure of the country-by-country table. Optional."
+                                    },
+                                    "eligiblePayroll": {
+                                        "description": "A figure of the country-by-country table. Optional."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/import-figures": {
+            "post": {
+                "operationId": "cbcr-import-figures",
+                "summary": "Import an entity's figures",
+                "description": "Store the country-by-country figures of an entity whose books are not kept here, for the fiscal year, from CSV text with one figure per line (name and amount). Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    },
+                                    "figures": {
+                                        "description": "The CSV text: one figure per line, its name and amount separated by a comma, semicolon or tab."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
         "/cbcr/entities/{entityId}/safe-harbour": {
             "post": {
                 "operationId": "cbcr-safe-harbour",

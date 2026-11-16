@@ -7424,7 +7424,25 @@ OC.L10N.register(
         "No checks apply to this return yet.": "Er zijn nog geen controles van toepassing op deze aangifte.",
         "The checks could not be run.": "De controles konden niet worden uitgevoerd.",
         "You have no access to the books of this group.": "Je hebt geen toegang tot de administratie van deze groep.",
-        "No reconciliation items are recorded on this report.": "Er zijn geen afstemmingsposten vastgelegd op dit rapport."
+        "No reconciliation items are recorded on this report.": "Er zijn geen afstemmingsposten vastgelegd op dit rapport.",
+        "Enter figures": "Cijfers invoeren",
+        "Import figures": "Cijfers importeren",
+        "The country-by-country figures of this entity for the year, as its own accounts give them. They replace the figures stored for that year.": "De landenrapportcijfers van deze entiteit voor het jaar, zoals haar eigen jaarrekening ze geeft. Ze vervangen de cijfers die voor dat jaar zijn opgeslagen.",
+        "Paste the figures from a spreadsheet saved as CSV: one figure per line, its name and its amount, for example profitBeforeTax;9500000.": "Plak de cijfers uit een spreadsheet die als CSV is opgeslagen: één cijfer per regel, met de naam en het bedrag, bijvoorbeeld profitBeforeTax;9500000.",
+        "Three letters, for example EUR; EUR when empty.": "Drie letters, bijvoorbeeld EUR; EUR als het leeg is.",
+        "The figures were stored.": "De cijfers zijn opgeslagen.",
+        "The figures could not be stored.": "De cijfers konden niet worden opgeslagen.",
+        "The figures were imported.": "De cijfers zijn geïmporteerd.",
+        "The figures could not be imported.": "De cijfers konden niet worden geïmporteerd.",
+        "These figures cannot be stored.": "Deze cijfers kunnen niet worden opgeslagen.",
+        "%s keeps its books in Shillinq; read its figures from the books instead.": "%s voert de administratie in Shillinq; lees de cijfers in plaats daarvan uit de boekhouding.",
+        "Give the figure %s.": "Geef het cijfer %s op.",
+        "The figure %s is not a number.": "Het cijfer %s is geen getal.",
+        "The number of employees is a whole number of at least zero.": "Het aantal werknemers is een geheel getal van minstens nul.",
+        "The currency is a three-letter code, for example EUR.": "De valuta is een code van drie letters, bijvoorbeeld EUR.",
+        "Line %1$s names no known figure: %2$s.": "Regel %1$s noemt geen bekend cijfer: %2$s.",
+        "The figure %s is given twice.": "Het cijfer %s is twee keer opgegeven.",
+        "Paste the figures, one per line.": "Plak de cijfers, één per regel."
     },
     "nplurals=2; plural=(n != 1);"
 )

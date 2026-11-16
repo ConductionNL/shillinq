@@ -5258,7 +5258,25 @@ OC.L10N.register(
         "No checks apply to this return yet.": "No checks apply to this return yet.",
         "The checks could not be run.": "The checks could not be run.",
         "You have no access to the books of this group.": "You have no access to the books of this group.",
-        "No reconciliation items are recorded on this report.": "No reconciliation items are recorded on this report."
+        "No reconciliation items are recorded on this report.": "No reconciliation items are recorded on this report.",
+        "Enter figures": "Enter figures",
+        "Import figures": "Import figures",
+        "The country-by-country figures of this entity for the year, as its own accounts give them. They replace the figures stored for that year.": "The country-by-country figures of this entity for the year, as its own accounts give them. They replace the figures stored for that year.",
+        "Paste the figures from a spreadsheet saved as CSV: one figure per line, its name and its amount, for example profitBeforeTax;9500000.": "Paste the figures from a spreadsheet saved as CSV: one figure per line, its name and its amount, for example profitBeforeTax;9500000.",
+        "Three letters, for example EUR; EUR when empty.": "Three letters, for example EUR; EUR when empty.",
+        "The figures were stored.": "The figures were stored.",
+        "The figures could not be stored.": "The figures could not be stored.",
+        "The figures were imported.": "The figures were imported.",
+        "The figures could not be imported.": "The figures could not be imported.",
+        "These figures cannot be stored.": "These figures cannot be stored.",
+        "%s keeps its books in Shillinq; read its figures from the books instead.": "%s keeps its books in Shillinq; read its figures from the books instead.",
+        "Give the figure %s.": "Give the figure %s.",
+        "The figure %s is not a number.": "The figure %s is not a number.",
+        "The number of employees is a whole number of at least zero.": "The number of employees is a whole number of at least zero.",
+        "The currency is a three-letter code, for example EUR.": "The currency is a three-letter code, for example EUR.",
+        "Line %1$s names no known figure: %2$s.": "Line %1$s names no known figure: %2$s.",
+        "The figure %s is given twice.": "The figure %s is given twice.",
+        "Paste the figures, one per line.": "Paste the figures, one per line."
     },
     "nplurals=2; plural=(n != 1);"
 )
