@@ -34,9 +34,9 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 
 /**
- * F2-S2: blocking and releasing payment needs the payment.block action, the
- * record's administration and a reason, and the person who set a block does
- * not release it.
+ * F2-S2: blocking and releasing payment is open to whoever may write the record
+ * under OpenRegister's access rules (a bookkeeper, REQ-BPR-003/004), within
+ * the record's administration and with a reason.
  *
  * @spec openspec/specs/payment-control-guards/spec.md
  */
@@ -55,6 +55,13 @@ final class PaymentBlockServiceTest extends TestCase {
 	 * @var list<bool>
 	 */
 	private array $scopeOpenOnSave = [];
+
+	/**
+	 * The named arguments of each save.
+	 *
+	 * @var list<array<string,mixed>>
+	 */
+	private array $saveArguments = [];
 
 	/**
 	 * A blocker blocks an invoice of their administration, with reason and actor stored.
@@ -90,28 +97,30 @@ final class PaymentBlockServiceTest extends TestCase {
 	}//end testAnotherUserReleasesWithAReason()
 
 	/**
-	 * The person who set the block cannot release it.
+	 * The bookkeeper who set the block may release it, as REQ-BPR-003 allows.
 	 *
 	 * @return void
 	 */
-	public function testTheBlockerCannotReleaseTheirOwnBlock(): void {
+	public function testTheBlockerMayReleaseTheirOwnBlock(): void {
 		$result = $this->service(user: 'anna')->setBlock(schema: 'Payee', id: 'payee-1', blocked: false, reason: 'done');
 
-		self::assertSame(['status' => 403, 'error' => 'four-eyes'], $result);
-		self::assertSame([], $this->saved);
-	}//end testTheBlockerCannotReleaseTheirOwnBlock()
+		self::assertSame(200, $result['status']);
+		self::assertSame('anna', $this->saved[0]['object']['paymentReleasedBy']);
+	}//end testTheBlockerMayReleaseTheirOwnBlock()
 
 	/**
-	 * A user without the payment.block action is refused.
+	 * The write runs under the caller's own OpenRegister rights, so a user who may not write the record is refused there.
 	 *
 	 * @return void
 	 */
-	public function testAUserWithoutThePaymentActionIsRefused(): void {
+	public function testTheSaveRunsUnderTheCallersRights(): void {
 		$result = $this->service(user: 'carl')->setBlock(schema: 'APTransaction', id: 'ap-1', blocked: true, reason: 'x');
 
-		self::assertSame(['status' => 403, 'error' => 'not-allowed'], $result);
-		self::assertSame([], $this->saved);
-	}//end testAUserWithoutThePaymentActionIsRefused()
+		self::assertSame(200, $result['status']);
+		self::assertCount(1, $this->saveArguments);
+		self::assertTrue($this->saveArguments[0]['_rbac']);
+		self::assertTrue($this->saveArguments[0]['_multitenancy']);
+	}//end testTheSaveRunsUnderTheCallersRights()
 
 	/**
 	 * A record of another administration reads as not found.
@@ -152,7 +161,7 @@ final class PaymentBlockServiceTest extends TestCase {
 	}//end testOtherSchemasAndRepeatsAreRefused()
 
 	/**
-	 * Build the service with anna and bram holding payment.block in adm-1.
+	 * Build the service for a caller in adm-1.
 	 *
 	 * @param string $user The caller.
 	 *
@@ -189,14 +198,15 @@ final class PaymentBlockServiceTest extends TestCase {
 			 */
 			public function saveObject(array $object, ...$rest): \OCA\OpenRegister\Contract\ObjectEntityInterface {
 				if ($this->onSave !== null) {
-					($this->onSave)();
+					($this->onSave)($rest);
 				}
 
 				return parent::saveObject($object, ...$rest);
 			}//end saveObject()
 		};
-		$objects->onSave = function () use ($scope): void {
+		$objects->onSave = function (array $rest) use ($scope): void {
 			$this->scopeOpenOnSave[] = $scope->isOpen();
+			$this->saveArguments[]   = $rest;
 		};
 
 		$administrations = $this->createMock(AdministrationContextService::class);
@@ -207,10 +217,8 @@ final class PaymentBlockServiceTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($iUser);
 		$config = $this->createMock(IAppConfig::class);
-		$config->method('getValueString')->willReturn(json_encode([PaymentActionAuthorizer::ACTION_BLOCK => ['payables']]));
 		$groups = $this->createMock(IGroupManager::class);
 		$groups->method('isAdmin')->willReturn(false);
-		$groups->method('isInGroup')->willReturnCallback(static fn (string $uid, string $group): bool => $group === 'payables' && in_array($uid, ['anna', 'bram'], true));
 
 		return new PaymentBlockService(
 			objectService: $objects,

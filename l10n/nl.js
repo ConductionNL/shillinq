@@ -7120,7 +7120,6 @@ OC.L10N.register(
         "Give a reason.": "Geef een reden.",
         "Payment is already blocked.": "De betaling is al geblokkeerd.",
         "Payment is not blocked.": "De betaling is niet geblokkeerd.",
-        "You set this block, so someone else has to release it.": "Je hebt deze blokkade zelf gezet, dus iemand anders moet hem vrijgeven.",
         "This record cannot be found.": "Dit record is niet gevonden."
     },
     "nplurals=2; plural=(n != 1);"

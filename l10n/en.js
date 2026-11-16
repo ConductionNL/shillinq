@@ -4951,7 +4951,6 @@ OC.L10N.register(
         "Give a reason.": "Give a reason.",
         "Payment is already blocked.": "Payment is already blocked.",
         "Payment is not blocked.": "Payment is not blocked.",
-        "You set this block, so someone else has to release it.": "You set this block, so someone else has to release it.",
         "This record cannot be found.": "This record cannot be found."
     },
     "nplurals=2; plural=(n != 1);"

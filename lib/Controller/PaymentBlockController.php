@@ -4,8 +4,8 @@
  * Payment Block Controller
  *
  * The one endpoint behind "Block payment" and "Release payment" on a supplier
- * invoice or a supplier. #[NoAdminRequired]; the payment action, the
- * administration, the reason and four-eyes are checked in PaymentBlockService.
+ * invoice or a supplier. #[NoAdminRequired]; the caller's OpenRegister write
+ * access, the administration and the reason are checked in PaymentBlockService.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Exception\NotAuthorizedException;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\PaymentRun\PaymentBlockService;
 use OCP\AppFramework\Controller;
@@ -79,6 +80,11 @@ class PaymentBlockController extends Controller {
 		$blocked = filter_var($this->request->getParam('blocked', true), FILTER_VALIDATE_BOOLEAN);
 		try {
 			$result = $this->blocks->setBlock(schema: $schema, id: $id, blocked: $blocked, reason: $reason);
+		} catch (NotAuthorizedException $e) {
+			return new JSONResponse(
+				['error' => 'not-allowed', 'message' => $this->message(code: 'not-allowed')],
+				403
+			);
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq: the payment block could not be saved', ['exception' => $e->getMessage()]);
 			return new JSONResponse(
@@ -112,7 +118,6 @@ class PaymentBlockController extends Controller {
 			'reason-required' => $this->l10n->t('Give a reason.'),
 			'already-blocked' => $this->l10n->t('Payment is already blocked.'),
 			'not-blocked' => $this->l10n->t('Payment is not blocked.'),
-			'four-eyes' => $this->l10n->t('You set this block, so someone else has to release it.'),
 			default => $this->l10n->t('This record cannot be found.'),
 		};
 

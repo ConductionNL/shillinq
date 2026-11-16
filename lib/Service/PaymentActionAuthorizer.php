@@ -45,13 +45,6 @@ use OCP\IUserSession;
 final class PaymentActionAuthorizer implements PaymentActionAuthorizerInterface {
 
 	/**
-	 * Setting or releasing the payment block of an invoice or a supplier.
-	 *
-	 * @var string
-	 */
-	public const ACTION_BLOCK = 'payment.block';
-
-	/**
 	 * The app-config key mapping an action to the groups that carry it.
 	 *
 	 * @var string

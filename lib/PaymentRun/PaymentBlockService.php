@@ -4,9 +4,10 @@
  * Payment Block Service
  *
  * Sets and releases the payment block of a supplier invoice (APTransaction)
- * or a supplier (Payee). Both need the `payment.block` payment action, access
- * to the record's administration and a reason, and the person who set a block
- * cannot release it. The actor and time of both are stored on the record.
+ * or a supplier (Payee). Who may do it is who may write the record under
+ * OpenRegister's own access rules (a bookkeeper, REQ-BPR-003/004), within the
+ * record's administration, always with a reason. The actor and time of both
+ * are stored on the record.
  * PaymentBlockLockListener refuses any other write of these fields.
  *
  * @category PaymentRun
@@ -68,7 +69,7 @@ class PaymentBlockService {
 	 *
 	 * @param ObjectServiceInterface       $objectService  OpenRegister objects.
 	 * @param AdministrationContextService $administrations The caller's administrations.
-	 * @param PaymentActionAuthorizer      $authorizer     The payment action matrix.
+	 * @param PaymentActionAuthorizer      $authorizer     Names the calling user.
 	 * @param PaymentBlockWriteScope       $scope          Opens the block fields to this service's write.
 	 */
 	public function __construct(
@@ -101,10 +102,6 @@ class PaymentBlockService {
 			return ['status' => 401, 'error' => 'not-logged-in'];
 		}
 
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_BLOCK) === false) {
-			return ['status' => 403, 'error' => 'not-allowed'];
-		}
-
 		$reason = trim($reason);
 		if ($reason === '') {
 			return ['status' => 400, 'error' => 'reason-required'];
@@ -113,8 +110,7 @@ class PaymentBlockService {
 		try {
 			$entity = ObjectIdentifier::findScoped(
 				scoped: $this->objectService->setRegister(self::REGISTER)->setSchema($schema),
-				id: $id,
-				named: ['_rbac' => false, '_multitenancy' => false]
+				id: $id
 			);
 		} catch (DoesNotExistException $miss) {
 			$entity = null;
@@ -138,10 +134,6 @@ class PaymentBlockService {
 			return ['status' => 409, 'error' => $error];
 		}
 
-		if ($blocked === false && (string)($record['paymentBlockedBy'] ?? '') === $actor) {
-			return ['status' => 403, 'error' => 'four-eyes'];
-		}
-
 		$stamp = $this->releaseFields(actor: $actor, reason: $reason);
 		if ($blocked === true) {
 			$stamp = $this->blockFields(actor: $actor, reason: $reason);
@@ -156,8 +148,8 @@ class PaymentBlockService {
 					target: new ObjectFindTarget(register: self::REGISTER, schema: $schema),
 					uuid: ($entity->getUuid() ?? $id)
 				),
-				_rbac: false,
-				_multitenancy: false
+				_rbac: true,
+				_multitenancy: true
 			)
 		);
 
