@@ -42,6 +42,8 @@ use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * REQ-BMM-003.
@@ -119,7 +121,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 	 * @return string
 	 */
 	private function stateOf(string $schema, string $id, string $field): string {
-		return (string)$this->store->find($id, schema: $schema)->getObject()[$field];
+		return (string)$this->store->find($id, new ObjectFindOptions(schema: $schema))->getObject()[$field];
 
 	}//end stateOf()
 
@@ -327,6 +329,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 			 * @return object
 			 */
 			public function find(mixed $id, mixed ...$rest): object {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				$slug = ['812' => 'ReconciliationMatch', '900' => 'SupplierInvoice', '7' => 'shillinq'][(string)$id] ?? '';
 				return new class($slug) {
 					/**

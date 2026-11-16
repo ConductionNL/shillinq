@@ -35,6 +35,7 @@ use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Pins BackfillGlLineFiscalYear's outcomes.
@@ -145,12 +146,13 @@ final class BackfillGlLineFiscalYearOutcomesTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register = '',
-				string $schema = '',
-				?string $uuid = null,
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_multitenancy = true,
+				bool $_multitenancy = true
 			): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
+				$uuid = $options->uuid;
 				if (in_array($uuid, $this->failSaves, true) === true) {
 					throw new RuntimeException('locked');
 				}

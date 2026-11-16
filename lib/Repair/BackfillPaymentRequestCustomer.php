@@ -36,6 +36,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
@@ -117,11 +119,12 @@ class BackfillPaymentRequestCustomer implements IRepairStep {
 
 				$this->objectService->saveObject(
 					object: $this->portalScope->stamp(request: $this->withoutMetadata(row: $request)),
-					register: $registerSlug,
-					schema: self::SCHEMA,
-					uuid: $uuid,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: self::SCHEMA),
+						uuid: $uuid
+					),
 					_rbac: false,
-					_multitenancy: false,
+					_multitenancy: false
 				);
 				$stamped++;
 			}

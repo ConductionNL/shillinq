@@ -23,6 +23,7 @@ namespace OCA\Shillinq\Tests\Unit\Util;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * The by-uuid and by-property lookups forward the caller's RBAC choice.
@@ -144,6 +145,7 @@ final class ObjectIdentifierFindOneTest extends TestCase {
 			/** @var array<int, array{0: string, 1: array<string, mixed>}> */
 			public array $calls = [];
 			public function find(string $id, mixed ...$named): array {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				$this->calls[] = ['find', $named];
 				throw new \RuntimeException('DoesNotExist');
 			}
