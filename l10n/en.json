@@ -5020,7 +5020,11 @@
         "Charge": "Charge",
         "Outcomes": "Outcomes",
         "Only issued invoices can be sent: issue the invoices to send them.": "Only issued invoices can be sent: issue the invoices to send them.",
-        "This batch reference belongs to another batch.": "This batch reference belongs to another batch."
+        "This batch reference belongs to another batch.": "This batch reference belongs to another batch.",
+        "The customer this row is about (a create batch).": "The customer this row is about (a create batch).",
+        "The invoice this row is about: the one sent, or the one a create batch wrote or found.": "The invoice this row is about: the one sent, or the one a create batch wrote or found.",
+        "Why the invoice was skipped or failed; empty when it went through.": "Why the invoice was skipped or failed; empty when it went through.",
+        "created, existing, sent, skipped or failed.": "created, existing, sent, skipped or failed."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

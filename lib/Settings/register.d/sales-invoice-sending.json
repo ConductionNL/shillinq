@@ -206,10 +206,14 @@
               "type": "object",
               "properties": {
                 "customerId": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Customer",
+                  "description": "The customer this row is about (a create batch)."
                 },
                 "invoiceId": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Invoice",
+                  "description": "The invoice this row is about: the one sent, or the one a create batch wrote or found."
                 },
                 "status": {
                   "type": "string",
@@ -219,10 +223,14 @@
                     "sent",
                     "skipped",
                     "failed"
-                  ]
+                  ],
+                  "title": "Status",
+                  "description": "created, existing, sent, skipped or failed."
                 },
                 "reason": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Reason",
+                  "description": "Why the invoice was skipped or failed; empty when it went through."
                 }
               }
             },
@@ -300,7 +308,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a SEPA Mandate is written to OpenRegister's immutable audit trail with actor and timestamp."
+          "description": "Every create, update and delete of an Invoice Batch is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

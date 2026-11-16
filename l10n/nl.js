@@ -7171,7 +7171,11 @@ OC.L10N.register(
         "Charge": "Te factureren",
         "Outcomes": "Resultaten",
         "Only issued invoices can be sent: issue the invoices to send them.": "Alleen definitieve facturen kunnen worden verstuurd: maak de facturen definitief om ze te versturen.",
-        "This batch reference belongs to another batch.": "Deze batchreferentie hoort bij een andere batch."
+        "This batch reference belongs to another batch.": "Deze batchreferentie hoort bij een andere batch.",
+        "The customer this row is about (a create batch).": "De klant waar deze regel over gaat (bij een aanmaakbatch).",
+        "The invoice this row is about: the one sent, or the one a create batch wrote or found.": "De factuur waar deze regel over gaat: de verzonden factuur, of de factuur die een aanmaakbatch schreef of vond.",
+        "Why the invoice was skipped or failed; empty when it went through.": "Waarom de factuur is overgeslagen of mislukt; leeg wanneer die is gelukt.",
+        "created, existing, sent, skipped or failed.": "aangemaakt (created), bestaand (existing), verzonden (sent), overgeslagen (skipped) of mislukt (failed)."
     },
     "nplurals=2; plural=(n != 1);"
 )

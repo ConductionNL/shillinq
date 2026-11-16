@@ -284,6 +284,8 @@ export default {
 		 * A new empty line.
 		 *
 		 * @return {object} The line.
+		 *
+		 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
 		 */
 		emptyLine() {
 			return emptyBatchLine()
@@ -294,6 +296,8 @@ export default {
 		 *
 		 * @param {string} id The customer id.
 		 * @return {string} The name.
+		 *
+		 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
 		 */
 		customerName(id) {
 			return this.customerOptions.find((option) => option.value === id)?.label || id
@@ -318,6 +322,8 @@ export default {
 
 		/**
 		 * Close, handing back the batch when one was created.
+		 *
+		 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
 		 */
 		close() {
 			this.$emit('close', this.result)
