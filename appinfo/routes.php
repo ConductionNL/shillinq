@@ -216,6 +216,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'vATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
             ['name' => 'vATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
             ['name' => 'vATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
+            ['name' => 'vATReturn#checks', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'],
             // tax-vat-position-and-suppletie (REQ-VPS-001, REQ-VPS-002): the running
             // position, the drift check on a filed return, and preparing its suppletie.
             ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
