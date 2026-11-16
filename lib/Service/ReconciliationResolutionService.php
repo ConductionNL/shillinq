@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Service;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -109,13 +110,16 @@ class ReconciliationResolutionService implements ReconciliationResolutionService
 			// PatchObject merges; updateObject would replace the match with
 			// these four keys and erase its line, targets and amount.
 			->patchObject(
-				$matchId,
-				[
-					'resolutionStatus' => $resolutionStatus,
-					'resolutionReason' => $resolutionReason,
-					'resolvedBy' => $actor,
-					'matchedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-				]
+				new ObjectPatch(
+					objectId: $matchId,
+					data: [
+						'reconId' => $reconId,
+						'resolutionStatus' => $resolutionStatus,
+						'resolutionReason' => $resolutionReason,
+						'resolvedBy' => $actor,
+						'matchedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+					]
+				)
 			);
 
 		$this->logger->info(

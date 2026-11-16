@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
@@ -107,7 +108,7 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 
 		$patch = self::settledPatch(request: $request);
 
-		$this->scoped(schema: 'PaymentRequest')->patchObject($requestId, $patch);
+		$this->scoped(schema: 'PaymentRequest')->patchObject(new ObjectPatch(objectId: $requestId, data: $patch));
 
 		return $outcome;
 	}//end settle()

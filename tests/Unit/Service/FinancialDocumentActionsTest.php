@@ -36,6 +36,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * An in-memory store per schema; a caller read hides the ids in `$hidden`.
@@ -102,7 +103,11 @@ final class ActionDocumentStore {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$id = 'new-' . (count($this->saved) + 1);
 		$this->saved[] = ['schema' => (string)($schema ?? $this->schema), 'object' => $object, 'rbac' => $_rbac];
 

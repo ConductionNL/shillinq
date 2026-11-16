@@ -13,6 +13,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * RW124 probe (reviewer-only): findOne over an OpenRegister-faithful service.
@@ -35,7 +36,7 @@ final class Rw124FindOneProbeTest extends TestCase {
 
 	/** Like OR's Schema: accessors only through __call, as NC Entity serves them. */
 	public static function magicEntity(int $id, string $slug): object {
-		return new class($id, $slug) {
+		return new class($id, $slug) implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 			public $id;
 			protected $slug;
 			protected $uuid;
@@ -55,7 +56,7 @@ final class Rw124FindOneProbeTest extends TestCase {
 	}
 
 	public static function service(bool $magic = true): object {
-		return new class($magic) {
+		return new class($magic) implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 			public array $calls = [];
 			private object $register;
 			private object $schema;
@@ -69,11 +70,11 @@ final class Rw124FindOneProbeTest extends TestCase {
 					$this->register = Rw124FindOneProbeTest::magicEntity(3, 'shillinq');
 					$this->schema = Rw124FindOneProbeTest::magicEntity(40, 'APTransaction');
 				} else {
-					$this->register = new class() {
+					$this->register = new class() implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 						public function getId(): int { return 3; }
 						public function getSlug(): string { return 'shillinq'; }
 					};
-					$this->schema = new class() {
+					$this->schema = new class() implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 						public function getId(): int { return 40; }
 						public function getUuid(): string { return 'uuid-APTransaction'; }
 						public function getSlug(): string { return 'APTransaction'; }
@@ -102,7 +103,13 @@ final class Rw124FindOneProbeTest extends TestCase {
 				}
 				throw new RuntimeException('DoesNotExist');
 			}
-			public function find(int|string $id, ?array $_extend = [], bool $files = false, $register = null, $schema = null, bool $_rbac = true, bool $_multitenancy = true, bool $_render = true, bool $_audit = true): ?ObjectEntity {
+			public function find(int|string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ?ObjectEntity {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
+				$_render = $options?->render ?? true;
+				$_audit = $options?->audit ?? true;
 				$reg = $register === null ? null : (int)$register->getId();
 				$sch = $schema === null ? null : (int)$schema->getId();
 				$this->calls[] = ['find', (string)$id, $reg, $sch, $_rbac];
