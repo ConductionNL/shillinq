@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Receivables\DirectDebitFileService;
 
@@ -50,20 +51,17 @@ class GenerateDirectDebitFileAction implements LifecycleActionInterface {
 	/**
 	 * The batch with its validated file, count and control sum.
 	 *
-	 * @param array<string,mixed> $objectData   The batch after the transition.
-	 * @param array<string,mixed> $previousData The batch before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the batch after the transition.
 	 *
 	 * @return array<string,mixed> The batch to save.
 	 *
 	 * @throws \RuntimeException When the file has errors.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		return $this->files->generate(batch: $objectData);
 
 	}//end execute()

@@ -125,6 +125,7 @@
                 <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
                 <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleGuardInterface"/>
                 <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleActionInterface"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleActionContext"/>
                 <referencedClass name="OCA\OpenRegister\Lifecycle\GuardResult"/>
                 <!-- OpenRegister listener-deferral contract (ADR-078). Used by
                      TenderNedAwardPromotionJob + TenderNedAwardDetectedListener to
