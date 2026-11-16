@@ -55,6 +55,7 @@ namespace OCA\Shillinq\Service;
 use DateInterval;
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -66,7 +67,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/recurring-invoicing/spec.md
  */
-class RecurringInvoiceGenerator {
+class RecurringInvoiceGenerator implements RecurringInvoiceGeneratorInterface {
 
 	/**
 	 * English month names for the {month} token (the document language

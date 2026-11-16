@@ -1040,6 +1040,48 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\DirectDebitBatchServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Receivables\\\\DirectDebitBatchService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\DirectDebitFileServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Receivables\\\\DirectDebitFileService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\FxRateFeedStatusInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Treasury\\\\FxRateFeedStatus'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PensionValuationPostingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PensionValuationPostingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RecurringInvoiceGeneratorInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\RecurringInvoiceGenerator'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RetentionDueServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\RetentionDueService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SubscriptionCancellationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\SubscriptionCancellationService'"
         ]
@@ -1999,6 +2041,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TaskFieldRealisationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\TaskFieldRealisation'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TaxNotificationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\TaxNotificationService'"
         ]
@@ -2071,6 +2120,20 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatNumberCheckInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\VatNumberCheck'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatSuppletieDetectionServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\VatSuppletieDetectionService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatSuppletieFilingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\VatSuppletieFilingService'"
         ]
     ],
     [

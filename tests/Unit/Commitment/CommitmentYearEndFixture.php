@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Commitment;
 
 use DateTime;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\RecordCommitmentMovementAction;
 use OCA\Shillinq\Service\Commitment\CommitmentCarryOverService;
 use OCA\Shillinq\Service\Commitment\CommitmentInvoicing;
@@ -114,7 +115,14 @@ trait CommitmentYearEndFixture {
 				$declared = RegisterSchema::schema('Commitment')['x-openregister-lifecycle']['transitions'][$record['action']];
 				foreach (($declared['actions'] ?? []) as $step) {
 					if ($step['action'] === RecordCommitmentMovementAction::class) {
-						$action->execute($object, [], ($step['actionParameters'] ?? []), $step['action']);
+						$action->execute(
+							new LifecycleActionContext(
+								objectData: $object,
+								previousData: [],
+								parameters: ($step['actionParameters'] ?? []),
+								actionName: $step['action']
+							)
+						);
 					}
 				}
 			}

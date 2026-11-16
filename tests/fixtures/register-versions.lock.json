@@ -98,8 +98,12 @@
             "versionsSha256": "2303fe6a1ccfdbc18ddaf7c055585ddeb3ca704b6707542074eb2ad053979ff4"
         },
         {
-            "appVersion": "0.5.7-unstable.20261115180000",
-            "versionsSha256": "c1705e9199c5d45c614922907afc1de453428703dcfea7dffb78d0d81b4bde25"
+            "appVersion": "0.5.7-unstable.20261115172959",
+            "versionsSha256": "8c14d8f0a0fc6f12b4fb08e4a7509bad0e9b20076c6064728a6ee0711b89503e"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116210000",
+            "versionsSha256": "6c97f494bc5065099ec8b4bb68152167fe8305c3607c4f85e6c19e626f669f29"
         }
     ],
     "versions": {
@@ -622,7 +626,7 @@
         "schema:WbsoBeschikking": "0.1.0",
         "schema:WbsoMededeling": "0.1.0",
         "schema:WebshopChannel": "0.1.0",
-        "schema:WebshopOrder": "0.1.0",
+        "schema:WebshopOrder": "0.3.0",
         "schema:Werkgever": "0.1.0",
         "schema:Werknemer": "0.1.0",
         "schema:WidgetAccessKey": "0.1.0",

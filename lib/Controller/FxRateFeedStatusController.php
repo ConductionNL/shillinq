@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\Treasury\FxRateFeedStatus;
+use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -44,11 +44,11 @@ class FxRateFeedStatusController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest         $request    Nextcloud request.
-	 * @param FxRateFeedStatus $feedStatus The feed state and newest rates.
+	 * @param FxRateFeedStatusInterface $feedStatus The feed state and newest rates.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly FxRateFeedStatus $feedStatus,
+		private readonly FxRateFeedStatusInterface $feedStatus,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

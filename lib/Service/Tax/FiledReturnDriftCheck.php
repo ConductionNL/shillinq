@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Service\Tax;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\VatSuppletieDetectionService;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -63,13 +63,13 @@ class FiledReturnDriftCheck {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface       $objectService The object store.
-	 * @param VatSuppletieDetectionService $suppletie     Compares one filed return with the books.
+	 * @param VatSuppletieDetectionServiceInterface $suppletie     Compares one filed return with the books.
 	 * @param IAppConfig                   $appConfig     The register slug.
 	 * @param LoggerInterface              $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly VatSuppletieDetectionService $suppletie,
+		private readonly VatSuppletieDetectionServiceInterface $suppletie,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 	) {
