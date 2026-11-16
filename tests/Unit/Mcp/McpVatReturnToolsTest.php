@@ -51,6 +51,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 #[CoversClass(McpAdministrationGate::class)]
 #[CoversClass(McpResult::class)]
 #[UsesClass(VATReturnController::class)]
+#[UsesClass(VatReturnChecksGuard::class)]
 class McpVatReturnToolsTest extends TestCase {
 
 	/**
@@ -351,7 +352,9 @@ class McpVatReturnToolsTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
-		$controller = new VATReturnController($this->createMock(IRequest::class), $this->service, $container, $session, $context, $logger, $l10n, $this->createMock(VatReturnChecksGuard::class), $this->createMock(VatReturnCheckService::class));
+		// No blocking VAT return check fails here, so the controller refuses only where the tool does.
+		$checks = $this->createMock(VatReturnCheckService::class);
+		$controller = new VATReturnController($this->createMock(IRequest::class), $this->service, $container, $session, $context, $logger, $l10n, new VatReturnChecksGuard(checks: $checks), $checks);
 		$tools = new McpVatReturnTools(new McpAdministrationGate($session, $context), $this->service, $container, $logger);
 
 		return [$controller, $tools];
