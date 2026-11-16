@@ -41,6 +41,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCP\Http\Client\IClientService;
@@ -368,8 +370,7 @@ class ViesService implements ViesServiceInterface {
 		try {
 			$this->objectService->saveObject(
 				object: $record,
-				register: $this->register(),
-				schema: 'ViesValidation',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ViesValidation'))
 			);
 			$saved = true;
 		} catch (\Throwable $e) {

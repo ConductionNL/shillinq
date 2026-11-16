@@ -61,6 +61,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\GlLineAdministrationBackfillMigratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
@@ -269,11 +271,15 @@ class BackfillGlLineAdministration implements IRepairStep {
 				// sees and writes every tenant's rows.
 				$this->objectService->saveObject(
 					object: $row,
-					register: $registerSlug,
-					schema: GlLineAdministrationBackfillMigratorInterface::SCHEMA_GL_LINE,
-					uuid: $objectId,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(
+								register: $registerSlug,
+								schema: GlLineAdministrationBackfillMigratorInterface::SCHEMA_GL_LINE
+							),
+						uuid: $objectId
+					),
 					_rbac: false,
-					_multitenancy: false,
+					_multitenancy: false
 				);
 				$written++;
 			} catch (\Throwable $e) {
