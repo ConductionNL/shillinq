@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -761,7 +762,7 @@ class InvoiceBatchService {
 			$uuid = $id;
 		}
 
-		$saved = $this->scoped(schema: 'InvoiceBatch')->saveObject(object: $batch, uuid: $uuid);
+		$saved = $this->scoped(schema: 'InvoiceBatch')->saveObject(object: $batch, options: new ObjectSaveOptions(uuid: $uuid));
 		$out = ObjectIdentifier::recordWithId(candidate: $saved);
 		if ($out === null) {
 			return $batch;

@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Service;
 use DomainException;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\BackgroundJob\SendInvoicesJob;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -322,7 +323,7 @@ class InvoiceBatchSendService {
 			$uuid = $id;
 		}
 
-		$saved = $this->objectService->setRegister($this->register())->setSchema('InvoiceBatch')->saveObject(object: $batch, uuid: $uuid);
+		$saved = $this->objectService->setRegister($this->register())->setSchema('InvoiceBatch')->saveObject(object: $batch, options: new ObjectSaveOptions(uuid: $uuid));
 		$out = $saved->jsonSerialize();
 		if (is_array($out) === false) {
 			return $batch;
