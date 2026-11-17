@@ -172,6 +172,15 @@ class CashFlowCalculatorTest extends TestCase {
 		self::assertSame(['opening' => 20000.0, 'change' => 28000.0, 'closing' => 48000.0], $statement['cash']);
 		self::assertSame('indirect', $statement['method']);
 		self::assertSame([], $statement['unclassified']['rows']);
+		self::assertSame(
+			[
+				['label' => 'Kasstroom uit operationele activiteiten', 'amount' => 48000.0],
+				['label' => 'Kasstroom uit investeringsactiviteiten', 'amount' => -12000.0],
+				['label' => 'Kasstroom uit financieringsactiviteiten', 'amount' => -8000.0],
+				['label' => 'Mutatie liquide middelen', 'amount' => 28000.0],
+			],
+			$statement['summary']
+		);
 	}
 
 	/**
@@ -223,6 +232,7 @@ class CashFlowCalculatorTest extends TestCase {
 		self::assertSame(500.0, $statement['unclassified']['total']);
 		self::assertSame(28500.0, $statement['totals']['cashChange']);
 		self::assertSame(0.0, $statement['totals']['difference']);
+		self::assertSame(['Niet ingedeeld', 500.0], [$statement['summary'][3]['label'], $statement['summary'][3]['amount']]);
 	}
 
 	/**

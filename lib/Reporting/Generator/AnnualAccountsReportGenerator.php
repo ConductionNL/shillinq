@@ -298,10 +298,10 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 		}
 
 		$sections = [
-			'operating' => ['Kasstroom uit operationele activiteiten', 'Totaal operationeel'],
-			'investing' => ['Kasstroom uit investeringsactiviteiten', 'Totaal investeringen'],
-			'financing' => ['Kasstroom uit financieringsactiviteiten', 'Totaal financiering'],
-			'unclassified' => [CashFlowCalculator::UNCLASSIFIED_LABEL, 'Totaal niet ingedeeld'],
+			'operating' => [CashFlowCalculator::SECTION_LABELS['operating'], 'Totaal operationeel'],
+			'investing' => [CashFlowCalculator::SECTION_LABELS['investing'], 'Totaal investeringen'],
+			'financing' => [CashFlowCalculator::SECTION_LABELS['financing'], 'Totaal financiering'],
+			'unclassified' => [CashFlowCalculator::SECTION_LABELS['unclassified'], 'Totaal niet ingedeeld'],
 		];
 		foreach ($sections as $key => [$head, $totalLabel]) {
 			$rows = (array)($flow[$key]['rows'] ?? []);
@@ -324,7 +324,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 			$reconciliation[] = ['label' => 'Verschil', 'amount' => (float)$totals['difference']];
 		}
 
-		$this->addAmountTable($section, 'Aansluiting liquide middelen', 'Bedrag', $reconciliation, ['label' => 'Mutatie liquide middelen', 'amount' => (float)($totals['cashChange'] ?? 0.0)], $currency);
+		$this->addAmountTable($section, 'Aansluiting liquide middelen', 'Bedrag', $reconciliation, ['label' => CashFlowCalculator::CASH_CHANGE_LABEL, 'amount' => (float)($totals['cashChange'] ?? 0.0)], $currency);
 
 		$record = $this->resolve(class: CashFlowStatementRecord::class);
 		if ($record instanceof CashFlowStatementRecord) {

@@ -2699,6 +2699,14 @@
 						"route": "VarianceReport"
 					},
 					{
+						"id": "FinancialStatementCashFlow",
+						"label": "Cash flow statement",
+						"description": "Cash from operations, investments and financing, reconciled to the change in cash.",
+						"icon": "CashMultiple",
+						"category": "financial",
+						"route": "FinancialStatementCashFlow"
+					},
+					{
 						"id": "RelationsBothWays",
 						"label": "Relations both ways",
 						"description": "Customers that are also suppliers, and who owes whom.",

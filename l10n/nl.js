@@ -7705,7 +7705,22 @@ OC.L10N.register(
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Doorzoek de gebruikershandleiding van shillinq (helpartikelen). Gebruik dit voor hoe-doe-ik-vragen over shillinq; filter op pageIds met de pagina waarop de gebruiker staat om het artikel te kiezen dat die pagina uitlegt.",
         "Get one help article by id, with its markdown body and documentation link.": "Haal één helpartikel op via zijn id, met de markdowntekst en de documentatielink.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte.",
+        "Cash flow category": "Kasstroomcategorie",
+        "Where a movement on this balance sheet account goes in the cash flow statement: cash (the change the statement explains), working capital (operating), fixed assets (investing), financing or equity (financing). Revenue and expense accounts need none. A balance account without one shows as unclassified.": "Waar een mutatie op deze balansrekening in het kasstroomoverzicht terechtkomt: liquide middelen (de mutatie die het overzicht verklaart), werkkapitaal (operationeel), vaste activa (investeringen), financiering of eigen vermogen (financiering). Opbrengst- en kostenrekeningen hebben er geen nodig. Een balansrekening zonder categorie staat onder niet ingedeeld.",
+        "Working capital": "Werkkapitaal",
+        "Fixed assets": "Vaste activa",
+        "Cash flow statement": "Kasstroomoverzicht",
+        "Where the money went in the period: from operations, investments and financing, reconciled to the change in cash.": "Waar het geld in de periode naartoe ging: uit de bedrijfsvoering, investeringen en financiering, aangesloten op de mutatie in liquide middelen.",
+        "Accounts without a category": "Rekeningen zonder categorie",
+        "Cash flow": "Kasstroom",
+        "Operating activities": "Operationele activiteiten",
+        "Investing activities": "Investeringsactiviteiten",
+        "Financing activities": "Financieringsactiviteiten",
+        "Not classified": "Niet ingedeeld",
+        "Accounts without a cash flow category": "Rekeningen zonder kasstroomcategorie",
+        "Balance sheet accounts the cash flow statement cannot place yet. Open one to set its cash flow category; until then its movements show as not classified.": "Balansrekeningen die het kasstroomoverzicht nog niet kan plaatsen. Open er een om de kasstroomcategorie in te stellen; tot dan staan de mutaties onder niet ingedeeld.",
+        "Cash from operations, investments and financing, reconciled to the change in cash.": "Kasstromen uit bedrijfsvoering, investeringen en financiering, aangesloten op de mutatie in liquide middelen."
     },
     "nplurals=2; plural=(n != 1);"
 )

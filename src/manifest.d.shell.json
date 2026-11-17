@@ -5515,6 +5515,25 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "reporting-cash-flow-statement",
+					"id": "FinancialStatementCashFlow",
+					"route": "/reports/cash-flow",
+					"type": "dashboard",
+					"title": "Cash flow statement"
+				},
+				{
+					"_fragment": "reporting-cash-flow-statement",
+					"id": "CashFlowAccountCheck",
+					"route": "/reports/cash-flow/accounts",
+					"type": "index",
+					"title": "Accounts without a cash flow category"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "ReportingCompliance",

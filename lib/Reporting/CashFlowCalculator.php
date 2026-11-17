@@ -69,6 +69,21 @@ class CashFlowCalculator {
 	public const UNCLASSIFIED_LABEL = 'Niet ingedeeld';
 
 	/**
+	 * The heading of each section, as the page and the annual accounts show it.
+	 */
+	public const SECTION_LABELS = [
+		'operating' => 'Kasstroom uit operationele activiteiten',
+		'investing' => 'Kasstroom uit investeringsactiviteiten',
+		'financing' => 'Kasstroom uit financieringsactiviteiten',
+		'unclassified' => self::UNCLASSIFIED_LABEL,
+	];
+
+	/**
+	 * The line carrying the change in cash the sections explain.
+	 */
+	public const CASH_CHANGE_LABEL = 'Mutatie liquide middelen';
+
+	/**
 	 * The categories a balance account can carry (design D1).
 	 */
 	public const CATEGORIES = ['cash', 'working-capital', 'fixed-assets', 'financing', 'equity'];
@@ -110,7 +125,8 @@ class CashFlowCalculator {
 	 * @param string $to               Last posting date, YYYY-MM-DD.
 	 *
 	 * @return array<string, mixed> administrationId, from, to, method, operating, investing, financing and
-	 *                              unclassified (each rows and total), cash (opening, closing, change) and totals.
+	 *                              unclassified (each rows and total), summary (one row per section and the
+	 *                              change in cash), cash (opening, closing, change) and totals.
 	 *
 	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
 	 */
@@ -169,6 +185,19 @@ class CashFlowCalculator {
 		$openingCash = self::round(value: -$this->cashBalance(accounts: $accounts, movements: $opening['accounts']));
 		$explained = ($totals['operating'] + $totals['investing'] + $totals['financing'] + $totals['unclassified']);
 
+		$summary = [];
+		foreach (self::SECTION_LABELS as $name => $label) {
+			if ($name !== 'unclassified' || $sections['unclassified'] !== []) {
+				$summary[] = ['label' => $label, 'amount' => $totals[$name]];
+			}
+		}
+
+		$summary[] = ['label' => self::CASH_CHANGE_LABEL, 'amount' => self::round(value: $cashChange)];
+		$difference = self::round(value: ($cashChange - $explained));
+		if ($difference !== 0.0) {
+			$summary[] = ['label' => 'Verschil', 'amount' => $difference];
+		}
+
 		return [
 			'administrationId' => $administrationId,
 			'from' => $from,
@@ -178,6 +207,7 @@ class CashFlowCalculator {
 			'investing' => ['rows' => $sections['investing'], 'total' => $totals['investing']],
 			'financing' => ['rows' => $sections['financing'], 'total' => $totals['financing']],
 			'unclassified' => ['rows' => $sections['unclassified'], 'total' => $totals['unclassified']],
+			'summary' => $summary,
 			'cash' => [
 				'opening' => $openingCash,
 				'change' => self::round(value: $cashChange),
@@ -190,7 +220,7 @@ class CashFlowCalculator {
 				'unclassified' => $totals['unclassified'],
 				'netCashFlow' => self::round(value: $explained),
 				'cashChange' => self::round(value: $cashChange),
-				'difference' => self::round(value: ($cashChange - $explained)),
+				'difference' => $difference,
 			],
 		];
 	}//end between()

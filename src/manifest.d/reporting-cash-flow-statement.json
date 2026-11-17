@@ -1,0 +1,299 @@
+{
+ "_meta": {
+  "spdx-license": "EUPL-1.2",
+  "spdx-copyright": "2026 Conduction B.V.",
+  "change": "reporting-cash-flow-statement",
+  "adr": "ADR-037 modular manifest fragment",
+  "description": "The cash flow statement by the indirect method for a chosen period (REQ-RCF-002, REQ-RCF-003), opened from its card on the Reports page (ADR-112), and the check listing balance accounts without a cash flow category (REQ-RCF-001). The figures come from GET /api/statements/cash-flow, the same calculator the annual accounts use."
+ },
+ "pages": [
+  {
+   "id": "FinancialStatementCashFlow",
+   "route": "/reports/cash-flow",
+   "type": "dashboard",
+   "title": "Cash flow statement",
+   "config": {
+    "description": "Where the money went in the period: from operations, investments and financing, reconciled to the change in cash.",
+    "headerActions": [
+     {
+      "id": "cash-flow-account-check",
+      "label": "Accounts without a category",
+      "type": "open-page",
+      "route": "CashFlowAccountCheck",
+      "icon": "FormatListChecks"
+     }
+    ],
+    "dateRange": {
+     "enabled": true,
+     "showHeaderPicker": true,
+     "persistKey": "shillinq-cash-flow-range",
+     "default": {
+      "preset": "year"
+     },
+     "presets": [
+      {
+       "id": "quarter",
+       "label": "Last 3 months",
+       "days": 91
+      },
+      {
+       "id": "year",
+       "label": "Last 12 months",
+       "days": 365
+      },
+      {
+       "id": "two-year",
+       "label": "Last 24 months",
+       "days": 730
+      }
+     ]
+    },
+    "widgets": [
+     {
+      "id": "cash-flow-summary",
+      "title": "Cash flow",
+      "type": "object-table",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/cash-flow",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?"
+        },
+        "responsePath": "summary"
+       },
+       "columns": [
+        {
+         "key": "label",
+         "label": "Line"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ]
+      }
+     },
+     {
+      "id": "cash-flow-operating",
+      "title": "Operating activities",
+      "type": "object-table",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/cash-flow",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?"
+        },
+        "responsePath": "operating.rows"
+       },
+       "columns": [
+        {
+         "key": "label",
+         "label": "Line"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "ChartOfAccountsDetail",
+       "rowIdField": "accountId"
+      }
+     },
+     {
+      "id": "cash-flow-investing",
+      "title": "Investing activities",
+      "type": "object-table",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/cash-flow",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?"
+        },
+        "responsePath": "investing.rows"
+       },
+       "columns": [
+        {
+         "key": "label",
+         "label": "Line"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "ChartOfAccountsDetail",
+       "rowIdField": "accountId"
+      }
+     },
+     {
+      "id": "cash-flow-financing",
+      "title": "Financing activities",
+      "type": "object-table",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/cash-flow",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?"
+        },
+        "responsePath": "financing.rows"
+       },
+       "columns": [
+        {
+         "key": "label",
+         "label": "Line"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "ChartOfAccountsDetail",
+       "rowIdField": "accountId"
+      }
+     },
+     {
+      "id": "cash-flow-unclassified",
+      "title": "Not classified",
+      "type": "object-table",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/cash-flow",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?"
+        },
+        "responsePath": "unclassified.rows"
+       },
+       "columns": [
+        {
+         "key": "label",
+         "label": "Line"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "ChartOfAccountsDetail",
+       "rowIdField": "accountId"
+      }
+     }
+    ],
+    "layout": [
+     {
+      "id": "1",
+      "widgetId": "cash-flow-summary",
+      "gridX": 0,
+      "gridY": 0,
+      "gridWidth": 12,
+      "gridHeight": 4
+     },
+     {
+      "id": "2",
+      "widgetId": "cash-flow-operating",
+      "gridX": 0,
+      "gridY": 4,
+      "gridWidth": 12,
+      "gridHeight": 5
+     },
+     {
+      "id": "3",
+      "widgetId": "cash-flow-investing",
+      "gridX": 0,
+      "gridY": 9,
+      "gridWidth": 6,
+      "gridHeight": 4
+     },
+     {
+      "id": "4",
+      "widgetId": "cash-flow-financing",
+      "gridX": 6,
+      "gridY": 9,
+      "gridWidth": 6,
+      "gridHeight": 4
+     },
+     {
+      "id": "5",
+      "widgetId": "cash-flow-unclassified",
+      "gridX": 0,
+      "gridY": 13,
+      "gridWidth": 12,
+      "gridHeight": 4
+     }
+    ]
+   }
+  },
+  {
+   "id": "CashFlowAccountCheck",
+   "route": "/reports/cash-flow/accounts",
+   "type": "index",
+   "title": "Accounts without a cash flow category",
+   "config": {
+    "register": "shillinq",
+    "schema": "Account",
+    "description": "Balance sheet accounts the cash flow statement cannot place yet. Open one to set its cash flow category; until then its movements show as not classified.",
+    "filter": {
+     "cashFlowCategory": null,
+     "accountType": [
+      "assets",
+      "liabilities",
+      "equity"
+     ]
+    },
+    "columns": [
+     {
+      "key": "accountNumber",
+      "label": "Account number",
+      "sortable": true
+     },
+     {
+      "key": "name",
+      "label": "Name",
+      "sortable": true
+     },
+     {
+      "key": "accountType",
+      "label": "Type",
+      "sortable": true
+     },
+     {
+      "key": "cashFlowCategory",
+      "label": "Cash flow category"
+     }
+    ],
+    "search": true,
+    "defaultSort": "accountNumber",
+    "rowRoute": "ChartOfAccountsDetail"
+   }
+  }
+ ]
+}
