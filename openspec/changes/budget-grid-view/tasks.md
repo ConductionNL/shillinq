@@ -198,6 +198,9 @@
       (Full app tally: Tests: 4675, Assertions: 45462, Failures: 0,
       Skipped: 1 pre-existing.)
 - [ ] `npx playwright test tests/e2e/budget-grid-view.spec.ts` — **NOT RUN**,
+      Live pass 2026-11-17 (LedgerGroups copied to the administration by hand: a fresh install
+      seeds them only as administrationId "template"): 3 passed after the keyboard toggle fix,
+      2 skipped (no leaf group with account members, no closed period with actuals).
       per this task's own explicit instruction ("Write the Playwright spec,
       do NOT execute it").
 - [x] `hydra-gate-keyboard-operable-controls` (ADR-059, once that gate
