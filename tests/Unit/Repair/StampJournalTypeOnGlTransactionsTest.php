@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -41,6 +41,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for StampJournalTypeOnGlTransactions.
@@ -162,6 +164,7 @@ class StampJournalTypeOnGlTransactionsTest extends TestCase {
 			 * @return object|null
 			 */
 			public function find(string $id, mixed ...$named): ?object {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				$data = ($this->transactions[$id] ?? null);
 				if ($data instanceof \Throwable) {
 					throw $data;
@@ -202,7 +205,9 @@ class StampJournalTypeOnGlTransactionsTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac = true, bool $_multitenancy = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if (in_array((string)($object['id'] ?? ''), $this->failSaves, true) === true) {
 					throw new RuntimeException('locked '.$object['id']);
 				}

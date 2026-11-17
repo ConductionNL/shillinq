@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\BackgroundJob\HorizonRollingJob;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -163,7 +164,10 @@ final class HorizonRollingJobRunTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $object The object.
 			 */
-			public function saveObject(array $object, string $register, string $schema, string $uuid): void {
+			public function saveObject(array $object, ?ObjectSaveOptions $options = null): void {
+				$register = (string)$options?->target->register;
+				$schema   = (string)$options?->target->schema;
+				$uuid     = (string)$options?->uuid;
 				if (isset($this->saveFails[$uuid]) === true) {
 					throw $this->saveFails[$uuid];
 				}

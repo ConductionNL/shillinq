@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\ComplianceDeadlineCalendarService;
+use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -49,12 +49,12 @@ class DeadlineReminderJob extends TimedJob {
 	 * Construct the job with a daily interval.
 	 *
 	 * @param ITimeFactory $time The Nextcloud time factory.
-	 * @param ComplianceDeadlineCalendarService $calendarService The deadline publication + reminder service.
+	 * @param ComplianceDeadlineCalendarServiceInterface $calendarService The deadline publication + reminder service.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly ComplianceDeadlineCalendarService $calendarService,
+		private readonly ComplianceDeadlineCalendarServiceInterface $calendarService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

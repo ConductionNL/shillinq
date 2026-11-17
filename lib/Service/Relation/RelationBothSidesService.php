@@ -37,13 +37,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Relation;
 
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\RelationBothSidesServiceInterface;
 
 /**
  * Totals both sides of a linked relation.
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
-class RelationBothSidesService {
+class RelationBothSidesService implements RelationBothSidesServiceInterface {
 
 	/**
 	 * Sales invoice states that count as invoiced; the first three are still open.

@@ -43,6 +43,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
+
 /**
  * Maps docudesk extraction payloads onto shillinq drafts and records
  * operator corrections with provenance.
@@ -53,20 +55,7 @@ namespace OCA\Shillinq\Service\Extraction;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class ExtractionPrefillService {
-	/**
-	 * The SupplierInvoice schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_SUPPLIER_INVOICE = 'SupplierInvoice';
-
-	/**
-	 * The Receipt schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_RECEIPT = 'Receipt';
+class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 
 	/**
 	 * Extraction status recorded on an uncommitted draft (REQ-RXC-001).

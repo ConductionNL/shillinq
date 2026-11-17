@@ -35,6 +35,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\IntercompanyJournalServiceInterface;
+
 /**
  * Computes intercompany mirroring + reconciliation and validates the status flow.
  *
@@ -44,7 +46,7 @@ namespace OCA\Shillinq\Service;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class IntercompanyJournalService {
+class IntercompanyJournalService implements IntercompanyJournalServiceInterface {
 	/**
 	 * Allowed IntercompanyJournalEntry status transitions (REQ-MA-004).
 	 *

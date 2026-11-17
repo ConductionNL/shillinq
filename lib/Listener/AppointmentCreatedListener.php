@@ -34,8 +34,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -53,13 +53,13 @@ class AppointmentCreatedListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param ConfirmationTokenService $tokens Token + email dispatcher.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param ConfirmationTokenServiceInterface $tokens Token + email dispatcher.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft.
 	 */
 	public function __construct(
-		private readonly ConfirmationTokenService $tokens,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ConfirmationTokenServiceInterface $tokens,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -112,9 +112,28 @@ class AppointmentCreatedListener implements IEventListener {
 			return null;
 		}
 
-		return $appointment;
+		return self::withStoredId(appointment: $appointment, uuid: $entity->getUuid());
 
 	}//end pendingAppointment()
+
+	/**
+	 * The appointment with its stored id, so the send can be recorded on it (REQ-BCF-013).
+	 *
+	 * @param array<string,mixed> $appointment The appointment.
+	 * @param mixed               $uuid        The stored object's uuid.
+	 *
+	 * @return array<string,mixed> The appointment, with `id` set when it had none.
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 */
+	private static function withStoredId(array $appointment, mixed $uuid): array {
+		if (isset($appointment['id']) === false && is_string($uuid) === true && $uuid !== '') {
+			$appointment['id'] = $uuid;
+		}
+
+		return $appointment;
+
+	}//end withStoredId()
 
 	/**
 	 * Whether the appointment has an id and is pending customer confirmation.

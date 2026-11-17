@@ -131,6 +131,14 @@
 						"icon": "BellRingOutline",
 						"description": "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.",
 						"visibleWhen": { "field": "dunningEnabled", "op": "neq", "value": true }
+					},
+					{
+						"id": "save-as-template",
+						"label": "Save as template",
+						"type": "handler",
+						"handler": "openSaveAdministrationTemplate",
+						"icon": "FileReplaceOutline",
+						"description": "Let other administrations start from this chart of accounts. Postings, relations and balances are not copied."
 					}
 				],
 				"relatedObjects": [

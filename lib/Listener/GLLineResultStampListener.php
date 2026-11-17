@@ -45,9 +45,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
+use OCA\Shillinq\Kernel\Contracts\GlLineResultStampsInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\Ledger\OpenItemClearingService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -68,14 +68,14 @@ class GLLineResultStampListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param GlLineResultStamps      $stamps         Writes the stamps.
-	 * @param ListenerSchemaResolver  $schemaResolver Resolves an entity's schema slug.
-	 * @param LoggerInterface         $logger         Logger.
-	 * @param OpenItemClearingService $clearing       Reopens clearing groups on a reversal.
+	 * @param GlLineResultStampsInterface     $stamps         Writes the stamps.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves an entity's schema slug.
+	 * @param LoggerInterface                 $logger         Logger.
+	 * @param OpenItemClearingService         $clearing       Reopens clearing groups on a reversal.
 	 */
 	public function __construct(
-		private readonly GlLineResultStamps $stamps,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly GlLineResultStampsInterface $stamps,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 		private readonly OpenItemClearingService $clearing,
 	) {

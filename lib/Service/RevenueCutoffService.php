@@ -40,9 +40,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RevenueCutoffServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCP\IAppConfig;
 
 /**
  * Computes per-contract revenue cut-off balances and waterfall rows.
@@ -56,7 +57,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
  */
-class RevenueCutoffService {
+class RevenueCutoffService implements RevenueCutoffServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -264,12 +265,7 @@ class RevenueCutoffService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	/**

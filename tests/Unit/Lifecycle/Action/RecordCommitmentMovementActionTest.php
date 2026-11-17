@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\RecordCommitmentMovementAction;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\IUser;
@@ -69,7 +70,14 @@ final class RecordCommitmentMovementActionTest extends TestCase {
 		$ledger->expects($this->never())->method('closed');
 		$ledger->expects($this->once())->method('committed')->with(self::COMMITMENT, 'alice')->willReturn(3);
 
-		$this->assertSame(self::COMMITMENT, (new RecordCommitmentMovementAction($ledger, $this->session('alice')))->execute(self::COMMITMENT, [], [], 'approve'));
+		$this->assertSame(self::COMMITMENT, (new RecordCommitmentMovementAction($ledger, $this->session('alice')))->execute(
+			new LifecycleActionContext(
+				objectData: self::COMMITMENT,
+				previousData: [],
+				parameters: [],
+				actionName: 'approve'
+			)
+		));
 
 	}//end testByDefaultTheCommitmentIsCommittedByTheSessionUser()
 
@@ -83,7 +91,14 @@ final class RecordCommitmentMovementActionTest extends TestCase {
 		$ledger->expects($this->never())->method('committed');
 		$ledger->expects($this->once())->method('closed')->with(self::COMMITMENT, 'bob')->willReturn(1);
 
-		$this->assertSame(self::COMMITMENT, (new RecordCommitmentMovementAction($ledger, $this->session('bob')))->execute(self::COMMITMENT, [], ['kind' => 'closed'], 'close'));
+		$this->assertSame(self::COMMITMENT, (new RecordCommitmentMovementAction($ledger, $this->session('bob')))->execute(
+			new LifecycleActionContext(
+				objectData: self::COMMITMENT,
+				previousData: [],
+				parameters: ['kind' => 'closed'],
+				actionName: 'close'
+			)
+		));
 
 	}//end testTheClosedKindRecordsTheClosing()
 
@@ -96,7 +111,14 @@ final class RecordCommitmentMovementActionTest extends TestCase {
 		$ledger = $this->createMock(CommitmentLedger::class);
 		$ledger->expects($this->once())->method('closed')->with(self::COMMITMENT, 'system')->willReturn(0);
 
-		$this->assertSame(self::COMMITMENT, (new RecordCommitmentMovementAction($ledger, $this->session(null)))->execute(self::COMMITMENT, [], ['kind' => 'closed'], 'close'));
+		$this->assertSame(self::COMMITMENT, (new RecordCommitmentMovementAction($ledger, $this->session(null)))->execute(
+			new LifecycleActionContext(
+				objectData: self::COMMITMENT,
+				previousData: [],
+				parameters: ['kind' => 'closed'],
+				actionName: 'close'
+			)
+		));
 
 	}//end testWithoutASessionUserTheMovementIsBySystem()
 
@@ -111,8 +133,22 @@ final class RecordCommitmentMovementActionTest extends TestCase {
 		$ledger->expects($this->exactly(2))->method('committed')->with(self::COMMITMENT, 'system')->willReturn(1);
 		$action = new RecordCommitmentMovementAction($ledger, $this->session(null));
 
-		$this->assertSame(self::COMMITMENT, $action->execute(self::COMMITMENT, [], ['kind' => 'committed'], 'approve'));
-		$this->assertSame(self::COMMITMENT, $action->execute(self::COMMITMENT, [], ['kind' => 'Closed'], 'approve'));
+		$this->assertSame(self::COMMITMENT, $action->execute(
+			new LifecycleActionContext(
+				objectData: self::COMMITMENT,
+				previousData: [],
+				parameters: ['kind' => 'committed'],
+				actionName: 'approve'
+			)
+		));
+		$this->assertSame(self::COMMITMENT, $action->execute(
+			new LifecycleActionContext(
+				objectData: self::COMMITMENT,
+				previousData: [],
+				parameters: ['kind' => 'Closed'],
+				actionName: 'approve'
+			)
+		));
 
 	}//end testAnyOtherKindCommits()
 }//end class

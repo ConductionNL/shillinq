@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Import;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ImportPeriodInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
@@ -33,7 +34,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
-class ImportPeriod {
+class ImportPeriod implements ImportPeriodInterface {
 
 	/**
 	 * Constructor.

@@ -33,18 +33,22 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestRefundServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use RuntimeException;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
 
 /**
  * Approves and pays a requested refund, with its two bookings.
  *
  * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
  */
-class ObjectRequestRefundService {
+class ObjectRequestRefundService implements ObjectRequestRefundServiceInterface {
 
 	/**
 	 * App config key: the refunds payable account.
@@ -148,7 +152,7 @@ class ObjectRequestRefundService {
 		$actor = $this->actorIn(request: $request);
 		$index = $this->refundIn(request: $request, state: 'approved');
 		if ((string)($request['refunds'][$index]['approvedBy'] ?? '') === $actor) {
-			throw new RefundStepForbiddenException('You approved this refund, so someone else must mark it paid.');
+			throw new RefundStepForbiddenException(message: 'You approved this refund, so someone else must mark it paid.');
 		}
 
 		$this->book(
@@ -182,7 +186,7 @@ class ObjectRequestRefundService {
 	private function actorIn(array $request): string {
 		$actor = (string)($this->context->currentUserId() ?? '');
 		if ($actor === '' || $this->context->canAccess((string)($request['administrationId'] ?? '')) === false) {
-			throw new RefundStepForbiddenException('This payment request belongs to an administration you are not a member of.');
+			throw new RefundStepForbiddenException(message: 'This payment request belongs to an administration you are not a member of.');
 		}
 
 		return $actor;
@@ -329,10 +333,9 @@ class ObjectRequestRefundService {
 	private function save(string $schema, array $object): string {
 		$saved = $this->objectService->saveObject(
 			object: $object,
-			register: $this->registerSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema)),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 		$uuid = ObjectIdentifier::resolve(saved: $saved);
 		if ($uuid === '') {

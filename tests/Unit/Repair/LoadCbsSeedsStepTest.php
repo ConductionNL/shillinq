@@ -29,6 +29,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionProperty;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * The step re-creates the shipped CBS submission seed records from
@@ -220,7 +221,9 @@ final class LoadCbsSeedsStepTest extends TestCase {
 			 *
 			 * @return array<string, mixed> The payload.
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if (in_array($object['slug'], $this->failing, true) === true) {
 					throw new RuntimeException('constraint violated');
 				}

@@ -51,6 +51,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
+use OCA\Shillinq\Service\Payment\PayLinkService;
+
 /**
  * Dutch-formatted invoice HTML / PDF builder.
  *
@@ -61,7 +64,7 @@ namespace OCA\Shillinq\Service;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class InvoicePdfGenerator {
+class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	/**
 	 * Embedded-filename for the NLCIUS UBL hybrid attachment. Deliberately
 	 * NOT the Factur-X/ZUGFeRD well-known name (`factur-x.xml`) — the
@@ -80,6 +83,16 @@ class InvoicePdfGenerator {
 	 * @var integer
 	 */
 	private const HYBRID_PAGE_LINES = 45;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param PayLinkService|null $payLinks Gives the pay link an open invoice prints; without it none is printed.
+	 */
+	public function __construct(
+		private readonly ?PayLinkService $payLinks = null,
+	) {
+	}//end __construct()
 
 	/**
 	 * Generate the renderable invoice payload.
@@ -412,6 +425,7 @@ class InvoicePdfGenerator {
 			. '<strong>BTW:</strong> € %s &nbsp; '
 			. '<strong>Te betalen:</strong> € %s</p>'
 			. '<p>Betalingscondities: %s</p>'
+			. '%s'
 			. '<p>%s</p>'
 			. '<div class="footer">Gegenereerd op %s — Shillinq invoice-from-time-and-expense</div>'
 			. '</body></html>',
@@ -431,11 +445,36 @@ class InvoicePdfGenerator {
 			$this->fmtMoney(value: (float)($invoice['vatAmount'] ?? 0)),
 			$this->fmtMoney(value: (float)($invoice['grossAmount'] ?? 0)),
 			htmlspecialchars((string)($invoice['paymentTerms'] ?? 'net 30'), ENT_QUOTES),
+			$this->payLinkHtml(invoice: $invoice),
 			htmlspecialchars((string)($invoice['notes'] ?? ''), ENT_QUOTES),
 			date('Y-m-d H:i')
 		);
 
 	}//end renderHtml()
+
+	/**
+	 * The "Betaal online" paragraph under the totals, or '' when the invoice
+	 * gets no pay link (receivables-payment-links D4, D5).
+	 *
+	 * @param array<string,mixed> $invoice Invoice.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.2
+	 */
+	private function payLinkHtml(array $invoice): string {
+		$url = null;
+		if ($this->payLinks !== null) {
+			$url = $this->payLinks->forOpenInvoice(invoice: $invoice);
+		}
+
+		if ($url === null) {
+			return '';
+		}
+
+		$escaped = htmlspecialchars($url, ENT_QUOTES);
+		return '<p class="pay-link"><strong>Betaal online:</strong> <a href="' . $escaped . '">' . $escaped . '</a></p>';
+	}//end payLinkHtml()
 
 	/**
 	 * Format a 2-decimal float with Dutch locale.

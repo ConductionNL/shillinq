@@ -37,6 +37,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\OrderFulfilmentGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -46,7 +47,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class OrderFulfilmentGuard {
+class OrderFulfilmentGuard implements OrderFulfilmentGuardInterface {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *

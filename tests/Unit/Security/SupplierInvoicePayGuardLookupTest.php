@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * The pay guard accepts only the invoice's own paid AP transaction: the
@@ -61,6 +62,7 @@ final class SupplierInvoicePayGuardLookupTest extends TestCase {
 			public function __construct(private ?ObjectEntity $entity) {
 			}
 			public function find(string $id, ...$named): ObjectEntity {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				if ($this->entity === null) {
 					throw new RuntimeException('DoesNotExist');
 				}

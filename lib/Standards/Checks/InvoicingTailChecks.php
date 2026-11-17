@@ -183,26 +183,7 @@ final class InvoicingTailChecks implements CheckProvider {
 				// BR-26: Item net price (BT-146).
 				'en16931-br-26' => static fn (array $o): bool => self::allLinesNumeric($o, 'netPrice'),
 
-				// ===== VAT breakdown BT-level presence (BR-45..48). =====
-				// BR-45: VAT category taxable amount (BT-116).
-				'en16931-br-45' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
-				// BR-46: VAT category tax amount (BT-117).
-				'en16931-br-46' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxAmount'),
-				// BR-47: VAT category code (BT-118) on each breakdown group.
-				'en16931-br-47' => static fn (array $o): bool => self::allBreakdownPresent($o, 'category'),
-				// BR-48: VAT category rate (BT-119), except where not subject to VAT ('O').
-				'en16931-br-48' => static fn (array $o): bool => self::breakdownRatePresentUnlessUntaxed($o),
-
-				// ===== Cross-total arithmetic / structural (BR-CO-03/04/09..14/17/18). =====
-				// BR-CO-03: tax point date (BT-7) and tax point date code (BT-8) mutually exclusive.
-				'en16931-br-co-03' => static fn (array $o): bool => (self::present($o, 'taxPointDate') === false
-					|| self::present($o, 'taxPointDateCode') === false),
-				// BR-CO-04: every line categorised with a VAT category code (BT-151).
-				'en16931-br-co-04' => static fn (array $o): bool => self::allLinesPresent($o, 'vatCategory'),
-				// BR-CO-09: seller / tax-rep / buyer VAT id (when present) carry an ISO-3166 prefix.
-				'en16931-br-co-09' => static fn (array $o): bool => self::vatIdPrefixOk($o, 'sellerVatId')
-					&& self::vatIdPrefixOk($o, 'sellerTaxRepVatId')
-					&& self::vatIdPrefixOk($o, 'buyerVatId'),
+				...self::breakdownPresenceChecks(),
 				// BR-CO-10: Σ line net amount = sum of invoice line net amounts.
 				'en16931-br-co-10' => static fn (array $o): bool => self::centsEqual(
 					self::numericVal($o, 'lineNetTotal'),
@@ -353,28 +334,71 @@ final class InvoicingTailChecks implements CheckProvider {
 				'en16931-br-o-09' => static fn (array $o): bool => self::breakdownTaxZero($o, 'O'),
 				'en16931-br-o-10' => static fn (array $o): bool => self::breakdownHasExemptionReason($o, 'O'),
 
-				// ===== VAT Directive art. 226 content (presence). =====
-				// 226-1: date of issue.
-				'vatdir-art226-1' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
-				// 226-2: a sequential invoice number.
-				'vatdir-art226-2' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
-				// 226-3: the supplier's VAT identification number.
-				'vatdir-art226-3' => static fn (array $o): bool => self::present($o, 'sellerVatId'),
-				// 226-5: full name and address of supplier and customer.
-				'vatdir-art226-5' => static fn (array $o): bool => self::present($o, 'sellerName')
-					&& self::present($o, 'sellerAddress') && self::present($o, 'buyerName')
-					&& self::present($o, 'buyerAddress'),
-				// 226-8: taxable amount per rate (breakdown) and unit price exclusive of VAT (line).
-				'vatdir-art226-8' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount')
-					&& self::allLinesNumeric($o, 'netPrice'),
-				// 226-9: the VAT rate applied (each breakdown group states its rate, unless untaxed).
-				'vatdir-art226-9' => static fn (array $o): bool => self::breakdownRatePresentUnlessUntaxed($o),
-				// 226-10: the VAT amount payable.
-				'vatdir-art226-10' => static fn (array $o): bool => self::numericPresent($o, 'vatAmount'),
+				...self::vatDirectiveChecks(),
 			],
 		];
 
 	}//end checks()
+
+	/**
+	 * EN 16931 VAT breakdown presence and first structural predicates (BR-45..48, BR-CO-03/04/09).
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function breakdownPresenceChecks(): array {
+		return [
+			// ===== VAT breakdown BT-level presence (BR-45..48). =====
+			// BR-45: VAT category taxable amount (BT-116).
+			'en16931-br-45' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
+			// BR-46: VAT category tax amount (BT-117).
+			'en16931-br-46' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxAmount'),
+			// BR-47: VAT category code (BT-118) on each breakdown group.
+			'en16931-br-47' => static fn (array $o): bool => self::allBreakdownPresent($o, 'category'),
+			// BR-48: VAT category rate (BT-119), except where not subject to VAT ('O').
+			'en16931-br-48' => static fn (array $o): bool => self::breakdownRatePresentUnlessUntaxed($o),
+
+			// ===== Cross-total arithmetic / structural (BR-CO-03/04/09..14/17/18). =====
+			// BR-CO-03: tax point date (BT-7) and tax point date code (BT-8) mutually exclusive.
+			'en16931-br-co-03' => static fn (array $o): bool => (self::present($o, 'taxPointDate') === false
+				|| self::present($o, 'taxPointDateCode') === false),
+			// BR-CO-04: every line categorised with a VAT category code (BT-151).
+			'en16931-br-co-04' => static fn (array $o): bool => self::allLinesPresent($o, 'vatCategory'),
+			// BR-CO-09: seller / tax-rep / buyer VAT id (when present) carry an ISO-3166 prefix.
+			'en16931-br-co-09' => static fn (array $o): bool => self::vatIdPrefixOk($o, 'sellerVatId')
+				&& self::vatIdPrefixOk($o, 'sellerTaxRepVatId')
+				&& self::vatIdPrefixOk($o, 'buyerVatId'),
+		];
+
+	}//end breakdownPresenceChecks()
+
+	/**
+	 * VAT Directive art. 226 content presence predicates.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function vatDirectiveChecks(): array {
+		return [
+			// ===== VAT Directive art. 226 content (presence). =====
+			// 226-1: date of issue.
+			'vatdir-art226-1' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
+			// 226-2: a sequential invoice number.
+			'vatdir-art226-2' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
+			// 226-3: the supplier's VAT identification number.
+			'vatdir-art226-3' => static fn (array $o): bool => self::present($o, 'sellerVatId'),
+			// 226-5: full name and address of supplier and customer.
+			'vatdir-art226-5' => static fn (array $o): bool => self::present($o, 'sellerName')
+				&& self::present($o, 'sellerAddress') && self::present($o, 'buyerName')
+				&& self::present($o, 'buyerAddress'),
+			// 226-8: taxable amount per rate (breakdown) and unit price exclusive of VAT (line).
+			'vatdir-art226-8' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount')
+				&& self::allLinesNumeric($o, 'netPrice'),
+			// 226-9: the VAT rate applied (each breakdown group states its rate, unless untaxed).
+			'vatdir-art226-9' => static fn (array $o): bool => self::breakdownRatePresentUnlessUntaxed($o),
+			// 226-10: the VAT amount payable.
+			'vatdir-art226-10' => static fn (array $o): bool => self::numericPresent($o, 'vatAmount'),
+		];
+
+	}//end vatDirectiveChecks()
 
 	/**
 	 * Scalar test-data defaults so the mandatory header rules in this provider are
@@ -1171,38 +1195,37 @@ final class InvoicingTailChecks implements CheckProvider {
 			return true;
 		}
 
-		$lineSum = 0.0;
-		foreach (self::lines($o) as $line) {
-			if ((string)($line['vatCategory'] ?? '') === $cat) {
-				$lineSum += (float)($line['netAmount'] ?? 0);
-			}
-		}
-
-		$allowanceSum = 0.0;
-		foreach (self::items($o, 'allowances') as $item) {
-			if ((string)($item['vatCategory'] ?? '') === $cat) {
-				$allowanceSum += (float)($item['amount'] ?? 0);
-			}
-		}
-
-		$chargeSum = 0.0;
-		foreach (self::items($o, 'charges') as $item) {
-			if ((string)($item['vatCategory'] ?? '') === $cat) {
-				$chargeSum += (float)($item['amount'] ?? 0);
-			}
-		}
+		$lineSum      = self::categorySum(self::lines($o), 'vatCategory', $cat, 'netAmount');
+		$allowanceSum = self::categorySum(self::items($o, 'allowances'), 'vatCategory', $cat, 'amount');
+		$chargeSum    = self::categorySum(self::items($o, 'charges'), 'vatCategory', $cat, 'amount');
 
 		$expected = ($lineSum - $allowanceSum + $chargeSum);
 
-		$taxableSum = 0.0;
-		foreach (self::vatBreakdown($o) as $group) {
-			if ((string)($group['category'] ?? '') === $cat) {
-				$taxableSum += (float)($group['taxableAmount'] ?? 0);
-			}
-		}
+		$taxableSum = self::categorySum(self::vatBreakdown($o), 'category', $cat, 'taxableAmount');
 
 		return self::centsEqual($taxableSum, $expected);
 	}//end breakdownTaxableReconciles()
+
+	/**
+	 * Sum of $amountKey over the rows whose $categoryKey equals $cat.
+	 *
+	 * @param array<int, array<string, mixed>> $rows        The lines, items or breakdown groups.
+	 * @param string                          $categoryKey The key holding the category code.
+	 * @param string                          $cat         The UNTDID 5305 category code.
+	 * @param string                          $amountKey   The key holding the amount.
+	 *
+	 * @return float
+	 */
+	private static function categorySum(array $rows, string $categoryKey, string $cat, string $amountKey): float {
+		$sum = 0.0;
+		foreach ($rows as $row) {
+			if ((string)($row[$categoryKey] ?? '') === $cat) {
+				$sum += (float)($row[$amountKey] ?? 0);
+			}
+		}
+
+		return $sum;
+	}//end categorySum()
 
 	/**
 	 * Every breakdown group of category $cat has a tax amount of zero (EN 16931

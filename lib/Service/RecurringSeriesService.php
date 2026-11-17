@@ -41,6 +41,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\RecurringSeriesServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -54,7 +55,7 @@ use RuntimeException;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class RecurringSeriesService {
+class RecurringSeriesService implements RecurringSeriesServiceInterface {
 
 	/**
 	 * Hard safety cap on generated occurrences when the rule is open-ended

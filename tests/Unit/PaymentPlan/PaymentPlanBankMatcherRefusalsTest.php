@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 
 use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
