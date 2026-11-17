@@ -78,6 +78,7 @@ use OCA\Shillinq\Kernel\Contracts\DirectDebitBatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
 use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
+use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
 use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
@@ -298,6 +299,7 @@ use OCA\Shillinq\Service\Project\AssignmentHours;
 use OCA\Shillinq\Service\PublicSector\ActivityCostPriceCalculation;
 use OCA\Shillinq\Service\PublicSector\CrossSubsidyScan;
 use OCA\Shillinq\Service\PublicSector\FidoQuarter;
+use OCA\Shillinq\Service\PublicSector\GrantSettlement;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 use OCA\Shillinq\Service\PublicSector\JointArrangementAllocation;
 use OCA\Shillinq\Service\PublicSector\ReserveBalances;
@@ -455,6 +457,7 @@ final class ContractRegistrar {
 		GlLineFiscalYearBackfillMigratorInterface::class => GlLineFiscalYearBackfillMigrator::class,
 		GlLineResultStampsInterface::class => GlLineResultStamps::class,
 		GoodsReceiptNoteServiceInterface::class => GoodsReceiptNoteService::class,
+		GrantSettlementInterface::class => GrantSettlement::class,
 		HrmqCostRateAdapterInterface::class => HrmqCostRateAdapter::class,
 		IcpFilingServiceInterface::class => IcpFilingService::class,
 		IcpServiceInterface::class => IcpService::class,

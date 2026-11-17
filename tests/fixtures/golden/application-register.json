@@ -1444,6 +1444,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\GrantSettlementInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\GrantSettlement'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\HrmqCostRateAdapterInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\HrmqCostRateAdapter'"
         ]

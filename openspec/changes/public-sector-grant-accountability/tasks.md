@@ -4,8 +4,8 @@
 
 ## 1. Grants
 
-- [ ] 1.1 `determine` action and the reclaim invoice or payable (REQ-SUBV-011). Verify: PHPUnit red first; the invoice and payable validate against the real schemas; paid EUR 10,000, determined EUR 8,500 gives a draft reclaim of EUR 1,500.
-- [ ] 1.2 `report` action over `SubsidieVerantwoordingService` (REQ-SUBV-012). Verify: PHPUnit with the real service; the stored payload validates.
+- [x] 1.1 `determine` action and the reclaim invoice or payable (REQ-SUBV-011). Verify: PHPUnit red first; the invoice and payable validate against the real schemas; paid EUR 10,000, determined EUR 8,500 gives a draft reclaim of EUR 1,500.
+- [x] 1.2 `report` action over `SubsidieVerantwoordingService` (REQ-SUBV-012). Verify: PHPUnit with the real service; the stored payload validates.
 
 ## 2. SiSa
 

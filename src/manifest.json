@@ -20534,6 +20534,7 @@
 						"type": "string"
 					}
 				],
+				"actions": [{"id": "generate-accountability-report", "label": "Generate accountability report", "icon": "FileDocumentCheckOutline", "type": "api-call", "url": "/apps/shillinq/api/v1/public-sector/grants/@objectId/report", "method": "POST", "visibleWhen": {"field": "state", "in": ["granted", "determined", "disbursed", "reclaimed"]}, "successMessage": "Accountability report stored.", "errorMessage": "The accountability report could not be stored.", "description": "Store the grant's accountability report, with a pending auditor statement when the grant's amount requires one (REQ-SUBV-012)."}],
 				"lifecycleActions": true,
 				"relatedLists": [
 					{

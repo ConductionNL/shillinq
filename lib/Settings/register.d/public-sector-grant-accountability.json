@@ -1,0 +1,43 @@
+{
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "public-sector-grant-accountability",
+        "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycles, imperative settlement (the reclaim amount, the SiSa sums and the EU declaration are calculations over the books)",
+        "description": "Grant settlement on Subsidie.vaststellen (SettleGrantAction: the reclaimed amount and a draft reclaim invoice or payable), the grant's SiSa regulation code and its reclaim document ids. The work lives in lib/Service/PublicSector; the report endpoint is GrantAccountabilityController."
+    },
+    "components": {
+        "schemas": {
+            "Subsidie": {
+                "properties": {
+                    "reclaimInvoiceId": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Reclaim invoice",
+                        "description": "The draft receivable invoice determining a grant given wrote for what was paid out above the determined amount (REQ-SUBV-011). Set once; determining again writes no second invoice."
+                    },
+                    "reclaimPayableId": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Reclaim payable",
+                        "description": "The draft payable determining a grant received wrote for what was received above the determined amount (REQ-SUBV-011). Set once."
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "transitions": {
+                        "vaststellen": {
+                            "actions": [
+                                {
+                                    "trigger": "x-openregister-lifecycle-action",
+                                    "action": "OCA\\Shillinq\\Lifecycle\\Action\\SettleGrantAction",
+                                    "description": "Settle the difference with what was paid out: set reclaimedAmount and, when more was paid out than determined, write a draft reclaim invoice to the beneficiary (grant given) or a draft payable to the granting body (grant received), naming the grant (REQ-SUBV-011)."
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "objects": []
+}

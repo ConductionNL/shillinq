@@ -992,6 +992,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // (another administration's cycle is masked as 404).
             ['name' => 'ensiaCycle#xml', 'url' => '/api/v1/public-sector/ensia/{id}/xml', 'verb' => 'GET'],
             ['name' => 'ensiaCycle#statement', 'url' => '/api/v1/public-sector/ensia/{id}/statement', 'verb' => 'GET'],
+            // public-sector-grant-accountability REQ-SUBV-012: store a grant's
+            // accountability report (and its pending auditor statement).
+            // #[NoAdminRequired], the grant's administration checked in the
+            // controller (another administration's grant is masked as 404).
+            ['name' => 'grantAccountability#report', 'url' => '/api/v1/public-sector/grants/{id}/report', 'verb' => 'POST'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
