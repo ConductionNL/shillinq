@@ -25,8 +25,10 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\ThreeWayMatchExceptionController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Service\ForbiddenActionException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -90,6 +92,15 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 	private ?IUser $currentUser = null;
 
 	/**
+	 * The groups the caller is in (alice is an exception approver by default).
+	 *
+	 * @var list<string>
+	 */
+	private array $groups = ['shillinq_approver'];
+
+	private bool $isAdmin = false;
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var ThreeWayMatchExceptionController
@@ -125,9 +136,78 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			userSession: $this->userSession,
 			logger: $this->logger,
+			groupManager: $this->groupManager(),
 		);
 
 	}//end setUp()
+
+	/**
+	 * A group manager answering from $this->groups and $this->isAdmin.
+	 *
+	 * @return IGroupManager
+	 */
+	private function groupManager(): IGroupManager {
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isAdmin')->willReturnCallback(fn (string $uid): bool => $uid === 'alice' && $this->isAdmin);
+		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => $uid === 'alice' && in_array($group, $this->groups, true));
+
+		return $groups;
+	}//end groupManager()
+
+	/**
+	 * A caller in no approver group cannot accept, and nothing is read or written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#2-state-guards
+	 */
+	public function testAcceptRefusesACallerWhoIsNoExceptionApprover(): void {
+		$this->groups = ['shillinq_bookkeeper', 'shillinq_procurement_officer'];
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'resolutionNotes' => 'ok']);
+		$this->administrationContext->expects($this->never())->method('canAccess');
+		$this->exceptions->expects($this->never())->method('acceptWithMotivation');
+
+		$response = $this->controller->accept();
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame(['error' => 'Only an exception approver can accept a three-way-match exception'], $response->getData());
+	}//end testAcceptRefusesACallerWhoIsNoExceptionApprover()
+
+	/**
+	 * A controller and an administrator may accept, like an approver.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#2-state-guards
+	 */
+	public function testAControllerOrAnAdministratorMayAccept(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'resolutionNotes' => 'ok']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->exceptions->expects($this->exactly(2))->method('acceptWithMotivation')->willReturn(['id' => 'match-3']);
+
+		$this->groups = ['shillinq_controller'];
+		self::assertSame(Http::STATUS_OK, $this->controller->accept()->getStatus());
+
+		$this->groups = [];
+		$this->isAdmin = true;
+		self::assertSame(Http::STATUS_OK, $this->controller->accept()->getStatus());
+	}//end testAControllerOrAnAdministratorMayAccept()
+
+	/**
+	 * Disputing and rejecting are not limited to exception approvers.
+	 *
+	 * @return void
+	 */
+	public function testDisputeAndRejectNeedNoApproverRole(): void {
+		$this->groups = [];
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'disputeReason' => 'wrong price', 'rejectionReason' => 'not ordered']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->exceptions->expects($this->once())->method('fileDispute')->willReturn(['id' => 'match-3']);
+		$this->exceptions->expects($this->once())->method('rejectAndBlockPayment')->willReturn(['id' => 'match-3']);
+
+		self::assertSame(Http::STATUS_OK, $this->controller->dispute()->getStatus());
+		self::assertSame(Http::STATUS_OK, $this->controller->reject()->getStatus());
+	}//end testDisputeAndRejectNeedNoApproverRole()
 
 	/**
 	 * Configure request params from a key => value map.
@@ -316,6 +396,24 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 		);
 
 	}//end testAcceptUnexpectedFailureReturns500WithoutStackTrace()
+
+	/**
+	 * F2-S6: a caller outside the approver role, or the invoice's creator, gets 403.
+	 *
+	 * @return void
+	 */
+	public function testAcceptByAnUnauthorisedApproverReturns403(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'resolutionNotes' => 'ok']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->exceptions->method('acceptWithMotivation')
+			->willThrowException(new ForbiddenActionException('The person who entered the invoice cannot accept its exception.'));
+
+		$response = $this->controller->accept();
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame(['error' => 'The person who entered the invoice cannot accept its exception.'], $response->getData());
+
+	}//end testAcceptByAnUnauthorisedApproverReturns403()
 
 	/**
 	 * Filing a dispute returns 200 with both the updated match and the credit-note

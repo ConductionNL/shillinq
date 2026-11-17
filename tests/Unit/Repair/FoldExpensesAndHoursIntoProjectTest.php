@@ -40,12 +40,13 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for FoldExpensesAndHoursIntoProject.
  *
  * @covers \OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  */
 class FoldExpensesAndHoursIntoProjectTest extends TestCase {
 
@@ -146,15 +147,11 @@ class FoldExpensesAndHoursIntoProjectTest extends TestCase {
 
 			return array_slice(($this->rows[$this->schema] ?? []), (int)$config['offset'], (int)$config['limit']);
 		});
-		$service->method('saveObject')->willReturnCallback(function (
-			array $object,
-			?array $extend = [],
-			string|int|null $register = null,
-			string|int|null $schema = null,
-			?string $uuid = null,
-			bool $_rbac = true,
-			bool $_multitenancy = true,
-		): ObjectEntityInterface {
+		$service->method('saveObject')->willReturnCallback(function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): ObjectEntityInterface {
+			$extend = $options->extend ?? [];
+			$register = $options->target->register;
+			$schema = $options->target->schema;
+			$uuid = $options->uuid;
 			if (in_array($object['id'], $this->failingSaves, true) === true) {
 				throw new RuntimeException('locked');
 			}

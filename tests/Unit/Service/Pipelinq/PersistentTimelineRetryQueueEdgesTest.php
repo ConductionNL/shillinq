@@ -24,7 +24,7 @@ use DateTime;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
@@ -33,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * enqueue() runs after the booking commit and so must never raise: an entry
@@ -41,7 +42,7 @@ use RuntimeException;
  * that throws falls back to a warning. A mutable timestamp is stored in UTC.
  *
  * @covers \OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue
- * @uses \OCA\Shillinq\Service\Pipelinq\TimelineEventDto
+ * @uses \OCA\Shillinq\Kernel\Model\TimelineEventDto
  */
 final class PersistentTimelineRetryQueueEdgesTest extends TestCase {
 
@@ -131,7 +132,9 @@ final class PersistentTimelineRetryQueueEdgesTest extends TestCase {
 			 *
 			 * @return mixed The answer.
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saved[] = $object;
 
 				return $this->answer;

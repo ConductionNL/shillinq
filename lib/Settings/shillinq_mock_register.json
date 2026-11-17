@@ -11841,6 +11841,103 @@
       {
         "@self": {
           "register": "shillinq",
+          "schema": "InvoiceBatch",
+          "slug": "invoice-batch-send-2026-11-demo"
+        },
+        "batchId": "SEND-demo-2026-11",
+        "kind": "send",
+        "administrationId": "adm-shillinq-demo",
+        "requestedBy": "admin",
+        "invoiceIds": [
+          "ar-invoice-2026-0042",
+          "ar-invoice-2026-0051",
+          "ar-invoice-2026-0060"
+        ],
+        "resend": false,
+        "state": "done",
+        "outcomes": [
+          {
+            "invoiceId": "ar-invoice-2026-0042",
+            "status": "sent",
+            "reason": ""
+          },
+          {
+            "invoiceId": "ar-invoice-2026-0051",
+            "status": "skipped",
+            "reason": "The invoice was already sent."
+          },
+          {
+            "invoiceId": "ar-invoice-2026-0060",
+            "status": "sent",
+            "reason": ""
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "InvoiceBatch",
+          "slug": "invoice-batch-create-2026-11-demo"
+        },
+        "batchId": "CREATE-demo-2026-11",
+        "kind": "create",
+        "administrationId": "adm-shillinq-demo",
+        "requestedBy": "admin",
+        "charge": {
+          "description": "Onderhoudscontract november 2026",
+          "amount": 250,
+          "vatRate": 21
+        },
+        "customerIds": [
+          "customer-master-gemeente-zuidoost",
+          "customer-master-advies-bv",
+          "customer-master-zzp-klant"
+        ],
+        "issue": true,
+        "send": false,
+        "state": "done",
+        "outcomes": [
+          {
+            "customerId": "customer-master-gemeente-zuidoost",
+            "invoiceId": "ar-invoice-batch-demo-1",
+            "status": "created",
+            "reason": ""
+          },
+          {
+            "customerId": "customer-master-advies-bv",
+            "invoiceId": "ar-invoice-batch-demo-2",
+            "status": "created",
+            "reason": ""
+          },
+          {
+            "customerId": "customer-master-zzp-klant",
+            "invoiceId": "",
+            "status": "failed",
+            "reason": "The customer has no billing address."
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "InvoiceBatch",
+          "slug": "invoice-batch-send-2026-12-queued-demo"
+        },
+        "batchId": "SEND-demo-2026-12",
+        "kind": "send",
+        "administrationId": "adm-shillinq-demo",
+        "requestedBy": "admin",
+        "invoiceIds": [
+          "ar-invoice-ctb-2026-ouderbijdrage-1",
+          "ar-invoice-ctb-2026-ouderbijdrage-2"
+        ],
+        "resend": false,
+        "state": "queued",
+        "outcomes": []
+      },
+      {
+        "@self": {
+          "register": "shillinq",
           "schema": "payrollEmployee",
           "slug": "employee-employee-1-1"
         },

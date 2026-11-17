@@ -41,10 +41,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\InventoryScanServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Server-authoritative inventory operations for the mobile scanner.
@@ -54,7 +57,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class InventoryScanService {
+class InventoryScanService implements InventoryScanServiceInterface {
 	/**
 	 * Construct the service with DI dependencies.
 	 *
@@ -78,12 +81,7 @@ class InventoryScanService {
 	 * app config; no observable business behaviour of its own.
 	 */
 	public function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**
@@ -538,8 +536,7 @@ class InventoryScanService {
 	private function saveObject(string $schema, array $object): void {
 		$this->objectService->saveObject(
 			object: $object,
-			register: $this->getRegisterSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->getRegisterSlug(), schema: $schema))
 		);
 
 	}//end saveObject()

@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Budget\BudgetEditingService;
-use OCA\Shillinq\Budget\BudgetEditRefusedException;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
 use OCA\Shillinq\Controller\BudgetEditingController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\IL10N;

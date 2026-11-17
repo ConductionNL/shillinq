@@ -36,12 +36,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for UnifyAnalyticalDimensions.
  *
  * @covers \OCA\Shillinq\Repair\UnifyAnalyticalDimensions
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  * @uses   \OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity
  */
 class UnifyAnalyticalDimensionsTest extends TestCase {
@@ -153,7 +154,9 @@ class UnifyAnalyticalDimensionsTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if (in_array($object['code'], $this->failingCodes, true) === true) {
 					throw new RuntimeException('validation failed');
 				}

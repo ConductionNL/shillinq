@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
-use OCA\Shillinq\Service\RuleTestDataSeeder;
+use OCA\Shillinq\Kernel\Contracts\RuleTestDataSeederInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -41,10 +41,10 @@ class RulesSeedTestDataCommand extends Command {
 	/**
 	 * Construct the seed-testdata command.
 	 *
-	 * @param RuleTestDataSeeder $seeder The test-data seeder.
+	 * @param RuleTestDataSeederInterface $seeder The test-data seeder.
 	 */
 	public function __construct(
-		private readonly RuleTestDataSeeder $seeder,
+		private readonly RuleTestDataSeederInterface $seeder,
 	) {
 		parent::__construct();
 

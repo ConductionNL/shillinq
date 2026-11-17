@@ -50,10 +50,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Aggregates GL data into a CBS IV3-extended submission with declarative
@@ -61,7 +65,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
  */
-class CBSExportService {
+class CBSExportService implements CBSExportServiceInterface {
 	/**
 	 * IV3-extended file format identifier (REQ-CBS-006).
 	 *
@@ -281,8 +285,39 @@ class CBSExportService {
 	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function validateSubmission(array $submission): array {
-		$errors = [];
 		$warnings = [];
+
+		$errors = $this->organizationErrors(submission: $submission);
+
+		$submissionId = (string)($submission['id'] ?? '');
+		$lines = $this->loadLinesForSubmission(submissionId: $submissionId);
+
+		if ($lines === []) {
+			$errors[] = 'CBSSubmission has no CBSLine records; cannot validate structure';
+		}
+
+		$errors = array_merge($errors, $this->rangeConflictErrors(lines: $lines));
+		$errors = array_merge($errors, $this->periodErrors(submission: $submission));
+
+		return [
+			'valid' => ($errors === []),
+			'errors' => $errors,
+			'warnings' => $warnings,
+		];
+
+	}//end validateSubmission()
+
+	/**
+	 * Completeness errors for the organization KvK number and tax id.
+	 *
+	 * @param array $submission The CBSSubmission record.
+	 *
+	 * @return array<int,string> The errors.
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function organizationErrors(array $submission): array {
+		$errors = [];
 
 		$kvk = (string)($submission['kvkNumber'] ?? '');
 		if (preg_match('/^[0-9]{8}$/', $kvk) !== 1) {
@@ -294,13 +329,20 @@ class CBSExportService {
 			$errors[] = 'taxIdentificationNumber must match the pattern ^NL[0-9]{9}B[0-9]{2}$';
 		}
 
-		$submissionId = (string)($submission['id'] ?? '');
-		$lines = $this->loadLinesForSubmission(submissionId: $submissionId);
+		return $errors;
+	}//end organizationErrors()
 
-		if ($lines === []) {
-			$errors[] = 'CBSSubmission has no CBSLine records; cannot validate structure';
-		}
-
+	/**
+	 * Accounting errors for account ranges that appear under multiple classifications.
+	 *
+	 * @param array<int,array> $lines The CBSLine records.
+	 *
+	 * @return array<int,string> The errors.
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function rangeConflictErrors(array $lines): array {
+		$errors = [];
 		$rangeKeys = [];
 		foreach ($lines as $line) {
 			$start = (string)($line['accountRangeStart'] ?? '');
@@ -318,18 +360,27 @@ class CBSExportService {
 			$rangeKeys[$key] = (string)($line['cbsLineClassification'] ?? '');
 		}
 
+		return $errors;
+	}//end rangeConflictErrors()
+
+	/**
+	 * The error for a missing reporting period.
+	 *
+	 * @param array $submission The CBSSubmission record.
+	 *
+	 * @return array<int,string> The errors.
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function periodErrors(array $submission): array {
+		$errors = [];
 		$period = ($submission['reportingPeriodStartDate'] ?? '');
 		if ($period === '' || ($submission['reportingPeriodEndDate'] ?? '') === '') {
 			$errors[] = 'reportingPeriodStartDate and reportingPeriodEndDate are required';
 		}
 
-		return [
-			'valid' => ($errors === []),
-			'errors' => $errors,
-			'warnings' => $warnings,
-		];
-
-	}//end validateSubmission()
+		return $errors;
+	}//end periodErrors()
 
 	/**
 	 * Produce the IV3-extended JSON envelope (REQ-CBS-006).
@@ -412,27 +463,7 @@ class CBSExportService {
 			return self::DEFAULT_MAPPING;
 		}
 
-		$mapping = [];
-		foreach ($decoded as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$start = (string)($entry['start'] ?? '');
-			$end = (string)($entry['end'] ?? '');
-			$classification = (string)($entry['classification'] ?? '');
-			$lineNumber = (string)($entry['lineNumber'] ?? '');
-			if ($start === '' || $end === '' || $classification === '' || $lineNumber === '') {
-				continue;
-			}
-
-			$mapping[] = [
-				'start' => $start,
-				'end' => $end,
-				'classification' => $classification,
-				'lineNumber' => $lineNumber,
-			];
-		}
+		$mapping = $this->mappingEntries(decoded: $decoded);
 
 		if ($mapping === []) {
 			return self::DEFAULT_MAPPING;
@@ -440,6 +471,72 @@ class CBSExportService {
 
 		return $mapping;
 	}//end getMappingFromSettings()
+
+	/**
+	 * Keep the complete mapping entries of a decoded override.
+	 *
+	 * @param array<mixed> $decoded The decoded mapping override.
+	 *
+	 * @return array<int,array{start:string,end:string,classification:string,lineNumber:string}>
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function mappingEntries(array $decoded): array {
+		$mapping = [];
+		foreach ($decoded as $entry) {
+			$row = $this->mappingEntry(entry: $entry);
+			if ($row === null) {
+				continue;
+			}
+
+			$mapping[] = $row;
+		}
+
+		return $mapping;
+	}//end mappingEntries()
+
+	/**
+	 * One mapping entry, or null when it is not an array or misses a field.
+	 *
+	 * @param mixed $entry The decoded entry.
+	 *
+	 * @return array{start:string,end:string,classification:string,lineNumber:string}|null
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function mappingEntry(mixed $entry): array|null {
+		if (is_array($entry) === false) {
+			return null;
+		}
+
+		return $this->completeMappingEntry(entry: $entry);
+	}//end mappingEntry()
+
+	/**
+	 * The mapping entry with its four fields, or null when one is missing.
+	 *
+	 * @param array<mixed> $entry The decoded entry.
+	 *
+	 * @return array{start:string,end:string,classification:string,lineNumber:string}|null
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function completeMappingEntry(array $entry): array|null {
+		$start = (string)($entry['start'] ?? '');
+		$end = (string)($entry['end'] ?? '');
+		$classification = (string)($entry['classification'] ?? '');
+		$lineNumber = (string)($entry['lineNumber'] ?? '');
+		if ($start === '' || $end === '' || $classification === '' || $lineNumber === '') {
+			return null;
+		}
+
+		return [
+			'start' => $start,
+			'end' => $end,
+			'classification' => $classification,
+			'lineNumber' => $lineNumber,
+		];
+	}//end completeMappingEntry()
 
 	/**
 	 * Aggregate GL lines by CBS classification using the mapping table.
@@ -750,8 +847,7 @@ class CBSExportService {
 		try {
 			$saved = $this->objectService()->saveObject(
 				object: $object,
-				register: $this->register(),
-				schema: $schema,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: $schema))
 			);
 
 			if (is_array($saved) === true) {
@@ -790,11 +886,6 @@ class CBSExportService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

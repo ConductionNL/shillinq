@@ -25,7 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Service\ComplianceDeadlineCalendarService;
+use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
 
 /**
  * What a settings update asks for one known category.
@@ -93,7 +93,7 @@ final class DeadlineCategoryChange {
 			return null;
 		}
 
-		if (in_array($category, ComplianceDeadlineCalendarService::CATEGORIES, true) === false) {
+		if (in_array($category, ComplianceDeadlineCalendarServiceInterface::CATEGORIES, true) === false) {
 			return null;
 		}
 

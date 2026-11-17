@@ -23,7 +23,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 use DateTimeImmutable;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\LoggingTimelineRetryQueue;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
  * reported as the dead-letter gauge when metrics are wired.
  *
  * @covers \OCA\Shillinq\Service\Pipelinq\LoggingTimelineRetryQueue
- * @uses \OCA\Shillinq\Service\Pipelinq\TimelineEventDto
+ * @uses \OCA\Shillinq\Kernel\Model\TimelineEventDto
  * @uses \OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService
  */
 final class LoggingTimelineRetryQueueTest extends TestCase {

@@ -37,6 +37,7 @@ use Psr\Log\LoggerInterface;
  * Shared flow of the signature-verified payment webhooks.
  *
  * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 abstract class PaymentWebhookReceiver extends Controller {
 	/**

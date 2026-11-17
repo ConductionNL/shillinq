@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Guard;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Enums\DBAConstants;
+use OCA\Shillinq\Kernel\Contracts\DBAOpdrachtGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,7 +37,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
  */
-class DBAOpdrachtGuard {
+class DBAOpdrachtGuard implements DBAOpdrachtGuardInterface {
 	/**
 	 * Constructor.
 	 *

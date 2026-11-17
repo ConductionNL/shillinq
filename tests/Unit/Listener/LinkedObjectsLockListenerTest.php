@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
-use OCA\Shillinq\AppInfo\PaymentControlsRegistration;
+use OCA\Shillinq\Listener\Registration\PaymentControlsRegistration;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\LinkedObjectsLockListener;

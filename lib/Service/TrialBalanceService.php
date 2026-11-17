@@ -44,9 +44,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCP\IAppConfig;
 
 /**
  * Computes a period-scoped, per-account trial balance from the general ledger.
@@ -70,7 +71,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * requirement the code violates reports conformance; a dangling one reports
  * work to do.
  */
-class TrialBalanceService {
+class TrialBalanceService implements TrialBalanceServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -195,15 +196,7 @@ class TrialBalanceService {
 				['filters' => ['administrationId' => $administrationId, 'periodId' => $periodId]]
 			);
 
-		$transactionIds = [];
-		foreach ($transactions as $rawTransaction) {
-			// OpenRegister's findAll() returns ObjectEntity instances; normalise.
-			$transaction = $this->asArray(row: $rawTransaction);
-			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
-			if ($id !== null) {
-				$transactionIds[(string)$id] = true;
-			}
-		}
+		$transactionIds = $this->transactionIds(transactions: $transactions);
 
 		// GLLines for the period; cross-check the parent transaction is in scope.
 		$lines = $this->objectService
@@ -219,22 +212,55 @@ class TrialBalanceService {
 				continue;
 			}
 
-			$account = (string)($line['accountNumber'] ?? '');
-			if (isset($byAccount[$account]) === false) {
-				$byAccount[$account] = ['debit' => 0, 'credit' => 0];
-			}
-
-			$cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
-			$side = 'credit';
-			if (($line['side'] ?? '') === 'debit') {
-				$side = 'debit';
-			}
-
-			$byAccount[$account][$side] += $cents;
-		}//end foreach
+			$this->addMovement(byAccount: $byAccount, line: $line);
+		}
 
 		return $byAccount;
 	}//end movementsByAccount()
+
+	/**
+	 * The ids of the transactions, as a set.
+	 *
+	 * @param iterable<mixed> $transactions The GLTransaction records.
+	 *
+	 * @return array<string,true>
+	 */
+	private function transactionIds(iterable $transactions): array {
+		$transactionIds = [];
+		foreach ($transactions as $rawTransaction) {
+			// OpenRegister's findAll() returns ObjectEntity instances; normalise.
+			$transaction = $this->asArray(row: $rawTransaction);
+			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+			if ($id !== null) {
+				$transactionIds[(string)$id] = true;
+			}
+		}
+
+		return $transactionIds;
+	}//end transactionIds()
+
+	/**
+	 * Add one line's amount to its account's debit or credit movement.
+	 *
+	 * @param array<string,array{debit:int,credit:int}> $byAccount Movements per account, updated.
+	 * @param array<string,mixed>                       $line      The GLLine.
+	 *
+	 * @return void
+	 */
+	private function addMovement(array &$byAccount, array $line): void {
+		$account = (string)($line['accountNumber'] ?? '');
+		if (isset($byAccount[$account]) === false) {
+			$byAccount[$account] = ['debit' => 0, 'credit' => 0];
+		}
+
+		$cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
+		$side = 'credit';
+		if (($line['side'] ?? '') === 'debit') {
+			$side = 'debit';
+		}
+
+		$byAccount[$account][$side] += $cents;
+	}//end addMovement()
 
 	/**
 	 * Decide whether a GLLine counts toward the period trial balance.
@@ -326,11 +352,6 @@ class TrialBalanceService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

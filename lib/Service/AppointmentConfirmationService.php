@@ -32,7 +32,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\AppointmentConfirmationServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\IAppConfig;
@@ -43,7 +46,7 @@ use Throwable;
 /**
  * Service implementing the appointment confirmation workflow.
  */
-class AppointmentConfirmationService {
+class AppointmentConfirmationService implements AppointmentConfirmationServiceInterface {
 	/**
 	 * Status of a freshly created, self-booked appointment.
 	 *
@@ -94,12 +97,7 @@ class AppointmentConfirmationService {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**
@@ -157,8 +155,7 @@ class AppointmentConfirmationService {
 		try {
 			$objectService->saveObject(
 				object: $tokenRecord,
-				register: $register,
-				schema: 'ConfirmationToken',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'ConfirmationToken'))
 			);
 			$this->logger->info(
 				'Shillinq: confirmation token generated',
@@ -277,8 +274,14 @@ class AppointmentConfirmationService {
 		$token['redeemedAt'] = $now;
 
 		try {
-			$objectService->saveObject(object: $token, register: $register, schema: 'ConfirmationToken');
-			$objectService->saveObject(object: $appointment, register: $register, schema: 'Appointment');
+			$objectService->saveObject(
+				object: $token,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'ConfirmationToken'))
+			);
+			$objectService->saveObject(
+				object: $appointment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'Appointment'))
+			);
 			$this->logger->info(
 				'Shillinq: appointment confirmed',
 				['appointmentId' => $appointmentId, 'action' => 'appointment_confirmed']
@@ -319,18 +322,7 @@ class AppointmentConfirmationService {
 			return ['success' => false, 'reason' => 'not_pending'];
 		}
 
-		// Revoke any active tokens for this appointment.
-		try {
-			$existing = $objectService
-				->setRegister($register)
-				->setSchema('ConfirmationToken')
-				->findAll(['filters' => ['appointmentId' => $appointmentId, 'status' => 'active']]);
-			foreach ($existing as $tok) {
-				$tok['status'] = 'revoked';
-				$objectService->saveObject(object: $tok, register: $register, schema: 'ConfirmationToken');
-			}
-		} catch (Throwable $e) {
-			$this->logger->error('Shillinq: failed to revoke prior tokens: ' . $e->getMessage());
+		if ($this->revokeActiveTokens(objectService: $objectService, register: $register, appointmentId: $appointmentId) === false) {
 			return ['success' => false, 'reason' => 'persist_error'];
 		}
 
@@ -341,13 +333,55 @@ class AppointmentConfirmationService {
 
 		$raw = $this->issueConfirmation(appointment: $appointment);
 
+		return $this->issueOutcome(raw: $raw);
+	}//end resend()
+
+	/**
+	 * Revoke every active ConfirmationToken of the appointment.
+	 *
+	 * @param object $objectService OR ObjectService.
+	 * @param string $register      The register slug.
+	 * @param string $appointmentId The appointment id.
+	 *
+	 * @return bool True when all were revoked, false (logged) when the lookup or a save failed.
+	 */
+	private function revokeActiveTokens(object $objectService, string $register, string $appointmentId): bool {
+		// Revoke any active tokens for this appointment.
+		try {
+			$existing = $objectService
+				->setRegister($register)
+				->setSchema('ConfirmationToken')
+				->findAll(['filters' => ['appointmentId' => $appointmentId, 'status' => 'active']]);
+			foreach ($existing as $tok) {
+				$tok['status'] = 'revoked';
+				$objectService->saveObject(
+					object: $tok,
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'ConfirmationToken'))
+				);
+			}
+		} catch (Throwable $e) {
+			$this->logger->error('Shillinq: failed to revoke prior tokens: ' . $e->getMessage());
+			return false;
+		}
+
+		return true;
+	}//end revokeActiveTokens()
+
+	/**
+	 * The resend result for the token issueConfirmation() returned.
+	 *
+	 * @param string|null $raw The issued plaintext token, or null when issuing failed.
+	 *
+	 * @return array{success:bool,reason:string}
+	 */
+	private function issueOutcome(string|null $raw): array {
 		$reason = 'issue_failed';
 		if ($raw !== null) {
 			$reason = 'ok';
 		}
 
 		return ['success' => ($raw !== null), 'reason' => $reason];
-	}//end resend()
+	}//end issueOutcome()
 
 	/**
 	 * Auto-cancel pending appointments past their confirmation deadline
@@ -365,47 +399,90 @@ class AppointmentConfirmationService {
 		$now = new DateTimeImmutable('now');
 		$cancelled = 0;
 
+		$pending = $this->pendingAppointments(objectService: $objectService, register: $register);
+
+		foreach ($pending as $appointment) {
+			if ($this->isPastDeadline(appointment: $appointment, now: $now) === false) {
+				continue;
+			}
+
+			if ($this->autoCancel(objectService: $objectService, register: $register, appointment: $appointment) === true) {
+				$cancelled++;
+			}
+		}
+
+		return $cancelled;
+	}//end cancelExpired()
+
+	/**
+	 * The pending appointments, or none (logged) when they cannot be queried.
+	 *
+	 * @param object $objectService OR ObjectService.
+	 * @param string $register      The register slug.
+	 *
+	 * @return iterable<mixed>
+	 */
+	private function pendingAppointments(object $objectService, string $register): iterable {
 		try {
-			$pending = $objectService
+			return $objectService
 				->setRegister($register)
 				->setSchema('Appointment')
 				->findAll(['filters' => ['status' => self::STATUS_PENDING]]);
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq: failed to query pending appointments: ' . $e->getMessage());
-			return 0;
+			return [];
+		}
+	}//end pendingAppointments()
+
+	/**
+	 * Whether the appointment has a confirmation deadline that has passed.
+	 *
+	 * @param mixed             $appointment The Appointment record.
+	 * @param DateTimeImmutable $now         The current time.
+	 *
+	 * @return bool True when the deadline is set, parseable and not in the future.
+	 */
+	private function isPastDeadline(mixed $appointment, DateTimeImmutable $now): bool {
+		$deadline = ($appointment['confirmationDeadline'] ?? null);
+		if (is_string($deadline) === false || $deadline === '') {
+			return false;
 		}
 
-		foreach ($pending as $appointment) {
-			$deadline = ($appointment['confirmationDeadline'] ?? null);
-			if (is_string($deadline) === false || $deadline === '') {
-				continue;
-			}
+		$deadlineTs = strtotime($deadline);
+		return ($deadlineTs !== false && $deadlineTs <= $now->getTimestamp());
+	}//end isPastDeadline()
 
-			$deadlineTs = strtotime($deadline);
-			if ($deadlineTs === false || $deadlineTs > $now->getTimestamp()) {
-				continue;
-			}
-
-			$appointment['status'] = self::STATUS_CANCELLED;
-			$appointment['cancelledReason'] = 'Confirmation deadline passed';
-			try {
-				$objectService->saveObject(object: $appointment, register: $register, schema: 'Appointment');
-				$cancelled++;
-				$this->logger->info(
-					'Shillinq: appointment auto-cancelled',
-					[
-						'appointmentId' => (string)($appointment['id'] ?? ($appointment['appointmentNumber'] ?? '')),
-						'action' => 'appointment_auto_cancelled',
-						'actor' => 'system',
-					]
-				);
-			} catch (Throwable $e) {
-				$this->logger->error('Shillinq: failed to auto-cancel appointment: ' . $e->getMessage());
-			}
-		}//end foreach
-
-		return $cancelled;
-	}//end cancelExpired()
+	/**
+	 * Cancel one pending appointment whose confirmation deadline passed.
+	 *
+	 * @param object $objectService OR ObjectService.
+	 * @param string $register      The register slug.
+	 * @param mixed  $appointment   The Appointment record.
+	 *
+	 * @return bool True when saved, false (logged) when the save failed.
+	 */
+	private function autoCancel(object $objectService, string $register, mixed $appointment): bool {
+		$appointment['status'] = self::STATUS_CANCELLED;
+		$appointment['cancelledReason'] = 'Confirmation deadline passed';
+		try {
+			$objectService->saveObject(
+				object: $appointment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'Appointment'))
+			);
+			$this->logger->info(
+				'Shillinq: appointment auto-cancelled',
+				[
+					'appointmentId' => (string)($appointment['id'] ?? ($appointment['appointmentNumber'] ?? '')),
+					'action' => 'appointment_auto_cancelled',
+					'actor' => 'system',
+				]
+			);
+			return true;
+		} catch (Throwable $e) {
+			$this->logger->error('Shillinq: failed to auto-cancel appointment: ' . $e->getMessage());
+			return false;
+		}
+	}//end autoCancel()
 
 	/**
 	 * Find an appointment by OR id or appointmentNumber.

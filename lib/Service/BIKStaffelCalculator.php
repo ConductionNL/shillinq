@@ -37,6 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\BIKStaffelCalculatorInterface;
 
 /**
  * Pure BIK staffel + wettelijke rente calculator — no DI, fully unit-testable.
@@ -69,7 +70,7 @@ use InvalidArgumentException;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class BIKStaffelCalculator {
+class BIKStaffelCalculator implements BIKStaffelCalculatorInterface {
 	/**
 	 * Statutory minimum incasso costs per Besluit BIK (cents).
 	 */
@@ -82,11 +83,6 @@ class BIKStaffelCalculator {
 	 * fee above this ceiling.
 	 */
 	private const MAXIMUM_CENTS = 677500;
-
-	/**
-	 * Default BTW percentage applied under art. 2 lid 2 Besluit BIK.
-	 */
-	public const DEFAULT_BTW_PERCENTAGE = 0.21;
 
 	/**
 	 * Slab upper bounds in cents (€2.500 / €5.000 / €10.000 / €200.000).

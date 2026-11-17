@@ -9,9 +9,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * RW124 probe: assertNotInOpenPlan over the magic-accessor, OR-faithful store.
@@ -25,7 +26,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\Shillinq\PaymentPlan\PaymentPlanService
  * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanAllocator
  * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanMailer
- * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException
+ * @uses   \OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException
  * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanSchedule
  * @uses   \OCA\Shillinq\Service\DunningRunService
  * @uses   \OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner
@@ -80,15 +81,16 @@ final class Rw124OpenPlanProbeTest extends TestCase {
 		$this->store = new class() extends \OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub {
 			public function find(
 				int|string $id,
-				?array $_extend = [],
-				bool $files = false,
-				mixed $register = null,
-				mixed $schema = null,
+				?ObjectFindOptions $options = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true,
-				bool $_render = true,
-				bool $_audit = true
+				bool $_multitenancy = true
 			): ?\OCA\OpenRegister\Contract\ObjectEntityInterface {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
+				$_render = $options?->render ?? true;
+				$_audit = $options?->audit ?? true;
 				throw new \RuntimeException('OpenRegister is down');
 			}
 		};

@@ -68,14 +68,16 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AccountantsdossierExportServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use ZipArchive;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Builds the BADO accountantsdossier bundle for one Controleprotocol.
@@ -96,7 +98,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
  */
-class AccountantsdossierExportService {
+class AccountantsdossierExportService implements AccountantsdossierExportServiceInterface {
 
 	/**
 	 * Schema slug for the parent Controleprotocol (REQ-001).
@@ -843,11 +845,6 @@ class AccountantsdossierExportService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

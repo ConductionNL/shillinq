@@ -31,6 +31,8 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests the shared idempotent reconciliation across PaymentRequest +
@@ -102,7 +104,8 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function find(string $id, bool $_rbac = true, bool $_multitenancy = true, bool $_audit = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$_audit = $options?->audit ?? true;
 				$this->findCalls[] = [$id, $_rbac, $_multitenancy, $_audit];
 				throw new \RuntimeException('DoesNotExist');
 			}
@@ -131,7 +134,9 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->rbacFlags[] = $_rbac;
 				// The subject reaches this double through the ADR-084 contract,
 				// which carries the target schema as a named argument and applies

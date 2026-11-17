@@ -27,10 +27,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Ask hrmq what an hour of each person's time costs the employer.
@@ -62,7 +63,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/subject-cost-aggregation/spec.md
  */
-class HrmqCostRateAdapter {
+class HrmqCostRateAdapter implements HrmqCostRateAdapterInterface {
 
 	/**
 	 * The cost-rate service, newest name first, as strings so nothing resolves

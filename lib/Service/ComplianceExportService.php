@@ -42,10 +42,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Db\AuditTrail\NamedActor;
+use OCA\OpenRegister\Db\AuditTrail\RegisterAuditEvent;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ListQuery;
 use OCA\OpenRegister\Db\RegisterMapper;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -67,7 +70,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */
-class ComplianceExportService {
+class ComplianceExportService implements ComplianceExportServiceInterface {
 
 	/**
 	 * The export's columns, in order.
@@ -107,13 +110,6 @@ class ComplianceExportService {
 	];
 
 	/**
-	 * Default scope when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const SCOPE_ALL = 'all';
-
-	/**
 	 * GDPR subject-access scope per REQ-RAP-009.
 	 *
 	 * @var string
@@ -121,18 +117,18 @@ class ComplianceExportService {
 	public const SCOPE_SUBJECT = 'subject';
 
 	/**
-	 * Default format when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const FORMAT_CSV = 'csv';
-
-	/**
 	 * JSON output format.
 	 *
 	 * @var string
 	 */
 	public const FORMAT_JSON = 'json';
+
+	/**
+	 * Audit-trail action for a requested compliance export.
+	 *
+	 * @var string
+	 */
+	public const EXPORT_REQUESTED_ACTION = 'compliance.export_requested';
 
 	/**
 	 * Constructor.
@@ -280,6 +276,39 @@ class ComplianceExportService {
 	}//end exportRows()
 
 	/**
+	 * Record an export request on the register's hash-chained audit trail.
+	 *
+	 * REQ-RAP-005 scenario 3: the trail answers "who exported what, when". The
+	 * entry names the register and no object, so it stays off every object's
+	 * timeline.
+	 *
+	 * @param string $scope  The requested export scope.
+	 * @param string $format The requested output format.
+	 * @param string $uid    The caller.
+	 *
+	 * @return void
+	 *
+	 * @throws \Throwable When OpenRegister is absent or the entry cannot be written.
+	 *
+	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
+	 */
+	public function recordExportRequest(string $scope, string $format, string $uid): void {
+		$registerMapper = $this->container->get(RegisterMapper::class);
+		$auditTrailMapper = $this->container->get(AuditTrailMapper::class);
+		$registerId = (int)$registerMapper->find($this->register())->getId();
+
+		$auditTrailMapper->recordRegisterEvent(
+			new RegisterAuditEvent(
+				register: $registerId,
+				action: self::EXPORT_REQUESTED_ACTION,
+				details: ['scope' => $scope, 'format' => $format],
+				actor: new NamedActor(id: $uid),
+			)
+		);
+
+	}//end recordExportRequest()
+
+	/**
 	 * Render the in-memory export as a single CSV blob (RFC 4180).
 	 *
 	 * @param array{headers:array<int,string>,rows:array<int,array<string,mixed>>} $envelope The envelope from generateExport().
@@ -423,19 +452,7 @@ class ComplianceExportService {
 		$before = $this->stripPii(value: ($event['before'] ?? ($event['beforeValue'] ?? [])));
 		$after = $this->stripPii(value: ($event['after'] ?? ($event['afterValue'] ?? [])));
 
-		$fieldsChanged = [];
-		if (is_array($before) === true && is_array($after) === true) {
-			$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
-			foreach ($keys as $key) {
-				if (in_array($key, self::PII_FIELDS, true) === true) {
-					continue;
-				}
-
-				if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
-					$fieldsChanged[] = (string)$key;
-				}
-			}
-		}
+		$fieldsChanged = $this->changedFields(before: $before, after: $after);
 
 		return [
 			'timestamp' => (string)($event['created'] ?? ($event['timestamp'] ?? '')),
@@ -449,6 +466,46 @@ class ComplianceExportService {
 		];
 
 	}//end renderRow()
+
+	/**
+	 * The non-PII fields whose value differs between before and after.
+	 *
+	 * @param mixed $before The PII-stripped before value.
+	 * @param mixed $after  The PII-stripped after value.
+	 *
+	 * @return list<string>
+	 */
+	private function changedFields(mixed $before, mixed $after): array {
+		if (is_array($before) === false || is_array($after) === false) {
+			return [];
+		}
+
+		return $this->differingKeys(before: $before, after: $after);
+	}//end changedFields()
+
+	/**
+	 * The non-PII keys whose value differs between two arrays.
+	 *
+	 * @param array<string,mixed> $before The before value.
+	 * @param array<string,mixed> $after  The after value.
+	 *
+	 * @return list<string>
+	 */
+	private function differingKeys(array $before, array $after): array {
+		$fieldsChanged = [];
+		$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
+		foreach ($keys as $key) {
+			if (in_array($key, self::PII_FIELDS, true) === true) {
+				continue;
+			}
+
+			if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
+				$fieldsChanged[] = (string)$key;
+			}
+		}
+
+		return $fieldsChanged;
+	}//end differingKeys()
 
 	/**
 	 * Validate the [from, to] window — both dates required, ISO format,
@@ -499,11 +556,6 @@ class ComplianceExportService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

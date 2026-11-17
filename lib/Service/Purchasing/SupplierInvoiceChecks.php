@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Purchasing;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Throwable;
@@ -37,7 +38,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md
  */
-class SupplierInvoiceChecks {
+class SupplierInvoiceChecks implements SupplierInvoiceChecksInterface {
 
 	/**
 	 * The duplicate marker when the lookup itself failed: a possible duplicate.
