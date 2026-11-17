@@ -167,14 +167,14 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string {
-		$orderId = (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
+		$orderId = $this->orderId(purchaseOrder: $purchaseOrder);
 		if ($orderId === '') {
 			throw new RuntimeException('A purchase order without an id cannot be sent by Peppol');
 		}
 
 		// Refuse before anything is stored when integriq cannot take the request.
 		$this->integriqService(relative: 'Service\\EventService', method: 'emitCloudEvent');
-		$fileUri = $this->store(purchaseOrder: $purchaseOrder, orderId: $orderId, ublOrderXml: $ublOrderXml);
+		$fileUri = $this->store(purchaseOrder: $purchaseOrder, ublOrderXml: $ublOrderXml);
 		$objectUri = 'openregister://shillinq/PurchaseOrder/' . $orderId;
 		$this->emit(
 			data: [
@@ -209,28 +209,29 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	}//end emit()
 
 	/**
+	 * The order's id, from the record or its metadata; empty when it has none.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The order.
+	 *
+	 * @return string
+	 */
+	private function orderId(array $purchaseOrder): string {
+		return (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
+	}//end orderId()
+
+	/**
 	 * Write the UBL Order into the buyer's files.
 	 *
 	 * @param array<string,mixed> $purchaseOrder The order.
-	 * @param string              $orderId       The order's id.
 	 * @param string              $ublOrderXml   The document.
 	 *
 	 * @return string `nextcloud-file:<id>`, the form integriq reads.
 	 *
 	 * @throws RuntimeException When nobody is signed in.
 	 */
-	private function store(array $purchaseOrder, string $orderId, string $ublOrderXml): string {
-		$userId = $this->userSession->getUser()?->getUID();
-		if ($userId === null || $userId === '') {
-			throw new RuntimeException('A purchase order is sent by Peppol only by a signed-in user');
-		}
-
-		$folder = $this->rootFolder->getUserFolder($userId);
-		$path = self::FOLDER . '/' . $this->safeName(name: (string)($purchaseOrder['administrationId'] ?? 'default'));
-		foreach (explode('/', $path) as $segment) {
-			$folder = $this->child(folder: $folder, name: $segment);
-		}
-
+	private function store(array $purchaseOrder, string $ublOrderXml): string {
+		$orderId = $this->orderId(purchaseOrder: $purchaseOrder);
+		$folder = $this->orderFolder(purchaseOrder: $purchaseOrder);
 		$name = $this->safeName(name: (string)($purchaseOrder['poNumber'] ?? $orderId)) . '.xml';
 		$file = null;
 		if ($folder->nodeExists($name) === true) {
@@ -249,6 +250,30 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 
 		return 'nextcloud-file:' . (string)$file->getId();
 	}//end store()
+
+	/**
+	 * The signed-in user's folder for the order's administration, created when missing.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The order.
+	 *
+	 * @return Folder
+	 *
+	 * @throws RuntimeException When nobody is signed in.
+	 */
+	private function orderFolder(array $purchaseOrder): Folder {
+		$userId = $this->userSession->getUser()?->getUID();
+		if ($userId === null || $userId === '') {
+			throw new RuntimeException('A purchase order is sent by Peppol only by a signed-in user');
+		}
+
+		$folder = $this->rootFolder->getUserFolder($userId);
+		$path = self::FOLDER . '/' . $this->safeName(name: (string)($purchaseOrder['administrationId'] ?? 'default'));
+		foreach (explode('/', $path) as $segment) {
+			$folder = $this->child(folder: $folder, name: $segment);
+		}
+
+		return $folder;
+	}//end orderFolder()
 
 	/**
 	 * A sub folder, created when missing.

@@ -78,15 +78,7 @@ class PurchaseOrderPdfRenderer {
 
 		$out[] = '';
 		foreach ((array)($purchaseOrder['lines'] ?? []) as $index => $line) {
-			$line = (array)$line;
-			$out[] = sprintf(
-				'%d. %s  %s x %s %s',
-				((int)$index + 1),
-				(string)($line['description'] ?? ''),
-				$this->number(value: $line['quantityOrdered'] ?? ($line['quantity'] ?? 0)),
-				$currency,
-				$this->number(value: $line['unitPrice'] ?? 0)
-			);
+			$out[] = ((int)$index + 1) . '. ' . $this->orderLine(line: (array)$line, currency: $currency);
 		}
 
 		$out[] = '';
@@ -96,6 +88,24 @@ class PurchaseOrderPdfRenderer {
 
 		return $out;
 	}//end lines()
+
+	/**
+	 * One order line as the PDF prints it, after its number.
+	 *
+	 * @param array<string,mixed> $line     The order line.
+	 * @param string              $currency The order's currency.
+	 *
+	 * @return string
+	 */
+	private function orderLine(array $line, string $currency): string {
+		return sprintf(
+			'%s  %s x %s %s',
+			(string)($line['description'] ?? ''),
+			$this->number(value: $line['quantityOrdered'] ?? ($line['quantity'] ?? 0)),
+			$currency,
+			$this->number(value: $line['unitPrice'] ?? 0)
+		);
+	}//end orderLine()
 
 	/**
 	 * The order as PDF bytes.
@@ -127,6 +137,17 @@ class PurchaseOrderPdfRenderer {
 		$objects[$fontId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
 		ksort($objects);
 
+		return $this->document(objects: $objects);
+	}//end render()
+
+	/**
+	 * The PDF file of numbered objects: header, bodies, cross-reference table and trailer.
+	 *
+	 * @param array<int,string> $objects The object bodies by id, in id order.
+	 *
+	 * @return string
+	 */
+	private function document(array $objects): string {
 		$pdf = "%PDF-1.4\n";
 		$offsets = [];
 		foreach ($objects as $id => $body) {
@@ -141,7 +162,7 @@ class PurchaseOrderPdfRenderer {
 		}
 
 		return $pdf . 'trailer << /Size ' . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n" . $xref . "\n%%EOF\n";
-	}//end render()
+	}//end document()
 
 	/**
 	 * One page's content stream.

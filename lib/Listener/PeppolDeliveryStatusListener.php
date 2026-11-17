@@ -245,6 +245,18 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 			return;
 		}
 
+		$this->applyToInvoice(update: $update);
+	}//end apply()
+
+	/**
+	 * Record a delivery status on the ARInvoice the update points at, and alert
+	 * the finance operators on a rejection.
+	 *
+	 * @param DeliveryStatusUpdate $update The delivery-status update.
+	 *
+	 * @return void
+	 */
+	private function applyToInvoice(DeliveryStatusUpdate $update): void {
 		$invoice = $this->matchingInvoice(update: $update);
 		if ($invoice === null || $this->transitionAllowed(invoice: $invoice, update: $update) === false) {
 			return;
@@ -261,8 +273,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 		if ($update->status === 'rejected') {
 			$this->notifyFinanceOperators(invoice: $invoice, detail: $update->detail);
 		}
-
-	}//end apply()
+	}//end applyToInvoice()
 
 	/**
 	 * The ARInvoice the update's objectUri points at; a miss is logged.

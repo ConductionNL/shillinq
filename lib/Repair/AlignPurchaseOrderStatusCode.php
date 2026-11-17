@@ -105,28 +105,8 @@ class AlignPurchaseOrderStatusCode implements IRepairStep {
 
 			$aligned = 0;
 			foreach ($rows as $row) {
-				$order = $this->rowPayload(row: $row);
-				$uuid = ObjectIdentifier::resolve(saved: $row);
-				if ($uuid === '' || ($order['lifecycleState'] ?? null) !== 'sent' || ($order['statusCode'] ?? null) !== 'approved') {
-					continue;
-				}
-
-				$data = [];
-				foreach ($order as $key => $value) {
-					if ($key !== 'id' && str_starts_with((string)$key, '@') === false) {
-						$data[$key] = $value;
-					}
-				}
-
-				$data['statusCode'] = 'sent';
-				$this->objectService->saveObject(
-					object: $data,
-					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: self::SCHEMA), uuid: $uuid),
-					_rbac: false,
-					_multitenancy: false,
-				);
-				$aligned++;
-			}//end foreach
+				$aligned += $this->alignRow(row: $row, registerSlug: $registerSlug);
+			}
 
 			$output->info(sprintf('Shillinq: %d purchase order(s) moved to the declared state sent.', $aligned));
 		} catch (Throwable $e) {
@@ -134,4 +114,36 @@ class AlignPurchaseOrderStatusCode implements IRepairStep {
 			$this->logger->warning('Shillinq: aligning the purchase order state failed', ['exception' => $e->getMessage()]);
 		}//end try
 	}//end run()
+
+	/**
+	 * Move one order sent under the old field to the declared state sent.
+	 *
+	 * @param array<string,mixed>|object $row          The stored row.
+	 * @param string                     $registerSlug Shillinq's register.
+	 *
+	 * @return int 1 when the order was saved, 0 when it was left alone.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+	 */
+	private function alignRow(mixed $row, string $registerSlug): int {
+		$order = $this->rowPayload(row: $row);
+		$uuid = ObjectIdentifier::resolve(saved: $row);
+		if ($uuid === '' || ($order['lifecycleState'] ?? null) !== 'sent' || ($order['statusCode'] ?? null) !== 'approved') {
+			return 0;
+		}
+
+		$data = array_filter(
+			$order,
+			static fn ($key): bool => $key !== 'id' && str_starts_with((string)$key, '@') === false,
+			ARRAY_FILTER_USE_KEY
+		);
+		$data['statusCode'] = 'sent';
+		$this->objectService->saveObject(
+			object: $data,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: self::SCHEMA), uuid: $uuid),
+			_rbac: false,
+			_multitenancy: false,
+		);
+		return 1;
+	}//end alignRow()
 }//end class

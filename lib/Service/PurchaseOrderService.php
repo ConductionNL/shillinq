@@ -662,14 +662,29 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			);
 		}
 
-		$po['peppolMessageId'] = $messageId;
-		$po['peppolFallbackReason'] = null;
-		$po['dispatchChannel'] = self::CHANNEL_PEPPOL;
-		$po['dispatchStatus'] = self::DISPATCH_PENDING;
-		$po['dispatchError'] = null;
-
-		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
+		return $this->recordPeppolDispatch(purchaseOrder: $po, messageId: $messageId);
 	}//end sendToPeppol()
+
+	/**
+	 * Record an accepted Peppol hand-off on the order: the dispatch is pending
+	 * until the access point reports delivery.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The PurchaseOrder handed off.
+	 * @param string              $messageId     The access point's message id.
+	 *
+	 * @return array<string,mixed> The saved PurchaseOrder.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 */
+	private function recordPeppolDispatch(array $purchaseOrder, string $messageId): array {
+		$purchaseOrder['peppolMessageId'] = $messageId;
+		$purchaseOrder['peppolFallbackReason'] = null;
+		$purchaseOrder['dispatchChannel'] = self::CHANNEL_PEPPOL;
+		$purchaseOrder['dispatchStatus'] = self::DISPATCH_PENDING;
+		$purchaseOrder['dispatchError'] = null;
+
+		return $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder);
+	}//end recordPeppolDispatch()
 
 	/**
 	 * Send an approved PO by PDF and email through the mail channel (REQ-PODR-002).
@@ -758,12 +773,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		}
 
 		if (in_array($status, ['sent', 'delivered'], true) === true) {
-			$now = $this->nowIso();
-			$po['dispatchStatus'] = self::DISPATCH_SENT;
-			$po['dispatchError'] = null;
-			$po['peppolSentAt'] = $now;
-			$po['sentAt'] = $now;
-			$this->transitionToSent(purchaseOrder: $this->saveObject(schema: 'PurchaseOrder', object: $po), asSystem: true);
+			$this->recordPeppolDelivered(purchaseOrder: $po);
 			return true;
 		}
 
@@ -779,6 +789,24 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 
 		return false;
 	}//end applyPeppolDeliveryStatus()
+
+	/**
+	 * Record a Peppol delivery the access point confirmed and move the order to sent.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The order, still approved.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 */
+	private function recordPeppolDelivered(array $purchaseOrder): void {
+		$now = $this->nowIso();
+		$purchaseOrder['dispatchStatus'] = self::DISPATCH_SENT;
+		$purchaseOrder['dispatchError'] = null;
+		$purchaseOrder['peppolSentAt'] = $now;
+		$purchaseOrder['sentAt'] = $now;
+		$this->transitionToSent(purchaseOrder: $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder), asSystem: true);
+	}//end recordPeppolDelivered()
 
 	/**
 	 * Record a dispatch that did not reach the supplier; the order keeps its state.

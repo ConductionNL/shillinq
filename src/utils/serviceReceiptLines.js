@@ -40,20 +40,9 @@ export function isServiceLine(line) {
  * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
  */
 export function linePayload(entry, period, administrationId) {
-	if (!entry || !CONFIRMATION_MODES.includes(entry.mode) || entry.value === '' || entry.value === null || entry.value === undefined) {
+	const value = confirmedValue(entry)
+	if (value === null) {
 		return null
-	}
-	const number = Number(entry.value)
-	if (!Number.isFinite(number) || number <= 0) {
-		return null
-	}
-	let value = number
-	if (entry.mode === 'percentageComplete') {
-		if (!Number.isInteger(number) || number > 100) {
-			return null
-		}
-	} else if (entry.mode === 'amountConfirmedCents') {
-		value = Math.round(number * 100)
 	}
 	return {
 		administrationId,
@@ -62,4 +51,29 @@ export function linePayload(entry, period, administrationId) {
 		periodStart: period.periodStart || null,
 		periodEnd: period.periodEnd || null,
 	}
+}
+
+/**
+ * The value one entry confirms, in the unit the endpoint takes, or null when
+ * the entry is empty or invalid for its mode.
+ *
+ * @param {object} entry { mode, value } as the form holds it.
+ * @return {number|null}
+ * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+ */
+function confirmedValue(entry) {
+	if (!entry || !CONFIRMATION_MODES.includes(entry.mode) || [ '', null, undefined ].includes(entry.value)) {
+		return null
+	}
+	const number = Number(entry.value)
+	if (!Number.isFinite(number) || number <= 0) {
+		return null
+	}
+	if (entry.mode === 'amountConfirmedCents') {
+		return Math.round(number * 100)
+	}
+	if (entry.mode === 'percentageComplete' && (!Number.isInteger(number) || number > 100)) {
+		return null
+	}
+	return number
 }
