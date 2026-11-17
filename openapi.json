@@ -12389,54 +12389,6 @@
                 }
             }
         },
-        "/vat-returns/{returnId}/checks": {
-            "get": {
-                "operationId": "v-at-return-checks",
-                "summary": "Run the checks of a VAT return (REQ-TVRB-001)",
-                "description": "Run the checks of a VAT return (REQ-TVRB-001): each with whether it passed, whether it blocks submitting and what makes it fail. Needs a signed-in Nextcloud user.",
-                "tags": [
-                    "v-at-return"
-                ],
-                "parameters": [
-                    {
-                        "name": "returnId",
-                        "in": "path",
-                        "required": true,
-                        "description": "The VATReturn id.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The request succeeded.",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/Problem400"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Problem401"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/Problem404"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/Problem500"
-                    }
-                }
-            }
-        },
         "/wbso/realisatie": {
             "get": {
                 "operationId": "wbso-administratie-realisatie",
