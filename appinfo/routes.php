@@ -118,6 +118,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'fieldRequirement#fields', 'url' => '/api/field-requirements/{id}/fields', 'verb' => 'GET'],
             // reporting-custom-analysis REQ-RCA-002: the financial pivot.
             ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
+            // reporting-financial-statements REQ-RFS-001/002: the on-screen statements.
+            ['name' => 'financialStatement#profitAndLoss', 'url' => '/api/statements/profit-and-loss', 'verb' => 'GET'],
+            ['name' => 'financialStatement#balanceSheet', 'url' => '/api/statements/balance-sheet', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app
@@ -838,6 +841,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // on the caller's administration.
             ['name' => 'financialDocumentAction#issueInvoice', 'url' => '/api/financial-documents/invoices', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#requestPayment', 'url' => '/api/financial-documents/invoices/{id}/payment-request', 'verb' => 'POST'],
+            // receivables-provider-payouts REQ-RPPO-005: take payment now on the caller's registered phone, or as a QR checkout.
+            ['name' => 'pointOfSalePayment#takePayment', 'url' => '/api/financial-documents/invoices/{id}/take-payment', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#createQuote', 'url' => '/api/financial-documents/quotes', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#creditInvoice', 'url' => '/api/financial-documents/invoices/{id}/credit', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#raisePayout', 'url' => '/api/financial-documents/payouts', 'verb' => 'POST'],
@@ -900,6 +905,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
             ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
             ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+            // iv3-report-takes-case-costs-by-case-type: the rows of the case cost tables
+            // (per taakveld on the Iv3 page, per type on its own page). Static URL, before
+            // the SPA catch-all.
+            ['name' => 'subjectCostReport#rows', 'url' => '/api/reporting/subject-costs', 'verb' => 'GET'],
 
             // Payment-run-sepa-export (REQ-SEPA-006 / REQ-SEPA-007). The HTTP surface
             // behind the "Export to bank" and "Reconcile / import statement" actions

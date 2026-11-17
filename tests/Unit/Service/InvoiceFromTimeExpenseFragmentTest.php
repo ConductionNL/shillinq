@@ -104,16 +104,57 @@ final class InvoiceFromTimeExpenseFragmentTest extends TestCase {
 	}//end testFragmentDeclaresInvoiceSchemas()
 
 	/**
-	 * BillableInvoice carries the five-model billingModel enum (REQ-ITE-001, design D1).
+	 * BillableInvoice's billingModel enum holds every model the invoice generator drafts (REQ-ITE-001, design D1).
+	 *
+	 * A model the generator handles but the enum lacks is refused by
+	 * OpenRegister when the draft is saved.
 	 *
 	 * @return void
 	 */
-	public function testInvoiceDeclaresFiveBillingModels(): void {
+	public function testInvoiceDeclaresEveryGeneratedBillingModel(): void {
 		$invoice = $this->fragment()['components']['schemas']['BillableInvoice'];
 		$enum = $invoice['properties']['billingModel']['enum'];
-		self::assertSame(['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed'], $enum);
 
-	}//end testInvoiceDeclaresFiveBillingModels()
+		$source = (string) file_get_contents(filename: __DIR__.'/../../../lib/Service/InvoiceGenerationService.php');
+		$found = preg_match(pattern: '/function driveModel\(.*?\{(.*?)\}\/\/end driveModel/s', subject: $source, matches: $body);
+		self::assertSame(expected: 1, actual: $found);
+		preg_match_all(pattern: '/\'([a-z_]+)\' => \$this->/', subject: $body[1], matches: $arms);
+		$generated = $arms[1];
+		self::assertContains(needle: 'usage', haystack: $generated);
+
+		sort($enum);
+		sort($generated);
+		self::assertSame(expected: $generated, actual: $enum);
+
+	}//end testInvoiceDeclaresEveryGeneratedBillingModel()
+
+	/**
+	 * The invoice and line schemas declare what the generator writes.
+	 *
+	 * OpenRegister discards an undeclared property on save and refuses a value
+	 * outside an enum, so a usage invoice lost its readings or failed outright.
+	 *
+	 * @return void
+	 */
+	public function testSchemasDeclareWhatTheGeneratorWrites(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		$lib = __DIR__.'/../../../lib/Service/';
+
+		$records = (string) file_get_contents(filename: $lib.'BillableInvoiceRecords.php');
+		$found = preg_match(pattern: '/function invoicePayload\(.*?return \[(.*?)\];/s', subject: $records, matches: $payload);
+		self::assertSame(expected: 1, actual: $found);
+		preg_match_all(pattern: '/^\s*\'([a-zA-Z]+)\' =>/m', subject: $payload[1], matches: $keys);
+		self::assertContains(needle: 'meterReadingIds', haystack: $keys[1]);
+		$undeclared = array_values(array_diff($keys[1], array_keys($schemas['BillableInvoice']['properties'])));
+		self::assertSame(expected: [], actual: $undeclared);
+
+		$engine = (string) file_get_contents(filename: $lib.'BillingModelEngine.php');
+		preg_match_all(pattern: '/\'sourceType\' => \'([a-z_]+)\'/', subject: $engine, matches: $types);
+		self::assertContains(needle: 'usage', haystack: $types[1]);
+		$unknown = array_values(array_diff($types[1], $schemas['BillableInvoiceLine']['properties']['sourceType']['enum']));
+		self::assertSame(expected: [], actual: $unknown);
+
+	}//end testSchemasDeclareWhatTheGeneratorWrites()
 
 	/**
 	 * Line-item composition reflects the four sourceType values (time_entry,
