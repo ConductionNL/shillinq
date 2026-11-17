@@ -100,8 +100,6 @@ use OCA\Shillinq\Kernel\Contracts\DunningStageRendererInterface;
 use OCA\Shillinq\Kernel\Contracts\DunningTickRunnerInterface;
 use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\EmuReportingServiceInterface;
-use OCA\Shillinq\Kernel\Contracts\ReportScheduleServiceInterface;
-use OCA\Shillinq\Reporting\Schedule\ReportScheduleService;
 use OCA\Shillinq\Kernel\Contracts\ExceptionResolutionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
@@ -435,7 +433,6 @@ final class ContractRegistrar {
 		DunningTickRunnerInterface::class => DunningTickRunner::class,
 		EInvoiceServiceInterface::class => EInvoiceService::class,
 		EmuReportingServiceInterface::class => EmuReportingService::class,
-		ReportScheduleServiceInterface::class => ReportScheduleService::class,
 		EnsiaCycleStepsInterface::class => EnsiaCycleSteps::class,
 		ExceptionResolutionServiceInterface::class => ExceptionResolutionService::class,
 		ExtractionPrefillServiceInterface::class => ExtractionPrefillService::class,
