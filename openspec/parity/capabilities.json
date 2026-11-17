@@ -5823,8 +5823,8 @@
 				"evidence": "Shillinq has no login of its own; every page sits behind Nextcloud authentication, whose two-factor providers apply (appinfo/info.xml navigation shillinq.dashboard.page)",
 				"reachedOn": "Nextcloud login, before any shillinq page",
 				"owner": "nextcloud/server",
-				"change": "platform-properties",
-				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: Sign-in, including two-factor authentication, is the Nextcloud login (REQ-PLAT-001)"
+				"spec": "openspec/specs/platform-properties",
+				"requirement": "openspec/specs/platform-properties :: Sign-in, including two-factor authentication, is the Nextcloud login (REQ-PLAT-001)"
 			},
 			"screen": {
 				"board": null,
@@ -5858,8 +5858,8 @@
 				"evidence": "every page reads and writes through OpenRegister's REST API (/index.php/apps/openregister/api/objects/shillinq/..., e.g. src/manifest.json BtwAangifteDetail sidebar source); appinfo/routes.php adds 843 lines of app routes",
 				"reachedOn": "any client with Nextcloud credentials; no API documentation page is shipped in this repo",
 				"owner": "ConductionNL/openregister",
-				"change": "platform-properties",
-				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: Other software reaches shillinq's records through a REST API (REQ-PLAT-003)"
+				"spec": "openspec/specs/platform-properties",
+				"requirement": "openspec/specs/platform-properties :: Other software reaches shillinq's records through a REST API (REQ-PLAT-003)"
 			},
 			"screen": {
 				"board": null,
@@ -6082,8 +6082,8 @@
 				"evidence": "l10n/ ships 25 languages (50 .js/.json files), including nl, en, de and fr",
 				"reachedOn": "every page, following the Nextcloud user language",
 				"owner": "ConductionNL/shillinq",
-				"change": "platform-properties",
-				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: The interface follows the user's Nextcloud language (REQ-PLAT-004)",
+				"spec": "openspec/specs/platform-properties",
+				"requirement": "openspec/specs/platform-properties :: The interface follows the user's Nextcloud language (REQ-PLAT-004)",
 				"plan": "setup-wizard-english"
 			},
 			"screen": {
@@ -6195,8 +6195,8 @@
 				"evidence": "appinfo/info.xml: a Nextcloud app under EUPL-1.2 with OpenRegister as its data layer, installed on the customer's own Nextcloud",
 				"reachedOn": "Nextcloud app store or a manual install",
 				"owner": "ConductionNL/shillinq",
-				"change": "platform-properties",
-				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: shillinq runs on the customer's own Nextcloud (REQ-PLAT-005)"
+				"spec": "openspec/specs/platform-properties",
+				"requirement": "openspec/specs/platform-properties :: shillinq runs on the customer's own Nextcloud (REQ-PLAT-005)"
 			},
 			"screen": {
 				"board": null,
@@ -8843,8 +8843,8 @@
 				"readOn": "2026-09-26",
 				"evidence": "Shillinq has no login of its own; Nextcloud authentication applies, and Nextcloud supports SAML and OpenID Connect through its user_saml and user_oidc apps.",
 				"reachedOn": "Nextcloud login, before any shillinq page",
-				"change": "platform-properties",
-				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: Single sign-on works through the Nextcloud login (REQ-PLAT-002)"
+				"spec": "openspec/specs/platform-properties",
+				"requirement": "openspec/specs/platform-properties :: Single sign-on works through the Nextcloud login (REQ-PLAT-002)"
 			},
 			"screen": {
 				"board": null,

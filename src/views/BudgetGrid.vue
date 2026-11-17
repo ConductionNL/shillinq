@@ -150,9 +150,7 @@
 											class="budget-grid__toggle"
 											data-testid="budget-grid-expand-toggle"
 											:aria-expanded="expandedIds.has(row.id)"
-											@click="toggleRow(row.id)"
-											@keyup.enter="toggleRow(row.id)"
-											@keyup.space="toggleRow(row.id)">
+											@click="toggleRow(row.id)">
 											<ChevronDown
 												v-if="expandedIds.has(row.id)"
 												:size="16" />
@@ -181,9 +179,7 @@
 													{ name: row.label },
 												)
 											"
-											@click="toggleChart(row.id)"
-											@keyup.enter="toggleChart(row.id)"
-											@keyup.space="toggleChart(row.id)">
+											@click="toggleChart(row.id)">
 											<ChartLine :size="16" />
 										</button>
 									</th>

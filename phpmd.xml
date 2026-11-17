@@ -77,6 +77,10 @@
         (l) RegisterSlug reads the register slug from the IAppConfig it is
         given, so a test still mocks that config: final, NO constructor, NO
         properties, NO collaborators of its own, as (i).
+        (m) SubjectCostGrouping and ReportPeriod (iv3-report-takes-case-costs-by-case-type)
+        group cost source rows and read a period's days, pure functions of
+        their arguments on the same testable claim as (f): final, NO constructor,
+        NO properties, NO collaborators. Remove an entry if that stops being true.
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -103,6 +107,8 @@
                 OCA\Shillinq\Standards\Checks\InvoiceParts,
                 OCA\Shillinq\Service\BudgetMonthFields,
                 OCA\Shillinq\Service\LedgerGroupEntryKey,
+                OCA\Shillinq\Reporting\CostSource\SubjectCostGrouping,
+                OCA\Shillinq\Reporting\CostSource\ReportPeriod,
                 OCA\Shillinq\AppInfo\OpenRegisterAutoloader,
                 OCA\OpenRegister\AppHost\Bootstrap,
                 OCA\Shillinq\Request\InvoiceGenerationRequest,
