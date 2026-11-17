@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\BackgroundJob\ChartTemplateSyncJob;
-use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
+use OCA\Shillinq\Kernel\Contracts\ChartTemplateServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\BackgroundJob\IJobList;
 use OCP\EventDispatcher\Event;
@@ -70,7 +70,7 @@ class ChartTemplateVersionListener implements IEventListener {
 		}
 
 		$entity = $event->getObject();
-		if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: ChartTemplateService::TEMPLATE_SCHEMA) === false) {
+		if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: ChartTemplateServiceInterface::TEMPLATE_SCHEMA) === false) {
 			return;
 		}
 

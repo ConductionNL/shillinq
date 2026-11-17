@@ -1026,8 +1026,22 @@
 							"id": "BookingsPendingConfirmations",
 							"label": "Pending confirmations",
 							"icon": "EmailCheckOutline",
-							"route": "BookingsPendingConfirmations",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation"
+							},
 							"order": 14
+						},
+						{
+							"id": "BookingsConfirmationRequestFailed",
+							"label": "Confirmation request failed",
+							"icon": "EmailAlertOutline",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation",
+								"confirmationRequestStatus": "failed"
+							},
+							"order": 15
 						}
 					]
 				}
@@ -1039,13 +1053,6 @@
 					"route": "/confirm/:appointmentId",
 					"type": "custom",
 					"title": "Confirm your appointment"
-				},
-				{
-					"_fragment": "bookings-confirm-flow",
-					"id": "BookingsPendingConfirmations",
-					"route": "/verkoop/openstaande-bevestigingen",
-					"type": "custom",
-					"title": "Pending confirmations"
 				}
 			]
 		},
@@ -4714,6 +4721,34 @@
 		{
 			"menu": [
 				{
+					"id": "Overheid",
+					"label": "Government",
+					"icon": "Domain",
+					"order": 30,
+					"children": [
+						{
+							"id": "SubjectCosts",
+							"label": "Case costs",
+							"icon": "ChartBoxOutline",
+							"route": "SubjectCosts",
+							"order": 12
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "iv3-report-takes-case-costs-by-case-type",
+					"id": "SubjectCosts",
+					"route": "/overheid/zaakkosten",
+					"type": "dashboard",
+					"title": "Case costs"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "PostingRestrictions",
 					"label": "Posting restrictions",
 					"icon": "Cancel",
@@ -5557,6 +5592,33 @@
 					"route": "/reports/cancellation-reasons",
 					"type": "dashboard",
 					"title": "Cancellation reasons"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "InvoiceBatches",
+					"label": "Invoice batches",
+					"icon": "EmailFastOutline",
+					"route": "InvoiceBatches",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatches",
+					"route": "/bookkeeping/invoice-batches",
+					"type": "index",
+					"title": "Invoice batches"
+				},
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatchDetail",
+					"route": "/bookkeeping/invoice-batches/:id",
+					"type": "detail",
+					"title": "Invoice batch"
 				}
 			]
 		},

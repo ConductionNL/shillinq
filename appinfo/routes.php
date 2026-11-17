@@ -195,6 +195,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
+            // CORS preflight of an embed on another website (REQ-WSW-011): the origins allowed per widget key.
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/services', 'verb' => 'OPTIONS', 'postfix' => 'services'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/slots', 'verb' => 'OPTIONS', 'postfix' => 'slots'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/appointments', 'verb' => 'OPTIONS', 'postfix' => 'appointments'],
         // Bookings-depth: no-show-fee capture + recurring appointment series.
         // Both are operator actions (#[NoAdminRequired] + per-administration
         // guard). no-show captures the defined noShowFee via the DepositPayment
@@ -212,6 +216,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'vATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
             ['name' => 'vATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
             ['name' => 'vATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
+            ['name' => 'vATReturn#checks', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'],
             // tax-vat-position-and-suppletie (REQ-VPS-001, REQ-VPS-002): the running
             // position, the drift check on a filed return, and preparing its suppletie.
             ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
@@ -336,6 +341,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // ARInvoice: pre-send validation, NLCIUS UBL 2.1 + PDF/A-3 hybrid, Peppol
         // submit via the generalised transmission port, delivery-status queued.
             ['name' => 'aRInvoiceEInvoice#send', 'url' => '/api/ar-invoices/{invoiceNumber}/send-einvoice', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-001, REQ-SIS-002): send one issued invoice by the customer's delivery method.
+            ['name' => 'invoiceSending#send', 'url' => '/api/ar-invoices/{id}/send', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-003): send the selected invoices in a queued batch.
+            ['name' => 'invoiceSending#sendBatch', 'url' => '/api/ar-invoices/send-batch', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-004): one invoice per selected customer from one set of lines.
+            ['name' => 'invoiceBatch#create', 'url' => '/api/ar-invoices/batch', 'verb' => 'POST'],
 
             // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
             // down payment on an order, show the order's position, deduct on the final invoice.
@@ -659,6 +670,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
             // BADO accountantsdossier export (bookkeeping-bado-controleprotocol, REQ-010, Task 16).
             ['name' => 'badoControleprotocol#exportAccountantsdossier', 'url' => '/api/bado/controleprotocol/accountantsdossier', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-011/REQ-012: draw an
+            // audit sample from the protocol's posted ledger lines.
+            // #[NoAdminRequired], the protocol's administration checked in the
+            // controller (another administration's protocol is masked as 404).
+            ['name' => 'auditSample#draw', 'url' => '/api/bado/controleprotocol/samples', 'verb' => 'POST'],
 
             // CBS bestanden extended (bookkeeping-cbs-bestanden-extended,
             // REQ-CBS-001..009). RESTful CBSSubmission CRUD + generate endpoint.
@@ -678,6 +694,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'widgetSettings#create', 'url' => '/api/widget/admin/keys/create', 'verb' => 'POST'],
             ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
             ['name' => 'widgetSettings#revoke', 'url' => '/api/widget/admin/keys/revoke', 'verb' => 'POST'],
+            ['name' => 'widgetSettings#origins', 'url' => '/api/widget/admin/keys/origins', 'verb' => 'POST'],
 
             // Inventory scanner server-authoritative API (inventory-mobile-scanner,
             // REQ-SKU-001/002, REQ-OFFLINE-002/003, REQ-PERM-001). The
@@ -816,6 +833,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // on the caller's administration.
             ['name' => 'financialDocumentAction#issueInvoice', 'url' => '/api/financial-documents/invoices', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#requestPayment', 'url' => '/api/financial-documents/invoices/{id}/payment-request', 'verb' => 'POST'],
+            // receivables-provider-payouts REQ-RPPO-005: take payment now on the caller's registered phone, or as a QR checkout.
+            ['name' => 'pointOfSalePayment#takePayment', 'url' => '/api/financial-documents/invoices/{id}/take-payment', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#createQuote', 'url' => '/api/financial-documents/quotes', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#creditInvoice', 'url' => '/api/financial-documents/invoices/{id}/credit', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#raisePayout', 'url' => '/api/financial-documents/payouts', 'verb' => 'POST'],
@@ -878,6 +897,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
             ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
             ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+            // iv3-report-takes-case-costs-by-case-type: the rows of the case cost tables
+            // (per taakveld on the Iv3 page, per type on its own page). Static URL, before
+            // the SPA catch-all.
+            ['name' => 'subjectCostReport#rows', 'url' => '/api/reporting/subject-costs', 'verb' => 'GET'],
 
             // Payment-run-sepa-export (REQ-SEPA-006 / REQ-SEPA-007). The HTTP surface
             // behind the "Export to bank" and "Reconcile / import statement" actions
@@ -931,6 +954,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'directDebitBatch#file', 'url' => '/api/v1/direct-debit-batches/{id}/file', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-ENSIA-012: download an
+            // ENSIA cycle's submission XML and its college statement. Both
+            // #[NoAdminRequired], administration checked in the controller
+            // (another administration's cycle is masked as 404).
+            ['name' => 'ensiaCycle#xml', 'url' => '/api/v1/public-sector/ensia/{id}/xml', 'verb' => 'GET'],
+            ['name' => 'ensiaCycle#statement', 'url' => '/api/v1/public-sector/ensia/{id}/statement', 'verb' => 'GET'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
