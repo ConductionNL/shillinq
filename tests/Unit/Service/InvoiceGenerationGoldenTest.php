@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -204,7 +207,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 5.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 				[
 					'id' => 'ure-victim-1',
@@ -212,7 +215,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 8.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 			],
 			'ExpenseClaimEntry' => [
@@ -345,6 +348,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 			objectService: new DuckObjectServiceAdapter($this->objectService),
 			billedReadings: $this->createMock(BilledReadings::class),
 			passThrough: $this->createMock(PassThroughBilling::class),
+			billableRates: new BillableRateService(new DuckObjectServiceAdapter($this->objectService), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 	}//end setUp()
 
@@ -465,7 +469,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 		foreach ([
 			['status' => 'posted'],
 			['status' => 'cancelled'],
-			['status' => 'draft', 'administrationId' => self::ADMIN_ATTACKER, 'billingModel' => 't_and_m'],
+			['status' => 'draft', 'administrationId' => self::ADMIN_ATTACKER, 'billingModel' => 'retainer'],
 			['status' => 'draft', 'administrationId' => self::ADMIN_ATTACKER, 'billingModel' => 'mixed', 'rateCardId' => 'x'],
 		] as $invoice) {
 			try {
@@ -480,7 +484,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 			[
 				'Invoice is already posted.',
 				'Cancelled invoices cannot be posted.',
-				'Invoice failed validation: rateCardId is required for t_and_m model.',
+				'Invoice failed validation: retainerScheduleId is required for retainer model.',
 				'Invoice failed validation: retainerScheduleId is required for mixed model.',
 			],
 			$messages

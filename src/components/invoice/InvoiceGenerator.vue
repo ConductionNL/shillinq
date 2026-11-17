@@ -231,6 +231,7 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import invoiceApi from '../../api/invoiceApi.js'
+import { RATE_CARD_MODELS } from '../../utils/billableRate.js'
 import { loadBillableReadings } from '../../utils/usageBilling.js'
 
 /**
@@ -288,8 +289,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the model takes one rate card for the whole invoice; a time
+		 * and material invoice prices each hour by its own rate
+		 * (sales-billable-rate-per-hour REQ-BRPH-005).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+		 */
 		needsRateCard() {
-			return ['t_and_m', 'mixed'].includes(this.form.billingModel)
+			return RATE_CARD_MODELS.includes(this.form.billingModel)
 		},
 
 		needsRetainer() {
@@ -339,6 +348,7 @@ export default {
 			const ticked = this.needsUsage ? [] : this.work.expenses.filter((item) => this.expenseItemIds.includes(item.id))
 			return {
 				...this.form,
+				rateCardId: this.needsRateCard ? this.form.rateCardId : '',
 				timeEntryIds: this.needsUsage ? [] : [...this.timeEntryIds],
 				expenseIds: [],
 				expenseItemRefs: ticked.map((item) => ({

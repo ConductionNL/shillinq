@@ -81,6 +81,18 @@ interface ExtractionPrefillServiceInterface {
 	): array;
 
 	/**
+	 * Keep only the fields an operator may correct on this schema.
+	 *
+	 * @param string              $schema         SupplierInvoice or Receipt.
+	 * @param array<string,mixed> $incomingFields The submitted fields.
+	 *
+	 * @return array<string,mixed> The correctable subset.
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
+	 */
+	public function correctableFields(string $schema, array $incomingFields): array;
+
+	/**
 	 * Record an operator correction on an existing draft (REQ-RXC-004).
 	 *
 	 * Compares every key of `$incomingFields` that is one of the draft's

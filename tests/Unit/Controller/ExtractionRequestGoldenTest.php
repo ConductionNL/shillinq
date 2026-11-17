@@ -29,6 +29,7 @@ use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IRequest;
 use OCP\IUser;
@@ -200,6 +201,7 @@ final class ExtractionRequestGoldenTest extends TestCase {
 			$this->suggestion,
 			$candidates,
 			new ExtractionPrefillService(),
+			$this->createMock(SupplierInvoiceChecks::class),
 			$context,
 			$session,
 			$container,

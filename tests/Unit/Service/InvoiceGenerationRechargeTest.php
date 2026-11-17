@@ -30,6 +30,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\Billing\PassThroughBilling;
+use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
@@ -41,6 +42,7 @@ use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -86,7 +88,8 @@ final class InvoiceGenerationRechargeTest extends TestCase {
 		$this->store = new InMemoryObjectServiceStub(
 			[
 				'UrenRegistratie' => [
-					['id' => 'te-1', 'administrationId' => 'adm-kade', 'hours' => 12.5, 'date' => '2026-10-10', 'resourceType' => 'consultant'],
+					['id' => 'te-1', 'administrationId' => 'adm-kade', 'hours' => 12.5, 'date' => '2026-10-10', 'resourceType' => 'consultant',
+						'hourlyRateOverride' => 95.0],
 				],
 				'ExpenseClaimEntry' => [
 					['id' => 'c-vries', 'administrationId' => 'adm-kade', 'state' => 'posted', 'settlementMode' => 'pass-through',
@@ -128,6 +131,11 @@ final class InvoiceGenerationRechargeTest extends TestCase {
 				location: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 				transitions: $this->transitions,
 				logger: $logger,
+			),
+			billableRates: new BillableRateService(
+				objectService: $this->store,
+				registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
+				timeFactory: $this->createMock(ITimeFactory::class)
 			),
 		);
 	}//end setUp()
