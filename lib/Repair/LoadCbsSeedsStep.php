@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Repair\Support\SeedFragment;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -110,14 +111,8 @@ class LoadCbsSeedsStep implements IRepairStep {
 	public function run(IOutput $output): void {
 		$output->info('Seeding CBSSubmission + CBSLine example records...');
 
-		$data = $this->readSeedFragment(output: $output);
-		if ($data === null) {
-			return;
-		}
-
-		$objects = ($data['objects'] ?? []);
-		if (is_array($objects) === false || $objects === []) {
-			$output->info('CBS seed fragment carries no objects; nothing to seed');
+		$objects = (new SeedFragment(path: $this->seedPath, label: 'CBS'))->objects(output: $output);
+		if ($objects === null) {
 			return;
 		}
 
@@ -138,36 +133,6 @@ class LoadCbsSeedsStep implements IRepairStep {
 			}
 		);
 	}//end run()
-
-	/**
-	 * Read and decode the CBS seed fragment, or null (reported) when it is missing, unreadable or not a JSON object.
-	 *
-	 * @param IOutput $output Progress output interface.
-	 *
-	 * @return array<mixed>|null The decoded fragment.
-	 *
-	 * @spec openspec/specs/app-administration/spec.md
-	 */
-	private function readSeedFragment(IOutput $output): array|null {
-		if (file_exists($this->seedPath) === false) {
-			$output->warning('CBS seed fragment not found at ' . $this->seedPath . ', skipping');
-			return null;
-		}
-
-		$content = file_get_contents($this->seedPath);
-		if ($content === false) {
-			$output->warning('Failed to read CBS seed fragment, skipping');
-			return null;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-			$output->warning('Failed to parse CBS seed fragment: ' . json_last_error_msg());
-			return null;
-		}
-
-		return $data;
-	}//end readSeedFragment()
 
 	/**
 	 * The seed itself.
