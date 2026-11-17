@@ -73,6 +73,27 @@ second record is marked `duplicate` and no second invoice is written.
 To report a refund or cancellation, update the existing order's
 `payment.status`. Do not write a new order.
 
+For a partial refund, also name what was refunded:
+
+| Field | Meaning |
+| --- | --- |
+| `payment.refundedLines` | One entry per refunded order line: `line` (its 1-based position in `lines`) and `quantity` (the whole line when absent). |
+| `payment.refundedShipping` | `true` when the shipping charge is refunded too. |
+
+Without either, the whole order is credited.
+
+### VAT route
+
+`buyer.countryCode` decides the VAT on the invoice:
+
+| Buyer | Invoiced at |
+| --- | --- |
+| In `NL`, or no country | The `vatRate` of each line. |
+| Consumer in another EU member state | That state's rate for the line's category (21 standard, 9 reduced, 0 zero) through OSS. |
+| Business in another EU member state with a `vatId` VIES confirms | 0 under reverse charge, with the mention "Btw verlegd". |
+| Business in another EU member state without a confirmed `vatId` | That state's rate, as for a consumer. |
+| Outside the EU | Refused. |
+
 ## What happens to an order
 
 Shillinq keeps its own state in `intakeState`:
@@ -85,5 +106,6 @@ Shillinq keeps its own state in `intakeState`:
 | `duplicate` | The channel already had an order with this number. |
 | `credited` | Refunded or cancelled after invoicing; `creditNoteId` points to the credit note. |
 
-An order is refused when its channel is unknown, when it has no lines, or when
-its lines do not add up to the order total. The reason names both totals.
+An order is refused when its channel is unknown, when it has no lines, when
+its lines do not add up to the order total (the reason names both totals), or
+when no VAT route applies.

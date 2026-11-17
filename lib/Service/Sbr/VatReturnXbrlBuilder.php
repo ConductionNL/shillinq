@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Sbr;
 
+use OCA\Shillinq\Kernel\Contracts\VatReturnXbrlBuilderInterface;
 use RuntimeException;
 
 /**
@@ -36,7 +37,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md#requirement-a-vat-return-is-filed-through-its-xbrl-instance-req-tdf-001
  */
-class VatReturnXbrlBuilder {
+class VatReturnXbrlBuilder implements VatReturnXbrlBuilderInterface {
 
 	/**
 	 * The entry point a VAT return is filed on.

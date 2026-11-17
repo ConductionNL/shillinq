@@ -14,13 +14,16 @@
 // So every handler is registered in both, from this one list.
 
 import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
+import { openRepeatAppointment } from './utils/appointmentSeriesActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
+import { openAuditSampleDraw } from './utils/auditSampleApi.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openProposeDirectDebit } from './utils/directDebitActions.js'
 import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
+import { downloadEnsiaStatement, downloadEnsiaXml } from './utils/ensiaApi.js'
 import { openImportWizard } from './utils/importWizard.js'
 import {
 	approvePayable,
@@ -32,6 +35,7 @@ import {
 	openIntegriqStore,
 } from './utils/integriqConnections.js'
 import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
+import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
@@ -74,6 +78,10 @@ export const manifestActions = Object.freeze({
 	openDownPaymentInvoice,
 	// Generate invoices on Sales invoices (board ShFactuurGenereren).
 	openInvoiceGenerateWizard,
+	// sales-invoice-sending 3.2: Send selected on Accounts Receivable.
+	sendSelectedInvoices,
+	// sales-invoice-sending 3.3: New invoice batch on Sales invoices and Invoice batches.
+	openInvoiceBatchCreate,
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
@@ -81,6 +89,11 @@ export const manifestActions = Object.freeze({
 	// batches and Download pain.008 on a generated batch.
 	openProposeDirectDebit,
 	downloadDirectDebitFile,
+	// public-sector-council-and-auditor-statements: Draw sample on an audit
+	// protocol, and the XML and statement downloads on an ENSIA cycle.
+	openAuditSampleDraw,
+	downloadEnsiaXml,
+	downloadEnsiaStatement,
 	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
 	approvePayable,
 	markPayablePaid,
@@ -124,6 +137,9 @@ export const manifestActions = Object.freeze({
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
 	openVatPositionLines,
+	// bookings-messages-and-embedding 1.4: New repeating appointment on
+	// Appointments.
+	openRepeatAppointment,
 	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
 	openRecalculateInvestmentDeductions,
 })
