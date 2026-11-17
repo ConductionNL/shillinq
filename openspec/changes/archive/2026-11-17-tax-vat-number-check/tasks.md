@@ -14,7 +14,7 @@
 ## 3. Display, end to end and strings
 
 - [x] 3.1 Status shown on AR and supplier invoice detail pages next to the number (REQ-TVNC-001, REQ-TVNC-003). Verify: `npm run check:manifest`.
-- [ ] 3.2 (Playwright written, not run: the local instance runs the workspace checkout, not the branch.) Playwright `tests/e2e/tax-vat-number-check.spec.ts` with VIES stubbed. Verify: passes locally.
+- [x] 3.2 Playwright `tests/e2e/tax-vat-number-check.spec.ts` with VIES stubbed. Verify: passes locally. Live pass 2026-11-17: 3 passed on a fresh NC 34 + OpenRegister main instance (after opening the action from the detail header's More menu).
 - [x] 3.3 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
