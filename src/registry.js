@@ -361,6 +361,7 @@ import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
 // kind:"page" custom component; the manifest fragment
 // src/manifest.d/budget-scenarios.json declares the route.
 import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
+import CounterSalePage from './views/CounterSalePage.vue'
 // compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
 // + reminder lead times for the compliance deadline calendar. Talks to
 // the strictly current-user-scoped /api/deadline-calendar/settings
@@ -473,6 +474,8 @@ export default {
 		kind: 'page',
 		component: AdministrationSwitcherPage,
 	},
+	// receivables-provider-payouts REQ-RPPO-006: a counter sale sized for a phone.
+	CounterSalePage: { kind: 'page', component: CounterSalePage },
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
 	BookingsCalendar: { kind: 'page', component: CalendarPage },

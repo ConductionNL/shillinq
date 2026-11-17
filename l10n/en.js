@@ -5543,7 +5543,20 @@ OC.L10N.register(
         "QR code of the payment page": "QR code of the payment page",
         "Open the payment page": "Open the payment page",
         "Take payment": "Take payment",
-        "The payment could not be started.": "The payment could not be started."
+        "The payment could not be started.": "The payment could not be started.",
+        "Choose the administration you work in first.": "Choose the administration you work in first.",
+        "Counter sale": "Counter sale",
+        "Counter sales, no named customer": "Counter sales, no named customer",
+        "Customer (optional)": "Customer (optional)",
+        "Customer walked away": "Customer walked away",
+        "Line {number}": "Line {number}",
+        "Next sale": "Next sale",
+        "Price incl. VAT": "Price incl. VAT",
+        "Remove line {number}": "Remove line {number}",
+        "The payment of {amount} is on your phone. Once the customer has paid, the sale is issued as a paid invoice.": "The payment of {amount} is on your phone. Once the customer has paid, the sale is issued as a paid invoice.",
+        "The sale could not be cancelled.": "The sale could not be cancelled.",
+        "The sale is cancelled. Nothing was booked.": "The sale is cancelled. Nothing was booked.",
+        "Total {amount}": "Total {amount}"
     },
     "nplurals=2; plural=(n != 1);"
 )

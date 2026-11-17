@@ -7713,7 +7713,20 @@ OC.L10N.register(
         "QR code of the payment page": "QR-code van de betaalpagina",
         "Open the payment page": "Betaalpagina openen",
         "Take payment": "Betaling ontvangen",
-        "The payment could not be started.": "De betaling kon niet worden gestart."
+        "The payment could not be started.": "De betaling kon niet worden gestart.",
+        "Counter sale": "Toonbankverkoop",
+        "Counter sales, no named customer": "Toonbankverkoop, geen klant met naam",
+        "Customer (optional)": "Klant (optioneel)",
+        "Customer walked away": "Klant is weggelopen",
+        "Line {number}": "Regel {number}",
+        "Next sale": "Volgende verkoop",
+        "Price incl. VAT": "Prijs incl. btw",
+        "Remove line {number}": "Regel {number} verwijderen",
+        "The payment of {amount} is on your phone. Once the customer has paid, the sale is issued as a paid invoice.": "De betaling van {amount} staat op je telefoon. Zodra de klant heeft betaald, wordt de verkoop als betaalde factuur uitgereikt.",
+        "The sale could not be cancelled.": "De verkoop kon niet worden geannuleerd.",
+        "The sale is cancelled. Nothing was booked.": "De verkoop is geannuleerd. Er is niets geboekt.",
+        "Total {amount}": "Totaal {amount}",
+        "Choose the administration you work in first.": "Kies eerst de administratie waarin je werkt."
     },
     "nplurals=2; plural=(n != 1);"
 )
