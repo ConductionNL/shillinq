@@ -34,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * The dead-letter endpoints when OpenRegister is absent, when a read or a
@@ -144,7 +145,9 @@ final class TimelineDeadLetterControllerEdgesTest extends TestCase {
 			 *
 			 * @return mixed What the callback answers.
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saves[] = ['schema' => (string)$schema, 'object' => $object];
 
 				return ($this->save)($object, (string)$schema);

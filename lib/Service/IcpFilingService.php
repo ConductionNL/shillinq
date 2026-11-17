@@ -35,8 +35,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use RuntimeException;
 use ZipArchive;
@@ -305,8 +307,7 @@ class IcpFilingService implements IcpFilingServiceInterface {
 		try {
 			$this->objectService->saveObject(
 				object: $return,
-				register: $this->register(),
-				schema: 'IcpOpgaaf',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'IcpOpgaaf'))
 			);
 
 			return true;
@@ -322,11 +323,6 @@ class IcpFilingService implements IcpFilingServiceInterface {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

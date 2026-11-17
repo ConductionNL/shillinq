@@ -11,7 +11,7 @@
       "BtwAangifte": {
         "slug": "BtwAangifte",
         "icon": "FileDocumentCheckOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "BTW-aangifte",
         "description": "Dutch VAT return for a fiscal period (quarter / month / year), regime-typed (standard / KOR / reverse-charge) per Wet OB 1968. Tracks totalVATCollected (sales / AR rubrieken 1a/1b/1c), totalVATPaid (purchases / AP deductible) and the derived vatBalance (paid − collected). Operator-driven lifecycle draft → submitted → verified → filed; once submitted, the linked VATLine records are immutable until the return is explicitly rebased to draft.",
         "x-schema-org": "schema:DigitalDocument",
@@ -200,7 +200,8 @@
               "from": "draft",
               "to": "submitted",
               "label": "Indienen",
-              "description": "Submit to Belastingdienst; validates totals are non-negative and sets submissionDate."
+              "description": "Submit to Belastingdienst; validates totals are non-negative and sets submissionDate. Refused while a blocking VAT return check fails (REQ-TVRB-001).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\VatReturnChecksGuard::canSubmit"
             },
             "rebase": {
               "from": "submitted",

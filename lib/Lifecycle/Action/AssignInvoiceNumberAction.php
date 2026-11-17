@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Sales\InvoiceNumberSequenceService;
 
@@ -69,18 +70,14 @@ class AssignInvoiceNumberAction implements LifecycleActionInterface {
 	/**
 	 * Number the issuing invoice.
 	 *
-	 * @param array<string,mixed> $objectData   The invoice after its state moved to issued.
-	 * @param array<string,mixed> $previousData The invoice before the transition.
-	 * @param array<string,mixed> $parameters   The declared actionParameters (none).
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition: objectData is the invoice after its state moved to issued.
 	 *
 	 * @return array<string,mixed> The invoice with its number.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
 		if (self::takesNumber(invoice: $objectData) === false) {
 			return $objectData;
 		}

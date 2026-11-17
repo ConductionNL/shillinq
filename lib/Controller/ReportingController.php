@@ -67,6 +67,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\Files\File;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -188,6 +189,32 @@ class ReportingController extends Controller {
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
 		$format = trim((string)$this->request->getParam('format', ''));
 
+		$refusal = $this->generateRefusal(reportType: $reportType, administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$result = $this->service->generate(
+			reportType: $reportType,
+			period: $period,
+			administrationId: $administrationId,
+			format: $format,
+		);
+
+		return $this->generatedResponse(result: $result);
+	}//end generate()
+
+	/**
+	 * The error response for a generate request that names no report type or an administration the caller may not use.
+	 *
+	 * @param string $reportType       The requested report type.
+	 * @param string $administrationId The requested administration.
+	 *
+	 * @return JSONResponse|null The error response, or null when the request may proceed.
+	 *
+	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
+	 */
+	private function generateRefusal(string $reportType, string $administrationId): JSONResponse|null {
 		if ($reportType === '') {
 			return new JSONResponse(['error' => 'missing-report-type'], Http::STATUS_BAD_REQUEST);
 		}
@@ -201,13 +228,19 @@ class ReportingController extends Controller {
 			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$result = $this->service->generate(
-			reportType: $reportType,
-			period: $period,
-			administrationId: $administrationId,
-			format: $format,
-		);
+		return null;
+	}//end generateRefusal()
 
+	/**
+	 * The response for a generate result: 201 with the record, 503 when docudesk is unavailable, 422 on any other error.
+	 *
+	 * @param array<string, mixed> $result The service result.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
+	 */
+	private function generatedResponse(array $result): JSONResponse {
 		if (isset($result['error']) === true) {
 			$status = Http::STATUS_UNPROCESSABLE_ENTITY;
 			if ($result['error'] === 'docudesk-unavailable') {
@@ -218,7 +251,7 @@ class ReportingController extends Controller {
 		}
 
 		return new JSONResponse($result, Http::STATUS_CREATED);
-	}//end generate()
+	}//end generatedResponse()
 
 	/**
 	 * GET /api/reporting/generated — list previously generated reports.
@@ -297,10 +330,8 @@ class ReportingController extends Controller {
 			return new JSONResponse(['error' => 'missing-id'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$record = $this->service->findRecord($id);
-		if ($record === null
-			|| $this->context->canAccess(administrationId: (string)($record['administrationId'] ?? '')) === false
-		) {
+		$record = $this->accessibleRecord(id: $id);
+		if ($record === null) {
 			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
 		}
 
@@ -309,6 +340,40 @@ class ReportingController extends Controller {
 			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return $this->fileDownload(file: $file);
+
+	}//end download()
+
+	/**
+	 * The GeneratedReport record, only when it belongs to an administration the caller may use.
+	 *
+	 * @param string $id The GeneratedReport id.
+	 *
+	 * @return array<string, mixed>|null The record, or null when absent or not the caller's.
+	 *
+	 * @spec exclude No canonical requirement exists for the reporting capability — see #525.
+	 */
+	private function accessibleRecord(string $id): array|null {
+		$record = $this->service->findRecord($id);
+		if ($record === null
+			|| $this->context->canAccess(administrationId: (string)($record['administrationId'] ?? '')) === false
+		) {
+			return null;
+		}
+
+		return $record;
+	}//end accessibleRecord()
+
+	/**
+	 * Stream a stored report file.
+	 *
+	 * @param File $file The stored report file.
+	 *
+	 * @return DataDownloadResponse|JSONResponse The streamed file, or a 404 JSON envelope when it cannot be read.
+	 *
+	 * @spec exclude No canonical requirement exists for the reporting capability — see #525.
+	 */
+	private function fileDownload(File $file): DataDownloadResponse|JSONResponse {
 		try {
 			$content = $file->getContent();
 			$fileName = $file->getName();
@@ -322,6 +387,5 @@ class ReportingController extends Controller {
 			filename: $fileName,
 			contentType: $mimeType,
 		);
-
-	}//end download()
+	}//end fileDownload()
 }//end class

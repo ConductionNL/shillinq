@@ -144,6 +144,20 @@ class InventorySeedService {
 			return $this->importer->nothingSeeded(message: 'No default administration configured, skipping lot seed.');
 		}
 
+		return $this->importLots(lots: $lots, administrationId: $administrationId);
+	}//end seedInventoryLots()
+
+	/**
+	 * Import the demo lots, deduplicated on (administrationId, lotNumber).
+	 *
+	 * @param mixed             $lots             The seed lots.
+	 * @param string            $administrationId Administration scope for the seed.
+	 *
+	 * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
+	 *
+	 * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+	 */
+	private function importLots(mixed $lots, string $administrationId): array {
 		// Deduplication key (administrationId, lotNumber): idempotent re-runs per REQ-LOT-002.
 		$match = static fn ($lot): array => [
 			'administrationId' => $administrationId,
@@ -158,7 +172,7 @@ class InventorySeedService {
 				failedLog: 'Shillinq: inventory lot seeding failed',
 			)
 		);
-	}//end seedInventoryLots()
+	}//end importLots()
 
 	/**
 	 * Seed example InventoryValuation records from
@@ -177,12 +191,9 @@ class InventorySeedService {
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
 	 */
 	public function seedInventoryValuationExamples(string $administrationId): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return $this->importer->failed(message: self::NO_OPENREGISTER);
-		}
-
-		if ($administrationId === '') {
-			return $this->importer->failed(message: 'administrationId is required for InventoryValuation seed.');
+		$refusal = $this->seedRefusal(administrationId: $administrationId, missingMessage: 'administrationId is required for InventoryValuation seed.');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$file = $this->importer->read(fileName: 'inventory-valuation-examples.json');
@@ -195,6 +206,20 @@ class InventorySeedService {
 			return $this->importer->nothingSeeded(message: 'Seed file contains no valuations, nothing to import.');
 		}
 
+		return $this->importValuations(valuations: $valuations, administrationId: $administrationId);
+	}//end seedInventoryValuationExamples()
+
+	/**
+	 * Import the example valuations, deduplicated per REQ-INV-005.
+	 *
+	 * @param mixed             $valuations       The seed valuations.
+	 * @param string            $administrationId Administration scope for the seed.
+	 *
+	 * @return array<string,mixed> Result with success/seeded/skipped/message.
+	 *
+	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
+	 */
+	private function importValuations(mixed $valuations, string $administrationId): array {
 		// Dedup key (productId, warehouse, status=active, administrationId) per REQ-INV-005.
 		$match = static function ($valuation) use ($administrationId): ?array {
 			$productId = (string) ($valuation['productId'] ?? '');
@@ -219,7 +244,7 @@ class InventorySeedService {
 				failedLog: 'Shillinq: inventory valuation example seeding failed',
 			)
 		);
-	}//end seedInventoryValuationExamples()
+	}//end importValuations()
 
 	/**
 	 * Seed demo InventoryStock records from the three location seed files,
@@ -255,6 +280,20 @@ class InventorySeedService {
 			return $this->importer->nothingSeeded(message: 'No InventoryStock seed rows found.');
 		}
 
+		return $this->importStock(allRows: $allRows, administrationId: $administrationId);
+	}//end seedInventoryStockExamples()
+
+	/**
+	 * Import the demo stock rows, deduplicated on (administrationId, productSku, locationCode).
+	 *
+	 * @param array<int, mixed> $allRows          The seed stock rows.
+	 * @param string            $administrationId Administration scope for the seed.
+	 *
+	 * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	private function importStock(array $allRows, string $administrationId): array {
 		// Deduplication key (administrationId, productSku, locationCode): REQ-IST-002.
 		$match = static function ($row) use ($administrationId): ?array {
 			$productSku = ($row['productSku'] ?? '');
@@ -278,7 +317,7 @@ class InventorySeedService {
 				failedLog: 'Shillinq: InventoryStock seeding failed',
 			)
 		);
-	}//end seedInventoryStockExamples()
+	}//end importStock()
 
 	/**
 	 * The stock rows of the three demo warehouse files.
@@ -298,43 +337,55 @@ class InventorySeedService {
 
 		$allRows = [];
 		foreach ($seedFiles as $seedPath) {
-			if (file_exists($seedPath) === false) {
-				$this->logger->warning(
-					'Shillinq: InventoryStock seed file missing, skipping',
-					['file' => basename($seedPath)]
-				);
-				continue;
-			}
-
-			$content = file_get_contents($seedPath);
-			if ($content === false) {
-				$this->logger->warning(
-					'Shillinq: failed to read InventoryStock seed file',
-					['file' => basename($seedPath)]
-				);
-				continue;
-			}
-
-			$data = json_decode($content, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				$this->logger->warning(
-					'Shillinq: failed to parse InventoryStock seed file',
-					[
-						'file' => basename($seedPath),
-						'error' => json_last_error_msg(),
-					]
-				);
-				continue;
-			}
-
-			$rows = ($data['stock'] ?? []);
-			foreach ($rows as $row) {
+			foreach ($this->stockFileRows(seedPath: $seedPath) as $row) {
 				$allRows[] = $row;
 			}
-		}//end foreach
+		}
 
 		return $allRows;
 	}//end readStockRows()
+
+	/**
+	 * The stock rows of one demo warehouse file; a missing, unreadable or invalid file is logged and gives none.
+	 *
+	 * @param string $seedPath The seed file path.
+	 *
+	 * @return mixed The file's `stock` rows.
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	private function stockFileRows(string $seedPath): mixed {
+		if (file_exists($seedPath) === false) {
+			$this->logger->warning(
+				'Shillinq: InventoryStock seed file missing, skipping',
+				['file' => basename($seedPath)]
+			);
+			return [];
+		}
+
+		$content = file_get_contents($seedPath);
+		if ($content === false) {
+			$this->logger->warning(
+				'Shillinq: failed to read InventoryStock seed file',
+				['file' => basename($seedPath)]
+			);
+			return [];
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$this->logger->warning(
+				'Shillinq: failed to parse InventoryStock seed file',
+				[
+					'file' => basename($seedPath),
+					'error' => json_last_error_msg(),
+				]
+			);
+			return [];
+		}
+
+		return ($data['stock'] ?? []);
+	}//end stockFileRows()
 
 	/**
 	 * Seed the default `InventoryGLConfig` record for an administration
@@ -355,12 +406,9 @@ class InventorySeedService {
 	 * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
 	 */
 	public function seedInventoryGLConfig(string $administrationId): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return $this->importer->failed(message: self::NO_OPENREGISTER);
-		}
-
-		if ($administrationId === '') {
-			return $this->importer->failed(message: 'administrationId must not be empty.');
+		$refusal = $this->seedRefusal(administrationId: $administrationId, missingMessage: 'administrationId must not be empty.');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$fileName = 'inventory-gl-config-2026.json';
@@ -381,6 +429,20 @@ class InventorySeedService {
 			return $this->importer->nothingSeeded(message: 'No InventoryGLConfig entries in seed file.');
 		}
 
+		return $this->importGlConfig(configs: $configs, administrationId: $administrationId);
+	}//end seedInventoryGLConfig()
+
+	/**
+	 * Import the InventoryGLConfig, one configuration per administration.
+	 *
+	 * @param mixed             $configs          The seed configurations.
+	 * @param string            $administrationId Administration scope for the seed.
+	 *
+	 * @return array<string,mixed> Result with success flag, seeded + skipped counts, message.
+	 *
+	 * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
+	 */
+	private function importGlConfig(mixed $configs, string $administrationId): array {
 		// One configuration per administration.
 		$match = static fn (): array => ['administrationId' => $administrationId];
 
@@ -393,5 +455,25 @@ class InventorySeedService {
 				logContext: ['administrationId' => $administrationId],
 			)
 		);
-	}//end seedInventoryGLConfig()
+	}//end importGlConfig()
+
+	/**
+	 * Refuse a seed without OpenRegister or an administration.
+	 *
+	 * @param string $administrationId Administration scope for the seed.
+	 * @param string $missingMessage   The message when the administration is missing.
+	 *
+	 * @return array<string,mixed>|null The refusal, or null to go on seeding.
+	 */
+	private function seedRefusal(string $administrationId, string $missingMessage): array|null {
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return $this->importer->failed(message: self::NO_OPENREGISTER);
+		}
+
+		if ($administrationId === '') {
+			return $this->importer->failed(message: $missingMessage);
+		}
+
+		return null;
+	}//end seedRefusal()
 }//end class

@@ -34,8 +34,8 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use RuntimeException;
@@ -349,12 +349,7 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	/**

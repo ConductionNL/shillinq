@@ -37,6 +37,8 @@ namespace OCA\Shillinq\Service\Sales;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Lock\ILockingProvider;
@@ -365,9 +367,10 @@ class InvoiceNumberSequenceService {
 		try {
 			$this->objectService->saveObject(
 				object: $sequence,
-				register: $this->registerLocation->getRegisterSlug(),
-				schema: self::SCHEMA,
-				uuid: $uuid
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->registerLocation->getRegisterSlug(), schema: self::SCHEMA),
+					uuid: $uuid
+				)
 			);
 		} catch (\Throwable $e) {
 			throw new RuntimeException('The invoice number series could not be saved: ' . $e->getMessage(), 0, $e);

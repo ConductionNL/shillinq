@@ -90,6 +90,28 @@ class AdministrationManagedWriteListener implements IEventListener {
 	 * @spec openspec/specs/accounting-standards-policy/spec.md
 	 */
 	public function handle(Event $event): void {
+		$entities = $this->entitiesOf(event: $event);
+		if ($entities === [] || $this->isChecked(entity: $entities[0]) === false) {
+			return;
+		}
+
+		if ($this->administrationContext->currentUserId() === null) {
+			return;
+		}
+
+		$this->refuseUnmanaged(event: $event, entities: $entities);
+	}//end handle()
+
+	/**
+	 * The objects the write touches: the new object, and on an update also the old one.
+	 *
+	 * @param Event $event An ObjectCreatingEvent or ObjectUpdatingEvent.
+	 *
+	 * @return array<int, mixed> The non-null objects.
+	 *
+	 * @spec openspec/specs/accounting-standards-policy/spec.md
+	 */
+	private function entitiesOf(Event $event): array {
 		$entities = [];
 		if ($event instanceof ObjectCreatingEvent === true) {
 			$entities[] = $event->getObject();
@@ -100,15 +122,20 @@ class AdministrationManagedWriteListener implements IEventListener {
 			$entities[] = $event->getOldObject();
 		}
 
-		$entities = array_values(array_filter($entities, static fn ($entity): bool => $entity !== null));
-		if ($entities === [] || $this->isChecked(entity: $entities[0]) === false) {
-			return;
-		}
+		return array_values(array_filter($entities, static fn ($entity): bool => $entity !== null));
+	}//end entitiesOf()
 
-		if ($this->administrationContext->currentUserId() === null) {
-			return;
-		}
-
+	/**
+	 * Stop the write at the first object whose administration the caller does not manage.
+	 *
+	 * @param Event             $event    The write event.
+	 * @param array<int, mixed> $entities The objects the write touches.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/accounting-standards-policy/spec.md
+	 */
+	private function refuseUnmanaged(Event $event, array $entities): void {
 		foreach ($entities as $entity) {
 			$administrationId = trim((string)(($entity->getObject() ?? [])['administrationId'] ?? ''));
 			if ($this->managementAccess->canManage(administrationId: $administrationId) === true) {
@@ -123,7 +150,7 @@ class AdministrationManagedWriteListener implements IEventListener {
 			$event->stopPropagation();
 			return;
 		}
-	}//end handle()
+	}//end refuseUnmanaged()
 
 	/**
 	 * Whether the entity belongs to one of the checked schemas.

@@ -96,6 +96,14 @@ final class LedgerPostingRegistration {
 			'isInvoiceBalanced',
 			'The invoice cannot be issued: its lines plus VAT do not add up to the invoice total.',
 		],
+		// BtwAangifte.submit (bookkeeping-vat-btw-filing.json, REQ-TVRB-001):
+		// the return is filed, not posted, but its refusal names a check the
+		// same way, so it shares this table.
+		'OCA\Shillinq\Lifecycle\VatReturnChecksGuard::canSubmit' => [
+			VatReturnChecksGuard::class,
+			'canSubmit',
+			'The return cannot be submitted until its blocking checks pass.',
+		],
 	];
 
 	/**

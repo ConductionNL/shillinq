@@ -52,6 +52,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\TenderNedStatusSyncInterface;
 use OCA\Shillinq\Support\FleetAppId;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -167,6 +168,20 @@ class TenderNedStatusSync implements TenderNedStatusSyncInterface {
 			return null;
 		}
 
+		$rows = $this->tenderRows(objectService: $objectService, commitmentId: $commitmentId);
+
+		return $this->firstArrayRow(rows: $rows);
+	}//end resolveAanbestedingFor()
+
+	/**
+	 * The TenderNedProcurement rows linked to a Commitment, or null when the read fails.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $commitmentId  The linked obligation identifier.
+	 *
+	 * @return mixed
+	 */
+	private function tenderRows(object $objectService, string $commitmentId): mixed {
 		try {
 			$rows = $objectService
 				->setRegister(register: $this->getRegisterSlug())
@@ -180,6 +195,17 @@ class TenderNedStatusSync implements TenderNedStatusSyncInterface {
 			return null;
 		}
 
+		return $rows;
+	}//end tenderRows()
+
+	/**
+	 * The first array row, or null.
+	 *
+	 * @param mixed $rows The rows, or null.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function firstArrayRow(mixed $rows): array|null {
 		if (is_array($rows) === false) {
 			return null;
 		}
@@ -191,7 +217,7 @@ class TenderNedStatusSync implements TenderNedStatusSyncInterface {
 		}
 
 		return null;
-	}//end resolveAanbestedingFor()
+	}//end firstArrayRow()
 
 	/**
 	 * Check whether the tenant is the aanbestedende dienst on the dossier.
@@ -307,11 +333,6 @@ class TenderNedStatusSync implements TenderNedStatusSyncInterface {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 }//end class

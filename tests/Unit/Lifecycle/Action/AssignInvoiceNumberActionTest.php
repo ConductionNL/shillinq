@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\AssignInvoiceNumberAction;
 use OCA\Shillinq\Service\Sales\InvoiceNumberSequenceService;
 use PHPUnit\Framework\TestCase;
@@ -58,7 +59,7 @@ class AssignInvoiceNumberActionTest extends TestCase {
 			->with('adm-vd', InvoiceNumberSequenceService::KIND_SALES, 2026)
 			->willReturn('2026-0042');
 
-		$issued = (new AssignInvoiceNumberAction(sequences: $sequences))->execute($this->issuing(), [], [], 'issue');
+		$issued = (new AssignInvoiceNumberAction(sequences: $sequences))->execute(new LifecycleActionContext(objectData: $this->issuing(), previousData: [], parameters: [], actionName: 'issue'));
 
 		$this->assertSame('2026-0042', $issued['invoiceNumber']);
 		$this->assertSame(1210.0, $issued['grossAmount']);
@@ -74,7 +75,7 @@ class AssignInvoiceNumberActionTest extends TestCase {
 		$sequences->method('next')->willReturn('2026-0043');
 
 		$issued = (new AssignInvoiceNumberAction(sequences: $sequences))
-			->execute($this->issuing(['invoiceNumber' => 'DRAFT-20260314-ab12cd34']), [], [], 'issue');
+			->execute(new LifecycleActionContext(objectData: $this->issuing(['invoiceNumber' => 'DRAFT-20260314-ab12cd34']), previousData: [], parameters: [], actionName: 'issue'));
 
 		$this->assertSame('2026-0043', $issued['invoiceNumber']);
 	}//end testAProvisionalDraftNumberIsReplaced()
@@ -91,7 +92,7 @@ class AssignInvoiceNumberActionTest extends TestCase {
 
 		foreach ([true, 1, '1', 'true'] as $flag) {
 			$invoice = $this->issuing(['invoiceNumber' => 'GV-2026-0815', 'selfBilled' => $flag]);
-			$this->assertSame($invoice, $action->execute($invoice, [], [], 'issue'));
+			$this->assertSame($invoice, $action->execute(new LifecycleActionContext(objectData: $invoice, previousData: [], parameters: [], actionName: 'issue')));
 			$this->assertFalse(AssignInvoiceNumberAction::takesNumber(invoice: $invoice));
 		}
 
@@ -110,7 +111,7 @@ class AssignInvoiceNumberActionTest extends TestCase {
 			->willReturn('CN-2025-0004');
 
 		$issued = (new AssignInvoiceNumberAction(sequences: $sequences))
-			->execute($this->issuing(['invoiceType' => 'credit-note', 'invoiceDate' => '2025-12-31']), [], [], 'issue');
+			->execute(new LifecycleActionContext(objectData: $this->issuing(['invoiceType' => 'credit-note', 'invoiceDate' => '2025-12-31']), previousData: [], parameters: [], actionName: 'issue'));
 
 		$this->assertSame('CN-2025-0004', $issued['invoiceNumber']);
 	}//end testACreditNoteTakesTheCreditSeries()
@@ -126,6 +127,6 @@ class AssignInvoiceNumberActionTest extends TestCase {
 			->with('adm-vd', InvoiceNumberSequenceService::KIND_SALES, (int)date('Y'))
 			->willReturn('x');
 
-		(new AssignInvoiceNumberAction(sequences: $sequences))->execute($this->issuing(['invoiceDate' => 'soon']), [], [], 'issue');
+		(new AssignInvoiceNumberAction(sequences: $sequences))->execute(new LifecycleActionContext(objectData: $this->issuing(['invoiceDate' => 'soon']), previousData: [], parameters: [], actionName: 'issue'));
 	}//end testWithoutAnInvoiceDateTheCurrentYearCounts()
 }//end class

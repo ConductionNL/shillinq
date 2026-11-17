@@ -37,6 +37,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Project;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -218,6 +220,22 @@ class AssignmentHours implements AssignmentHoursInterface {
 			return;
 		}
 
+		$totals = $this->projectHourTotals(projectId: $projectId);
+		$changed = $this->changedFields(current: $project, wanted: $totals);
+		if ($changed !== []) {
+			$this->patch(schema: self::PROJECT_SCHEMA, objectId: $projectId, data: $changed);
+		}
+
+	}//end recalculateProject()
+
+	/**
+	 * The estimated, logged and remaining hours over a project's assignments, and whether any is over budget.
+	 *
+	 * @param string $projectId The engagement id.
+	 *
+	 * @return array{estimatedHoursTotal: float, loggedHoursTotal: float, remainingHoursTotal: float, hoursOverBudget: bool}
+	 */
+	private function projectHourTotals(string $projectId): array {
 		$estimated = 0.0;
 		$logged = 0.0;
 		$over = false;
@@ -229,18 +247,13 @@ class AssignmentHours implements AssignmentHoursInterface {
 			$over = $over || ($percent !== null && $percent > 100.0);
 		}
 
-		$totals = [
+		return [
 			'estimatedHoursTotal' => $estimated,
 			'loggedHoursTotal'    => $logged,
 			'remainingHoursTotal' => round($estimated - $logged, 2),
 			'hoursOverBudget'     => $over,
 		];
-		$changed = $this->changedFields(current: $project, wanted: $totals);
-		if ($changed !== []) {
-			$this->patch(schema: self::PROJECT_SCHEMA, objectId: $projectId, data: $changed);
-		}
-
-	}//end recalculateProject()
+	}//end projectHourTotals()
 
 	/**
 	 * The project owner and name copied onto the assignment for the warnings.
@@ -376,10 +389,11 @@ class AssignmentHours implements AssignmentHoursInterface {
 	 */
 	private function patch(string $schema, string $objectId, array $data): void {
 		$this->objectService->patchObject(
-			objectId: $objectId,
-			data: $data,
-			register: $this->settings->getRegisterSlug(),
-			schema: $schema,
+			new ObjectPatch(
+				objectId: $objectId,
+				data: $data,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema)
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

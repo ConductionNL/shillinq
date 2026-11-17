@@ -87,7 +87,6 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -254,7 +253,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		$scorecard = $this->withExistingScorecardId(run: $run, scorecard: $scorecard);
 		$scorecard = $this->withReviewEligibility(run: $run, scorecard: $scorecard);
 
-		$saved = $this->saveObject(schema: self::SCHEMA_VENDOR_PERFORMANCE, object: $scorecard);
+		$saved = $this->records()->saveObject(schema: self::SCHEMA_VENDOR_PERFORMANCE, object: $scorecard);
 		if ($scorecard['automatedReviewEligible'] === true) {
 			$this->relaxSupplierTolerance(run: $run);
 		}
@@ -313,7 +312,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 */
 	private function collectPeriodFacts(VendorScorecardRun $run): void {
 		$run->poIds = $this->supplierPurchaseOrdersById(run: $run);
-		$supplierInvoices = $this->findAll(
+		$supplierInvoices = $this->records()->findAll(
 			schema: self::SCHEMA_SUPPLIER_INVOICE,
 			filters: ['supplierId' => $run->supplierId, 'administrationId' => $run->administrationId]
 		);
@@ -330,7 +329,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @return array<string,array<string,mixed>>
 	 */
 	private function supplierPurchaseOrdersById(VendorScorecardRun $run): array {
-		$purchaseOrders = $this->findAll(
+		$purchaseOrders = $this->records()->findAll(
 			schema: self::SCHEMA_PURCHASE_ORDER,
 			filters: ['supplierId' => $run->supplierId, 'administrationId' => $run->administrationId]
 		);
@@ -393,7 +392,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 */
 	private function administrationRowsInPeriod(VendorScorecardRun $run, string $schema): array {
 		return $this->filterByDate(
-			rows:  $this->findAll(
+			rows:  $this->records()->findAll(
 				schema: $schema,
 				filters: ['administrationId' => $run->administrationId]
 			),
@@ -559,7 +558,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @return string
 	 */
 	private function trendAgainstPriorPeriod(VendorScorecardRun $run, int $overallBp): string {
-		$priorCard = $this->findOne(
+		$priorCard = $this->records()->findOne(
 			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
 			filters: [
 				'supplierId' => $run->supplierId,
@@ -580,7 +579,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @return array<string,mixed>
 	 */
 	private function withExistingScorecardId(VendorScorecardRun $run, array $scorecard): array {
-		$existing = $this->findOne(
+		$existing = $this->records()->findOne(
 			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
 			filters: [
 				'supplierId' => $run->supplierId,
@@ -697,35 +696,61 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 				continue;
 			}
 
-			$lines = $this->findAll(
-				schema:  self::SCHEMA_GRN_LINE,
-				filters: ['grnId' => $grnId, 'administrationId' => $administrationId]
-			);
-			foreach ($lines as $line) {
-				$poLineId = (string)($line['poLineId'] ?? '');
-				if ($poLineId === '') {
-					continue;
-				}
-
-				$poLine = $this->findOne(
-					schema:  self::SCHEMA_PO_LINE,
-					filters: ['id' => $poLineId, 'administrationId' => $administrationId]
-				);
-				if ($poLine === null) {
-					continue;
-				}
-
-				$eligible++;
-				$received = $this->thousandths(value: $line['quantityReceived'] ?? 0);
-				$ordered = $this->thousandths(value: $poLine['quantityOrdered'] ?? 0);
-				if ($received === $ordered) {
-					$accurate++;
-				}
-			}//end foreach
-		}//end foreach
+			$tally     = $this->grnQuantityTally(grnId: $grnId, administrationId: $administrationId);
+			$eligible += $tally['eligible'];
+			$accurate += $tally['accurate'];
+		}
 
 		return $this->rateBp(numerator: $accurate, denominator: $eligible);
 	}//end computeQuantityAccuracyRate()
+
+	/**
+	 * Count one GRN's lines that have a PO line, and those received at exactly the ordered quantity.
+	 *
+	 * @param string $grnId            The GRN id.
+	 * @param string $administrationId Tenant scope.
+	 *
+	 * @return array{eligible: int, accurate: int}
+	 */
+	private function grnQuantityTally(string $grnId, string $administrationId): array {
+		$tally = ['eligible' => 0, 'accurate' => 0];
+		$lines = $this->records()->findAll(schema: self::SCHEMA_GRN_LINE, filters: ['grnId' => $grnId, 'administrationId' => $administrationId]);
+		foreach ($lines as $line) {
+			$poLine = $this->poLineOf(line: $line, administrationId: $administrationId);
+			if ($poLine === null) {
+				continue;
+			}
+
+			$tally['eligible']++;
+			$received = $this->thousandths(value: $line['quantityReceived'] ?? 0);
+			$ordered  = $this->thousandths(value: $poLine['quantityOrdered'] ?? 0);
+			if ($received === $ordered) {
+				$tally['accurate']++;
+			}
+		}
+
+		return $tally;
+	}//end grnQuantityTally()
+
+	/**
+	 * The PO line a GRN line receives against, or null when it names none or it is not found.
+	 *
+	 * @param array<string,mixed> $line             The GRN line.
+	 * @param string              $administrationId Tenant scope.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function poLineOf(array $line, string $administrationId): array|null {
+		$poLineId = (string)($line['poLineId'] ?? '');
+		if ($poLineId === '') {
+			return null;
+		}
+
+		return $this->records()->findOne(
+			schema:  self::SCHEMA_PO_LINE,
+			filters: ['id' => $poLineId, 'administrationId' => $administrationId]
+		);
+	}//end poLineOf()
 
 	/**
 	 * Compute the price-accuracy rate for the period in basis points.
@@ -769,25 +794,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
 	 */
 	public function computeInvoiceAccuracyRate(array $matches, array $invoiceIds): int {
-		// Group matches by invoiceId, then pick the chronologically-first one.
-		$byInvoice = [];
-		foreach ($matches as $match) {
-			$invoiceId = (string)($match['invoiceId'] ?? '');
-			if ($invoiceId === '' || isset($invoiceIds[$invoiceId]) === false) {
-				continue;
-			}
-
-			$createdAt = (string)($match['createdAt'] ?? '');
-			if (isset($byInvoice[$invoiceId]) === false) {
-				$byInvoice[$invoiceId] = $match;
-				continue;
-			}
-
-			$current = (string)($byInvoice[$invoiceId]['createdAt'] ?? '');
-			if ($createdAt !== '' && ($current === '' || $createdAt < $current)) {
-				$byInvoice[$invoiceId] = $match;
-			}
-		}
+		$byInvoice = self::firstMatchPerInvoice(matches: $matches, invoiceIds: $invoiceIds);
 
 		$eligible = count($byInvoice);
 		$accurate = 0;
@@ -799,6 +806,66 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 
 		return $this->rateBp(numerator: $accurate, denominator: $eligible);
 	}//end computeInvoiceAccuracyRate()
+
+	/**
+	 * Group matches by invoiceId, then pick the chronologically-first one.
+	 *
+	 * @param array<int, array<string,mixed>> $matches    The three-way matches.
+	 * @param array<string, mixed>            $invoiceIds The invoice ids in scope, as keys.
+	 *
+	 * @return array<string, array<string,mixed>>
+	 */
+	private static function firstMatchPerInvoice(array $matches, array $invoiceIds): array {
+		$byInvoice = [];
+		foreach ($matches as $match) {
+			$invoiceId = self::inScopeInvoiceId(candidate: $match, invoiceIds: $invoiceIds);
+			if ($invoiceId === '') {
+				continue;
+			}
+
+			if (self::isEarlierMatch(candidate: $match, current: ($byInvoice[$invoiceId] ?? null)) === true) {
+				$byInvoice[$invoiceId] = $match;
+			}
+		}
+
+		return $byInvoice;
+	}//end firstMatchPerInvoice()
+
+	/**
+	 * The match's invoice id when that invoice is in scope, else ''.
+	 *
+	 * @param array<string,mixed>  $candidate  The three-way match.
+	 * @param array<string, mixed> $invoiceIds The invoice ids in scope, as keys.
+	 *
+	 * @return string
+	 */
+	private static function inScopeInvoiceId(array $candidate, array $invoiceIds): string {
+		$invoiceId = (string)($candidate['invoiceId'] ?? '');
+		if ($invoiceId === '' || isset($invoiceIds[$invoiceId]) === false) {
+			return '';
+		}
+
+		return $invoiceId;
+	}//end inScopeInvoiceId()
+
+	/**
+	 * Whether a match replaces the one held so far: there is none yet, or it was created before it.
+	 * A match without createdAt never replaces one, and one with it beats a held match without it.
+	 *
+	 * @param array<string,mixed>      $candidate The candidate match.
+	 * @param array<string,mixed>|null $current   The match held so far, or null.
+	 *
+	 * @return bool
+	 */
+	private static function isEarlierMatch(array $candidate, array|null $current): bool {
+		if ($current === null) {
+			return true;
+		}
+
+		$createdAt     = (string)($candidate['createdAt'] ?? '');
+		$currentCreate = (string)($current['createdAt'] ?? '');
+		return ($createdAt !== '' && ($currentCreate === '' || $createdAt < $currentCreate));
+	}//end isEarlierMatch()
 
 	/**
 	 * Weighted overall score in basis points.
@@ -885,17 +952,27 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		// Find the supplier's earliest scorecard for this administration —
 		// VendorPerformance carries no createdAt by schema design, so the
 		// "first scorecard" is reconstructed by sorting on the period code.
-		$cards = $this->findAll(
-			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
-			filters: [
-				'supplierId' => $supplierId,
-				'administrationId' => $administrationId,
-			]
+		$cards = $this->records()->findAll(
+			schema: self::SCHEMA_VENDOR_PERFORMANCE,
+			filters: ['supplierId' => $supplierId, 'administrationId' => $administrationId]
 		);
-		if ($cards === []) {
+
+		$firstPeriod = self::earliestPeriod(cards: $cards);
+		if ($firstPeriod === '') {
 			return false;
 		}
 
+		return $this->isPastBootstrap(firstPeriod: $firstPeriod);
+	}//end setAutoReviewEligible()
+
+	/**
+	 * The earliest period code among the scorecards, or '' when none carries one.
+	 *
+	 * @param array<int, array<string,mixed>> $cards The supplier's scorecards.
+	 *
+	 * @return string
+	 */
+	private static function earliestPeriod(array $cards): string {
 		$firstPeriod = '';
 		foreach ($cards as $card) {
 			$period = (string)($card['period'] ?? '');
@@ -908,14 +985,21 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			}
 		}
 
-		if ($firstPeriod === '') {
-			return false;
-		}
+		return $firstPeriod;
+	}//end earliestPeriod()
 
+	/**
+	 * Whether the first scorecard's period began at least the bootstrap window ago.
+	 *
+	 * @param string $firstPeriod The earliest period code.
+	 *
+	 * @return bool False also when the period cannot be read.
+	 */
+	private function isPastBootstrap(string $firstPeriod): bool {
 		try {
 			$firstDate = $this->periodToFirstDay(period: $firstPeriod);
-			$today = new DateTimeImmutable('today');
-			$ageDays = (int)$firstDate->diff($today)->format('%a');
+			$today     = new DateTimeImmutable('today');
+			$ageDays   = (int)$firstDate->diff($today)->format('%a');
 			if ($firstDate > $today) {
 				$ageDays = -$ageDays;
 			}
@@ -924,7 +1008,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		}
 
 		return ($ageDays >= self::BOOTSTRAP_DAYS);
-	}//end setAutoReviewEligible()
+	}//end isPastBootstrap()
 
 	/**
 	 * Nudge the supplier's ToleranceProfile one step more permissive.
@@ -945,7 +1029,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
 	 */
 	public function autoRelaxToleranceProfile(string $administrationId, string $supplierId): ?array {
-		$profile = $this->findOne(
+		$profile = $this->records()->findOne(
 			schema:  self::SCHEMA_TOLERANCE_PROFILE,
 			filters: [
 				'scope' => 'supplier',
@@ -958,27 +1042,32 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			return null;
 		}
 
-		$priceBp = $this->intOrZero(value: $profile['priceTolerancePercentage'] ?? 0) + 25;
-		if ($priceBp > 1000) {
-			$priceBp = 1000;
-		}
-
-		$qtyBp = $this->intOrZero(value: $profile['quantityTolerancePercentage'] ?? 0) + 25;
-		if ($qtyBp > 1000) {
-			$qtyBp = 1000;
-		}
-
-		$dateDays = $this->intOrZero(value: $profile['dateToleranceDays'] ?? 0) + 1;
-		if ($dateDays > 14) {
-			$dateDays = 14;
-		}
+		$priceBp  = self::capAt(value: $this->intOrZero(value: $profile['priceTolerancePercentage'] ?? 0) + 25, max: 1000);
+		$qtyBp    = self::capAt(value: $this->intOrZero(value: $profile['quantityTolerancePercentage'] ?? 0) + 25, max: 1000);
+		$dateDays = self::capAt(value: $this->intOrZero(value: $profile['dateToleranceDays'] ?? 0) + 1, max: 14);
 
 		$profile['priceTolerancePercentage'] = $priceBp;
 		$profile['quantityTolerancePercentage'] = $qtyBp;
 		$profile['dateToleranceDays'] = $dateDays;
 
-		return $this->saveObject(schema: self::SCHEMA_TOLERANCE_PROFILE, object: $profile);
+		return $this->records()->saveObject(schema: self::SCHEMA_TOLERANCE_PROFILE, object: $profile);
 	}//end autoRelaxToleranceProfile()
+
+	/**
+	 * The value, capped at the maximum.
+	 *
+	 * @param int $value The value.
+	 * @param int $max   The cap.
+	 *
+	 * @return int
+	 */
+	private static function capAt(int $value, int $max): int {
+		if ($value > $max) {
+			$value = $max;
+		}
+
+		return $value;
+	}//end capAt()
 
 	/**
 	 * Aggregate every supplier with activity in the administration for the
@@ -996,17 +1085,21 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			return [];
 		}
 
-		$window = $this->resolvePeriodWindow(period: $period);
-		$invoices = $this->filterByDate(
-			rows:  $this->findAll(
-				schema:  self::SCHEMA_SUPPLIER_INVOICE,
-				filters: ['administrationId' => $administrationId]
-			),
-			field: 'invoiceDate',
-			from:  $window['from'],
-			to:    $window['to']
-		);
+		$window   = $this->resolvePeriodWindow(period: $period);
+		$rows     = $this->records()->findAll(schema: self::SCHEMA_SUPPLIER_INVOICE, filters: ['administrationId' => $administrationId]);
+		$invoices = $this->filterByDate(rows: $rows, field: 'invoiceDate', from: $window['from'], to: $window['to']);
 
+		return $this->scorecardsFor(administrationId: $administrationId, period: $period, supplierIds: self::supplierIdsOf(invoices: $invoices));
+	}//end aggregateAdministrationForPeriod()
+
+	/**
+	 * The distinct supplier ids of the invoices, as a set.
+	 *
+	 * @param array<int, array<string,mixed>> $invoices The period's supplier invoices.
+	 *
+	 * @return array<string, true>
+	 */
+	private static function supplierIdsOf(array $invoices): array {
 		$supplierIds = [];
 		foreach ($invoices as $invoice) {
 			$supplierId = trim((string)($invoice['supplierId'] ?? ''));
@@ -1015,6 +1108,19 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			}
 		}
 
+		return $supplierIds;
+	}//end supplierIdsOf()
+
+	/**
+	 * Calculate each supplier's monthly scorecard, skipping (and logging) the ones that fail.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param string              $period           The period code.
+	 * @param array<string, true> $supplierIds      The suppliers, as keys.
+	 *
+	 * @return array<int, array<string,mixed>>
+	 */
+	private function scorecardsFor(string $administrationId, string $period, array $supplierIds): array {
 		$scorecards = [];
 		foreach (array_keys($supplierIds) as $supplierId) {
 			try {
@@ -1026,18 +1132,13 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			} catch (Throwable $e) {
 				$this->logger->warning(
 					'VendorPerformanceAggregation: scorecard failed',
-					[
-						'administrationId' => $administrationId,
-						'supplierId' => $supplierId,
-						'period' => $period,
-						'exception' => $e->getMessage(),
-					]
+					['administrationId' => $administrationId, 'supplierId' => $supplierId, 'period' => $period, 'exception' => $e->getMessage()]
 				);
 			}
 		}
 
 		return $scorecards;
-	}//end aggregateAdministrationForPeriod()
+	}//end scorecardsFor()
 
 	/**
 	 * Resolve a period code to ['from' => 'YYYY-MM-DD', 'to' => 'YYYY-MM-DD'].
@@ -1187,27 +1288,52 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			}
 
 			try {
-				$a = new DateTimeImmutable($created);
-				$b = new DateTimeImmutable($resolved);
-				$days = (int)$a->diff($b)->format('%a');
-				if ($b < $a) {
-					$days = -$days;
-				}
-
-				$total += $days;
+				$total += self::resolutionDays(created: $created, resolved: $resolved);
 				$count++;
 			} catch (Throwable $e) {
 				continue;
 			}
 		}//end foreach
 
+		return self::halfUpAverage(total: $total, count: $count);
+	}//end averageResolutionDays()
+
+	/**
+	 * Integer-rounding HALF-UP average: (total + count/2) intdiv count; 0 when there is nothing to average.
+	 *
+	 * @param int $total The summed days.
+	 * @param int $count The number of matches.
+	 *
+	 * @return int
+	 */
+	private static function halfUpAverage(int $total, int $count): int {
 		if ($count === 0) {
 			return 0;
 		}
 
-		// Integer-rounding HALF-UP: (total + count/2) intdiv count.
 		return intdiv(($total + intdiv($count, 2)), $count);
-	}//end averageResolutionDays()
+	}//end halfUpAverage()
+
+	/**
+	 * Whole days from creation to resolution; negative when resolved before created.
+	 *
+	 * @param string $created  The match's createdAt.
+	 * @param string $resolved The match's resolvedAt.
+	 *
+	 * @return int
+	 *
+	 * @throws \Exception When a timestamp cannot be parsed.
+	 */
+	private static function resolutionDays(string $created, string $resolved): int {
+		$a    = new DateTimeImmutable($created);
+		$b    = new DateTimeImmutable($resolved);
+		$days = (int)$a->diff($b)->format('%a');
+		if ($b < $a) {
+			$days = -$days;
+		}
+
+		return $days;
+	}//end resolutionDays()
 
 	/**
 	 * Quantise a count + denominator to basis points (0..10000).
@@ -1335,99 +1461,15 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	}//end idOf()
 
 	/**
-	 * Persist an object via OR's real ObjectService API (saveObject).
+	 * The register records of this service.
 	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object to persist.
-	 *
-	 * @return array<string,mixed>
-	 *
-	 * @throws \RuntimeException When the persistence call fails.
+	 * @return SchemaRecordStore The store.
 	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'VendorPerformanceAggregation')
+		);
 
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'VendorPerformanceAggregation: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'VendorPerformanceAggregation: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OR register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
+	}//end records()
 }//end class
