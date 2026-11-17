@@ -210,6 +210,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
+            // CORS preflight of an embed on another website (REQ-WSW-011): the origins allowed per widget key.
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/services', 'verb' => 'OPTIONS', 'postfix' => 'services'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/slots', 'verb' => 'OPTIONS', 'postfix' => 'slots'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/appointments', 'verb' => 'OPTIONS', 'postfix' => 'appointments'],
         // Bookings-depth: no-show-fee capture + recurring appointment series.
         // Both are operator actions (#[NoAdminRequired] + per-administration
         // guard). no-show captures the defined noShowFee via the DepositPayment
@@ -227,6 +231,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'vATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
             ['name' => 'vATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
             ['name' => 'vATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
+            ['name' => 'vATReturn#checks', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'],
             // tax-vat-position-and-suppletie (REQ-VPS-001, REQ-VPS-002): the running
             // position, the drift check on a filed return, and preparing its suppletie.
             ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
@@ -699,6 +704,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'widgetSettings#create', 'url' => '/api/widget/admin/keys/create', 'verb' => 'POST'],
             ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
             ['name' => 'widgetSettings#revoke', 'url' => '/api/widget/admin/keys/revoke', 'verb' => 'POST'],
+            ['name' => 'widgetSettings#origins', 'url' => '/api/widget/admin/keys/origins', 'verb' => 'POST'],
 
             // Inventory scanner server-authoritative API (inventory-mobile-scanner,
             // REQ-SKU-001/002, REQ-OFFLINE-002/003, REQ-PERM-001). The

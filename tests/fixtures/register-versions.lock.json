@@ -110,8 +110,12 @@
             "versionsSha256": "e2e41df56b632cc9a414210e6b0551f51e90126895d69b9116f117aff99e3005"
         },
         {
+            "appVersion": "0.5.7-unstable.20261116230000",
+            "versionsSha256": "b83468d10ec63d9aac329c3b3771a0f8b0ab3c9ab5aebf6946aa63d7724bd9e7"
+        },
+        {
             "appVersion": "0.5.7-unstable.20261116231500",
-            "versionsSha256": "1d3567f7335aed5ef2e7f81638293930fe50411b5f4f36d7a21e78c1a2a7a606"
+            "versionsSha256": "39ba86c24726ae8b9e9bff397fbafea82da222e537b0ac366442e692ff9c75b9"
         }
     ],
     "versions": {
@@ -186,7 +190,7 @@
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",
         "schema:BookingSmsReminderChannel": "0.1.0",
-        "schema:BtwAangifte": "0.1.0",
+        "schema:BtwAangifte": "0.2.0",
         "schema:BudgetBBVMapping": "0.3.0",
         "schema:BudgetLine": "0.1.0",
         "schema:BudgetLineDerivation": "0.1.0",
@@ -212,7 +216,6 @@
         "schema:CashflowRecurring": "0.1.0",
         "schema:CashflowScenario": "0.1.0",
         "schema:CashflowWeek": "0.1.0",
-        "schema:CbcrEntityFigures": "0.1.0",
         "schema:CbcrJurisdictionSummary": "0.2.0",
         "schema:CbcrReturn": "0.2.0",
         "schema:CcmAuditCommitteeReport": "0.1.0",
@@ -341,7 +344,6 @@
         "schema:Grant": "0.1.0",
         "schema:GroupEntity": "0.1.1",
         "schema:GroupEntityRegistry": "0.2.0",
-        "schema:GroupScopeAssessment": "0.1.0",
         "schema:HerstructureringsvoorzieningDetail": "0.1.0",
         "schema:IB47Record": "0.1.0",
         "schema:IBAangifte": "0.1.0",
@@ -651,6 +653,8 @@
         "schema:ZzpDeductionAmounts": "0.1.0",
         "schema:engagement": "0.2.0",
         "schema:kernGegevensConfig": "0.1.0",
-        "schema:payrollEmployee": "0.1.0"
+        "schema:payrollEmployee": "0.1.0",
+        "schema:CbcrEntityFigures": "0.1.0",
+        "schema:GroupScopeAssessment": "0.1.0"
     }
 }

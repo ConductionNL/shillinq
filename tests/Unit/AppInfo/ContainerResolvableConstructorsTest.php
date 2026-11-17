@@ -360,6 +360,24 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 			foreach ($aliasMatches[1] as $short) {
 				$bound[$aliases[$short] ?? ($namespace . $short)] = true;
 			}
+
+			// A registrar may keep its aliases in an ALIASES map
+			// (`Contract::class => Implementation::class`) and pass each
+			// pair to registerServiceAlias() in a loop. The keys of that
+			// map are the bound contracts.
+			if (str_contains($source, 'registerServiceAlias(') === true
+				&& preg_match('/const\s+ALIASES\s*=\s*\[(.*?)\];/s', $source, $mapMatch) === 1
+			) {
+				preg_match_all(
+					'/([A-Za-z_\\\\][\w\\\\]*)::class\s*=>\s*[A-Za-z_\\\\][\w\\\\]*::class/',
+					$mapMatch[1],
+					$mapEntries
+				);
+
+				foreach ($mapEntries[1] as $short) {
+					$bound[$aliases[$short] ?? ($namespace . $short)] = true;
+				}
+			}
 		}
 
 		return $bound;
