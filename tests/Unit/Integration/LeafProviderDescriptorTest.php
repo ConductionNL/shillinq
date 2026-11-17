@@ -34,6 +34,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 
 /**
  * Tests for the leaves' descriptors and refusals.
@@ -153,9 +154,9 @@ final class LeafProviderDescriptorTest extends TestCase {
 		$this->expectExceptionMessage($message);
 
 		match ($write) {
-			'create' => $leaf->create('zaken', 'zaak', 'zaak-7', ['title' => 'x']),
-			'update' => $leaf->update('zaken', 'zaak', 'zaak-7', 'e-1', ['title' => 'x']),
-			'delete' => $leaf->delete('zaken', 'zaak', 'zaak-7', 'e-1'),
+			'create' => $leaf->create(new ObjectRef(register: 'zaken', schema: 'zaak', id: 'zaak-7'), ['title' => 'x']),
+			'update' => $leaf->update(new ObjectRef(register: 'zaken', schema: 'zaak', id: 'zaak-7'), 'e-1', ['title' => 'x']),
+			'delete' => $leaf->delete(new ObjectRef(register: 'zaken', schema: 'zaak', id: 'zaak-7'), 'e-1'),
 		};
 	}//end testTheLeafRefusesWritesItDoesNotOffer()
 }//end class

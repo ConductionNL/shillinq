@@ -24,10 +24,12 @@ namespace OCA\Shillinq\Tests\Unit\Mcp;
 
 use OCA\Shillinq\Controller\VATReturnController;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
+use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
 use OCA\Shillinq\Mcp\McpAdministrationGate;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\McpVatReturnTools;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Vat\VatReturnCheckService;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
@@ -39,6 +41,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * The tools and VATReturnController run against the same session,
@@ -48,6 +51,7 @@ use RuntimeException;
 #[CoversClass(McpAdministrationGate::class)]
 #[CoversClass(McpResult::class)]
 #[UsesClass(VATReturnController::class)]
+#[UsesClass(VatReturnChecksGuard::class)]
 class McpVatReturnToolsTest extends TestCase {
 
 	/**
@@ -202,7 +206,8 @@ class McpVatReturnToolsTest extends TestCase {
 				return $this;
 			}
 
-			public function deleteObject(string $id): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$id = $deletion->uuid;
 				$this->calls[] = 'delete:' . $id;
 				return true;
 			}
@@ -347,7 +352,9 @@ class McpVatReturnToolsTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
-		$controller = new VATReturnController($this->createMock(IRequest::class), $this->service, $container, $session, $context, $logger, $l10n);
+		// No blocking VAT return check fails here, so the controller refuses only where the tool does.
+		$checks = $this->createMock(VatReturnCheckService::class);
+		$controller = new VATReturnController($this->createMock(IRequest::class), $this->service, $container, $session, $context, $logger, $l10n, new VatReturnChecksGuard(checks: $checks), $checks);
 		$tools = new McpVatReturnTools(new McpAdministrationGate($session, $context), $this->service, $container, $logger);
 
 		return [$controller, $tools];

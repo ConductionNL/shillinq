@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\Tax\FiledReturnDriftCheck;
+use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -57,12 +57,12 @@ class PeriodClosedDriftListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param FiledReturnDriftCheck           $driftCheck     Checks a fiscal year's filed returns.
+	 * @param FiledReturnDriftCheckInterface  $driftCheck     Checks a fiscal year's filed returns.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves an entity's schema slug.
 	 * @param LoggerInterface                 $logger         Logger.
 	 */
 	public function __construct(
-		private readonly FiledReturnDriftCheck $driftCheck,
+		private readonly FiledReturnDriftCheckInterface $driftCheck,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {

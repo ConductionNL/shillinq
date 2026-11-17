@@ -28,8 +28,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\BbvSeedServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -93,12 +95,7 @@ class BbvSeedService implements BbvSeedServiceInterface {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**
@@ -225,7 +222,10 @@ class BbvSeedService implements BbvSeedServiceInterface {
 				continue;
 			}
 
-			$objectService->saveObject(object: $row, register: $registerSlug, schema: $schema);
+			$objectService->saveObject(
+				object: $row,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema))
+			);
 			$seeded++;
 		}//end foreach
 

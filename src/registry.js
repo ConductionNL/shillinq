@@ -111,7 +111,6 @@ import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboar
 // with dimmed projection columns — a genuinely custom two-source transform
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
-import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
 // bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
 // the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
 // flow with rejection-reason picker + delivery-photo upload, and the detail
@@ -228,6 +227,7 @@ import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMa
 // fit the built-in `index` page type, so the view is registered as a
 // kind:"page" custom component.
 import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
+import VatReturnChecksPanel from './components/vat/VatReturnChecksPanel.vue'
 import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
 // bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
 // REQ-VP-005): the VendorPerformance index + detail render the monthly
@@ -329,15 +329,6 @@ import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue
 // the page is registered as a kind:"page" custom component per ADR-024.
 import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
 import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
-// add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
-// declarative FxRate index grid with a cron-status overlay (last-run
-// timestamp + TreasuryRateAdapter dormancy flag) read from
-// /api/admin/fx-rate-import-status. The header strip + dormancy hint do
-// not fit any built-in `index` / `detail` / `dashboard` page type, so the
-// page is registered as a kind:"page" custom component per ADR-024.
-// Admin-only — the controller is gated by
-// #[AuthorizedAdminSetting(Application::class)].
-import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 // budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
 // verzamelpost rows (LedgerGroup tree, expandable to child groups or
@@ -439,7 +430,6 @@ export default {
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
-	GoodsReceiptNoteDetail: { kind: 'page', component: GoodsReceiptNoteDetail },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 
@@ -487,7 +477,6 @@ export default {
 	PeriodCloseDetail: { kind: 'page', component: PeriodCloseDetail },
 
 	// add-shillinq-multi-currency Task 14: FxRates admin overlay (cron status).
-	FxRatesAdmin: { kind: 'page', component: FxRatesAdmin },
 
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
@@ -547,6 +536,15 @@ export default {
 		kind: 'widget',
 		component: ProjectBillableHoursCard,
 		_note: 'Lists a month of the project\'s hours with rate, tier, value and billed state and totals the unbilled value. An object-table widget cannot tell "no hours source" from "no hours" and has no month picker.',
+	},
+
+	// tax-vat-return-from-books 3.3 (REQ-TVRB-001): the Checks tab on
+	// VATReturnDetail's sidebar.
+	VatReturnChecksPanel: {
+		// @custom-widget-ratchet exclude the checks are computed on the server over the period's ledger lines, VAT accounts, drafts and earlier returns (GET /api/vat-returns/{id}/checks); no declarative widget runs a server-side rule evaluation or shows a per-check passed/blocking/warning state with the offenders it names.
+		kind: 'widget',
+		component: VatReturnChecksPanel,
+		_note: 'Shows each VAT return check as passed, failed and blocking, or failed as a warning, with the transactions, accounts or documents to fix. An object-table widget lists stored rows; these verdicts are computed per request and stored nowhere.',
 	},
 
 	// ledger-booking-rules (REQ-LBR-003): the booking lines with each

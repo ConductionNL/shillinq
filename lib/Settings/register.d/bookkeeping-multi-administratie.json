@@ -16,7 +16,7 @@
         },
         "slug": "Administration",
         "icon": "OfficeBuilding",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Administration",
         "description": "A legally self-contained bookkeeping entity (juridisch-onafhankelijke boekhouding). The first-class multi-tenant isolation boundary: every financial record carries an administrationId FK to this schema. Each Administration owns its own chart-of-accounts, fiscal-year cycle, presentation currency and VAT regime independently of other administrations. Holding/werkmij structures link via parentAdministrationId / childAdministrationIds.",
         "x-schema-org": "schema:Organization",
@@ -298,6 +298,22 @@
             "example": false,
             "title": "Automatic payment reminders",
             "x-spec": "openspec/changes/receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning/spec.md (REQ-RAD-001)"
+          },
+          "followsTemplateId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The AdministrationTemplate this administration follows. A new template version adds and updates its accounts and dimensions here (REQ-LMA-005).",
+            "example": null,
+            "title": "Follows template",
+            "$ref": "AdministrationTemplate"
+          },
+          "followedTemplateVersion": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "description": "The template version this administration was last brought in step with.",
+            "example": null,
+            "title": "Followed template version"
           }
         },
         "x-openregister-lifecycle": {
@@ -784,7 +800,7 @@
         },
         "slug": "AdministrationMigration",
         "icon": "TransitConnectionVariant",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Administration Migration",
         "description": "Audit record of an asset / contract / employee transfer between two administrations during internal restructuring. Captures boekwaarde vs marktwaarde, the juridische grondslag, the fiscale behandeling, and the paired GLTransaction references on both sides so the transfer is reversible without breaking the audit trail.",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
@@ -834,7 +850,8 @@
               "crediteur",
               "employee",
               "contract",
-              "other"
+              "other",
+              "template_sync"
             ],
             "example": "vaste_activa",
             "title": "Kind"
@@ -923,6 +940,21 @@
             "default": "voorbereid",
             "example": "voorbereid",
             "title": "Status"
+          },
+          "templateId": {
+            "type": "string",
+            "nullable": true,
+            "description": "For kind template_sync: the template whose version was applied.",
+            "example": null,
+            "title": "Template",
+            "$ref": "AdministrationTemplate"
+          },
+          "syncReport": {
+            "type": "object",
+            "nullable": true,
+            "description": "For kind template_sync: the account numbers and dimension codes added, updated and skipped.",
+            "example": null,
+            "title": "Sync report"
           }
         },
         "x-openregister-lifecycle": {
@@ -1068,6 +1100,117 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Administration Backup Run is written to OpenRegister's immutable audit trail with actor and timestamp."
+        }
+      },
+      "AdministrationTemplate": {
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_admin"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_admin",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
+        },
+        "slug": "AdministrationTemplate",
+        "icon": "ContentCopy",
+        "version": "0.1.0",
+        "title": "Administration Template",
+        "description": "An office's own starting point for a new client administration: a snapshot of one administration's chart of accounts and analytical dimensions, without postings, relations or balances. Administrations that follow it receive each new version (REQ-LMA-003, REQ-LMA-005).",
+        "x-spec": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md",
+        "type": "object",
+        "required": [
+          "name",
+          "accounts",
+          "version",
+          "lifecycleState"
+        ],
+        "x-openregister-audit-trail": {
+          "enabled": true
+        },
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "The template's name, shown in the setup wizard.",
+            "example": "Kantoor De Boer MKB",
+            "title": "Name"
+          },
+          "sourceAdministrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration the snapshot was taken from.",
+            "example": "adm-bakkerij-jansen",
+            "title": "Source administration",
+            "$ref": "Administration"
+          },
+          "accounts": {
+            "type": "array",
+            "description": "The accounts: number, name, type, currency, parent and classification only. No ids, balances or postings.",
+            "items": {
+              "type": "object"
+            },
+            "default": [],
+            "title": "Accounts"
+          },
+          "dimensions": {
+            "type": "array",
+            "description": "The analytical dimensions (cost centres and others): code, name, type and hierarchy only. No budgets or spend.",
+            "items": {
+              "type": "object"
+            },
+            "default": [],
+            "title": "Dimensions"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "Raised by the office to send the template's changes to the administrations that follow it.",
+            "example": 1,
+            "title": "Version"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ],
+            "default": "active",
+            "description": "A retired template is no longer offered in the setup wizard.",
+            "example": "active",
+            "title": "Lifecycle state"
+          }
+        }
+      },
+      "Account": {
+        "properties": {
+          "deviatesFromTemplate": {
+            "type": "boolean",
+            "default": false,
+            "description": "Set when this administration changed the record itself: a template sync leaves it as it is and lists it as skipped (REQ-LMA-005).",
+            "title": "Deviates from template"
+          }
+        }
+      },
+      "AnalyticalDimension": {
+        "properties": {
+          "deviatesFromTemplate": {
+            "type": "boolean",
+            "default": false,
+            "description": "Set when this administration changed the record itself: a template sync leaves it as it is and lists it as skipped (REQ-LMA-005).",
+            "title": "Deviates from template"
+          }
         }
       }
     },

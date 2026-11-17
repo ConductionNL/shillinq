@@ -43,6 +43,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Container\ContainerInterface;
@@ -717,17 +719,20 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 		$location = (string)($op['location'] ?? '');
 		$quantity = (float)($op['quantity'] ?? 0);
 		$transactionId = (string)($op['transactionId'] ?? '');
-
-		if ($type === 'receive') {
+		$adjust = function (string $at, float $delta) use ($objectService, $registerSlug, $administrationId, $sku, $serverTimestamp): void {
 			$this->mutateStock(
 				objectService: $objectService,
 				registerSlug: $registerSlug,
 				administrationId: $administrationId,
 				sku: $sku,
-				location: $location,
-				delta: $quantity,
+				location: $at,
+				delta: $delta,
 				serverTimestamp: $serverTimestamp,
 			);
+		};
+
+		if ($type === 'receive') {
+			$adjust($location, $quantity);
 
 			$objectService->saveObject(
 				object: [
@@ -739,32 +744,15 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'GoodsReceipt',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'GoodsReceipt'))
 			);
 			return;
 		}//end if
 
 		if ($type === 'transfer') {
 			$toLocation = (string)($op['toLocation'] ?? '');
-			$this->mutateStock(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				administrationId: $administrationId,
-				sku: $sku,
-				location: $location,
-				delta: (-1 * $quantity),
-				serverTimestamp: $serverTimestamp,
-			);
-			$this->mutateStock(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				administrationId: $administrationId,
-				sku: $sku,
-				location: $toLocation,
-				delta: $quantity,
-				serverTimestamp: $serverTimestamp,
-			);
+			$adjust($location, (-1 * $quantity));
+			$adjust($toLocation, $quantity);
 
 			$objectService->saveObject(
 				object: [
@@ -777,22 +765,13 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'InventoryTransfer',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryTransfer'))
 			);
 			return;
 		}//end if
 
 		if ($type === 'pick') {
-			$this->mutateStock(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				administrationId: $administrationId,
-				sku: $sku,
-				location: $location,
-				delta: (-1 * $quantity),
-				serverTimestamp: $serverTimestamp,
-			);
+			$adjust($location, (-1 * $quantity));
 
 			$objectService->saveObject(
 				object: [
@@ -805,8 +784,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'OrderPick',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'OrderPick'))
 			);
 			return;
 		}//end if
@@ -835,20 +813,11 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'InventoryCount',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryCount'))
 			);
 
 			if ($reconcile === true) {
-				$this->mutateStock(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					administrationId: $administrationId,
-					sku: $sku,
-					location: $location,
-					delta: ($physical - $systemQty),
-					serverTimestamp: $serverTimestamp,
-				);
+				$adjust($location, ($physical - $systemQty));
 			}
 		}//end if
 
@@ -877,19 +846,11 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 		float $delta,
 		string $serverTimestamp,
 	): void {
-		$existing = $objectService
-			->setRegister($registerSlug)
-			->setSchema('InventoryStock')
-			->findAll(
-				[
-					'filters' => [
-						'administrationId' => $administrationId,
-						'sku' => $sku,
-						'location' => $location,
-					],
-					'limit' => 1,
-				]
-			);
+		$existing = $this->stockRows(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			slot: ['administrationId' => $administrationId, 'sku' => $sku, 'location' => $location],
+		);
 
 		if (empty($existing) === true) {
 			$objectService->saveObject(
@@ -901,8 +862,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'lastModified' => $serverTimestamp,
 					'status' => 'active',
 				],
-				register: $registerSlug,
-				schema: 'InventoryStock',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryStock'))
 			);
 			return;
 		}
@@ -915,11 +875,32 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 
 		$objectService->saveObject(
 			object: $current,
-			register: $registerSlug,
-			schema: 'InventoryStock',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryStock'))
 		);
 
 	}//end mutateStock()
+
+	/**
+	 * The InventoryStock record of one (administrationId, sku, location) slot,
+	 * as the object service answers it (at most one row).
+	 *
+	 * @param object               $objectService OR ObjectService.
+	 * @param string               $registerSlug  Shillinq register slug.
+	 * @param array<string,string> $slot          The administrationId, sku and location filters.
+	 *
+	 * @return mixed The query result.
+	 */
+	private function stockRows(object $objectService, string $registerSlug, array $slot): mixed {
+		return $objectService
+			->setRegister($registerSlug)
+			->setSchema('InventoryStock')
+			->findAll(
+				[
+					'filters' => $slot,
+					'limit' => 1,
+				]
+			);
+	}//end stockRows()
 
 	/**
 	 * Read the current system quantity for (administrationId, sku, location).
@@ -940,19 +921,11 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 		string $sku,
 		string $location,
 	): float {
-		$existing = $objectService
-			->setRegister($registerSlug)
-			->setSchema('InventoryStock')
-			->findAll(
-				[
-					'filters' => [
-						'administrationId' => $administrationId,
-						'sku' => $sku,
-						'location' => $location,
-					],
-					'limit' => 1,
-				]
-			);
+		$existing = $this->stockRows(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			slot: ['administrationId' => $administrationId, 'sku' => $sku, 'location' => $location],
+		);
 
 		if (empty($existing) === true) {
 			return 0.0;
@@ -1014,8 +987,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 				'status' => $status,
 				'rejectionReason' => $rejectionReason,
 			],
-			register: $registerSlug,
-			schema: 'MobileScannerSyncBatch',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'MobileScannerSyncBatch'))
 		);
 
 	}//end recordSyncBatch()

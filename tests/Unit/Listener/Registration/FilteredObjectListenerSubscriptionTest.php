@@ -26,8 +26,10 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
+use OCA\Shillinq\Listener\ChartTemplateVersionListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
+use OCA\Shillinq\Listener\InvestmentAssetListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\Registration\ListenerRegistrar;
 use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
@@ -82,7 +84,7 @@ final class FilteredObjectListenerSubscriptionTest extends TestCase {
 		(new ListenerRegistrar())->subscribe($dispatcher);
 
 		$calls = \OCA\OpenRegister\Event\ObjectEventSubscription::$calls;
-		self::assertCount(18, $calls);
+		self::assertCount(21, $calls);
 		foreach ($calls as $call) {
 			self::assertSame($dispatcher, $call[0]);
 			self::assertNull($call[3], 'No listener narrows on register slugs.');
@@ -93,14 +95,17 @@ final class FilteredObjectListenerSubscriptionTest extends TestCase {
 		self::assertSame([ObjectCreatedEvent::class, AppointmentCreatedListener::class, ['Appointment']], $pick($calls[0]));
 		self::assertSame([ObjectCreatedEvent::class, SupplierInvoiceWarningListener::class, ['SupplierInvoice']], $pick($calls[1]));
 		self::assertSame([ObjectUpdatedEvent::class, SupplierInvoiceWarningListener::class, ['SupplierInvoice']], $pick($calls[2]));
-		self::assertSame([ObjectCreatedEvent::class, OssPaymentReconciliationListener::class, ['OssPayment', 'oss-payment']], $pick($calls[7]));
+		self::assertSame([ObjectCreatedEvent::class, OssPaymentReconciliationListener::class, ['OssPayment', 'oss-payment']], $pick($calls[10]));
 		self::assertSame(
 			[ObjectUpdatedEvent::class, GLTransactionComplianceCacheListener::class, ['GLTransaction', 'GLLine', 'GLTransactionLine']],
-			$pick($calls[10])
+			$pick($calls[13])
 		);
-		self::assertSame([ObjectCreatedEvent::class, CommitmentTransitionListener::class, ['Commitment']], $pick($calls[15]));
-		self::assertSame([ObjectCreatedEvent::class, WebshopOrderListener::class, ['WebshopOrder']], $pick($calls[16]));
-		self::assertSame([ObjectUpdatedEvent::class, WebshopOrderListener::class, ['WebshopOrder']], $pick($calls[17]));
+		self::assertSame([ObjectCreatedEvent::class, CommitmentTransitionListener::class, ['Commitment']], $pick($calls[18]));
+		self::assertSame([ObjectCreatedEvent::class, InvestmentAssetListener::class, ['FixedAsset']], $pick($calls[5]));
+		self::assertSame([ObjectUpdatedEvent::class, InvestmentAssetListener::class, ['FixedAsset']], $pick($calls[6]));
+		self::assertSame([ObjectUpdatedEvent::class, ChartTemplateVersionListener::class, ['AdministrationTemplate']], $pick($calls[7]));
+		self::assertSame([ObjectCreatedEvent::class, WebshopOrderListener::class, ['WebshopOrder']], $pick($calls[19]));
+		self::assertSame([ObjectUpdatedEvent::class, WebshopOrderListener::class, ['WebshopOrder']], $pick($calls[20]));
 
 	}//end testListenersAreSubscribedThroughOpenRegisterWithTheirSchemas()
 }//end class

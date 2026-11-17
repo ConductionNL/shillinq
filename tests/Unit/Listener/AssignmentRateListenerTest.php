@@ -31,6 +31,9 @@ use DateTime;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Listener\AssignmentRateListener;
 use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\Billing\AssignmentRateRefresher;
@@ -168,7 +171,7 @@ final class AssignmentRateListenerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function stored(): array {
-		return (array)$this->store->find(id: 'pa-chris', schema: 'ProjectAssignment')?->getObject();
+		return (array)$this->store->find(id: 'pa-chris', options: new ObjectFindOptions(schema: 'ProjectAssignment'))?->getObject();
 	}//end stored()
 
 	/**
@@ -178,7 +181,7 @@ final class AssignmentRateListenerTest extends TestCase {
 	 */
 	public function testSettingARoleUpdatesTheShownRate(): void {
 		$senior = array_merge($this->chris, ['billingRoleId' => 'role-senior']);
-		$this->store->saveObject(object: $senior, schema: 'ProjectAssignment');
+		$this->store->saveObject(object: $senior, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'ProjectAssignment')));
 		$this->store->saved = [];
 
 		$this->listener()->handle(
@@ -214,7 +217,7 @@ final class AssignmentRateListenerTest extends TestCase {
 	 */
 	public function testANewAssignmentShowsTheClientRateOfTheProjectsCustomer(): void {
 		$created = array_merge($this->chris, ['recognisedRate' => 0]);
-		$this->store->saveObject(object: $created, schema: 'ProjectAssignment');
+		$this->store->saveObject(object: $created, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'ProjectAssignment')));
 		$this->store->saved = [];
 
 		$this->listener()->handle(new ObjectCreatedEvent($this->entity('ProjectAssignment', $created)));
@@ -256,13 +259,13 @@ final class AssignmentRateListenerTest extends TestCase {
 	public function testActivatingAVersionRefreshesItsAssignments(): void {
 		$draft = ['id' => 'rcv-2027', 'templateId' => 'rct-std', 'status' => 'draft', 'effectiveDate' => '2026-11-01', 'administrationId' => self::ADMIN];
 		$active = array_merge($draft, ['status' => 'active']);
-		$this->store->saveObject(object: $active, schema: 'RateCardVersion');
+		$this->store->saveObject(object: $active, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'RateCardVersion')));
 		$this->store->saveObject(
 			object: [
 				'id' => 'rs-het-anker-2027', 'versionId' => 'rcv-2027', 'tier' => 'client', 'entityId' => 'cust-het-anker', 'rate' => 99, 'unit' => 'hourly',
 				'status' => 'active', 'effectiveDate' => '2026-11-01', 'administrationId' => self::ADMIN,
 			],
-			schema: 'RateSchedule'
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'RateSchedule'))
 		);
 		$this->store->saved = [];
 

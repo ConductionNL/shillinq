@@ -70,6 +70,7 @@ use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\MilestoneTemplateServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\TenderNedAwardDetectedListenerInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -764,12 +765,7 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**

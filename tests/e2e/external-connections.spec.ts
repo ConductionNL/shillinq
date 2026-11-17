@@ -171,13 +171,13 @@ test.describe('Shillinq: External Connections', () => {
 		for (const key of DECLARED_KEYS) {
 			const expected =
 				key === 'treasury-rates'
-					? `${APP}/bookkeeping/multi-currency/fx-rates/admin`
+					? `${APP}/bookkeeping/multi-currency/fx-rates`
 					: ''
 			expect(String(byKey[key].settingsUrl || ''), key).toBe(expected)
 		}
 
 		const treasury = page.getByRole('row', { name: /Treasury rates/i })
-		await expect(treasury.locator('a[href*="fx-rates/admin"]')).toHaveCount(1)
+		await expect(treasury.locator('a[href$="multi-currency/fx-rates"]')).toHaveCount(1)
 	})
 
 	/**

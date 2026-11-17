@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\PensionValuationPostingService;
+use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -45,12 +45,12 @@ use Throwable;
 class ActuarialValuationApprovedListener implements IEventListener {
 
 	/**
-	 * @param PensionValuationPostingService  $posting        Posts the entry.
+	 * @param PensionValuationPostingServiceInterface  $posting        Posts the entry.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Tells this app's ActuarialValuation from other objects.
 	 * @param LoggerInterface                 $logger         Logs a valuation that could not be booked.
 	 */
 	public function __construct(
-		private readonly PensionValuationPostingService $posting,
+		private readonly PensionValuationPostingServiceInterface $posting,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {

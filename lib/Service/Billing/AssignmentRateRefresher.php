@@ -29,6 +29,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Billing;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -107,10 +109,11 @@ class AssignmentRateRefresher {
 		}
 
 		$this->objectService->patchObject(
-			objectId: $id,
-			data: ['recognisedRate' => $rate],
-			register: $this->registerLocation->getRegisterSlug(),
-			schema: self::ASSIGNMENT_SCHEMA,
+			patch: new ObjectPatch(
+				objectId: $id,
+				data: ['recognisedRate' => $rate],
+				target: new ObjectFindTarget(register: $this->registerLocation->getRegisterSlug(), schema: self::ASSIGNMENT_SCHEMA)
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

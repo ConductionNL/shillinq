@@ -36,12 +36,15 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DBAOpdrachtGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\DBAScoreCalculatorInterface;
 use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -160,23 +163,22 @@ class DBAController extends Controller {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
-		$os = $this->objectService();
-		if ($os === null) {
-			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
+		$lookup = $this->assignmentLookup(assignmentId: $assignmentId);
+		if ($lookup instanceof JSONResponse) {
+			return $lookup;
 		}
 
-		$register = $this->register();
-		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
-		if ($assignment === null) {
-			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
-		}
+		['objectService' => $os, 'register' => $register, 'assignment' => $assignment] = $lookup;
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
 		$body = $this->scoredIntake(body: $body, assignment: $assignment);
 
 		try {
-			$intake = $os->saveObject(object: $body, register: $register, schema: 'DBAIntake');
+			$intake = $os->saveObject(
+				object: $body,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAIntake'))
+			);
 		} catch (Throwable $e) {
 			$this->logger->error('DBA saveIntake failed', ['exception' => $e->getMessage()]);
 			return $this->error(message: 'Opslaan intake mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -229,7 +231,10 @@ class DBAController extends Controller {
 		$assignment['actueleRisicoscore'] = $intake['totalScore'];
 		$assignment['riskLevel']          = $riskLevel;
 		try {
-			$objectService->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$objectService->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			$this->logger->error('DBA opdracht update failed', ['exception' => $e->getMessage()]);
 		}
@@ -291,16 +296,12 @@ class DBAController extends Controller {
 			return $this->error(message: 'opdrachtId + wbaBeoordelingResultaat vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
-		$os = $this->objectService();
-		if ($os === null) {
-			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
+		$lookup = $this->assignmentLookup(assignmentId: $assignmentId);
+		if ($lookup instanceof JSONResponse) {
+			return $lookup;
 		}
 
-		$register = $this->register();
-		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
-		if ($assignment === null) {
-			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
-		}
+		['objectService' => $os, 'register' => $register, 'assignment' => $assignment] = $lookup;
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
@@ -308,7 +309,10 @@ class DBAController extends Controller {
 		$assignment['wbaValidTo'] = (new DateTimeImmutable())
 			->modify('+' . DBAConstants::WBA_GELDIGHEID_DAGEN . ' days')->format('Y-m-d');
 		try {
-			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'WBA-upload mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -332,16 +336,12 @@ class DBAController extends Controller {
 			return $this->error(message: 'opdrachtId + feitelijkeEindDatum vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
-		$os = $this->objectService();
-		if ($os === null) {
-			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
+		$lookup = $this->assignmentLookup(assignmentId: $assignmentId);
+		if ($lookup instanceof JSONResponse) {
+			return $lookup;
 		}
 
-		$register = $this->register();
-		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
-		if ($assignment === null) {
-			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
-		}
+		['objectService' => $os, 'register' => $register, 'assignment' => $assignment] = $lookup;
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
@@ -351,7 +351,10 @@ class DBAController extends Controller {
 		$assignment = self::withRetentionDeadline(assignment: $assignment, retention: $retention);
 
 		try {
-			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'Beeindiging mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -414,21 +417,20 @@ class DBAController extends Controller {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
-		$os = $this->objectService();
-		if ($os === null) {
-			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
+		$lookup = $this->assignmentLookup(assignmentId: $assignmentId);
+		if ($lookup instanceof JSONResponse) {
+			return $lookup;
 		}
 
-		$register = $this->register();
-		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
-		if ($assignment === null) {
-			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
-		}
+		['objectService' => $os, 'register' => $register, 'assignment' => $assignment] = $lookup;
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 		$assignment['intermediaryMode'] = $enabled;
 		try {
-			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'Tussenkomst-mode opslaan mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -468,7 +470,10 @@ class DBAController extends Controller {
 		$dossier = self::withEmailArchiveConsent(dossier: $dossier, optIn: $optIn, consentId: $consentId);
 
 		try {
-			$updated = $os->saveObject(object: $dossier, register: $register, schema: 'DBAEvidenceDossier');
+			$updated = $os->saveObject(
+				object: $dossier,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAEvidenceDossier'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'Consent opslaan mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -538,21 +543,20 @@ class DBAController extends Controller {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
-		$os = $this->objectService();
-		if ($os === null) {
-			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
+		$lookup = $this->assignmentLookup(assignmentId: $assignmentId);
+		if ($lookup instanceof JSONResponse) {
+			return $lookup;
 		}
 
-		$register = $this->register();
-		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
-		if ($assignment === null) {
-			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
-		}
+		['objectService' => $os, 'register' => $register, 'assignment' => $assignment] = $lookup;
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 		$assignment['perspective'] = 'CLIENT';
 		try {
-			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			$this->logger->warning('Inhuur-intake perspectief update failed', ['exception' => $e->getMessage()]);
 		}
@@ -575,16 +579,12 @@ class DBAController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function auditReport(string $assignmentId): JSONResponse|DataDownloadResponse {
-		$os = $this->objectService();
-		if ($os === null) {
-			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
+		$lookup = $this->assignmentLookup(assignmentId: $assignmentId);
+		if ($lookup instanceof JSONResponse) {
+			return $lookup;
 		}
 
-		$register = $this->register();
-		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
-		if ($assignment === null) {
-			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
-		}
+		['objectService' => $os, 'register' => $register, 'assignment' => $assignment] = $lookup;
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
@@ -783,12 +783,7 @@ class DBAController extends Controller {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	/**
@@ -817,6 +812,30 @@ class DBAController extends Controller {
 			return null;
 		}
 	}//end objectService()
+
+	/**
+	 * The ObjectService, register slug and opdracht for an assignment id, or the refusal.
+	 *
+	 * 503 when OpenRegister is unavailable, 404 when the opdracht is not found.
+	 *
+	 * @param string $assignmentId The opdracht id.
+	 *
+	 * @return JSONResponse|array{objectService: ObjectServiceInterface, register: string, assignment: array<string,mixed>}
+	 */
+	private function assignmentLookup(string $assignmentId): JSONResponse|array {
+		$os = $this->objectService();
+		if ($os === null) {
+			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
+		}
+
+		$register = $this->register();
+		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
+		if ($assignment === null) {
+			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
+		}
+
+		return ['objectService' => $os, 'register' => $register, 'assignment' => $assignment];
+	}//end assignmentLookup()
 
 	/**
 	 * Helper: fetch an object by id with array coercion.
