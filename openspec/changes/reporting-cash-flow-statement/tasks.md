@@ -21,6 +21,7 @@
 ## 4. End to end and strings
 
 - [ ] 4.1 Playwright `tests/e2e/reporting-cash-flow-statement.spec.ts`: open the statement, check the reconciliation, click a figure. Verify: passes locally.
+  Written: the reconciliation invariant on the endpoint the page reads (sections and the unclassified line add up to the net cash flow, the rest is the "Verschil" line, every unclassified row names its account), the page with its four widgets and the account-check header action, and a figure click that opens its account (it follows the row route to `LedgerLinesForAccount` once reporting-financial-statements 2.3 is built). Lint-clean and listed; not ticked: not yet run against an instance.
 - [x] 4.2 Dutch and English strings. Verify: `npm run test:l10n`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
