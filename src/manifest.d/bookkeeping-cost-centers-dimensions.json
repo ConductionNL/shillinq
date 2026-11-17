@@ -53,7 +53,8 @@
 					{ "key": "lifecycleState", "label": "Status" },
 					{ "key": "dataType", "label": "Data type" }
 				],
-				"detailRoute": "AnalyticalDimensionDetail"
+				"detailRoute": "AnalyticalDimensionDetail",
+				"rowRoute": "AnalyticalDimensionDetail"
 			}
 		},
 		{

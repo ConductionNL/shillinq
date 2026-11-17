@@ -508,6 +508,10 @@
             "description": "Admin endpoints to generate, rotate, and revoke widget API keys."
         },
         {
+            "name": "financial-statement",
+            "description": "The profit and loss and the balance sheet, computed from posted ledger lines."
+        },
+        {
             "name": "investment-deduction",
             "description": "The yearly investment deduction (KIA, EIA, MIA) claims."
         },
@@ -5716,6 +5720,45 @@
                 }
             }
         },
+        "/financial-documents/invoices/{id}/take-payment": {
+            "post": {
+                "operationId": "point-of-sale-payment-take-payment",
+                "summary": "Take payment now on an open invoice",
+                "description": "Take an open invoice's payment on the caller's registered phone through the payment provider, or as a checkout shown as a QR code when the phone cannot receive it. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-document-action"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The invoice id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/financial-documents/payouts": {
             "post": {
                 "operationId": "financial-document-action-raise-payout",
@@ -10407,6 +10450,69 @@
                 }
             }
         },
+        "/reporting/subject-costs": {
+            "get": {
+                "operationId": "subject-cost-report-rows",
+                "summary": "GET /api/reporting/subject-costs — the case cost rows per task field or per case type",
+                "description": "GET /api/reporting/subject-costs — the case cost rows of one administration and period (YYYY, YYYY-Qn or YYYY-MM), per task field or, with grouping=type, per case type, then a total; a source whose app is missing gives one row naming it with no figure. Without administrationId the caller's active administration is read; either way it must be one of theirs (404 otherwise). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "reporting"
+                ],
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": true,
+                        "description": "The period: YYYY, YYYY-Qn or YYYY-MM.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "grouping",
+                        "in": "query",
+                        "required": false,
+                        "description": "`type` for the rows per case type; per task field otherwise.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id; the active one when absent.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
         "/reporting/types": {
             "get": {
                 "operationId": "reporting-types",
@@ -13597,6 +13703,74 @@
                     },
                     "400": {
                         "description": "A parameter is missing or an origin is invalid."
+                    }
+                }
+            }
+        },
+        "/statements/profit-and-loss": {
+            "get": {
+                "operationId": "financial-statement-profit-and-loss",
+                "summary": "GET /api/statements/profit-and-loss?from=&to=&compare=&administrationId=",
+                "description": "GET /api/statements/profit-and-loss?from=&to=&compare=&administrationId=. The profit and loss of posted ledger lines between two dates, with optional previous-period and previous-year columns and their differences. The administration defaults to the one the caller is working in. One the caller is not a member of is masked as absent (ADR-005). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-statement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/statements/balance-sheet": {
+            "get": {
+                "operationId": "financial-statement-balance-sheet",
+                "summary": "GET /api/statements/balance-sheet?asOf=&administrationId=",
+                "description": "GET /api/statements/balance-sheet?asOf=&administrationId=. The balance sheet of posted ledger lines up to a date, with the running result of the fiscal year in equity. The administration defaults to the one the caller is working in. One the caller is not a member of is masked as absent (ADR-005). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-statement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
                     }
                 }
             }
