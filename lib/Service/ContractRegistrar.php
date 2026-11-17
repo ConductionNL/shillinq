@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\AansluitingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AccountantDashboardServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AccountantsdossierExportServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ActivityCostPriceCalculationInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationArchivalServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
@@ -84,6 +85,7 @@ use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
 use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\CrossSubsidyScanInterface;
 use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
@@ -140,6 +142,7 @@ use OCA\Shillinq\Kernel\Contracts\InventoryValuationReportServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\JointArrangementAllocationInterface;
 use OCA\Shillinq\Kernel\Contracts\KlantbeeldResultInterface;
 use OCA\Shillinq\Kernel\Contracts\KorMonitorServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\LandedCostAllocationServiceInterface;
@@ -294,8 +297,11 @@ use OCA\Shillinq\Service\Platform\FieldRequirements;
 use OCA\Shillinq\Service\Platform\ObjectApiRequest;
 use OCA\Shillinq\Service\Platform\SchemaDefinitions;
 use OCA\Shillinq\Service\Project\AssignmentHours;
+use OCA\Shillinq\Service\PublicSector\ActivityCostPriceCalculation;
+use OCA\Shillinq\Service\PublicSector\CrossSubsidyScan;
 use OCA\Shillinq\Service\PublicSector\FidoQuarter;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
+use OCA\Shillinq\Service\PublicSector\JointArrangementAllocation;
 use OCA\Shillinq\Service\PublicSector\ReserveBalances;
 use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
@@ -353,6 +359,7 @@ final class ContractRegistrar {
 		AansluitingServiceInterface::class => AansluitingService::class,
 		AccountantDashboardServiceInterface::class => AccountantDashboardService::class,
 		AccountantsdossierExportServiceInterface::class => AccountantsdossierExportService::class,
+		ActivityCostPriceCalculationInterface::class => ActivityCostPriceCalculation::class,
 		AdministrationArchivalServiceInterface::class => AdministrationArchivalService::class,
 		AdministrationContextServiceInterface::class => AdministrationContextService::class,
 		AdministrationManagementAccessInterface::class => AdministrationManagementAccess::class,
@@ -413,6 +420,7 @@ final class ContractRegistrar {
 		SbrFilingFileStoreInterface::class => SbrFilingFileStore::class,
 		SubscriptionCancellationServiceInterface::class => SubscriptionCancellationService::class,
 		ContributionRaiseServiceInterface::class => ContributionRaiseService::class,
+		CrossSubsidyScanInterface::class => CrossSubsidyScan::class,
 		CustomerBridgeMetricsServiceInterface::class => CustomerBridgeMetricsService::class,
 		DBAVbarMonitorServiceInterface::class => DBAVbarMonitorService::class,
 		DebtorCreditServiceInterface::class => DebtorCreditService::class,
@@ -470,6 +478,7 @@ final class ContractRegistrar {
 		InvoiceGenerationServiceInterface::class => InvoiceGenerationService::class,
 		InvoicePdfGeneratorInterface::class => InvoicePdfGenerator::class,
 		InvoiceSettlementServiceInterface::class => InvoiceSettlementService::class,
+		JointArrangementAllocationInterface::class => JointArrangementAllocation::class,
 		KlantbeeldResultInterface::class => KlantbeeldResult::class,
 		KorMonitorServiceInterface::class => KorMonitorService::class,
 		LandedCostAllocationServiceInterface::class => LandedCostAllocationService::class,
