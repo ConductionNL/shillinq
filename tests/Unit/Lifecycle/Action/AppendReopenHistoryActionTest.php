@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\AppendReopenHistoryAction;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -76,14 +77,16 @@ final class AppendReopenHistoryActionTest extends TestCase {
 		// the payload never carried would pass on an undefined index — the
 		// assertion would hold whether or not the handler clears anything.
 		$result = $this->action()->execute(
-			[
-				'closeReason' => 'Audit adjustment',
-				'closedAt' => '2026-01-31T18:00:00+00:00',
-				'closedBy' => 'bob',
-			],
-			['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
-			[],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: [
+					'closeReason' => 'Audit adjustment',
+					'closedAt' => '2026-01-31T18:00:00+00:00',
+					'closedBy' => 'bob',
+				],
+				previousData: ['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
+				parameters: [],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertCount(1, $result['reopenedHistory']);
@@ -125,10 +128,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 		];
 
 		$result = $this->action()->execute(
-			['reopenedHistory' => $existing],
-			['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
-			[],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: ['reopenedHistory' => $existing],
+				previousData: ['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
+				parameters: [],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertCount(1, $result['reopenedHistory'], 'The same reopen must not be recorded twice.');
@@ -156,10 +161,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 		];
 
 		$result = $this->action()->execute(
-			['reopenedHistory' => $existing],
-			['closedAt' => '2026-02-28T18:00:00+00:00', 'closedBy' => 'carol'],
-			[],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: ['reopenedHistory' => $existing],
+				previousData: ['closedAt' => '2026-02-28T18:00:00+00:00', 'closedBy' => 'carol'],
+				parameters: [],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertCount(2, $result['reopenedHistory']);
@@ -175,10 +182,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 	 */
 	public function testATailEntryWithoutReopenedAtDoesNotSuppressTheAppend(): void {
 		$result = $this->action()->execute(
-			['reopenedHistory' => [['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob']]],
-			['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
-			[],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: ['reopenedHistory' => [['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob']]],
+				previousData: ['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
+				parameters: [],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertCount(2, $result['reopenedHistory']);
@@ -192,10 +201,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 	 */
 	public function testTargetParameterRedirectsTheHistoryProperty(): void {
 		$result = $this->action()->execute(
-			[],
-			['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
-			['target' => 'auditHistory'],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: [],
+				previousData: ['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
+				parameters: ['target' => 'auditHistory'],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertArrayHasKey('auditHistory', $result);
@@ -211,10 +222,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 	 */
 	public function testBlankTargetFallsBackToTheDefaultProperty(): void {
 		$result = $this->action()->execute(
-			[],
-			['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
-			['target' => '   '],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: [],
+				previousData: ['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
+				parameters: ['target' => '   '],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertCount(1, $result['reopenedHistory']);
@@ -229,10 +242,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 	 */
 	public function testACorruptHistoryValueIsReplacedRatherThanFatal(): void {
 		$result = $this->action()->execute(
-			['reopenedHistory' => 'not-an-array'],
-			['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
-			[],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: ['reopenedHistory' => 'not-an-array'],
+				previousData: ['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
+				parameters: [],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertIsArray($result['reopenedHistory']);
@@ -250,10 +265,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 	 */
 	public function testWithoutASessionTheActorIsSystem(): void {
 		$result = $this->action(null)->execute(
-			[],
-			['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
-			[],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: [],
+				previousData: ['closedAt' => '2026-01-31T18:00:00+00:00', 'closedBy' => 'bob'],
+				parameters: [],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertSame('system', $result['reopenedHistory'][0]['reopenedBy']);
@@ -268,10 +285,12 @@ final class AppendReopenHistoryActionTest extends TestCase {
 	 */
 	public function testCloseStampsAreReadFromTheObjectWhenPreviousDataIsEmpty(): void {
 		$result = $this->action()->execute(
-			['closedAt' => '2026-03-31T18:00:00+00:00', 'closedBy' => 'dave'],
-			[],
-			[],
-			'append-reopen-history'
+			new LifecycleActionContext(
+				objectData: ['closedAt' => '2026-03-31T18:00:00+00:00', 'closedBy' => 'dave'],
+				previousData: [],
+				parameters: [],
+				actionName: 'append-reopen-history'
+			)
 		);
 
 		self::assertSame('2026-03-31T18:00:00+00:00', $result['reopenedHistory'][0]['closedAt']);

@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use RuntimeException;
 
@@ -47,20 +48,17 @@ class RecordDirectDebitRejectAction implements LifecycleActionInterface {
 	/**
 	 * The collection with its reason code.
 	 *
-	 * @param array<string,mixed> $objectData   The collection after the transition.
-	 * @param array<string,mixed> $previousData The collection before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the collection after the transition.
 	 *
 	 * @return array<string,mixed> The collection with pain002ReasonCode upper-cased.
 	 *
 	 * @throws RuntimeException When the reason code is missing or malformed.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.4
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$code = strtoupper(trim((string)($objectData['pain002ReasonCode'] ?? '')));
 		if (preg_match(self::REASON_PATTERN, $code) !== 1) {
 			throw new RuntimeException('A rejected collection needs its four-character reason code, such as AM04.');

@@ -101,4 +101,19 @@ interface ComplianceExportServiceInterface {
 	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function renderCsv(array $envelope): string;
+
+	/**
+	 * Record the export request on the register's audit trail.
+	 *
+	 * @param string $scope  The requested export scope.
+	 * @param string $format The requested output format.
+	 * @param string $uid    The caller.
+	 *
+	 * @return void
+	 *
+	 * @throws \Throwable When the entry cannot be written.
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
+	 */
+	public function recordExportRequest(string $scope, string $format, string $uid): void;
 }//end interface

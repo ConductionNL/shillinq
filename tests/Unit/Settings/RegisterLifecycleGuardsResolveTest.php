@@ -167,6 +167,8 @@ final class RegisterLifecycleGuardsResolveTest extends TestCase {
 			'OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost',
 			'OCA\Shillinq\Lifecycle\ThreeWayMatchGuard::matches',
 			'OCA\Shillinq\Lifecycle\BalanceGuard::isInvoiceBalanced',
+			// tax-vat-return-from-books 3.2: BtwAangifte.submit.
+			'OCA\Shillinq\Lifecycle\VatReturnChecksGuard::canSubmit',
 		];
 
 	}//end fixedTags()

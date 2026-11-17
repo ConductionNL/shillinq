@@ -181,7 +181,8 @@
             "enum": [
               "created",
               "rotated",
-              "revoked"
+              "revoked",
+              "origins-changed"
             ],
             "title": "Action"
           },
