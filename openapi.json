@@ -526,6 +526,10 @@
         {
             "name": "project-billable-hours",
             "description": "A project's rated hours of one month (sales-billable-rate-per-hour)."
+        },
+        {
+            "name": "payment-revenue-accounts",
+            "description": "Which ledger account a paid payment request books against, per kind of request."
         }
     ],
     "paths": {
@@ -11861,6 +11865,113 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/settings/payment-revenue-accounts": {
+            "get": {
+                "operationId": "payment-revenue-accounts-index",
+                "summary": "GET the mapping, one key per request type, empty where unmapped",
+                "description": "GET the mapping from payment request type to the ledger account its receipt books against, one key per request type plus `clearing`, empty where unmapped. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "payment-revenue-accounts-update",
+                "summary": "PUT the submitted types' accounts; an empty value removes a mapping",
+                "description": "PUT the submitted types' accounts; an empty value removes a mapping, a type not submitted keeps its account. A value that is not an account number answers 400 and stores nothing. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "leges": {
+                                        "description": "The account for leges."
+                                    },
+                                    "dwangsom": {
+                                        "description": "The account for dwangsom."
+                                    },
+                                    "deposit": {
+                                        "description": "The account for deposit."
+                                    },
+                                    "other": {
+                                        "description": "The account for other."
+                                    },
+                                    "contribution": {
+                                        "description": "The account for contribution."
+                                    },
+                                    "event-fee": {
+                                        "description": "The account for event-fee."
+                                    },
+                                    "clearing": {
+                                        "description": "The account for clearing."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "400": {
+                        "description": "A value is not an account number; nothing was stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
                     }
                 }
             }

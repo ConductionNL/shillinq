@@ -25,6 +25,14 @@
 
 		<CnSettingsFieldsSection
 			appId="shillinq"
+			:name="t('shillinq', 'Revenue accounts for payment requests')"
+			:description="t('shillinq', 'The ledger account a paid request books against, per kind of request. A paid request whose kind has no account waits until one is set.')"
+			:url="revenueAccountsUrl"
+			:fields="revenueAccountFields"
+			data-testid="admin-section-revenue-accounts" />
+
+		<CnSettingsFieldsSection
+			appId="shillinq"
 			:name="t('shillinq', 'Pipelinq integration')"
 			:description="t('shillinq', 'The connection to Pipelinq, which adds customer details to bookings.')"
 			:url="pipelinqSettingsUrl"
@@ -149,6 +157,39 @@ export default {
 					patternMessage: 'Use an address that starts with https://',
 					hint: 'Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.',
 				},
+			]
+		},
+
+		/**
+		 * Where the request-type to revenue-account mapping is read and saved.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+		 */
+		revenueAccountsUrl() {
+			return generateUrl('/apps/shillinq/api/settings/payment-revenue-accounts')
+		},
+
+		/**
+		 * One account field per kind of payment request, plus the clearing
+		 * account the money arrives through. Empty means unmapped: the paid
+		 * request then waits in captured_unapplied instead of booking to a
+		 * guessed account.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+		 */
+		revenueAccountFields() {
+			const accountPattern = '^[A-Za-z0-9._-]{1,32}$'
+			const accountMessage = 'Use an account number of letters, digits, dots or dashes'
+			return [
+				{ key: 'leges', label: 'Fees (leges)', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'dwangsom', label: 'Penalty payments (dwangsom)', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'deposit', label: 'Deposits', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'contribution', label: 'Contributions', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'event-fee', label: 'Event fees', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'other', label: 'Other requests', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'clearing', label: 'Clearing account', type: 'text', pattern: accountPattern, patternMessage: accountMessage, hint: 'The account the money arrives through before it is booked to revenue.' },
 			]
 		},
 
