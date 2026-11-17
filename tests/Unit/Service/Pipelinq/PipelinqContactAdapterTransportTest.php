@@ -22,7 +22,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -46,7 +46,7 @@ use RuntimeException;
  * @uses \OCA\Shillinq\Service\Pipelinq\CircuitBreaker
  * @uses \OCA\Shillinq\Service\Pipelinq\RetryPolicy
  * @uses \OCA\Shillinq\Service\Pipelinq\PipelinqRequestRun
- * @uses \OCA\Shillinq\Service\Pipelinq\PipelinqTransportException
+ * @uses \OCA\Shillinq\Kernel\Exception\PipelinqTransportException
  * @uses \OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService
  */
 final class PipelinqContactAdapterTransportTest extends TestCase {

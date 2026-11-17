@@ -38,6 +38,9 @@ use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Posting, reversing and booking a source document stamp the lines; the repair step stamps history.
@@ -121,7 +124,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function line(string $id): array {
-		return $this->store->find(id: $id, schema: 'GLLine')->getObject();
+		return $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'GLLine'))->getObject();
 
 	}//end line()
 
@@ -147,7 +150,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testTheReverseTransitionTakesTheLinesOut(): void {
 		$this->stamps()->stampTransaction(Seed::TX_SEP);
-		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], schema: 'GLTransaction');
+		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
 		$transaction = $this->entity('GLTransaction', ['id' => Seed::TX_SEP, 'state' => 'reversed']);
 
 		$this->listener()->handle(new ObjectTransitionedEvent(object: $transaction, move: new TransitionMove(action: 'reverse', from: 'posted', to: 'reversed'), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'GLTransaction'), actor: new TransitionActor(userId: 'controller')));
@@ -208,8 +211,8 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListenerAndTheRepairStep(): void {
 		$root = __DIR__ . '/../../..';
-		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
+		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php') . (string)file_get_contents($root . '/lib/Listener/Registration/ListenerRegistrar.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
 		$info = (string)file_get_contents($root . '/appinfo/info.xml');
 
 		$this->assertStringContainsString('(new ReportingRegistration())->register(context: $context);', $application);

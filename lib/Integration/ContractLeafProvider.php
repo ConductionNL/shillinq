@@ -35,7 +35,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\OpenRegister\Service\Integration\RefIntegrationProvider;
+use OCA\Shillinq\Kernel\Contracts\ContractLeafProviderInterface;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -44,13 +47,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
  */
-final class ContractLeafProvider implements IntegrationProvider {
-	/**
-	 * The leaf id, equal on both halves so gate-24 can pair them.
-	 *
-	 * @var string
-	 */
-	public const LEAF_ID = 'shillinq-contracts';
+final class ContractLeafProvider implements RefIntegrationProvider, ContractLeafProviderInterface {
 
 	/**
 	 * The schema holding contracts.
@@ -174,9 +171,7 @@ final class ContractLeafProvider implements IntegrationProvider {
 	/**
 	 * The contracts this host object is handled under.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $filters Optional list filters; unknown keys are ignored.
 	 *
 	 * @return array<string, mixed> The `{items, total, nextCursor}` envelope.
@@ -186,7 +181,10 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
 	 * this leaf returns every request on the object and filters nothing yet.
 	 */
-	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
+	public function list(ObjectRef $ref, array $filters = []): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		$items = [];
 		foreach ($this->contractsLinkedTo(register: $register, schema: $schema, objectId: $objectId) as $contract) {
 			$items[] = $this->project(contract: $contract);
@@ -203,9 +201,7 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * caller cannot see never reaches this method at all; this refusal is what
 	 * happens when it does not.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The contract id.
 	 *
 	 * @return array<string, mixed> The contract.
@@ -214,7 +210,10 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 	 */
-	public function get(string $register, string $schema, string $objectId, string $entityId): array {
+	public function get(ObjectRef $ref, string $entityId): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		foreach ($this->contractsLinkedTo(register: $register, schema: $schema, objectId: $objectId) as $contract) {
 			if ((string)($contract['id'] ?? '') === $entityId) {
 				return $this->project(contract: $contract);
@@ -227,9 +226,7 @@ final class ContractLeafProvider implements IntegrationProvider {
 	/**
 	 * A contract is administered in shillinq, never created sideways from a case.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $payload Ignored.
 	 *
 	 * @return array<string, mixed> Never returns.
@@ -240,16 +237,14 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * IntegrationProvider's. The method refuses every call, so it reads none of
 	 * its arguments; dropping them would break the contract.
 	 */
-	public function create(string $register, string $schema, string $objectId, array $payload): array {
+	public function create(ObjectRef $ref, array $payload): array {
 		throw new RuntimeException('A contract is administered in shillinq; the leaf reads it and does not create one.');
 	}//end create()
 
 	/**
 	 * The same for an edit.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The contract id.
 	 * @param array<string, mixed> $payload Ignored.
 	 *
@@ -261,16 +256,14 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * IntegrationProvider's. The method refuses every call, so it reads none of
 	 * its arguments; dropping them would break the contract.
 	 */
-	public function update(string $register, string $schema, string $objectId, string $entityId, array $payload): array {
+	public function update(ObjectRef $ref, string $entityId, array $payload): array {
 		throw new RuntimeException('A contract is edited in shillinq, where its lifecycle and its audit trail are.');
 	}//end update()
 
 	/**
 	 * The same for a delete.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The contract id.
 	 *
 	 * @return void
@@ -281,7 +274,7 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * IntegrationProvider's. The method refuses every call, so it reads none of
 	 * its arguments; dropping them would break the contract.
 	 */
-	public function delete(string $register, string $schema, string $objectId, string $entityId): void {
+	public function delete(ObjectRef $ref, string $entityId): void {
 		throw new RuntimeException('A contract is an agreement and is terminated, never deleted from a case.');
 	}//end delete()
 
@@ -366,29 +359,44 @@ final class ContractLeafProvider implements IntegrationProvider {
 				continue;
 			}
 
-			foreach ($row['linkedObjects'] as $link) {
-				if (is_array($link) === false) {
-					continue;
-				}
-
-				$candidate = implode(
-					'|',
-					[
-						(string)($link['register'] ?? ''),
-						(string)($link['schema'] ?? ''),
-						(string)($link['id'] ?? ''),
-					]
-				);
-
-				if ($candidate === $key) {
-					$mine[] = $row;
-					break;
-				}
+			if (self::linksTo(row: $row, key: $key) === true) {
+				$mine[] = $row;
 			}
 		}
 
 		return $mine;
 	}//end contractsLinkedTo()
+
+	/**
+	 * Whether one of the contract's linked objects is the object with this key.
+	 *
+	 * @param array<string, mixed> $row The contract, with a linkedObjects list.
+	 * @param string               $key The host object's `register|schema|id`.
+	 *
+	 * @return bool True when the contract names the object.
+	 */
+	private static function linksTo(array $row, string $key): bool {
+		foreach ($row['linkedObjects'] as $link) {
+			if (is_array($link) === false) {
+				continue;
+			}
+
+			$candidate = implode(
+				'|',
+				[
+					(string)($link['register'] ?? ''),
+					(string)($link['schema'] ?? ''),
+					(string)($link['id'] ?? ''),
+				]
+			);
+
+			if ($candidate === $key) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end linksTo()
 
 	/**
 	 * The register slug holding shillinq's own objects.

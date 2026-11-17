@@ -38,8 +38,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\FeeScheduleService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -63,13 +63,13 @@ class FeeScheduleValidationListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param FeeScheduleService $feeSchedules The rules, called rather than copied.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema to its slug.
+	 * @param FeeScheduleServiceInterface $feeSchedules The rules, called rather than copied.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema to its slug.
 	 * @param LoggerInterface $logger Logger for refusals.
 	 */
 	public function __construct(
-		private readonly FeeScheduleService $feeSchedules,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly FeeScheduleServiceInterface $feeSchedules,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

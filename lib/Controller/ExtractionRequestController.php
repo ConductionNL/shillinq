@@ -55,13 +55,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ChartOfAccountsCandidateServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DocudeskExtractionClientInterface;
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\GlAccountSuggestionClientInterface;
+use OCA\Shillinq\Service\Extraction\ExtractionDraftCommitter;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
-use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
-use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
-use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -101,37 +102,47 @@ class ExtractionRequestController extends Controller {
 	 * @var array<string>
 	 */
 	private const ALLOWED_SCHEMAS = [
-		ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE,
-		ExtractionPrefillService::SCHEMA_RECEIPT,
+		ExtractionPrefillServiceInterface::SCHEMA_SUPPLIER_INVOICE,
+		ExtractionPrefillServiceInterface::SCHEMA_RECEIPT,
 	];
+
+	/**
+	 * Saves a corrected draft and feeds its booking back to docudesk.
+	 *
+	 * @var ExtractionDraftCommitter
+	 */
+	private readonly ExtractionDraftCommitter $committer;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param DocudeskExtractionClient $extractionClient Outbound docudesk request client.
-	 * @param GlAccountSuggestionClient $suggestionClient Outbound docudesk suggestion/correction client.
-	 * @param ChartOfAccountsCandidateService $candidateService Shillinq's own chart-of-accounts candidates.
-	 * @param ExtractionPrefillService $prefillService Correction-recording service.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param DocudeskExtractionClientInterface $extractionClient Outbound docudesk request client.
+	 * @param GlAccountSuggestionClientInterface $suggestionClient Outbound docudesk suggestion/correction client.
+	 * @param ChartOfAccountsCandidateServiceInterface $candidateService Shillinq's own chart-of-accounts candidates.
+	 * @param ExtractionPrefillServiceInterface $prefillService Correction-recording service.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param ContainerInterface $container DI container (OR ObjectService).
 	 * @param LoggerInterface $logger Logger.
+	 * @param ExtractionDraftCommitter|null $committer Saves a draft and feeds its booking back; built here when absent.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly DocudeskExtractionClient $extractionClient,
-		private readonly GlAccountSuggestionClient $suggestionClient,
-		private readonly ChartOfAccountsCandidateService $candidateService,
-		private readonly ExtractionPrefillService $prefillService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly DocudeskExtractionClientInterface $extractionClient,
+		private readonly GlAccountSuggestionClientInterface $suggestionClient,
+		private readonly ChartOfAccountsCandidateServiceInterface $candidateService,
+		private readonly ExtractionPrefillServiceInterface $prefillService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		?ExtractionDraftCommitter $committer = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
+		$this->committer = $committer ?? new ExtractionDraftCommitter(container: $container, suggestionClient: $suggestionClient);
 
 	}//end __construct()
 
@@ -255,7 +266,7 @@ class ExtractionRequestController extends Controller {
 		$existing['docudeskExtractionId'] = $extractionId;
 
 		try {
-			$this->saveDraft(schema: $draft->schema, object: $existing);
+			$this->committer->save(schema: $draft->schema, draft: $existing);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'ExtractionRequestController: failed to persist docudeskExtractionId',
@@ -264,22 +275,6 @@ class ExtractionRequestController extends Controller {
 		}
 
 	}//end persistExtractionId()
-
-	/**
-	 * Save a draft through OpenRegister's ObjectService.
-	 *
-	 * @param string               $schema The draft's schema.
-	 * @param array<string, mixed> $object The draft to save.
-	 *
-	 * @return mixed The saved object.
-	 */
-	private function saveDraft(string $schema, array $object): mixed {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		return $objectService
-			->setRegister(self::REGISTER_SLUG)
-			->setSchema($schema)
-			->saveObject($object);
-	}//end saveDraft()
 
 	/**
 	 * Commit an operator correction on an existing extraction draft (REQ-RXC-004).
@@ -376,68 +371,20 @@ class ExtractionRequestController extends Controller {
 	 */
 	private function savedCorrection(string $schema, array $updated): JSONResponse {
 		try {
-			$saved = $this->saveDraft(schema: $schema, object: $updated);
+			$record = $this->committer->save(schema: $schema, draft: $updated);
 		} catch (Throwable $e) {
 			$this->logger->error('ExtractionRequestController.confirm failed to persist: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'Failed to save correction'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		$record = $updated;
-		if (is_array($saved) === true) {
-			$record = $saved;
 		}
 
 		// REQ-GAC-005: feed every committed booking back to docudesk as a
 		// correction — whether or not it matches the prior suggestion — so
 		// the ranker's history reflects it. Best-effort: never blocks or
 		// undoes the local booking that already succeeded above.
-		$this->feedBookingBack(record: $record);
+		$this->committer->feedBack(record: $record);
 
 		return new JSONResponse(['record' => $record], Http::STATUS_OK);
 	}//end savedCorrection()
-
-	/**
-	 * Post the committed GL-account booking back to docudesk as a
-	 * correction when the draft carries a known `docudeskExtractionId` and a
-	 * non-empty `glAccount` (REQ-GAC-005). No-op, not an error, when either
-	 * is absent — this is the graceful-degradation case (REQ-GAC-006).
-	 *
-	 * @param array<string,mixed> $record The just-persisted draft record.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
-	 */
-	private function feedBookingBack(array $record): void {
-		$extractionId = (string)($record['docudeskExtractionId'] ?? '');
-		$accountCode = trim((string)($record['glAccount'] ?? ''));
-		if ($extractionId === '' || $accountCode === '') {
-			return;
-		}
-
-		$this->suggestionClient->postCorrection(
-			extractionId: $extractionId,
-			accountCode: $accountCode,
-			accountLabel: $this->labelOf(record: $record)
-		);
-
-	}//end feedBookingBack()
-
-	/**
-	 * The booked account's label, null when it is not a string.
-	 *
-	 * @param array<string, mixed> $record The saved record.
-	 *
-	 * @return string|null
-	 */
-	private function labelOf(array $record): ?string {
-		$accountLabel = $record['glAccountLabel'] ?? null;
-		if (is_string($accountLabel) === false) {
-			return null;
-		}
-
-		return $accountLabel;
-	}//end labelOf()
 
 	/**
 	 * Compute a GL-account suggestion for a draft with a known docudesk
@@ -563,7 +510,7 @@ class ExtractionRequestController extends Controller {
 	 */
 	private function cacheSuggestion(string $schema, array $draft): void {
 		try {
-			$this->saveDraft(schema: $schema, object: $draft);
+			$this->committer->save(schema: $schema, draft: $draft);
 		} catch (Throwable $e) {
 			$this->logger->info(
 				'ExtractionRequestController: failed to cache suggestedGlAccount (non-blocking)',

@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCP\Files\File;
@@ -43,6 +43,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use ReflectionProperty;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A fake OpenRegister ObjectService for the lookups: records every call, answers what it was given.
@@ -107,7 +108,9 @@ final class FakeLookupObjectService {
 	 *
 	 * @return mixed
 	 */
-	public function saveObject(array $object, string $register, string $schema): mixed {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->calls[] = 'save ' . $register . '/' . $schema . ' ' . (string)($object['status'] ?? '');
 		if ($this->failure !== null) {
 			throw $this->failure;
@@ -187,7 +190,7 @@ final class LookupWarnings extends AbstractLogger {
  * Tests ReportGenerationService's lookups and fail-soft paths.
  *
  * @covers \OCA\Shillinq\Reporting\ReportGenerationService
- * @uses   \OCA\Shillinq\Reporting\GeneratedFile
+ * @uses   \OCA\Shillinq\Kernel\Model\GeneratedFile
  * @uses   \OCA\Shillinq\Reporting\ReportCatalogue
  * @uses   \OCA\Shillinq\Reporting\SystemTagAssigner
  * @uses   \OCA\Shillinq\Reporting\TaggedFileStore
@@ -444,6 +447,18 @@ final class ReportGenerationServiceLookupTest extends TestCase {
 			$this->logger->messages()
 		);
 	}//end testElsewhereOnlyTheExactRecordedPathResolves()
+
+	public function testAHomeHoldingOnlyFoldersFallsBackToTheRecordedPath(): void {
+		$path = '/bob/files/Shillinq/Reports/adm-1/a.csv';
+		$home = $this->createMock(Folder::class);
+		$home->method('getById')->with(5)->willReturn([$this->createMock(Folder::class)]);
+		$root = $this->createMock(IRootFolder::class);
+		$root->method('getUserFolder')->with('alice')->willReturn($home);
+		$root->expects($this->once())->method('getById')->with(5)->willReturn([$this->file($path)]);
+
+		$this->assertSame($path, $this->service($this->container(null), [], $root)->resolveRecordFile(['fileId' => 5, 'filePath' => $path])?->getPath());
+		$this->assertSame([], $this->logger->messages());
+	}//end testAHomeHoldingOnlyFoldersFallsBackToTheRecordedPath()
 
 	public function testARecordWithoutAFileOrPathResolvesNothing(): void {
 		$root = $this->createMock(IRootFolder::class);

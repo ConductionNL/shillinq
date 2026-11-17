@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Validates the five accrual calculation methods on SoftCloseExecutor (REQ-CLS-003)
@@ -211,7 +212,9 @@ final class SoftCloseExecutorTest extends TestCase {
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saved[$schema][] = $object;
 				return $object;
 			}//end saveObject()
@@ -388,6 +391,11 @@ final class SoftCloseExecutorTest extends TestCase {
 					return $this->rules;
 				}
 
+				if ($this->schema === 'IntercompanyRelation') {
+					// Five relations, so the matching step has five to match (ledger-group-close REQ-ICE-011).
+					return array_map(static fn (int $n): array => ['relationId' => 'rel-' . $n], range(1, 5));
+				}
+
 				return [];
 			}//end findAll()
 
@@ -400,7 +408,9 @@ final class SoftCloseExecutorTest extends TestCase {
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, $register = null, $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saved[(string)($schema ?? $this->schema)][] = $object;
 				return $object;
 			}//end saveObject()
@@ -512,7 +522,7 @@ final class SoftCloseExecutorTest extends TestCase {
 					throw new \RuntimeException($this->message);
 				}//end post()
 			},
-			'matchForPeriod' => new class($message) {
+			'matchRelationPeriod' => new class($message) {
 				/**
 				 * Hold the failure message.
 				 *
@@ -524,14 +534,14 @@ final class SoftCloseExecutorTest extends TestCase {
 				/**
 				 * Fail.
 				 *
-				 * @param string $administrationId The administration.
+				 * @param string $relationId The relation.
 				 * @param string $periodId The period.
 				 *
 				 * @return array<string,int>
 				 */
-				public function matchForPeriod(string $administrationId, string $periodId): array {
+				public function matchRelationPeriod(string $relationId, string $periodId): array {
 					throw new \RuntimeException($this->message);
-				}//end matchForPeriod()
+				}//end matchRelationPeriod()
 			},
 			'generate' => new class($message) {
 				/**
@@ -608,16 +618,16 @@ final class SoftCloseExecutorTest extends TestCase {
 			},
 			'OCA\Shillinq\Service\IntercompanyMatchingService' => new class {
 				/**
-				 * Match.
+				 * Match one relation, within tolerance.
 				 *
-				 * @param string $administrationId The administration.
+				 * @param string $relationId The relation.
 				 * @param string $periodId The period.
 				 *
-				 * @return array<string,int>
+				 * @return array<string,string>
 				 */
-				public function matchForPeriod(string $administrationId, string $periodId): array {
-					return ['matchCount' => 5];
-				}//end matchForPeriod()
+				public function matchRelationPeriod(string $relationId, string $periodId): array {
+					return ['relationId' => $relationId, 'matchStatus' => 'perfect-match'];
+				}//end matchRelationPeriod()
 			},
 		];
 
@@ -699,7 +709,7 @@ final class SoftCloseExecutorTest extends TestCase {
 		$cases = [
 			'fx-revaluation' => ['OCA\Shillinq\Service\Treasury\FxRevaluationService', 'reval', 0],
 			'revenue-cutoff' => ['OCA\Shillinq\Service\Ifrs15\RevenueRecognitionService', 'cutoff', 2],
-			'intercompany-matching' => ['OCA\Shillinq\Service\IntercompanyMatchingService', 'matchForPeriod', 9],
+			'intercompany-matching' => ['OCA\Shillinq\Service\IntercompanyMatchingService', 'matchRelationPeriod', 9],
 			'trial-balance' => ['OCA\Shillinq\Service\TrialBalanceService', 'generate', 9],
 		];
 		foreach ($cases as $step => [$id, $method, $postingCount]) {

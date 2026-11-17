@@ -44,8 +44,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Peppol;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -303,11 +303,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

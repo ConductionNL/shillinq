@@ -24,6 +24,7 @@ description:
       and administering financial records. Built on Open Register, it integrates
       with Nextcloud's collaboration ecosystem and is designed to meet Dutch
       government and SME financial administration requirements.
+      Conduction maintains this component within the Nextcloud ISV programme.
     features:
       - Invoice creation and management
       - Payment tracking
@@ -40,6 +41,7 @@ description:
       Register integreert het met het Nextcloud-ecosysteem en is ontworpen om te
       voldoen aan de financiële administratievereisten van de Nederlandse overheid
       en het MKB.
+      Conduction onderhoudt dit component binnen het Nextcloud ISV-programma.
     features:
       - Facturen aanmaken en beheren
       - Betalingen bijhouden
@@ -52,7 +54,12 @@ legal:
   repoOwner: "Conduction B.V."
 
 maintenance:
-  type: community
+  type: contract
+  contractors:
+    - name: Conduction B.V.
+      until: "2028-12-31"
+      email: info@conduction.nl
+      website: https://conduction.nl
   contacts:
     - name: Conduction B.V.
       email: info@conduction.nl
@@ -63,3 +70,7 @@ localisation:
   availableLanguages:
     - nl
     - en
+
+# Common Ground layer (nl.vng profile), as a standard supports entry.
+supports:
+  - id: https://commonground.nl/cms/view/54476261/5-lagen-model#process

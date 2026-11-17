@@ -46,11 +46,11 @@ namespace OCA\Shillinq\Listener;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\Pipelinq\TimelinePublishOutcome;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -85,13 +85,13 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	/**
 	 * Construct the listener with its DI deps.
 	 *
-	 * @param PipelinqContactAdapter $pipelinq Slice-02 adapter (publishWithOutcome).
+	 * @param PipelinqContactAdapterInterface $pipelinq Slice-02 adapter (publishWithOutcome).
 	 * @param TimelineRetryQueue $retryQueue Async-retry queue (slice 09 binding).
 	 * @param PipelinqAdminNotifier $adminAlerts Admin alerter for permanent (401) failures.
 	 * @param LoggerInterface $logger PSR logger for fail-soft observability.
 	 */
 	public function __construct(
-		private readonly PipelinqContactAdapter $pipelinq,
+		private readonly PipelinqContactAdapterInterface $pipelinq,
 		private readonly TimelineRetryQueue $retryQueue,
 		private readonly PipelinqAdminNotifier $adminAlerts,
 		private readonly LoggerInterface $logger,

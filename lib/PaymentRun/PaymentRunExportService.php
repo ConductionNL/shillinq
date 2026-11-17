@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\PaymentRun;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentRunExportServiceInterface;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunGeneratorInterface;
 use OCA\Shillinq\Reporting\SystemTagAssigner;
 use OCA\Shillinq\Reporting\TaggedFileStore;
@@ -57,7 +58,7 @@ use ReflectionClass;
  * Discovers generators, validates + renders the run, stores + tags the files,
  * writes back the file reference, and drives approved → exported.
  */
-class PaymentRunExportService {
+class PaymentRunExportService implements PaymentRunExportServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.
@@ -485,25 +486,49 @@ class PaymentRunExportService {
 				->saveObject($run);
 		} catch (\Throwable $e) {
 			$this->logger->warning('PaymentRunExportService: failed to save PaymentRun', ['exception' => $e->getMessage()]);
-			$error = 'save-failed';
-			if (method_exists($e, 'getErrors') === true && $e->getErrors() !== []) {
-				$error = 'export-refused';
-			}
 
-			return ['error' => $error, 'reason' => $e->getMessage()];
+			return ['error' => $this->saveError(exception: $e), 'reason' => $e->getMessage()];
 		}
 
+		return ['run' => $this->savedRun(saved: $saved, run: $run)];
+
+	}//end saveRun()
+
+	/**
+	 * `export-refused` when a guard stopped the transition, else `save-failed`.
+	 *
+	 * @param \Throwable $exception The save failure.
+	 *
+	 * @return string The error code.
+	 */
+	private function saveError(\Throwable $exception): string {
+		$error = 'save-failed';
+		if (method_exists($exception, 'getErrors') === true && $exception->getErrors() !== []) {
+			$error = 'export-refused';
+		}
+
+		return $error;
+	}//end saveError()
+
+	/**
+	 * The saved PaymentRun as an array, falling back to the fields that were saved.
+	 *
+	 * @param mixed $saved The saveObject() result.
+	 * @param array<string, mixed> $run The updated PaymentRun fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function savedRun(mixed $saved, array $run): array {
 		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-			return ['run' => (array)$saved->jsonSerialize()];
+			return (array)$saved->jsonSerialize();
 		}
 
 		if (is_array($saved) === true) {
-			return ['run' => $saved];
+			return $saved;
 		}
 
-		return ['run' => $run];
-
-	}//end saveRun()
+		return $run;
+	}//end savedRun()
 
 	/**
 	 * Delete the export files of a run that did not move to exported.

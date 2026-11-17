@@ -36,19 +36,27 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Resolves the administratie-aware RBAC context and enforces tenant isolation.
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
  */
-class AdministrationContextService {
+class AdministrationContextService implements AdministrationContextServiceInterface {
+	/**
+	 * The user preference that holds the chosen administration.
+	 */
+	public const ACTIVE_PREFERENCE = 'activeAdministrationId';
+
 	/**
 	 * Roles permitted to post journal entries when the membership does not
 	 * explicitly set mayPostJournalEntries (REQ-MA-003). Read-only roles
@@ -103,6 +111,7 @@ class AdministrationContextService {
 	 * @param IUserSession $userSession The current user session.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param IConfig         $config The user preference holding the chosen administration.
 	 *
 	 * @return void
 	 */
@@ -111,6 +120,7 @@ class AdministrationContextService {
 		private readonly IUserSession $userSession,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly IConfig $config,
 	) {
 	}//end __construct()
 
@@ -155,43 +165,54 @@ class AdministrationContextService {
 		$memberships = $this->membershipsForUser(userId: $userId);
 		$administrations = [];
 		foreach ($memberships as $membership) {
-			$administrationId = (string)($membership['administrationId'] ?? '');
-			if ($administrationId === '') {
-				continue;
+			$entry = $this->accessibleAdministration(membership: $membership);
+			if ($entry !== null) {
+				$administrations[] = $entry;
 			}
-
-			if ($this->membershipIsCurrentlyValid(membership: $membership) === false) {
-				continue;
-			}
-
-			$administration = $this->findAdministration(administrationId: $administrationId);
-			if ($administration === null) {
-				continue;
-			}
-
-			$administrations[] = [
-				'administrationId' => $administrationId,
-				'administrationCode' => (string)($administration['administrationCode'] ?? ''),
-				'name' => (string)($administration['name'] ?? ''),
-				'status' => (string)($administration['status'] ?? 'actief'),
-				'role' => (string)($membership['role'] ?? 'inkijker'),
-				'mayPostJournalEntries' => $this->resolvePostingRight(membership: $membership),
-				'mayCloseFiscalYear' => (bool)($membership['mayCloseFiscalYear'] ?? false),
-			];
-		}//end foreach
-
-		$activeId = null;
-		if ($administrations !== []) {
-			$activeId = $administrations[0]['administrationId'];
 		}
 
 		return [
 			'userId' => $userId,
 			'administrations' => $administrations,
-			'activeAdministrationId' => $activeId,
+			'activeAdministrationId' => $this->activeAmong(userId: $userId, administrations: $administrations),
 		];
 
 	}//end buildContext()
+
+	/**
+	 * The context entry of one membership, or null when it gives no current access.
+	 *
+	 * @param array<string,mixed> $membership The AdministrationMembership.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+	 */
+	private function accessibleAdministration(array $membership): array|null {
+		$administrationId = (string)($membership['administrationId'] ?? '');
+		if ($administrationId === '') {
+			return null;
+		}
+
+		if ($this->membershipIsCurrentlyValid(membership: $membership) === false) {
+			return null;
+		}
+
+		$administration = $this->findAdministration(administrationId: $administrationId);
+		if ($administration === null) {
+			return null;
+		}
+
+		return [
+			'administrationId' => $administrationId,
+			'administrationCode' => (string)($administration['administrationCode'] ?? ''),
+			'name' => (string)($administration['name'] ?? ''),
+			'status' => (string)($administration['status'] ?? 'actief'),
+			'role' => (string)($membership['role'] ?? 'inkijker'),
+			'mayPostJournalEntries' => $this->resolvePostingRight(membership: $membership),
+			'mayCloseFiscalYear' => (bool)($membership['mayCloseFiscalYear'] ?? false),
+		];
+	}//end accessibleAdministration()
 
 	/**
 	 * List the administration ids the authenticated user may access.
@@ -350,6 +371,55 @@ class AdministrationContextService {
 
 		return false;
 	}//end isOwnerOf()
+
+	/**
+	 * Store the administration the current user chose, so the context
+	 * returns it on the next request and the next login.
+	 *
+	 * Callers check membership first ({@see resolveSwitchTarget()}); the
+	 * stored id is checked again on every read, so a membership that ends
+	 * later falls back to the first one.
+	 *
+	 * @param string $administrationId The chosen administration.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 */
+	public function rememberActiveAdministration(string $administrationId): void {
+		$userId = $this->currentUserId();
+		if ($userId === null || $administrationId === '') {
+			return;
+		}
+
+		$this->config->setUserValue($userId, AppIdentity::APP_ID, self::ACTIVE_PREFERENCE, $administrationId);
+	}//end rememberActiveAdministration()
+
+	/**
+	 * The stored choice when the user may still use it, else the first
+	 * administration, else null.
+	 *
+	 * @param string                           $userId          The user.
+	 * @param array<int, array<string, mixed>> $administrations The user's usable administrations, in order.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 */
+	private function activeAmong(string $userId, array $administrations): ?string {
+		if ($administrations === []) {
+			return null;
+		}
+
+		$stored = $this->config->getUserValue($userId, AppIdentity::APP_ID, self::ACTIVE_PREFERENCE, '');
+		foreach ($administrations as $administration) {
+			if ($stored !== '' && $administration['administrationId'] === $stored) {
+				return $stored;
+			}
+		}
+
+		return $administrations[0]['administrationId'];
+	}//end activeAmong()
 
 	/**
 	 * Validate a requested active administration and return the id to switch to (REQ-MA-003).
@@ -514,26 +584,9 @@ class AdministrationContextService {
 				->setRegister($this->register())
 				->setSchema('Administration');
 
-			// Primary: the OpenRegister uuid, via the single-object lookup that
-			// actually addresses it.
-			//
-			// ⚠️ Its own try/catch, deliberately. find() THROWS
-			// DoesNotExistException ("Object with identifier 'ADM-001' not found
-			// in any magic table") for anything that is not a uuid — it does not
-			// return null. Letting that reach the outer catch would return null
-			// before the administrationCode fallback below ever runs, which is
-			// exactly the bug this method is being fixed for, reintroduced one
-			// layer down. A miss here is a normal id-space mismatch, not an error.
-			try {
-				$arr = $this->asArray(row: ObjectIdentifier::findScoped(
-					scoped: $scoped,
-					id: $administrationId
-				));
-				if ($arr !== []) {
-					return $arr;
-				}
-			} catch (\Throwable $notAUuid) {
-				// Fall through to the administrationCode lookup.
+			$byUuid = $this->findAdministrationByUuid(scoped: $scoped, administrationId: $administrationId);
+			if ($byUuid !== null) {
+				return $byUuid;
 			}
 
 			// Fallback: the human administrationCode, which IS a JSON property
@@ -552,6 +605,52 @@ class AdministrationContextService {
 			return null;
 		}
 
+		return $this->firstAdministration(matches: $matches, administrationId: $administrationId);
+	}//end findAdministrationUncached()
+
+	/**
+	 * The administration by its OpenRegister uuid, or null when the id is not one.
+	 *
+	 * @param mixed  $scoped           The ObjectService scoped to the Administration schema.
+	 * @param string $administrationId The administration uuid or administrationCode.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findAdministrationByUuid(mixed $scoped, string $administrationId): array|null {
+		// Primary: the OpenRegister uuid, via the single-object lookup that
+		// actually addresses it.
+		//
+		// ⚠️ Its own try/catch, deliberately. find() THROWS
+		// DoesNotExistException ("Object with identifier 'ADM-001' not found
+		// in any magic table") for anything that is not a uuid — it does not
+		// return null. Letting that reach the outer catch would return null
+		// before the administrationCode fallback below ever runs, which is
+		// exactly the bug this method is being fixed for, reintroduced one
+		// layer down. A miss here is a normal id-space mismatch, not an error.
+		try {
+			$arr = $this->asArray(row: ObjectIdentifier::findScoped(
+				scoped: $scoped,
+				id: $administrationId
+			));
+			if ($arr !== []) {
+				return $arr;
+			}
+		} catch (\Throwable $notAUuid) {
+			// Fall through to the administrationCode lookup.
+		}
+
+		return null;
+	}//end findAdministrationByUuid()
+
+	/**
+	 * The first administrationCode match as an array, or null (logged) when none resolves.
+	 *
+	 * @param iterable<mixed> $matches          The findAll() result.
+	 * @param string          $administrationId The administration uuid or administrationCode.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstAdministration(iterable $matches, string $administrationId): array|null {
 		foreach ($matches as $match) {
 			// OpenRegister's findAll() returns ObjectEntity instances; normalise.
 			$arr = $this->asArray(row: $match);
@@ -569,7 +668,7 @@ class AdministrationContextService {
 		);
 
 		return null;
-	}//end findAdministrationUncached()
+	}//end firstAdministration()
 
 	/**
 	 * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
@@ -611,11 +710,6 @@ class AdministrationContextService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

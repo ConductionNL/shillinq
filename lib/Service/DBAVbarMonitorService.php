@@ -27,8 +27,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Enums\DBAConstants;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -39,7 +41,7 @@ use Throwable;
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
  */
-class DBAVbarMonitorService {
+class DBAVbarMonitorService implements DBAVbarMonitorServiceInterface {
 	/**
 	 * Constructor.
 	 *
@@ -54,10 +56,6 @@ class DBAVbarMonitorService {
 	) {
 	}//end __construct()
 
-	/**
-	 * Result codes for `assess()`.
-	 */
-	public const RESULT_OK = 'OK';
 	public const RESULT_WARN = 'WARN';
 	public const RESULT_BLOCK = 'BLOCK';
 
@@ -185,12 +183,7 @@ class DBAVbarMonitorService {
 	 * @return string The register slug.
 	 */
 	private function registerSlug(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end registerSlug()
 
 	/**

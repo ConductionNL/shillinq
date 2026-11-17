@@ -50,6 +50,13 @@ vi.mock('@nextcloud/vue', () => {
 	}
 })
 vi.mock('@conduction/nextcloud-vue', () => ({
+	CnSettingsFieldsSection: {
+		name: 'CnSettingsFieldsSection',
+		props: ['appId', 'name', 'description', 'url', 'fields'],
+		render() {
+			return h('section', { 'data-stub': 'CnSettingsFieldsSection' }, [h('h3', this.name)])
+		},
+	},
 	CnSettingsSection: {
 		name: 'CnSettingsSection',
 		props: ['name', 'description', 'wide'],
@@ -84,7 +91,6 @@ globalThis.t = (app, text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (_m, key)
 
 const { default: AdminRoot } = await import('../../src/views/settings/AdminRoot.vue')
 const { default: Settings } = await import('../../src/views/settings/Settings.vue')
-const { default: PipelinqIntegration } = await import('../../src/views/settings/PipelinqIntegration.vue')
 const { default: StandardsPolicyEditor } = await import('../../src/views/settings/StandardsPolicyEditor.vue')
 
 /**
@@ -148,66 +154,6 @@ describe('Settings', () => {
 	})
 })
 
-describe('PipelinqIntegration', () => {
-	/**
-	 * An instance of the form with its methods bound.
-	 *
-	 * @return {object}
-	 */
-	function instance() {
-		const vm = { ...PipelinqIntegration.data.call({}) }
-		for (const [name, method] of Object.entries(PipelinqIntegration.methods)) {
-			vm[name] = method.bind(vm)
-		}
-		return vm
-	}
-
-	it('reads the stored endpoint and whether a token is stored, with the request token', async () => {
-		globalThis.fetch.mockResolvedValue(response(true, { endpoint: 'https://pipelinq.example/api', hasToken: 1 }))
-		const vm = instance()
-
-		await vm.fetchSettings()
-
-		expect(globalThis.fetch).toHaveBeenCalledWith('/index.php/apps/shillinq/api/pipelinq/settings', { headers: { requesttoken: 'tok' } })
-		expect(vm.form.endpoint).toBe('https://pipelinq.example/api')
-		expect(vm.hasToken).toBe(true)
-	})
-
-	it('keeps the empty form when the read is refused or fails', async () => {
-		const vm = instance()
-		await vm.fetchSettings()
-		expect(vm.form.endpoint).toBe('')
-		expect(vm.hasToken).toBe(false)
-
-		const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-		globalThis.fetch.mockRejectedValue(new Error('offline'))
-		await vm.fetchSettings()
-		expect(vm.form.endpoint).toBe('')
-		expect(error).toHaveBeenCalledWith('Failed to fetch pipelinq settings:', expect.any(Error))
-		error.mockRestore()
-	})
-
-	it('says a token is stored and masks it, and holds Test back without an endpoint', async () => {
-		const stored = await render(PipelinqIntegration, { hasToken: true })
-		expect(stored).toContain('placeholder="••••••••••••"')
-		expect(stored).toContain('A token is stored. Leave empty to keep the current token, or paste a new one to rotate it.')
-		expect(stored).toMatch(/<button[^>]*disabled[^>]*>\s*Test connection/)
-
-		const fresh = await render(PipelinqIntegration, { form: { endpoint: 'https://p.example', token: '' }, feedback: { kind: 'error', message: 'Connection refused' } })
-		expect(fresh).toContain('Paste your pipelinq API token')
-		expect(fresh).toContain('never returned to the browser')
-		expect(fresh).toMatch(/class="feedback error"[^>]*>\s*Connection refused/)
-		expect(fresh).not.toMatch(/<button[^>]*disabled[^>]*>\s*Test connection/)
-	})
-
-	it('names the running act on its button', async () => {
-		const html = await render(PipelinqIntegration, { saving: true, testing: true, form: { endpoint: 'https://p.example', token: '' } })
-
-		expect(html).toMatch(/<button[^>]*disabled[^>]*>\s*Saving…/)
-		expect(html).toMatch(/<button[^>]*disabled[^>]*>\s*Testing…/)
-	})
-})
-
 describe('StandardsPolicyEditor', () => {
 	it('shows only the loading icon while the policy loads', async () => {
 		const html = await render(StandardsPolicyEditor)
@@ -264,10 +210,11 @@ describe('AdminRoot', () => {
 		expect(html.match(/data-stub="CnToggleTableWidget"/g)).toHaveLength(2)
 	})
 
-	it('shows the settings forms only once the stores are up, and starts them on creation', async () => {
+	it('shows the settings form only once the stores are up, the Pipelinq section at once, and starts the stores on creation', async () => {
 		const waiting = await render(AdminRoot)
 		expect(initializeStoresMock).toHaveBeenCalled()
-		expect(waiting).not.toContain('Pipelinq integration')
+		expect(waiting).not.toContain('OpenRegister register ID')
+		expect(waiting).toContain('Pipelinq integration')
 
 		const ready = await render(AdminRoot, { storesReady: true })
 		expect(ready).toContain('Pipelinq integration')

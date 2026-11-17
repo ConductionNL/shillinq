@@ -40,7 +40,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -108,19 +109,7 @@ class SubsidieVerantwoordingGuard {
 				return false;
 			}
 
-			$awardedAmount = (float)($object['awardedAmount'] ?? 0.0);
-			if ($awardedAmount < $this->resolveThreshold()) {
-				// Below threshold: no auditor statement required, approval permitted.
-				return true;
-			}
-
-			$grantId = (string)($object['grantId'] ?? '');
-			if ($grantId === '') {
-				// Large grant with no grant reference cannot be reconciled — fail closed.
-				return false;
-			}
-
-			return $this->hasApprovedAuditorStatement(grantId: $grantId);
+			return $this->isApprovable(object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SubsidieVerantwoordingGuard: approve check failed — denying approve transition (fail-closed)',
@@ -129,6 +118,31 @@ class SubsidieVerantwoordingGuard {
 			return false;
 		}//end try
 	}//end canApprove()
+
+	/**
+	 * Whether the report is below the threshold, or its grant has an approved auditor statement.
+	 *
+	 * @param array<string,mixed> $object The SubsidieVerantwoording.
+	 *
+	 * @return bool True when the accountability report may be approved.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	private function isApprovable(array $object): bool {
+		$awardedAmount = (float)($object['awardedAmount'] ?? 0.0);
+		if ($awardedAmount < $this->resolveThreshold()) {
+			// Below threshold: no auditor statement required, approval permitted.
+			return true;
+		}
+
+		$grantId = (string)($object['grantId'] ?? '');
+		if ($grantId === '') {
+			// Large grant with no grant reference cannot be reconciled — fail closed.
+			return false;
+		}
+
+		return $this->hasApprovedAuditorStatement(grantId: $grantId);
+	}//end isApprovable()
 
 	/**
 	 * Returns true iff the grant has at least one AuditorStatement in approved or conditional state.
@@ -224,11 +238,6 @@ class SubsidieVerantwoordingGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

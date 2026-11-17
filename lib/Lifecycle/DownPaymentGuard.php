@@ -37,9 +37,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
-use OCA\Shillinq\Service\Sales\DownPaymentService;
+use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 use RuntimeException;
 
 /**
@@ -51,10 +52,10 @@ class DownPaymentGuard implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param DownPaymentService $downPayments The down-payment rules.
+	 * @param DownPaymentServiceInterface $downPayments The down-payment rules.
 	 */
 	public function __construct(
-		private readonly DownPaymentService $downPayments,
+		private readonly DownPaymentServiceInterface $downPayments,
 	) {
 
 	}//end __construct()
@@ -62,20 +63,19 @@ class DownPaymentGuard implements LifecycleActionInterface {
 	/**
 	 * Run the declared step on the invoice being issued.
 	 *
-	 * @param array<string,mixed> $objectData   The invoice after its state moved.
-	 * @param array<string,mixed> $previousData The invoice before the transition.
-	 * @param array<string,mixed> $parameters   `step`: check or stamp.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the invoice after its state moved. Its
+	 *                                        parameters are the declared `step`: check or stamp.
 	 *
 	 * @return array<string,mixed> The invoice, unchanged.
 	 *
 	 * @throws RuntimeException When the invoice may not be issued, or the step is unknown.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		$step = (string)($parameters['step'] ?? '');
 		if ($step === 'check') {
 			$this->requireOpenDeductions(invoice: $objectData);

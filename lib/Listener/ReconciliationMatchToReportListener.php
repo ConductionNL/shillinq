@@ -61,7 +61,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -473,11 +473,6 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 }//end class

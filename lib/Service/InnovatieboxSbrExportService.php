@@ -45,6 +45,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxSbrExportServiceInterface;
+
 /**
  * Pure SBR/XBRL + PDF hand-off renderer for the Vpb innovatiebox-sectie
  * (REQ-IBA-006).
@@ -55,7 +57,7 @@ namespace OCA\Shillinq\Service;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class InnovatieboxSbrExportService {
+class InnovatieboxSbrExportService implements InnovatieboxSbrExportServiceInterface {
 	/**
 	 * SBR Nederland Vpb taxonomy version targeted by this converter.
 	 *

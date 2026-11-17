@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Booking;
 
 use LogicException;
+use OCA\Shillinq\Kernel\Contracts\TransactionalGuardInterface;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 
@@ -41,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * rollBack flow that satisfies the LogicException invariants in
  * ConflictDetectionService::lockResource.
  */
-class TransactionalGuard {
+class TransactionalGuard implements TransactionalGuardInterface {
 
 	/**
 	 * Local transaction tracker used when no IDBConnection is wired.

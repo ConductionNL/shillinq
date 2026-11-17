@@ -42,12 +42,13 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for FoldDunningWriteoffIntoArInvoice.
  *
  * @covers \OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  */
 class FoldDunningWriteoffIntoArInvoiceTest extends TestCase {
@@ -178,19 +179,15 @@ class FoldDunningWriteoffIntoArInvoiceTest extends TestCase {
 			$entity->method('jsonSerialize')->willReturn($this->invoices[$id]);
 			return $entity;
 		});
-		$service->method('saveObject')->willReturnCallback(function (
-			array $object,
-			?array $extend = [],
-			string|int|null $register = null,
-			string|int|null $schema = null,
-			?string $uuid = null,
-			bool $_rbac = true,
-			bool $_multitenancy = true,
-			bool $silent = false,
-			bool $_validation = true,
-			?array $uploadedFiles = null,
-			?IUser $currentUser = null,
-		): ObjectEntityInterface {
+		$service->method('saveObject')->willReturnCallback(function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): ObjectEntityInterface {
+			$extend = $options->extend ?? [];
+			$register = $options->target->register;
+			$schema = $options->target->schema;
+			$uuid = $options->uuid;
+			$silent = $options->policy->silent ?? false;
+			$_validation = $options->policy->validation ?? true;
+			$uploadedFiles = $options->uploadedFiles;
+			$currentUser = $options->actor->currentUser;
 			$this->saved[] = [
 				'object' => $object,
 				'register' => $register,

@@ -64,17 +64,19 @@ final class BillableInvoiceRecords {
 
 
 	/**
-	 * The draft BillableInvoice record, due 30 days after the invoice date.
+	 * The draft BillableInvoice record, due the customer's payment term after
+	 * the invoice date (sales-invoice-sending REQ-SIS-005).
 	 *
 	 * @param InvoiceDraft $draft The totalled draft.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
 	 */
 	public function invoicePayload(InvoiceDraft $draft): array {
 		$request = $draft->request;
-		$amounts = $this->amountsInEuros(totals: $draft->totals);
+		$amounts = $this->amountsInEuros(totals: $draft->totals, currency: $draft->currency);
 
 		return [
 			'administrationId' => $request->administrationId,
@@ -83,7 +85,7 @@ final class BillableInvoiceRecords {
 			'customerId' => $request->customerId,
 			'projectId' => $request->projectId,
 			'invoiceDate' => $request->toDate,
-			'dueDate' => $this->addDays(isoDate: $request->toDate, days: 30),
+			'dueDate' => $this->addDays(isoDate: $request->toDate, days: $draft->paymentTermDays),
 			'timeEntryIds' => $request->timeEntryIds,
 			'expenseIds' => $request->expenseIds,
 			'meterReadingIds' => $request->meterReadingIds,
@@ -94,8 +96,8 @@ final class BillableInvoiceRecords {
 			'netAmount' => $amounts['netAmount'],
 			'vatAmount' => $amounts['vatAmount'],
 			'grossAmount' => $amounts['grossAmount'],
-			'currency' => 'EUR',
-			'paymentTerms' => 'net 30',
+			'currency' => $draft->currency,
+			'paymentTerms' => 'net ' . $draft->paymentTermDays,
 			'status' => 'draft',
 			'posted' => false,
 			'obligationId' => null,
@@ -186,18 +188,21 @@ final class BillableInvoiceRecords {
 
 
 	/**
-	 * Net, VAT and gross in euros, and the currency.
+	 * Net, VAT and gross in the invoice currency's units, and the currency.
 	 *
-	 * @param array<string,mixed> $totals The VAT totals in cents.
+	 * @param array<string,mixed> $totals   The VAT totals in cents.
+	 * @param string              $currency The invoice currency.
 	 *
 	 * @return array{netAmount: float, vatAmount: float, grossAmount: float, currency: string}
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
 	 */
-	private function amountsInEuros(array $totals): array {
+	private function amountsInEuros(array $totals, string $currency = 'EUR'): array {
 		return [
 			'netAmount' => round($totals['netCents'] / 100, 2),
 			'vatAmount' => round($totals['vatCents'] / 100, 2),
 			'grossAmount' => round($totals['grossCents'] / 100, 2),
-			'currency' => 'EUR',
+			'currency' => $currency,
 		];
 	}//end amountsInEuros()
 
