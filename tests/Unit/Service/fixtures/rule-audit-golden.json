@@ -2,10 +2,10 @@
     "plain": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1297,
-            "machineCheckable": 690,
-            "enforceableRules": 612,
-            "coveragePct": 88.7,
+            "corpusTotal": 1303,
+            "machineCheckable": 696,
+            "enforceableRules": 618,
+            "coveragePct": 88.8,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -150,10 +150,16 @@
                     "compliant": 0,
                     "withViolations": 3,
                     "violations": 12
+                },
+                "BtwAangifte": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
                 }
             },
-            "objectsChecked": 72,
-            "objectsCompliant": 9,
+            "objectsChecked": 75,
+            "objectsCompliant": 12,
             "objectsWithViolations": 63,
             "violationsBySeverity": {
                 "mandatory": 467,
@@ -415,6 +421,13 @@
             [
                 "find",
                 "BbvStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BtwAangifte",
                 {
                     "limit": 10000
                 }
@@ -424,10 +437,10 @@
     "jurisdiction": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1297,
-            "machineCheckable": 690,
-            "enforceableRules": 612,
-            "coveragePct": 88.7,
+            "corpusTotal": 1303,
+            "machineCheckable": 696,
+            "enforceableRules": 618,
+            "coveragePct": 88.8,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -572,10 +585,16 @@
                     "compliant": 0,
                     "withViolations": 3,
                     "violations": 12
+                },
+                "BtwAangifte": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
                 }
             },
-            "objectsChecked": 72,
-            "objectsCompliant": 9,
+            "objectsChecked": 75,
+            "objectsCompliant": 12,
             "objectsWithViolations": 63,
             "violationsBySeverity": {
                 "mandatory": 467,
@@ -840,16 +859,23 @@
                 {
                     "limit": 10000
                 }
+            ],
+            [
+                "find",
+                "BtwAangifte",
+                {
+                    "limit": 10000
+                }
             ]
         ]
     },
     "failing": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1297,
-            "machineCheckable": 690,
-            "enforceableRules": 612,
-            "coveragePct": 88.7,
+            "corpusTotal": 1303,
+            "machineCheckable": 696,
+            "enforceableRules": 618,
+            "coveragePct": 88.8,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -994,10 +1020,16 @@
                     "compliant": 0,
                     "withViolations": 3,
                     "violations": 12
+                },
+                "BtwAangifte": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
                 }
             },
-            "objectsChecked": 69,
-            "objectsCompliant": 9,
+            "objectsChecked": 72,
+            "objectsCompliant": 12,
             "objectsWithViolations": 60,
             "violationsBySeverity": {
                 "mandatory": 432,
@@ -1236,6 +1268,13 @@
             [
                 "find",
                 "BbvStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "BtwAangifte",
                 {
                     "limit": 10000
                 }

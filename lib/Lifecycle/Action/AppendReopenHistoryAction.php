@@ -53,6 +53,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCP\IUserSession;
 
@@ -83,20 +84,21 @@ class AppendReopenHistoryAction implements LifecycleActionInterface {
 	/**
 	 * Record the reopen on the transitioning FiscalPeriod (REQ-PC-006).
 	 *
-	 * @param array<string,mixed> $objectData Payload after the state moved to `open`.
-	 * @param array<string,mixed> $previousData Payload before the transition (carries the prior close stamps).
-	 * @param array<string,mixed> $parameters Declared `actionParameters` (`target`).
-	 * @param string $actionName The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is payload after the state moved to `open`.
+	 *                                        Its parameters are the declared declared `actionParameters` (`target`).
 	 *
 	 * @return array<string,mixed> The payload with the history appended and the close stamps cleared.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $actionName is required by
 	 * OpenRegister's LifecycleActionInterface; this handler serves exactly one
 	 * declared action and has no dispatch to do on the name.
 	 *
 	 * @spec openspec/specs/bookkeeping-period-close/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$previousData = $context->previousData;
+		$parameters = $context->parameters;
+
 		$target = trim((string)($parameters['target'] ?? self::DEFAULT_TARGET));
 		if ($target === '') {
 			$target = self::DEFAULT_TARGET;
