@@ -47,7 +47,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -129,7 +131,10 @@ class StockMoveOffsetCreator {
 
 		$offset        = self::offsetMove(original: $original, originalId: $originalId, administrationId: $administrationId);
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->saveObject(object: $offset, register: $this->register(), schema: 'StockMove');
+		$objectService->saveObject(
+			object: $offset,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'StockMove'))
+		);
 
 		return true;
 
@@ -227,11 +232,6 @@ class StockMoveOffsetCreator {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

@@ -50,9 +50,12 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
+use OCA\Shillinq\Repair\Support\SeedsOpenFiscalPeriods;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -67,6 +70,8 @@ class BackfillFiscalPeriods implements IRepairStep {
 	use RunsUnderSystemIdentity;
 
 	use ReadsSourceRowsInBatches;
+
+	use SeedsOpenFiscalPeriods;
 
 	/**
 	 * Constructor.
@@ -307,42 +312,11 @@ class BackfillFiscalPeriods implements IRepairStep {
 		// have permission to 'create'".
 		$this->objectService->saveObject(
 			object: $record,
-			register: $registerSlug,
-			schema: 'FiscalPeriod',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'FiscalPeriod')),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end savePeriod()
-
-	/**
-	 * Whether a FiscalPeriod record already exists for the given
-	 * (periodId, administrationId) tuple.
-	 *
-	 * @param object $objectService The OR ObjectService.
-	 * @param string $registerSlug The register slug.
-	 * @param string $periodId The business periodId.
-	 * @param string $administrationId The administration scope ('' for none).
-	 *
-	 * @return bool True when a match is found.
-	 */
-	private function fiscalPeriodExists(
-		object $objectService,
-		string $registerSlug,
-		string $periodId,
-		string $administrationId,
-	): bool {
-		$filters = ['periodId' => $periodId];
-		if ($administrationId !== '') {
-			$filters['administrationId'] = $administrationId;
-		}
-
-		$found = $objectService
-			->setRegister($registerSlug)
-			->setSchema('FiscalPeriod')
-			->findAll(['filters' => $filters, 'limit' => 1]);
-
-		return is_array($found) === true && $found !== [];
-	}//end fiscalPeriodExists()
 
 	/**
 	 * Build the seed record for a distinct historical periodId. Derives
@@ -364,20 +338,10 @@ class BackfillFiscalPeriods implements IRepairStep {
 			$resolvedAdministrationId = $administrationId;
 		}
 
-		$record = [
-			'periodId' => $periodId,
-			'name' => $derived['name'],
-			'administrationId' => $resolvedAdministrationId,
-			'startDate' => $derived['startDate'],
-			'endDate' => $derived['endDate'],
-			'fiscalYear' => $derived['fiscalYear'],
-			'state' => 'open',
-			'reopenedHistory' => [],
-			'taskChecklistItems' => [],
-			'aiFlags' => [],
-		];
-
-		return $record;
+		return $this->openFiscalPeriodRecord(
+			period: ['periodId' => $periodId] + $derived,
+			administrationId: $resolvedAdministrationId
+		);
 	}//end buildSeedRecord()
 
 	/**
@@ -464,32 +428,6 @@ class BackfillFiscalPeriods implements IRepairStep {
 
 		return $this->periodFields(name: $name, startDate: $start, endDate: $end, fiscalYear: $year);
 	}//end monthFields()
-
-	/**
-	 * English name of a calendar month.
-	 *
-	 * @param int $month Month number.
-	 *
-	 * @return string
-	 */
-	private function monthName(int $month): string {
-		$names = [
-			1 => 'January',
-			2 => 'February',
-			3 => 'March',
-			4 => 'April',
-			5 => 'May',
-			6 => 'June',
-			7 => 'July',
-			8 => 'August',
-			9 => 'September',
-			10 => 'October',
-			11 => 'November',
-			12 => 'December',
-		];
-
-		return $names[$month];
-	}//end monthName()
 
 	/**
 	 * Fields for a YYYY-Wnn (ISO week, startDate Monday, endDate Sunday) periodId.

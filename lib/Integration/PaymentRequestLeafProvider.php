@@ -37,7 +37,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\OpenRegister\Service\Integration\RefIntegrationProvider;
 use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
@@ -48,6 +52,8 @@ use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCP\IAppConfig;
@@ -58,7 +64,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
  */
-final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRequestLeafProviderInterface {
+final class PaymentRequestLeafProvider implements RefIntegrationProvider, PaymentRequestLeafProviderInterface {
 
 	/**
 	 * The schema holding payment requests.
@@ -81,6 +87,8 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @param PaymentRequestPortalScopeInterface $portalScope Gives a request without an invoice its portal scope.
 	 * @param ?ObjectRequestInvoiceServiceInterface $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
 	 * @param ?DebtorCreditServiceInterface $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
+	 * @param ?MolliePaymentAdapterInterface $paymentAdapter The bound payment adapter; dormant or absent means online payment is not set up.
+	 * @param ?PaymentLinkCreator $linkCreator Creates the checkout link of a raised request (receivables-payment-links D2).
 	 *
 	 * @return void
 	 */
@@ -96,6 +104,8 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
 		private readonly ?ObjectRequestInvoiceServiceInterface $invoices = null,
 		private readonly ?DebtorCreditServiceInterface $credits = null,
+		private readonly ?MolliePaymentAdapterInterface $paymentAdapter = null,
+		private readonly ?PaymentLinkCreator $linkCreator = null,
 	) {
 	}//end __construct()
 
@@ -193,9 +203,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	/**
 	 * The requests standing on this host object, newest first.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $filters Optional list filters; unknown keys are ignored.
 	 *
 	 * @return array<string, mixed> The `{items, total, nextCursor, fee}` envelope.
@@ -206,7 +214,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
 	 * this leaf returns every request on the object and filters nothing yet.
 	 */
-	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
+	public function list(ObjectRef $ref, array $filters = []): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: false);
 
 		$projected = [];
@@ -252,8 +263,26 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			'total' => count($projected),
 			'nextCursor' => null,
 			'fee' => $this->feeFor(register: $register, schema: $schema, objectId: $objectId),
+			'onlinePayment' => $this->onlinePayment(),
 		];
 	}//end list()
+
+	/**
+	 * Whether a payment link can be created: a live payment adapter is bound.
+	 * The panel disables Send payment link with the reason otherwise
+	 * (receivables-payment-links D5, REQ-RPL-002).
+	 *
+	 * @return array{live: bool, reason: string} `reason` is `not-set-up` when not live, else ''.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+	 */
+	private function onlinePayment(): array {
+		if ($this->paymentAdapter === null || $this->paymentAdapter->isDormant() === true) {
+			return ['live' => false, 'reason' => 'not-set-up'];
+		}
+
+		return ['live' => true, 'reason' => ''];
+	}//end onlinePayment()
 
 	/**
 	 * The published fee for the host object's type, or null when it carries none.
@@ -295,17 +324,15 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * One request by id, scoped to the host object so a request on another
 	 * object cannot be read through this host.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The request id.
 	 *
 	 * @return array<string, mixed> The request.
 	 *
 	 * @throws RuntimeException When no such request stands on this object.
 	 */
-	public function get(string $register, string $schema, string $objectId, string $entityId): array {
-		$listed = $this->list(register: $register, schema: $schema, objectId: $objectId);
+	public function get(ObjectRef $ref, string $entityId): array {
+		$listed = $this->list(ref: $ref);
 		foreach ($listed['items'] as $request) {
 			if ($request['id'] === $entityId) {
 				return $request;
@@ -318,9 +345,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	/**
 	 * Append one payment request to the host object.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param array<string, mixed> $payload The request fields: amount, currency, requestType, description, debtor, dueAt.
 	 *
 	 * @return array<string, mixed> The created request.
@@ -330,7 +355,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	public function create(string $register, string $schema, string $objectId, array $payload): array {
+	public function create(ObjectRef $ref, array $payload): array {
+		$register = (string) $ref->register;
+		$schema = (string) $ref->schema;
+		$objectId = $ref->id;
 		if ($this->authorizer->may(self::ACTION_REQUEST) === false) {
 			throw new RuntimeException('403 Raising a payment request needs the payment.request action.');
 		}
@@ -531,8 +559,51 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
 		}
 
-		return $this->saveRequest(request: $request, asSystem: $asSystem);
+		return $this->withPaymentLink(created: $this->saveRequest(request: $request, asSystem: $asSystem), asSystem: $asSystem);
 	}//end finaliseRequest()
+
+	/**
+	 * Give a raised, still pending request its checkout link from the
+	 * provider, and store it with the provider payment id and the checkout
+	 * expiry (REQ-RPL-001). Without a live provider the request stays without
+	 * a link.
+	 *
+	 * @param array<string, mixed> $created  The saved request, with its id.
+	 * @param bool                 $asSystem Write without the session's rights.
+	 *
+	 * @return array<string, mixed> The request, with its link fields when it got a link.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
+	 */
+	private function withPaymentLink(array $created, bool $asSystem): array {
+		if ($this->linkCreator === null) {
+			return $created;
+		}
+
+		$fields = $this->linkCreator->linkFieldsFor(request: $created);
+		if ($fields === []) {
+			return $created;
+		}
+
+		$data = [];
+		foreach ($created as $key => $value) {
+			if ($key !== 'id' && str_starts_with((string)$key, '@') === false) {
+				$data[$key] = $value;
+			}
+		}
+
+		$this->objectService->saveObject(
+			object: array_merge($data, $fields),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA),
+				uuid: (string)$created['id']
+			),
+			_rbac: ($asSystem === false),
+			_multitenancy: ($asSystem === false),
+		);
+
+		return array_merge($created, $fields);
+	}//end withPaymentLink()
 
 	/**
 	 * An invoice asked for at create stands behind the request, so a
@@ -574,10 +645,9 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	private function saveRequest(array $request, bool $asSystem): array {
 		$saved = $this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
-			_rbac: ($asSystem === false),
-			_multitenancy: ($asSystem === false),
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA)),
+			_rbac: $asSystem === false,
+			_multitenancy: $asSystem === false
 		);
 
 		// OpenRegister answers a save with an ObjectEntity, not the array that
@@ -595,9 +665,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * The leaf appends; it never rewrites a request in place. A request changes
 	 * state through its own lifecycle, which is where the audit trail is.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The request id.
 	 * @param array<string, mixed> $payload Ignored.
 	 *
@@ -609,16 +677,14 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * IntegrationProvider's. The method refuses every call, so it reads none of
 	 * its arguments; dropping them would break the contract.
 	 */
-	public function update(string $register, string $schema, string $objectId, string $entityId, array $payload): array {
+	public function update(ObjectRef $ref, string $entityId, array $payload): array {
 		throw new RuntimeException('A payment request changes state through its lifecycle, not through the leaf.');
 	}//end update()
 
 	/**
 	 * A payment request is evidence and is never deleted through the leaf.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param ObjectRef $ref The register, schema and id of the object.
 	 * @param string $entityId The request id.
 	 *
 	 * @return void
@@ -629,7 +695,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * IntegrationProvider's. The method refuses every call, so it reads none of
 	 * its arguments; dropping them would break the contract.
 	 */
-	public function delete(string $register, string $schema, string $objectId, string $entityId): void {
+	public function delete(ObjectRef $ref, string $entityId): void {
 		throw new RuntimeException('A payment request is payment evidence and is voided, never deleted.');
 	}//end delete()
 

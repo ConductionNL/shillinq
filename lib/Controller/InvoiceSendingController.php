@@ -26,14 +26,17 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DomainException;
+use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\InvoiceBatchSendService;
 use OCA\Shillinq\Service\InvoiceSendingService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -58,12 +61,16 @@ class InvoiceSendingController extends Controller {
 	 * @param InvoiceSendingService        $sending The send.
 	 * @param AdministrationContextService $context Whether the user may act on the administration.
 	 * @param LoggerInterface              $logger  An unexpected failure, never shown in full.
+	 * @param InvoiceBatchSendService|null $batches Queues a send of selected invoices (REQ-SIS-003).
+	 * @param IUserSession|null            $session Who asked for a batch, to tell them when it is done.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly InvoiceSendingService $sending,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
+		private readonly ?InvoiceBatchSendService $batches = null,
+		private readonly ?IUserSession $session = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -89,12 +96,9 @@ class InvoiceSendingController extends Controller {
 	#[NoAdminRequired]
 	public function send(string $id, string $administrationId = '', string $via = ''): JSONResponse {
 		$administrationId = trim($administrationId);
-		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->context->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'ARInvoice not found'], Http::STATUS_NOT_FOUND);
+		$refusal = $this->administrationRefusal(administrationId: $administrationId, notFound: 'ARInvoice not found');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		if ($via !== '' && $via !== 'email') {
@@ -114,4 +118,76 @@ class InvoiceSendingController extends Controller {
 
 		return new JSONResponse($outcome);
 	}//end send()
+
+	/**
+	 * Send the selected invoices in a queued batch.
+	 *
+	 * POST /api/ar-invoices/send-batch with `{administrationId, invoiceIds,
+	 * resend?}`. The batch is recorded and queued; each invoice then goes out
+	 * by its customer's delivery method, and an invoice already sent is
+	 * skipped unless `resend` is true.
+	 *
+	 * @param string            $administrationId The administration the invoices belong to.
+	 * @param array<int, mixed> $invoiceIds       The selected ARInvoice ids, 1 to 200.
+	 * @param bool              $resend           Whether an invoice already sent goes again.
+	 *
+	 * @return JSONResponse 202 with the queued InvoiceBatch; 400 for a bad
+	 *                      request; 404 for an administration the user may not see.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.2
+	 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-selected-invoices-are-sent-in-one-action-req-sis-003
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `resend` is a field of the request body, bound by the framework.
+	 */
+	#[NoAdminRequired]
+	public function sendBatch(string $administrationId = '', array $invoiceIds = [], bool $resend = false): JSONResponse {
+		$administrationId = trim($administrationId);
+		$refusal = $this->administrationRefusal(administrationId: $administrationId, notFound: 'Administration not found');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		if ($this->batches === null) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		try {
+			$batch = $this->batches->queue(
+				administrationId: $administrationId,
+				invoiceIds: $invoiceIds,
+				options: ['resend' => $resend, 'requestedBy' => (string)$this->session?->getUser()?->getUID()]
+			);
+		} catch (OutOfBoundsException $e) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		} catch (Throwable $e) {
+			$this->logger->error('InvoiceSendingController: batch not queued', ['exception' => $e->getMessage()]);
+			return new JSONResponse(['error' => 'The batch could not be queued.'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse($batch, Http::STATUS_ACCEPTED);
+	}//end sendBatch()
+
+	/**
+	 * A 400 for a malformed administration id, a 404 for one the caller may not use; null when it may.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 * @param string $notFound         The 404 message.
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private function administrationRefusal(string $administrationId, string $notFound): ?JSONResponse {
+		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => $notFound], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end administrationRefusal()
 }//end class

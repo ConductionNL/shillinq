@@ -90,8 +90,36 @@
             "versionsSha256": "b6318eb2982bdafd95228b4a6fe1ac17be097fc52db71fea64dbda0373762cfb"
         },
         {
-            "appVersion": "0.5.7-unstable.20261114223000",
-            "versionsSha256": "cb2d6adfd25a7c011987a269489fb6eda5d8f2f743bd3d983ea86b13fbdbd7af"
+            "appVersion": "0.5.7-unstable.20261114220000",
+            "versionsSha256": "94596f1823024c3830be1bfa8322089ee4e2ceae5d0fde26ab6f201083276819"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115143000",
+            "versionsSha256": "2303fe6a1ccfdbc18ddaf7c055585ddeb3ca704b6707542074eb2ad053979ff4"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115172959",
+            "versionsSha256": "8c14d8f0a0fc6f12b4fb08e4a7509bad0e9b20076c6064728a6ee0711b89503e"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116210000",
+            "versionsSha256": "6c97f494bc5065099ec8b4bb68152167fe8305c3607c4f85e6c19e626f669f29"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116220000",
+            "versionsSha256": "e2e41df56b632cc9a414210e6b0551f51e90126895d69b9116f117aff99e3005"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116230000",
+            "versionsSha256": "b83468d10ec63d9aac329c3b3771a0f8b0ab3c9ab5aebf6946aa63d7724bd9e7"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116233000",
+            "versionsSha256": "a3d11b8b45cbeebce6affc0de824641a65be9cdc23c8790b8397c5f793ecde5a"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117010000",
+            "versionsSha256": "3727e0a9e6482be2dbfba94a115231d6de6162532291a2e63ad9e721e8349b10"
         }
     ],
     "versions": {
@@ -107,10 +135,11 @@
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
-        "schema:Administration": "0.2.0",
+        "schema:Administration": "0.3.0",
         "schema:AdministrationBackupRun": "0.1.0",
         "schema:AdministrationMembership": "0.1.0",
-        "schema:AdministrationMigration": "0.1.0",
+        "schema:AdministrationMigration": "0.2.0",
+        "schema:AdministrationTemplate": "0.1.0",
         "schema:AlertLog": "0.1.0",
         "schema:AlgemeenBelangBesluit": "0.1.0",
         "schema:AllocationRule": "0.1.0",
@@ -165,7 +194,7 @@
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",
         "schema:BookingSmsReminderChannel": "0.1.0",
-        "schema:BtwAangifte": "0.1.0",
+        "schema:BtwAangifte": "0.2.0",
         "schema:BudgetBBVMapping": "0.3.0",
         "schema:BudgetLine": "0.1.0",
         "schema:BudgetLineDerivation": "0.1.0",
@@ -267,7 +296,7 @@
         "schema:EInvoiceMandate": "0.1.0",
         "schema:EMUAdjustment": "0.1.0",
         "schema:EMUReport": "0.1.0",
-        "schema:ENSIAJaarcyclus": "0.1.0",
+        "schema:ENSIAJaarcyclus": "0.2.0",
         "schema:EconomischeCategorie": "0.1.0",
         "schema:EligibilityRule": "0.1.0",
         "schema:EliminationEntry": "0.1.1",
@@ -369,9 +398,10 @@
         "schema:InventoryVarianceReason": "0.1.0",
         "schema:Investering": "0.1.0",
         "schema:InvesteringsAftrek": "0.1.0",
-        "schema:InvesteringsaftrekClaim": "0.1.0",
-        "schema:InvestmentAsset": "0.1.0",
+        "schema:InvesteringsaftrekClaim": "0.2.0",
+        "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
+        "schema:InvoiceBatch": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
         "schema:IossImport": "0.1.0",
         "schema:IroRecord": "0.1.0",
@@ -439,7 +469,7 @@
         "schema:Payment": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
-        "schema:PaymentRequest": "0.10.0",
+        "schema:PaymentRequest": "0.11.0",
         "schema:PaymentRun": "0.3.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",
@@ -487,7 +517,7 @@
         "schema:RealisedFxPosting": "0.2.0",
         "schema:Receipt": "0.1.0",
         "schema:Rechtmatigheidsbevinding": "0.1.0",
-        "schema:Rechtmatigheidsparagraaf": "0.1.0",
+        "schema:Rechtmatigheidsparagraaf": "0.2.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
         "schema:ReconciliationMatch": "0.2.0",
@@ -613,7 +643,7 @@
         "schema:WbsoBeschikking": "0.1.0",
         "schema:WbsoMededeling": "0.1.0",
         "schema:WebshopChannel": "0.1.0",
-        "schema:WebshopOrder": "0.1.0",
+        "schema:WebshopOrder": "0.3.0",
         "schema:Werkgever": "0.1.0",
         "schema:Werknemer": "0.1.0",
         "schema:WidgetAccessKey": "0.1.0",

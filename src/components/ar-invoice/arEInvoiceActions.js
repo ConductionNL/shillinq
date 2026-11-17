@@ -118,6 +118,16 @@ export function sendInvoiceEndpoint(id) {
 }
 
 /**
+ * The sentence for each delivery method, given the sending group, its time and `t`.
+ */
+const SENDING_LINES = {
+	email: (sending, at, t) => t('shillinq', 'Sent by email to {address} on {at}.', { address: sending.sentTo || '', at }),
+	peppol: (sending, at, t) => t('shillinq', 'Sent through Peppol on {at}.', { at }),
+	post: (sending, at, t) => t('shillinq', 'Delivery method post: the letter is printed and posted by hand.'),
+	none: (sending, at, t) => t('shillinq', 'Delivery method none: the invoice is not sent from here.'),
+}
+
+/**
  * The line under the actions that says how the invoice went out, or why it did not.
  *
  * @param {object|null|undefined} sending The invoice's `sending` group.
@@ -133,19 +143,11 @@ export function sendingLine(sending, t) {
 	if (sending.lastError) {
 		return t('shillinq', 'The invoice could not be sent: {error}', { error: sending.lastError })
 	}
-	const at = sending.sentAt ? new Date(sending.sentAt).toLocaleString() : ''
-	switch (sending.sentVia) {
-	case 'email':
-		return t('shillinq', 'Sent by email to {address} on {at}.', { address: sending.sentTo || '', at })
-	case 'peppol':
-		return t('shillinq', 'Sent through Peppol on {at}.', { at })
-	case 'post':
-		return t('shillinq', 'Delivery method post: the letter is printed and posted by hand.')
-	case 'none':
-		return t('shillinq', 'Delivery method none: the invoice is not sent from here.')
-	default:
+	const line = Object.hasOwn(SENDING_LINES, sending.sentVia) ? SENDING_LINES[sending.sentVia] : null
+	if (line === null) {
 		return ''
 	}
+	return line(sending, sending.sentAt ? new Date(sending.sentAt).toLocaleString() : '', t)
 }
 
 /**

@@ -58,9 +58,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -277,9 +279,8 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 
 		$this->objectService->saveObject(
 			object: $record,
-			register: $registerSlug,
-			schema: $schema,
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema)),
+			_rbac: false
 		);
 
 		return ['result' => $result, 'schema' => $schema];
@@ -490,9 +491,8 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 
 			$objectService->saveObject(
 				object: $invoice,
-				register: $registerSlug,
-				schema: 'ARInvoice',
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'ARInvoice')),
+				_rbac: false
 			);
 
 			// Post the realised FX gain/loss when the invoice was issued in a
@@ -765,9 +765,8 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		try {
 			$saved = $this->objectService->saveObject(
 				object: $journal,
-				register: $registerSlug,
-				schema: 'JournalEntry',
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'JournalEntry')),
+				_rbac: false
 			);
 			$journalId = ObjectIdentifier::resolve(saved: $saved);
 			if ($journalId === '') {
@@ -1017,11 +1016,6 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	 * @return string The register slug (defaults to 'shillinq').
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 }//end class

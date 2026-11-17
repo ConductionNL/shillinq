@@ -40,8 +40,10 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -645,8 +647,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	private function persist(array $record): array {
 		$this->objectService->saveObject(
 			object: $record,
-			register: $this->register(),
-			schema: 'FiscalPeriod',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'FiscalPeriod'))
 		);
 
 		return $record;
@@ -667,11 +668,6 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

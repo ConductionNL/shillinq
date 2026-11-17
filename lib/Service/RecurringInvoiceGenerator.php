@@ -54,7 +54,8 @@ namespace OCA\Shillinq\Service;
 
 use DateInterval;
 use DateTimeImmutable;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -66,7 +67,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/recurring-invoicing/spec.md
  */
-class RecurringInvoiceGenerator {
+class RecurringInvoiceGenerator implements RecurringInvoiceGeneratorInterface {
 
 	/**
 	 * English month names for the {month} token (the document language
@@ -197,23 +198,14 @@ class RecurringInvoiceGenerator {
 	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-4.1
 	 */
 	private function sendIssued(array $profile, array $invoice): string {
-		if ($this->sending === null
-			|| ($profile['issueMode'] ?? '') !== 'auto-issue'
-			|| ($profile['deliveryChannel'] ?? '') !== 'email'
-			|| ($invoice['lifecycleState'] ?? '') !== 'issued'
-		) {
+		if ($this->sending === null || self::mailsOnIssue(profile: $profile, invoice: $invoice) === false) {
 			return '';
-		}
-
-		$reference = (string)($invoice['id'] ?? ($invoice['uuid'] ?? ''));
-		if ($reference === '') {
-			$reference = (string)($invoice['invoiceNumber'] ?? '');
 		}
 
 		try {
 			$outcome = $this->sending->sendUnattended(
 				administrationId: (string)($invoice['administrationId'] ?? ''),
-				invoiceId: $reference,
+				invoiceId: self::referenceOf(invoice: $invoice),
 				via: 'email'
 			);
 		} catch (\Throwable $e) {
@@ -226,6 +218,40 @@ class RecurringInvoiceGenerator {
 
 		return $outcome['status'];
 	}//end sendIssued()
+
+	/**
+	 * Whether the profile issues automatically and mails, and the invoice is issued.
+	 *
+	 * @param array<string, mixed> $profile The recurring profile.
+	 * @param array<string, mixed> $invoice The generated invoice.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private static function mailsOnIssue(array $profile, array $invoice): bool {
+		return ($profile['issueMode'] ?? '') === 'auto-issue'
+			&& ($profile['deliveryChannel'] ?? '') === 'email'
+			&& ($invoice['lifecycleState'] ?? '') === 'issued';
+	}//end mailsOnIssue()
+
+	/**
+	 * The invoice's id, else its uuid, else its number.
+	 *
+	 * @param array<string, mixed> $invoice The invoice.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private static function referenceOf(array $invoice): string {
+		$reference = (string)($invoice['id'] ?? ($invoice['uuid'] ?? ''));
+		if ($reference === '') {
+			$reference = (string)($invoice['invoiceNumber'] ?? '');
+		}
+
+		return $reference;
+	}//end referenceOf()
 
 	/**
 	 * The period a profile generates for: its start, the clamped issue date,
@@ -964,11 +990,6 @@ class RecurringInvoiceGenerator {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

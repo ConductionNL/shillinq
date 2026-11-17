@@ -39,7 +39,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Repair\Support\SeedFragment;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -141,34 +144,6 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	}//end run()
 
 	/**
-	 * Read and decode the seed fragment.
-	 *
-	 * @param IOutput $output Progress output interface.
-	 *
-	 * @return array<mixed>|null The decoded fragment, or null (warned) when it cannot be read.
-	 */
-	private function readSeed(IOutput $output): array|null {
-		if (file_exists($this->seedPath) === false) {
-			$output->warning('SBR/XBRL seed fragment not found at ' . $this->seedPath . ', skipping');
-			return null;
-		}
-
-		$content = file_get_contents($this->seedPath);
-		if ($content === false) {
-			$output->warning('Failed to read SBR/XBRL seed fragment, skipping');
-			return null;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-			$output->warning('Failed to parse SBR/XBRL seed fragment: ' . json_last_error_msg());
-			return null;
-		}
-
-		return $data;
-	}//end readSeed()
-
-	/**
 	 * The seed fragment's objects, or null when there is nothing to seed.
 	 *
 	 * @param IOutput $output Progress output interface.
@@ -176,18 +151,7 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	 * @return array<int, mixed>|null
 	 */
 	private function seedObjects(IOutput $output): array|null {
-		$data = $this->readSeed(output: $output);
-		if ($data === null) {
-			return null;
-		}
-
-		$objects = ($data['objects'] ?? []);
-		if (is_array($objects) === false || $objects === []) {
-			$output->info('SBR/XBRL seed fragment carries no objects; nothing to seed');
-			return null;
-		}
-
-		return $objects;
+		return (new SeedFragment(path: $this->seedPath, label: 'SBR/XBRL'))->objects(output: $output);
 	}//end seedObjects()
 
 	/**
@@ -316,10 +280,9 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 		// permission to 'create'" — mirrors the OR ImportHandler fix.
 		$objectService->saveObject(
 			object: $payload,
-			register: $registerSlug,
-			schema: $schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema)),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end persistSeed()
 
@@ -373,11 +336,6 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

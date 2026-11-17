@@ -32,8 +32,9 @@ namespace OCA\Shillinq\Service;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OutOfBoundsException;
@@ -106,13 +107,15 @@ class ReconciliationResolutionService implements ReconciliationResolutionService
 			// PatchObject merges; updateObject would replace the match with
 			// these four keys and erase its line, targets and amount.
 			->patchObject(
-				$matchId,
-				[
-					'reconId' => $reconId,
-					'resolutionStatus' => $resolutionStatus,
-					'resolutionReason' => $resolutionReason,
-					'matchedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-				]
+				new ObjectPatch(
+					objectId: $matchId,
+					data: [
+						'reconId' => $reconId,
+						'resolutionStatus' => $resolutionStatus,
+						'resolutionReason' => $resolutionReason,
+						'matchedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+					]
+				)
 			);
 
 		$this->logger->info(
@@ -219,12 +222,7 @@ class ReconciliationResolutionService implements ReconciliationResolutionService
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**

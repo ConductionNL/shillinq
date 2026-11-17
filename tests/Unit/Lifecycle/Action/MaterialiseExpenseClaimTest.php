@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\ExpenseClaimPosting;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Lifecycle\PostingStamps;
@@ -69,7 +70,7 @@ final class MaterialiseExpenseClaimTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheClaimOfSDeVriesPostsItself(): void {
-		$result = $this->action()->execute($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class);
+		$result = $this->action()->execute(new LifecycleActionContext($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class));
 
 		$transactions = $this->savedOf(schema: 'GLTransaction');
 		$this->assertCount(1, $transactions);
@@ -110,7 +111,9 @@ final class MaterialiseExpenseClaimTest extends TestCase {
 		);
 
 		try {
-			$this->action(lunchCategory: ExpenseAccountResolver::UNCATEGORISED)->execute($claim, [], self::POST, MaterialiseGlTransactionAction::class);
+			$this->action(lunchCategory: ExpenseAccountResolver::UNCATEGORISED)->execute(
+				new LifecycleActionContext($claim, [], self::POST, MaterialiseGlTransactionAction::class)
+			);
 		} finally {
 			$this->assertSame([], $this->saved, 'a refused post writes no transaction');
 		}
@@ -123,7 +126,7 @@ final class MaterialiseExpenseClaimTest extends TestCase {
 	 */
 	public function testAConfirmedAccountWins(): void {
 		$action = $this->action(lunchCategory: ExpenseAccountResolver::UNCATEGORISED, lunchAccount: '4060');
-		$action->execute($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class);
+		$action->execute(new LifecycleActionContext($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class));
 
 		$this->assertSame('4060', $this->savedOf(schema: 'GLLine')[2]['accountNumber']);
 		// Without a category the VAT is deducted under the default rule (full).
@@ -138,12 +141,14 @@ final class MaterialiseExpenseClaimTest extends TestCase {
 	 */
 	public function testTheReimbursableDeclarationSetsItsBackReference(): void {
 		$action = $this->action();
-		$posted = $action->execute($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class);
+		$posted = $action->execute(new LifecycleActionContext($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class));
 		$again = $action->execute(
-			$posted,
-			[],
-			self::POST + ['settlementMode' => 'reimbursable', 'backReferenceField' => 'glReimbursableTransactionId'],
-			MaterialiseGlTransactionAction::class
+			new LifecycleActionContext(
+				$posted,
+				[],
+				self::POST + ['settlementMode' => 'reimbursable', 'backReferenceField' => 'glReimbursableTransactionId'],
+				MaterialiseGlTransactionAction::class
+			)
 		);
 
 		$this->assertCount(1, $this->savedOf(schema: 'GLTransaction'));
@@ -160,12 +165,12 @@ final class MaterialiseExpenseClaimTest extends TestCase {
 		$claim = $this->claim() + ['settlementMode' => 'pass-through'];
 		$action = $this->action();
 
-		$this->assertSame($claim, $action->execute($claim, [], self::POST, MaterialiseGlTransactionAction::class));
+		$this->assertSame($claim, $action->execute(new LifecycleActionContext($claim, [], self::POST, MaterialiseGlTransactionAction::class)));
 		$this->assertSame([], $this->saved);
 
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('A pass-through expense claim cannot be posted to the ledger yet: no posting is defined for it.');
-		$action->execute($claim, [], self::POST + ['settlementMode' => 'pass-through'], MaterialiseGlTransactionAction::class);
+		$action->execute(new LifecycleActionContext($claim, [], self::POST + ['settlementMode' => 'pass-through'], MaterialiseGlTransactionAction::class));
 	}//end testAPassThroughClaimIsNotPostedAsAReimbursement()
 
 	/**
@@ -185,7 +190,7 @@ final class MaterialiseExpenseClaimTest extends TestCase {
 		);
 
 		$this->expectExceptionMessage('An expense claim cannot be posted: no expense account resolver is available.');
-		$action->execute($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class);
+		$action->execute(new LifecycleActionContext($this->claim(), [], self::POST, MaterialiseGlTransactionAction::class));
 	}//end testWithoutAResolverAClaimIsRefused()
 
 	/**
@@ -198,7 +203,7 @@ final class MaterialiseExpenseClaimTest extends TestCase {
 		$claim['receiptIds'][] = 'r-gone';
 
 		$this->expectExceptionMessage('The expense claim was not posted: its Receipt r-gone does not exist.');
-		$this->action()->execute($claim, [], self::POST, MaterialiseGlTransactionAction::class);
+		$this->action()->execute(new LifecycleActionContext($claim, [], self::POST, MaterialiseGlTransactionAction::class));
 	}//end testAMissingLineRefusesThePost()
 
 	/**

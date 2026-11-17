@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\HoldClaimOverCategoryLimitAction;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -55,7 +56,9 @@ final class HoldClaimOverCategoryLimitActionTest extends TestCase {
 			['claimId' => 'claim-1', 'lines' => ['R-10']]
 		);
 
-		$result = $this->action(hotelAmount: 210.0, logger: $logger)->execute($this->claim(), [], [], HoldClaimOverCategoryLimitAction::class);
+		$result = $this->action(hotelAmount: 210.0, logger: $logger)->execute(
+			new LifecycleActionContext($this->claim(), [], [], HoldClaimOverCategoryLimitAction::class)
+		);
 
 		$this->assertSame(HoldClaimOverCategoryLimitAction::PENDING, $result['approvalState']);
 		$this->assertSame(
@@ -70,7 +73,7 @@ final class HoldClaimOverCategoryLimitActionTest extends TestCase {
 	 * @return void
 	 */
 	public function testAClaimWithinTheLimitsGoesOn(): void {
-		$result = $this->action(hotelAmount: 120.0)->execute($this->claim(), [], [], HoldClaimOverCategoryLimitAction::class);
+		$result = $this->action(hotelAmount: 120.0)->execute(new LifecycleActionContext($this->claim(), [], [], HoldClaimOverCategoryLimitAction::class));
 
 		$this->assertSame('not-required', $result['approvalState']);
 		$this->assertSame([], $result[HoldClaimOverCategoryLimitAction::EXCEEDANCES]);
@@ -118,7 +121,7 @@ final class HoldClaimOverCategoryLimitActionTest extends TestCase {
 		);
 
 		$action = new HoldClaimOverCategoryLimitAction(objectService: $store, registerLocation: $this->location(), logger: $logger);
-		$result = $action->execute($this->claim(), [], [], HoldClaimOverCategoryLimitAction::class);
+		$result = $action->execute(new LifecycleActionContext($this->claim(), [], [], HoldClaimOverCategoryLimitAction::class));
 
 		$this->assertSame(HoldClaimOverCategoryLimitAction::PENDING, $result['approvalState']);
 	}//end testAFailedCheckHoldsTheClaim()

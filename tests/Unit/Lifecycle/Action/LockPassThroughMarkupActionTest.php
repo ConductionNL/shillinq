@@ -16,11 +16,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\LockPassThroughMarkupAction;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * The submitted claim's pass-through items carry the rule, the rate and the
@@ -75,7 +78,14 @@ final class LockPassThroughMarkupActionTest extends TestCase {
 		);
 
 		$claim = $this->claim();
-		$this->assertSame($claim, $this->action($store)->execute($claim, [], [], LockPassThroughMarkupAction::NAME));
+		$this->assertSame($claim, $this->action($store)->execute(
+			new LifecycleActionContext(
+				objectData: $claim,
+				previousData: [],
+				parameters: [],
+				actionName: LockPassThroughMarkupAction::NAME
+			)
+		));
 
 		$train = $this->savedItem('r-train');
 		$this->assertSame('rule-travel', $train['markupRuleId']);
@@ -94,7 +104,14 @@ final class LockPassThroughMarkupActionTest extends TestCase {
 			[['id' => 'rule-travel', 'administrationId' => 'adm-1', 'targetCustomerId' => 'anker', 'targetCategory' => 'travel', 'markupType' => 'percentage', 'markupValue' => 0.10]]
 		);
 
-		$this->action($store)->execute($this->claim(), [], [], LockPassThroughMarkupAction::NAME);
+		$this->action($store)->execute(
+			new LifecycleActionContext(
+				objectData: $this->claim(),
+				previousData: [],
+				parameters: [],
+				actionName: LockPassThroughMarkupAction::NAME
+			)
+		);
 
 		$parking = $this->savedItem('r-park');
 		$this->assertNull($parking['markupRuleId']);
@@ -103,7 +120,14 @@ final class LockPassThroughMarkupActionTest extends TestCase {
 	}
 
 	public function testAReimbursableItemIsLeftAlone(): void {
-		$this->action($this->store([]))->execute($this->claim(), [], [], LockPassThroughMarkupAction::NAME);
+		$this->action($this->store([]))->execute(
+			new LifecycleActionContext(
+				objectData: $this->claim(),
+				previousData: [],
+				parameters: [],
+				actionName: LockPassThroughMarkupAction::NAME
+			)
+		);
 
 		$this->assertNull($this->savedItem('r-own'));
 		$this->assertSame(['r-train', 'r-park', 'm-1'], array_map(static fn (array $w): string => $w['object']['id'], $this->saved));
@@ -112,10 +136,17 @@ final class LockPassThroughMarkupActionTest extends TestCase {
 	public function testALaterRuleChangeLeavesTheLockedItems(): void {
 		$rules = [['id' => 'rule-travel', 'administrationId' => 'adm-1', 'targetCustomerId' => 'anker', 'targetCategory' => 'travel', 'markupType' => 'percentage', 'markupValue' => 0.10]];
 		$store = $this->store($rules);
-		$this->action($store)->execute($this->claim(), [], [], LockPassThroughMarkupAction::NAME);
+		$this->action($store)->execute(
+			new LifecycleActionContext(
+				objectData: $this->claim(),
+				previousData: [],
+				parameters: [],
+				actionName: LockPassThroughMarkupAction::NAME
+			)
+		);
 
 		// The rule moves to 25 percent after submission; nothing re-runs the lock.
-		$store->saveObject(object: ['id' => 'rule-travel', 'administrationId' => 'adm-1', 'targetCustomerId' => 'anker', 'targetCategory' => 'travel', 'markupType' => 'percentage', 'markupValue' => 0.25], schema: 'PassThroughMarkupRule');
+		$store->saveObject(object: ['id' => 'rule-travel', 'administrationId' => 'adm-1', 'targetCustomerId' => 'anker', 'targetCategory' => 'travel', 'markupType' => 'percentage', 'markupValue' => 0.25], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'PassThroughMarkupRule')));
 
 		$train = $store->setRegister('shillinq')->setSchema('Receipt')->find('r-train')->jsonSerialize();
 		$this->assertSame(0.10, $train['markupRateApplied']);
@@ -127,7 +158,14 @@ final class LockPassThroughMarkupActionTest extends TestCase {
 			[['id' => 'rule-flat', 'administrationId' => 'adm-1', 'targetCustomerId' => 'anker', 'markupType' => 'fixedAmount', 'markupValue' => 5.00]]
 		);
 
-		$this->action($store)->execute($this->claim(), [], [], LockPassThroughMarkupAction::NAME);
+		$this->action($store)->execute(
+			new LifecycleActionContext(
+				objectData: $this->claim(),
+				previousData: [],
+				parameters: [],
+				actionName: LockPassThroughMarkupAction::NAME
+			)
+		);
 
 		$parking = $this->savedItem('r-park');
 		$this->assertSame('rule-flat', $parking['markupRuleId']);

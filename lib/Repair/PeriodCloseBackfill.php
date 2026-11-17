@@ -51,8 +51,11 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Repair\Support\SeedsOpenFiscalPeriods;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -66,6 +69,8 @@ use Throwable;
  */
 class PeriodCloseBackfill implements IRepairStep {
 	use ReadsSourceRowsInBatches;
+
+	use SeedsOpenFiscalPeriods;
 
 	/**
 	 * Number of calendar months ahead of the current month to backfill.
@@ -192,71 +197,15 @@ class PeriodCloseBackfill implements IRepairStep {
 			// does not have permission to 'create'".
 			$this->objectService->saveObject(
 				object: $record,
-				register: $registerSlug,
-				schema: 'FiscalPeriod',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'FiscalPeriod')),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			$created++;
 		}//end foreach
 
 		return [$created, $skipped];
 	}//end backfillAdministration()
-
-	/**
-	 * Build the open FiscalPeriod record for a horizon period.
-	 *
-	 * @param array<string,mixed> $period The horizon period.
-	 * @param string $administrationId The administration scope.
-	 *
-	 * @return array<string,mixed> The FiscalPeriod record.
-	 *
-	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
-	 */
-	private function openFiscalPeriodRecord(array $period, string $administrationId): array {
-		return [
-			'periodId' => $period['periodId'],
-			'name' => $period['name'],
-			'administrationId' => $administrationId,
-			'startDate' => $period['startDate'],
-			'endDate' => $period['endDate'],
-			'fiscalYear' => $period['fiscalYear'],
-			'state' => 'open',
-			'reopenedHistory' => [],
-			'taskChecklistItems' => [],
-			'aiFlags' => [],
-		];
-	}//end openFiscalPeriodRecord()
-
-	/**
-	 * Whether a FiscalPeriod record already exists for the given
-	 * (periodId, administrationId) tuple.
-	 *
-	 * @param object $objectService The OR ObjectService.
-	 * @param string $registerSlug The register slug.
-	 * @param string $periodId The business periodId.
-	 * @param string $administrationId The administration scope.
-	 *
-	 * @return bool True when a match is found.
-	 */
-	private function fiscalPeriodExists(
-		object $objectService,
-		string $registerSlug,
-		string $periodId,
-		string $administrationId,
-	): bool {
-		$filters = [
-			'periodId' => $periodId,
-			'administrationId' => $administrationId,
-		];
-
-		$found = $objectService
-			->setRegister($registerSlug)
-			->setSchema('FiscalPeriod')
-			->findAll(['filters' => $filters, 'limit' => 1]);
-
-		return is_array($found) === true && $found !== [];
-	}//end fiscalPeriodExists()
 
 	/**
 	 * Build the rolling horizon — the current calendar month + the next
@@ -267,21 +216,6 @@ class PeriodCloseBackfill implements IRepairStep {
 	 * @return array<int,array{periodId:string,name:string,startDate:string,endDate:string,fiscalYear:int}> The horizon periods.
 	 */
 	private function buildHorizon(): array {
-		$names = [
-			1 => 'January',
-			2 => 'February',
-			3 => 'March',
-			4 => 'April',
-			5 => 'May',
-			6 => 'June',
-			7 => 'July',
-			8 => 'August',
-			9 => 'September',
-			10 => 'October',
-			11 => 'November',
-			12 => 'December',
-		];
-
 		$now = new DateTimeImmutable('first day of this month');
 		$horizon = [];
 		// Current month + next HORIZON_MONTHS months (inclusive).
@@ -295,7 +229,7 @@ class PeriodCloseBackfill implements IRepairStep {
 
 			$horizon[] = [
 				'periodId' => sprintf('%04d-%02d', $year, $monthNum),
-				'name' => sprintf('%s %04d', $names[$monthNum], $year),
+				'name' => sprintf('%s %04d', $this->monthName(month: $monthNum), $year),
 				'startDate' => $startDate,
 				'endDate' => $endDate,
 				'fiscalYear' => $year,

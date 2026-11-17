@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -82,18 +83,15 @@ final class HoldClaimOverCategoryLimitAction implements LifecycleActionInterface
 	/**
 	 * Check the submitted claim's lines against the category limits.
 	 *
-	 * @param array<string,mixed> $objectData   The claim after its state moved.
-	 * @param array<string,mixed> $previousData The claim before the transition.
-	 * @param array<string,mixed> $parameters   The declared actionParameters.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The claim after its state moved, with the transition's data.
 	 *
 	 * @return array<string,mixed> The claim, held when a line is over its limit.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.4
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		try {
 			$exceedances = $this->exceedances(claim: $objectData);
 		} catch (\Throwable $e) {

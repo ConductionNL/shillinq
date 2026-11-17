@@ -37,9 +37,12 @@ use OCA\Shillinq\Service\InvoiceSendingService;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\ViesService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\Payment\PayLinkService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IL10N;
 use OCP\Mail\IAttachment;
 use OCP\Mail\IMailer;
@@ -308,16 +311,80 @@ class InvoiceSendingServiceTest extends TestCase {
 	}//end testAnUnattendedSendNeedsNoUserAndFindsTheInvoiceByNumber()
 
 	/**
+	 * With a live payment adapter the mail of an open invoice carries the
+	 * signed pay link (receivables-payment-links task 3.2, REQ-RPL-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.2
+	 */
+	public function testALiveAdapterPutsThePayLinkInTheMail(): void {
+		$payLinks = $this->payLinks(dormant: false);
+		$service  = $this->service(customer: ['email' => 'info@dekorenaar.example'], payLinks: $payLinks);
+
+		$outcome = $service->send(administrationId: 'adm-1', invoiceId: 'inv-1');
+
+		$this->assertSame(InvoiceSendingService::STATUS_SENT, $outcome['status']);
+		$this->assertSame(1, preg_match('#Pay online: (https://portal\.example/betalen\?pay=(\S+))\n\nKind regards$#', $this->mailed['body'], $match));
+		$this->assertSame(['administrationId' => 'adm-1', 'invoiceId' => 'inv-1'], $payLinks->verify(token: rawurldecode($match[2])));
+		$this->assertStringContainsString('EUR 1.210,00', $this->mailed['body']);
+	}//end testALiveAdapterPutsThePayLinkInTheMail()
+
+	/**
+	 * A dormant adapter, no adapter and no pay link service each mail the
+	 * invoice without a pay link (receivables-payment-links D5).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.2
+	 */
+	public function testWithoutALiveAdapterTheMailHasNoPayLink(): void {
+		foreach ([$this->payLinks(dormant: true), $this->payLinks(dormant: null), null] as $payLinks) {
+			$this->mailed = [];
+			$service = $this->service(customer: ['email' => 'info@dekorenaar.example'], payLinks: $payLinks);
+
+			$this->assertSame(InvoiceSendingService::STATUS_SENT, $service->send(administrationId: 'adm-1', invoiceId: 'inv-1')['status']);
+			$this->assertStringNotContainsString('Pay online', $this->mailed['body']);
+			$this->assertStringNotContainsString('pay=', $this->mailed['body']);
+			$this->assertStringEndsWith("\n\nKind regards", $this->mailed['body']);
+		}
+	}//end testWithoutALiveAdapterTheMailHasNoPayLink()
+
+	/**
+	 * A pay link service over a test secret and an https pay page.
+	 *
+	 * @param bool|null $dormant Whether the bound adapter is dormant; null binds none.
+	 *
+	 * @return PayLinkService
+	 */
+	private function payLinks(?bool $dormant): PayLinkService {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueString')->willReturnCallback(static fn (string $key, string $default = ''): string => $key === 'secret' ? 'instance-secret-of-test' : $default);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueInt')->willReturnCallback(static fn (string $app, string $key, int $default = 0): int => $default);
+		$appConfig->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $key === PayLinkService::PAGE_KEY ? 'https://portal.example/betalen' : $default);
+
+		$adapter = null;
+		if ($dormant !== null) {
+			$adapter = $this->createMock(MolliePaymentAdapterInterface::class);
+			$adapter->method('isDormant')->willReturn($dormant);
+		}
+
+		return new PayLinkService(config: $config, appConfig: $appConfig, adapter: $adapter);
+	}//end payLinks()
+
+	/**
 	 * The service over the in-memory store, with one invoice and its customer.
 	 *
 	 * @param array<string, mixed> $customer    The customer's own fields.
 	 * @param array<string, mixed> $invoice     Overrides of the invoice.
 	 * @param array<int, string>   $accessible  The administrations the user may act on.
 	 * @param string|null          $participant The Peppol participant the port finds.
+	 * @param PayLinkService|null  $payLinks    The pay link service, or none.
 	 *
 	 * @return InvoiceSendingService
 	 */
-	private function service(array $customer, array $invoice = [], array $accessible = ['adm-1'], ?string $participant = null): InvoiceSendingService {
+	private function service(array $customer, array $invoice = [], array $accessible = ['adm-1'], ?string $participant = null, ?PayLinkService $payLinks = null): InvoiceSendingService {
 		$this->saved = [];
 		$store = new InMemoryObjectServiceStub(
 			data: [
@@ -359,6 +426,7 @@ class InvoiceSendingServiceTest extends TestCase {
 			l10n: $l10n,
 			time: $time,
 			logger: new NullLogger(),
+			payLinks: $payLinks,
 		);
 	}//end service()
 

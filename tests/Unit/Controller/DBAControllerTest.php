@@ -41,6 +41,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Stream wrapper that replaces the built-in `php://` protocol so a test can
@@ -351,7 +352,9 @@ final class FakeDBAObjectService {
 	 *
 	 * @return array<string,mixed> The persisted payload.
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		if (in_array($schema, $this->failingSchemas, true) === true) {
 			throw new \RuntimeException('save refused for ' . $schema);
 		}
