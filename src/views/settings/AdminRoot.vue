@@ -23,7 +23,25 @@
 			:fields="configurationFields"
 			data-testid="admin-section-configuration" />
 
-		<PipelinqIntegration v-if="storesReady" />
+		<CnSettingsFieldsSection
+			appId="shillinq"
+			:name="t('shillinq', 'Pipelinq integration')"
+			:description="t('shillinq', 'The connection to Pipelinq, which adds customer details to bookings.')"
+			:url="pipelinqSettingsUrl"
+			saveMethod="POST"
+			:saveAll="true"
+			:fields="pipelinqFields"
+			data-testid="admin-section-pipelinq" />
+
+		<template #tab-exchange-rates>
+			<CnSettingsFieldsSection
+				appId="shillinq"
+				:name="t('shillinq', 'Exchange rates')"
+				:description="t('shillinq', 'Whether the daily exchange-rate import runs. Rates themselves are kept on the exchange rates page.')"
+				:url="fxImportStatusUrl"
+				:fields="fxImportStatusFields"
+				data-testid="admin-section-exchange-rates" />
+		</template>
 
 		<template
 			v-for="section in pageSections"
@@ -55,7 +73,6 @@ import {
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
-import PipelinqIntegration from './PipelinqIntegration.vue'
 import requiredFieldsFragment from '../../manifest.d/platform-required-fields.json'
 import { initializeStores } from '../../store/store.js'
 
@@ -63,11 +80,10 @@ export default {
 	name: 'AdminRoot',
 	components: {
 		CnAdminSettingsShell,
+		CnSettingsFieldsSection,
 		CnSettingsSection,
 		CnToggleTableWidget,
-		CnSettingsFieldsSection,
 		NcButton,
-		PipelinqIntegration,
 	},
 
 	/**
@@ -131,6 +147,68 @@ export default {
 					pattern: '^https://.+',
 					patternMessage: 'Use an address that starts with https://',
 					hint: 'Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.',
+				},
+			]
+		},
+
+		/**
+		 * Where the Pipelinq connection is read and saved.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
+		 */
+		pipelinqSettingsUrl() {
+			return generateUrl('/apps/shillinq/api/pipelinq/settings')
+		},
+
+		/**
+		 * The Pipelinq connection: its address, its token (never shown, only
+		 * replaced) and a connection test.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
+		 */
+		pipelinqFields() {
+			return [
+				{ key: 'endpoint', label: 'API endpoint', type: 'text', placeholder: 'https://pipelinq.example.com/api', pattern: '^https?://.+', patternMessage: 'Enter an address that starts with https://' },
+				{ key: 'token', label: 'API token', type: 'secret', setKey: 'hasToken', hint: 'Stored in the Nextcloud secrets store and never shown again. Paste a new token to replace it.' },
+				{ key: 'test', label: 'Test connection', type: 'action', url: generateUrl('/apps/shillinq/api/pipelinq/settings/test'), okPath: 'success', resultPath: 'message' },
+			]
+		},
+
+		/**
+		 * The daily exchange-rate import's state, read by the Exchange rates tab.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-14
+		 */
+		fxImportStatusUrl() {
+			return generateUrl('/apps/shillinq/api/admin/fx-rate-import-status')
+		},
+
+		/**
+		 * The Exchange rates tab: two read-only notes over the import state.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-14
+		 */
+		fxImportStatusFields() {
+			return [
+				{
+					key: 'status',
+					type: 'status',
+					textMap: {
+						ok: 'The daily import runs.',
+						'never-ran': 'The daily import has not run yet.',
+						dormant: 'No rate source is connected, so only rates entered by hand are used.',
+					},
+
+					toneMap: { ok: 'success', 'never-ran': 'warning', dormant: 'warning' },
+				},
+				{
+					key: 'lastRunAt',
+					type: 'status',
+					textMap: { '': '', '*': 'Last successful run: {value}' },
 				},
 			]
 		},
@@ -201,6 +279,7 @@ export default {
 						? { count: this.requiredFieldCount }
 						: {}),
 				})),
+				{ id: 'exchange-rates', label: this.t('shillinq', 'Exchange rates') },
 			]
 		},
 

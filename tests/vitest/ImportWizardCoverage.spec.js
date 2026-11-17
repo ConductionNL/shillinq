@@ -200,13 +200,12 @@ describe('the mapping review', () => {
 		const { html, view } = await wizard({ step: 'mapping', batch: { id: 'b1', status: 'mapping' }, mappings: rows.slice(0, 2) })
 		expect(html).not.toContain('Map the remaining accounts')
 
+		axiosMock.post.mockResolvedValueOnce({ data: { confirmed: 1 } })
 		axiosMock.get.mockResolvedValueOnce({ data: { results: rows.slice(0, 2).map((row) => ({ ...row, confirmed: true })) } })
 		await button(view, 'import-confirm-suggestions').onClick()
-		expect(axiosMock.patch).toHaveBeenCalledOnce()
-		expect(axiosMock.patch).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/ImportMapping/m2',
-			{ confirmed: true },
-		)
+		expect(axiosMock.post).toHaveBeenCalledOnce()
+		expect(axiosMock.post).toHaveBeenCalledWith('/index.php/apps/shillinq/api/import-batches/b1/confirm-suggestions')
+		expect(axiosMock.patch).not.toHaveBeenCalled()
 		expect(view.vm.open).toEqual([])
 
 		axiosMock.get.mockResolvedValueOnce({ data: { id: 'b1', status: 'validated' } })
@@ -217,7 +216,7 @@ describe('the mapping review', () => {
 
 	it('keeps the step and shows the refusal of a failed confirmation', async () => {
 		const { view } = await wizard({ step: 'mapping', batch: { id: 'b1', status: 'mapping' }, mappings: rows })
-		axiosMock.patch.mockRejectedValueOnce({ response: { data: { error: 'Mapping is locked.' } } })
+		axiosMock.post.mockRejectedValueOnce({ response: { data: { error: 'Mapping is locked.' } } })
 
 		await button(view, 'import-confirm-suggestions').onClick()
 

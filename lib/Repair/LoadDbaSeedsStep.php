@@ -33,7 +33,8 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Repair\Support\SeedFragment;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -121,47 +122,8 @@ class LoadDbaSeedsStep implements IRepairStep {
 	 * @return array<int, mixed>|null The seed objects, or null to skip.
 	 */
 	private function seedObjects(IOutput $output): array|null {
-		$data = $this->seedData(output: $output);
-		if ($data === null) {
-			return null;
-		}
-
-		$objects = ($data['objects'] ?? []);
-		if (is_array($objects) === false || $objects === []) {
-			$output->info('DBA seed fragment carries no objects; nothing to seed');
-			return null;
-		}
-
-		return $objects;
+		return (new SeedFragment(path: $this->seedPath, label: 'DBA'))->objects(output: $output);
 	}//end seedObjects()
-
-	/**
-	 * Read and decode the seed fragment, warning and returning null when it cannot be used.
-	 *
-	 * @param IOutput $output Progress output.
-	 *
-	 * @return array<mixed>|null The decoded fragment, or null.
-	 */
-	private function seedData(IOutput $output): array|null {
-		if (file_exists($this->seedPath) === false) {
-			$output->warning('DBA seed fragment not found at ' . $this->seedPath . ', skipping');
-			return null;
-		}
-
-		$content = file_get_contents($this->seedPath);
-		if ($content === false) {
-			$output->warning('Failed to read DBA seed fragment, skipping');
-			return null;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-			$output->warning('Failed to parse DBA seed fragment: ' . json_last_error_msg());
-			return null;
-		}
-
-		return $data;
-	}//end seedData()
 
 	/**
 	 * Seed the objects under a system identity: an upgrade has no session, and OpenRegister
@@ -306,11 +268,6 @@ class LoadDbaSeedsStep implements IRepairStep {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\EvaluateAllocationRulesAction;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -109,7 +110,14 @@ final class EvaluateAllocationRulesActionEdgeTest extends TestCase {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function added(EvaluateAllocationRulesAction $action): array {
-		$action->execute(self::TRANSACTION, [], [], EvaluateAllocationRulesAction::class);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: self::TRANSACTION,
+				previousData: [],
+				parameters: [],
+				actionName: EvaluateAllocationRulesAction::class
+			)
+		);
 		return $this->store->savedOf('GLLine');
 
 	}//end added()
@@ -123,7 +131,14 @@ final class EvaluateAllocationRulesActionEdgeTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('Cannot apply allocation rules to a transaction without an id.');
 
-		$this->action([self::rule()])->execute(['administrationId' => 'adm-1'], [], [], EvaluateAllocationRulesAction::class);
+		$this->action([self::rule()])->execute(
+			new LifecycleActionContext(
+				objectData: ['administrationId' => 'adm-1'],
+				previousData: [],
+				parameters: [],
+				actionName: EvaluateAllocationRulesAction::class
+			)
+		);
 
 	}//end testATransactionWithoutIdIsRefused()
 

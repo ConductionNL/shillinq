@@ -172,7 +172,8 @@ describe('InvoiceQuickDraftModal template', () => {
 	})
 
 	it('picks a customer: GL account, due date from its terms, and a save that turns on', async () => {
-		const acme = { customerId: 'C-1', legalName: 'Acme BV', paymentTerms: 'net14', defaultGlAccount: 8010 }
+		// The customer's term is paymentTermDays (sales-invoice-sending REQ-SIS-005).
+		const acme = { customerId: 'C-1', legalName: 'Acme BV', paymentTermDays: 14, defaultGlAccount: 8010 }
 		customers([acme])
 		const view = await render()
 		await loaded(view)

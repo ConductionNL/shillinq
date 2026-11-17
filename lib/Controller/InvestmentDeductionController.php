@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\InvestmentDeduction\InvestmentDeductionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -49,13 +49,13 @@ class InvestmentDeductionController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request    The request.
-	 * @param AdministrationContextService $context    Who may post in which administration.
+	 * @param AdministrationContextServiceInterface $context    Who may post in which administration.
 	 * @param InvestmentDeductionService   $deductions The calculation.
 	 * @param LoggerInterface              $logger     Where a failure is logged.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly InvestmentDeductionService $deductions,
 		private readonly LoggerInterface $logger,
 	) {

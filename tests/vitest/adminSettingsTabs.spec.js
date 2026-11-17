@@ -26,7 +26,7 @@ function instance(state = {}) {
 		requiredFieldCount: null,
 		...state,
 	}
-	for (const name of ['pageSections', 'tabs', 'breadcrumbs', 'configurationFields', 'settingsUrl']) {
+	for (const name of ['pageSections', 'tabs', 'breadcrumbs', 'configurationFields', 'settingsUrl', 'pipelinqFields', 'pipelinqSettingsUrl', 'fxImportStatusFields', 'fxImportStatusUrl']) {
 		Object.defineProperty(vm, name, {
 			get: () => AdminRoot.computed[name].call(vm),
 		})
@@ -41,6 +41,7 @@ describe('admin settings tabs', () => {
 			'required-fields',
 			'connections',
 			'appointments',
+			'exchange-rates',
 		])
 	})
 
@@ -59,6 +60,22 @@ describe('admin settings tabs', () => {
 		expect(new RegExp(returnAddress.pattern).test('https://portal.example.nl')).toBe(true)
 		expect(new RegExp(returnAddress.pattern).test('http://portal.example.nl')).toBe(false)
 		expect(instance().settingsUrl).toContain('/apps/shillinq/api/settings')
+	})
+
+	it('declares the Pipelinq connection as fields: address, a secret token and a test', () => {
+		const fields = instance().pipelinqFields
+		expect(fields.map((f) => [f.key, f.type])).toEqual([['endpoint', 'text'], ['token', 'secret'], ['test', 'action']])
+		expect(fields[1].setKey).toBe('hasToken')
+		expect(fields[2].url).toContain('/apps/shillinq/api/pipelinq/settings/test')
+		expect(fields[2].okPath).toBe('success')
+		expect(instance().pipelinqSettingsUrl).toContain('/apps/shillinq/api/pipelinq/settings')
+	})
+
+	it('reads the exchange-rate import state on its own tab, without a Save', () => {
+		const fields = instance().fxImportStatusFields
+		expect(fields.map((f) => f.type)).toEqual(['status', 'status'])
+		expect(fields[0].textMap.dormant).toBeTruthy()
+		expect(instance().fxImportStatusUrl).toContain('/apps/shillinq/api/admin/fx-rate-import-status')
 	})
 
 	it('draws a switch per required field on the Required fields tab', () => {
