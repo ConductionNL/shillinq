@@ -62,9 +62,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\LotSellabilityGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -400,6 +400,20 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 
 		$moves = $this->issuedMovesForDelivery(deliveryId: $deliveryId, administrationId: $administrationId);
 
+		return $this->reverseMoves(moves: $moves);
+
+	}//end reverseForDelivery()
+
+	/**
+	 * Cancel every posted move, counting the reversals and the failures.
+	 *
+	 * @param array<int,array<string,mixed>> $moves The issued StockMoves.
+	 *
+	 * @return array<string,mixed> Result envelope: {reversed: int, failed: int}.
+	 *
+	 * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
+	 */
+	private function reverseMoves(array $moves): array {
 		$reversed = 0;
 		$failed = 0;
 		foreach ($moves as $move) {
@@ -420,8 +434,7 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 			'reversed' => $reversed,
 			'failed' => $failed,
 		];
-
-	}//end reverseForDelivery()
+	}//end reverseMoves()
 
 	/**
 	 * Drive a named StockMove transition through OpenRegister's
@@ -823,11 +836,6 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

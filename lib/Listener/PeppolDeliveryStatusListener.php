@@ -53,6 +53,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PeppolDeliveryStatusListenerInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -177,8 +178,8 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 
 		try {
 			$entity = $event->getObject();
-			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			$cloudEvent = self::deliveryStatusEvent(entity: $entity);
+			if ($cloudEvent === null) {
 				return;
 			}
 
@@ -202,7 +203,23 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	}//end handle()
 
 	/**
-	 * Apply one delivery-status payload to the matching purchase order or ARInvoice.
+	 * The entity's CloudEvent when it is an integriq delivery-status event.
+	 *
+	 * @param mixed $entity The created object entity, or null.
+	 *
+	 * @return array<string,mixed>|null The CloudEvent, or null for any other object.
+	 */
+	private static function deliveryStatusEvent(mixed $entity): array|null {
+		$cloudEvent = $entity?->getObject();
+		if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			return null;
+		}
+
+		return $cloudEvent;
+	}//end deliveryStatusEvent()
+
+	/**
+		 * Apply one delivery-status payload to the matching purchase order or ARInvoice.
 	 *
 	 * @param array<string,mixed> $payload {objectUri, transmissionId, status, timestamp, detail}.
 	 *
@@ -497,11 +514,6 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

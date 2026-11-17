@@ -28,7 +28,12 @@ use OCA\Shillinq\Service\ContributionDebtorResolver;
 use OCA\Shillinq\Service\ContributionInvoiceBuilder;
 use OCA\Shillinq\Service\ContributionRaiseService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
+use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
+use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
+use OCA\Shillinq\Service\Payment\PaymentSessionRequest;
+use OCA\Shillinq\Service\Payment\PaymentSessionResult;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCP\IURLGenerator;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -63,7 +68,7 @@ final class ContributionRaiseServiceTest extends TestCase {
 	 *
 	 * @return ContributionRaiseService The service.
 	 */
-	private function service(array $data = [], bool $allowed = true): ContributionRaiseService {
+	private function service(array $data = [], bool $allowed = true, ?PaymentLinkCreator $linkCreator = null): ContributionRaiseService {
 		$this->store = new InMemoryObjectServiceStub(data: $data, findAllRendersEntities: true);
 
 		$appConfig = $this->createMock(IAppConfig::class);
@@ -103,6 +108,7 @@ final class ContributionRaiseServiceTest extends TestCase {
 			appConfig: $appConfig,
 			timeFactory: $time,
 			logger: $this->createMock(LoggerInterface::class),
+			linkCreator: $linkCreator,
 		);
 	}//end service()
 
@@ -174,6 +180,37 @@ final class ContributionRaiseServiceTest extends TestCase {
 			)
 		);
 	}//end savedIn()
+
+	/**
+	 * A raised contribution's request gets its checkout link from a live
+	 * provider, stored with the provider payment id (receivables-payment-links
+	 * task 1.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
+	 */
+	public function testARaisedContributionStoresItsCheckoutLink(): void {
+		$provider = $this->createMock(PaymentProviderInterface::class);
+		$provider->expects($this->once())->method('createSession')
+			->with($this->callback(static fn (PaymentSessionRequest $session): bool => $session->amount === 60.0 && $session->metadata['invoiceId'] !== ''))
+			->willReturn(new PaymentSessionResult(dormant: false, checkoutUrl: 'https://www.mollie.com/checkout/tr_ctb1', paymentIntentId: 'tr_ctb1'));
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('linkToRouteAbsolute')->willReturn('https://instance.example/webhook');
+		$urls->method('getAbsoluteURL')->willReturn('https://instance.example/');
+		$creator = new PaymentLinkCreator(provider: $provider, urlGenerator: $urls, appConfig: $this->createMock(IAppConfig::class), logger: $this->createMock(LoggerInterface::class));
+
+		$result = $this->service($this->customers(), linkCreator: $creator)->raise($this->call([$this->recipient('cm-1', 'child-a')]));
+
+		self::assertSame(1, $result['raised']);
+		$requests = $this->savedIn('PaymentRequest');
+		self::assertCount(2, $requests);
+		self::assertArrayNotHasKey('paymentLink', $requests[0]);
+		self::assertSame('https://www.mollie.com/checkout/tr_ctb1', $requests[1]['paymentLink']);
+		self::assertSame('tr_ctb1', $requests[1]['providerPaymentId']);
+		self::assertSame($requests[0]['invoiceReference'], $requests[1]['invoiceReference']);
+		self::assertSame('contribution', $requests[1]['requestType']);
+	}//end testARaisedContributionStoresItsCheckoutLink()
 
 	/**
 	 * Three guardians become three issued invoices and three requests that

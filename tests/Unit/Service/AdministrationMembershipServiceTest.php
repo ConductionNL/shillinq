@@ -29,6 +29,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationMembershipService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Membership rows are written with a valid role, once per user and administration.
@@ -98,7 +99,10 @@ final class AdministrationMembershipServiceTest extends TestCase {
 		$objects->method('setSchema')->willReturnSelf();
 		$objects->method('findAll')->willReturnCallback(static fn (): array => $store->existing);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend, $register, $schema) use ($store): ObjectEntityInterface {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) use ($store): ObjectEntityInterface {
+				$extend = $options->extend;
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$store->saved[] = ['object' => $object, 'schema' => $schema];
 				$entity = $this->createMock(ObjectEntityInterface::class);
 				$entity->method('jsonSerialize')->willReturn($object);

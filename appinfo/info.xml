@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261114140000</version>
+    <version>0.5.7-unstable.20261117010000</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -188,6 +188,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
              named INTERVAL_SECONDS constant), so none busy-loops cron. -->
         <job>OCA\Shillinq\BackgroundJob\TaxDeadlineReminderJob</job>
         <job>OCA\Shillinq\BackgroundJob\BookingReminderJob</job>
+        <job>OCA\Shillinq\BackgroundJob\SmsReminderJob</job>
         <job>OCA\Shillinq\BackgroundJob\ViesOutageRetryJob</job>
         <!-- adopt-connection-registry: once a day, tells integriq which adapter
              answers for the three adapter families shillinq calls. Sends

@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
@@ -85,15 +86,10 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 			return 'missing';
 		}
 
-		$reference = (string)($line['endToEndRef'] ?? '');
-		if ($reference === '') {
-			$reference = (string)($line['lineId'] ?? ($line['id'] ?? ''));
-		}
+		$reference = self::lineReference(line: $line);
 
-		foreach ((array)($request['settlements'] ?? []) as $existing) {
-			if (($existing['method'] ?? '') === 'bank-transfer' && (string)($existing['reference'] ?? '') === $reference) {
-				return 'already';
-			}
+		if (self::alreadySettled(request: $request, reference: $reference) === true) {
+			return 'already';
 		}
 
 		$amount = round((float)($match['matchedAmount'] ?? ($line['amount'] ?? 0)), 2);
@@ -110,6 +106,61 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 
 		$outcome = $this->bookOrSettleInvoice(request: $request, line: $line, amount: $amount);
 
+		$patch = self::settledPatch(request: $request);
+
+		$this->scoped(schema: 'PaymentRequest')->patchObject(new ObjectPatch(objectId: $requestId, data: $patch));
+
+		return $outcome;
+	}//end settle()
+
+	/**
+	 * The payment reference of a bank statement line: its end-to-end reference, else its line id.
+	 *
+	 * @param array<string, mixed> $line The BankStatementLine.
+	 *
+	 * @return string The reference.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 */
+	private static function lineReference(array $line): string {
+		$reference = (string)($line['endToEndRef'] ?? '');
+		if ($reference === '') {
+			$reference = (string)($line['lineId'] ?? ($line['id'] ?? ''));
+		}
+
+		return $reference;
+	}//end lineReference()
+
+	/**
+	 * Whether the request already holds a bank-transfer settlement with this reference.
+	 *
+	 * @param array<string, mixed> $request   The PaymentRequest.
+	 * @param string               $reference The payment reference.
+	 *
+	 * @return bool True when it was settled by this payment before.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 */
+	private static function alreadySettled(array $request, string $reference): bool {
+		foreach ((array)($request['settlements'] ?? []) as $existing) {
+			if (($existing['method'] ?? '') === 'bank-transfer' && (string)($existing['reference'] ?? '') === $reference) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end alreadySettled()
+
+	/**
+	 * The patch that persists the settlement: the settlements, plus each settled field that is set.
+	 *
+	 * @param array<string, mixed> $request The settled PaymentRequest.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 */
+	private static function settledPatch(array $request): array {
 		$patch = ['settlements' => $request['settlements']];
 		foreach (['settledAt', 'settledVia', 'revenueAccount'] as $field) {
 			if ((string)($request[$field] ?? '') !== '') {
@@ -117,10 +168,8 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 			}
 		}
 
-		$this->scoped(schema: 'PaymentRequest')->patchObject($requestId, $patch);
-
-		return $outcome;
-	}//end settle()
+		return $patch;
+	}//end settledPatch()
 
 	/**
 	 * Settle the invoice behind the request, or book the receipt on the object.

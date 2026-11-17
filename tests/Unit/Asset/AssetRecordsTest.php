@@ -28,6 +28,7 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Reads and writes go to the register of the app and the named schema;
@@ -158,7 +159,9 @@ final class AssetRecordsTest extends TestCase {
 	 */
 	public function testSaveReturnsTheStoredRecordOrTheObjectGiven(): void {
 		$this->objects->expects($this->exactly(2))->method('saveObject')
-			->with(['name' => 'Van'])
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => ['name' => 'Van'],
+			]))
 			->willReturnOnConsecutiveCalls($this->entity(['id' => 'new-1', 'name' => 'Van']), $this->entity([]));
 
 		$this->assertSame(['id' => 'new-1', 'name' => 'Van'], $this->records()->save('FixedAsset', ['name' => 'Van']));
@@ -172,9 +175,18 @@ final class AssetRecordsTest extends TestCase {
 	 */
 	public function testPatchAndDeleteNameRegisterAndSchema(): void {
 		$this->objects->expects($this->once())->method('patchObject')
-			->with('a-1', ['currentBookValue' => 450.0], 'shillinq', 'FixedAsset');
+			->with(...LegacyObjectArgs::with(method: 'patchObject', expected: [
+				'objectId' => 'a-1',
+				'data' => ['currentBookValue' => 450.0],
+				'register' => 'shillinq',
+				'schema' => 'FixedAsset',
+			]));
 		$this->objects->expects($this->once())->method('deleteObject')
-			->with('line-1', 'shillinq', 'DepreciationLine');
+			->with(...LegacyObjectArgs::with(method: 'deleteObject', expected: [
+				'uuid' => 'line-1',
+				'register' => 'shillinq',
+				'schema' => 'DepreciationLine',
+			]));
 
 		$records = $this->records();
 		$records->patch('FixedAsset', 'a-1', ['currentBookValue' => 450.0]);
@@ -190,7 +202,9 @@ final class AssetRecordsTest extends TestCase {
 	 */
 	public function testAJournalIsSavedThenPostedDirectly(): void {
 		$journal = ['number' => 'AFS-2026-06', 'lines' => []];
-		$this->objects->expects($this->once())->method('saveObject')->with($journal)->willReturn($this->entity(['id' => 'je-7'] + $journal));
+		$this->objects->expects($this->once())->method('saveObject')->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => $journal,
+			]))->willReturn($this->entity(['id' => 'je-7'] + $journal));
 		$this->transitions->expects($this->once())->method('run')->with('je-7', 'postDirect');
 
 		$this->assertSame('je-7', $this->records()->postJournal($journal));
