@@ -5056,6 +5056,8 @@ OC.L10N.register(
         "The XBRL file could not be downloaded.": "The XBRL file could not be downloaded.",
         "Download the filing's XBRL instance, in any state.": "Download the filing's XBRL instance, in any state.",
         "Parts": "Parts",
+        "No active administration, so the chart of accounts cannot be shown.": "No active administration, so the chart of accounts cannot be shown.",
+        "No active administration, so the budget mappings cannot be shown.": "No active administration, so the budget mappings cannot be shown.",
         "Payment term (days)": "Payment term (days)",
         "Delivery method": "Delivery method",
         "Credit limit": "Credit limit",

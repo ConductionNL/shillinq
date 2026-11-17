@@ -7259,6 +7259,8 @@
         "The XBRL file could not be downloaded.": "Het XBRL-bestand kon niet worden gedownload.",
         "Download the filing's XBRL instance, in any state.": "Download de XBRL-instantie van deze aangifte, in elke status.",
         "Parts": "Onderdelen",
+        "No active administration, so the chart of accounts cannot be shown.": "Geen actieve administratie, dus het rekeningschema kan niet worden getoond.",
+        "No active administration, so the budget mappings cannot be shown.": "Geen actieve administratie, dus de budgettoewijzingen kunnen niet worden getoond.",
         "Payment term (days)": "Betaaltermijn (dagen)",
         "Delivery method": "Verzendwijze",
         "Credit limit": "Kredietlimiet",
