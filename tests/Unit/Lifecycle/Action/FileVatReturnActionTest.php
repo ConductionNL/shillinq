@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Lifecycle\Action\FileVatReturnAction;
 use OCA\Shillinq\Lifecycle\Action\HandToDigipoortAction;
@@ -70,7 +71,14 @@ final class FileVatReturnActionTest extends TestCase {
 	public function testADraftInstanceIsValidatedAndSubmittedAndLinkedToTheReturn(): void {
 		$action = new FileVatReturnAction($this->adapter(false), $this->builder(['id' => 'xbrl-1', 'state' => 'draft']), $this->transitions());
 
-		$result = $action->execute(self::RETURN, ['statusCode' => 'draft'], [], 'file-vat-return');
+		$result = $action->execute(
+			new LifecycleActionContext(
+				objectData: self::RETURN,
+				previousData: ['statusCode' => 'draft'],
+				parameters: [],
+				actionName: 'file-vat-return'
+			)
+		);
 
 		$this->assertSame(['xbrl-1:validate', 'xbrl-1:submit'], $this->runs);
 		$this->assertSame('xbrl-1', $result['xbrlInstanceId']);
@@ -79,7 +87,14 @@ final class FileVatReturnActionTest extends TestCase {
 
 	public function testAValidatedInstanceIsSubmittedAgain(): void {
 		(new FileVatReturnAction($this->adapter(false), $this->builder(['id' => 'xbrl-1', 'state' => 'validated']), $this->transitions()))
-			->execute(self::RETURN, [], [], 'file-vat-return');
+			->execute(
+				new LifecycleActionContext(
+					objectData: self::RETURN,
+					previousData: [],
+					parameters: [],
+					actionName: 'file-vat-return'
+				)
+			);
 
 		$this->assertSame(['xbrl-1:submit'], $this->runs);
 	}
@@ -91,7 +106,14 @@ final class FileVatReturnActionTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage(HandToDigipoortAction::NOT_CONFIGURED);
 
-		(new FileVatReturnAction($this->adapter(true), $builder, $this->transitions()))->execute(self::RETURN, [], [], 'file-vat-return');
+		(new FileVatReturnAction($this->adapter(true), $builder, $this->transitions()))->execute(
+			new LifecycleActionContext(
+				objectData: self::RETURN,
+				previousData: [],
+				parameters: [],
+				actionName: 'file-vat-return'
+			)
+		);
 	}
 
 	public function testAnInstanceThatFailsValidationRefusesTheReturnWithItsReason(): void {
@@ -99,7 +121,14 @@ final class FileVatReturnActionTest extends TestCase {
 		$action = new FileVatReturnAction($this->adapter(false), $this->builder(['id' => 'xbrl-1', 'state' => 'draft']), $this->transitions($refusal));
 
 		try {
-			$action->execute(self::RETURN, [], [], 'file-vat-return');
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: self::RETURN,
+					previousData: [],
+					parameters: [],
+					actionName: 'file-vat-return'
+				)
+			);
 			$this->fail('the return was not refused');
 		} catch (PostingRefusedException $e) {
 			$this->assertSame($refusal, $e);
@@ -113,7 +142,14 @@ final class FileVatReturnActionTest extends TestCase {
 
 		$this->expectExceptionMessage('This VAT return is already being filed (its XBRL instance is handed-off).');
 
-		$action->execute(self::RETURN, [], [], 'file-vat-return');
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: self::RETURN,
+				previousData: [],
+				parameters: [],
+				actionName: 'file-vat-return'
+			)
+		);
 	}
 
 	public function testARejectedInstanceMustBeReopenedFirst(): void {
@@ -121,6 +157,13 @@ final class FileVatReturnActionTest extends TestCase {
 
 		$this->expectExceptionMessage('The XBRL instance of this VAT return is rejected; reopen and correct it first.');
 
-		$action->execute(self::RETURN, [], [], 'file-vat-return');
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: self::RETURN,
+				previousData: [],
+				parameters: [],
+				actionName: 'file-vat-return'
+			)
+		);
 	}
 }

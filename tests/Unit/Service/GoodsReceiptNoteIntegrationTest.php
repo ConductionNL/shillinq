@@ -591,9 +591,24 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 		self::assertContains('GoodsReceiptNoteForm', $pageIds);
 		self::assertContains('GoodsReceiptNoteDetail', $pageIds);
 
+		$pagesById = array_column($json['pages'], null, 'id');
+
+		// The capture form stays a custom registry component.
+		$form = $pagesById['GoodsReceiptNoteForm'];
+		self::assertSame('custom', $form['type'] ?? '', 'The capture form must declare type=custom for the v2 registry resolver');
+		self::assertNotEmpty($form['component'] ?? '', 'The capture form must reference a registry component');
+
+		// The detail page is a built-in detail page over the GoodsReceiptNote schema.
+		$detail = $pagesById['GoodsReceiptNoteDetail'];
+		self::assertSame('detail', $detail['type'] ?? '');
+		self::assertSame('/inkoop/goods-receipt-notes/:id', $detail['route'] ?? '');
+		self::assertSame('shillinq', $detail['config']['register'] ?? '');
+		self::assertSame('GoodsReceiptNote', $detail['config']['schema'] ?? '');
+
 		foreach ($json['pages'] as $page) {
-			self::assertSame('custom', $page['type'] ?? '', 'Custom pages must declare type=custom for the v2 registry resolver');
-			self::assertNotEmpty($page['component'] ?? '', 'Custom pages must reference a registry component');
+			if (($page['type'] ?? '') === 'custom') {
+				self::assertNotEmpty($page['component'] ?? '', 'Custom pages must reference a registry component');
+			}
 		}
 
 		// GoodsReceiptNotes may appear at the top level or as a child of a parent
@@ -606,7 +621,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 				continue;
 			}
 
-			if (isset($entry['id'])) {
+			if (isset($entry['id']) === true) {
 				$allMenuIds[] = $entry['id'];
 			}
 

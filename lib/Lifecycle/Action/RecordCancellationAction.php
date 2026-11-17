@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Lifecycle\CancellationReasonGuard;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -63,19 +64,17 @@ class RecordCancellationAction implements LifecycleActionInterface {
 	/**
 	 * Return the profile with its cancellation record.
 	 *
-	 * @param array<string, mixed> $objectData   The profile being ended, with the inputs merged in.
-	 * @param array<string, mixed> $previousData The profile before the transition.
-	 * @param array<string, mixed> $parameters   The action's parameters (none).
-	 * @param string               $actionName   The transition.
+	 * @param LifecycleActionContext $context The transition; its objectData is the profile being ended, with the inputs merged in.
 	 *
 	 * @return array<string, mixed> The profile to save.
 	 *
 	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 * @SuppressWarnings(PHPMD.StaticAccess) CancellationReasonGuard::endConditionReached() is the one reading of the end condition.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$now = DateTimeImmutable::createFromInterface($this->time->getDateTime());
 		$code = trim((string)($objectData['cancellationReasonCode'] ?? ''));
 		if ($code === '' && CancellationReasonGuard::endConditionReached(profile: $objectData, today: $now) === true) {
