@@ -97,6 +97,7 @@
 					<input
 						id="rc-photo-uri"
 						v-model="form.photoUri"
+						:readonly="isDraftReview"
 						type="text"
 						class="receipt-capture__input"
 						data-testid="rc-photo-uri" />
