@@ -5558,7 +5558,16 @@
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.",
         "Get one help article by id, with its markdown body and documentation link.": "Get one help article by id, with its markdown body and documentation link.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.",
+        "Budget lines created: {created}. Updated: {updated}.": "Budget lines created: {created}. Updated: {updated}.",
+        "Budget lines you changed by hand and that were left alone: {overridden}.": "Budget lines you changed by hand and that were left alone: {overridden}.",
+        "Recurring and contract costs are written into the default budget of every year they touch. Lines you changed by hand are left alone.": "Recurring and contract costs are written into the default budget of every year they touch. Lines you changed by hand are left alone.",
+        "Regenerate": "Regenerate",
+        "Regenerate known costs": "Regenerate known costs",
+        "The known costs could not be regenerated. Try again, or ask your administrator to check the log.": "The known costs could not be regenerated. Try again, or ask your administrator to check the log.",
+        "Years without a default budget, so nothing was written for them: {years}.": "Years without a default budget, so nothing was written for them: {years}.",
+        "You cannot regenerate the budget of this administration.": "You cannot regenerate the budget of this administration.",
+        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

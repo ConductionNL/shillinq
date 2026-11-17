@@ -7728,7 +7728,16 @@
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Doorzoek de gebruikershandleiding van shillinq (helpartikelen). Gebruik dit voor hoe-doe-ik-vragen over shillinq; filter op pageIds met de pagina waarop de gebruiker staat om het artikel te kiezen dat die pagina uitlegt.",
         "Get one help article by id, with its markdown body and documentation link.": "Haal één helpartikel op via zijn id, met de markdowntekst en de documentatielink.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte.",
+        "Budget lines created: {created}. Updated: {updated}.": "Begrotingsregels aangemaakt: {created}. Bijgewerkt: {updated}.",
+        "Budget lines you changed by hand and that were left alone: {overridden}.": "Begrotingsregels die je met de hand hebt gewijzigd en die zijn ongemoeid gelaten: {overridden}.",
+        "Recurring and contract costs are written into the default budget of every year they touch. Lines you changed by hand are left alone.": "Terugkerende kosten en contractkosten worden in de standaardbegroting gezet van elk jaar waarin ze vallen. Regels die je met de hand hebt gewijzigd, blijven ongemoeid.",
+        "Regenerate": "Opnieuw genereren",
+        "Regenerate known costs": "Bekende kosten opnieuw genereren",
+        "The known costs could not be regenerated. Try again, or ask your administrator to check the log.": "De bekende kosten konden niet opnieuw worden gegenereerd. Probeer het opnieuw, of vraag je beheerder het logboek te bekijken.",
+        "Years without a default budget, so nothing was written for them: {years}.": "Jaren zonder standaardbegroting, waarvoor dus niets is geschreven: {years}.",
+        "You cannot regenerate the budget of this administration.": "Je kunt de begroting van deze administratie niet opnieuw genereren.",
+        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Zet de terugkerende kosten en contractkosten in de standaardbegroting van elk jaar waarin ze vallen. Met de hand gewijzigde regels blijven ongemoeid."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -37,6 +37,7 @@ import {
 import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
 import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
+import { openRegenerateKnownCosts } from './utils/knownCostActions.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -142,6 +143,9 @@ export const manifestActions = Object.freeze({
 	openRepeatAppointment,
 	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
 	openRecalculateInvestmentDeductions,
+	// budget-known-costs design.md §12: "Regenerate known costs" on
+	// Budget Line Derivations.
+	openRegenerateKnownCosts,
 })
 
 /**
