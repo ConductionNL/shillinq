@@ -11,4 +11,4 @@
 - [x] 2.4 Same test: asserts `l10n/nl.json` and `l10n/en.json` exist and parse (REQ-PLAT-004) (V1)
 
 ## 3. Matrix
-- [ ] 3.1 When the tasks are done, archive this change and repoint the five rows in `openspec/parity/capabilities.json` from `built.change` to `built.spec: openspec/specs/platform-properties`
+- [x] 3.1 When the tasks are done, archive this change and repoint the five rows in `openspec/parity/capabilities.json` from `built.change` to `built.spec: openspec/specs/platform-properties`
