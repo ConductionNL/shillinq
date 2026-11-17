@@ -112,6 +112,10 @@
         {
             "appVersion": "0.5.7-unstable.20261116230000",
             "versionsSha256": "b83468d10ec63d9aac329c3b3771a0f8b0ab3c9ab5aebf6946aa63d7724bd9e7"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261116233000",
+            "versionsSha256": "a3d11b8b45cbeebce6affc0de824641a65be9cdc23c8790b8397c5f793ecde5a"
         }
     ],
     "versions": {
@@ -288,7 +292,7 @@
         "schema:EInvoiceMandate": "0.1.0",
         "schema:EMUAdjustment": "0.1.0",
         "schema:EMUReport": "0.1.0",
-        "schema:ENSIAJaarcyclus": "0.1.0",
+        "schema:ENSIAJaarcyclus": "0.2.0",
         "schema:EconomischeCategorie": "0.1.0",
         "schema:EligibilityRule": "0.1.0",
         "schema:EliminationEntry": "0.1.1",
@@ -508,7 +512,7 @@
         "schema:RealisedFxPosting": "0.2.0",
         "schema:Receipt": "0.1.0",
         "schema:Rechtmatigheidsbevinding": "0.1.0",
-        "schema:Rechtmatigheidsparagraaf": "0.1.0",
+        "schema:Rechtmatigheidsparagraaf": "0.2.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
         "schema:ReconciliationMatch": "0.2.0",

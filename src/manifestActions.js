@@ -16,12 +16,14 @@
 import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
 import { openRepeatAppointment } from './utils/appointmentSeriesActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
+import { openAuditSampleDraw } from './utils/auditSampleApi.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openProposeDirectDebit } from './utils/directDebitActions.js'
 import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
+import { downloadEnsiaStatement, downloadEnsiaXml } from './utils/ensiaApi.js'
 import { openImportWizard } from './utils/importWizard.js'
 import {
 	approvePayable,
@@ -87,6 +89,11 @@ export const manifestActions = Object.freeze({
 	// batches and Download pain.008 on a generated batch.
 	openProposeDirectDebit,
 	downloadDirectDebitFile,
+	// public-sector-council-and-auditor-statements: Draw sample on an audit
+	// protocol, and the XML and statement downloads on an ENSIA cycle.
+	openAuditSampleDraw,
+	downloadEnsiaXml,
+	downloadEnsiaStatement,
 	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
 	approvePayable,
 	markPayablePaid,
