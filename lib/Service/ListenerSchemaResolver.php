@@ -55,6 +55,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -65,7 +66,7 @@ use Throwable;
  *
  * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
-class ListenerSchemaResolver {
+class ListenerSchemaResolver implements ListenerSchemaResolverInterface {
 
 	/**
 	 * FQCN of OpenRegister's schema mapper.

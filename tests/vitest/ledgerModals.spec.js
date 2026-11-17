@@ -98,11 +98,12 @@ describe('PaymentBlockModal', () => {
 
 	it('releases a payee and refreshes the payee detail', async () => {
 		const vm = instance(PaymentBlockModal, { schema: 'Payee', mode: 'release', $route: { params: { id: 'pay-1' } } })
+		vm.reason = 'IBAN verified'
 		axios.patch.mockResolvedValueOnce({ data: {} })
 		await vm.submit()
 		expect(axios.patch.mock.calls[0]).toEqual([
 			'/index.php/apps/openregister/api/objects/shillinq/Payee/pay-1',
-			{ paymentBlocked: false, paymentBlockReason: null },
+			{ paymentBlocked: false, paymentBlockReleaseReason: 'IBAN verified' },
 		])
 		expect(showSuccess).toHaveBeenCalledWith('Payment released')
 		expect(emit).toHaveBeenCalledWith('cn:widget:refresh', { widget: 'PayeeDetail' })
@@ -110,11 +111,13 @@ describe('PaymentBlockModal', () => {
 
 	it('shows why a save failed and stays open', async () => {
 		const vm = instance(PaymentBlockModal, { schema: 'Invoice', mode: 'release', objectId: 'x' })
+		vm.reason = 'Creditnota ontvangen'
 		await vm.submit()
 		expect(vm.error).toBe('The payment block could not be saved.')
 		expect(axios.patch).not.toHaveBeenCalled()
 
 		const other = instance(PaymentBlockModal, { schema: 'Payee', mode: 'release', objectId: 'p' })
+		other.reason = 'Creditnota ontvangen'
 		axios.patch.mockRejectedValueOnce(httpError({ message: 'Locked' }))
 		await other.submit()
 		expect(other.error).toBe('Locked')

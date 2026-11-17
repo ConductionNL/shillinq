@@ -48,6 +48,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -58,7 +59,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class BudgetImpactEmitter {
+class BudgetImpactEmitter implements BudgetImpactEmitterInterface {
 
 	/**
 	 * Event name for an activated TenderNed-sourced obligation (REQ-007).

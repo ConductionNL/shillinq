@@ -77,7 +77,7 @@ final class PlatformMobilePwaFragmentTest extends TestCase {
 
 		$expected = [
 			'Receipt' => ['zz-platform-mobile-pwa.json', '0.2.0'],
-			'ARInvoice' => ['zz-financial-documents-linked-objects.json', '0.18.0'],
+			'ARInvoice' => ['zz-financial-documents-linked-objects.json', '0.19.0'],
 		];
 		foreach ($expected as $name => [$file, $version]) {
 			self::assertSame([$file, $version], end($setters[$name]), $name);

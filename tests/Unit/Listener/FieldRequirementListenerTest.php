@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\AppInfo\FieldRequirementRegistration;
+use OCA\Shillinq\Listener\Registration\FieldRequirementRegistration;
 use OCA\Shillinq\Listener\FieldRequirementListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Platform\FieldRequirements;
@@ -568,7 +568,7 @@ class FieldRequirementListenerTest extends TestCase {
 		$this->assertContains([ObjectCreatingEvent::class, FieldRequirementListener::class], $listeners);
 		$this->assertContains([ObjectUpdatingEvent::class, FieldRequirementListener::class], $listeners);
 
-		$app = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$app = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php') . (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ListenerRegistrar.php');
 		$this->assertStringContainsString('(new FieldRequirementRegistration())->register(context: $context);', $app);
 
 	}//end testTheAppWiresTheListenerOnBothPreSaveEvents()

@@ -34,8 +34,8 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -90,15 +90,15 @@ class BbvAllocationValidationListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param ListenerSchemaResolver $schemaResolver  Matches the BBV schemas in shillinq's register.
+	 * @param ListenerSchemaResolverInterface $schemaResolver  Matches the BBV schemas in shillinq's register.
 	 * @param ObjectServiceInterface $objectService   Reads the sibling records.
-	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger          Logger.
 	 */
 	public function __construct(
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -113,6 +113,30 @@ class BbvAllocationValidationListener implements IEventListener {
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.7
 	 */
 	public function handle(Event $event): void {
+		$entity = $this->writtenEntity(event: $event);
+
+		if ($entity === null) {
+			return;
+		}
+
+		$error = $this->refusalFor(entity: $entity);
+
+		if ($error !== null) {
+			$event->setErrors(['message' => $error]);
+			$event->stopPropagation();
+		}
+	}//end handle()
+
+	/**
+	 * The object being created or updated, or null for another event.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.7
+	 */
+	private function writtenEntity(Event $event): mixed {
 		$entity = null;
 		if ($event instanceof ObjectCreatingEvent === true) {
 			$entity = $event->getObject();
@@ -122,10 +146,19 @@ class BbvAllocationValidationListener implements IEventListener {
 			$entity = $event->getNewObject();
 		}
 
-		if ($entity === null) {
-			return;
-		}
+		return $entity;
+	}//end writtenEntity()
 
+	/**
+	 * Why a programme or mapping write is refused, or null; a failed sibling lookup refuses.
+	 *
+	 * @param mixed $entity The object being written.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.7
+	 */
+	private function refusalFor(mixed $entity): string|null {
 		$data = $entity->getObject();
 		$self = (string)($entity->getUuid() ?? ($data['id'] ?? ''));
 		try {
@@ -140,11 +173,8 @@ class BbvAllocationValidationListener implements IEventListener {
 			$error = self::MESSAGE_UNCHECKED;
 		}
 
-		if ($error !== null) {
-			$event->setErrors(['message' => $error]);
-			$event->stopPropagation();
-		}
-	}//end handle()
+		return $error;
+	}//end refusalFor()
 
 	/**
 	 * Why a programme may not be saved, or null.

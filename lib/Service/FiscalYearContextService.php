@@ -51,19 +51,20 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Active-fiscal-year resolver for the BBV consumers (slices 05–08).
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
-class FiscalYearContextService {
+class FiscalYearContextService implements FiscalYearContextServiceInterface {
 	/**
 	 * Construct the service with DI dependencies.
 	 *
@@ -424,12 +425,7 @@ class FiscalYearContextService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	/**

@@ -44,6 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\Kernel\Contracts\UrencriteriumYearGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
  */
-class UrencriteriumYearGuard {
+class UrencriteriumYearGuard implements UrencriteriumYearGuardInterface {
 
 	/**
 	 * The regular urencriterium norm in hours (art. 3.6 lid 1 Wet IB 2001).

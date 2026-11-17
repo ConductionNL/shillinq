@@ -43,11 +43,14 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates the nightly soft-close execution per administratie (ADR-031 exception).
@@ -67,13 +70,20 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain logic; early-return refactor deferred pending full behavioral
  * verification of each branch.
  */
-class SoftCloseExecutor {
+class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	/**
 	 * Marker used for the postedBy field on auto-postings (REQ-CLS-010).
 	 *
 	 * @var string
 	 */
 	public const SYSTEM_ACTOR = 'SYSTEM:SoftCloseExecutor';
+
+	/**
+	 * The match statuses that write an elimination entry (REQ-ICE-011).
+	 *
+	 * @var array<int,string>
+	 */
+	private const ELIMINATED_STATUSES = ['perfect-match', 'within-tolerance'];
 
 	/**
 	 * The totals a run report starts from, after its status, administration and period.
@@ -341,44 +351,81 @@ class SoftCloseExecutor {
 		$method = (string)($rule['calculationMethod'] ?? '');
 		$parameters = (array)($rule['calculationParameters'] ?? []);
 
-		switch ($method) {
-			case 'fixed-amount':
-				$amount = (int)($parameters['amountCents'] ?? 0);
-				return max(0, $amount);
-			case 'percentage-of-revenue':
-				$rate = (float)($parameters['rate'] ?? 0.0);
-				$revenue = (int)($context['revenueMtdCents'] ?? 0);
-				if ($rate <= 0.0 || $revenue <= 0) {
-					return 0;
-				}
-				return (int)round($revenue * $rate);
-			case 'straight-line-from-contract':
-				// PrincipalCents × annualRate × dayCount / dayCountConvention.
-				$principal = (int)($parameters['principalCents'] ?? 0);
-				$rate = (float)($parameters['annualRate'] ?? 0.0);
-				$dayCount = (int)($parameters['dayCount'] ?? 365);
-				$days = (int)($context['daysElapsed'] ?? 0);
-				if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
-					return 0;
-				}
-				return (int)round(($principal * $rate * $days) / $dayCount);
-			case 'days-elapsed-of-period':
-				$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
-				$daysElapsed = (int)($context['daysElapsed'] ?? 0);
-				$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
-				if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
-					return 0;
-				}
-				return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
-			case 'external-lookup':
-				// Lookup amount is provided by the orchestration context.
-				$lookup = (int)($context['lookupAmountCents'] ?? 0);
-				return max(0, $lookup);
-			default:
-				return 0;
-		}//end switch
+		return match ($method) {
+			'fixed-amount' => max(0, (int)($parameters['amountCents'] ?? 0)),
+			'percentage-of-revenue' => $this->revenueAccrualCents(parameters: $parameters, context: $context),
+			'straight-line-from-contract' => $this->contractAccrualCents(parameters: $parameters, context: $context),
+			'days-elapsed-of-period' => $this->periodAccrualCents(parameters: $parameters, context: $context),
+			// Lookup amount is provided by the orchestration context.
+			'external-lookup' => max(0, (int)($context['lookupAmountCents'] ?? 0)),
+			default => 0,
+		};
 
 	}//end computeAccrualCents()
+
+	/**
+	 * Accrual as a rate of the month-to-date revenue.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function revenueAccrualCents(array $parameters, array $context): int {
+		$rate = (float)($parameters['rate'] ?? 0.0);
+		$revenue = (int)($context['revenueMtdCents'] ?? 0);
+		if ($rate <= 0.0 || $revenue <= 0) {
+			return 0;
+		}
+
+		return (int)round($revenue * $rate);
+	}//end revenueAccrualCents()
+
+	/**
+	 * Straight-line contract accrual: principalCents × annualRate × days / dayCount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function contractAccrualCents(array $parameters, array $context): int {
+		// PrincipalCents × annualRate × dayCount / dayCountConvention.
+		$principal = (int)($parameters['principalCents'] ?? 0);
+		$rate = (float)($parameters['annualRate'] ?? 0.0);
+		$dayCount = (int)($parameters['dayCount'] ?? 365);
+		$days = (int)($context['daysElapsed'] ?? 0);
+		if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
+			return 0;
+		}
+
+		return (int)round(($principal * $rate * $days) / $dayCount);
+	}//end contractAccrualCents()
+
+	/**
+	 * The elapsed share of a monthly amount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function periodAccrualCents(array $parameters, array $context): int {
+		$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
+		$daysElapsed = (int)($context['daysElapsed'] ?? 0);
+		$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
+		if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
+			return 0;
+		}
+
+		return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
+	}//end periodAccrualCents()
 
 	/**
 	 * Execute every active AutoAccrualRule for the administratie + period (REQ-CLS-002, REQ-CLS-003).
@@ -488,8 +535,7 @@ class SoftCloseExecutor {
 
 		$this->objectService->saveObject(
 			object: $posting,
-			register: $this->register(),
-			schema: 'AutoAccrualPosting',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'AutoAccrualPosting'))
 		);
 
 	}//end persistAccrualPosting()
@@ -580,28 +626,91 @@ class SoftCloseExecutor {
 	}//end delegateLeasePostings()
 
 	/**
-	 * Run intercompany matching for the administratie + period.
+	 * Run intercompany matching for every relation of the administratie in the period.
 	 *
-	 * Reuses the existing IntercompanyMatchingService when available.
+	 * Each relation goes through IntercompanyMatchingService::matchRelationPeriod,
+	 * which writes the match and, for a match within tolerance, the elimination
+	 * entry. A relation already eliminated for the period is not matched again,
+	 * so a rerun of the nightly close writes no second elimination.
 	 *
 	 * @param string $administrationId The administration scope.
 	 * @param string $periodId The yyyy-mm period.
 	 *
-	 * @return int Match count.
+	 * @return int The relations eliminated for the period.
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
 	 */
 	private function runIntercompanyMatching(string $administrationId, string $periodId): int {
-		if ($this->container->has('OCA\Shillinq\Service\IntercompanyMatchingService') === false) {
+		if ($this->container->has(IntercompanyMatchingService::class) === false) {
 			return 0;
 		}
 
-		$delegate = $this->container->get('OCA\Shillinq\Service\IntercompanyMatchingService');
-		if (method_exists($delegate, 'matchForPeriod') === false) {
-			return 0;
+		$delegate = $this->container->get(IntercompanyMatchingService::class);
+		$matched  = 0;
+		foreach ($this->intercompanyRelationIds(administrationId: $administrationId) as $relationId) {
+			if ($this->isEliminated(relationId: $relationId, periodId: $periodId) === true) {
+				$matched++;
+				continue;
+			}
+
+			$match = (array)$delegate->matchRelationPeriod(relationId: $relationId, periodId: $periodId);
+			if (in_array((string)($match['matchStatus'] ?? ''), self::ELIMINATED_STATUSES, true) === true) {
+				$matched++;
+			}
 		}
 
-		$result = (array)$delegate->matchForPeriod($administrationId, $periodId);
-		return (int)($result['matchCount'] ?? 0);
+		return $matched;
 	}//end runIntercompanyMatching()
+
+	/**
+	 * The relation ids of the administratie's intercompany relations.
+	 *
+	 * @param string $administrationId The administration scope; '' for all.
+	 *
+	 * @return array<int,string> The distinct, non-empty relation ids.
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 */
+	private function intercompanyRelationIds(string $administrationId): array {
+		$filters = [];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
+
+		$found = $this->objectService
+			->setRegister($this->register())
+			->setSchema('IntercompanyRelation')
+			->findAll(['filters' => $filters]);
+
+		$ids = [];
+		foreach ($found as $relation) {
+			$relationId = (string)(((array)$relation)['relationId'] ?? '');
+			if ($relationId !== '') {
+				$ids[$relationId] = true;
+			}
+		}
+
+		return array_map('strval', array_keys($ids));
+	}//end intercompanyRelationIds()
+
+	/**
+	 * Whether the relation already has its elimination entry for the period.
+	 *
+	 * @param string $relationId The relation.
+	 * @param string $periodId The yyyy-mm period.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 */
+	private function isEliminated(string $relationId, string $periodId): bool {
+		$found = $this->objectService
+			->setRegister($this->register())
+			->setSchema('EliminationJournal')
+			->findAll(['filters' => ['eliminationId' => 'elim-match-' . $relationId . '-' . $periodId]]);
+
+		return $found !== [];
+	}//end isEliminated()
 
 	/**
 	 * Generate the trial balance summary for the administratie + period.
@@ -687,8 +796,7 @@ class SoftCloseExecutor {
 
 		$this->objectService->saveObject(
 			object: $record,
-			register: $this->register(),
-			schema: 'PeriodStatus',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'PeriodStatus'))
 		);
 
 	}//end markSoftClosed()
@@ -718,8 +826,7 @@ class SoftCloseExecutor {
 		try {
 			$this->objectService->saveObject(
 				object: $alert,
-				register: $this->register(),
-				schema: 'ContinuousCloseAlert',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ContinuousCloseAlert'))
 			);
 		} catch (\Throwable $persistError) {
 			$this->logger->error(
@@ -773,11 +880,6 @@ class SoftCloseExecutor {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

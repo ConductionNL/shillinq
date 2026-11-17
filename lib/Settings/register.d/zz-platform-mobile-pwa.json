@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "platform-mobile-pwa",
     "adr": "ADR-037 modular register fragment",
-    "description": "A receipt or invoice draft made on the phone carries the client id the phone gave it, unique per schema, so a queued item sent twice is found again instead of stored twice (REQ-PMP-003). Receipt's version moves here (0.1.0 -> 0.2.0); ARInvoice's moves in zz-financial-documents-linked-objects.json (0.17.0 -> 0.18.0), the fragment that keeps the last word on that schema's version."
+    "description": "A receipt or invoice draft made on the phone carries the client id the phone gave it, unique per schema, so a queued item sent twice is found again instead of stored twice (REQ-PMP-003). Receipt's version moves here (0.1.0 -> 0.2.0); ARInvoice's moves in zz-financial-documents-linked-objects.json (0.18.0 -> 0.19.0), the fragment that keeps the last word on that schema's version."
   },
   "components": {
     "schemas": {

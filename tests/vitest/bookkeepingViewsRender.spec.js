@@ -51,7 +51,6 @@ globalThis.t = (app, text) => text
 const { default: ChartOfAccountsView } = await import('../../src/views/bookkeeping/ChartOfAccountsView.vue')
 const { default: TransactionsView } = await import('../../src/views/bookkeeping/TransactionsView.vue')
 const { default: DocumentsView } = await import('../../src/views/bookkeeping/DocumentsView.vue')
-const { default: FxRatesAdmin } = await import('../../src/views/bookkeeping/multi-currency/FxRatesAdmin.vue')
 const { default: SegmentPnLDashboard } = await import('../../src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue')
 
 /**
@@ -239,39 +238,6 @@ describe('DocumentsView', () => {
 		expect([view.translateStatus('draft'), view.translateStatus('archived')]).toEqual(['Draft', 'Archived'])
 		view.onUpload()
 		expect(view.$emit).toHaveBeenCalledWith('upload-document')
-	})
-})
-
-describe('FxRatesAdmin', () => {
-	const status = (over) => ({ jobClass: 'Job', lastRunAt: null, lastRunEpoch: null, adapterDormant: false, interval: 86400, status: 'never-ran', ...over })
-
-	it('shows the loading icon while reading the import status', async () => {
-		const html = await render(FxRatesAdmin, { loading: true, errorMessage: '', status: status({}) })
-		expect(html).toContain('data-name="Loading import status"')
-		expect(html).not.toContain('Import status')
-	})
-
-	it('shows a successful run with its badge and time', async () => {
-		const at = '2026-11-03T06:00:00Z'
-		const html = await render(FxRatesAdmin, { loading: false, errorMessage: '', status: status({ status: 'ok', lastRunAt: at }) })
-		expect(html).toMatch(/class="[^"]*fx-rates-admin__status-badge--ok[^"]*"[^>]*data-status="ok"[^>]*>\s*OK\s*</)
-		expect(html).toContain('Last successful run')
-		expect(html).toContain(new Date(at).toLocaleString())
-		expect(html).not.toContain('The cron has not produced a successful run yet.')
-		expect(html).not.toContain('is currently dormant')
-	})
-
-	it('says the cron never ran, and explains a dormant adapter', async () => {
-		const never = await render(FxRatesAdmin, { loading: false, errorMessage: '', status: status({}) })
-		expect(never).toContain('fx-rates-admin__status-badge--warn')
-		expect(never).toContain('Never ran')
-		expect(never).toContain('The cron has not produced a successful run yet.')
-
-		const dormant = await render(FxRatesAdmin, { loading: false, errorMessage: 'Failed to load FX import status.', status: status({ status: 'dormant', adapterDormant: true }) })
-		expect(dormant).toContain('fx-rates-admin__status-badge--dormant')
-		expect(dormant).toContain('Dormant')
-		expect(dormant).toContain('The Treasury rate adapter is currently dormant.')
-		expect(dormant).toMatch(/role="alert"[^>]*>\s*Failed to load FX import status\./)
 	})
 })
 

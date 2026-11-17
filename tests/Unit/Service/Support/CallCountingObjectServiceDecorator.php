@@ -39,6 +39,13 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCP\IUser;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\LockRequest;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
 
 /**
  * Forwarding decorator that counts `findAll()` calls.
@@ -120,16 +127,17 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
-		return $this->inner->find($id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy, $_render, $_audit);
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$_render = $options?->render ?? true;
+		$_audit = $options?->audit ?? true;
+		return $this->inner->find($id, $options, $_rbac, $_multitenancy);
 
 	}//end find()
 
@@ -151,32 +159,20 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->saveObject(
-			$object,
-			$extend,
-			$register,
-			$schema,
-			$uuid,
-			$_rbac,
-			$_multitenancy,
-			$silent,
-			$_validation,
-			$uploadedFiles,
-			$currentUser,
-			$failIfExists
-		);
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$silent = $options->policy->silent ?? false;
+		$_validation = $options->policy->validation ?? true;
+		$uploadedFiles = $options->uploadedFiles;
+		$currentUser = $options->actor->currentUser;
+		$failIfExists = $options->policy->failIfExists ?? false;
+		return $this->inner->saveObject($object, $options, $_rbac, $_multitenancy);
 
 	}//end saveObject()
 
@@ -240,15 +236,16 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->patchObject($objectId, $data, $register, $schema, $_rbac, $_multitenancy, $currentUser);
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$register = $patch->target->register;
+		$schema = $patch->target->schema;
+		$currentUser = $patch->currentUser;
+		return $this->inner->patchObject($patch, $_rbac, $_multitenancy);
 
 	}//end patchObject()
 
@@ -265,14 +262,15 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 */
 	public function findSilent(
 		string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->findSilent($id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy);
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		return $this->inner->findSilent($id, $options, $_rbac, $_multitenancy);
 
 	}//end findSilent()
 
@@ -329,16 +327,17 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @return bool
 	 */
 	public function deleteObject(
-		string $uuid,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_retentionSweep = false,
-		?IUser $currentUser = null,
-		bool $permanent = false
+		bool $_retentionSweep = false
 	): bool {
-		return $this->inner->deleteObject($uuid, $register, $schema, $_rbac, $_multitenancy, $_retentionSweep, $currentUser, $permanent);
+		$uuid = $deletion->uuid;
+		$register = $deletion->target->register;
+		$schema = $deletion->target->schema;
+		$currentUser = $deletion->currentUser;
+		$permanent = $deletion->permanent ?? false;
+		return $this->inner->deleteObject($deletion, $_rbac, $_multitenancy);
 
 	}//end deleteObject()
 
@@ -400,28 +399,18 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		BulkSaveOptions $options = new BulkSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): array {
-		return $this->inner->saveObjects(
-			$objects,
-			$register,
-			$schema,
-			$_rbac,
-			$_multitenancy,
-			$validation,
-			$events,
-			$deduplicateIds,
-			$enrich,
-			$_audit
-		);
+		$register = $options->defaults->register;
+		$schema = $options->defaults->schema;
+		$validation = $options->validation ?? false;
+		$events = $options->events ?? false;
+		$deduplicateIds = true;
+		$enrich = true;
+		$_audit = $options->audit ?? true;
+		return $this->inner->saveObjects($objects, $options, $_rbac, $_multitenancy);
 
 	}//end saveObjects()
 
@@ -455,11 +444,15 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	/**
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
-		return $this->inner->unlockObject($identifier, $advisory);
+	public function unlockObject(UnlockRequest $request): bool {
+		$identifier = $request->identifier;
+		$advisory = $request->advisory ?? false;
+		$runUuid = $request->runUuid;
+		return $this->inner->unlockObject($request);
 
 	}//end unlockObject()
 
@@ -468,16 +461,21 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @param ?string $process A label for the holding process.
 	 * @param ?int $duration Lock duration in seconds.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
 	public function lockObject(
-		string $identifier,
-		?string $process = null,
-		?int $duration = null,
+		LockRequest $request,
 		bool $advisory = false
 	): array {
-		return $this->inner->lockObject($identifier, $process, $duration, $advisory);
+		$identifier = $request->identifier;
+		$process = $request->process;
+		$duration = $request->duration;
+		$runUuid = $request->runUuid;
+		$nodeId = $request->nodeId;
+		return $this->inner->lockObject($request);
 
 	}//end lockObject()
 
@@ -572,4 +570,11 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 		return $this->inner->countSearchObjects($query, $_rbac, $_multitenancy, $ids, $uses);
 
 	}//end countSearchObjects()
+	/**
+	 * Not used by this double.
+	 */
+	public function validateObject(array $object, string|int $register, string|int $schema, ?string $id=null): \OCA\OpenRegister\Kernel\Contracts\Value\ObjectValidationVerdict {
+		throw new \LogicException('validateObject() is not modelled by this double');
+	}
+
 }//end class

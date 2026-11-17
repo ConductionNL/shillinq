@@ -32,9 +32,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -47,7 +48,7 @@ use Throwable;
  *
  * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
  */
-class ConnectionReportService {
+class ConnectionReportService implements ConnectionReportServiceInterface {
 
 	/**
 	 * Integriq's report event (ADR-041). Named by string so shillinq stays
@@ -68,9 +69,12 @@ class ConnectionReportService {
 	 * @var array<string, array{interface: class-string, consequence: string}>
 	 */
 	public const FAMILIES = [
-		'mollie' => [
-			'interface' => MolliePaymentAdapterInterface::class,
-			'consequence' => 'No payment reaches Mollie.',
+		// The supplementary VAT return files through this port
+		// (tax-vat-position-and-suppletie REQ-VPS-002).
+		'digipoort-sbr' => [
+			'interface' => DigipoortSbrAdapterInterface::class,
+			'consequence' => 'No VAT return, supplementary return or annual accounts reach Digipoort; '
+				.'Submit is refused and a supplementary return is downloaded to file by hand.',
 		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,

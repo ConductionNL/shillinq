@@ -167,6 +167,8 @@ final class RegisterLifecycleGuardsResolveTest extends TestCase {
 			'OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost',
 			'OCA\Shillinq\Lifecycle\ThreeWayMatchGuard::matches',
 			'OCA\Shillinq\Lifecycle\BalanceGuard::isInvoiceBalanced',
+			// tax-vat-return-from-books 3.2: BtwAangifte.submit.
+			'OCA\Shillinq\Lifecycle\VatReturnChecksGuard::canSubmit',
 		];
 
 	}//end fixedTags()
@@ -196,7 +198,7 @@ final class RegisterLifecycleGuardsResolveTest extends TestCase {
 		// Application.php plus the focused registrars it calls
 		// (OrderFulfilmentGateRegistration, LedgerPostingRegistration, ...).
 		$applicationSource = (string)file_get_contents($this->applicationPath);
-		foreach (glob(dirname($this->applicationPath) . '/*Registration.php') as $registrar) {
+		foreach ([...glob(dirname($this->applicationPath) . '/*Registration.php'), ...glob(dirname($this->applicationPath, 2) . '/*/*Registrar.php'), ...glob(dirname($this->applicationPath, 2) . '/*/*Registration.php'), ...glob(dirname($this->applicationPath, 2) . '/Listener/Registration/*.php')] as $registrar) {
 			$applicationSource .= (string)file_get_contents($registrar);
 		}
 		$pairs = $this->collectLifecycleRequiresValues();

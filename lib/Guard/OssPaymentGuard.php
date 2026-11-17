@@ -45,8 +45,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\Service\OssPaymentReconciliation;
-use OCA\Shillinq\Service\OssRecordResolver;
+use OCA\Shillinq\Kernel\Contracts\OssPaymentReconciliationInterface;
+use OCA\Shillinq\Kernel\Contracts\OssRecordResolverInterface;
 
 /**
  * Precondition for `OssReturn.pay` / `OssPayment.reconcile`.
@@ -62,12 +62,12 @@ class OssPaymentGuard {
 	/**
 	 * Construct the guard.
 	 *
-	 * @param OssRecordResolver $resolver Reads the counterpart OssReturn / OssPayment.
-	 * @param OssPaymentReconciliation $reconciliation The pure-logic REQ-OSS-008 kernel.
+	 * @param OssRecordResolverInterface $resolver Reads the counterpart OssReturn / OssPayment.
+	 * @param OssPaymentReconciliationInterface $reconciliation The pure-logic REQ-OSS-008 kernel.
 	 */
 	public function __construct(
-		private readonly OssRecordResolver $resolver,
-		private readonly OssPaymentReconciliation $reconciliation,
+		private readonly OssRecordResolverInterface $resolver,
+		private readonly OssPaymentReconciliationInterface $reconciliation,
 	) {
 
 	}//end __construct()

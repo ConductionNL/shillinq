@@ -36,12 +36,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BillableLinesService;
-use OCA\Shillinq\Service\InvoiceGenerationService;
-use OCA\Shillinq\Service\InvoicePdfGenerator;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,8 +52,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * HTTP API for BillableInvoice drafting + posting.
@@ -109,23 +109,23 @@ class InvoiceApiController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param InvoiceGenerationService $service Drafting/posting service.
-	 * @param InvoicePdfGenerator $pdfGenerator PDF/HTML renderer.
+	 * @param InvoiceGenerationServiceInterface $service Drafting/posting service.
+	 * @param InvoicePdfGeneratorInterface $pdfGenerator PDF/HTML renderer.
 	 * @param IUserSession $session User session.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param BillableLinesService $billableLines The lines one customer can be invoiced for.
+	 * @param BillableLinesServiceInterface $billableLines The lines one customer can be invoiced for.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly InvoiceGenerationService $service,
-		private readonly InvoicePdfGenerator $pdfGenerator,
+		private readonly InvoiceGenerationServiceInterface $service,
+		private readonly InvoicePdfGeneratorInterface $pdfGenerator,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly BillableLinesService $billableLines,
+		private readonly BillableLinesServiceInterface $billableLines,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

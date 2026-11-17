@@ -27,19 +27,21 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Sales;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use DateTimeImmutable;
 use OCP\Security\ISecureRandom;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 
 /**
  * Drafts an ARInvoice on the server.
  *
  * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  */
-class QuickDraftInvoiceService {
+class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 
 	/**
 	 * How often a provisional number is drawn before giving up.
@@ -82,40 +84,21 @@ class QuickDraftInvoiceService {
 	 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 	 */
 	public function draft(string $administrationId, array $request): array {
-		if ($administrationId === '') {
-			throw new QuickDraftRefusedException('Choose an administration before drafting an invoice.');
-		}
-
 		// A draft queued on the phone carries the id the phone gave it, and may
 		// be sent again when a sync was cut off after the save. The second send
 		// is answered with the draft the first one made (REQ-PMP-003).
 		$clientId = self::clientId(value: $request['clientId'] ?? null);
-		if ($clientId !== null) {
+		if ($clientId !== null && $administrationId !== '') {
 			$existing = $this->draftWithClientId(administrationId: $administrationId, clientId: $clientId);
 			if ($existing !== null) {
 				return $existing;
 			}
 		}
 
-		$customer = $this->customer(administrationId: $administrationId, customerId: trim((string)($request['customerId'] ?? '')));
-		if ($customer === null) {
-			throw new QuickDraftRefusedException('This customer is not part of your administration.');
-		}
-
-		$invoiceDate = trim((string)($request['invoiceDate'] ?? ''));
-		if (self::isDate(value: $invoiceDate) === false) {
-			throw new QuickDraftRefusedException('Enter a valid invoice date.');
-		}
-
-		$lines = self::lines(given: $request['lines'] ?? [], glAccount: trim((string)($request['glAccount'] ?? '')));
-		if ($lines === []) {
-			throw new QuickDraftRefusedException('Add at least one line with a description and a price.');
-		}
-
-		$dueDate = trim((string)($request['dueDate'] ?? ''));
-		if (self::isDate(value: $dueDate) === false || $dueDate < $invoiceDate) {
-			$dueDate = self::addDays(date: $invoiceDate, days: self::termDays(terms: (string)($customer['paymentTerms'] ?? '')));
-		}
+		$customer    = $this->draftCustomer(administrationId: $administrationId, request: $request);
+		$invoiceDate = self::requiredInvoiceDate(request: $request);
+		$lines       = self::requiredLines(request: $request);
+		$dueDate     = self::dueDateFor(request: $request, invoiceDate: $invoiceDate, customer: $customer);
 
 		$invoice = array_merge(
 			[
@@ -142,6 +125,83 @@ class QuickDraftInvoiceService {
 
 		return $invoice;
 	}//end draft()
+
+	/**
+	 * The requested customer, refused without an administration or when it is not part of it.
+	 *
+	 * @param string              $administrationId The administration the invoice is drafted in.
+	 * @param array<string,mixed> $request          The quick draft request.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws QuickDraftRefusedException When there is no administration or the customer is outside it.
+	 */
+	private function draftCustomer(string $administrationId, array $request): array {
+		if ($administrationId === '') {
+			throw new QuickDraftRefusedException(message: 'Choose an administration before drafting an invoice.');
+		}
+
+		$customer = $this->customer(administrationId: $administrationId, customerId: trim((string)($request['customerId'] ?? '')));
+		if ($customer === null) {
+			throw new QuickDraftRefusedException(message: 'This customer is not part of your administration.');
+		}
+
+		return $customer;
+	}//end draftCustomer()
+
+	/**
+	 * The invoice date, refused when it is not a valid date.
+	 *
+	 * @param array<string,mixed> $request The quick draft request.
+	 *
+	 * @return string
+	 *
+	 * @throws QuickDraftRefusedException When the invoice date is not valid.
+	 */
+	private static function requiredInvoiceDate(array $request): string {
+		$invoiceDate = trim((string)($request['invoiceDate'] ?? ''));
+		if (self::isDate(value: $invoiceDate) === false) {
+			throw new QuickDraftRefusedException(message: 'Enter a valid invoice date.');
+		}
+
+		return $invoiceDate;
+	}//end requiredInvoiceDate()
+
+	/**
+	 * The invoice lines, refused when none has a description and a price.
+	 *
+	 * @param array<string,mixed> $request The quick draft request.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @throws QuickDraftRefusedException When there are no usable lines.
+	 */
+	private static function requiredLines(array $request): array {
+		$lines = self::lines(given: $request['lines'] ?? [], glAccount: trim((string)($request['glAccount'] ?? '')));
+		if ($lines === []) {
+			throw new QuickDraftRefusedException(message: 'Add at least one line with a description and a price.');
+		}
+
+		return $lines;
+	}//end requiredLines()
+
+	/**
+	 * The requested due date, else the invoice date plus the customer's payment term.
+	 *
+	 * @param array<string,mixed> $request     The quick draft request.
+	 * @param string              $invoiceDate The invoice date.
+	 * @param array<string,mixed> $customer    The customer.
+	 *
+	 * @return string
+	 */
+	private static function dueDateFor(array $request, string $invoiceDate, array $customer): string {
+		$dueDate = trim((string)($request['dueDate'] ?? ''));
+		if (self::isDate(value: $dueDate) === false || $dueDate < $invoiceDate) {
+			$dueDate = self::addDays(date: $invoiceDate, days: self::termDays(terms: (string)($customer['paymentTerms'] ?? '')));
+		}
+
+		return $dueDate;
+	}//end dueDateFor()
 
 	/**
 	 * The customer, by business key or id, only when it is the administration's.
@@ -252,7 +312,7 @@ class QuickDraftInvoiceService {
 		$price = $line['unitPrice'] ?? 0;
 		$rate = $line['vatRate'] ?? 0;
 		if (is_numeric($quantity) === false || is_numeric($price) === false || is_numeric($rate) === false) {
-			throw new QuickDraftRefusedException('Every line needs a number for quantity, price and VAT rate.');
+			throw new QuickDraftRefusedException(message: 'Every line needs a number for quantity, price and VAT rate.');
 		}
 
 		return [$quantity, $price, $rate];
@@ -269,7 +329,7 @@ class QuickDraftInvoiceService {
 	 */
 	private static function assertVatRate(float $rate): void {
 		if ($rate < 0 || $rate > 100) {
-			throw new QuickDraftRefusedException('A VAT rate lies between 0 and 100 percent.');
+			throw new QuickDraftRefusedException(message: 'A VAT rate lies between 0 and 100 percent.');
 		}
 	}//end assertVatRate()
 
@@ -372,7 +432,7 @@ class QuickDraftInvoiceService {
 			}
 		}
 
-		throw new QuickDraftRefusedException('No free draft number was found. Try again.');
+		throw new QuickDraftRefusedException(message: 'No free draft number was found. Try again.');
 	}//end provisionalNumber()
 
 	/**

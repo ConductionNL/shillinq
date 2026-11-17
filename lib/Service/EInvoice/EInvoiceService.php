@@ -37,25 +37,29 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\EInvoice;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
+use OCA\Shillinq\Service\RecordStoreLog;
+use OCA\Shillinq\Service\RegisterBinding;
+use OCA\Shillinq\Service\SchemaRecordStore;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates ARInvoice e-invoice generation, validation and Peppol dispatch.
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-final class EInvoiceService {
+final class EInvoiceService implements EInvoiceServiceInterface {
 	/**
 	 * Cross-app cloud-event name emitted on a successful pre-send validation
 	 * (REQ-EINV-005). Consumed by openconnector's Peppol access point.
@@ -268,7 +272,7 @@ final class EInvoiceService {
 		$invoice['payloadFileUri']           = $send->payloadFileUri;
 		$invoice['buyerPeppolParticipantId'] = $send->participantId;
 
-		$persisted = $this->saveObject(schema: 'ARInvoice', object: $invoice);
+		$persisted = $this->records()->saveObject(schema: 'ARInvoice', object: $invoice);
 		$this->emitOutboundRequested(send: $send, invoice: $persisted);
 
 		return [
@@ -390,7 +394,7 @@ final class EInvoiceService {
 	 * @return array<string,mixed>|null
 	 */
 	private function findInvoice(string $administrationId, string $invoiceNumber): ?array {
-		$rows = $this->findAll(
+		$rows = $this->records()->findAll(
 			schema: 'ARInvoice',
 			filters: [
 				'administrationId' => $administrationId,
@@ -408,78 +412,24 @@ final class EInvoiceService {
 	}//end findInvoice()
 
 	/**
-	 * Persist an object via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object payload.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'EInvoiceService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'EInvoiceService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
 	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
 	 *
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
+
+	/**
+	 * The register records of this service.
+	 *
+	 * @return SchemaRecordStore The store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'EInvoiceService')
+		);
+
+	}//end records()
 }//end class

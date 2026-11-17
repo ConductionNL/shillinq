@@ -50,8 +50,10 @@ namespace OCA\Shillinq\Listener;
 
 use DateTime;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\PeppolDeliveryStatusListenerInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -68,7 +70,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-class PeppolDeliveryStatusListener implements IEventListener {
+class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStatusListenerInterface {
 	/**
 	 * CloudEvent `type` this listener consumes (integriq
 	 * `PeppolTransmissionService::EVENT_TYPE_DELIVERY_STATUS`).
@@ -83,14 +85,6 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @var string
 	 */
 	private const NOTIFICATION_OBJECT_TYPE = 'ar_invoice';
-
-	/**
-	 * Notification subject identifier for a rejected e-invoice, rendered by
-	 * {@see \OCA\Shillinq\Notification\EInvoiceNotifier}.
-	 *
-	 * @var string
-	 */
-	public const NOTIFICATION_SUBJECT_REJECTED = 'einvoice_delivery_rejected';
 
 	/**
 	 * The AdministrationMembership roles told about a rejected e-invoice (#1754).
@@ -136,14 +130,14 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's register and schema ids to slugs.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 	) {
 
 	}//end __construct()
@@ -174,8 +168,8 @@ class PeppolDeliveryStatusListener implements IEventListener {
 
 		try {
 			$entity = $event->getObject();
-			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			$cloudEvent = self::deliveryStatusEvent(entity: $entity);
+			if ($cloudEvent === null) {
 				return;
 			}
 
@@ -197,6 +191,22 @@ class PeppolDeliveryStatusListener implements IEventListener {
 		}
 
 	}//end handle()
+
+	/**
+	 * The entity's CloudEvent when it is an integriq delivery-status event.
+	 *
+	 * @param mixed $entity The created object entity, or null.
+	 *
+	 * @return array<string,mixed>|null The CloudEvent, or null for any other object.
+	 */
+	private static function deliveryStatusEvent(mixed $entity): array|null {
+		$cloudEvent = $entity?->getObject();
+		if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			return null;
+		}
+
+		return $cloudEvent;
+	}//end deliveryStatusEvent()
 
 	/**
 	 * Apply one delivery-status payload to the matching ARInvoice.
@@ -485,11 +495,6 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

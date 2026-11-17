@@ -39,8 +39,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\CashflowExportService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CashflowExportServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -61,13 +61,13 @@ class CashflowExportController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request.
-	 * @param CashflowExportService $exportService Assembles the export document.
+	 * @param CashflowExportServiceInterface $exportService Assembles the export document.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly CashflowExportService $exportService,
+		private readonly CashflowExportServiceInterface $exportService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

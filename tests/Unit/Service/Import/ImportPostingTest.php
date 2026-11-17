@@ -30,12 +30,16 @@ use OCA\Shillinq\Service\Import\ImportPosting;
 use OCA\Shillinq\Service\Import\ImportPostingPayloads;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * The refusals, warnings and unwinding of ImportPosting.
@@ -44,6 +48,8 @@ use RuntimeException;
  * @uses   \OCA\Shillinq\Service\Import\ImportPostingPayloads
  * @uses   \OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
+ * @uses   \OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub
+ * @uses   \OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub
  */
 final class ImportPostingTest extends TestCase {
 
@@ -317,15 +323,16 @@ final class ImportPostingTest extends TestCase {
 			 * @throws RuntimeException Always.
 			 */
 			public function deleteObject(
-				string $uuid,
-				string|int|null $register = null,
-				string|int|null $schema = null,
+				ObjectDeletion $deletion,
 				bool $_rbac = true,
 				bool $_multitenancy = true,
-				bool $_retentionSweep = false,
-				?IUser $currentUser = null,
-				bool $permanent = false
+				bool $_retentionSweep = false
 			): bool {
+				$uuid = $deletion->uuid;
+				$register = $deletion->target->register;
+				$schema = $deletion->target->schema;
+				$currentUser = $deletion->currentUser;
+				$permanent = $deletion->permanent ?? false;
 				throw new RuntimeException('locked');
 			}
 		};
@@ -380,4 +387,44 @@ final class ImportPostingTest extends TestCase {
 		$this->assertSame([], $this->ran);
 
 	}//end testAReversalWithoutItsOpeningEntryNamesIt()
+
+	/**
+	 * An opening entry the register saves without an id refuses the post,
+	 * naming the entry, and runs no transition.
+	 *
+	 * @return void
+	 */
+	public function testAnEntrySavedWithoutAnIdRefusesThePost(): void {
+		$store = new class(['JournalEntry' => [], 'CustomerMaster' => []]) extends InMemoryObjectServiceStub {
+			/**
+			 * Saves nothing and answers an object without an id.
+			 *
+			 * @param array $object The object.
+			 * @param mixed ...$rest The other arguments.
+			 *
+			 * @return ObjectEntityInterface
+			 */
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): ObjectEntityInterface {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
+				$silent = $options->policy->silent ?? false;
+				$_validation = $options->policy->validation ?? true;
+				$uploadedFiles = $options->uploadedFiles;
+				$currentUser = $options->actor->currentUser;
+				$failIfExists = $options->policy->failIfExists ?? false;
+				return new ObjectEntityStub(payload: ['journalNumber' => (string)($object['journalNumber'] ?? '')]);
+			}
+		};
+		[$batch, $report] = $this->batch();
+
+		$result = $this->posting(store: $store)->post($batch, $report);
+
+		$this->assertTrue($result['failed']);
+		$this->assertSame(['posting-refused'], self::codes($result['findings']));
+		$this->assertMatchesRegularExpression('/^The import was not posted: the JournalEntry \S+ was not saved\.$/', $result['findings'][0]['message']);
+		$this->assertSame([], $this->ran);
+
+	}//end testAnEntrySavedWithoutAnIdRefusesThePost()
 }//end class
