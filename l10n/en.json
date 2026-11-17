@@ -5267,7 +5267,12 @@
         "The integral cost price last calculated for the activity.": "The integral cost price last calculated for the activity.",
         "Calculate cost price": "Calculate cost price",
         "Calculate the integral cost price for the year from the posted direct costs, the share of overhead, the cost of capital and the profit markup.": "Calculate the integral cost price for the year from the posted direct costs, the share of overhead, the cost of capital and the profit markup.",
-        "Store the year's IntegralCostPrice and link it (CalculateIntegralCostPriceAction).": "Store the year's IntegralCostPrice and link it (CalculateIntegralCostPriceAction)."
+        "Store the year's IntegralCostPrice and link it (CalculateIntegralCostPriceAction).": "Store the year's IntegralCostPrice and link it (CalculateIntegralCostPriceAction).",
+        "Variance items": "Variance items",
+        "Actual (cents)": "Actual (cents)",
+        "Variance (cents)": "Variance (cents)",
+        "Flux run ID": "Flux run ID",
+        "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011).": "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011)."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

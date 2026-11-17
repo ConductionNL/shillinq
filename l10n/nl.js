@@ -7416,7 +7416,12 @@ OC.L10N.register(
         "The integral cost price last calculated for the activity.": "De laatst berekende integrale kostprijs van de activiteit.",
         "Calculate cost price": "Kostprijs berekenen",
         "Calculate the integral cost price for the year from the posted direct costs, the share of overhead, the cost of capital and the profit markup.": "Bereken de integrale kostprijs voor het jaar uit de geboekte directe kosten, het aandeel in de overhead, de vermogenskosten en de winstopslag.",
-        "Store the year's IntegralCostPrice and link it (CalculateIntegralCostPriceAction).": "Sla de IntegralCostPrice van het jaar op en koppel deze (CalculateIntegralCostPriceAction)."
+        "Store the year's IntegralCostPrice and link it (CalculateIntegralCostPriceAction).": "Sla de IntegralCostPrice van het jaar op en koppel deze (CalculateIntegralCostPriceAction).",
+        "Variance items": "Afwijkingsposten",
+        "Actual (cents)": "Werkelijk (centen)",
+        "Variance (cents)": "Afwijking (centen)",
+        "Flux run ID": "Fluxrun-ID",
+        "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011).": "Het eigen id van de run, zoals elk FluxItem van de run het opslaat in fluxRunId (ledger-group-close, REQ-CLS-011)."
     },
     "nplurals=2; plural=(n != 1);"
 )
