@@ -7,7 +7,8 @@
  * and, when the grant's amount requires one, a pending auditor statement
  * (public-sector-grant-accountability REQ-SUBV-012). And the SiSa appendix of
  * an administration's specific grants for a year, as a table or as the CSV for
- * the annual accounts (REQ-SISA-012, REQ-SISA-013).
+ * the annual accounts (REQ-SISA-012, REQ-SISA-013). And the EU project
+ * page's proposal of a declaration for a quarter (REQ-EUF-012).
  *
  * #[NoAdminRequired]: any member of the administration may use them. The grant
  * is read with OpenRegister's RBAC as the caller, and a grant or appendix of an
@@ -37,6 +38,7 @@ use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\EuDeclarationBuilderInterface;
 use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
 use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
 use OCA\Shillinq\Support\RegisterSlug;
@@ -65,6 +67,7 @@ class GrantAccountabilityController extends Controller {
 	 * @param IRequest                              $request       The request.
 	 * @param GrantSettlementInterface              $settlement    Stores the report.
 	 * @param SisaAppendixInterface                 $sisa          The SiSa appendix.
+	 * @param EuDeclarationBuilderInterface         $declarations  Proposes EU declarations.
 	 * @param ObjectServiceInterface                $objectService OpenRegister's object service.
 	 * @param AdministrationContextServiceInterface $context       Administration access.
 	 * @param IAppConfig                            $appConfig     App config for the register slug.
@@ -75,6 +78,7 @@ class GrantAccountabilityController extends Controller {
 		IRequest $request,
 		private readonly GrantSettlementInterface $settlement,
 		private readonly SisaAppendixInterface $sisa,
+		private readonly EuDeclarationBuilderInterface $declarations,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly IAppConfig $appConfig,
@@ -162,6 +166,74 @@ class GrantAccountabilityController extends Controller {
 	}//end sisa()
 
 	/**
+	 * Propose the draft declaration of an EU project for a quarter.
+	 *
+	 * Body: `period` as a quarter such as `2026-Q3` (default the current
+	 * quarter), or `periodFrom` and `periodTo` as dates.
+	 *
+	 * @param string $id The EU project's id.
+	 *
+	 * @return JSONResponse The stored draft declaration.
+	 *
+	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
+	 */
+	#[NoAdminRequired]
+	public function proposeEuDeclaration(string $id): JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return $this->message(text: 'Not logged in', status: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$project = $this->accessible(schema: 'EuProject', id: $id);
+		if ($project === null) {
+			return $this->message(text: 'EU project not found', status: Http::STATUS_NOT_FOUND);
+		}
+
+		$period = $this->period();
+		if ($period === null) {
+			return $this->message(text: 'Choose the quarter of the declaration, for example 2026-Q3.', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$declaration = $this->declarations->propose(project: $project, periodFrom: $period[0], periodTo: $period[1]);
+			return new JSONResponse(data: $declaration, statusCode: Http::STATUS_CREATED);
+		} catch (DomainException $e) {
+			return new JSONResponse(data: ['message' => $this->l10n->t($e->getMessage())], statusCode: Http::STATUS_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $e) {
+			$this->logger->error('GrantAccountabilityController: EU declaration failed', ['exception' => $e->getMessage()]);
+			return $this->message(text: 'The declaration could not be proposed.', status: Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+	}//end proposeEuDeclaration()
+
+	/**
+	 * The requested period: the dates given, else the quarter given, else the current quarter; null when unreadable.
+	 *
+	 * @return array{0: string, 1: string}|null
+	 */
+	private function period(): ?array {
+		$from = trim((string)$this->request->getParam('periodFrom', ''));
+		$to = trim((string)$this->request->getParam('periodTo', ''));
+		if ($from !== '' || $to !== '') {
+			return [$from, $to];
+		}
+
+		$quarter = trim((string)$this->request->getParam('period', ''));
+		if ($quarter === '') {
+			$quarter = gmdate('Y') . '-Q' . (string)intdiv(((int)gmdate('n')) + 2, 3);
+		}
+
+		if (preg_match('/^(\d{4})-Q([1-4])$/', $quarter, $match) !== 1) {
+			return null;
+		}
+
+		$firstMonth = (((int)$match[2] - 1) * 3) + 1;
+		$start = sprintf('%s-%02d-01', $match[1], $firstMonth);
+		$end = (new \DateTimeImmutable($start))->modify('+2 months')->format('Y-m-t');
+		return [$start, $end];
+
+	}//end period()
+
+	/**
 	 * The grant, read as the caller, when its administration is one the caller can access.
 	 *
 	 * @param string $id The grant's id.
@@ -169,30 +241,43 @@ class GrantAccountabilityController extends Controller {
 	 * @return array<string,mixed>|null
 	 */
 	private function grant(string $id): ?array {
+		return $this->accessible(schema: 'Subsidie', id: $id);
+
+	}//end grant()
+
+	/**
+	 * A record of a schema, read as the caller, when its administration is one the caller can access.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param string $id     The record's id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function accessible(string $schema, string $id): ?array {
 		if (trim($id) === '') {
 			return null;
 		}
 
 		try {
-			$scoped = $this->objectService->setRegister(RegisterSlug::of(config: $this->appConfig))->setSchema('Subsidie');
-			$grant = ObjectIdentifier::findOneStrict(scoped: $scoped, id: $id);
+			$scoped = $this->objectService->setRegister(RegisterSlug::of(config: $this->appConfig))->setSchema($schema);
+			$record = ObjectIdentifier::findOneStrict(scoped: $scoped, id: $id);
 		} catch (Throwable) {
 			return null;
 		}
 
-		if ($grant === null) {
+		if ($record === null) {
 			return null;
 		}
 
-		$administrationId = (string)($grant['administrationId'] ?? '');
+		$administrationId = (string)($record['administrationId'] ?? '');
 		if ($administrationId === '' || $this->context->canAccess(administrationId: $administrationId) === false) {
 			return null;
 		}
 
-		$grant['id'] = (string)($grant['id'] ?? $id);
-		return $grant;
+		$record['id'] = (string)($record['id'] ?? $id);
+		return $record;
 
-	}//end grant()
+	}//end accessible()
 
 	/**
 	 * A translated message response.

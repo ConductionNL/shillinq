@@ -76,6 +76,7 @@ use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DirectDebitBatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\EuDeclarationBuilderInterface;
 use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
 use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
 use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
@@ -299,6 +300,7 @@ use OCA\Shillinq\Service\Platform\SchemaDefinitions;
 use OCA\Shillinq\Service\Project\AssignmentHours;
 use OCA\Shillinq\Service\PublicSector\ActivityCostPriceCalculation;
 use OCA\Shillinq\Service\PublicSector\CrossSubsidyScan;
+use OCA\Shillinq\Service\PublicSector\EuDeclarationBuilder;
 use OCA\Shillinq\Service\PublicSector\FidoQuarter;
 use OCA\Shillinq\Service\PublicSector\GrantSettlement;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
@@ -438,6 +440,7 @@ final class ContractRegistrar {
 		EInvoiceServiceInterface::class => EInvoiceService::class,
 		EmuReportingServiceInterface::class => EmuReportingService::class,
 		EnsiaCycleStepsInterface::class => EnsiaCycleSteps::class,
+		EuDeclarationBuilderInterface::class => EuDeclarationBuilder::class,
 		ExceptionResolutionServiceInterface::class => ExceptionResolutionService::class,
 		ExtractionPrefillServiceInterface::class => ExtractionPrefillService::class,
 		FeeScheduleServiceInterface::class => FeeScheduleService::class,

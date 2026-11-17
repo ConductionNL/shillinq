@@ -1001,6 +1001,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // of a year, as a table or ?format=csv. #[NoAdminRequired], the
             // administration checked in the controller (masked as 404).
             ['name' => 'grantAccountability#sisa', 'url' => '/api/v1/public-sector/sisa', 'verb' => 'GET'],
+            // public-sector-grant-accountability REQ-EUF-012: propose an EU project's
+            // declaration for a quarter. #[NoAdminRequired], the project's
+            // administration checked in the controller (masked as 404).
+            ['name' => 'grantAccountability#proposeEuDeclaration', 'url' => '/api/v1/public-sector/eu-projects/{id}/declarations', 'verb' => 'POST'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both

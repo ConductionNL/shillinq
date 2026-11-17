@@ -144,6 +144,10 @@
         {
             "appVersion": "0.5.7-unstable.20261117150000",
             "versionsSha256": "976e3875120213ffad68aa875ada3763226f402cf481c2a806ca491a349fe15a"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117160000",
+            "versionsSha256": "92a79007d119d1f63a88ce9959016bb7916d42ddc1772980aa707368fec68c4e"
         }
     ],
     "versions": {
@@ -334,6 +338,7 @@
         "schema:EsrsPolicy": "0.1.0",
         "schema:EsrsStatement": "0.1.0",
         "schema:EsrsTarget": "0.1.0",
+        "schema:EuDeclaration": "0.1.0",
         "schema:EuExpenditure": "0.1.0",
         "schema:EuProject": "0.1.0",
         "schema:EuVatRate": "0.1.0",

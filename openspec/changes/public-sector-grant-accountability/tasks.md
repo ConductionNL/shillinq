@@ -14,9 +14,9 @@
 
 ## 3. EU funds
 
-- [ ] 3.1 `EuDeclaration` and `EuDeclarationBuilder::propose` (REQ-EUF-012). Verify: PHPUnit red first with the real guard; an expenditure without a certified document is left out with the reason.
-- [ ] 3.2 Submit and the project page action (REQ-EUF-013). Verify: PHPUnit; `check:manifest`; vitest.
-- [ ] 3.3 `IrregularityReport` schema with the threshold check on escalate and the declaration block (REQ-EUF-007). Verify: PHPUnit red first for both scenarios; payload validates against the real schema.
+- [x] 3.1 `EuDeclaration` and `EuDeclarationBuilder::propose` (REQ-EUF-012). Verify: PHPUnit red first with the real guard; an expenditure without a certified document is left out with the reason.
+- [x] 3.2 Submit and the project page action (REQ-EUF-013). Verify: PHPUnit; `check:manifest`; vitest. — the project page action and the declaration pages are manifest configuration, so there is no Vue component for vitest.
+- [x] 3.3 `IrregularityReport` schema with the threshold check on escalate and the declaration block (REQ-EUF-007). Verify: PHPUnit red first for both scenarios; payload validates against the real schema.
 
 ## 4. Strings and live check
 

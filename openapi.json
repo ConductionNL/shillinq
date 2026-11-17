@@ -14799,6 +14799,170 @@
                     }
                 }
             }
+        },
+        "/public-sector/grants/{id}/report": {
+            "post": {
+                "operationId": "grant-accountability-report",
+                "summary": "Store a grant's accountability report",
+                "description": "Store the grant's accountability report (SubsidieVerantwoording) once and, when the grant's amount reaches the auditor threshold, a pending auditor statement; answer `{verantwoordingId, auditorStatementRequired, auditorStatementId}`. A missing grant or one of another administration answers a masked 404; a grant that cannot be reported on answers 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "grant-accountability"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The Subsidie id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The report is stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/public-sector/sisa": {
+            "get": {
+                "operationId": "grant-accountability-sisa",
+                "summary": "The SiSa appendix of a year",
+                "description": "The SiSa appendix of an administration's specific grants for a year: spending and income summed from the posted ledger lines tagged with each grant, and the entered output indicators, an empty one marked missing. Query: `administrationId` (default the active administration), `year` and `format` (`csv` for the export in the column order of the BZK template). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "grant-accountability"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration; default the active one.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "required": true,
+                        "description": "The year, for example 2026.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "required": false,
+                        "description": "`csv` for the export.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The appendix rows, or the CSV.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/public-sector/eu-projects/{id}/declarations": {
+            "post": {
+                "operationId": "grant-accountability-propose-eu-declaration",
+                "summary": "Propose an EU project's declaration for a quarter",
+                "description": "Store the draft declaration of the project for a quarter: the declared expenditure with certified, complete evidence, the eligible total and EU share, and the rest listed as left out with the reason. Body: `period` (a quarter such as `2026-Q3`, default the current one) or `periodFrom` and `periodTo`. A missing project or one of another administration answers a masked 404; an open irregularity on the project answers 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "grant-accountability"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The EuProject id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The draft declaration.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
         }
     },
     "components": {

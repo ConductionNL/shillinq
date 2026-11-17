@@ -4,7 +4,7 @@
         "spdx-copyright": "2026 Conduction B.V.",
         "change": "public-sector-grant-accountability",
         "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycles, imperative settlement (the reclaim amount, the SiSa sums and the EU declaration are calculations over the books)",
-        "description": "Grant settlement on Subsidie.vaststellen (SettleGrantAction: the reclaimed amount and a draft reclaim invoice or payable), the grant's SiSa regulation code and its reclaim document ids. The work lives in lib/Service/PublicSector; the report endpoint is GrantAccountabilityController. The SiSa appendix: Subsidie.sisaRegulationCode, GLLine.subsidieId (the grant a posting belongs to) and SisaIndicator (entered indicators and indicator codes); SisaAppendix sums the books and the appendix is served by GrantAccountabilityController."
+        "description": "Grant settlement on Subsidie.vaststellen (SettleGrantAction: the reclaimed amount and a draft reclaim invoice or payable), the grant's SiSa regulation code and its reclaim document ids. The work lives in lib/Service/PublicSector; the report endpoint is GrantAccountabilityController. The SiSa appendix: Subsidie.sisaRegulationCode, GLLine.subsidieId (the grant a posting belongs to) and SisaIndicator (entered indicators and indicator codes); SisaAppendix sums the books and the appendix is served by GrantAccountabilityController. The EU declaration: EuDeclaration bundles a project's declared expenditure with certified, complete evidence for a period (EuDeclarationBuilder), lists what was left out and why, and submitting it submits each expenditure (SubmitEuDeclarationAction)."
     },
     "components": {
         "schemas": {
@@ -137,6 +137,180 @@
                 "x-openregister-audit-trail": {
                     "enabled": true,
                     "description": "Who entered or changed an indicator, and when."
+                },
+                "authorization": {
+                    "create": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "read": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller",
+                        "shillinq_auditor"
+                    ],
+                    "update": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "delete": [
+                        "shillinq_admin"
+                    ]
+                }
+            },
+            "EuDeclaration": {
+                "slug": "EuDeclaration",
+                "icon": "CashCheck",
+                "version": "0.1.0",
+                "title": "EU declaration",
+                "description": "A declaration (betaalaanvraag) of one EU project for a period: the declared expenditure that carries certified, complete evidence, with the eligible total and the EU share, and the project's other expenditure of the period listed as left out with the reason. Submitting it submits each expenditure it holds (REQ-EUF-012, REQ-EUF-013).",
+                "x-schema-org": "schema:Invoice",
+                "x-spec": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md",
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "euProjectId",
+                    "periodFrom",
+                    "periodTo",
+                    "expenditureIds",
+                    "state"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "title": "Administration",
+                        "description": "The administration the project belongs to.",
+                        "example": "gem-almelo"
+                    },
+                    "euProjectId": {
+                        "type": "string",
+                        "title": "EU project",
+                        "description": "The EuProject the declaration is for."
+                    },
+                    "periodFrom": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Period from",
+                        "description": "The first day of the period; an expenditure is in it when its declaration quarter starts in it.",
+                        "example": "2026-07-01"
+                    },
+                    "periodTo": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Period to",
+                        "description": "The last day of the period.",
+                        "example": "2026-09-30"
+                    },
+                    "expenditureIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Expenditure",
+                        "description": "The EuExpenditure the declaration holds."
+                    },
+                    "leftOut": {
+                        "type": "array",
+                        "title": "Left out",
+                        "description": "The project's expenditure of the period that is not in the declaration, each with the reason.",
+                        "default": [],
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "expenditureId",
+                                "reason"
+                            ],
+                            "properties": {
+                                "expenditureId": {
+                                    "type": "string",
+                                    "title": "Expenditure",
+                                    "description": "The EuExpenditure left out."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "title": "Description",
+                                    "description": "The expenditure's description."
+                                },
+                                "reason": {
+                                    "type": "string",
+                                    "title": "Reason",
+                                    "description": "Why it was left out, for example missing evidence."
+                                }
+                            }
+                        }
+                    },
+                    "eligibleTotal": {
+                        "type": "number",
+                        "minimum": 0,
+                        "title": "Eligible total",
+                        "description": "The declared amounts of the expenditure held, in EUR."
+                    },
+                    "euShare": {
+                        "type": "number",
+                        "minimum": 0,
+                        "title": "EU share",
+                        "description": "The EU co-funding of the expenditure held, in EUR."
+                    },
+                    "submittedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "title": "Submitted at",
+                        "description": "When the declaration and its expenditure were submitted."
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted",
+                            "paid"
+                        ],
+                        "default": "draft",
+                        "title": "Status",
+                        "description": "draft, submitted to the managing authority, paid."
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "state",
+                    "initialState": "draft",
+                    "states": {
+                        "draft": {
+                            "label": "Draft",
+                            "description": "Proposed; can be checked before it is submitted."
+                        },
+                        "submitted": {
+                            "label": "Submitted",
+                            "description": "Submitted to the managing authority, with each expenditure it holds."
+                        },
+                        "paid": {
+                            "label": "Paid",
+                            "description": "Paid out by the managing authority."
+                        }
+                    },
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted",
+                            "label": "Submit",
+                            "description": "Submit the declaration and every expenditure it holds, all or none (REQ-EUF-013).",
+                            "actions": [
+                                {
+                                    "trigger": "x-openregister-lifecycle-action",
+                                    "action": "OCA\\Shillinq\\Lifecycle\\Action\\SubmitEuDeclarationAction",
+                                    "description": "Check that every expenditure can still be submitted, then run its submit transition and set submittedAt."
+                                }
+                            ]
+                        },
+                        "markPaid": {
+                            "from": "submitted",
+                            "to": "paid",
+                            "label": "Mark paid",
+                            "description": "The managing authority paid the declaration."
+                        }
+                    }
+                },
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Who proposed and submitted the declaration, and when."
                 },
                 "authorization": {
                     "create": [

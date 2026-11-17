@@ -20,6 +20,7 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\GrantAccountabilityController;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\EuDeclarationBuilderInterface;
 use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
 use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -62,6 +63,9 @@ final class GrantAccountabilityControllerTest extends TestCase {
 		$entity->method('getObject')->willReturn(['id' => 'grant-1', 'administrationId' => 'gem-1', 'subsidyNumber' => 'SUB-1', 'grantedAmount' => 150000.0]);
 		$entity->method('getUuid')->willReturn('grant-1');
 
+		$project = $this->createStub(ObjectEntityInterface::class);
+		$project->method('getObject')->willReturn(['id' => 'eu-1', 'administrationId' => 'gem-1', 'euCoFundingRate' => 0.4]);
+
 		$scope = [];
 		$objects = $this->createMock(ObjectServiceInterface::class);
 		$objects->method('setRegister')->willReturnCallback(
@@ -77,10 +81,14 @@ final class GrantAccountabilityControllerTest extends TestCase {
 			}
 		);
 		$objects->method('find')->willReturnCallback(
-			static function (int|string $id) use ($entity, &$scope): ?ObjectEntityInterface {
-				TestCase::assertSame(['register' => 'shillinq', 'schema' => 'Subsidie'], $scope);
-				if ($id === 'grant-1') {
+			static function (int|string $id) use ($entity, $project, &$scope): ?ObjectEntityInterface {
+				TestCase::assertSame('shillinq', $scope['register']);
+				if ($id === 'grant-1' && $scope['schema'] === 'Subsidie') {
 					return $entity;
+				}
+
+				if ($id === 'eu-1' && $scope['schema'] === 'EuProject') {
+					return $project;
 				}
 
 				return null;
@@ -124,6 +132,18 @@ final class GrantAccountabilityControllerTest extends TestCase {
 		);
 		$sisa->method('toCsv')->willReturn("\"Code\"\r\n");
 
+		$declarations = $this->createStub(EuDeclarationBuilderInterface::class);
+		$declarations->method('propose')->willReturnCallback(
+			function (array $project, string $periodFrom, string $periodTo) use ($fail): array {
+				if ($fail !== null) {
+					throw $fail;
+				}
+
+				$this->reported[] = $project['id'] . ':' . $periodFrom . '..' . $periodTo;
+				return ['id' => 'decl-1', 'state' => 'draft'];
+			}
+		);
+
 		$request = $this->createStub(IRequest::class);
 		$request->method('getParam')->willReturnCallback(static fn (string $key, mixed $default = null): mixed => ($params[$key] ?? $default));
 
@@ -131,6 +151,7 @@ final class GrantAccountabilityControllerTest extends TestCase {
 			request: $request,
 			settlement: $settlement,
 			sisa: $sisa,
+			declarations: $declarations,
 			objectService: $objects,
 			context: $context,
 			appConfig: $config,
@@ -220,4 +241,54 @@ final class GrantAccountabilityControllerTest extends TestCase {
 		self::assertSame(500, $failed->getStatus());
 
 	}//end testTheSisaAppendixRefusals()
+	/**
+	 * A member proposes a declaration for a quarter, for given dates, or for
+	 * the current quarter when nothing is given.
+	 *
+	 * @return void
+	 */
+	public function testAMemberProposesADeclarationForAQuarter(): void {
+		$response = $this->controller(params: ['period' => '2026-Q3'])->proposeEuDeclaration(id: 'eu-1');
+		self::assertSame(201, $response->getStatus());
+		self::assertSame(['id' => 'decl-1', 'state' => 'draft'], $response->getData());
+
+		$this->controller(params: ['periodFrom' => '2026-01-01', 'periodTo' => '2026-06-30'])->proposeEuDeclaration(id: 'eu-1');
+		$this->controller(params: ['period' => '2024-Q1'])->proposeEuDeclaration(id: 'eu-1');
+		$this->controller()->proposeEuDeclaration(id: 'eu-1');
+
+		$quarter = intdiv(((int)gmdate('n')) + 2, 3);
+		$start = sprintf('%s-%02d-01', gmdate('Y'), (($quarter - 1) * 3) + 1);
+		self::assertSame(
+			[
+				'eu-1:2026-07-01..2026-09-30',
+				'eu-1:2026-01-01..2026-06-30',
+				'eu-1:2024-01-01..2024-03-31',
+				'eu-1:' . $start . '..' . (new \DateTimeImmutable($start))->modify('+2 months')->format('Y-m-t'),
+			],
+			$this->reported
+		);
+
+	}//end testAMemberProposesADeclarationForAQuarter()
+
+	/**
+	 * Refusals of the proposal: 401, 404 for another administration's or a
+	 * missing project, 400 for an unreadable quarter, 422 for a refusal in
+	 * words and 500 for anything else.
+	 *
+	 * @return void
+	 */
+	public function testTheDeclarationRefusals(): void {
+		self::assertSame(401, $this->controller(user: null)->proposeEuDeclaration(id: 'eu-1')->getStatus());
+		self::assertSame(404, $this->controller(member: false)->proposeEuDeclaration(id: 'eu-1')->getStatus());
+		self::assertSame(404, $this->controller()->proposeEuDeclaration(id: 'grant-1')->getStatus());
+		self::assertSame(400, $this->controller(params: ['period' => '2026-Q5'])->proposeEuDeclaration(id: 'eu-1')->getStatus());
+		self::assertSame([], $this->reported);
+
+		$blocked = $this->controller(fail: new DomainException('An open irregularity on this project blocks new declarations until its correction is booked.'))
+			->proposeEuDeclaration(id: 'eu-1');
+		self::assertSame(422, $blocked->getStatus());
+		self::assertSame(['message' => 'An open irregularity on this project blocks new declarations until its correction is booked.'], $blocked->getData());
+		self::assertSame(500, $this->controller(fail: new RuntimeException('x'))->proposeEuDeclaration(id: 'eu-1')->getStatus());
+
+	}//end testTheDeclarationRefusals()
 }//end class

@@ -1297,6 +1297,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\EuDeclarationBuilderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\EuDeclarationBuilder'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ExceptionResolutionServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ExceptionResolutionService'"
         ]
