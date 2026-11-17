@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\HandToAccountsPayableAction;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
@@ -82,7 +83,14 @@ class HandToAccountsPayableActionEdgesTest extends TestCase {
 
 		$invoice = ['id' => 'si-1', 'apTransactionId' => 'ap-9'];
 
-		$this->assertSame($invoice, $this->action()->execute($invoice, [], [], 'hand-to-accounts-payable'));
+		$this->assertSame($invoice, $this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $invoice,
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-accounts-payable'
+			)
+		));
 	}//end testAnInvoiceAlreadyHandedOverIsLeftAlone()
 
 	/**
@@ -97,7 +105,14 @@ class HandToAccountsPayableActionEdgesTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('The invoice cannot be booked: its supplier is not recognised.');
 
-		$this->action()->execute(['id' => 'si-1', 'supplierId' => 'sup-x', 'invoiceDate' => '2026-09-01'], [], [], 'hand-to-accounts-payable');
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: ['id' => 'si-1', 'supplierId' => 'sup-x', 'invoiceDate' => '2026-09-01'],
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-accounts-payable'
+			)
+		);
 	}//end testAnUnknownSupplierIsRefused()
 
 	/**
@@ -113,7 +128,14 @@ class HandToAccountsPayableActionEdgesTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('The AP transaction for the invoice could not be written.');
 
-		$this->action()->execute(['id' => 'si-1', 'supplierId' => 'sup-1', 'invoiceDate' => '2026-09-01'], [], [], 'hand-to-accounts-payable');
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: ['id' => 'si-1', 'supplierId' => 'sup-1', 'invoiceDate' => '2026-09-01'],
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-accounts-payable'
+			)
+		);
 	}//end testAnUnsavedTransactionIsRefusedWithoutTransitions()
 
 	/**

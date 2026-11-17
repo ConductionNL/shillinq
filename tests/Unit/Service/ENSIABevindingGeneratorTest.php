@@ -193,4 +193,43 @@ class ENSIABevindingGeneratorTest extends TestCase {
 		self::assertSame([], $this->generator->generate([], []));
 
 	}//end testFindingsOverEveryShapeAreExact()
+
+	/**
+	 * At the move to peer review a question answered nee and a score below its
+	 * norm each give a finding, whatever the peer review status; yes, nvt, a
+	 * score at its norm and a nee on another answer type give none
+	 * (REQ-ENSIA-011).
+	 *
+	 * @return void
+	 */
+	public function testFindingsFromTheAnswersAloneAreExact(): void {
+		$vragen = [
+			['id' => 'q1', 'answerType' => 'ja-nee-nvt', 'answer' => 'nee', 'questionCode' => 'BIO 1.1', 'questionText' => 'Beleid'],
+			['id' => 'q2', 'answerType' => 'ja-nee-nvt', 'answer' => ' NEE ', 'peerReviewStatus' => 'wijziging-gevraagd'],
+			['id' => 'q3', 'answerType' => 'ja-nee-nvt', 'answer' => 'ja'],
+			['id' => 'q4', 'answerType' => 'ja-nee-nvt', 'answer' => 'nvt'],
+			['id' => 'q5', 'answerType' => 'free-text', 'answer' => 'nee'],
+			['id' => 'q6', 'answerType' => 'volwassenheidsniveau-1-5', 'maturityScore' => 2, 'normniveau' => 3, 'questionCode' => 'BIO 2.1', 'questionText' => 'Toegang'],
+			['id' => 'q7', 'answerType' => 'volwassenheidsniveau-1-5', 'maturityScore' => 3, 'normniveau' => 3],
+		];
+		$expected = static fn (string $questionId, string $description): array => [
+			'cyclusId' => 'c1',
+			'administrationId' => 'adm',
+			'questionId' => $questionId,
+			'type' => 'tekortkoming',
+			'description' => $description,
+			'status' => 'open',
+		];
+
+		self::assertSame(
+			[
+				$expected('q1', 'BIO 1.1 — Beleid: beantwoord met nee.'),
+				$expected('q2', ' — evaluatievraag: beantwoord met nee.'),
+				$expected('q6', 'BIO 2.1 — Toegang: volwassenheidsScore 2 ligt onder VNG normniveau 3.'),
+			],
+			$this->generator->fromAnswers(['id' => 'c1', 'administrationId' => 'adm'], $vragen)
+		);
+		self::assertSame([], $this->generator->fromAnswers(['id' => 'c1'], []));
+
+	}//end testFindingsFromTheAnswersAloneAreExact()
 }//end class

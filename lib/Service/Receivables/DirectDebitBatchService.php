@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Receivables;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DirectDebitBatchServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -38,7 +39,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
  *
  * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
  */
-class DirectDebitBatchService {
+class DirectDebitBatchService implements DirectDebitBatchServiceInterface {
 
 	public const REASON_NO_MANDATE = 'no-mandate';
 	public const REASON_MANDATE_INACTIVE = 'mandate-inactive';

@@ -746,6 +746,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\AnnualAccountsXbrlBuilderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\AnnualAccountsXbrlBuilder'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\AppointmentConfirmationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\AppointmentConfirmationService'"
         ]
@@ -949,6 +956,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ChartTemplateServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\ChartTemplate\\\\ChartTemplateService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CogsPosterServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\CogsPosterService'"
         ]
@@ -1026,6 +1040,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ContactCustomerResolverInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\ContactCustomerResolver'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ContractCostRollupServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ContractCostRollupService'"
         ]
@@ -1035,6 +1056,62 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ContributionDeclineServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ContributionDeclineService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\DirectDebitBatchServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Receivables\\\\DirectDebitBatchService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\DirectDebitFileServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Receivables\\\\DirectDebitFileService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\FiledReturnDriftCheckInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\FiledReturnDriftCheck'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\FxRateFeedStatusInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Treasury\\\\FxRateFeedStatus'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PensionValuationPostingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PensionValuationPostingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RecurringInvoiceGeneratorInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\RecurringInvoiceGenerator'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\RetentionDueServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\RetentionDueService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SbrFilingFileStoreInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\SbrFilingFileStore'"
         ]
     ],
     [
@@ -1154,6 +1231,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\EmuReportingServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\EmuReportingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\EnsiaCycleStepsInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\EnsiaCycleSteps'"
         ]
     ],
     [
@@ -1462,6 +1546,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\LandedCostAllocationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\LandedCostAllocationService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\LawfulnessParagraphInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\LawfulnessParagraph'"
         ]
     ],
     [
@@ -1999,6 +2090,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TaskFieldRealisationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\TaskFieldRealisation'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TaxNotificationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\TaxNotificationService'"
         ]
@@ -2076,6 +2174,27 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatReturnXbrlBuilderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\VatReturnXbrlBuilder'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatSuppletieDetectionServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\VatSuppletieDetectionService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VatSuppletieFilingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Tax\\\\VatSuppletieFilingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\VendorPerformanceAggregationInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\VendorPerformanceAggregation'"
         ]
@@ -2139,6 +2258,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WebshopOrderInvoicerInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Webshop\\\\WebshopOrderInvoicer'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WidgetAuthServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\WidgetAuthService'"
         ]
@@ -2148,6 +2274,20 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\WidgetServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\WidgetService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\XbrlInstanceCheckInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\XbrlInstanceCheck'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\XbrlTaxonomyLookupInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Sbr\\\\XbrlTaxonomyLookup'"
         ]
     ],
     [
@@ -2402,6 +2542,14 @@
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\BalanceGuard::isInvoiceBalanced'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\VatReturnChecksGuard::canSubmit'",
             "Closure",
             "true"
         ]
@@ -2890,6 +3038,20 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\BBVComplianceWidgetInterface'",
             "'OCA\\\\Shillinq\\\\Dashboard\\\\BBVComplianceWidget'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SepaPain008GeneratorInterface'",
+            "'OCA\\\\Shillinq\\\\Receivables\\\\SepaPain008Generator'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SepaPain008ValidatorInterface'",
+            "'OCA\\\\Shillinq\\\\Receivables\\\\SepaPain008Validator'"
         ]
     ]
 ]

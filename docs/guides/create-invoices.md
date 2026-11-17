@@ -164,6 +164,12 @@ To cancel or partially credit a sent invoice:
 4. Save and send the credit note. Shillinq posts the reversing journal entry
    and links the credit note to the original invoice.
 
+## Send the invoice
+
+An issued invoice is sent from Shillinq by email, Peppol or post, one at a time
+or as a selection, and one set of lines can be billed to several customers at
+once. See [Send invoices](./send-invoices.md).
+
 ## Common issues
 
 | Issue | Cause | Fix |

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\ComputeFidoQuarterAction;
 use OCA\Shillinq\Service\PublicSector\FidoQuarter;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
@@ -79,7 +80,14 @@ final class ComputeFidoQuarterActionTest extends TestCase {
 		);
 
 		$report = ['auditYear' => 2026, 'quarter' => 'Q3', 'organisationId' => 'gem-1', 'status' => 'draft'];
-		$saved = $this->action($os)->execute($report, $report, [], 'compute');
+		$saved = $this->action($os)->execute(
+			new LifecycleActionContext(
+				objectData: $report,
+				previousData: $report,
+				parameters: [],
+				actionName: 'compute'
+			)
+		);
 
 		self::assertSame(2500000.0, $saved['cashStatus']['headroom']);
 		self::assertSame('binnen-norm', $saved['cashStatus']['status']);
@@ -97,7 +105,14 @@ final class ComputeFidoQuarterActionTest extends TestCase {
 	public function testAReportWithoutAQuarterIsRefused(): void {
 		$this->expectException(\InvalidArgumentException::class);
 		$report = ['auditYear' => 2026, 'organisationId' => 'gem-1', 'status' => 'draft'];
-		$this->action(new InMemoryObjectService())->execute($report, $report, [], 'compute');
+		$this->action(new InMemoryObjectService())->execute(
+			new LifecycleActionContext(
+				objectData: $report,
+				previousData: $report,
+				parameters: [],
+				actionName: 'compute'
+			)
+		);
 
 	}//end testAReportWithoutAQuarterIsRefused()
 }//end class
