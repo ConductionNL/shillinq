@@ -66,7 +66,7 @@ final class LifecycleActionSignatureTest extends TestCase {
 			}
 		}
 
-		self::assertSame(expected: 23, actual: $checked, message: 'expected the 23 lifecycle actions');
+		self::assertSame(expected: 27, actual: $checked, message: 'expected the 27 lifecycle actions');
 		self::assertSame(expected: [], actual: $wrong, message: implode(separator: "\n", array: $wrong));
 	}//end testEveryActionTakesTheContext()
 }//end class

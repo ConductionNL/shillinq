@@ -319,6 +319,10 @@ use OCA\Shillinq\Service\Usage\MeterReadingRating;
 use OCA\Shillinq\Service\Vat\VatLineBackfill;
 use OCA\Shillinq\Service\Webshop\WebshopOrderInvoicer;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCA\Shillinq\Kernel\Contracts\EnsiaCycleStepsInterface;
+use OCA\Shillinq\Kernel\Contracts\LawfulnessParagraphInterface;
+use OCA\Shillinq\Service\PublicSector\EnsiaCycleSteps;
+use OCA\Shillinq\Service\PublicSector\LawfulnessParagraph;
 
 /**
  * Nextcloud autowires concrete classes but not interfaces, so every contract
@@ -421,6 +425,7 @@ final class ContractRegistrar {
 		DunningTickRunnerInterface::class => DunningTickRunner::class,
 		EInvoiceServiceInterface::class => EInvoiceService::class,
 		EmuReportingServiceInterface::class => EmuReportingService::class,
+		EnsiaCycleStepsInterface::class => EnsiaCycleSteps::class,
 		ExceptionResolutionServiceInterface::class => ExceptionResolutionService::class,
 		ExtractionPrefillServiceInterface::class => ExtractionPrefillService::class,
 		FeeScheduleServiceInterface::class => FeeScheduleService::class,
@@ -465,6 +470,7 @@ final class ContractRegistrar {
 		KlantbeeldResultInterface::class => KlantbeeldResult::class,
 		KorMonitorServiceInterface::class => KorMonitorService::class,
 		LandedCostAllocationServiceInterface::class => LandedCostAllocationService::class,
+		LawfulnessParagraphInterface::class => LawfulnessParagraph::class,
 		LeaseDisclosureServiceInterface::class => LeaseDisclosureService::class,
 		LeasePaymentScheduleServiceInterface::class => LeasePaymentScheduleService::class,
 		LeaseReassessmentServiceInterface::class => LeaseReassessmentService::class,

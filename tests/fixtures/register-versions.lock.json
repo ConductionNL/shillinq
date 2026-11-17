@@ -114,8 +114,12 @@
             "versionsSha256": "b83468d10ec63d9aac329c3b3771a0f8b0ab3c9ab5aebf6946aa63d7724bd9e7"
         },
         {
-            "appVersion": "0.5.7-unstable.20261116231500",
-            "versionsSha256": "39ba86c24726ae8b9e9bff397fbafea82da222e537b0ac366442e692ff9c75b9"
+            "appVersion": "0.5.7-unstable.20261116233000",
+            "versionsSha256": "a3d11b8b45cbeebce6affc0de824641a65be9cdc23c8790b8397c5f793ecde5a"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117005200",
+            "versionsSha256": "057d4034ee42ef0fa6472ec4ab50908c76a2225f357931b80e445027267c2780"
         }
     ],
     "versions": {
@@ -216,6 +220,7 @@
         "schema:CashflowRecurring": "0.1.0",
         "schema:CashflowScenario": "0.1.0",
         "schema:CashflowWeek": "0.1.0",
+        "schema:CbcrEntityFigures": "0.1.0",
         "schema:CbcrJurisdictionSummary": "0.2.0",
         "schema:CbcrReturn": "0.2.0",
         "schema:CcmAuditCommitteeReport": "0.1.0",
@@ -292,7 +297,7 @@
         "schema:EInvoiceMandate": "0.1.0",
         "schema:EMUAdjustment": "0.1.0",
         "schema:EMUReport": "0.1.0",
-        "schema:ENSIAJaarcyclus": "0.1.0",
+        "schema:ENSIAJaarcyclus": "0.2.0",
         "schema:EconomischeCategorie": "0.1.0",
         "schema:EligibilityRule": "0.1.0",
         "schema:EliminationEntry": "0.1.1",
@@ -344,6 +349,7 @@
         "schema:Grant": "0.1.0",
         "schema:GroupEntity": "0.1.1",
         "schema:GroupEntityRegistry": "0.2.0",
+        "schema:GroupScopeAssessment": "0.1.0",
         "schema:HerstructureringsvoorzieningDetail": "0.1.0",
         "schema:IB47Record": "0.1.0",
         "schema:IBAangifte": "0.1.0",
@@ -512,7 +518,7 @@
         "schema:RealisedFxPosting": "0.2.0",
         "schema:Receipt": "0.1.0",
         "schema:Rechtmatigheidsbevinding": "0.1.0",
-        "schema:Rechtmatigheidsparagraaf": "0.1.0",
+        "schema:Rechtmatigheidsparagraaf": "0.2.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
         "schema:ReconciliationMatch": "0.2.0",
@@ -653,8 +659,6 @@
         "schema:ZzpDeductionAmounts": "0.1.0",
         "schema:engagement": "0.2.0",
         "schema:kernGegevensConfig": "0.1.0",
-        "schema:payrollEmployee": "0.1.0",
-        "schema:CbcrEntityFigures": "0.1.0",
-        "schema:GroupScopeAssessment": "0.1.0"
+        "schema:payrollEmployee": "0.1.0"
     }
 }

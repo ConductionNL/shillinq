@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261116231500</version>
+    <version>0.5.7-unstable.20261117005200</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -203,9 +203,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
              due date move to overdue and each overdue invoice gets the ladder
              stage that is due. Ships off for every administration. -->
         <job>OCA\Shillinq\BackgroundJob\DunningTickJob</job>
-        <!-- tax-cbcr-and-pillar2-returns task 3.2: weekly, assesses each group's
-             CbCR and Pillar Two scope and notifies when it changes. -->
-        <job>OCA\Shillinq\BackgroundJob\GroupScopeAssessmentJob</job>
     </background-jobs>
 
     <repair-steps>
@@ -366,12 +363,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  After InitializeSettings, which seeds the tariffs. Logs the lines
                  it cannot resolve. Idempotent, fail-soft. -->
             <step>OCA\Shillinq\Repair\StampVatReturnBoxes</step>
-            <!-- tax-cbcr-and-pillar2-returns task 1.2 (REQ-CBC-002): maps the old
-                 mainBusinessActivity onto bizActivities and fills tin from the
-                 administration's RSIN, only where still empty. After
-                 InitializeSettings, which imports the fields. Idempotent;
-                 a fresh install has no older group entities, so post-migration only. -->
-            <step>OCA\Shillinq\Repair\BackfillGroupEntityCbcFields</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
