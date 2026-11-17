@@ -489,46 +489,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker results  4300": {
@@ -538,57 +505,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "4300",
-					"accountName": "Drukwerk",
-					"accountType": "expense",
-					"balance": 123456
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker results  P1": {
 		"result": {
@@ -597,46 +521,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker results  a-3": {
@@ -646,56 +537,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"id": "a-3",
-					"title": "Zonder nummer",
-					"balance": "x"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker results  p-3": {
 		"result": {
@@ -704,46 +553,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker results  a-4": {
@@ -753,57 +569,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "",
-					"id": "a-4",
-					"accountName": "Leeg nummer",
-					"balance": null
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker results  p-4": {
 		"result": {
@@ -812,46 +585,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker results  0": {
@@ -861,46 +601,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker results  undefined": {
@@ -910,55 +617,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": 0,
-					"accountName": "Nul"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker results  unknown": {
 		"result": {
@@ -967,46 +633,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker results adm-1 ": {
@@ -1553,46 +1186,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker objects  4300": {
@@ -1602,57 +1202,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "4300",
-					"accountName": "Drukwerk",
-					"accountType": "expense",
-					"balance": 123456
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker objects  P1": {
 		"result": {
@@ -1661,46 +1218,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker objects  a-3": {
@@ -1710,56 +1234,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"id": "a-3",
-					"title": "Zonder nummer",
-					"balance": "x"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker objects  p-3": {
 		"result": {
@@ -1768,46 +1250,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker objects  a-4": {
@@ -1817,57 +1266,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "",
-					"id": "a-4",
-					"accountName": "Leeg nummer",
-					"balance": null
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker objects  p-4": {
 		"result": {
@@ -1876,46 +1282,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker objects  0": {
@@ -1925,46 +1298,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker objects  undefined": {
@@ -1974,55 +1314,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": 0,
-					"accountName": "Nul"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker objects  unknown": {
 		"result": {
@@ -2031,46 +1330,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker objects adm-1 ": {
@@ -2617,46 +1883,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker plain  4300": {
@@ -2666,57 +1899,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "4300",
-					"accountName": "Drukwerk",
-					"accountType": "expense",
-					"balance": 123456
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker plain  P1": {
 		"result": {
@@ -2725,46 +1915,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker plain  a-3": {
@@ -2774,56 +1931,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"id": "a-3",
-					"title": "Zonder nummer",
-					"balance": "x"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker plain  p-3": {
 		"result": {
@@ -2832,46 +1947,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker plain  a-4": {
@@ -2881,57 +1963,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "",
-					"id": "a-4",
-					"accountName": "Leeg nummer",
-					"balance": null
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker plain  p-4": {
 		"result": {
@@ -2940,46 +1979,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker plain  0": {
@@ -2989,46 +1995,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker plain  undefined": {
@@ -3038,55 +2011,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": 0,
-					"accountName": "Nul"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker plain  unknown": {
 		"result": {
@@ -3095,46 +2027,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker plain adm-1 ": {
@@ -3681,46 +2580,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker nullResults  4300": {
@@ -3730,57 +2596,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "4300",
-					"accountName": "Drukwerk",
-					"accountType": "expense",
-					"balance": 123456
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker nullResults  P1": {
 		"result": {
@@ -3789,46 +2612,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker nullResults  a-3": {
@@ -3838,56 +2628,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"id": "a-3",
-					"title": "Zonder nummer",
-					"balance": "x"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker nullResults  p-3": {
 		"result": {
@@ -3896,46 +2644,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker nullResults  a-4": {
@@ -3945,57 +2660,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": "",
-					"id": "a-4",
-					"accountName": "Leeg nummer",
-					"balance": null
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker nullResults  p-4": {
 		"result": {
@@ -4004,46 +2676,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker nullResults  0": {
@@ -4053,46 +2692,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker nullResults  undefined": {
@@ -4102,55 +2708,14 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
-		"emitted": [
-			[
-				"selected",
-				{
-					"accountNumber": 0,
-					"accountName": "Nul"
-				}
-			]
-		]
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
+		"emitted": []
 	},
 	"GlAccountPicker nullResults  unknown": {
 		"result": {
@@ -4159,46 +2724,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
-		"rows": [
-			{
-				"accountNumber": "4300",
-				"accountName": "Drukwerk",
-				"accountType": "expense",
-				"balance": 123456
-			},
-			{
-				"accountNumber": 7,
-				"name": "Kas",
-				"type": "asset",
-				"balanceCents": 0
-			},
-			{
-				"id": "a-3",
-				"title": "Zonder nummer",
-				"balance": "x"
-			},
-			{
-				"accountNumber": "",
-				"id": "a-4",
-				"accountName": "Leeg nummer",
-				"balance": null
-			},
-			{
-				"accountNumber": 0,
-				"accountName": "Nul"
-			},
-			{}
-		],
+		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker nullResults adm-1 ": {
@@ -4745,17 +3277,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  4300": {
@@ -4765,17 +3293,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  P1": {
@@ -4785,17 +3309,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  a-3": {
@@ -4805,17 +3325,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  p-3": {
@@ -4825,17 +3341,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  a-4": {
@@ -4845,17 +3357,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  p-4": {
@@ -4865,17 +3373,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  0": {
@@ -4885,17 +3389,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  undefined": {
@@ -4905,17 +3405,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList  unknown": {
@@ -4925,17 +3421,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker notAList adm-1 ": {
@@ -5155,17 +3647,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  4300": {
@@ -5175,17 +3663,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  P1": {
@@ -5195,17 +3679,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  a-3": {
@@ -5215,17 +3695,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  p-3": {
@@ -5235,17 +3711,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  a-4": {
@@ -5255,17 +3727,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  p-4": {
@@ -5275,17 +3743,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  0": {
@@ -5295,17 +3759,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  undefined": {
@@ -5315,17 +3775,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty  unknown": {
@@ -5335,17 +3791,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker empty adm-1 ": {
@@ -5565,17 +4017,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  4300": {
@@ -5585,17 +4033,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  P1": {
@@ -5605,17 +4049,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  a-3": {
@@ -5625,17 +4065,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  p-3": {
@@ -5645,17 +4081,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  a-4": {
@@ -5665,17 +4097,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  p-4": {
@@ -5685,17 +4113,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  0": {
@@ -5705,17 +4129,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  undefined": {
@@ -5725,17 +4145,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError  unknown": {
@@ -5745,17 +4161,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Nee",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker serverError adm-1 ": {
@@ -5975,17 +4387,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  4300": {
@@ -5995,17 +4403,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  P1": {
@@ -6015,17 +4419,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  a-3": {
@@ -6035,17 +4435,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  p-3": {
@@ -6055,17 +4451,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  a-4": {
@@ -6075,17 +4467,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  p-4": {
@@ -6095,17 +4483,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  0": {
@@ -6115,17 +4499,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  undefined": {
@@ -6135,17 +4515,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError  unknown": {
@@ -6155,17 +4531,13 @@
 		"requests": [
 			[
 				"get",
-				"/apps/openregister/api/objects/shillinq/Account",
-				{
-					"params": {
-						"_limit": 500
-					}
-				}
+				"/apps/shillinq/api/administrations/context",
+				"__undefined"
 			]
 		],
 		"rows": [],
 		"loading": false,
-		"fetchError": "Failed to load chart of accounts.",
+		"fetchError": "No active administration, so the chart of accounts cannot be shown.",
 		"emitted": []
 	},
 	"GlAccountPicker networkError adm-1 ": {
