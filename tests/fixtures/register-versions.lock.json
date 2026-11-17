@@ -140,6 +140,10 @@
         {
             "appVersion": "0.5.7-unstable.20261117140000",
             "versionsSha256": "9e5dd0ad0834ecf3cf75d29a176cfd50e0bc9d9f52e28568e4091d6db57cb4fc"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117153000",
+            "versionsSha256": "b9d6daf402ff6b33f39ca64971db058a0897db67aa7ff5f006db30d1fc73783f"
         }
     ],
     "versions": {
@@ -151,7 +155,7 @@
         "schema:ARInvoice": "0.18.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
-        "schema:Account": "0.4.0",
+        "schema:Account": "0.5.0",
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
