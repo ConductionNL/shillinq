@@ -225,6 +225,8 @@ check current repo state before starting either.
       scope (a shared 1300+-line bootstrap class's top-level docblock, not
       a decision this change should make unilaterally).
 - [ ] `npx playwright test tests/e2e/budget-scenarios.spec.ts` — NOT RUN,
+      Live pass 2026-11-17: 6 passed, 1 skipped (the comparison picker offers no scenario with
+      evaluable LedgerGroup data on a fresh install).
       per the implementer's brief ("write the Playwright spec, do NOT
       execute it").
 - [x] `openspec validate budget-scenarios --strict` — PASS ("Change

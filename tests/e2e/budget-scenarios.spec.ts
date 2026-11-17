@@ -334,14 +334,21 @@ async function openScenario(page: Page, name: string): Promise<void> {
 }
 
 /**
- * The "Promote to default" header action.
+ * The "Promote to default" header action, which the detail page lists in its
+ * header "More" menu. Opens that menu first, so a hidden item means the
+ * action was not offered rather than that the menu was closed.
  *
  * Safe to match on its English label: it is THIS change's own manifest
  * string (`src/manifest.d/budget-scenarios.json`), not a framework string
  * the instance would translate.
  */
-function promoteButton(page: Page) {
-	return page.getByRole('button', { name: /promote to default/i })
+async function promoteButton(page: Page) {
+	const more = page.getByTestId('cn-detail-page').getByRole('button', { name: /^more$/i }).first()
+	await expect(more, 'the detail header must offer its "More" menu').toBeVisible({ timeout: 15_000 })
+	if (await more.getAttribute('aria-expanded') !== 'true') {
+		await more.click()
+	}
+	return page.getByRole('menuitem', { name: /promote to default/i })
 }
 
 /**
@@ -364,7 +371,7 @@ async function promoteToDefault(page: Page): Promise<void> {
 	// therefore does NOT match `false` and hides the button, while a stored
 	// `false` matches. Failing here says which of those happened.
 	await expect(
-		promoteButton(page).first(),
+		(await promoteButton(page)).first(),
 		'the "Promote to default" action must be rendered before it can be clicked — '
 			+ 'it is gated by visibleWhen {isDefault eq false}, so if this fails the '
 			+ 'scenario either already IS default or stored no isDefault at all',
@@ -378,7 +385,7 @@ async function promoteToDefault(page: Page): Promise<void> {
 		{ timeout: 25_000 },
 	)
 
-	await promoteButton(page).first().click()
+	await (await promoteButton(page)).first().click()
 
 	const response = await promoted
 	expect(
@@ -409,6 +416,9 @@ test.describe('budget-scenarios — Budgets nav group leaves (REQ-BSC-008)', () 
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissOverlays(page)
+
+		// Banking & Cashflow sits in the Advanced foldout, so open it first.
+		await page.locator('[data-testid="cn-nav"] [data-testid="cn-nav-settings"]').click()
 
 		const bankingCashflow = page.getByRole('link', {
 			name: /Banking.*Cashflow/i,
@@ -768,7 +778,7 @@ test.describe('budget-scenarios — promote to default demotes the previous one 
 		await gotoRoute(page, SCENARIOS_ROUTE)
 		await openScenario(page, nameA)
 		await expect(
-			promoteButton(page),
+			(await promoteButton(page)),
 			'scenario A must hide "Promote to default" once it IS the default (visibleWhen isDefault=false)',
 		).toBeHidden({ timeout: 15_000 })
 
@@ -781,7 +791,7 @@ test.describe('budget-scenarios — promote to default demotes the previous one 
 		await gotoRoute(page, SCENARIOS_ROUTE)
 		await openScenario(page, nameB)
 		await expect(
-			promoteButton(page),
+			(await promoteButton(page)),
 			'scenario B must be the default after being promoted',
 		).toBeHidden({ timeout: 15_000 })
 
@@ -793,7 +803,7 @@ test.describe('budget-scenarios — promote to default demotes the previous one 
 		await gotoRoute(page, SCENARIOS_ROUTE)
 		await openScenario(page, nameA)
 		await expect(
-			promoteButton(page),
+			(await promoteButton(page)),
 			'scenario A must show "Promote to default" again once demoted — promoting B did NOT demote the previous default (REQ-BSC-002)',
 		).toBeVisible({ timeout: 15_000 })
 	})
