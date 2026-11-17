@@ -3,6 +3,9 @@
 /**
  * Shillinq CbC and Minimum Tax Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The actions of the Group entities, Country-by-country reports and
  * Minimum tax returns pages: assess a group's scope, read an entity's
  * figures from the books, prepare a CbC report's figures for every entity
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-6.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

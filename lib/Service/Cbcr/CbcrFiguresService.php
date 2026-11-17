@@ -3,6 +3,9 @@
 /**
  * Shillinq CbC Figures Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reads the country-by-country figures of one group entity for one fiscal
  * year from the posted ledger lines of its administration, stores them per
  * entity, and sums them per jurisdiction (design D2, REQ-CBC-002).
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-3.3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Shillinq Pillar Two Safe Harbour Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Runs the three transitional CbCR safe harbour tests per jurisdiction of a
  * minimum tax year on the jurisdiction summaries, writes one safe harbour
  * record per test, prepares a draft jurisdiction computation where no test
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-3.4
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
