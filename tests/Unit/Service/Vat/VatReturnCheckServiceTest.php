@@ -233,8 +233,9 @@ final class VatReturnCheckServiceTest extends TestCase {
 	}//end testThePreviousReturnMustBeSubmitted()
 
 	/**
-	 * A reverse-charged purchase whose VAT is not booked fails the pair check;
-	 * the same purchase with its VAT owed in 2a and deducted in 5b passes.
+	 * A reverse-charged purchase posted by the real mapper passes the pair
+	 * check; without its VAT lines it fails; with its VAT owed in 2a and
+	 * deducted in 5b by hand it passes again.
 	 *
 	 * @return void
 	 *
@@ -259,6 +260,17 @@ final class VatReturnCheckServiceTest extends TestCase {
 		}
 
 		self::assertNotSame('', $transaction);
+		$posted = $this->checksOf($rows);
+		self::assertTrue($posted[VatReturnChecks::REVERSE_CHARGE_PAIR]['passed'], 'the posting books the pair (task 1.2)');
+		self::assertTrue($posted[VatReturnChecks::ACCOUNT_MOVEMENT]['passed'], implode(', ', $posted[VatReturnChecks::ACCOUNT_MOVEMENT]['offenders']));
+
+		// The same purchase as posted before task 1.2: the base only.
+		$rows['GLLine'] = array_values(
+			array_filter(
+				$rows['GLLine'],
+				static fn (array $l): bool => (($l['vatTariffCode'] ?? '') !== 'reverse-charge' || ($l['vatAmountKind'] ?? '') !== 'vat')
+			)
+		);
 		$check = $this->checksOf($rows)[VatReturnChecks::REVERSE_CHARGE_PAIR];
 		self::assertFalse($check['passed']);
 		self::assertCount(1, $check['offenders']);
