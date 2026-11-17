@@ -183,13 +183,13 @@
       "config": {
         "register": "shillinq",
         "_note": "General-ledger account detail — a single Chart-of-Accounts line (number, type, VAT/Vpb flags, BBV variant, retention). GL posting lines list every movement booked to this account; audit trail evidences master-data changes for ledger integrity. tax-vat-rates-and-deductibility overlays this page from its own fragment to add the deductible percentage and the private-share account (REQ-TVRD-003).",
-        "relatedLists": [
+        "relatedCollections": [
           {
-            "id": "account-lines",
             "title": "GL postings",
+            "register": "shillinq",
             "schema": "GLLine",
             "filter": {
-              "accountNumber": "@self.id"
+              "accountNumber": "@object.accountNumber"
             },
             "columns": [
               {
