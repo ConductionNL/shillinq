@@ -122,8 +122,16 @@
             "versionsSha256": "941921db8f3c6b77597da6ce89ec6d5bcf0ef2fcfce62c400d1f87e44e567af7"
         },
         {
+            "appVersion": "0.5.7-unstable.20261117030000",
+            "versionsSha256": "5eb8591cc159a1fcde7f8006e2a06faf90204e14f9319a988832ac204796a337"
+        },
+        {
             "appVersion": "0.5.7-unstable.20261117060000",
             "versionsSha256": "1bb70570f308d6e89ed513574025bf6b3e89e541a4331deb8ee86f1eb43152fc"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117083000",
+            "versionsSha256": "7cd52c434a6e4ca32d86297d701d07d37fe63f66585898b3b52d6ea8d835f0af"
         }
     ],
     "versions": {
@@ -339,6 +347,7 @@
         "schema:FxRevaluationPosting": "0.1.0",
         "schema:GLLine": "0.2.0",
         "schema:GLTransaction": "0.3.0",
+        "schema:GRAllocationRun": "0.1.0",
         "schema:GRDeelnemer": "0.1.0",
         "schema:GRVerdeelsleutel": "0.1.0",
         "schema:GarantievoorzieningDetail": "0.1.0",
