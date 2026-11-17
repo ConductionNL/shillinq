@@ -24,4 +24,4 @@
 
 ## 4. End to end
 
-- [ ] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally.
+- [ ] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally. Strings pass `test:l10n` and parity; the spec is written (catalogue, issue-then-read scoped to the object, six routes registered, anonymous refused) and not yet run against an instance.
