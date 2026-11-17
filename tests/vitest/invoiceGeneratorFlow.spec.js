@@ -67,7 +67,7 @@ afterEach(() => {
 
 describe('what each billing model asks for', () => {
 	it.each([
-		['t_and_m', { needsRateCard: true, needsRetainer: false, needsFixedFee: false, needsMilestone: false, needsUsage: false }],
+		['t_and_m', { needsRateCard: false, needsRetainer: false, needsFixedFee: false, needsMilestone: false, needsUsage: false }],
 		['retainer', { needsRateCard: false, needsRetainer: true, needsFixedFee: false, needsMilestone: false, needsUsage: false }],
 		['fixed_fee', { needsRateCard: false, needsRetainer: false, needsFixedFee: true, needsMilestone: false, needsUsage: false }],
 		['milestone', { needsRateCard: false, needsRetainer: false, needsFixedFee: false, needsMilestone: true, needsUsage: false }],
@@ -79,9 +79,10 @@ describe('what each billing model asks for', () => {
 		expect(actual).toEqual(expected)
 	})
 
-	it('renders the rate card and the id lists for time and materials', async () => {
+	it('renders the id lists but no rate card for time and materials', async () => {
 		const html = await render({}, { rateCards: [{ id: 'rc-1', name: 'Standard' }] })
-		expect(html).toContain('rc-1')
+		// Each hour is priced by its own rate (sales-billable-rate-per-hour REQ-BRPH-005).
+		expect(html).not.toContain('rc-1')
 		expect(html.match(/<textarea/g)).toHaveLength(3)
 		expect(html).not.toContain('invoice-generator__totals')
 	})

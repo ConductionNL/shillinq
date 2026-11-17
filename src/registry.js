@@ -85,6 +85,12 @@ import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappi
 // switch the BudgetBBVMappings page from type=index to
 // type=custom + component=BudgetBBVMappingIndex.
 import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappingIndex.vue'
+// platform-custom-record-types (REQ-CRT-002/003): the own records page, one
+// card per own record type an administrator chose to show. Custom because its
+// cards come from a server list (GET /api/custom-record-types), not from fixed
+// menu children; the list and detail pages themselves stay built-in
+// `index` / `detail` pages over `@route.schema`.
+import CustomRecordTypes from './components/custom-records/CustomRecordTypes.vue'
 // bookkeeping-waterschappen-bbv-variant slice 05 (REQ-BBVW-003 /
 // REQ-BBVW-005): the BBV Compliance Dashboard composes four bespoke
 // widgets — KPI counts, a four-bucket compliance pie, a YTD cumulative
@@ -169,6 +175,7 @@ import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePan
 // declarative `detail` page type — so the page is registered as a
 // kind:"page" custom component per ADR-024 / ADR-036.
 import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
+import ProjectBillableHoursCard from './components/project/ProjectBillableHoursCard.vue'
 import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
 // bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
 // previews the server-determined approval chain as the line total changes
@@ -241,6 +248,7 @@ import VendorPerformanceIndex from './components/vendor-performance/VendorPerfor
 import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
 import BankStatementWizard from './modals/BankStatementWizard.vue'
 import BillImportModal from './modals/BillImportModal.vue'
+import FiscalYearActionModal from './modals/FiscalYearActionModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
 // ribbons are now declarative `config.headerActions[]` (type:"open-modal");
@@ -399,6 +407,9 @@ export default {
 	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
 	// APTransactionDetail and PayeeDetail.
 	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
+	// tax-cbcr-and-pillar2-returns 6.1 to 6.3: Assess scope and Read figures
+	// from the books on GroupEntityDetail.
+	FiscalYearActionModal: { kind: 'modal', component: FiscalYearActionModal },
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
@@ -539,6 +550,15 @@ export default {
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
 	},
 
+	// sales-billable-rate-per-hour (REQ-BRPH-003): one month of a project's
+	// rated hours on ProjectDetail, through the slot widget-project-billable-hours.
+	ProjectBillableHoursCard: {
+		// @custom-widget-ratchet exclude the card reads GET /api/v1/projects/{id}/billable-hours, which rates each hour of another app's hours source by the assignment's rate card and joins the invoices that bill it; no declarative widget computes a value per row on the server or says that its source is not connected instead of showing zero.
+		kind: 'widget',
+		component: ProjectBillableHoursCard,
+		_note: 'Lists a month of the project\'s hours with rate, tier, value and billed state and totals the unbilled value. An object-table widget cannot tell "no hours source" from "no hours" and has no month picker.',
+	},
+
 	// tax-vat-return-from-books 3.3 (REQ-TVRB-001): the Checks tab on
 	// VATReturnDetail's sidebar.
 	VatReturnChecksPanel: {
@@ -587,6 +607,7 @@ export default {
 
 	// nav-six-clusters: the 5 new cluster landing pages (design.md §3).
 	BookkeepingOverview: { kind: 'page', component: BookkeepingOverview },
+	CustomRecordTypes: { kind: 'page', component: CustomRecordTypes },
 	SalesOverview: { kind: 'page', component: SalesOverview },
 	PurchasingOverview: { kind: 'page', component: PurchasingOverview },
 	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },
