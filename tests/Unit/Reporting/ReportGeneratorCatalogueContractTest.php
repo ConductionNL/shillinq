@@ -32,6 +32,7 @@ use OCA\Shillinq\Reporting\Generator\AnnualAccountsReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BalanceSheetReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BbvJaarstukkenReportGenerator;
 use OCA\Shillinq\Reporting\Generator\GeneralLedgerReportGenerator;
+use OCA\Shillinq\Reporting\Generator\Ib47StatementReportGenerator;
 use OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator;
 use OCA\Shillinq\Reporting\Generator\ManagementLetterReportGenerator;
 use OCA\Shillinq\Reporting\Generator\ProfitLossReportGenerator;
@@ -79,6 +80,7 @@ class ReportGeneratorCatalogueContractTest extends TestCase {
 		BalanceSheetReportGenerator::class,
 		BbvJaarstukkenReportGenerator::class,
 		GeneralLedgerReportGenerator::class,
+		Ib47StatementReportGenerator::class,
 		Iv3ReportGenerator::class,
 		ManagementLetterReportGenerator::class,
 		ProfitLossReportGenerator::class,

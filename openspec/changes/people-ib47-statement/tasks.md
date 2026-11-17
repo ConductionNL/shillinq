@@ -13,7 +13,10 @@
 
 ## 2. Statement
 
-- [ ] 2.1 An `ib47` entry in `lib/Reporting/ReportCatalogue.php` with a generator that writes the batch's records as the statement file (REQ-DPA-021). Verify: PHPUnit on the generated file.
+- [x] 2.1 An `ib47` entry in `lib/Reporting/ReportCatalogue.php` with a generator that writes the batch's records as the statement file (REQ-DPA-021). Verify: PHPUnit on the generated file.
+  - `ib47` (IB47-opgaaf, tax, csv) in the catalogue; `lib/Reporting/Generator/Ib47StatementReportGenerator.php` writes one line per final record of the year (dry runs left out), by recipient name, and computes nothing itself. The records are read under the caller's access, so the BSN column is filled only for the payroll officer.
+  - `Ib47StatementReportGeneratorTest::testTheStatementNamesWhatThePrepareWrote` runs a prepare and the generator over one store and asserts the file names EUR 2,000.00 for J. de Boer.
 - [ ] 2.2 English and Dutch strings, then live: mark a freelancer, pay two invoices in 2026, prepare the 2026 batch and download the statement.
+  - Strings done: the Prepare action's label, messages and description, and every title and description of the new schema properties, are in `l10n/en.json` and `l10n/nl.json` (`.js` rebuilt; `test:l10n-parity` and `check:l10n-js` pass; `check:schema-l10n` gains nothing from this change). Open: the live pass (needs an instance).
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
