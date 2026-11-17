@@ -47,6 +47,7 @@ description = "App manifest: the key fields are page and widget identifiers, not
 targetRules = ["generic-api-key"]
 paths = [
   '''(^|/)src/manifest\.d/bookkeeping\-payroll\-engine\-nl\.json$''',
+  '''(^|/)src/manifest\.d/tax\-cbcr\-and\-pillar2\-returns\.json$''',
   '''(^|/)src/manifest\.json$''',
 ]
 

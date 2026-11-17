@@ -52,15 +52,22 @@ class BillableLinesService implements BillableLinesServiceInterface {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param IAppConfig             $appConfig     The register slug.
+	 * @param BillableRateService    $billableRates Prices each hour from the assignment's rate card.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
+		private readonly BillableRateService $billableRates,
 	) {
 	}//end __construct()
 
 	/**
 	 * The customer's time entries and passed-on expense claims in the period.
+	 *
+	 * Each time entry carries the resolution of its billable rate under
+	 * `rate`: `status` rated with `rate`, `unit`, `tier` and `value`, or
+	 * `status` no-rate with `reason` and `message` (sales-billable-rate-per-hour
+	 * REQ-BRPH-005), so the hours can be chosen knowing what each is worth.
 	 *
 	 * @param string $administrationId The administration, resolved on the server.
 	 * @param string $customerId       The customer.
@@ -82,7 +89,10 @@ class BillableLinesService implements BillableLinesServiceInterface {
 			$projects = array_values(array_intersect($projects, [$projectId]));
 		}
 
-		$timeEntries = $this->billableTimeEntries(administrationId: $administrationId, projects: $projects, fromDate: $fromDate, toDate: $toDate);
+		$timeEntries = array_map(
+			fn (array $entry): array => $entry + ['rate' => $this->rateOf(entry: $entry, administrationId: $administrationId, customerId: $customerId)],
+			$this->billableTimeEntries(administrationId: $administrationId, projects: $projects, fromDate: $fromDate, toDate: $toDate)
+		);
 		$expenses = $this->passedOnExpenses(administrationId: $administrationId, customerId: $customerId, fromDate: $fromDate, toDate: $toDate);
 
 		return ['timeEntries' => $timeEntries, 'expenses' => $expenses];
@@ -175,6 +185,33 @@ class BillableLinesService implements BillableLinesServiceInterface {
 
 		return $foreign;
 	}//end foreignLineIds()
+
+	/**
+	 * The billable rate one time entry resolves to, without an audit record.
+	 *
+	 * @param array<string,mixed> $entry            The time entry.
+	 * @param string              $administrationId The administration.
+	 * @param string              $customerId       The customer, for the client tier.
+	 *
+	 * @return array<string,mixed> The resolution, without its record id.
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+	 */
+	private function rateOf(array $entry, string $administrationId, string $customerId): array {
+		$answer = $this->billableRates->preview(
+			hour: [
+				'personId' => (string)($entry['personId'] ?? ''),
+				'projectId' => (string)($entry['projectId'] ?? ''),
+				'date' => substr((string)($entry['date'] ?? ''), 0, 10),
+				'hours' => (float)($entry['hours'] ?? 0),
+				'administrationId' => $administrationId,
+				'clientId' => $customerId,
+			]
+		);
+		unset($answer['recordId']);
+
+		return $answer;
+	}//end rateOf()
 
 	/**
 	 * The ids of the customer's projects in the administration.
