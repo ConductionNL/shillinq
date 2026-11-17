@@ -71,9 +71,10 @@
               "fixed_fee",
               "milestone",
               "retainer",
+              "usage",
               "mixed"
             ],
-            "description": "Billing-model selector (D1). Drives line-item composition and revenue-account choice on GL posting.",
+            "description": "Billing-model selector (D1); usage bills rated meter readings (usage-metered-billing). Drives line-item composition and revenue-account choice on GL posting.",
             "example": "t_and_m",
             "title": "Billing Model"
           },
@@ -129,41 +130,17 @@
             ],
             "title": "Expense Ids"
           },
-          "expenseItemRefs": {
+          "meterReadingIds": {
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "Receipt",
-                    "MileageEntry",
-                    "PerDiem"
-                  ]
-                },
-                "id": {
-                  "type": "string"
-                },
-                "claimId": {
-                  "type": "string"
-                },
-                "disbursement": {
-                  "type": "boolean"
-                }
-              }
+              "type": "string"
             },
             "default": [],
-            "description": "Pass-through receipts, mileage and per diem items billed one by one on this invoice: schema, id, the claim they belong to and whether the item is a disbursement outside the VAT base. Checked for duplicates like expenseIds; when every pass-through item of a claim sits on a posted invoice the claim takes markInvoiced.",
+            "description": "FKs to the rated MeterReading rows a usage invoice bills.",
             "example": [
-              {
-                "schema": "Receipt",
-                "id": "rcpt-001",
-                "claimId": "exp-001",
-                "disbursement": false
-              }
+              "mr-001"
             ],
-            "title": "Expense Item Refs"
+            "title": "Meter Reading Ids"
           },
           "rateCardId": {
             "type": "string",
@@ -275,6 +252,42 @@
             "nullable": true,
             "description": "Free-text operator notes captured at draft time, included in the PDF footer.",
             "title": "Notes"
+          },
+          "expenseItemRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "Receipt",
+                    "MileageEntry",
+                    "PerDiem"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "claimId": {
+                  "type": "string"
+                },
+                "disbursement": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "default": [],
+            "description": "Pass-through receipts, mileage and per diem items billed one by one on this invoice: schema, id, the claim they belong to and whether the item is a disbursement outside the VAT base. Checked for duplicates like expenseIds; when every pass-through item of a claim sits on a posted invoice the claim takes markInvoiced.",
+            "example": [
+              {
+                "schema": "Receipt",
+                "id": "rcpt-001",
+                "claimId": "exp-001",
+                "disbursement": false
+              }
+            ],
+            "title": "Expense Item Refs"
           }
         }
       },
@@ -343,6 +356,7 @@
               "expense",
               "retainer_charge",
               "fixed_fee",
+              "usage",
               "manual"
             ],
             "description": "What this line represents.",
