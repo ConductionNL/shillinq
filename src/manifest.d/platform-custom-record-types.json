@@ -1,0 +1,78 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "platform-custom-record-types",
+		"adr": "ADR-037 modular manifest fragment, never edit src/manifest.json",
+		"description": "Own record types (REQ-CRT-001..003): schemas an administrator added to the shillinq register in Open Register, chosen in the admin settings, each with a list and a detail page driven by the schema in the route."
+	},
+	"adminTab": {
+		"id": "custom-record-types",
+		"_note": "Board ShInstellingen, tab Eigen gegevens: one switch per schema of the shillinq register that the app did not ship. A switch writes through PATCH /api/custom-record-types (admin only), which refuses a shipped or unknown slug.",
+		"widget": {
+			"type": "toggle-table",
+			"content": {
+				"source": {
+					"url": "/apps/shillinq/api/custom-record-types/available",
+					"path": "types",
+					"key": "slug",
+					"label": "title",
+					"hint": "description"
+				},
+				"bind": {
+					"mode": "map",
+					"url": "/apps/shillinq/api/custom-record-types/available",
+					"path": "shown"
+				},
+				"save": {
+					"url": "/apps/shillinq/api/custom-record-types",
+					"method": "PATCH",
+					"payload": { "slug": "{field}", "shown": "{value}" }
+				},
+				"titleHeader": "Record type",
+				"toggleHeader": "Show in shillinq",
+				"emptyText": "No own record types yet. Add a schema to the shillinq register in Open Register first."
+			}
+		}
+	},
+	"menu": [
+		{
+			"id": "CustomRecordTypes",
+			"label": "Own records",
+			"icon": "DatabaseOutline",
+			"route": "CustomRecordTypes",
+			"order": 47
+		}
+	],
+	"pages": [
+		{
+			"id": "CustomRecordTypes",
+			"route": "/records",
+			"type": "custom",
+			"title": "Own records",
+			"component": "CustomRecordTypes",
+			"_note": "One card per shown own record type, read from GET /api/custom-record-types, and the empty state when none is shown or a typed URL named a type that is not shown (the router guard in src/utils/customRecordGuard.js sends such a URL here). Custom because the cards come from a server list rather than from fixed menu children."
+		},
+		{
+			"id": "CustomRecords",
+			"route": "/records/:schema",
+			"type": "index",
+			"title": "Own records",
+			"config": {
+				"register": "shillinq",
+				"schema": "@route.schema",
+				"rowRoute": "CustomRecordDetail"
+			}
+		},
+		{
+			"id": "CustomRecordDetail",
+			"route": "/records/:schema/:id",
+			"type": "detail",
+			"title": "Own record",
+			"config": {
+				"register": "shillinq",
+				"schema": "@route.schema"
+			}
+		}
+	]
+}

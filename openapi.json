@@ -160,6 +160,10 @@
             "description": "Raises school contributions in bulk."
         },
         {
+            "name": "custom-record-types",
+            "description": "Own record types: schemas an administrator added to the shillinq register."
+        },
+        {
             "name": "d-ba",
             "description": "DBA Compliance Marker endpoint façade."
         },
@@ -4840,6 +4844,170 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/custom-record-types": {
+            "get": {
+                "operationId": "custom-record-types-index",
+                "summary": "GET the own record types shown in shillinq",
+                "description": "GET the own record types an administrator chose to show: `types`, each with slug, title, description and icon. Own record types are schemas of the shillinq register that the app did not ship. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "custom-record-types-update",
+                "summary": "PUT the list of shown own record types",
+                "description": "PUT the complete list of shown own record types as `shown` (a list of schema slugs). Refuses a slug that ships with shillinq or does not exist in the register. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "shown": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "The schema slugs to show."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "custom-record-types-toggle",
+                "summary": "PATCH one own record type on or off",
+                "description": "PATCH one own record type on or off: `slug` and `shown` (boolean). Other shown types stay as they are. Refuses a slug that ships with shillinq or does not exist in the register. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "description": "The schema slug."
+                                    },
+                                    "shown": {
+                                        "type": "boolean",
+                                        "description": "Whether to show it."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/custom-record-types/available": {
+            "get": {
+                "operationId": "custom-record-types-available",
+                "summary": "GET every own record type with its switch",
+                "description": "GET every own record type of the shillinq register as `types` (with `shown`), and `shown` as a map of slug to boolean. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
                     }
                 }
             }
@@ -14393,6 +14561,177 @@
                     },
                     "400": {
                         "description": "A parameter is missing or an origin is invalid."
+                    }
+                }
+            }
+        },
+        "/report-schedules": {
+            "post": {
+                "operationId": "report-schedule-create",
+                "summary": "POST /api/report-schedules — create a report schedule",
+                "description": "POST /api/report-schedules — create a report schedule owned by the caller. The server sets `status` and `nextRunAt`; recipients are limited to users and groups the owner may share the administration's reports with. Needs a signed-in Nextcloud user who is a member of the administration.",
+                "tags": [
+                    "reporting"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration the schedule reports on (create only)."
+                                    },
+                                    "reportType": {
+                                        "description": "The report type (create only)."
+                                    },
+                                    "name": {
+                                        "description": "The schedule name."
+                                    },
+                                    "format": {
+                                        "description": "The output format; one the report offers."
+                                    },
+                                    "frequency": {
+                                        "description": "How often the report runs."
+                                    },
+                                    "runDay": {
+                                        "description": "The day of the period it runs on."
+                                    },
+                                    "periodRule": {
+                                        "description": "Which period each run reports on."
+                                    },
+                                    "recipients": {
+                                        "description": "Users or groups (`group:<gid>`) the owner may share the administration's reports with."
+                                    },
+                                    "folderPath": {
+                                        "description": "The folder the report is stored in."
+                                    },
+                                    "status": {
+                                        "description": "active or paused (update only)."
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The schedule was created.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/report-schedules/{id}": {
+            "put": {
+                "operationId": "report-schedule-update",
+                "summary": "PUT /api/report-schedules/{id} — change a report schedule",
+                "description": "PUT /api/report-schedules/{id} — change a schedule the caller owns. Only name, format, frequency, runDay, periodRule, recipients, folderPath and status change; the next run is recomputed when frequency or runDay changes. Needs a signed-in Nextcloud user who owns the schedule.",
+                "tags": [
+                    "reporting"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The schedule id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration the schedule reports on (create only)."
+                                    },
+                                    "reportType": {
+                                        "description": "The report type (create only)."
+                                    },
+                                    "name": {
+                                        "description": "The schedule name."
+                                    },
+                                    "format": {
+                                        "description": "The output format; one the report offers."
+                                    },
+                                    "frequency": {
+                                        "description": "How often the report runs."
+                                    },
+                                    "runDay": {
+                                        "description": "The day of the period it runs on."
+                                    },
+                                    "periodRule": {
+                                        "description": "Which period each run reports on."
+                                    },
+                                    "recipients": {
+                                        "description": "Users or groups (`group:<gid>`) the owner may share the administration's reports with."
+                                    },
+                                    "folderPath": {
+                                        "description": "The folder the report is stored in."
+                                    },
+                                    "status": {
+                                        "description": "active or paused (update only)."
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The schedule was changed.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
                     }
                 }
             }

@@ -928,6 +928,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
             ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
             ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+            // Report schedules are written only here: the caller owns them, the server sets status and next run.
+            ['name' => 'reportSchedule#create', 'url' => '/api/report-schedules', 'verb' => 'POST'],
+            ['name' => 'reportSchedule#update', 'url' => '/api/report-schedules/{id}', 'verb' => 'PUT'],
             // iv3-report-takes-case-costs-by-case-type: the rows of the case cost tables
             // (per taakveld on the Iv3 page, per type on its own page). Static URL, before
             // the SPA catch-all.
@@ -1000,6 +1003,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // URLs declared before the SPA catch-all per ADR-016.
             ['name' => 'deadlineCalendarSettings#index', 'url' => '/api/deadline-calendar/settings', 'verb' => 'GET'],
             ['name' => 'deadlineCalendarSettings#update', 'url' => '/api/deadline-calendar/settings', 'verb' => 'POST'],
+            // platform-custom-record-types (REQ-CRT-001..003): the shown own
+            // record types for any user, and the admin listing and switch.
+            ['name' => 'customRecordType#index', 'url' => '/api/custom-record-types', 'verb' => 'GET'],
+            ['name' => 'customRecordType#available', 'url' => '/api/custom-record-types/available', 'verb' => 'GET'],
+            ['name' => 'customRecordType#update', 'url' => '/api/custom-record-types', 'verb' => 'PUT'],
+            ['name' => 'customRecordType#toggle', 'url' => '/api/custom-record-types', 'verb' => 'PATCH'],
 
             // Accountant portal (accountant-portal, REQ-ACP-001/002/004).
             // These two were MISSING from this table entirely while every other

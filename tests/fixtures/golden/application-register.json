@@ -94,6 +94,14 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\Hermiq\\\\Event\\\\CollectAgentTemplatesEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\OfferHelperAgentTemplate'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\StockMoveTransitionedListener'",
             "0"
@@ -2934,6 +2942,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReportRecipientPolicyInterface'",
             "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ReportRecipientPolicy'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReportScheduleServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ReportScheduleService'"
         ]
     ],
     [
