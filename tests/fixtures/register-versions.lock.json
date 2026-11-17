@@ -139,7 +139,11 @@
         },
         {
             "appVersion": "0.5.7-unstable.20261117140000",
-            "versionsSha256": "e7a917d6565ad6a95b0f3e44b5839716707f7e6f2c5485f539ec9ca826e384bd"
+            "versionsSha256": "9e5dd0ad0834ecf3cf75d29a176cfd50e0bc9d9f52e28568e4091d6db57cb4fc"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117220000",
+            "versionsSha256": "a1144297336e4a919ab1f5d37d36a6d10937cba38c4c8dbc09a6ee32b8e10dd3"
         }
     ],
     "versions": {
@@ -494,7 +498,7 @@
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
         "schema:PaymentRequest": "0.11.1",
-        "schema:PaymentRun": "0.3.0",
+        "schema:PaymentRun": "0.4.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",
         "schema:PensionAssetDetail": "0.1.0",
