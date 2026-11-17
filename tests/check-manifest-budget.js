@@ -245,7 +245,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // the 1,272,900 above. This change adds the 11,254 B
 // tax-investment-deduction-claims.json. 1,291,474 in all.
 // Raised to 1,297,900: 6,426 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_297_900
+//
+// Re-measured 2026-11-15 (tax-cbcr-and-pillar2-returns: group entities,
+// country-by-country reports and minimum tax returns under Taxes, merged with
+// the investment deductions above): development held 1,295,159 bytes. This
+// change adds 14,961 B. 1,310,120 in all.
+// Raised to 1,316,700: 6,580 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_316_700
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
