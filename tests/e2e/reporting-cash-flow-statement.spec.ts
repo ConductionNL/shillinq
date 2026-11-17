@@ -14,11 +14,9 @@
  *   2. the page opens from its Reports route, shows the summary and the three
  *      activity sections over the endpoint, and its header action opens the
  *      check of accounts without a category (REQ-RCF-001, REQ-RCF-003);
- *   3. a figure is a link: clicking an account row leaves the statement for
- *      that account. Today it opens the account (`ChartOfAccountsDetail`);
- *      once `LedgerLinesForAccount` (reporting-financial-statements 2.3) is
- *      built the row route moves there and this test follows it. A period with
- *      no account rows skips that step and says so.
+ *   3. a figure is a link: clicking a row opens `CashFlowLines` for that
+ *      figure's `linesKey`, and the lines endpoint behind that page adds up to
+ *      the figure. A period with no rows skips that step and says so.
  *
  * The caller is the suite's administrator (globalSetup's storage state). The
  * spec writes nothing.
@@ -43,6 +41,7 @@ const API = '/index.php/apps/shillinq/api/statements/cash-flow'
 interface CashFlowRow {
 	accountNumber: string | null
 	accountId?: string
+	linesKey?: string
 	label: string
 	amount: number
 }
@@ -125,14 +124,20 @@ test.describe('reporting-cash-flow-statement: the cash flow statement', () => {
 		await expect(page).toHaveURL(/\/reports\/cash-flow\/accounts/)
 	})
 
-	test('a figure opens its account @spec REQ-RCF-003', async ({ page, request }) => {
+	test('a figure opens the ledger lines behind it @spec REQ-RCF-003', async ({ page, request }) => {
 		const { from, to } = lastYear()
 		const res = await request.get(`${API}?from=${from}&to=${to}`, { headers: { 'OCS-APIRequest': 'true' } })
 		expect(res.status()).toBe(200)
 		const body = await res.json() as CashFlowAnswer
 		const row = [...body.operating.rows, ...body.investing.rows, ...body.financing.rows]
-			.find((candidate) => (candidate.accountId ?? '') !== '')
-		test.skip(row === undefined, 'the period holds no movement on a classified account, so there is no figure to click')
+			.find((candidate) => (candidate.linesKey ?? '') !== '' && candidate.amount !== 0)
+		test.skip(row === undefined, 'the period holds no cash flow figure, so there is nothing to click')
+
+		const lines = await request.get(`${API}/lines?key=${encodeURIComponent(row!.linesKey!)}`, { headers: { 'OCS-APIRequest': 'true' } })
+		expect(lines.status(), await lines.text()).toBe(200)
+		const found = await lines.json() as { lines: Array<{ amount: number }>, total: number }
+		expect(cents(found.total), `the lines of "${row!.label}" add up to its figure`).toBe(cents(row!.amount))
+		expect(cents(found.lines.reduce((sum, line) => sum + line.amount, 0))).toBe(cents(row!.amount))
 
 		await page.goto(APP + ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -141,7 +146,7 @@ test.describe('reporting-cash-flow-statement: the cash flow statement', () => {
 		const figure = page.getByRole('row', { name: new RegExp(row!.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first()
 		await expect(figure).toBeVisible({ timeout: 20_000 })
 		await figure.click()
-		await expect(page).not.toHaveURL(new RegExp(ROUTE + '$'))
-		expect(page.url()).toContain(String(row!.accountId))
+		await expect(page).toHaveURL(/\/reports\/cash-flow\/lines\//)
+		await expect(page.getByText(/Ledger lines|Grootboekregels/i).first()).toBeVisible({ timeout: 20_000 })
 	})
 })

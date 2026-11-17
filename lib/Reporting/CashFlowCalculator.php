@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Reporting;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -104,6 +105,27 @@ class CashFlowCalculator {
 	private const PAGE_SIZE = 500;
 
 	/**
+	 * The lines key scope of the result row: every profit and loss line.
+	 *
+	 * @var string
+	 */
+	public const SCOPE_RESULT = 'result';
+
+	/**
+	 * The lines key scope of the depreciation row: the credits on accumulated depreciation accounts.
+	 *
+	 * @var string
+	 */
+	public const SCOPE_DEPRECIATION = 'depreciation';
+
+	/**
+	 * A lines key: scope, first and last date, joined by a tilde.
+	 *
+	 * @var string
+	 */
+	private const LINES_KEY = '/^([A-Za-z0-9._-]{1,64})~(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param StatementCalculator    $statements       The posted-line figures.
@@ -163,7 +185,14 @@ class CashFlowCalculator {
 		}
 
 		$operatingRows = [
-			['accountNumber' => null, 'label' => self::RESULT_LABEL, 'amount' => self::round(value: $period['result']), 'from' => $from, 'to' => $to],
+			[
+				'accountNumber' => null,
+				'label' => self::RESULT_LABEL,
+				'amount' => self::round(value: $period['result']),
+				'from' => $from,
+				'to' => $to,
+				'linesKey' => self::linesKey(scope: self::SCOPE_RESULT, from: $from, to: $to),
+			],
 		];
 		if (abs($depreciation) >= 0.005) {
 			$operatingRows[] = [
@@ -172,6 +201,7 @@ class CashFlowCalculator {
 				'amount' => self::round(value: $depreciation),
 				'from' => $from,
 				'to' => $to,
+				'linesKey' => self::linesKey(scope: self::SCOPE_DEPRECIATION, from: $from, to: $to),
 			];
 		}
 
@@ -300,6 +330,7 @@ class CashFlowCalculator {
 			'amount' => self::round(value: $amount),
 			'from' => $from,
 			'to' => $to,
+			'linesKey' => self::linesKey(scope: $account, from: $from, to: $to),
 		];
 	}//end row()
 
@@ -339,6 +370,84 @@ class CashFlowCalculator {
 
 		return $rows;
 	}//end read()
+
+	/**
+	 * The posted ledger lines behind one cash flow figure, from its lines key.
+	 *
+	 * The lines add up to the figure: an account row lists that account's
+	 * lines (without the depreciation credits on an accumulated depreciation
+	 * account, which the depreciation row carries), the result row every
+	 * profit and loss line, the depreciation row those credits.
+	 *
+	 * @param string $administrationId The administration, already checked for access.
+	 * @param string $key              A row's `linesKey`: scope~from~to.
+	 *
+	 * @return array<string, mixed> scope, from, to, lines and total.
+	 *
+	 * @throws InvalidArgumentException When the key is malformed or its range is.
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 */
+	public function lines(string $administrationId, string $key): array {
+		if (preg_match(self::LINES_KEY, $key, $match) !== 1) {
+			throw new InvalidArgumentException('key must be scope~from~to.');
+		}
+
+		[, $scope, $from, $to] = $match;
+		StatementPeriods::assertRange(from: $from, to: $to);
+
+		$depreciationAccounts = [];
+		if ($scope !== self::SCOPE_RESULT) {
+			$depreciationAccounts = $this->depreciationAccounts(administrationId: $administrationId);
+		}
+
+		if ($scope === self::SCOPE_RESULT) {
+			$found = $this->statements->linesBetween(administrationId: $administrationId, accounts: [], class: 'pnl', from: $from, to: $to);
+			$lines = $found['lines'];
+		} else if ($scope === self::SCOPE_DEPRECIATION) {
+			$lines = [];
+			if ($depreciationAccounts !== []) {
+				$found = $this->statements->linesBetween(
+					administrationId: $administrationId,
+					accounts: array_keys($depreciationAccounts),
+					class: 'balance',
+					from: $from,
+					to: $to
+				);
+				$lines = array_values(array_filter($found['lines'], static fn (array $line): bool => $line['amount'] > 0.0));
+			}
+		} else {
+			$found = $this->statements->linesBetween(administrationId: $administrationId, accounts: [$scope], class: 'balance', from: $from, to: $to);
+			$lines = $found['lines'];
+			if (isset($depreciationAccounts[$scope]) === true) {
+				$lines = array_values(array_filter($lines, static fn (array $line): bool => $line['amount'] < 0.0));
+			}
+		}//end if
+
+		return [
+			'administrationId' => $administrationId,
+			'scope' => $scope,
+			'from' => $from,
+			'to' => $to,
+			'lines' => $lines,
+			'total' => self::round(value: array_sum(array_column($lines, 'amount'))),
+		];
+	}//end lines()
+
+	/**
+	 * A row's lines key.
+	 *
+	 * @param string $scope An account number, or the result or depreciation scope.
+	 * @param string $from  First date.
+	 * @param string $to    Last date.
+	 *
+	 * @return string scope~from~to.
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 */
+	public static function linesKey(string $scope, string $from, string $to): string {
+		return $scope.'~'.$from.'~'.$to;
+	}//end linesKey()
 
 	/**
 	 * The day before a date.

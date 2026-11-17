@@ -5526,6 +5526,13 @@
 				},
 				{
 					"_fragment": "reporting-cash-flow-statement",
+					"id": "CashFlowLines",
+					"route": "/reports/cash-flow/lines/:id",
+					"type": "dashboard",
+					"title": "Cash flow lines"
+				},
+				{
+					"_fragment": "reporting-cash-flow-statement",
 					"id": "CashFlowAccountCheck",
 					"route": "/reports/cash-flow/accounts",
 					"type": "index",

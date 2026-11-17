@@ -5554,7 +5554,10 @@ OC.L10N.register(
         "Accounts without a cash flow category": "Accounts without a cash flow category",
         "Balance sheet accounts the cash flow statement cannot place yet. Open one to set its cash flow category; until then its movements show as not classified.": "Balance sheet accounts the cash flow statement cannot place yet. Open one to set its cash flow category; until then its movements show as not classified.",
         "Account number": "Account number",
-        "Cash from operations, investments and financing, reconciled to the change in cash.": "Cash from operations, investments and financing, reconciled to the change in cash."
+        "Cash from operations, investments and financing, reconciled to the change in cash.": "Cash from operations, investments and financing, reconciled to the change in cash.",
+        "Cash flow lines": "Cash flow lines",
+        "The posted ledger lines behind one cash flow figure; together they add up to it. Open a line to see its posting.": "The posted ledger lines behind one cash flow figure; together they add up to it. Open a line to see its posting.",
+        "Ledger lines": "Ledger lines"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -142,6 +142,26 @@ class FinancialStatementController extends Controller {
 	}//end cashFlow()
 
 	/**
+	 * The posted ledger lines behind one cash flow figure.
+	 *
+	 * GET /api/statements/cash-flow/lines?key=<scope~from~to>
+	 * The figure's `linesKey` names its accounts and range; the lines add up
+	 * to the figure.
+	 *
+	 * @return JSONResponse 200 with lines and total; 400 malformed key; 401; 404 no access.
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 */
+	#[NoAdminRequired]
+	public function cashFlowLines(): JSONResponse {
+		return $this->answer(
+			compute: function (string $administrationId): array {
+				return $this->cashFlow->lines(administrationId: $administrationId, key: (string)$this->request->getParam('key', ''));
+			}
+		);
+	}//end cashFlowLines()
+
+	/**
 	 * Check the caller and the administration, then compute.
 	 *
 	 * @param Closure(string): array<string, mixed> $compute The statement for an administration.

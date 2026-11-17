@@ -136,6 +136,50 @@ class FinancialStatementControllerTest extends TestCase {
 	}
 
 	/**
+	 * The lines behind one cash flow figure of the active administration add
+	 * up to it; the seed's result row is the profit and loss of the period.
+	 *
+	 * @return void
+	 */
+	public function testTheLinesBehindACashFlowFigure(): void {
+		$statement = $this->controller(['from' => '2026-01-01', 'to' => '2026-09-30'])->cashFlow()->getData();
+		$result = $statement['operating']['rows'][0];
+
+		$response = $this->controller(['key' => $result['linesKey']])->cashFlowLines();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame([VanDijkLedger::ADM, 'result', '2026-01-01', '2026-09-30'], [$data['administrationId'], $data['scope'], $data['from'], $data['to']]);
+		self::assertSame($result['amount'], $data['total']);
+		self::assertNotSame([], $data['lines']);
+	}
+
+	/**
+	 * The lines refuse like the statements, before anything is read, and a
+	 * malformed key is a bad request.
+	 *
+	 * @return void
+	 */
+	public function testCashFlowLinesRefusals(): void {
+		$untouched = $this->getMockBuilder(CashFlowCalculator::class)->disableOriginalConstructor()->getMock();
+		$untouched->expects(self::never())->method('lines');
+		$calculator = $this->createMock(StatementCalculator::class);
+		$key = 'result~2026-01-01~2026-09-30';
+
+		$anonymous = $this->controller(['key' => $key], null, $calculator, null, $untouched)->cashFlowLines();
+		self::assertSame([Http::STATUS_UNAUTHORIZED, ['error' => 'Not authenticated']], [$anonymous->getStatus(), $anonymous->getData()]);
+
+		$foreign = $this->controller(['key' => $key, 'administrationId' => 'adm-other'], 'director', $calculator, null, $untouched)->cashFlowLines();
+		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Not found']], [$foreign->getStatus(), $foreign->getData()]);
+
+		$malformed = $this->controller(['key' => 'result'])->cashFlowLines();
+		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'key must be scope~from~to.']], [$malformed->getStatus(), $malformed->getData()]);
+
+		$reversed = $this->controller(['key' => 'result~2026-09-30~2026-01-01'])->cashFlowLines();
+		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'to must not be before from.']], [$reversed->getStatus(), $reversed->getData()]);
+	}
+
+	/**
 	 * The compared profit and loss of the active administration.
 	 *
 	 * @return void

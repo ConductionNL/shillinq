@@ -14,7 +14,7 @@
 
 ## 3. Page and document
 
-- [ ] 3.1 `FinancialStatementCashFlow` page with a Reports card and figure links (REQ-RCF-003). Verify: vitest; nav reachability.
+- [x] 3.1 `FinancialStatementCashFlow` page with a Reports card and figure links (REQ-RCF-003). Verify: vitest; nav reachability.
   Partly built: the page (`src/manifest.d/reporting-cash-flow-statement.json`, dashboard over the endpoint with a date range) and its Reports card; nav reachability records it as a Reports card. Open: a figure opens its account (`ChartOfAccountsDetail`), not the posted lines of the period, because the `LedgerLinesForAccount` page of `reporting-financial-statements` (its task 2.3) is not built yet. Every row already carries `accountNumber`, `from` and `to` for that page.
 - [x] 3.2 The kasstroomoverzicht section in `AnnualAccountsReportGenerator` writing `CashFlowStatement` (REQ-RCF-004). Verify: PHPUnit comparing document totals with endpoint totals.
 

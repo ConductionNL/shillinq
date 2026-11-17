@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @covers \OCA\Shillinq\Reporting\CashFlowCalculator
  * @uses   \OCA\Shillinq\Reporting\StatementCalculator
+ * @uses   \OCA\Shillinq\Reporting\StatementPeriods
  * @uses   \OCA\Shillinq\Service\FiscalYearContextService
  */
 class CashFlowCalculatorTest extends TestCase {
@@ -65,6 +66,7 @@ class CashFlowCalculatorTest extends TestCase {
 		$this->transactions[] = ['id' => $id, 'administrationId' => self::ADM, 'state' => 'posted', 'postingDate' => $date, 'journalType' => $journalType];
 		foreach ($lines as [$account, $side, $amount]) {
 			$this->lines[] = [
+				'id' => $id.'-'.$account,
 				'administrationId' => self::ADM,
 				'transactionId' => $id,
 				'accountNumber' => $account,
@@ -210,7 +212,7 @@ class CashFlowCalculatorTest extends TestCase {
 		$statement = $this->calculator($this->seed())->between(self::ADM, '2026-01-01', '2026-09-30');
 
 		self::assertSame(
-			['accountNumber' => '0100', 'accountId' => 'acc-0100', 'label' => '0100 Inventaris', 'amount' => -12000.0, 'from' => '2026-01-01', 'to' => '2026-09-30'],
+			['accountNumber' => '0100', 'accountId' => 'acc-0100', 'label' => '0100 Inventaris', 'amount' => -12000.0, 'from' => '2026-01-01', 'to' => '2026-09-30', 'linesKey' => '0100~2026-01-01~2026-09-30'],
 			$statement['investing']['rows'][0]
 		);
 	}
@@ -284,5 +286,130 @@ class CashFlowCalculatorTest extends TestCase {
 
 		self::assertSame(['opening' => 20000.0, 'change' => 28900.0, 'closing' => 48900.0], $statement['cash']);
 		self::assertSame(48900.0, $statement['totals']['operating']);
+	}
+
+	/**
+	 * Every figure's lines add up to that figure (REQ-RCF-003): each account
+	 * row, the result row and the depreciation row of every section.
+	 *
+	 * @return void
+	 */
+	public function testEveryFigureOpensLinesThatAddUpToIt(): void {
+		$calculator = $this->calculator($this->seed());
+		$statement = $calculator->between(self::ADM, '2026-01-01', '2026-09-30');
+
+		$checked = 0;
+		foreach (['operating', 'investing', 'financing', 'unclassified'] as $section) {
+			foreach ($statement[$section]['rows'] as $row) {
+				$lines = $calculator->lines(self::ADM, $row['linesKey']);
+				self::assertSame($row['amount'], $lines['total'], $row['label']);
+				self::assertSame(
+					$row['amount'],
+					round(array_sum(array_column($lines['lines'], 'amount')), 2),
+					$row['label']
+				);
+				$checked++;
+			}
+		}
+
+		// Result, depreciation, debtors, creditors, the fit-out and the loan.
+		self::assertSame(6, $checked);
+	}
+
+	/**
+	 * The director checks the investments: the laptop fleet's posted line of
+	 * the period, opening its transaction, and nothing from before the period.
+	 *
+	 * @return void
+	 */
+	public function testTheInvestmentFigureListsThePostedFixedAssetLine(): void {
+		$lines = $this->calculator($this->seed())->lines(self::ADM, '0100~2026-01-01~2026-09-30');
+
+		self::assertSame(
+			[
+				'administrationId' => self::ADM,
+				'scope' => '0100',
+				'from' => '2026-01-01',
+				'to' => '2026-09-30',
+				'lines' => [
+					[
+						'id' => 'tx-laptops-0100',
+						'transactionId' => 'tx-laptops',
+						'date' => '2026-05-15',
+						'accountNumber' => '0100',
+						'account' => '0100 Inventaris',
+						'description' => '',
+						'amount' => -12000.0,
+					],
+				],
+				'total' => -12000.0,
+			],
+			$lines
+		);
+	}
+
+	/**
+	 * The result row lists the profit and loss lines of the period in date
+	 * order; the October sale after the period is not among them.
+	 *
+	 * @return void
+	 */
+	public function testTheResultFigureListsTheProfitAndLossLinesOfThePeriod(): void {
+		$lines = $this->calculator($this->seed())->lines(self::ADM, 'result~2026-01-01~2026-09-30');
+
+		self::assertSame(['tx-sales', 'tx-costs', 'tx-depreciation'], array_column($lines['lines'], 'transactionId'));
+		self::assertSame([100000.0, -46000.0, -6000.0], array_column($lines['lines'], 'amount'));
+		self::assertSame(48000.0, $lines['total']);
+	}
+
+	/**
+	 * The depreciation row lists the credits on the accumulated depreciation
+	 * account; that account's own row would list only its debits.
+	 *
+	 * @return void
+	 */
+	public function testTheDepreciationFigureListsTheDepreciationCredits(): void {
+		$lines = $this->calculator($this->seed())->lines(self::ADM, 'depreciation~2026-01-01~2026-09-30');
+
+		self::assertSame(['tx-depreciation-0110'], array_column($lines['lines'], 'id'));
+		self::assertSame(6000.0, $lines['total']);
+	}
+
+	/**
+	 * A malformed key or range is refused before anything is read.
+	 *
+	 * @return void
+	 */
+	public function testAMalformedKeyIsRefused(): void {
+		$calculator = $this->calculator($this->seed());
+		foreach (['', '0100', '0100~2026-01-01', '01 00~2026-01-01~2026-09-30', '0100~2026-09-30~2026-01-01', '0100~2026-02-30~2026-03-01'] as $key) {
+			try {
+				$calculator->lines(self::ADM, $key);
+				self::fail('Accepted '.$key);
+			} catch (\InvalidArgumentException $e) {
+				self::assertNotSame('', $e->getMessage());
+			}
+		}
+	}
+
+	/**
+	 * A disposal debits the accumulated depreciation account: that account's
+	 * row lists the debit only, and still adds up to its figure, while the
+	 * depreciation row keeps the credits.
+	 *
+	 * @return void
+	 */
+	public function testADepreciationAccountRowListsItsDebitsOnly(): void {
+		$base = $this->seed();
+		$this->post('tx-disposal', '2026-09-15', [['0110', 'debit', 1000.0], ['0100', 'credit', 1000.0]]);
+		$calculator = $this->calculator($base);
+		$statement = $calculator->between(self::ADM, '2026-01-01', '2026-09-30');
+
+		$rows = array_column($statement['investing']['rows'], null, 'accountNumber');
+		self::assertSame(-1000.0, $rows['0110']['amount']);
+		$lines = $calculator->lines(self::ADM, $rows['0110']['linesKey']);
+		self::assertSame(['tx-disposal-0110'], array_column($lines['lines'], 'id'));
+		self::assertSame(-1000.0, $lines['total']);
+		self::assertSame(6000.0, $calculator->lines(self::ADM, 'depreciation~2026-01-01~2026-09-30')['total']);
 	}
 }

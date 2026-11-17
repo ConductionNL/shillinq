@@ -138,6 +138,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'financialStatement#balanceSheet', 'url' => '/api/statements/balance-sheet', 'verb' => 'GET'],
             // reporting-cash-flow-statement REQ-RCF-002: the cash flow statement by the indirect method.
             ['name' => 'financialStatement#cashFlow', 'url' => '/api/statements/cash-flow', 'verb' => 'GET'],
+            // reporting-cash-flow-statement REQ-RCF-003: the ledger lines behind one cash flow figure. Access is checked in the controller body.
+            ['name' => 'financialStatement#cashFlowLines', 'url' => '/api/statements/cash-flow/lines', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app

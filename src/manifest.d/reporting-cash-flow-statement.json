@@ -4,7 +4,7 @@
   "spdx-copyright": "2026 Conduction B.V.",
   "change": "reporting-cash-flow-statement",
   "adr": "ADR-037 modular manifest fragment",
-  "description": "The cash flow statement by the indirect method for a chosen period (REQ-RCF-002, REQ-RCF-003), opened from its card on the Reports page (ADR-112), and the check listing balance accounts without a cash flow category (REQ-RCF-001). The figures come from GET /api/statements/cash-flow, the same calculator the annual accounts use."
+  "description": "The cash flow statement by the indirect method for a chosen period (REQ-RCF-002, REQ-RCF-003), opened from its card on the Reports page (ADR-112), and the check listing balance accounts without a cash flow category (REQ-RCF-001). The figures come from GET /api/statements/cash-flow, the same calculator the annual accounts use. Every figure opens the posted ledger lines behind it (GET /api/statements/cash-flow/lines)."
  },
  "pages": [
   {
@@ -107,8 +107,8 @@
          }
         }
        ],
-       "rowRoute": "ChartOfAccountsDetail",
-       "rowIdField": "accountId"
+       "rowRoute": "CashFlowLines",
+       "rowIdField": "linesKey"
       }
      },
      {
@@ -139,8 +139,8 @@
          }
         }
        ],
-       "rowRoute": "ChartOfAccountsDetail",
-       "rowIdField": "accountId"
+       "rowRoute": "CashFlowLines",
+       "rowIdField": "linesKey"
       }
      },
      {
@@ -171,8 +171,8 @@
          }
         }
        ],
-       "rowRoute": "ChartOfAccountsDetail",
-       "rowIdField": "accountId"
+       "rowRoute": "CashFlowLines",
+       "rowIdField": "linesKey"
       }
      },
      {
@@ -203,8 +203,8 @@
          }
         }
        ],
-       "rowRoute": "ChartOfAccountsDetail",
-       "rowIdField": "accountId"
+       "rowRoute": "CashFlowLines",
+       "rowIdField": "linesKey"
       }
      }
     ],
@@ -248,6 +248,75 @@
       "gridY": 13,
       "gridWidth": 12,
       "gridHeight": 4
+     }
+    ]
+   }
+  },
+  {
+   "id": "CashFlowLines",
+   "route": "/reports/cash-flow/lines/:id",
+   "type": "dashboard",
+   "title": "Cash flow lines",
+   "config": {
+    "description": "The posted ledger lines behind one cash flow figure; together they add up to it. Open a line to see its posting.",
+    "headerActions": [
+     {
+      "id": "cash-flow-lines-back",
+      "label": "Cash flow statement",
+      "type": "open-page",
+      "route": "FinancialStatementCashFlow",
+      "icon": "ArrowLeft"
+     }
+    ],
+    "widgets": [
+     {
+      "id": "cash-flow-lines",
+      "title": "Ledger lines",
+      "type": "object-table",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/cash-flow/lines",
+        "params": {
+         "key": "@route.id"
+        },
+        "responsePath": "lines"
+       },
+       "columns": [
+        {
+         "key": "date",
+         "label": "Date"
+        },
+        {
+         "key": "account",
+         "label": "Account"
+        },
+        {
+         "key": "description",
+         "label": "Description"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "GeneralLedgerDetail",
+       "rowIdField": "transactionId"
+      }
+     }
+    ],
+    "layout": [
+     {
+      "id": "1",
+      "widgetId": "cash-flow-lines",
+      "gridX": 0,
+      "gridY": 0,
+      "gridWidth": 12,
+      "gridHeight": 8
      }
     ]
    }

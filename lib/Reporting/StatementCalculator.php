@@ -96,7 +96,7 @@ class StatementCalculator {
 	 * Counting lines per administration: accountNumber, class, date, amount,
 	 * and whether the line belongs to a year-closing entry.
 	 *
-	 * @var array<string, array<int, array{account: string, class: string, date: string, amount: float, closing: bool}>>
+	 * @var array<string, array<int, array<string, mixed>>> Each: account, class, date, amount, closing, id, transactionId, description.
 	 */
 	private array $lines = [];
 
@@ -340,6 +340,62 @@ class StatementCalculator {
 	}//end cashFlowMovements()
 
 	/**
+	 * The posted ledger lines behind one statement figure.
+	 *
+	 * The same lines the figures are summed from: posted, counting, not part
+	 * of a year-closing entry, dated by their transaction. A figure names its
+	 * accounts, or a line class (`pnl` for the result) when it has no single
+	 * account. Each line carries its transaction, so it opens its posting.
+	 *
+	 * @param string       $administrationId The administration, already checked for access.
+	 * @param list<string> $accounts         Account numbers; empty for every account of the class.
+	 * @param string       $class            `pnl`, `balance`, or empty for both.
+	 * @param string       $from             First posting date, YYYY-MM-DD; empty for no lower bound.
+	 * @param string       $to               Last posting date, YYYY-MM-DD.
+	 *
+	 * @return array{lines: list<array<string, mixed>>, total: float} Lines in date and account order, and their credit-positive sum.
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 */
+	public function linesBetween(string $administrationId, array $accounts, string $class, string $from, string $to): array {
+		$wanted = array_fill_keys(array_map('strval', $accounts), true);
+		$names = $this->accountRows(administrationId: $administrationId);
+		$lines = [];
+		$total = 0.0;
+		foreach ($this->countingLines(administrationId: $administrationId) as $line) {
+			if ($line['closing'] === true || $line['date'] > $to || ($from !== '' && $line['date'] < $from)) {
+				continue;
+			}
+
+			if (($wanted !== [] && isset($wanted[$line['account']]) === false)
+				|| ($class !== '' && $line['class'] !== $class)
+			) {
+				continue;
+			}
+
+			$total += $line['amount'];
+			$lines[] = [
+				'id' => $line['id'],
+				'transactionId' => $line['transactionId'],
+				'date' => $line['date'],
+				'accountNumber' => $line['account'],
+				'account' => trim($line['account'].' '.trim((string)($names[$line['account']]['name'] ?? ''))),
+				'description' => $line['description'],
+				'amount' => self::round(value: $line['amount']),
+			];
+		}
+
+		usort(
+			$lines,
+			static function (array $left, array $right): int {
+				return [$left['date'], $left['accountNumber'], $left['id']] <=> [$right['date'], $right['accountNumber'], $right['id']];
+			}
+		);
+
+		return ['lines' => $lines, 'total' => self::round(value: $total)];
+	}//end linesBetween()
+
+	/**
 	 * The administration's account records by account number.
 	 *
 	 * @param string $administrationId The administration, already checked for access.
@@ -415,7 +471,7 @@ class StatementCalculator {
 	 *
 	 * @param string $administrationId The administration.
 	 *
-	 * @return array<int, array{account: string, class: string, date: string, amount: float, closing: bool}>
+	 * @return array<int, array<string, mixed>> Each: account, class, date, amount, closing, id, transactionId, description.
 	 */
 	private function countingLines(string $administrationId): array {
 		if (isset($this->lines[$administrationId]) === true) {
@@ -437,6 +493,9 @@ class StatementCalculator {
 				'date' => $date,
 				'amount' => self::signedAmount(line: $line),
 				'closing' => isset($this->closing[$administrationId][(string)($line['transactionId'] ?? '')]),
+				'id' => (string)($line['@self']['id'] ?? $line['id'] ?? ''),
+				'transactionId' => (string)($line['transactionId'] ?? ''),
+				'description' => trim((string)($line['description'] ?? '')),
 			];
 		}
 
