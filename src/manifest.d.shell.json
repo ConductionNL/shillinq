@@ -560,6 +560,13 @@
 							"order": 20
 						},
 						{
+							"id": "EuBetaalaanvragen",
+							"label": "Declarations",
+							"icon": "CashCheck",
+							"route": "EuBetaalaanvragen",
+							"order": 25
+						},
+						{
 							"id": "EuBewijsstukken",
 							"label": "Supporting documents",
 							"icon": "FileDocumentMultipleOutline",
@@ -653,6 +660,20 @@
 					"route": "/eu-fondsen/audit-portaal/:id",
 					"type": "detail",
 					"title": "Audit-trail"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuBetaalaanvragen",
+					"route": "/eu-fondsen/betaalaanvragen",
+					"type": "index",
+					"title": "Declarations"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuBetaalaanvraagDetail",
+					"route": "/eu-fondsen/betaalaanvragen/:id",
+					"type": "detail",
+					"title": "Declaration"
 				}
 			]
 		},

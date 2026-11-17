@@ -20,7 +20,7 @@
 
 ## 4. Strings and live check
 
-- [ ] 4.1 English and Dutch strings. Verify: `npm run test:l10n`, `check:schema-l10n`.
+- [x] 4.1 English and Dutch strings. Verify: `npm run test:l10n`, `check:schema-l10n`.
 - [ ] 4.2 Live: determine a grant lower than paid out and see the draft reclaim; export the SiSa table for 2026; propose an EU declaration with one expenditure missing evidence.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
