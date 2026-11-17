@@ -138,7 +138,7 @@ interface SettingsServiceInterface {
 	public function seedBbvProgrammes(string $administrationId): array;
 
 	/**
-	 * Seed the BBV task_field catalogue from bbv-task_fields-2024.json, idempotently.
+	 * Seed the BBV task_field catalogue from bbv-taakvelden-2024.json, idempotently.
 	 *
 	 * Imports the canonical Besluit BBV bijlage IV task_fields into the BbvTaakveld
 	 * schema. Deduplication key is code. Idempotent on re-run.

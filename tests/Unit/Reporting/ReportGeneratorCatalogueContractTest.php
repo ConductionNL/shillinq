@@ -39,6 +39,7 @@ use OCA\Shillinq\Reporting\Generator\ProfitLossReportGenerator;
 use OCA\Shillinq\Reporting\Generator\RuleAuditReportGenerator;
 use OCA\Shillinq\Reporting\Generator\SaftReportGenerator;
 use OCA\Shillinq\Reporting\Generator\SbrXbrlReportGenerator;
+use OCA\Shillinq\Reporting\Generator\SubjectCostsPerTypeReportGenerator;
 use OCA\Shillinq\Reporting\Generator\TrialBalanceReportGenerator;
 use OCA\Shillinq\Reporting\Generator\VatReturnReportGenerator;
 use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
@@ -61,6 +62,7 @@ use ReflectionClass;
  * @covers \OCA\Shillinq\Reporting\Generator\RuleAuditReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\SaftReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\SbrXbrlReportGenerator
+ * @covers \OCA\Shillinq\Reporting\Generator\SubjectCostsPerTypeReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\TrialBalanceReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\VatReturnReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator
@@ -86,6 +88,7 @@ class ReportGeneratorCatalogueContractTest extends TestCase {
 		RuleAuditReportGenerator::class,
 		SaftReportGenerator::class,
 		SbrXbrlReportGenerator::class,
+		SubjectCostsPerTypeReportGenerator::class,
 		TrialBalanceReportGenerator::class,
 		VatReturnReportGenerator::class,
 		XafAuditfileGenerator::class,
