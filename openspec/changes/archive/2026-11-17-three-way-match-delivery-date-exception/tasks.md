@@ -7,4 +7,4 @@
   - PHPUnit: REQ-TWM-003-01 to REQ-TWM-003-06
 - [x] **T3**: `ExceptionResolutionService` resolves `exception_date` like the other exceptions
 - [x] **T4**: The three-way match list and exception panel show `exception_date` with a translated label
-- [ ] **T5**: On archive, add `exception_date` to the match_status row of the `bookkeeping-purchase-order-3way` data table
+- [x] **T5**: On archive, add `exception_date` to the match_status row of the `bookkeeping-purchase-order-3way` data table

@@ -97,10 +97,11 @@ describe('BudgetBBVMappingIndex collection', () => {
 			pagination: { budgetBBVMapping: { page: 1, limit: 200 } },
 		}
 		const vm = index(store)
+		vm.scope.administrationId = 'adm-1'
 
 		await vm.loadMappings()
 
-		expect(store.fetchCollection).toHaveBeenCalledWith('budgetBBVMapping', { _limit: 200 })
+		expect(store.fetchCollection).toHaveBeenCalledWith('budgetBBVMapping', { _limit: 200, administrationId: 'adm-1' })
 		expect(vm.objects).toEqual([{ id: 1 }])
 		expect(vm.pagination).toEqual({ page: 1, limit: 200 })
 		expect(vm.loading).toBe(false)
@@ -110,6 +111,7 @@ describe('BudgetBBVMappingIndex collection', () => {
 	it('accepts a bare array, and treats anything else as no rows', async () => {
 		const store = { fetchCollection: vi.fn().mockResolvedValueOnce([{ id: 2 }]).mockResolvedValueOnce({ total: 3 }) }
 		const vm = index(store)
+		vm.scope.administrationId = 'adm-1'
 
 		await vm.loadMappings()
 		expect(vm.objects).toEqual([{ id: 2 }])
@@ -122,6 +124,7 @@ describe('BudgetBBVMappingIndex collection', () => {
 	it('shows the store\'s error, or its own sentence when the error has no message', async () => {
 		const store = { fetchCollection: vi.fn().mockResolvedValue([]), errors: { budgetBBVMapping: { message: 'Schema missing' } } }
 		const vm = index(store)
+		vm.scope.administrationId = 'adm-1'
 
 		await vm.loadMappings()
 		expect(vm.error).toBe('Schema missing')
@@ -134,6 +137,7 @@ describe('BudgetBBVMappingIndex collection', () => {
 	it('empties the list and shows the server\'s reason when the fetch throws', async () => {
 		const store = { fetchCollection: vi.fn().mockRejectedValue({ response: { data: { error: 'No access' } } }) }
 		const vm = index(store)
+		vm.scope.administrationId = 'adm-1'
 		vm.objects = [{ id: 9 }]
 
 		await vm.loadMappings()
@@ -149,10 +153,11 @@ describe('BudgetBBVMappingIndex collection', () => {
 			pagination: { budgetBBVMapping: { page: 2, limit: 50 } },
 		}
 		const vm = index(store)
+		vm.scope.administrationId = 'adm-1'
 		vm.pagination = { limit: 50 }
 
 		await vm.onPageChange(2)
-		expect(store.fetchCollection).toHaveBeenLastCalledWith('budgetBBVMapping', { _page: 2, _limit: 50 })
+		expect(store.fetchCollection).toHaveBeenLastCalledWith('budgetBBVMapping', { _page: 2, _limit: 50, administrationId: 'adm-1' })
 		expect(vm.objects).toEqual([{ id: 3 }])
 		expect(vm.pagination).toEqual({ page: 2, limit: 50 })
 
@@ -165,10 +170,11 @@ describe('BudgetBBVMappingIndex collection', () => {
 	it('pages 200 at a time before any pagination is known', async () => {
 		const store = { fetchCollection: vi.fn().mockResolvedValue([]) }
 		const vm = index(store)
+		vm.scope.administrationId = 'adm-1'
 
 		await vm.onPageChange(1)
 
-		expect(store.fetchCollection).toHaveBeenCalledWith('budgetBBVMapping', { _page: 1, _limit: 200 })
+		expect(store.fetchCollection).toHaveBeenCalledWith('budgetBBVMapping', { _page: 1, _limit: 200, administrationId: 'adm-1' })
 	})
 })
 
