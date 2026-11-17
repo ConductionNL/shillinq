@@ -56,7 +56,6 @@ vi.mock('@conduction/nextcloud-vue', async () => ({
 	CnToggleTableWidget: await stub('CnToggleTableWidget', 'table'),
 }))
 vi.mock('@nextcloud/vue', async () => ({ NcButton: await stub('NcButton', 'a') }))
-vi.mock('../../src/views/settings/Settings.vue', async () => ({ default: await stub('Settings', 'form') }))
 
 const { default: AdminRoot } = await import('../../src/views/settings/AdminRoot.vue')
 
@@ -106,17 +105,18 @@ describe('AdminRoot render', () => {
 		expect(Object.keys(shell.slots)).toEqual(['tab-exchange-rates', 'default', 'tab-required-fields', 'tab-connections', 'tab-appointments'])
 	})
 
-	it('shows the settings form once the stores are ready, and the Pipelinq section, which reads its own settings, at once', async () => {
-		const waiting = await render({ storesReady: false })
-		expect(named('Settings')).toEqual([])
-		// The Pipelinq section draws at once; the Exchange rates tab draws its own section.
-		expect(named('CnSettingsFieldsSection').filter((node) => node.attrs['data-testid'] === 'admin-section-pipelinq')).toHaveLength(1)
-		expect(waiting.html).not.toContain('data-stub="Settings"')
+	it('shows the configuration and Pipelinq sections at once, each reading its own settings', async () => {
+		await render({ storesReady: false })
+		const sections = named('CnSettingsFieldsSection')
+		const [configuration] = sections.filter((node) => node.attrs['data-testid'] === 'admin-section-configuration')
+		expect(configuration.attrs).toMatchObject({ appId: 'shillinq', name: 'Configuration', url: '/index.php/apps/shillinq/api/settings' })
+		expect(configuration.attrs.fields.map((field) => field.key)).toEqual(['register', 'portal_payment_redirect_url'])
+		expect(sections.filter((node) => node.attrs['data-testid'] === 'admin-section-pipelinq')).toHaveLength(1)
 
 		const ready = await render({ storesReady: true })
-		expect(ready.html).toMatch(/<!--slot:default--><!--\[--><form data-stub="Settings"><\/form><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-pipelinq"><\/section>/)
+		expect(ready.html).toMatch(/<!--slot:default--><!--\[--><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-configuration"><\/section><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-pipelinq"><\/section>/)
 		const [shell] = named('CnAdminSettingsShell').slice(-1)
-		expect(shell.slots.default.map((node) => node.type.name)).toEqual(['Settings', 'CnSettingsFieldsSection'])
+		expect(shell.slots.default.map((node) => node.type.name)).toEqual(['CnSettingsFieldsSection', 'CnSettingsFieldsSection'])
 		const [pipelinq] = named('CnSettingsFieldsSection').filter((node) => node.attrs['data-testid'] === 'admin-section-pipelinq').slice(-1)
 		// saveAll: the settings POST replaces the endpoint, so a token-only save must still carry it.
 		expect(pipelinq.attrs).toMatchObject({ appId: 'shillinq', url: '/index.php/apps/shillinq/api/pipelinq/settings', saveMethod: 'POST', saveAll: true })
