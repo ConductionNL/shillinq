@@ -29,6 +29,20 @@ export async function fetchAdministrationContext() {
 }
 
 /**
+ * The administration the caller works in, or '' when it cannot be read.
+ *
+ * @return {Promise<string>} The active administration id, or ''.
+ */
+export async function fetchActiveAdministrationId() {
+	try {
+		const context = await fetchAdministrationContext()
+		return context?.activeAdministrationId || ''
+	} catch {
+		return ''
+	}
+}
+
+/**
  * Switch the session's active administration.
  *
  * Server validates the user has a valid AdministrationMembership for the
