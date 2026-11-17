@@ -5323,6 +5323,38 @@
 			]
 		},
 		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "GRAllocationRuns",
+							"label": "Allocation runs",
+							"icon": "ScaleBalance",
+							"route": "GRAllocationRuns",
+							"order": 65
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRuns",
+					"route": "/gr/verdeelruns",
+					"type": "index",
+					"title": "Allocation runs"
+				},
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRunDetail",
+					"route": "/gr/verdeelruns/:id",
+					"type": "detail",
+					"title": "Allocation run"
+				}
+			]
+		},
+		{
 			"menu": [],
 			"pages": [
 				{
