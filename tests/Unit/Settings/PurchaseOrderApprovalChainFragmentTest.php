@@ -145,4 +145,25 @@ final class PurchaseOrderApprovalChainFragmentTest extends TestCase {
 		self::assertStringContainsString('History only', $approvalChain['description']);
 		self::assertSame(['pending', 'approved', 'rejected'], $approvalChain['items']['properties']['decision']['enum']);
 	}//end testTheInObjectChainIsHistory()
+	/**
+	 * A matched supplier invoice from EUR 10.000 waits for a controller (REQ-PAD-004).
+	 *
+	 * @return void
+	 */
+	public function testAMatchedSupplierInvoiceFromTenThousandWaitsForAController(): void {
+		$fragment = json_decode((string) file_get_contents(self::FRAGMENT), true);
+		$invoice  = $fragment['components']['schemas']['SupplierInvoice'];
+		$chain    = $invoice['x-openregister-approval-chains']['supplier-invoice-approval'];
+		$approve  = $invoice['x-openregister-lifecycle']['transitions']['approveMatched'];
+
+		self::assertSame('approveMatched', $chain['transition']);
+		self::assertSame(['matched', 'approved'], [$approve['from'], $approve['to']]);
+		self::assertSame('totalInclVat', $chain['amountField']);
+		self::assertSame('integer', $invoice['properties']['totalInclVat']['type']);
+		self::assertSame([['role' => 'controller', 'min' => 1, 'minAmount' => 1000000]], $chain['approvers']);
+		self::assertTrue($chain['separationOfDuties']);
+		self::assertSame('advanceTransition', $chain['onApprove']);
+		self::assertSame(['shillinq_controller'], $invoice['authorization']['roles']['controller']);
+		self::assertContains('shillinq_controller', $invoice['authorization']['update']);
+	}//end testAMatchedSupplierInvoiceFromTenThousandWaitsForAController()
 }//end class

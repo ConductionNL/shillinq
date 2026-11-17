@@ -1165,6 +1165,11 @@
           }
         },
         "authorization": {
+          "roles": {
+            "controller": [
+              "shillinq_controller"
+            ]
+          },
           "create": [
             "shillinq_procurement_officer",
             "shillinq_bookkeeper",
@@ -1186,6 +1191,22 @@
           "delete": [
             "shillinq_controller"
           ]
+        },
+        "x-openregister-approval-chains": {
+          "supplier-invoice-approval": {
+            "description": "Approval chain that gates the SupplierInvoice matched -> approved `approveMatched` transition (REQ-PAD-004). A matched invoice of EUR 10.000 or more including VAT (totalInclVat, EUR cents) waits for a controller's approval; below that tier the chain has no steps and the match approves it. Separation of duties: whoever submitted the approval cannot decide it. Declarative only: OpenRegister provisions the step as a flow task and gates the transition, so a payment run, which takes approved invoices only, leaves the invoice out until the controller approves.",
+            "transition": "approveMatched",
+            "amountField": "totalInclVat",
+            "separationOfDuties": true,
+            "approvers": [
+              {
+                "role": "controller",
+                "min": 1,
+                "minAmount": 1000000
+              }
+            ],
+            "onApprove": "advanceTransition"
+          }
         }
       },
       "ThreeWayMatch": {

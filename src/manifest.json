@@ -15657,6 +15657,26 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "approval",
+							"label": "Approval",
+							"icon": "CheckDecagram",
+							"order": 10,
+							"_note": "purchasing-approval-delegation REQ-PAD-004: a matched invoice from EUR 10.000 waits for a controller step (OpenRegister flow task) before approveMatched.",
+							"widgets": [
+								{
+									"type": "tasks",
+									"content": {
+										"objectUuid": "@objectId",
+										"scope": "all",
+										"variant": "table",
+										"includeDone": true,
+										"limit": 10,
+										"pollSeconds": 30
+									}
+								}
+							]
+						},
+						{
 							"id": "files",
 							"label": "Files",
 							"icon": "FolderOutline",

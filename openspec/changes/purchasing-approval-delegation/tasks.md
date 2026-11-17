@@ -11,21 +11,25 @@
 - [x] 1.3 Remove `PurchaseOrderApprovalService`, its controller and route, `determineApprovalChain()`, `initialiseApprovalChainEntries()`, `blockSendUntilApproved()` and the `delegated` value; point `previewApprovalChain()` at the schema tiers and `send()` at `statusCode`; add the repair step for `pending_approval` orders (REQ-PAD-001). Verify: hydra gates orphan-auth and route-reachability pass; the repair step is idempotent on a local instance; a live approval of a seed order materialises its `Commitment`.
   - Built: the service, its interface, controller, route, MCP tool `shillinq.purchase_order.decide`, `PurchaseOrderApprovalGuard` and `PurchaseOrderApprovalEntry` are gone; `blockSendUntilApproved()` became `markSent()`, which waits for `statusCode` approved; `previewApprovalChain()` reads the schema tiers through `PurchaseOrderApprovalTiers`; the lock listener now refuses any user write of the `approvalChain` history; repair step `ResetPendingApprovalPurchaseOrders` with unit tests. The hydra gates and the live runs (repair on an instance, a seed order materialising its `Commitment`) are still to do.
 - [ ] 1.4 Add the `supplier-invoice-approval` chain on `SupplierInvoice.approve` with amount tiers and let `ThreeWayMatchingEngine` hand matched invoices to it instead of approving them, with the approval panel on `SupplierInvoiceDetail.vue` (REQ-PAD-004). Verify: PHPUnit for both scenarios; Playwright approves a large matched invoice.
+  - Partly built, left unticked: the `supplier-invoice-approval` chain on `SupplierInvoice.approveMatched` (a controller from EUR 10.000 on `totalInclVat`, separation of duties), its contract test, and an Approval tab on `SupplierInvoiceDetail` with the shared `tasks` widget. Left: `ThreeWayMatchingEngine` writes only the `ThreeWayMatch` record and fires no SupplierInvoice transition today, so handing a matched invoice to `approveMatched` is new engine behaviour still to build, with its PHPUnit scenarios and the Playwright run.
 
 ## 2. Delegation
 
 - [ ] 2.1 After OpenRegister's `flow-approval-consolidation` is on the instance, add "Hand to a colleague" with a mandate to the approval panel, calling the task `delegate` verb, and show "on behalf of" on decided steps (REQ-PAD-002). Verify: Playwright hands the step to Karin de Wit and sees the on-behalf-of line; an empty mandate is refused.
+  - Left: OpenRegister has `POST /api/flow-tasks/{uuid}/delegate` with a mandate and `on_behalf_of`, but the shared `tasks` widget of @conduction/nextcloud-vue offers no delegate verb; the hand-over belongs in that widget (a library change), not in a hand-built shillinq panel.
 
 ## 3. Audit
 
 - [ ] 3.1 Add decider, on-behalf-of and mandate columns to the purchase order audit export (REQ-PAD-003). Verify: PHPUnit on the exporter with a delegated and a direct decision.
+  - Left: OpenRegister publishes no PHP contract to read an object's approval tasks (decider, `onBehalfOf`, `mandate`), so the audit export cannot read them server side yet; it still lists the decisions in the order's `approvalChain` history.
 
 ## 4. Platform request
 
 - [ ] 4.1 Open an issue on ConductionNL/openregister for a standing delegation on the task performer model (a person's dated rule routing their tasks in a scope to a stand-in), linking this change and the tender row. Verify: the issue link is in the PR body; the issue text is shown to Ruben before it is posted.
+  - Left: the issue text has to be shown to Ruben before it is posted.
 
 ## 5. Docs
 
-- [ ] 5.1 Release note: purchase order approval now works and runs on OpenRegister, single hand-overs are possible, and an absence period is not yet. Verify: the note is in the PR body.
+- [x] 5.1 Release note: purchase order approval now works and runs on OpenRegister, single hand-overs are possible, and an absence period is not yet. Verify: the note is in the PR body.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/purchasing-approval-delegation/tasks.md#task-N` on every new method, Dutch and English strings for every label.
