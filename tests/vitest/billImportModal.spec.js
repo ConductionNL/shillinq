@@ -18,6 +18,7 @@ import {
 	buildImportFormData,
 	canSaveReview,
 	confidenceForField,
+	confirmPayloadFromForm,
 	CREDITORS_WIDGET,
 	detectFormat,
 	glAccountSuggestionSummary,
@@ -70,7 +71,7 @@ describe('billImportModal — honest PDF-OCR deferral (REQ-BIM-002)', () => {
 })
 
 describe('billImportModal — import payload', () => {
-	it('builds a FormData carrying file + explicit format', () => {
+	it('builds a FormData carrying file, explicit format and the review flag', () => {
 		const calls = []
 		class FakeFormData {
 			append(k, v) {
@@ -81,7 +82,31 @@ describe('billImportModal — import payload', () => {
 		expect(calls).toEqual([
 			['file', { name: 'invoice.xml' }],
 			['format', 'ubl'],
+			['review', 'true'],
 		])
+	})
+})
+
+describe('billImportModal — confirm payload (F2-S7)', () => {
+	it('sends only the corrected fields, amounts in cents, never status or administration', () => {
+		const body = confirmPayloadFromForm({
+			supplier: 'SUP-1',
+			invoiceNumber: 'INV-9',
+			invoiceDate: '2026-02-01',
+			glAccount: '4000',
+			amount: 121.01,
+			vatAmount: '21',
+		})
+		expect(body).toEqual({
+			supplierId: 'SUP-1',
+			invoiceNumber: 'INV-9',
+			invoiceDate: '2026-02-01',
+			glAccount: '4000',
+			totalInclVat: 12101,
+			totalVat: 2100,
+		})
+		expect(body).not.toHaveProperty('statusCode')
+		expect(body).not.toHaveProperty('administrationId')
 	})
 })
 

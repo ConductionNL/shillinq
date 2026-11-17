@@ -30,6 +30,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Middleware\ApiContractMiddleware;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
 use OCA\Shillinq\Notification\EInvoiceNotifier;
+use OCA\Shillinq\Notification\GroupScopeChangedNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
 use OCP\AppFramework\App;
@@ -130,71 +131,12 @@ class Application extends App implements IBootstrap {
 
 		(new ServiceRegistrar())->register(context: $context);
 
-		// Migrate-legacy-notification-dialect (task 1.3) — register one
-		// RoleFallbackResolver instance per (primary role, fallback role)
-		// pair used by the canonical `recipients: [{kind: "expression",
-		// resolver: "..."}]` rules migrated off the legacy singular
-		// `"recipient": {resolver, fallback}` shape. Each alias is a DI
-		// service id (not a literal FQCN::method call — the OR dispatcher
-		// resolves it via IServerContainer::get($resolverTag)), resolved by
-		// Nextcloud's container the same way any other registered service
-		// is. Group ids follow the `shillinq_<role>` convention established
-		// by WbsoRbacResolver::GROUP_TO_ROLE.
-		$context->registerService(
-			RoleFallbackResolver::class . '::financeOfficer',
-			static function ($c): RoleFallbackResolver {
-				return new RoleFallbackResolver(
-					groupManager: $c->get(IGroupManager::class),
-					logger: $c->get(LoggerInterface::class),
-					primaryGroup: 'shillinq_finance_officer',
-					fallbackGroup: 'shillinq_subsidie_coordinator',
-				);
-			}
-		);
-		$context->registerService(
-			RoleFallbackResolver::class . '::subsidieCoordinator',
-			static function ($c): RoleFallbackResolver {
-				return new RoleFallbackResolver(
-					groupManager: $c->get(IGroupManager::class),
-					logger: $c->get(LoggerInterface::class),
-					primaryGroup: 'shillinq_subsidie_coordinator',
-					fallbackGroup: 'shillinq_administration_treasurer',
-				);
-			}
-		);
-		$context->registerService(
-			RoleFallbackResolver::class . '::payrollOfficer',
-			static function ($c): RoleFallbackResolver {
-				return new RoleFallbackResolver(
-					groupManager: $c->get(IGroupManager::class),
-					logger: $c->get(LoggerInterface::class),
-					primaryGroup: 'shillinq_payroll_officer',
-					fallbackGroup: 'shillinq_administration_treasurer',
-				);
-			}
-		);
+		$this->registerRoleFallbackResolvers(context: $context);
+
 		// #516/#1103: the ledger posting guards; then the reporting listeners.
 		(new LedgerPostingRegistration())->register(context: $context);
 
-		// Compliance-deadline-calendar REQ-CDC-007 — render the
-		// `deadline_reminder` notifications raised by
-		// ComplianceDeadlineCalendarService / DeadlineReminderJob in the
-		// notification centre. Without a registered INotifier the raised
-		// notifications would be discarded at display time.
-		$context->registerNotifierService(DeadlineReminderNotifier::class);
-
-		// REQ-EINV-005 (#1111) — render the rejection notice
-		// PeppolDeliveryStatusListener raises when the Peppol network refuses an
-		// e-invoice. Without a registered INotifier it is discarded at display time.
-		$context->registerNotifierService(EInvoiceNotifier::class);
-
-		// Change inventory-pos-decrement (shillinq#504) — render the
-		// `pos_stock_unmatched_line` notifications PosStockDecrementListener
-		// raises for a POS-sale line that could not be matched to a shillinq
-		// inventory item. Without a registered INotifier those notifications
-		// would be discarded at display time — the reconciliation/audit
-		// surface would be silently unreachable.
-		$context->registerNotifierService(PosStockUnmatchedLineNotifier::class);
+		$this->registerNotifiers(context: $context);
 
 		(new GuardRegistrar())->register(context: $context);
 
@@ -300,6 +242,92 @@ class Application extends App implements IBootstrap {
 			'OCA\OpenRegister\Service\RegisterSlugResolver'
 		);
 	}//end registerOpenRegisterContracts()
+
+	/**
+	 * Register one RoleFallbackResolver per (primary role, fallback role) pair.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerRoleFallbackResolvers(IRegistrationContext $context): void {
+		// Migrate-legacy-notification-dialect (task 1.3) — register one
+		// RoleFallbackResolver instance per (primary role, fallback role)
+		// pair used by the canonical `recipients: [{kind: "expression",
+		// resolver: "..."}]` rules migrated off the legacy singular
+		// `"recipient": {resolver, fallback}` shape. Each alias is a DI
+		// service id (not a literal FQCN::method call — the OR dispatcher
+		// resolves it via IServerContainer::get($resolverTag)), resolved by
+		// Nextcloud's container the same way any other registered service
+		// is. Group ids follow the `shillinq_<role>` convention established
+		// by WbsoRbacResolver::GROUP_TO_ROLE.
+		$context->registerService(
+			RoleFallbackResolver::class . '::financeOfficer',
+			static function ($c): RoleFallbackResolver {
+				return new RoleFallbackResolver(
+					groupManager: $c->get(IGroupManager::class),
+					logger: $c->get(LoggerInterface::class),
+					primaryGroup: 'shillinq_finance_officer',
+					fallbackGroup: 'shillinq_subsidie_coordinator',
+				);
+			}
+		);
+		$context->registerService(
+			RoleFallbackResolver::class . '::subsidieCoordinator',
+			static function ($c): RoleFallbackResolver {
+				return new RoleFallbackResolver(
+					groupManager: $c->get(IGroupManager::class),
+					logger: $c->get(LoggerInterface::class),
+					primaryGroup: 'shillinq_subsidie_coordinator',
+					fallbackGroup: 'shillinq_administration_treasurer',
+				);
+			}
+		);
+		$context->registerService(
+			RoleFallbackResolver::class . '::payrollOfficer',
+			static function ($c): RoleFallbackResolver {
+				return new RoleFallbackResolver(
+					groupManager: $c->get(IGroupManager::class),
+					logger: $c->get(LoggerInterface::class),
+					primaryGroup: 'shillinq_payroll_officer',
+					fallbackGroup: 'shillinq_administration_treasurer',
+				);
+			}
+		);
+	}//end registerRoleFallbackResolvers()
+
+	/**
+	 * Register the notifiers that render the notifications this app raises.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerNotifiers(IRegistrationContext $context): void {
+		// Compliance-deadline-calendar REQ-CDC-007 — render the
+		// `deadline_reminder` notifications raised by
+		// ComplianceDeadlineCalendarService / DeadlineReminderJob in the
+		// notification centre. Without a registered INotifier the raised
+		// notifications would be discarded at display time.
+		$context->registerNotifierService(DeadlineReminderNotifier::class);
+
+		// REQ-EINV-005 (#1111) — render the rejection notice
+		// PeppolDeliveryStatusListener raises when the Peppol network refuses an
+		// e-invoice. Without a registered INotifier it is discarded at display time.
+		$context->registerNotifierService(EInvoiceNotifier::class);
+
+		// Change inventory-pos-decrement (shillinq#504) — render the
+		// `pos_stock_unmatched_line` notifications PosStockDecrementListener
+		// raises for a POS-sale line that could not be matched to a shillinq
+		// inventory item. Without a registered INotifier those notifications
+		// would be discarded at display time — the reconciliation/audit
+		// surface would be silently unreachable.
+		$context->registerNotifierService(PosStockUnmatchedLineNotifier::class);
+
+		// Change tax-cbcr-and-pillar2-returns task 3.2 — render the notification
+		// GroupScopeAssessmentJob sends when a group's tax scope changes.
+		$context->registerNotifierService(GroupScopeChangedNotifier::class);
+	}//end registerNotifiers()
 
 	/**
 	 * Point the dashboard, health and metrics controllers at the AppHost generics.
