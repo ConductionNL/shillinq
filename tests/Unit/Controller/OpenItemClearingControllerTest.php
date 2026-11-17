@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Controller\OpenItemClearingController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Ledger\OpenItemClearingRefusedException;
@@ -188,7 +189,7 @@ final class OpenItemClearingControllerTest extends TestCase {
 		$this->assertSame(200, $response->getStatus());
 		$group = $response->getData();
 		$this->assertSame(['bookkeeper', 0, 'Spaaropdracht 0903'], [$group['clearedBy'], $group['balanceCents'], $group['reason']]);
-		$this->assertSame($group['id'], $this->store->find(id: 'l-out', schema: 'GLLine')->getObject()['clearingGroupId']);
+		$this->assertSame($group['id'], $this->store->find(id: 'l-out', options: new ObjectFindOptions(schema: 'GLLine'))->getObject()['clearingGroupId']);
 
 	}//end testAMemberClearsThePair()
 
@@ -278,7 +279,7 @@ final class OpenItemClearingControllerTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(['groupId' => 'grp-old', 'releasedLineIds' => ['l-old-a', 'l-old-b']], $response->getData());
-		$this->assertNull($this->store->find(id: 'grp-old', schema: 'ClearingGroup'));
+		$this->assertNull($this->store->find(id: 'grp-old', options: new ObjectFindOptions(schema: 'ClearingGroup')));
 
 	}//end testAMemberUndoesAClearing()
 
@@ -292,7 +293,7 @@ final class OpenItemClearingControllerTest extends TestCase {
 
 		$this->assertSame(404, $this->controller()->undo('grp-old')->getStatus());
 		$this->assertSame(404, $this->controller()->undo('nope')->getStatus());
-		$this->assertNotNull($this->store->find(id: 'grp-old', schema: 'ClearingGroup'));
+		$this->assertNotNull($this->store->find(id: 'grp-old', options: new ObjectFindOptions(schema: 'ClearingGroup')));
 
 	}//end testUndoChecksTheGroupsAdministration()
 
@@ -305,7 +306,7 @@ final class OpenItemClearingControllerTest extends TestCase {
 		$this->member([Seed::ADMIN], false);
 
 		$this->assertSame(403, $this->controller()->undo('grp-old')->getStatus());
-		$this->assertNotNull($this->store->find(id: 'grp-old', schema: 'ClearingGroup'));
+		$this->assertNotNull($this->store->find(id: 'grp-old', options: new ObjectFindOptions(schema: 'ClearingGroup')));
 
 	}//end testUndoWithoutPostingRightsIsForbidden()
 

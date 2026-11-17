@@ -39,7 +39,10 @@ namespace OCA\Shillinq\Service\Ledger;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -297,9 +300,10 @@ class OpenItemClearingService {
 		}
 
 		$this->objectService->deleteObject(
-			uuid: $groupId,
-			register: $this->registerLocation->getRegisterSlug(),
-			schema: 'ClearingGroup',
+			new ObjectDeletion(
+				uuid: $groupId,
+				target: new ObjectFindTarget(register: $this->registerLocation->getRegisterSlug(), schema: 'ClearingGroup')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -339,10 +343,11 @@ class OpenItemClearingService {
 
 			$this->transitions->runAsSystem(objectId: (string)$groupId, action: 'reopen');
 			$this->objectService->patchObject(
-				objectId: (string)$groupId,
-				data: ['reopenedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM)],
-				register: $this->registerLocation->getRegisterSlug(),
-				schema: 'ClearingGroup',
+				new ObjectPatch(
+					objectId: (string)$groupId,
+					data: ['reopenedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM)],
+					target: new ObjectFindTarget(register: $this->registerLocation->getRegisterSlug(), schema: 'ClearingGroup')
+				),
 				_rbac: false,
 				_multitenancy: false
 			);
@@ -650,10 +655,11 @@ class OpenItemClearingService {
 	 */
 	private function patchLine(string $lineId, ?string $groupId): void {
 		$this->objectService->patchObject(
-			objectId: $lineId,
-			data: ['clearingGroupId' => $groupId],
-			register: $this->registerLocation->getRegisterSlug(),
-			schema: 'GLLine',
+			new ObjectPatch(
+				objectId: $lineId,
+				data: ['clearingGroupId' => $groupId],
+				target: new ObjectFindTarget(register: $this->registerLocation->getRegisterSlug(), schema: 'GLLine')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

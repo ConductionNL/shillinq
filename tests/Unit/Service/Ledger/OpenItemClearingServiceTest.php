@@ -22,6 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Ledger;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\Ledger\OpenItemClearingRefusedException;
 use OCA\Shillinq\Service\Ledger\OpenItemClearingService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
@@ -168,7 +172,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 			public function transitionAsSystem(string $id, string $action, string $app, array $data=[]): mixed {
 				$this->test->transitionsRun[] = [$id, $action, $app];
 
-				return $this->store->patchObject(objectId: $id, data: ['state' => 'reopened'], schema: 'ClearingGroup');
+				return $this->store->patchObject(new ObjectPatch(objectId: $id, data: ['state' => 'reopened'], target: new ObjectFindTarget(schema: 'ClearingGroup')));
 			}
 		};
 		$container = $this->createMock(ContainerInterface::class);
@@ -192,7 +196,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 	 * @return array<string, mixed>|null
 	 */
 	private function stored(string $schema, string $id): ?array {
-		return $this->store->find(id: $id, schema: $schema)?->getObject();
+		return $this->store->find(id: $id, options: new ObjectFindOptions(schema: $schema))?->getObject();
 
 	}//end stored()
 
@@ -306,7 +310,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnAccountNotKeptByOpenItemIsRefused(): void {
-		$this->store->saveObject(object: ['id' => 'l-1960b', 'transactionId' => 'tx-in', 'accountNumber' => '1960', 'side' => 'credit', 'amount' => 4750.0], schema: 'GLLine');
+		$this->store->saveObject(object: ['id' => 'l-1960b', 'transactionId' => 'tx-in', 'accountNumber' => '1960', 'side' => 'credit', 'amount' => 4750.0], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLLine')));
 		$this->saved = [];
 		$e = $this->assertRefused(['l-1960', 'l-1960b'], 'Account %1$s is not a balance account kept by open item.');
 		$this->assertSame(['1960'], $e->getParameters());
@@ -360,7 +364,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheAdministrationOfLinesIsTheirTransactions(): void {
-		$this->store->saveObject(object: ['id' => 'l-mislabelled', 'transactionId' => 'tx-foreign', 'accountNumber' => '1950', 'side' => 'debit', 'amount' => 1.0, 'administrationId' => self::ADMIN], schema: 'GLLine');
+		$this->store->saveObject(object: ['id' => 'l-mislabelled', 'transactionId' => 'tx-foreign', 'accountNumber' => '1950', 'side' => 'debit', 'amount' => 1.0, 'administrationId' => self::ADMIN], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLLine')));
 
 		$this->assertSame(self::ADMIN, $this->service()->administrationOfLines(['l-out', 'l-in']));
 		$this->assertSame(self::OTHER_ADMIN, $this->service()->administrationOfLines(['l-mislabelled']));
@@ -389,7 +393,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testUndoLeavesALineOfAnotherGroupAlone(): void {
-		$this->store->patchObject(objectId: 'l-old-b', data: ['clearingGroupId' => 'grp-other'], schema: 'GLLine');
+		$this->store->patchObject(new ObjectPatch(objectId: 'l-old-b', data: ['clearingGroupId' => 'grp-other'], target: new ObjectFindTarget(schema: 'GLLine')));
 		$service = $this->service();
 
 		$result = $service->undo($service->findGroup('grp-old'));
@@ -447,7 +451,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAReopenedGroupIsListed(): void {
-		$this->store->patchObject(objectId: 'grp-old', data: ['state' => 'reopened'], schema: 'ClearingGroup');
+		$this->store->patchObject(new ObjectPatch(objectId: 'grp-old', data: ['state' => 'reopened'], target: new ObjectFindTarget(schema: 'ClearingGroup')));
 		$service = $this->service();
 
 		$overview = $service->overview($service->findAccount('acc-1950'));
@@ -491,16 +495,16 @@ final class OpenItemClearingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testNonPairsAreNotSuggested(): void {
-		$this->store->patchObject(objectId: 'l-in', data: ['description' => 'Something else'], schema: 'GLLine');
-		$this->store->patchObject(objectId: 'tx-in', data: ['sourceReference' => 'Other'], schema: 'GLTransaction');
+		$this->store->patchObject(new ObjectPatch(objectId: 'l-in', data: ['description' => 'Something else'], target: new ObjectFindTarget(schema: 'GLLine')));
+		$this->store->patchObject(new ObjectPatch(objectId: 'tx-in', data: ['sourceReference' => 'Other'], target: new ObjectFindTarget(schema: 'GLTransaction')));
 		$service = $this->service();
 
 		$this->assertSame([], $service->suggest($service->findAccount('acc-1950')), 'No shared reference.');
 
-		$this->store->patchObject(objectId: 'l-in', data: ['description' => 'Spaaropdracht 0903', 'amount' => 4999.99], schema: 'GLLine');
+		$this->store->patchObject(new ObjectPatch(objectId: 'l-in', data: ['description' => 'Spaaropdracht 0903', 'amount' => 4999.99], target: new ObjectFindTarget(schema: 'GLLine')));
 		$this->assertSame([], $this->service()->suggest($service->findAccount('acc-1950')), 'A different amount.');
 
-		$this->store->patchObject(objectId: 'l-in', data: ['amount' => 5000.0, 'side' => 'debit'], schema: 'GLLine');
+		$this->store->patchObject(new ObjectPatch(objectId: 'l-in', data: ['amount' => 5000.0, 'side' => 'debit'], target: new ObjectFindTarget(schema: 'GLLine')));
 		$this->assertSame([], $this->service()->suggest($service->findAccount('acc-1950')), 'The same side.');
 
 	}//end testNonPairsAreNotSuggested()
@@ -511,7 +515,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheSourceReferenceIsASharedReference(): void {
-		$this->store->patchObject(objectId: 'l-in', data: ['description' => 'Arrival'], schema: 'GLLine');
+		$this->store->patchObject(new ObjectPatch(objectId: 'l-in', data: ['description' => 'Arrival'], target: new ObjectFindTarget(schema: 'GLLine')));
 		$service = $this->service();
 
 		$pairs = $service->suggest($service->findAccount('acc-1950'));
@@ -546,7 +550,7 @@ final class OpenItemClearingServiceTest extends TestCase {
 		$this->assertSame([], $this->service()->reopenForTransaction('tx-out'));
 		$this->assertSame([], $this->service()->reopenForTransaction(''));
 
-		$this->store->patchObject(objectId: 'grp-old', data: ['state' => 'reopened'], schema: 'ClearingGroup');
+		$this->store->patchObject(new ObjectPatch(objectId: 'grp-old', data: ['state' => 'reopened'], target: new ObjectFindTarget(schema: 'ClearingGroup')));
 		$this->assertSame([], $this->service()->reopenForTransaction('tx-old'));
 		$this->assertSame([], $this->transitionsRun);
 

@@ -26,6 +26,10 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
 use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\GLLineResultStampListener;
@@ -43,9 +47,6 @@ use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Posting, reversing and booking a source document stamp the lines; the repair step stamps history.
@@ -130,7 +131,7 @@ class GLLineResultStampListenerTest extends TestCase {
 			public function transitionAsSystem(string $id, string $action, string $app, array $data=[]): mixed {
 				$this->runs[] = [$id, $action];
 
-				return $this->store->patchObject(objectId: $id, data: ['state' => 'reopened'], schema: 'ClearingGroup');
+				return $this->store->patchObject(new ObjectPatch(objectId: $id, data: ['state' => 'reopened'], target: new ObjectFindTarget(schema: 'ClearingGroup')));
 			}
 		};
 		$container = $this->createStub(ContainerInterface::class);
@@ -228,16 +229,16 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheReverseTransitionReopensTheClearingGroupOfItsLine(): void {
-		$this->store->saveObject(object: ['id' => 'grp-1', 'accountNumber' => '1950', 'lineIds' => ['l1', 'x'], 'debitCents' => 1, 'creditCents' => 1, 'state' => 'cleared'], schema: 'ClearingGroup');
-		$this->store->patchObject(objectId: 'l1', data: ['clearingGroupId' => 'grp-1'], schema: 'GLLine');
+		$this->store->saveObject(object: ['id' => 'grp-1', 'accountNumber' => '1950', 'lineIds' => ['l1', 'x'], 'debitCents' => 1, 'creditCents' => 1, 'state' => 'cleared'], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'ClearingGroup')));
+		$this->store->patchObject(new ObjectPatch(objectId: 'l1', data: ['clearingGroupId' => 'grp-1'], target: new ObjectFindTarget(schema: 'GLLine')));
 		$this->stamps()->stampTransaction(Seed::TX_SEP);
-		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], schema: 'GLTransaction');
+		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
 		$transaction = $this->entity('GLTransaction', ['id' => Seed::TX_SEP, 'state' => 'reversed']);
 
 		$this->listener()->handle(new ObjectTransitionedEvent(object: $transaction, move: new TransitionMove(action: 'reverse', from: 'posted', to: 'reversed'), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'GLTransaction'), actor: new TransitionActor(userId: 'controller')));
 
 		$this->assertSame([['grp-1', 'reopen']], $this->transitionsRun);
-		$this->assertSame('reopened', $this->store->find(id: 'grp-1', schema: 'ClearingGroup')->getObject()['state']);
+		$this->assertSame('reopened', $this->store->find(id: 'grp-1', options: new ObjectFindOptions(schema: 'ClearingGroup'))->getObject()['state']);
 		$this->assertFalse($this->line('l1')['countsInResult']);
 
 	}//end testTheReverseTransitionReopensTheClearingGroupOfItsLine()
@@ -248,10 +249,10 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFailedReopenIsLoggedAndDoesNotStopTheStamps(): void {
-		$this->store->saveObject(object: ['id' => 'grp-1', 'accountNumber' => '1950', 'lineIds' => ['l1', 'x'], 'state' => 'cleared'], schema: 'ClearingGroup');
-		$this->store->patchObject(objectId: 'l1', data: ['clearingGroupId' => 'grp-1'], schema: 'GLLine');
+		$this->store->saveObject(object: ['id' => 'grp-1', 'accountNumber' => '1950', 'lineIds' => ['l1', 'x'], 'state' => 'cleared'], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'ClearingGroup')));
+		$this->store->patchObject(new ObjectPatch(objectId: 'l1', data: ['clearingGroupId' => 'grp-1'], target: new ObjectFindTarget(schema: 'GLLine')));
 		$this->stamps()->stampTransaction(Seed::TX_SEP);
-		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], schema: 'GLTransaction');
+		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->expects($this->once())->method('warning')->with(
 			'GLLineResultStampListener: clearing groups not reopened',
@@ -261,7 +262,7 @@ class GLLineResultStampListenerTest extends TestCase {
 
 		$this->listener($logger, false)->handle(new ObjectTransitionedEvent(object: $transaction, move: new TransitionMove(action: 'reverse', from: 'posted', to: 'reversed'), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'GLTransaction'), actor: new TransitionActor(userId: 'controller')));
 
-		$this->assertSame('cleared', $this->store->find(id: 'grp-1', schema: 'ClearingGroup')->getObject()['state']);
+		$this->assertSame('cleared', $this->store->find(id: 'grp-1', options: new ObjectFindOptions(schema: 'ClearingGroup'))->getObject()['state']);
 		$this->assertFalse($this->line('l1')['countsInResult']);
 
 	}//end testAFailedReopenIsLoggedAndDoesNotStopTheStamps()
