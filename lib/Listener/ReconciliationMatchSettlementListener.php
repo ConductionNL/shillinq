@@ -75,6 +75,18 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 			return;
 		}
 
+		$this->settleConfirmedMatch(event: $event);
+
+	}//end handle()
+
+	/**
+	 * Settle a ReconciliationMatch moved by the confirm action; a failure is logged, never thrown.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return void
+	 */
+	private function settleConfirmedMatch(ObjectTransitionedEvent $event): void {
 		if ($event->getAction() !== 'confirm') {
 			return;
 		}
@@ -85,6 +97,18 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 			return;
 		}
 
+		$this->settle(event: $event);
+
+	}//end settleConfirmedMatch()
+
+	/**
+	 * Settle the event's match object; a failure is logged, never thrown.
+	 *
+	 * @param ObjectTransitionedEvent $event The confirm transition of a ReconciliationMatch.
+	 *
+	 * @return void
+	 */
+	private function settle(ObjectTransitionedEvent $event): void {
 		try {
 			$match = $event->getObject()->getObject();
 			if (is_array($match) === false) {
@@ -103,5 +127,5 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 			);
 		}
 
-	}//end handle()
+	}//end settle()
 }//end class

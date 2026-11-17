@@ -58,7 +58,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -413,7 +413,17 @@ class InventoryPostingGuard {
 			return null;
 		}
 
-		$row = $matches[0];
+		return self::configPayload(row: $matches[0]);
+	}//end resolveActiveConfig()
+
+	/**
+	 * The payload of a findAll() row: the array itself, or a serialisable entity's array.
+	 *
+	 * @param mixed $row One InventoryGLConfig row.
+	 *
+	 * @return array<string,mixed>|null The payload, or null when the row is unusable.
+	 */
+	private static function configPayload(mixed $row): array|null {
 		if (is_array($row) === true) {
 			return $row;
 		}
@@ -426,7 +436,7 @@ class InventoryPostingGuard {
 		}
 
 		return null;
-	}//end resolveActiveConfig()
+	}//end configPayload()
 
 	/**
 	 * Extract the inventory delta from the proposed valuation. Accepts
@@ -458,11 +468,6 @@ class InventoryPostingGuard {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

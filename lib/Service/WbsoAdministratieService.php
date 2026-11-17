@@ -36,8 +36,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\WbsoAdministratieServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 
 /**
@@ -142,16 +142,7 @@ class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 
 		$byDecision = [];
 		foreach ($entries as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$state = (string)($entry['state'] ?? '');
-			if ($state !== 'confirmed' && $state !== 'locked') {
-				continue;
-			}
-
-			$decisionNumber = (string)($entry['decisionNumber'] ?? '');
+			$decisionNumber = self::countedDecisionNumber(entry: $entry);
 			if ($decisionNumber === '') {
 				continue;
 			}
@@ -170,6 +161,26 @@ class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 
 		return $byDecision;
 	}//end realisedHoursByBeschikking()
+
+	/**
+	 * The decision number of a confirmed or locked hours entry, or '' when the entry does not count.
+	 *
+	 * @param mixed $entry The SoUurregistratie row.
+	 *
+	 * @return string
+	 */
+	private static function countedDecisionNumber(mixed $entry): string {
+		if (is_array($entry) === false) {
+			return '';
+		}
+
+		$state = (string)($entry['state'] ?? '');
+		if ($state !== 'confirmed' && $state !== 'locked') {
+			return '';
+		}
+
+		return (string)($entry['decisionNumber'] ?? '');
+	}//end countedDecisionNumber()
 
 	/**
 	 * Fetch the administration's WbsoBeschikking records keyed by beschikkingNumber.
@@ -205,12 +216,7 @@ class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters

@@ -37,11 +37,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\EInvoice;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\IntegriqCloudEventPublisher;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
+use OCA\Shillinq\Service\RecordStoreLog;
+use OCA\Shillinq\Service\RegisterBinding;
+use OCA\Shillinq\Service\SchemaRecordStore;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -382,7 +385,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 		$invoice['payloadFileUri']           = $send->payloadFileUri;
 		$invoice['buyerPeppolParticipantId'] = $send->participantId;
 
-		$this->saveObject(schema: 'ARInvoice', object: $invoice);
+		$this->records()->saveObject(schema: 'ARInvoice', object: $invoice);
 
 		return [
 			'deliveryStatus' => 'queued',
@@ -483,37 +486,11 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	}//end findInvoice()
 
 	/**
-	 * Persist an object via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object payload.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'EInvoiceService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
 	/**
 	 * Fetch all matching records via the real ObjectService API.
+	 *
+	 * Kept beside the shared record store because its findAll() keeps only
+	 * array rows, and OpenRegister answers ObjectEntity instances.
 	 *
 	 * @param string $schema OR schema slug.
 	 * @param array<string,mixed> $filters Equality filters.
@@ -554,11 +531,19 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
+
+	/**
+	 * The register records of this service.
+	 *
+	 * @return SchemaRecordStore The store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'EInvoiceService')
+		);
+
+	}//end records()
 }//end class

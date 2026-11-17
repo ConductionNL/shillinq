@@ -54,6 +54,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCP\DB\Exception;
+use OCP\DB\IPreparedStatement;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -122,54 +123,101 @@ class RenameDutchColumns implements IRepairStep {
 			return;
 		}
 
-		$renamed = 0;
-		$copied = 0;
-		$refused = 0;
+		$counts = ['renamed' => 0, 'copied' => 0, 'refused' => 0, 'none' => 0];
 
 		foreach ($tables as $table) {
 			$columns = $this->columnsOf(table: $table);
-			$qTable = $this->quote(identifier: $table);
 
 			foreach (self::COLUMN_MAP as $old => $new) {
-				if (in_array($old, $columns, true) === false) {
-					continue;
-				}
-
-				if ($this->hasCollision(columns: $columns, target: $new) === true) {
-					$this->logger->warning(
-						'RenameDutchColumns: two sources target one destination; migrating neither.',
-						['table' => $table, 'source' => $old, 'destination' => $new]
-					);
-					$refused++;
-					continue;
-				}
-
-				if (in_array($new, $columns, true) === false) {
-					$sql = 'ALTER TABLE ' . $qTable . ' RENAME COLUMN '
-						. $this->quote(identifier: $old) . ' TO ' . $this->quote(identifier: $new);
-					if ($this->exec(sql: $sql) === true) {
-						$renamed++;
-					}
-
-					continue;
-				}
-
-				$qNew = $this->quote(identifier: $new);
-				$qOld = $this->quote(identifier: $old);
-				$sql = 'UPDATE ' . $qTable . ' SET ' . $qNew . ' = ' . $qOld
-					. ' WHERE ' . $qNew . ' IS NULL AND ' . $qOld . ' IS NOT NULL';
-				if ($this->exec(sql: $sql) === true) {
-					$copied++;
-				}
-			}//end foreach
-		}//end foreach
+				$outcome = $this->migrateColumn(table: $table, columns: $columns, old: $old, new: $new);
+				$counts[$outcome]++;
+			}
+		}
 
 		$output->info(
-			'RenameDutchColumns: ' . $renamed . ' renamed, ' . $copied . ' back-filled, '
-			. $refused . ' refused, across ' . count($tables) . ' shard table(s).'
+			'RenameDutchColumns: ' . $counts['renamed'] . ' renamed, ' . $counts['copied'] . ' back-filled, '
+			. $counts['refused'] . ' refused, across ' . count($tables) . ' shard table(s).'
 		);
 
 	}//end run()
+
+	/**
+	 * Move one mapped column of one table: rename it, back-fill the existing destination, or refuse a collision.
+	 *
+	 * @param string             $table   The shard table.
+	 * @param array<int, string> $columns Column names present in the table.
+	 * @param string             $old     The Dutch source column.
+	 * @param string             $new     The English destination column.
+	 *
+	 * @return string One of `renamed`, `copied`, `refused` or `none` (absent source, or a failed statement).
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private function migrateColumn(string $table, array $columns, string $old, string $new): string {
+		if (in_array($old, $columns, true) === false) {
+			return 'none';
+		}
+
+		if ($this->hasCollision(columns: $columns, target: $new) === true) {
+			$this->logger->warning(
+				'RenameDutchColumns: two sources target one destination; migrating neither.',
+				['table' => $table, 'source' => $old, 'destination' => $new]
+			);
+			return 'refused';
+		}
+
+		$qTable = $this->quote(identifier: $table);
+
+		if (in_array($new, $columns, true) === false) {
+			return $this->renameColumn(qTable: $qTable, old: $old, new: $new);
+		}
+
+		return $this->backfillColumn(qTable: $qTable, old: $old, new: $new);
+	}//end migrateColumn()
+
+	/**
+	 * Rename the source column to the destination.
+	 *
+	 * @param string $qTable The quoted shard table.
+	 * @param string $old    The Dutch source column.
+	 * @param string $new    The English destination column.
+	 *
+	 * @return string `renamed`, or `none` when the statement failed.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private function renameColumn(string $qTable, string $old, string $new): string {
+		$sql = 'ALTER TABLE ' . $qTable . ' RENAME COLUMN '
+			. $this->quote(identifier: $old) . ' TO ' . $this->quote(identifier: $new);
+		if ($this->exec(sql: $sql) === true) {
+			return 'renamed';
+		}
+
+		return 'none';
+	}//end renameColumn()
+
+	/**
+	 * Copy the source column into the empty cells of the existing destination.
+	 *
+	 * @param string $qTable The quoted shard table.
+	 * @param string $old    The Dutch source column.
+	 * @param string $new    The English destination column.
+	 *
+	 * @return string `copied`, or `none` when the statement failed.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private function backfillColumn(string $qTable, string $old, string $new): string {
+		$qNew = $this->quote(identifier: $new);
+		$qOld = $this->quote(identifier: $old);
+		$sql = 'UPDATE ' . $qTable . ' SET ' . $qNew . ' = ' . $qOld
+			. ' WHERE ' . $qNew . ' IS NULL AND ' . $qOld . ' IS NOT NULL';
+		if ($this->exec(sql: $sql) === true) {
+			return 'copied';
+		}
+
+		return 'none';
+	}//end backfillColumn()
 
 	/**
 	 * Whether another mapped source already targets the same destination here.
@@ -203,8 +251,55 @@ class RenameDutchColumns implements IRepairStep {
 	 * @return array<int, string>
 	 */
 	private function shardTables(): array {
+		$ids = $this->registerIds();
+		if ($ids === []) {
+			return [];
+		}
+
+		$stmt = $this->openRegisterTables();
+		if ($stmt === null) {
+			return [];
+		}
+
+		$wanted = $this->shardMarkers(ids: $ids);
+
+		$tables = [];
+		while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
+			$name = (string)($row['table_name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
+
+			array_push($tables, ...$this->matchingTables(name: $name, wanted: $wanted));
+		}
+
+		return array_values(array_unique($tables));
+	}//end shardTables()
+
+	/**
+	 * The `openregister_table_<registerId>_` marker of each register.
+	 *
+	 * @param array<int, mixed> $ids The register ids.
+	 *
+	 * @return array<int, string>
+	 */
+	private function shardMarkers(array $ids): array {
+		$wanted = [];
+		foreach ($ids as $id) {
+			$wanted[] = 'openregister_table_' . ((int)$id) . '_';
+		}
+
+		return $wanted;
+	}//end shardMarkers()
+
+	/**
+	 * The ids of the registers whose slug starts with the shillinq prefix.
+	 *
+	 * @return array<int, mixed> The ids, or none (logged) when they cannot be read.
+	 */
+	private function registerIds(): array {
 		try {
-			$ids = $this->db->executeQuery(
+			return $this->db->executeQuery(
 				'SELECT id FROM `*PREFIX*openregister_registers` WHERE slug LIKE ?',
 				[self::REGISTER_SLUG_PREFIX . '%']
 			)->fetchAll(\PDO::FETCH_COLUMN);
@@ -215,11 +310,14 @@ class RenameDutchColumns implements IRepairStep {
 			);
 			return [];
 		}
+	}//end registerIds()
 
-		if ($ids === []) {
-			return [];
-		}
-
+	/**
+	 * An executed statement listing every OpenRegister table, or null (logged) when tables cannot be listed.
+	 *
+	 * @return IPreparedStatement|null
+	 */
+	private function openRegisterTables(): IPreparedStatement|null {
 		try {
 			$stmt = $this->db->prepare(
 				'SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern'
@@ -231,31 +329,31 @@ class RenameDutchColumns implements IRepairStep {
 				'RenameDutchColumns: could not list tables; skipping.',
 				['exception' => $e->getMessage()]
 			);
-			return [];
+			return null;
 		}
 
-		$wanted = [];
-		foreach ($ids as $id) {
-			$wanted[] = 'openregister_table_' . ((int)$id) . '_';
-		}
+		return $stmt;
+	}//end openRegisterTables()
 
+	/**
+	 * The table name once per shard marker it carries, followed only by the shard's digits.
+	 *
+	 * @param string             $name   A table name.
+	 * @param array<int, string> $wanted The `openregister_table_<registerId>_` markers.
+	 *
+	 * @return array<int, string>
+	 */
+	private function matchingTables(string $name, array $wanted): array {
 		$tables = [];
-		while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
-			$name = (string)($row['table_name'] ?? '');
-			if ($name === '') {
-				continue;
-			}
-
-			foreach ($wanted as $marker) {
-				$offset = strpos($name, $marker);
-				if ($offset !== false && ctype_digit(substr($name, ($offset + strlen($marker)))) === true) {
-					$tables[] = $name;
-				}
+		foreach ($wanted as $marker) {
+			$offset = strpos($name, $marker);
+			if ($offset !== false && ctype_digit(substr($name, ($offset + strlen($marker)))) === true) {
+				$tables[] = $name;
 			}
 		}
 
-		return array_values(array_unique($tables));
-	}//end shardTables()
+		return $tables;
+	}//end matchingTables()
 
 	/**
 	 * List the column names of a table.

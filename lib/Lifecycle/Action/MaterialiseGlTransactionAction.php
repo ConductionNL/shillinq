@@ -71,12 +71,17 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -90,13 +95,6 @@ use RuntimeException;
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
 class MaterialiseGlTransactionAction implements LifecycleActionInterface, MaterialiseGlTransactionActionInterface {
-
-	/**
-	 * App-config key: receivables control account (RGS 3.5 MKB 1100 Debiteuren).
-	 *
-	 * @var string
-	 */
-	public const CFG_AR_CONTROL_ACCOUNT = 'ledger_ar_control_account';
 
 	/**
 	 * App-config key: revenue account (RGS 3.5 MKB 8000 Netto-omzet).
@@ -152,6 +150,13 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @var list<string>
 	 */
 	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction'];
+
+	/**
+	 * The dimension codes a source line hands on to its GL line, under the GL line's own names.
+	 *
+	 * @var list<string>
+	 */
+	private const LINE_DIMENSIONS = ['costCenterCode', 'costCarrierCode', 'projectCode'];
 
 	/**
 	 * The tariff, box and VAT split, built on first use.
@@ -212,20 +217,20 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	/**
 	 * Book the transitioning source into the ledger.
 	 *
-	 * @param array<string,mixed> $objectData The source after its state moved.
-	 * @param array<string,mixed> $previousData The source before the transition.
-	 * @param array<string,mixed> $parameters The declared actionParameters (`sourceSchema`, `keepBalanced`).
-	 * @param string $actionName The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the source after its state moved. Its
+	 *                                        parameters are the declared actionParameters (`sourceSchema`,
+	 *                                        `keepBalanced`).
 	 *
 	 * @return array<string,mixed> The source with `glTransactionId` set.
 	 *
 	 * @throws RuntimeException When the source schema has no mapper, the posting does not balance, or a write fails.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		$sourceSchema = (string)($parameters['sourceSchema'] ?? '');
 		if (in_array($sourceSchema, self::SUPPORTED_SOURCES, true) === false) {
 			throw new RuntimeException(
@@ -308,9 +313,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				'cents' => $this->cents(amount: ($line['amount'] ?? 0)),
 				'description' => (string)($line['description'] ?? ($entry['description'] ?? '')),
 			];
-			// The line's cost centre and project reach the GL line
-			// (ledger-booking-rules: restrictions and segment reports read them).
-			foreach (['costCenterCode', 'projectCode'] as $dimension) {
+			// The line's cost centre, cost carrier and project reach the GL
+			// line (ledger-booking-rules: restrictions and segment reports read
+			// them; ledger-journal-line-dimensions REQ-LJD-001).
+			foreach (self::LINE_DIMENSIONS as $dimension) {
 				if ((string)($line[$dimension] ?? '') !== '') {
 					$mapped[$dimension] = (string)$line[$dimension];
 				}
@@ -925,7 +931,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	private function write(array $header, array $lines, string $sourceId): string {
 		$register = $this->register();
 		$transactionId = $this->idOf(
-			saved: $this->objectService->saveObject(object: $header, register: $register, schema: 'GLTransaction')->jsonSerialize()
+			saved: $this->objectService->saveObject(
+				object: $header,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'GLTransaction'))
+			)->jsonSerialize()
 		);
 		if ($transactionId === '') {
 			throw new RuntimeException(sprintf('The ledger transaction for %s was not saved.', (string)$header['sourceReference']));
@@ -945,7 +954,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 					'administrationId' => (string)$header['administrationId'],
 					'description' => (string)($line['description'] ?? ''),
 				];
-				foreach (['costCenterCode', 'projectCode'] as $dimension) {
+				foreach (self::LINE_DIMENSIONS as $dimension) {
 					if (isset($line[$dimension]) === true) {
 						$row[$dimension] = (string)$line[$dimension];
 					}
@@ -965,7 +974,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				}
 
 				$written[] = $this->idOf(
-					saved: $this->objectService->saveObject(object: $row, register: $register, schema: 'GLLine')->jsonSerialize()
+					saved: $this->objectService->saveObject(
+						object: $row,
+						options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'GLLine'))
+					)->jsonSerialize()
 				);
 			}//end foreach
 		} catch (\Throwable $e) {
@@ -992,14 +1004,18 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$register = $this->register();
 		foreach (array_filter($lineIds) as $lineId) {
 			try {
-				$this->objectService->deleteObject(uuid: $lineId, register: $register, schema: 'GLLine');
+				$this->objectService->deleteObject(
+					new ObjectDeletion(uuid: $lineId, target: new ObjectFindTarget(register: $register, schema: 'GLLine'))
+				);
 			} catch (\Throwable $e) {
 				$this->logger->error('MaterialiseGlTransactionAction: could not withdraw GL line ' . $lineId, ['exception' => $e->getMessage()]);
 			}
 		}
 
 		try {
-			$this->objectService->deleteObject(uuid: $transactionId, register: $register, schema: 'GLTransaction');
+			$this->objectService->deleteObject(
+				new ObjectDeletion(uuid: $transactionId, target: new ObjectFindTarget(register: $register, schema: 'GLTransaction'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error('MaterialiseGlTransactionAction: could not withdraw GL transaction ' . $transactionId, ['exception' => $e->getMessage()]);
 		}
@@ -1119,11 +1135,6 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

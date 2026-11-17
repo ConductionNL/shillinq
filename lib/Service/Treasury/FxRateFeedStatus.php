@@ -27,8 +27,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Treasury;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -40,7 +41,7 @@ use Throwable;
  *
  * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
  */
-class FxRateFeedStatus {
+class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	/**
 	 * How many FxRate rows one status read looks at.
 	 *
@@ -105,51 +106,87 @@ class FxRateFeedStatus {
 	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	public function newestPerPair(): array {
-		try {
-			$rows = $this->objectService->setRegister($this->register())->setSchema('FxRate')->findAll(['limit' => self::ROW_LIMIT]);
-		} catch (Throwable $e) {
-			$this->logger->warning('Shillinq FxRateFeedStatus: FxRate lookup failed', ['exception' => $e->getMessage()]);
-			return [];
-		}
-
 		$byPair = [];
-		foreach ($rows as $row) {
-			$record = ObjectIdentifier::recordWithId(candidate: $row);
-			if ($record === null) {
+		foreach ($this->fxRateRows() as $row) {
+			$pair = $this->ratePair(row: $row);
+			if ($pair === null) {
 				continue;
 			}
 
-			$from = strtoupper(trim((string)($record['transactionCurrency'] ?? '')));
-			$to   = strtoupper(trim((string)($record['baseCurrency'] ?? '')));
-			$date = substr((string)($record['date'] ?? ''), 0, 10);
-			if ($from === '' || $to === '' || preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) !== 1) {
-				continue;
-			}
-
-			$key = $from . '/' . $to;
-			if (isset($byPair[$key]) === false || $date > $byPair[$key]['newestDate']) {
-				$byPair[$key] = ['transactionCurrency' => $from, 'baseCurrency' => $to, 'newestDate' => $date];
+			$key = $pair['transactionCurrency'] . '/' . $pair['baseCurrency'];
+			if (isset($byPair[$key]) === false || $pair['newestDate'] > $byPair[$key]['newestDate']) {
+				$byPair[$key] = $pair;
 			}
 		}
 
 		$pairs = array_values($byPair);
-		usort(
-			$pairs,
-			static function (array $left, array $right): int {
-				if ($left['newestDate'] !== $right['newestDate']) {
-					return strcmp($right['newestDate'], $left['newestDate']);
-				}
-
-				return strcmp(
-					$left['transactionCurrency'] . $left['baseCurrency'],
-					$right['transactionCurrency'] . $right['baseCurrency']
-				);
-			}
-		);
+		usort($pairs, self::compareByNewest(...));
 
 		return $pairs;
 
 	}//end newestPerPair()
+
+	/**
+	 * Order pairs newest date first, then by currency pair.
+	 *
+	 * @param array{transactionCurrency:string,baseCurrency:string,newestDate:string} $left  One pair.
+	 * @param array{transactionCurrency:string,baseCurrency:string,newestDate:string} $right The other pair.
+	 *
+	 * @return int The usort comparison.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 */
+	private static function compareByNewest(array $left, array $right): int {
+		if ($left['newestDate'] !== $right['newestDate']) {
+			return strcmp($right['newestDate'], $left['newestDate']);
+		}
+
+		return strcmp(
+			$left['transactionCurrency'] . $left['baseCurrency'],
+			$right['transactionCurrency'] . $right['baseCurrency']
+		);
+	}//end compareByNewest()
+
+	/**
+	 * The FxRate rows the user may read, or none (logged) when the lookup fails.
+	 *
+	 * @return iterable<mixed>
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 */
+	private function fxRateRows(): iterable {
+		try {
+			return $this->objectService->setRegister($this->register())->setSchema('FxRate')->findAll(['limit' => self::ROW_LIMIT]);
+		} catch (Throwable $e) {
+			$this->logger->warning('Shillinq FxRateFeedStatus: FxRate lookup failed', ['exception' => $e->getMessage()]);
+			return [];
+		}
+	}//end fxRateRows()
+
+	/**
+	 * The currency pair and date of one rate row, or null when it lacks a pair or a valid date.
+	 *
+	 * @param mixed $row One FxRate row.
+	 *
+	 * @return array{transactionCurrency:string,baseCurrency:string,newestDate:string}|null
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 */
+	private function ratePair(mixed $row): array|null {
+		$record = ObjectIdentifier::recordWithId(candidate: $row);
+		if ($record === null) {
+			return null;
+		}
+
+		$from = strtoupper(trim((string)($record['transactionCurrency'] ?? '')));
+		$to   = strtoupper(trim((string)($record['baseCurrency'] ?? '')));
+		$date = substr((string)($record['date'] ?? ''), 0, 10);
+		if ($from === '' || $to === '' || preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) !== 1) {
+			return null;
+		}
+
+		return ['transactionCurrency' => $from, 'baseCurrency' => $to, 'newestDate' => $date];
+	}//end ratePair()
 
 	/**
 	 * The "newest rate" line: every pair with its newest date.
@@ -197,12 +234,7 @@ class FxRateFeedStatus {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 
 	}//end register()
 }//end class

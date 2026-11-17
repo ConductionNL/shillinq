@@ -212,35 +212,65 @@ class QuoteOrderInvoiceGuard {
 		return $this->evaluate(
 			context: 'confirm-delivery',
 			id: $deliveryId,
-			check: function () use ($deliveryId, $object): bool {
-				$delivery = $this->resolveObject(schema: 'Delivery', id: $deliveryId, object: $object);
-				if ($delivery === null || $this->deliveryLinesComplete(delivery: $delivery) === false) {
-					return false;
-				}
-
-				$order = $this->resolveObject(
-					schema: 'SalesOrder',
-					id: (string)($delivery['sourceOrderReference'] ?? ''),
-					object: null
-				);
-				$customer = trim((string)($order['customerReference'] ?? ''));
-				if ($order === null || $customer === '') {
-					return false;
-				}
-
-				if ($this->customerIsBlocked(
-					customerReference: $customer,
-					blockingSeverities: ['block-delivery']
-				) === true
-				) {
-					return false;
-				}
-
-				return $this->deliveryStockAvailable(delivery: $delivery);
-			}
+			check: fn (): bool => $this->deliveryConfirmable(deliveryId: $deliveryId, object: $object)
 		);
 
 	}//end canConfirmDelivery()
+
+	/**
+	 * Whether the delivery is complete, its order's customer is known and not delivery-blocked, and the stock is there.
+	 *
+	 * @param string                   $deliveryId The Delivery id.
+	 * @param array<string,mixed>|null $object     The delivery being transitioned.
+	 *
+	 * @return bool True when the delivery may be confirmed.
+	 *
+	 * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
+	 */
+	private function deliveryConfirmable(string $deliveryId, array|null $object): bool {
+		$delivery = $this->resolveObject(schema: 'Delivery', id: $deliveryId, object: $object);
+		if ($delivery === null || $this->deliveryLinesComplete(delivery: $delivery) === false) {
+			return false;
+		}
+
+		$customer = $this->deliveryCustomer(delivery: $delivery);
+		if ($customer === '') {
+			return false;
+		}
+
+		if ($this->customerIsBlocked(
+			customerReference: $customer,
+			blockingSeverities: ['block-delivery']
+		) === true
+		) {
+			return false;
+		}
+
+		return $this->deliveryStockAvailable(delivery: $delivery);
+	}//end deliveryConfirmable()
+
+	/**
+	 * The customer of the delivery's sales order.
+	 *
+	 * @param array<string,mixed> $delivery The Delivery.
+	 *
+	 * @return string The customer reference, or '' when the order or its customer is missing.
+	 *
+	 * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
+	 */
+	private function deliveryCustomer(array $delivery): string {
+		$order = $this->resolveObject(
+			schema: 'SalesOrder',
+			id: (string)($delivery['sourceOrderReference'] ?? ''),
+			object: null
+		);
+		$customer = trim((string)($order['customerReference'] ?? ''));
+		if ($order === null) {
+			return '';
+		}
+
+		return $customer;
+	}//end deliveryCustomer()
 
 	/**
 	 * Returns true iff a Delivery may be cancelled (draft|confirmed -> cancelled).

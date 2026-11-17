@@ -194,15 +194,15 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function createGRN(string $administrationId, array $payload): array {
-		$this->assertAccess(administrationId: $administrationId);
-		$receivedBy = $this->requireSessionUser();
+		$this->scope()->assertAccess(administrationId: $administrationId);
+		$receivedBy = $this->scope()->requireSessionUser();
 
-		$poIds = $this->normalisePoIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
+		$poIds = $this->input()->poIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
 		if ($poIds === []) {
 			throw new RuntimeException('At least one purchase order id is required');
 		}
 
-		$this->assertPurchaseOrdersAccessible(administrationId: $administrationId, poIds: $poIds);
+		$this->scope()->assertPurchaseOrdersAccessible(administrationId: $administrationId, poIds: $poIds);
 
 		$grnNumber = $this->generateGrnNumber(administrationId: $administrationId);
 		$receivedAt = trim((string)($payload['receivedAt'] ?? $payload['received_at'] ?? ''));
@@ -217,10 +217,10 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 			'receivedBy' => $receivedBy,
 			'deliveryNoteReference' => trim((string)($payload['deliveryNoteReference'] ?? $payload['delivery_note_ref'] ?? '')),
 			'carrier' => trim((string)($payload['carrier'] ?? '')),
-			'lotNumbers' => $this->stringArray(input: ($payload['lotNumbers'] ?? [])),
-			'serialNumbers' => $this->stringArray(input: ($payload['serialNumbers'] ?? [])),
+			'lotNumbers' => $this->input()->strings(input: ($payload['lotNumbers'] ?? [])),
+			'serialNumbers' => $this->input()->strings(input: ($payload['serialNumbers'] ?? [])),
 			'temperatureLog' => $this->temperatureLog(input: ($payload['temperatureLog'] ?? [])),
-			'photos' => $this->stringArray(input: ($payload['photos'] ?? [])),
+			'photos' => $this->input()->strings(input: ($payload['photos'] ?? [])),
 			'costCenter' => trim((string)($payload['costCenter'] ?? '')),
 			'projectCode' => trim((string)($payload['projectCode'] ?? '')),
 			'statusCode' => 'received',
@@ -253,65 +253,25 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function addGRNLine(string $administrationId, string $grnId, array $payload): array {
-		$this->assertAccess(administrationId: $administrationId);
-		$inspector = $this->requireSessionUser();
+		$this->scope()->assertAccess(administrationId: $administrationId);
+		$inspector = $this->scope()->requireSessionUser();
 
-		$grn = $this->records()->findOne(
-			schema: self::SCHEMA_GRN,
-			filters: [
-				'id' => $grnId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($grn === null) {
-			throw new RuntimeException('Goods receipt note not found');
-		}
+		$grn = $this->requireGrn(administrationId: $administrationId, grnId: $grnId);
 
-		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
-		if ($poLineId === '') {
-			throw new RuntimeException('poLineId is required');
-		}
+		$poLineId = $this->requireGrnPoLineId(administrationId: $administrationId, grn: $grn, payload: $payload);
 
-		$poLine = $this->records()->findOne(
-			schema: self::SCHEMA_PO_LINE,
-			filters: [
-				'id' => $poLineId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($poLine === null) {
-			throw new RuntimeException('Purchase order line not found');
-		}
-
-		// Cross-validate: the PO line MUST belong to one of the GRN's po_ids.
-		$parentPoId = (string)($poLine['poId'] ?? '');
-		$grnPoIds = $this->stringArray(input: ($grn['poIds'] ?? []));
-		if ($parentPoId === '' || in_array($parentPoId, $grnPoIds, true) === false) {
-			throw new RuntimeException('Purchase order line does not belong to this GRN');
-		}
-
-		$quantityReceived = $this->normaliseQuantity(value: ($payload['quantityReceived'] ?? $payload['quantity_received'] ?? 0));
-		$quantityAccepted = $this->normaliseQuantity(value: ($payload['quantityAccepted'] ?? $payload['quantity_accepted'] ?? $quantityReceived));
-		$quantityRejected = $this->normaliseQuantity(value: ($payload['quantityRejected'] ?? $payload['quantity_rejected'] ?? 0));
+		$quantityReceived = $this->input()->quantity(value: ($payload['quantityReceived'] ?? $payload['quantity_received'] ?? 0));
+		$quantityAccepted = $this->input()->quantity(value: ($payload['quantityAccepted'] ?? $payload['quantity_accepted'] ?? $quantityReceived));
+		$quantityRejected = $this->input()->quantity(value: ($payload['quantityRejected'] ?? $payload['quantity_rejected'] ?? 0));
 		$rejectionReason = trim((string)($payload['rejectionReason'] ?? $payload['rejection_reason'] ?? ''));
 		$batchReference = trim((string)($payload['batchReference'] ?? $payload['batch_ref'] ?? ''));
 
-		if ($quantityReceived <= 0.0) {
-			throw new RuntimeException('quantityReceived must be positive');
-		}
-
-		// Accepted + rejected may NOT exceed received (integer-thousandths
-		// arithmetic so rounding noise never creeps in).
-		$receivedThousandths = $this->thousandths(value: $quantityReceived);
-		$acceptedThousandths = $this->thousandths(value: $quantityAccepted);
-		$rejectedThousandths = $this->thousandths(value: $quantityRejected);
-		if (($acceptedThousandths + $rejectedThousandths) > $receivedThousandths) {
-			throw new RuntimeException('quantityAccepted + quantityRejected may not exceed quantityReceived');
-		}
-
-		if ($rejectedThousandths > 0 && $rejectionReason === '') {
-			throw new RuntimeException('rejectionReason is required when quantityRejected > 0');
-		}
+		$rejectedThousandths = $this->validateGrnLineQuantities(
+			quantityReceived: $quantityReceived,
+			quantityAccepted: $quantityAccepted,
+			quantityRejected: $quantityRejected,
+			rejectionReason: $rejectionReason
+		);
 
 		$grnRecordId = (string)($grn['id'] ?? ($grn['@self']['id'] ?? $grnId));
 
@@ -343,6 +303,113 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	}//end addGRNLine()
 
 	/**
+	 * Load a GRN within the administration.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $grnId Parent GRN id.
+	 *
+	 * @return array<string,mixed> The GRN record.
+	 *
+	 * @throws \RuntimeException When the GRN is missing.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
+	 */
+	private function requireGrn(string $administrationId, string $grnId): array {
+		$grn = $this->records()->findOne(
+			schema: self::SCHEMA_GRN,
+			filters: [
+				'id' => $grnId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($grn === null) {
+			throw new RuntimeException('Goods receipt note not found');
+		}
+
+		return $grn;
+	}//end requireGrn()
+
+	/**
+	 * Resolve the payload's PO line id and require that line to belong to one of the GRN's po_ids.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $grn The parent GRN record.
+	 * @param array<string,mixed> $payload The GRN line payload.
+	 *
+	 * @return string The PO line id.
+	 *
+	 * @throws \RuntimeException When the id is missing, the line is missing, or it belongs elsewhere.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
+	 */
+	private function requireGrnPoLineId(string $administrationId, array $grn, array $payload): string {
+		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
+		if ($poLineId === '') {
+			throw new RuntimeException('poLineId is required');
+		}
+
+		$poLine = $this->records()->findOne(
+			schema: self::SCHEMA_PO_LINE,
+			filters: [
+				'id' => $poLineId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($poLine === null) {
+			throw new RuntimeException('Purchase order line not found');
+		}
+
+		// Cross-validate: the PO line MUST belong to one of the GRN's po_ids.
+		$parentPoId = (string)($poLine['poId'] ?? '');
+		$grnPoIds = $this->input()->strings(input: ($grn['poIds'] ?? []));
+		if ($parentPoId === '' || in_array($parentPoId, $grnPoIds, true) === false) {
+			throw new RuntimeException('Purchase order line does not belong to this GRN');
+		}
+
+		return $poLineId;
+	}//end requireGrnPoLineId()
+
+	/**
+	 * Validate the received/accepted/rejected quantities of a GRN line.
+	 *
+	 * @param float $quantityReceived Quantity received.
+	 * @param float $quantityAccepted Quantity accepted.
+	 * @param float $quantityRejected Quantity rejected.
+	 * @param string $rejectionReason Rejection reason.
+	 *
+	 * @return int The rejected quantity in thousandths.
+	 *
+	 * @throws \RuntimeException When validation fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
+	 */
+	private function validateGrnLineQuantities(
+		float $quantityReceived,
+		float $quantityAccepted,
+		float $quantityRejected,
+		string $rejectionReason
+	): int {
+		if ($quantityReceived <= 0.0) {
+			throw new RuntimeException('quantityReceived must be positive');
+		}
+
+		// Accepted + rejected may NOT exceed received (integer-thousandths
+		// arithmetic so rounding noise never creeps in).
+		$receivedThousandths = $this->thousandths(value: $quantityReceived);
+		$acceptedThousandths = $this->thousandths(value: $quantityAccepted);
+		$rejectedThousandths = $this->thousandths(value: $quantityRejected);
+		if (($acceptedThousandths + $rejectedThousandths) > $receivedThousandths) {
+			throw new RuntimeException('quantityAccepted + quantityRejected may not exceed quantityReceived');
+		}
+
+		if ($rejectedThousandths > 0 && $rejectionReason === '') {
+			throw new RuntimeException('rejectionReason is required when quantityRejected > 0');
+		}
+
+		return $rejectedThousandths;
+	}//end validateGrnLineQuantities()
+
+	/**
 	 * Transition the GRN to "quality_checked" (REQ-GRN-002).
 	 *
 	 * Only callable from the "received" state; any other source state is a
@@ -360,7 +427,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function qualityCheckPass(string $administrationId, string $grnId): array {
-		$this->assertAccess(administrationId: $administrationId);
+		$this->scope()->assertAccess(administrationId: $administrationId);
 
 		$grn = $this->records()->findOne(
 			schema: self::SCHEMA_GRN,
@@ -417,7 +484,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function acceptGRN(string $administrationId, string $grnId): array {
-		$this->assertAccess(administrationId: $administrationId);
+		$this->scope()->assertAccess(administrationId: $administrationId);
 		$grn = $this->findGrn(administrationId: $administrationId, grnId: $grnId);
 		$this->assertNotTerminal(grn: $grn);
 
@@ -516,7 +583,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 * @return void
 	 */
 	private function updateReceivedPurchaseOrders(GrnAcceptance $acceptance, array $persisted): void {
-		$poIds = $this->stringArray(input: ($persisted['poIds'] ?? $acceptance->grn['poIds'] ?? []));
+		$poIds = $this->input()->strings(input: ($persisted['poIds'] ?? $acceptance->grn['poIds'] ?? []));
 		foreach ($poIds as $poId) {
 			$this->updatePurchaseOrderReceiptLifecycle(
 				administrationId: $acceptance->administrationId,
@@ -544,11 +611,11 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function uploadPhotos(string $administrationId, string $grnId, array $photoFileIds): array {
-		$this->assertAccess(administrationId: $administrationId);
+		$this->scope()->assertAccess(administrationId: $administrationId);
 		$grn = $this->findGrn(administrationId: $administrationId, grnId: $grnId);
 
-		$existing = $this->stringArray(input: ($grn['photos'] ?? []));
-		$incoming = $this->stringArray(input: $photoFileIds);
+		$existing = $this->input()->strings(input: ($grn['photos'] ?? []));
+		$incoming = $this->input()->strings(input: $photoFileIds);
 		$merged = array_values(array_unique(array_merge($existing, $incoming)));
 
 		$grn['photos'] = $merged;
@@ -818,6 +885,26 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	}//end stockMovePosting()
 
 	/**
+	 * The receipt input normalisers.
+	 *
+	 * @return ReceiptInput The normalisers.
+	 */
+	private function input(): ReceiptInput {
+		return new ReceiptInput();
+
+	}//end input()
+
+	/**
+	 * The administration, caller and purchase order checks.
+	 *
+	 * @return ReceiptScope The scope.
+	 */
+	private function scope(): ReceiptScope {
+		return new ReceiptScope(administrationContext: $this->administrationContext, records: $this->records());
+
+	}//end scope()
+
+	/**
 	 * The record store on the app's register, logging as this service.
 	 *
 	 * @return SchemaRecordStore The record store.
@@ -859,79 +946,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	}//end generateGrnNumber()
 
 	/**
-	 * Validate the per-PO-id array and trim each entry to a non-empty string.
-	 *
-	 * @param mixed $rawIds Raw input (array or scalar).
-	 *
-	 * @return array<int,string>
-	 */
-	private function normalisePoIds(mixed $rawIds): array {
-		if (is_array($rawIds) === false) {
-			return [];
-		}
-
-		$ids = [];
-		foreach ($rawIds as $entry) {
-			$id = trim((string)$entry);
-			if ($id !== '') {
-				$ids[] = $id;
-			}
-		}
-
-		return array_values(array_unique($ids));
-	}//end normalisePoIds()
-
-	/**
-	 * Verify the caller can see every supplied PurchaseOrder under the
-	 * administration scope. Cross-tenant refs are masked as 404.
-	 *
-	 * @param string $administrationId Administration scope.
-	 * @param array<int,string> $poIds PO ids to validate.
-	 *
-	 * @return void
-	 *
-	 * @throws \RuntimeException When any PO id is missing or cross-tenant.
-	 */
-	private function assertPurchaseOrdersAccessible(string $administrationId, array $poIds): void {
-		foreach ($poIds as $poId) {
-			$po = $this->records()->findOne(
-				schema: self::SCHEMA_PO,
-				filters: [
-					'id' => $poId,
-					'administrationId' => $administrationId,
-				]
-			);
-			if ($po === null) {
-				throw new RuntimeException('Purchase order not found');
-			}
-		}
-
-	}//end assertPurchaseOrdersAccessible()
-
-	/**
-	 * Coerce any string-array input to a sanitised string array.
-	 *
-	 * @param mixed $input Raw input.
-	 *
-	 * @return array<int,string>
-	 */
-	private function stringArray(mixed $input): array {
-		if (is_array($input) === false) {
-			return [];
-		}
-
-		$out = [];
-		foreach ($input as $entry) {
-			$value = trim((string)$entry);
-			if ($value !== '') {
-				$out[] = $value;
-			}
-		}
-
-		return $out;
-	}//end stringArray()
-
-	/**
 	 * Validate + normalise the cold-chain temperature log entries.
 	 *
 	 * Each entry must carry a recordedAt timestamp + temperatureC reading;
@@ -968,23 +982,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	}//end temperatureLog()
 
 	/**
-	 * Coerce a quantity input to a non-negative float with multipleOf 0.001.
-	 *
-	 * @param mixed $value Raw input.
-	 *
-	 * @return float
-	 */
-	private function normaliseQuantity(mixed $value): float {
-		$float = (float)$value;
-		if ($float < 0.0) {
-			return 0.0;
-		}
-
-		// Round to thousandths so multipleOf 0.001 enforcement is exact.
-		return (((float)round($float * 1000.0)) / 1000.0);
-	}//end normaliseQuantity()
-
-	/**
 	 * Convert a quantity float to integer thousandths (multipleOf 0.001) so
 	 * the partial-receipt allocator stays bit-exact.
 	 *
@@ -995,44 +992,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	private function thousandths(float $value): int {
 		return (int)round(($value * 1000.0), 0, PHP_ROUND_HALF_UP);
 	}//end thousandths()
-
-	/**
-	 * Assert the caller can access the requested administration; mask as
-	 * not-found per ADR-005.
-	 *
-	 * @param string $administrationId Administration scope.
-	 *
-	 * @return void
-	 *
-	 * @throws \RuntimeException When the administration is not accessible.
-	 */
-	private function assertAccess(string $administrationId): void {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Administration not found');
-		}
-
-	}//end assertAccess()
-
-	/**
-	 * Resolve the validated session user — the server-authoritative
-	 * receivedBy / inspector identity.
-	 *
-	 * @return string
-	 *
-	 * @throws \RuntimeException When no session user is available.
-	 */
-	private function requireSessionUser(): string {
-		$userId = (string)$this->administrationContext->currentUserId();
-		if ($userId === '') {
-			throw new RuntimeException('Authenticated user is required');
-		}
-
-		return $userId;
-	}//end requireSessionUser()
 
 	/**
 	 * Current timestamp in ISO-8601 (Y-m-d\TH:i:sP) — server-authoritative

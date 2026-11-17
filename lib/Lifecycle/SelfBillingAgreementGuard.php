@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceReview;
 use RuntimeException;
@@ -53,20 +54,16 @@ class SelfBillingAgreementGuard implements LifecycleActionInterface {
 	/**
 	 * Check the invoice being issued.
 	 *
-	 * @param array<string,mixed> $objectData   The invoice after its state moved.
-	 * @param array<string,mixed> $previousData The invoice before the transition.
-	 * @param array<string,mixed> $parameters   Unused.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the invoice after its state moved.
 	 *
 	 * @return array<string,mixed> The invoice, unchanged.
 	 *
 	 * @throws RuntimeException When the invoice may not be issued.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
 		$this->review->requireSelfBillingAgreement(invoice: $objectData);
 
 		return $objectData;

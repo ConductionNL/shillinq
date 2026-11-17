@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\EInvoice;
 
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\SelfBillingAgreementGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceReview;
@@ -193,7 +194,9 @@ final class SelfBilledInvoiceReviewTest extends TestCase {
 	private function refusal(array $invoice): ?string {
 		$guard = new SelfBillingAgreementGuard(review: $this->review());
 		try {
-			$returned = $guard->execute(objectData: $invoice, previousData: [], parameters: [], actionName: 'issue');
+			$returned = $guard->execute(
+				new LifecycleActionContext(objectData: $invoice, previousData: [], parameters: [], actionName: 'issue')
+			);
 		} catch (RuntimeException $e) {
 			return $e->getMessage();
 		}
