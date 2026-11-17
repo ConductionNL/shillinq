@@ -29,7 +29,6 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Log\LoggerInterface;
@@ -55,6 +54,21 @@ class IntegriqCloudEventPublisher {
 	 * @var string
 	 */
 	public const SPEC_VERSION = '1.0';
+
+	/**
+	 * The register integriq keeps its CloudEvents in, the same slug
+	 * the CloudEvent listener reads them from.
+	 *
+	 * @var string
+	 */
+	public const REGISTER_SLUG = 'integriq';
+
+	/**
+	 * The schema integriq saves its CloudEvents in.
+	 *
+	 * @var string
+	 */
+	public const SCHEMA_SLUG = 'event';
 
 	/**
 	 * Constructor.
@@ -119,8 +133,8 @@ class IntegriqCloudEventPublisher {
 
 		try {
 			$this->objectService
-				->setRegister(IntegriqCloudEventListener::REGISTER_SLUG)
-				->setSchema(IntegriqCloudEventListener::SCHEMA_SLUG)
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema(self::SCHEMA_SLUG)
 				->saveObject($event);
 		} catch (Throwable $e) {
 			$this->logger->error(

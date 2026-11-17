@@ -1140,6 +1140,20 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SelfBilledInvoiceIntakeInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\EInvoice\\\\SelfBilledInvoiceIntake'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SelfBilledInvoiceReviewInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\EInvoice\\\\SelfBilledInvoiceReview'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SubscriptionCancellationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\SubscriptionCancellationService'"
         ]

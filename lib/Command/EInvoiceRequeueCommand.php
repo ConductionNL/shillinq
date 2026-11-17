@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
-use OCA\Shillinq\Service\EInvoice\EInvoiceService;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -53,10 +53,10 @@ class EInvoiceRequeueCommand extends Command {
 	/**
 	 * Construct the command.
 	 *
-	 * @param EInvoiceService $eInvoiceService Lists and re-sends the stuck invoices.
+	 * @param EInvoiceServiceInterface $eInvoiceService Lists and re-sends the stuck invoices.
 	 */
 	public function __construct(
-		private readonly EInvoiceService $eInvoiceService,
+		private readonly EInvoiceServiceInterface $eInvoiceService,
 	) {
 		parent::__construct();
 	}//end __construct()

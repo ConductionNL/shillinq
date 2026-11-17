@@ -23,7 +23,7 @@
  * And `nl.conduction.peppol.inbound.received`, which integriq emits for every
  * document its Peppol access point received (integriq
  * `PeppolTransmissionService`), with `data` {senderPeppolId, documentType,
- * payloadReference}. It goes to {@see SelfBilledInvoiceIntake::receive()}: a
+ * payloadReference}. It goes to {@see SelfBilledInvoiceIntakeInterface::receive()}: a
  * self-billed invoice becomes a draft sales invoice or a refusal, any other
  * invoice goes to the supplier invoice intake (sales-einvoice-exchange
  * design D3, REQ-SEIX-006).
@@ -54,7 +54,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
-use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceIntake;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceIntakeInterface;
 use OCA\Shillinq\Service\Payout\PayoutIntakeService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -132,14 +132,14 @@ class IntegriqCloudEventListener implements IEventListener {
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
 	 * @param PaymentReconciliationServiceInterface $reconciliation Applies a payment outcome to its request.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
-	 * @param SelfBilledInvoiceIntake $inboundInvoices Takes a received Peppol invoice.
+	 * @param SelfBilledInvoiceIntakeInterface $inboundInvoices Takes a received Peppol invoice.
 	 * @param PayoutIntakeService $payoutIntake Records a reported settlement as a ProviderPayout.
 	 */
 	public function __construct(
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly PaymentReconciliationServiceInterface $reconciliation,
 		private readonly LoggerInterface $logger,
-		private readonly SelfBilledInvoiceIntake $inboundInvoices,
+		private readonly SelfBilledInvoiceIntakeInterface $inboundInvoices,
 		private readonly PayoutIntakeService $payoutIntake,
 	) {
 	}//end __construct()

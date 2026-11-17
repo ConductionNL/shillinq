@@ -44,6 +44,7 @@ namespace OCA\Shillinq\Service\EInvoice;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceIntakeInterface;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -59,7 +60,7 @@ use Throwable;
  *
  * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
  */
-class SelfBilledInvoiceIntake {
+class SelfBilledInvoiceIntake implements SelfBilledInvoiceIntakeInterface {
 	/**
 	 * The Peppol BIS self-billing customization (CustomizationID) marker.
 	 *

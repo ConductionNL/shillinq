@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceReview;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceReviewInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -38,7 +38,7 @@ use Throwable;
  * Rejects a received self-billed invoice (REQ-SEIX-007).
  *
  * Authenticated (#[NoAdminRequired]) and authorised per administration in
- * {@see SelfBilledInvoiceReview::reject()} through
+ * {@see SelfBilledInvoiceReviewInterface::reject()} through
  * AdministrationContextService::canAccess(), answering 404 for another
  * administration's invoice (ADR-005).
  *
@@ -56,13 +56,13 @@ class SelfBilledInvoiceController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                $request     The request.
-	 * @param SelfBilledInvoiceReview $review      The review rules.
+	 * @param SelfBilledInvoiceReviewInterface $review      The review rules.
 	 * @param IUserSession            $userSession The user session.
 	 * @param LoggerInterface         $logger      Logger; no stack traces reach the client.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SelfBilledInvoiceReview $review,
+		private readonly SelfBilledInvoiceReviewInterface $review,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

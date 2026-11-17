@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\EInvoice;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceReviewInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -40,7 +41,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
  */
-class SelfBilledInvoiceReview {
+class SelfBilledInvoiceReview implements SelfBilledInvoiceReviewInterface {
 	/**
 	 * The longest rejection reason kept.
 	 *

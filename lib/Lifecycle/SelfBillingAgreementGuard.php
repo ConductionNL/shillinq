@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceReview;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceReviewInterface;
 use RuntimeException;
 
 /**
@@ -44,10 +44,10 @@ class SelfBillingAgreementGuard implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param SelfBilledInvoiceReview $review The self-billing rules.
+	 * @param SelfBilledInvoiceReviewInterface $review The self-billing rules.
 	 */
 	public function __construct(
-		private readonly SelfBilledInvoiceReview $review,
+		private readonly SelfBilledInvoiceReviewInterface $review,
 	) {
 	}//end __construct()
 
