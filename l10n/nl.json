@@ -7728,7 +7728,15 @@
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Doorzoek de gebruikershandleiding van shillinq (helpartikelen). Gebruik dit voor hoe-doe-ik-vragen over shillinq; filter op pageIds met de pagina waarop de gebruiker staat om het artikel te kiezen dat die pagina uitlegt.",
         "Get one help article by id, with its markdown body and documentation link.": "Haal één helpartikel op via zijn id, met de markdowntekst en de documentatielink.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte.",
+        "Take payment now": "Nu laten betalen",
+        "The open amount of this invoice goes to the payment app on your registered phone. The customer pays there.": "Het openstaande bedrag van deze factuur gaat naar de betaalapp op je geregistreerde telefoon. De klant betaalt daar.",
+        "The payment is on your phone. Once the customer has paid, this invoice shows as paid.": "De betaling staat op je telefoon. Zodra de klant heeft betaald, staat deze factuur op betaald.",
+        "Your phone cannot take this payment. Let the customer scan this code to pay.": "Je telefoon kan deze betaling niet ontvangen. Laat de klant deze code scannen om te betalen.",
+        "QR code of the payment page": "QR-code van de betaalpagina",
+        "Open the payment page": "Betaalpagina openen",
+        "Take payment": "Betaling ontvangen",
+        "The payment could not be started.": "De betaling kon niet worden gestart."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

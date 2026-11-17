@@ -19,6 +19,7 @@
 ## 3. On the spot
 
 - [ ] 3.1 Add Take payment now on `ARInvoiceDetail` through the payment command with the point-of-sale method and the user's device, with the QR fallback (REQ-RPPO-005). Verify: PHPUnit for the device path, the fallback and no device registered; a live check on integriq's test source recorded in the PR body.
+  - Done: `PointOfSalePaymentService` and `POST /api/financial-documents/invoices/{id}/take-payment` (server); the Take payment now header action on `ARInvoiceDetail` (open states) opening `src/modals/TakePaymentModal.vue`, which shows the QR code of the checkout fallback (`qrcode`), pinned by `tests/vitest/takePaymentModal.spec.js`. Left: the live check on integriq's test source.
 - [ ] 3.2 Add `CounterSaleService` and the phone-sized `CounterSale` page, issuing on capture and cancelling on failure (REQ-RPPO-006). Verify: PHPUnit for capture and abandonment; Playwright at a 390 px viewport.
 
 ## 4. Docs

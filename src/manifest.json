@@ -8669,6 +8669,25 @@
 							"op": "eq",
 							"value": "overdue"
 						}
+					},
+					{
+						"id": "take-payment-now",
+						"label": "Take payment now",
+						"type": "open-modal",
+						"target": "TakePaymentModal",
+						"icon": "CashRegister",
+						"props": {
+							"open": true
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "in",
+							"value": [
+								"issued",
+								"overdue",
+								"partially-paid"
+							]
+						}
 					}
 				],
 				"lifecycleActions": true,

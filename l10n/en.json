@@ -5558,7 +5558,15 @@
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.",
         "Get one help article by id, with its markdown body and documentation link.": "Get one help article by id, with its markdown body and documentation link.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.",
+        "Take payment now": "Take payment now",
+        "The open amount of this invoice goes to the payment app on your registered phone. The customer pays there.": "The open amount of this invoice goes to the payment app on your registered phone. The customer pays there.",
+        "The payment is on your phone. Once the customer has paid, this invoice shows as paid.": "The payment is on your phone. Once the customer has paid, this invoice shows as paid.",
+        "Your phone cannot take this payment. Let the customer scan this code to pay.": "Your phone cannot take this payment. Let the customer scan this code to pay.",
+        "QR code of the payment page": "QR code of the payment page",
+        "Open the payment page": "Open the payment page",
+        "Take payment": "Take payment",
+        "The payment could not be started.": "The payment could not be started."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

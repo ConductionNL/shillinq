@@ -343,6 +343,25 @@
               "op": "eq",
               "value": "overdue"
             }
+          },
+          {
+            "id": "take-payment-now",
+            "label": "Take payment now",
+            "type": "open-modal",
+            "target": "TakePaymentModal",
+            "icon": "CashRegister",
+            "props": {
+              "open": true
+            },
+            "visibleWhen": {
+              "field": "lifecycleState",
+              "op": "in",
+              "value": [
+                "issued",
+                "overdue",
+                "partially-paid"
+              ]
+            }
           }
         ],
         "_boardNote": "Board ShVerkoopfactuur. The four totals tiles read 0 (a sum over a filter on the invoice id); the Money card keeps the amounts and the Reminders tab the count. Agree a payment plan is restored: this fragment replaces the base page whole."
