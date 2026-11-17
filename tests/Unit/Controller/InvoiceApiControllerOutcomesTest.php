@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\InvoiceApiController;
+use OCA\Shillinq\Kernel\Exception\UnratedHoursException;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BillableLinesService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
@@ -224,6 +225,32 @@ final class InvoiceApiControllerOutcomesTest extends TestCase {
 		self::assertSame([$status, $data], [$response->getStatus(), $response->getData()]);
 
 	}//end testGenerateFailureMapping()
+
+	/**
+	 * A draft holding an hour without a rate is refused with 422, naming the
+	 * person and the date (REQ-BRPH-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 */
+	public function testAnUnratedHourIsRefusedWith422(): void {
+		$this->validGeneration();
+		$hours = [['person' => 'Dana', 'date' => '2026-10-14', 'reason' => 'Dana is not assigned to this project']];
+		$this->service->method('draftInvoice')->willThrowException(new UnratedHoursException(hours: $hours));
+		$this->logger->expects(self::never())->method('error');
+
+		$response = $this->controller->generate();
+
+		self::assertSame(
+			[
+				422,
+				['message' => 'No rate for Dana on 14 October 2026.', 'error' => 'invoice-generate-unrated-hours', 'hours' => $hours],
+			],
+			[$response->getStatus(), $response->getData()]
+		);
+
+	}//end testAnUnratedHourIsRefusedWith422()
 
 	/**
 	 * Index filters on the administration and the optional model and status.

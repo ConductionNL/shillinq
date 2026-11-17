@@ -42,6 +42,7 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
+use OCA\Shillinq\Kernel\Exception\UnratedHoursException;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
@@ -155,6 +156,13 @@ class InvoiceApiController extends Controller {
 		} catch (\InvalidArgumentException $e) {
 			$this->logger->error('InvoiceApiController.generate: invalid request: ' . $e->getMessage());
 			return new JSONResponse(self::DRAFT_INVALID, Http::STATUS_UNPROCESSABLE_ENTITY);
+		} catch (UnratedHoursException $e) {
+			// An hour without a rate is never billed at a default: refuse the
+			// draft, naming each such hour's person and date (REQ-BRPH-002).
+			return new JSONResponse(
+				['message' => $e->getMessage(), 'error' => 'invoice-generate-unrated-hours', 'hours' => $e->getHours()],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
 		} catch (\RuntimeException $e) {
 			return $this->draftFailure(failure: $e);
 		} catch (\Throwable $e) {
