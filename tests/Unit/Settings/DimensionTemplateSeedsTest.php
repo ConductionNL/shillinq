@@ -34,7 +34,7 @@ class DimensionTemplateSeedsTest extends TestCase {
 	use ShippedRegisterAuthorization;
 
 	/**
-	 * Every template row carries every required property, or the schema defaults it.
+	 * Every template row carries every required property and matches each property's pattern and enum.
 	 *
 	 * @return void
 	 */
@@ -54,6 +54,19 @@ class DimensionTemplateSeedsTest extends TestCase {
 					$value = ($row[$property] ?? ($schema['properties'][$property]['default'] ?? null));
 					if ($value === null) {
 						$missing[] = "$file ".($row['code'] ?? '?').": $property";
+					}
+				}
+
+				foreach ($row as $property => $value) {
+					$definition = ($schema['properties'][$property] ?? []);
+					$pattern = ($definition['pattern'] ?? null);
+					if (is_string($value) === true && $pattern !== null && preg_match(pattern: '/'.$pattern.'/u', subject: $value) !== 1) {
+						$missing[] = "$file ".($row['code'] ?? '?').": $property does not match $pattern";
+					}
+
+					$enum = ($definition['enum'] ?? null);
+					if ($value !== null && is_array($enum) === true && in_array(needle: $value, haystack: $enum, strict: true) === false) {
+						$missing[] = "$file ".($row['code'] ?? '?').": $property is not one of its enum values";
 					}
 				}
 			}

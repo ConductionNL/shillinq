@@ -18831,8 +18831,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Unique dimension identifier used as keys in GLLine.dimensions map (e.g. region, product-line). Must be lowercase kebab-case.",
-            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "Unique dimension identifier used as keys in GLLine.dimensions map (e.g. region, product-line).",
             "example": "region",
             "title": "Code"
           },
