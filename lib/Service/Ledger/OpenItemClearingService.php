@@ -25,11 +25,10 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
- *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
+ *
+ * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
  */
 
 declare(strict_types=1);

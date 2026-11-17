@@ -514,6 +514,10 @@
         {
             "name": "portal-subscription-cancel",
             "description": "A customer ends their own subscription from the portal."
+        },
+        {
+            "name": "open-item-clearing",
+            "description": "Clearing the posted lines of an open-item balance account against each other, and undoing a clearing."
         }
     ],
     "paths": {

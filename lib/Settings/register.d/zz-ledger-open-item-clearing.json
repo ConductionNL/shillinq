@@ -368,6 +368,367 @@
       "periodId": "2026-09",
       "description": "Kasstorting 0910",
       "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-1950-0812-out",
+        "id": "39cc027a-60fc-5d10-b113-7cc7996078c9"
+      },
+      "transactionNumber": "MEM-2026-0812A",
+      "postingDate": "2026-08-12",
+      "periodId": "2026-08",
+      "currency": "EUR",
+      "description": "Transfer to savings",
+      "sourceReference": "Spaaropdracht 0812",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-1950-0812-in",
+        "id": "a10c46d1-0173-564c-a9e7-4171877b931d"
+      },
+      "transactionNumber": "MEM-2026-0812B",
+      "postingDate": "2026-08-13",
+      "periodId": "2026-08",
+      "currency": "EUR",
+      "description": "Transfer arrived on savings",
+      "sourceReference": "Spaaropdracht 0812",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0812-out",
+        "id": "ebca941a-d68f-5b06-acec-77f71450aa95"
+      },
+      "transactionId": "39cc027a-60fc-5d10-b113-7cc7996078c9",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "debit",
+      "amount": 1200,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0812",
+      "administrationId": "adm-consultancy-nl",
+      "clearingGroupId": "40b8795f-8e3b-5ca9-acef-053d7aa63cbe"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1100-0812-out"
+      },
+      "transactionId": "39cc027a-60fc-5d10-b113-7cc7996078c9",
+      "lineNumber": 2,
+      "accountNumber": "1100",
+      "side": "credit",
+      "amount": 1200,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0812",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0812-in",
+        "id": "9d316ac5-ed8f-5c4d-830e-48b8aa010e57"
+      },
+      "transactionId": "a10c46d1-0173-564c-a9e7-4171877b931d",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "credit",
+      "amount": 1200,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0812",
+      "administrationId": "adm-consultancy-nl",
+      "clearingGroupId": "40b8795f-8e3b-5ca9-acef-053d7aa63cbe"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1200-0812-in"
+      },
+      "transactionId": "a10c46d1-0173-564c-a9e7-4171877b931d",
+      "lineNumber": 2,
+      "accountNumber": "1200",
+      "side": "debit",
+      "amount": 1200,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0812",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ClearingGroup",
+        "slug": "clearing-1950-0812",
+        "id": "40b8795f-8e3b-5ca9-acef-053d7aa63cbe"
+      },
+      "administrationId": "adm-consultancy-nl",
+      "accountNumber": "1950",
+      "lineIds": [
+        "ebca941a-d68f-5b06-acec-77f71450aa95",
+        "9d316ac5-ed8f-5c4d-830e-48b8aa010e57"
+      ],
+      "debitCents": 120000,
+      "creditCents": 120000,
+      "clearedBy": "bookkeeper",
+      "clearedAt": "2026-08-14T09:30:00+00:00",
+      "reason": null,
+      "state": "cleared"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-1950-0820-out",
+        "id": "16091b6a-646d-5c24-84d3-3bbee7eb8253"
+      },
+      "transactionNumber": "MEM-2026-0820A",
+      "postingDate": "2026-08-20",
+      "periodId": "2026-08",
+      "currency": "EUR",
+      "description": "Cash deposited at the bank",
+      "sourceReference": "Kasstorting 0820",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-1950-0820-in",
+        "id": "e0595481-8cb8-5e6d-8583-f003fb389b7f"
+      },
+      "transactionNumber": "MEM-2026-0820B",
+      "postingDate": "2026-08-21",
+      "periodId": "2026-08",
+      "currency": "EUR",
+      "description": "Cash deposit credited by the bank",
+      "sourceReference": "Kasstorting 0820",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0820-out",
+        "id": "f067d965-7270-5f06-af2b-fcbf8b968d80"
+      },
+      "transactionId": "16091b6a-646d-5c24-84d3-3bbee7eb8253",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "debit",
+      "amount": 300,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Kasstorting 0820",
+      "administrationId": "adm-consultancy-nl",
+      "clearingGroupId": "ffda2c40-af8b-5f04-accf-4d2387de526b"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1000-0820-out"
+      },
+      "transactionId": "16091b6a-646d-5c24-84d3-3bbee7eb8253",
+      "lineNumber": 2,
+      "accountNumber": "1000",
+      "side": "credit",
+      "amount": 300,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Kasstorting 0820",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0820-in",
+        "id": "8ddaed2e-6a14-5fb0-ad8c-5c3230471e4c"
+      },
+      "transactionId": "e0595481-8cb8-5e6d-8583-f003fb389b7f",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "credit",
+      "amount": 295,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Kasstorting 0820",
+      "administrationId": "adm-consultancy-nl",
+      "clearingGroupId": "ffda2c40-af8b-5f04-accf-4d2387de526b"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1100-0820-in"
+      },
+      "transactionId": "e0595481-8cb8-5e6d-8583-f003fb389b7f",
+      "lineNumber": 2,
+      "accountNumber": "1100",
+      "side": "debit",
+      "amount": 295,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Kasstorting 0820",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ClearingGroup",
+        "slug": "clearing-1950-0820",
+        "id": "ffda2c40-af8b-5f04-accf-4d2387de526b"
+      },
+      "administrationId": "adm-consultancy-nl",
+      "accountNumber": "1950",
+      "lineIds": [
+        "f067d965-7270-5f06-af2b-fcbf8b968d80",
+        "8ddaed2e-6a14-5fb0-ad8c-5c3230471e4c"
+      ],
+      "debitCents": 30000,
+      "creditCents": 29500,
+      "clearedBy": "bookkeeper",
+      "clearedAt": "2026-08-22T11:00:00+00:00",
+      "reason": "Bank kept 5.00 deposit fee; booked separately",
+      "state": "cleared"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-1950-0826-out",
+        "id": "952a250d-0269-58e1-8c54-4291a192a67d"
+      },
+      "transactionNumber": "MEM-2026-0826A",
+      "postingDate": "2026-08-26",
+      "periodId": "2026-08",
+      "currency": "EUR",
+      "description": "Transfer to savings",
+      "sourceReference": "Spaaropdracht 0826",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-1950-0826-in",
+        "id": "07fab0bf-a3e6-5504-92db-c3f61c624a2a"
+      },
+      "transactionNumber": "MEM-2026-0826B",
+      "postingDate": "2026-08-27",
+      "periodId": "2026-08",
+      "currency": "EUR",
+      "description": "Transfer arrived on savings",
+      "sourceReference": "Spaaropdracht 0826",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0826-out",
+        "id": "b364a5cd-37a1-54fb-8232-c2b4e46b4151"
+      },
+      "transactionId": "952a250d-0269-58e1-8c54-4291a192a67d",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "debit",
+      "amount": 800,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0826",
+      "administrationId": "adm-consultancy-nl",
+      "clearingGroupId": "28aad2be-6227-577f-bca0-56d0aa82bf30"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1100-0826-out"
+      },
+      "transactionId": "952a250d-0269-58e1-8c54-4291a192a67d",
+      "lineNumber": 2,
+      "accountNumber": "1100",
+      "side": "credit",
+      "amount": 800,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0826",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0826-in",
+        "id": "e028a6dc-76a5-52d5-9daa-de7d70e87db1"
+      },
+      "transactionId": "07fab0bf-a3e6-5504-92db-c3f61c624a2a",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "credit",
+      "amount": 800,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0826",
+      "administrationId": "adm-consultancy-nl",
+      "clearingGroupId": "28aad2be-6227-577f-bca0-56d0aa82bf30"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1200-0826-in"
+      },
+      "transactionId": "07fab0bf-a3e6-5504-92db-c3f61c624a2a",
+      "lineNumber": 2,
+      "accountNumber": "1200",
+      "side": "debit",
+      "amount": 800,
+      "currency": "EUR",
+      "periodId": "2026-08",
+      "description": "Spaaropdracht 0826",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ClearingGroup",
+        "slug": "clearing-1950-0826",
+        "id": "28aad2be-6227-577f-bca0-56d0aa82bf30"
+      },
+      "administrationId": "adm-consultancy-nl",
+      "accountNumber": "1950",
+      "lineIds": [
+        "b364a5cd-37a1-54fb-8232-c2b4e46b4151",
+        "e028a6dc-76a5-52d5-9daa-de7d70e87db1"
+      ],
+      "debitCents": 80000,
+      "creditCents": 80000,
+      "clearedBy": "bookkeeper",
+      "clearedAt": "2026-08-28T08:45:00+00:00",
+      "reason": null,
+      "state": "reopened",
+      "reopenedAt": "2026-09-02T10:15:00+00:00"
     }
   ]
 }
