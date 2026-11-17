@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\JointArrangementAllocationInterface;
 
@@ -53,24 +54,19 @@ class JointArrangementAllocationAction implements LifecycleActionInterface {
 	/**
 	 * Run the declared step on the run.
 	 *
-	 * @param array<string,mixed> $objectData   The run after the transition.
-	 * @param array<string,mixed> $previousData The run before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters, with `step`.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the run and its parameters carry `step`.
 	 *
 	 * @return array<string,mixed> The run, proposed, confirmed or invoiced.
 	 *
 	 * @throws DomainException When the step is unknown or refuses the run.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
-		return match ((string)($parameters['step'] ?? '')) {
-			'propose' => $this->allocation->propose(run: $objectData),
-			'confirm' => $this->allocation->confirm(run: $objectData),
-			'invoice' => $this->allocation->invoice(run: $objectData),
+	public function execute(LifecycleActionContext $context): array {
+		return match ((string)($context->parameters['step'] ?? '')) {
+			'propose' => $this->allocation->propose(run: $context->objectData),
+			'confirm' => $this->allocation->confirm(run: $context->objectData),
+			'invoice' => $this->allocation->invoice(run: $context->objectData),
 			default   => throw new DomainException('The allocation run step is not known.'),
 		};
 

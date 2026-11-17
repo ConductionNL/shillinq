@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\ActivityCostPriceCalculationInterface;
 
@@ -51,19 +52,14 @@ class CalculateIntegralCostPriceAction implements LifecycleActionInterface {
 	/**
 	 * Calculate the cost price of the activity.
 	 *
-	 * @param array<string,mixed> $objectData   The activity after the transition, with costPriceYear.
-	 * @param array<string,mixed> $previousData The activity before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters (none).
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the activity, with costPriceYear.
 	 *
 	 * @return array<string,mixed> The activity with integralCostPriceId.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
-		return $this->costPrice->calculate(activity: $objectData);
+	public function execute(LifecycleActionContext $context): array {
+		return $this->costPrice->calculate(activity: $context->objectData);
 
 	}//end execute()
 }//end class

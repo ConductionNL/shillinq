@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\PublicSector;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -134,7 +135,7 @@ class PublicSectorRecords {
 	 */
 	public function update(string $schema, string $id, array $object): string {
 		$object['id'] = $id;
-		return ObjectIdentifier::resolve(saved: $this->scoped(schema: $schema)->saveObject(object: $object, uuid: $id));
+		return ObjectIdentifier::resolve(saved: $this->scoped(schema: $schema)->saveObject(object: $object, options: new ObjectSaveOptions(uuid: $id)));
 
 	}//end update()
 

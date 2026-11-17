@@ -799,13 +799,6 @@
 							"icon": "CurrencyUsd",
 							"route": "FXRates",
 							"order": 28
-						},
-						{
-							"id": "FxRatesAdmin",
-							"label": "FX Rates (Admin)",
-							"icon": "CogOutline",
-							"route": "FxRatesAdmin",
-							"order": 29
 						}
 					]
 				}
@@ -824,13 +817,6 @@
 					"route": "/bookkeeping/multi-currency/fx-rates/:id",
 					"type": "detail",
 					"title": "FX Rate"
-				},
-				{
-					"_fragment": "add-shillinq-multi-currency-t4",
-					"id": "FxRatesAdmin",
-					"route": "/bookkeeping/multi-currency/fx-rates/admin",
-					"type": "custom",
-					"title": "FX Rates (Admin)"
 				}
 			]
 		},
@@ -1040,8 +1026,22 @@
 							"id": "BookingsPendingConfirmations",
 							"label": "Pending confirmations",
 							"icon": "EmailCheckOutline",
-							"route": "BookingsPendingConfirmations",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation"
+							},
 							"order": 14
+						},
+						{
+							"id": "BookingsConfirmationRequestFailed",
+							"label": "Confirmation request failed",
+							"icon": "EmailAlertOutline",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation",
+								"confirmationRequestStatus": "failed"
+							},
+							"order": 15
 						}
 					]
 				}
@@ -1053,13 +1053,6 @@
 					"route": "/confirm/:appointmentId",
 					"type": "custom",
 					"title": "Confirm your appointment"
-				},
-				{
-					"_fragment": "bookings-confirm-flow",
-					"id": "BookingsPendingConfirmations",
-					"route": "/verkoop/openstaande-bevestigingen",
-					"type": "custom",
-					"title": "Pending confirmations"
 				}
 			]
 		},
@@ -2939,7 +2932,7 @@
 					"_fragment": "bookkeeping-purchase-order-3way-04-goods-receipt-note",
 					"id": "GoodsReceiptNoteDetail",
 					"route": "/inkoop/goods-receipt-notes/:id",
-					"type": "custom",
+					"type": "detail",
 					"title": "Goods Receipt Note"
 				}
 			]
@@ -4769,6 +4762,34 @@
 		{
 			"menu": [
 				{
+					"id": "ReportingCompliance",
+					"label": "Reporting & Compliance",
+					"icon": "ChartBoxOutline",
+					"order": 70,
+					"children": [
+						{
+							"id": "RetentionDueRecords",
+							"label": "Due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"route": "RetentionDueRecords",
+							"order": 25
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-retention-due-records",
+					"id": "RetentionDueRecords",
+					"route": "/reporting/retention-due",
+					"type": "logs",
+					"title": "Due for destruction"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "NavSalesCaption",
 					"label": "Sales",
 					"type": "caption",
@@ -5071,6 +5092,26 @@
 		{
 			"menu": [
 				{
+					"id": "Integrations",
+					"label": "Integrations",
+					"icon": "StoreOutline",
+					"route": "IntegrationCatalogue",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-integration-catalogue",
+					"id": "IntegrationCatalogue",
+					"route": "/integrations",
+					"type": "index",
+					"title": "Integrations"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RequiredFields",
 					"label": "Required fields",
 					"icon": "TextBoxCheckOutline",
@@ -5278,6 +5319,80 @@
 		{
 			"menu": [
 				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "SepaMandates",
+							"label": "Direct debit mandates",
+							"icon": "FileDocumentEditOutline",
+							"route": "SepaMandates",
+							"order": 42
+						},
+						{
+							"id": "DirectDebitBatches",
+							"label": "Direct debit batches",
+							"icon": "BankTransferIn",
+							"route": "DirectDebitBatches",
+							"order": 42
+						},
+						{
+							"id": "DirectDebitCollections",
+							"label": "Direct debit collections",
+							"icon": "FormatListBulleted",
+							"route": "DirectDebitCollections",
+							"order": 42
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "SepaMandates",
+					"route": "/bookkeeping/sepa-mandates",
+					"type": "index",
+					"title": "Direct debit mandates"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "SepaMandateDetail",
+					"route": "/bookkeeping/sepa-mandates/:id",
+					"type": "detail",
+					"title": "Direct debit mandate"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitBatches",
+					"route": "/bookkeeping/direct-debit-batches",
+					"type": "index",
+					"title": "Direct debit batches"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitBatchDetail",
+					"route": "/bookkeeping/direct-debit-batches/:id",
+					"type": "detail",
+					"title": "Direct debit batch"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitCollections",
+					"route": "/bookkeeping/direct-debit-collections",
+					"type": "index",
+					"title": "Direct debit collections"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitCollectionDetail",
+					"route": "/bookkeeping/direct-debit-collections/:id",
+					"type": "detail",
+					"title": "Direct debit collection"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RecurringInvoicing",
 					"label": "Recurring Invoices",
 					"icon": "ReceiptTextOutline",
@@ -5473,6 +5588,45 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "sales-cancellation",
+					"id": "CancellationReasons",
+					"route": "/reports/cancellation-reasons",
+					"type": "dashboard",
+					"title": "Cancellation reasons"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "InvoiceBatches",
+					"label": "Invoice batches",
+					"icon": "EmailFastOutline",
+					"route": "InvoiceBatches",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatches",
+					"route": "/bookkeeping/invoice-batches",
+					"type": "index",
+					"title": "Invoice batches"
+				},
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatchDetail",
+					"route": "/bookkeeping/invoice-batches/:id",
+					"type": "detail",
+					"title": "Invoice batch"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "MeterReadings",
@@ -5523,6 +5677,54 @@
 		{
 			"menu": [
 				{
+					"id": "WebshopOrders",
+					"label": "Web shop orders",
+					"icon": "StorefrontOutline",
+					"route": "WebshopOrders",
+					"order": 26
+				},
+				{
+					"id": "WebshopChannels",
+					"label": "Web shop channels",
+					"icon": "Storefront",
+					"route": "WebshopChannels",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrders",
+					"route": "/verkoop/webshop-orders",
+					"type": "index",
+					"title": "Web shop orders"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrderDetail",
+					"route": "/verkoop/webshop-orders/:id",
+					"type": "detail",
+					"title": "Web shop order"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannels",
+					"route": "/configuratie/webshop-channels",
+					"type": "index",
+					"title": "Web shop channels"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannelDetail",
+					"route": "/configuratie/webshop-channels/:id",
+					"type": "detail",
+					"title": "Web shop channel"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "ReportingCompliance",
 					"children": [
 						{
@@ -5542,6 +5744,73 @@
 					"route": "/reporting-compliance/spend-analytics",
 					"type": "dashboard",
 					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "InvestmentDeductions",
+					"label": "Investment deductions",
+					"icon": "CashRefund",
+					"route": "InvestmentDeductions",
+					"order": 75
+				},
+				{
+					"id": "InvestmentAssets",
+					"label": "Investment assets",
+					"icon": "SolarPower",
+					"route": "InvestmentAssets",
+					"order": 76
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentDeductions",
+					"route": "/tax/investment-deductions",
+					"type": "index",
+					"title": "Investment deductions"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentDeductionDetail",
+					"route": "/tax/investment-deductions/:id",
+					"type": "detail",
+					"title": "Investment deduction"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentAssets",
+					"route": "/tax/investment-assets",
+					"type": "index",
+					"title": "Investment assets"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentAssetDetail",
+					"route": "/tax/investment-assets/:id",
+					"type": "detail",
+					"title": "Investment asset"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "FixedAssetDetail",
+					"route": "/fixed-assets/:id",
+					"type": "detail",
+					"title": "Fixed Asset"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-vat-position-and-suppletie",
+					"id": "BtwCorrectieDetail",
+					"route": "/belastingen/btw-correcties/:id",
+					"type": "detail",
+					"title": "BTW-correctie"
 				}
 			]
 		},

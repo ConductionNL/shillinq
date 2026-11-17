@@ -63,6 +63,8 @@ class PlatformPropertiesTest extends TestCase {
 		'WidgetApiController::services' => ['file' => 'WidgetApiController.php', 'check' => '$this->auth->validateApiKey('],
 		'WidgetApiController::slots' => ['file' => 'WidgetApiController.php', 'check' => '$this->auth->validateApiKey('],
 		'WidgetApiController::appointments' => ['file' => 'WidgetApiController.php', 'check' => '$this->auth->validateApiKey('],
+		// The CORS preflight: answers only for an origin registered on the business's widget key.
+		'WidgetApiController::preflight' => ['file' => 'WidgetApiController.php', 'check' => '$this->corsPolicy->allowedOrigin('],
 		// The confirmation link: the appointment's one-time token.
 		'ConfirmationApiController::lookupByToken' => ['file' => 'ConfirmationApiController.php', 'check' => '$this->tokens->validate('],
 		'ConfirmationApiController::confirm' => ['file' => 'ConfirmationApiController.php', 'check' => '$this->tokens->validate('],
@@ -77,6 +79,7 @@ class PlatformPropertiesTest extends TestCase {
 		// Calls from the portal: its signed assertion.
 		'PortalPaymentInitiationController::initiate' => ['file' => 'PortalPaymentInitiationController.php', 'check' => '$this->verifier->verify('],
 		'PortalContributionDeclineController::decline' => ['file' => 'PortalContributionDeclineController.php', 'check' => '$this->verifier->verify('],
+		'PortalSubscriptionCancelController::cancel' => ['file' => 'PortalSubscriptionCancelController.php', 'check' => '$this->verifier->verify('],
 	];
 
 	/**

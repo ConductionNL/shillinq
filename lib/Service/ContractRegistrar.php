@@ -29,6 +29,7 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationArchivalServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationMembershipServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AnnualAccountsXbrlBuilderInterface;
 use OCA\Shillinq\Kernel\Contracts\AppointmentConfirmationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
 use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
@@ -58,6 +59,7 @@ use OCA\Shillinq\Kernel\Contracts\CalendarRowsInterface;
 use OCA\Shillinq\Kernel\Contracts\CashflowExportServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ChartOfAccountsCandidateServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ChartTemplateServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CogsPosterServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CommitmentCarryOverServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CommitmentInvoicingInterface;
@@ -69,8 +71,18 @@ use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ContactCustomerResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DirectDebitBatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
+use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
+use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
+use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
+use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CrossSubsidyScanInterface;
 use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
@@ -209,6 +221,7 @@ use OCA\Shillinq\Kernel\Contracts\SubjectCostServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SuspenseAgeingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\TaskFieldRealisationInterface;
 use OCA\Shillinq\Kernel\Contracts\TaxNotificationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\TaxPaymentReconciliationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\TaxReportServiceInterface;
@@ -220,6 +233,9 @@ use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
 use OCA\Shillinq\Kernel\Contracts\VatNumberCheckInterface;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VatReturnXbrlBuilderInterface;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieFilingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
 use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VoluntaryContributionPolicyInterface;
@@ -229,8 +245,11 @@ use OCA\Shillinq\Kernel\Contracts\WbsoAdministratieServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\WbsoTransactionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WebshopOrderInvoicerInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\XbrlInstanceCheckInterface;
+use OCA\Shillinq\Kernel\Contracts\XbrlTaxonomyLookupInterface;
 use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
 use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\Shillinq\Service\Asset\DepreciationRun;
@@ -246,6 +265,7 @@ use OCA\Shillinq\Service\Bank\StatementIntakeService;
 use OCA\Shillinq\Service\Booking\CalendarRows;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
+use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
 use OCA\Shillinq\Service\Commitment\CommitmentCarryOverService;
 use OCA\Shillinq\Service\Commitment\CommitmentInvoicing;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
@@ -281,18 +301,34 @@ use OCA\Shillinq\Service\PublicSector\FidoQuarter;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 use OCA\Shillinq\Service\PublicSector\JointArrangementAllocation;
 use OCA\Shillinq\Service\PublicSector\ReserveBalances;
+use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\Receivables\DirectDebitBatchService;
+use OCA\Shillinq\Service\Receivables\DirectDebitFileService;
 use OCA\Shillinq\Service\Relation\RelationBothSidesService;
 use OCA\Shillinq\Service\Relation\RelationLinkService;
 use OCA\Shillinq\Service\Sales\DownPaymentService;
 use OCA\Shillinq\Service\Sales\QuickDraftInvoiceService;
+use OCA\Shillinq\Service\Sbr\AnnualAccountsXbrlBuilder;
+use OCA\Shillinq\Service\Sbr\SbrFilingFileStore;
+use OCA\Shillinq\Service\Sbr\VatReturnXbrlBuilder;
+use OCA\Shillinq\Service\Sbr\XbrlInstanceCheck;
+use OCA\Shillinq\Service\Sbr\XbrlTaxonomyLookup;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
+use OCA\Shillinq\Service\Tax\FiledReturnDriftCheck;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
+use OCA\Shillinq\Service\Tax\VatSuppletieFilingService;
+use OCA\Shillinq\Service\Treasury\FxRateFeedStatus;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCA\Shillinq\Service\Usage\MeterReadingRating;
 use OCA\Shillinq\Service\Vat\VatLineBackfill;
+use OCA\Shillinq\Service\Webshop\WebshopOrderInvoicer;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCA\Shillinq\Kernel\Contracts\EnsiaCycleStepsInterface;
+use OCA\Shillinq\Kernel\Contracts\LawfulnessParagraphInterface;
+use OCA\Shillinq\Service\PublicSector\EnsiaCycleSteps;
+use OCA\Shillinq\Service\PublicSector\LawfulnessParagraph;
 
 /**
  * Nextcloud autowires concrete classes but not interfaces, so every contract
@@ -307,11 +343,249 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * @link     https://github.com/ConductionNL/shillinq
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  *
  * @spec exclude Structural contract wiring, no functional requirement.
  */
 final class ContractRegistrar {
+
+	/**
+	 * Every contract and the class that implements it.
+	 *
+	 * @var array<class-string, class-string>
+	 */
+	private const ALIASES = [
+		AansluitingServiceInterface::class => AansluitingService::class,
+		AccountantDashboardServiceInterface::class => AccountantDashboardService::class,
+		AccountantsdossierExportServiceInterface::class => AccountantsdossierExportService::class,
+		ActivityCostPriceCalculationInterface::class => ActivityCostPriceCalculation::class,
+		AdministrationArchivalServiceInterface::class => AdministrationArchivalService::class,
+		AdministrationContextServiceInterface::class => AdministrationContextService::class,
+		AdministrationManagementAccessInterface::class => AdministrationManagementAccess::class,
+		AdministrationMembershipServiceInterface::class => AdministrationMembershipService::class,
+		AnnualAccountsXbrlBuilderInterface::class => AnnualAccountsXbrlBuilder::class,
+		AppointmentConfirmationServiceInterface::class => AppointmentConfirmationService::class,
+		ArInvoiceIcpPdfRendererInterface::class => ArInvoiceIcpPdfRenderer::class,
+		AssetRecordsInterface::class => AssetRecords::class,
+		AssignmentHoursInterface::class => AssignmentHours::class,
+		AuditExportServiceInterface::class => AuditExportService::class,
+		BIKStaffelCalculatorInterface::class => BIKStaffelCalculator::class,
+		BadoControleprotocolServiceInterface::class => BadoControleprotocolService::class,
+		BankRulePreviewServiceInterface::class => BankRulePreviewService::class,
+		BankRuleSuggestionServiceInterface::class => BankRuleSuggestionService::class,
+		BankfeedIntakeServiceInterface::class => BankfeedIntakeService::class,
+		BbvProgrammeBudgetServiceInterface::class => BbvProgrammeBudgetService::class,
+		BbvSeedServiceInterface::class => BbvSeedService::class,
+		BcfClaimServiceInterface::class => BcfClaimService::class,
+		BcfCompensationCalculatorInterface::class => BcfCompensationCalculator::class,
+		BegrotingswijzigingStackerInterface::class => BegrotingswijzigingStacker::class,
+		BillableLinesServiceInterface::class => BillableLinesService::class,
+		BillablePeriodInvoiceServiceInterface::class => BillablePeriodInvoiceService::class,
+		BookingNotificationServiceInterface::class => BookingNotificationService::class,
+		BudgetChartSeriesServiceInterface::class => BudgetChartSeriesService::class,
+		BudgetGridCalculatorInterface::class => BudgetGridCalculator::class,
+		BudgetGridReaderInterface::class => BudgetGridReader::class,
+		BudgetImpactEmitterInterface::class => BudgetImpactEmitter::class,
+		BudgetScenarioDefaultPromoterInterface::class => BudgetScenarioDefaultPromoter::class,
+		BudgetScenarioEvaluatorInterface::class => BudgetScenarioEvaluator::class,
+		BudgetScenarioReaderInterface::class => BudgetScenarioReader::class,
+		CBSExportServiceInterface::class => CBSExportService::class,
+		CalendarRowsInterface::class => CalendarRows::class,
+		CashflowExportServiceInterface::class => CashflowExportService::class,
+		ChartOfAccountsCandidateServiceInterface::class => ChartOfAccountsCandidateService::class,
+		ChartTemplateServiceInterface::class => ChartTemplateService::class,
+		CogsPosterServiceInterface::class => CogsPosterService::class,
+		CommitmentCarryOverServiceInterface::class => CommitmentCarryOverService::class,
+		CommitmentInvoicingInterface::class => CommitmentInvoicing::class,
+		CommitmentLedgerInterface::class => CommitmentLedger::class,
+		CommitmentMaterialisationServiceInterface::class => CommitmentMaterialisationService::class,
+		ComplianceDeadlineCalendarServiceInterface::class => ComplianceDeadlineCalendarService::class,
+		ComplianceExportServiceInterface::class => ComplianceExportService::class,
+		ComplianceServiceInterface::class => ComplianceService::class,
+		ConfirmationTokenServiceInterface::class => ConfirmationTokenService::class,
+		ConflictDetectionServiceInterface::class => ConflictDetectionService::class,
+		ConnectionReportServiceInterface::class => ConnectionReportService::class,
+		ContactCustomerResolverInterface::class => ContactCustomerResolver::class,
+		ContractCostRollupServiceInterface::class => ContractCostRollupService::class,
+		ContributionDeclineServiceInterface::class => ContributionDeclineService::class,
+		DirectDebitBatchServiceInterface::class => DirectDebitBatchService::class,
+		DirectDebitFileServiceInterface::class => DirectDebitFileService::class,
+		FiledReturnDriftCheckInterface::class => FiledReturnDriftCheck::class,
+		FxRateFeedStatusInterface::class => FxRateFeedStatus::class,
+		PensionValuationPostingServiceInterface::class => PensionValuationPostingService::class,
+		RecurringInvoiceGeneratorInterface::class => RecurringInvoiceGenerator::class,
+		RetentionDueServiceInterface::class => RetentionDueService::class,
+		SbrFilingFileStoreInterface::class => SbrFilingFileStore::class,
+		SubscriptionCancellationServiceInterface::class => SubscriptionCancellationService::class,
+		ContributionRaiseServiceInterface::class => ContributionRaiseService::class,
+		CrossSubsidyScanInterface::class => CrossSubsidyScan::class,
+		CustomerBridgeMetricsServiceInterface::class => CustomerBridgeMetricsService::class,
+		DBAVbarMonitorServiceInterface::class => DBAVbarMonitorService::class,
+		DebtorCreditServiceInterface::class => DebtorCreditService::class,
+		DemoDataServiceInterface::class => DemoDataService::class,
+		DepositReconciliationServiceInterface::class => DepositReconciliationService::class,
+		DepreciationRunInterface::class => DepreciationRun::class,
+		DepreciationScheduleServiceInterface::class => DepreciationScheduleService::class,
+		DocudeskExtractionClientInterface::class => DocudeskExtractionClient::class,
+		DoorsnijdingsVerbodValidatorInterface::class => DoorsnijdingsVerbodValidator::class,
+		DownPaymentServiceInterface::class => DownPaymentService::class,
+		DunningRunServiceInterface::class => DunningRunService::class,
+		DunningStageRendererInterface::class => DunningStageRenderer::class,
+		DunningTickRunnerInterface::class => DunningTickRunner::class,
+		EInvoiceServiceInterface::class => EInvoiceService::class,
+		EmuReportingServiceInterface::class => EmuReportingService::class,
+		EnsiaCycleStepsInterface::class => EnsiaCycleSteps::class,
+		ExceptionResolutionServiceInterface::class => ExceptionResolutionService::class,
+		ExtractionPrefillServiceInterface::class => ExtractionPrefillService::class,
+		FeeScheduleServiceInterface::class => FeeScheduleService::class,
+		FidoQuarterInterface::class => FidoQuarter::class,
+		FieldRequirementsInterface::class => FieldRequirements::class,
+		FifoValuationServiceInterface::class => FifoValuationService::class,
+		FinancialDashboardServiceInterface::class => FinancialDashboardService::class,
+		FinancialDocumentActionsInterface::class => FinancialDocumentActions::class,
+		FinancialDocumentAuthoringInterface::class => FinancialDocumentAuthoring::class,
+		FinancialDocumentFinderInterface::class => FinancialDocumentFinder::class,
+		FinancialDocumentRowsInterface::class => FinancialDocumentRows::class,
+		FiscalYearContextServiceInterface::class => FiscalYearContextService::class,
+		FixedAssetDepreciationInterface::class => FixedAssetDepreciation::class,
+		FixedAssetDisposalServiceInterface::class => FixedAssetDisposalService::class,
+		FluxServiceInterface::class => FluxService::class,
+		GRIRClearingServiceInterface::class => GRIRClearingService::class,
+		GlAccountSuggestionClientInterface::class => GlAccountSuggestionClient::class,
+		GlLineAdministrationBackfillMigratorInterface::class => GlLineAdministrationBackfillMigrator::class,
+		GlLineFiscalYearBackfillMigratorInterface::class => GlLineFiscalYearBackfillMigrator::class,
+		GlLineResultStampsInterface::class => GlLineResultStamps::class,
+		GoodsReceiptNoteServiceInterface::class => GoodsReceiptNoteService::class,
+		HrmqCostRateAdapterInterface::class => HrmqCostRateAdapter::class,
+		IcpFilingServiceInterface::class => IcpFilingService::class,
+		IcpServiceInterface::class => IcpService::class,
+		ImportBatchStepsInterface::class => ImportBatchSteps::class,
+		ImportPeriodInterface::class => ImportPeriod::class,
+		InboundPayableReaderInterface::class => InboundPayableReader::class,
+		InboundPayableServiceInterface::class => InboundPayableService::class,
+		IncassoDossierComposerInterface::class => IncassoDossierComposer::class,
+		InnovatieboxAggregationServiceInterface::class => InnovatieboxAggregationService::class,
+		InnovatieboxAuditEventLoggerInterface::class => InnovatieboxAuditEventLogger::class,
+		InnovatieboxSbrExportServiceInterface::class => InnovatieboxSbrExportService::class,
+		IntercompanyJournalServiceInterface::class => IntercompanyJournalService::class,
+		IntercompanyLinkServiceInterface::class => IntercompanyLinkService::class,
+		InterestAllocationServiceInterface::class => InterestAllocationService::class,
+		InventoryMobileScannerServiceInterface::class => InventoryMobileScannerService::class,
+		InventoryScanServiceInterface::class => InventoryScanService::class,
+		InventoryValuationReportServiceInterface::class => InventoryValuationReportService::class,
+		InvoiceGenerationServiceInterface::class => InvoiceGenerationService::class,
+		InvoicePdfGeneratorInterface::class => InvoicePdfGenerator::class,
+		InvoiceSettlementServiceInterface::class => InvoiceSettlementService::class,
+		JointArrangementAllocationInterface::class => JointArrangementAllocation::class,
+		KlantbeeldResultInterface::class => KlantbeeldResult::class,
+		KorMonitorServiceInterface::class => KorMonitorService::class,
+		LandedCostAllocationServiceInterface::class => LandedCostAllocationService::class,
+		LawfulnessParagraphInterface::class => LawfulnessParagraph::class,
+		LeaseDisclosureServiceInterface::class => LeaseDisclosureService::class,
+		LeasePaymentScheduleServiceInterface::class => LeasePaymentScheduleService::class,
+		LeaseReassessmentServiceInterface::class => LeaseReassessmentService::class,
+		LedgerPivotServiceInterface::class => LedgerPivotService::class,
+		ListenerSchemaResolverInterface::class => ListenerSchemaResolver::class,
+		ManualMatchServiceInterface::class => ManualMatchService::class,
+		MeterReadingImportServiceInterface::class => MeterReadingImportService::class,
+		MeterReadingRatingInterface::class => MeterReadingRating::class,
+		MilestoneTemplateServiceInterface::class => MilestoneTemplateService::class,
+		MovingAverageValuationServiceInterface::class => MovingAverageValuationService::class,
+		MultiPoConsolidationServiceInterface::class => MultiPoConsolidationService::class,
+		NexusCalculationServiceInterface::class => NexusCalculationService::class,
+		NoShowFeeCaptureServiceInterface::class => NoShowFeeCaptureService::class,
+		NrvWriteDownServiceInterface::class => NrvWriteDownService::class,
+		ObjectApiRequestInterface::class => ObjectApiRequest::class,
+		ObjectPaymentRequestValidatorInterface::class => ObjectPaymentRequestValidator::class,
+		ObjectRequestBankMatcherInterface::class => ObjectRequestBankMatcher::class,
+		ObjectRequestBankSettlementInterface::class => ObjectRequestBankSettlement::class,
+		ObjectRequestCommandServiceInterface::class => ObjectRequestCommandService::class,
+		ObjectRequestInvoiceServiceInterface::class => ObjectRequestInvoiceService::class,
+		ObjectRequestReceiptMailerInterface::class => ObjectRequestReceiptMailer::class,
+		ObjectRequestRefundServiceInterface::class => ObjectRequestRefundService::class,
+		ObjectTransitionRunnerInterface::class => ObjectTransitionRunner::class,
+		ObligationTaskBridgeInterface::class => ObligationTaskBridge::class,
+		OssPaymentReconciliationInterface::class => OssPaymentReconciliation::class,
+		OssRateResolverInterface::class => OssRateResolver::class,
+		OssRecordResolverInterface::class => OssRecordResolver::class,
+		OssReturnGeneratorInterface::class => OssReturnGenerator::class,
+		PaymentActionAppGrantInterface::class => PaymentActionAppGrant::class,
+		PaymentActionAuthorizerInterface::class => PaymentActionAuthorizer::class,
+		PaymentReconciliationServiceInterface::class => PaymentReconciliationService::class,
+		PaymentRequestFinderInterface::class => PaymentRequestFinder::class,
+		PaymentRequestPortalScopeInterface::class => PaymentRequestPortalScope::class,
+		PaymentSettlementServiceInterface::class => PaymentSettlementService::class,
+		PayrollServiceInterface::class => PayrollService::class,
+		PeriodCloseAssistantServiceInterface::class => PeriodCloseAssistantService::class,
+		PeriodCloseServiceInterface::class => PeriodCloseService::class,
+		PipelinqConfigInterface::class => PipelinqConfig::class,
+		PipelinqContactAdapterInterface::class => PipelinqContactAdapter::class,
+		PortalPaymentSessionServiceInterface::class => PortalPaymentSessionService::class,
+		ProductCatalogServiceInterface::class => ProductCatalogService::class,
+		ProgrammabegrotingServiceInterface::class => ProgrammabegrotingService::class,
+		PurchaseOrderApprovalServiceInterface::class => PurchaseOrderApprovalService::class,
+		PurchaseOrderServiceInterface::class => PurchaseOrderService::class,
+		QuickDraftInvoiceServiceInterface::class => QuickDraftInvoiceService::class,
+		ReconciliationResolutionServiceInterface::class => ReconciliationResolutionService::class,
+		RecurringSeriesServiceInterface::class => RecurringSeriesService::class,
+		RegisterLocationInterface::class => RegisterLocation::class,
+		ReinvestmentReservesInterface::class => ReinvestmentReserves::class,
+		RelationBothSidesServiceInterface::class => RelationBothSidesService::class,
+		RelationLinkServiceInterface::class => RelationLinkService::class,
+		RequisitionConversionServiceInterface::class => RequisitionConversionService::class,
+		RequisitionServiceInterface::class => RequisitionService::class,
+		ReserveBalancesInterface::class => ReserveBalances::class,
+		RevenueContractRenameMigratorInterface::class => RevenueContractRenameMigrator::class,
+		RevenueCutoffServiceInterface::class => RevenueCutoffService::class,
+		RevenueRecognitionServiceInterface::class => RevenueRecognitionService::class,
+		RuleTestDataSeederInterface::class => RuleTestDataSeeder::class,
+		SalesDispatchStockIssueServiceInterface::class => SalesDispatchStockIssueService::class,
+		SchemaDefinitionsInterface::class => SchemaDefinitions::class,
+		SepaAuditServiceInterface::class => SepaAuditService::class,
+		ServiceReceiptServiceInterface::class => ServiceReceiptService::class,
+		SettingsServiceInterface::class => SettingsService::class,
+		SigningDelegationServiceInterface::class => SigningDelegationService::class,
+		SignoffDecisionServiceInterface::class => SignoffDecisionService::class,
+		SlotServiceInterface::class => SlotService::class,
+		SoftCloseExecutorInterface::class => SoftCloseExecutor::class,
+		SpendAnalyticsServiceInterface::class => SpendAnalyticsService::class,
+		StandardsPolicyServiceInterface::class => StandardsPolicyService::class,
+		StatementIntakeServiceInterface::class => StatementIntakeService::class,
+		StatementManifestServiceInterface::class => StatementManifestService::class,
+		StockLedgerServiceInterface::class => StockLedgerService::class,
+		SubjectCostServiceInterface::class => SubjectCostService::class,
+		SupplierInvoiceChecksInterface::class => SupplierInvoiceChecks::class,
+		SupplierInvoiceServiceInterface::class => SupplierInvoiceService::class,
+		SuspenseAgeingServiceInterface::class => SuspenseAgeingService::class,
+		TaskFieldRealisationInterface::class => TaskFieldRealisation::class,
+		TaxNotificationServiceInterface::class => TaxNotificationService::class,
+		TaxPaymentReconciliationServiceInterface::class => TaxPaymentReconciliationService::class,
+		TaxReportServiceInterface::class => TaxReportService::class,
+		TenderNedStatusSyncInterface::class => TenderNedStatusSync::class,
+		ThreeWayMatchingEngineInterface::class => ThreeWayMatchingEngine::class,
+		TimeIntakeServiceInterface::class => TimeIntakeService::class,
+		TransactionalGuardInterface::class => TransactionalGuard::class,
+		TrialBalanceServiceInterface::class => TrialBalanceService::class,
+		VATReturnServiceInterface::class => VATReturnService::class,
+		VatLineBackfillInterface::class => VatLineBackfill::class,
+		VatNumberCheckInterface::class => VatNumberCheck::class,
+		VatReturnXbrlBuilderInterface::class => VatReturnXbrlBuilder::class,
+		VatSuppletieDetectionServiceInterface::class => VatSuppletieDetectionService::class,
+		VatSuppletieFilingServiceInterface::class => VatSuppletieFilingService::class,
+		VendorPerformanceAggregationInterface::class => VendorPerformanceAggregation::class,
+		ViesServiceInterface::class => ViesService::class,
+		VoluntaryContributionPolicyInterface::class => VoluntaryContributionPolicy::class,
+		VsoLockingValidatorInterface::class => VsoLockingValidator::class,
+		WbsoAccountServiceInterface::class => WbsoAccountService::class,
+		WbsoAdministratieServiceInterface::class => WbsoAdministratieService::class,
+		WbsoDocumentServiceInterface::class => WbsoDocumentService::class,
+		WbsoRbacResolverInterface::class => WbsoRbacResolver::class,
+		WbsoTransactionServiceInterface::class => WbsoTransactionService::class,
+		WebshopOrderInvoicerInterface::class => WebshopOrderInvoicer::class,
+		WidgetAuthServiceInterface::class => WidgetAuthService::class,
+		WidgetServiceInterface::class => WidgetService::class,
+		XbrlInstanceCheckInterface::class => XbrlInstanceCheck::class,
+		XbrlTaxonomyLookupInterface::class => XbrlTaxonomyLookup::class,
+	];
 
 	/**
 	 * Alias every contract to its implementation.
@@ -323,215 +597,8 @@ final class ContractRegistrar {
 	 * @spec exclude Structural contract wiring, no functional requirement.
 	 */
 	public function register(IRegistrationContext $context): void {
-		$context->registerServiceAlias(AansluitingServiceInterface::class, AansluitingService::class);
-		$context->registerServiceAlias(AccountantDashboardServiceInterface::class, AccountantDashboardService::class);
-		$context->registerServiceAlias(AccountantsdossierExportServiceInterface::class, AccountantsdossierExportService::class);
-		$context->registerServiceAlias(ActivityCostPriceCalculationInterface::class, ActivityCostPriceCalculation::class);
-		$context->registerServiceAlias(AdministrationArchivalServiceInterface::class, AdministrationArchivalService::class);
-		$context->registerServiceAlias(AdministrationContextServiceInterface::class, AdministrationContextService::class);
-		$context->registerServiceAlias(AdministrationManagementAccessInterface::class, AdministrationManagementAccess::class);
-		$context->registerServiceAlias(AdministrationMembershipServiceInterface::class, AdministrationMembershipService::class);
-		$context->registerServiceAlias(AppointmentConfirmationServiceInterface::class, AppointmentConfirmationService::class);
-		$context->registerServiceAlias(ArInvoiceIcpPdfRendererInterface::class, ArInvoiceIcpPdfRenderer::class);
-		$context->registerServiceAlias(AssetRecordsInterface::class, AssetRecords::class);
-		$context->registerServiceAlias(AssignmentHoursInterface::class, AssignmentHours::class);
-		$context->registerServiceAlias(AuditExportServiceInterface::class, AuditExportService::class);
-		$context->registerServiceAlias(BIKStaffelCalculatorInterface::class, BIKStaffelCalculator::class);
-		$context->registerServiceAlias(BadoControleprotocolServiceInterface::class, BadoControleprotocolService::class);
-		$context->registerServiceAlias(BankRulePreviewServiceInterface::class, BankRulePreviewService::class);
-		$context->registerServiceAlias(BankRuleSuggestionServiceInterface::class, BankRuleSuggestionService::class);
-		$context->registerServiceAlias(BankfeedIntakeServiceInterface::class, BankfeedIntakeService::class);
-		$context->registerServiceAlias(BbvProgrammeBudgetServiceInterface::class, BbvProgrammeBudgetService::class);
-		$context->registerServiceAlias(BbvSeedServiceInterface::class, BbvSeedService::class);
-		$context->registerServiceAlias(BcfClaimServiceInterface::class, BcfClaimService::class);
-		$context->registerServiceAlias(BcfCompensationCalculatorInterface::class, BcfCompensationCalculator::class);
-		$context->registerServiceAlias(BegrotingswijzigingStackerInterface::class, BegrotingswijzigingStacker::class);
-		$context->registerServiceAlias(BillableLinesServiceInterface::class, BillableLinesService::class);
-		$context->registerServiceAlias(BillablePeriodInvoiceServiceInterface::class, BillablePeriodInvoiceService::class);
-		$context->registerServiceAlias(BookingNotificationServiceInterface::class, BookingNotificationService::class);
-		$context->registerServiceAlias(BudgetChartSeriesServiceInterface::class, BudgetChartSeriesService::class);
-		$context->registerServiceAlias(BudgetGridCalculatorInterface::class, BudgetGridCalculator::class);
-		$context->registerServiceAlias(BudgetGridReaderInterface::class, BudgetGridReader::class);
-		$context->registerServiceAlias(BudgetImpactEmitterInterface::class, BudgetImpactEmitter::class);
-		$context->registerServiceAlias(BudgetScenarioDefaultPromoterInterface::class, BudgetScenarioDefaultPromoter::class);
-		$context->registerServiceAlias(BudgetScenarioEvaluatorInterface::class, BudgetScenarioEvaluator::class);
-		$context->registerServiceAlias(BudgetScenarioReaderInterface::class, BudgetScenarioReader::class);
-		$context->registerServiceAlias(CBSExportServiceInterface::class, CBSExportService::class);
-		$context->registerServiceAlias(CalendarRowsInterface::class, CalendarRows::class);
-		$context->registerServiceAlias(CashflowExportServiceInterface::class, CashflowExportService::class);
-		$context->registerServiceAlias(ChartOfAccountsCandidateServiceInterface::class, ChartOfAccountsCandidateService::class);
-		$context->registerServiceAlias(CogsPosterServiceInterface::class, CogsPosterService::class);
-		$context->registerServiceAlias(CommitmentCarryOverServiceInterface::class, CommitmentCarryOverService::class);
-		$context->registerServiceAlias(CommitmentInvoicingInterface::class, CommitmentInvoicing::class);
-		$context->registerServiceAlias(CommitmentLedgerInterface::class, CommitmentLedger::class);
-		$context->registerServiceAlias(CommitmentMaterialisationServiceInterface::class, CommitmentMaterialisationService::class);
-		$context->registerServiceAlias(ComplianceDeadlineCalendarServiceInterface::class, ComplianceDeadlineCalendarService::class);
-		$context->registerServiceAlias(ComplianceExportServiceInterface::class, ComplianceExportService::class);
-		$context->registerServiceAlias(ComplianceServiceInterface::class, ComplianceService::class);
-		$context->registerServiceAlias(ConfirmationTokenServiceInterface::class, ConfirmationTokenService::class);
-		$context->registerServiceAlias(ConflictDetectionServiceInterface::class, ConflictDetectionService::class);
-		$context->registerServiceAlias(ConnectionReportServiceInterface::class, ConnectionReportService::class);
-		$context->registerServiceAlias(ContractCostRollupServiceInterface::class, ContractCostRollupService::class);
-		$context->registerServiceAlias(ContributionDeclineServiceInterface::class, ContributionDeclineService::class);
-		$context->registerServiceAlias(ContributionRaiseServiceInterface::class, ContributionRaiseService::class);
-		$context->registerServiceAlias(CrossSubsidyScanInterface::class, CrossSubsidyScan::class);
-		$context->registerServiceAlias(CustomerBridgeMetricsServiceInterface::class, CustomerBridgeMetricsService::class);
-		$context->registerServiceAlias(DBAVbarMonitorServiceInterface::class, DBAVbarMonitorService::class);
-		$context->registerServiceAlias(DebtorCreditServiceInterface::class, DebtorCreditService::class);
-		$context->registerServiceAlias(DemoDataServiceInterface::class, DemoDataService::class);
-		$context->registerServiceAlias(DepositReconciliationServiceInterface::class, DepositReconciliationService::class);
-		$context->registerServiceAlias(DepreciationRunInterface::class, DepreciationRun::class);
-		$context->registerServiceAlias(DepreciationScheduleServiceInterface::class, DepreciationScheduleService::class);
-		$context->registerServiceAlias(DocudeskExtractionClientInterface::class, DocudeskExtractionClient::class);
-		$context->registerServiceAlias(DoorsnijdingsVerbodValidatorInterface::class, DoorsnijdingsVerbodValidator::class);
-		$context->registerServiceAlias(DownPaymentServiceInterface::class, DownPaymentService::class);
-		$context->registerServiceAlias(DunningRunServiceInterface::class, DunningRunService::class);
-		$context->registerServiceAlias(DunningStageRendererInterface::class, DunningStageRenderer::class);
-		$context->registerServiceAlias(DunningTickRunnerInterface::class, DunningTickRunner::class);
-		$context->registerServiceAlias(EInvoiceServiceInterface::class, EInvoiceService::class);
-		$context->registerServiceAlias(EmuReportingServiceInterface::class, EmuReportingService::class);
-		$context->registerServiceAlias(ExceptionResolutionServiceInterface::class, ExceptionResolutionService::class);
-		$context->registerServiceAlias(ExtractionPrefillServiceInterface::class, ExtractionPrefillService::class);
-		$context->registerServiceAlias(FeeScheduleServiceInterface::class, FeeScheduleService::class);
-		$context->registerServiceAlias(FidoQuarterInterface::class, FidoQuarter::class);
-		$context->registerServiceAlias(FieldRequirementsInterface::class, FieldRequirements::class);
-		$context->registerServiceAlias(FifoValuationServiceInterface::class, FifoValuationService::class);
-		$context->registerServiceAlias(FinancialDashboardServiceInterface::class, FinancialDashboardService::class);
-		$context->registerServiceAlias(FinancialDocumentActionsInterface::class, FinancialDocumentActions::class);
-		$context->registerServiceAlias(FinancialDocumentAuthoringInterface::class, FinancialDocumentAuthoring::class);
-		$context->registerServiceAlias(FinancialDocumentFinderInterface::class, FinancialDocumentFinder::class);
-		$context->registerServiceAlias(FinancialDocumentRowsInterface::class, FinancialDocumentRows::class);
-		$context->registerServiceAlias(FiscalYearContextServiceInterface::class, FiscalYearContextService::class);
-		$context->registerServiceAlias(FixedAssetDepreciationInterface::class, FixedAssetDepreciation::class);
-		$context->registerServiceAlias(FixedAssetDisposalServiceInterface::class, FixedAssetDisposalService::class);
-		$context->registerServiceAlias(FluxServiceInterface::class, FluxService::class);
-		$context->registerServiceAlias(GRIRClearingServiceInterface::class, GRIRClearingService::class);
-		$context->registerServiceAlias(GlAccountSuggestionClientInterface::class, GlAccountSuggestionClient::class);
-		$context->registerServiceAlias(GlLineAdministrationBackfillMigratorInterface::class, GlLineAdministrationBackfillMigrator::class);
-		$context->registerServiceAlias(GlLineFiscalYearBackfillMigratorInterface::class, GlLineFiscalYearBackfillMigrator::class);
-		$context->registerServiceAlias(GlLineResultStampsInterface::class, GlLineResultStamps::class);
-		$context->registerServiceAlias(GoodsReceiptNoteServiceInterface::class, GoodsReceiptNoteService::class);
-		$context->registerServiceAlias(HrmqCostRateAdapterInterface::class, HrmqCostRateAdapter::class);
-		$context->registerServiceAlias(IcpFilingServiceInterface::class, IcpFilingService::class);
-		$context->registerServiceAlias(IcpServiceInterface::class, IcpService::class);
-		$context->registerServiceAlias(ImportBatchStepsInterface::class, ImportBatchSteps::class);
-		$context->registerServiceAlias(ImportPeriodInterface::class, ImportPeriod::class);
-		$context->registerServiceAlias(InboundPayableReaderInterface::class, InboundPayableReader::class);
-		$context->registerServiceAlias(InboundPayableServiceInterface::class, InboundPayableService::class);
-		$context->registerServiceAlias(IncassoDossierComposerInterface::class, IncassoDossierComposer::class);
-		$context->registerServiceAlias(InnovatieboxAggregationServiceInterface::class, InnovatieboxAggregationService::class);
-		$context->registerServiceAlias(InnovatieboxAuditEventLoggerInterface::class, InnovatieboxAuditEventLogger::class);
-		$context->registerServiceAlias(InnovatieboxSbrExportServiceInterface::class, InnovatieboxSbrExportService::class);
-		$context->registerServiceAlias(IntercompanyJournalServiceInterface::class, IntercompanyJournalService::class);
-		$context->registerServiceAlias(IntercompanyLinkServiceInterface::class, IntercompanyLinkService::class);
-		$context->registerServiceAlias(InterestAllocationServiceInterface::class, InterestAllocationService::class);
-		$context->registerServiceAlias(InventoryMobileScannerServiceInterface::class, InventoryMobileScannerService::class);
-		$context->registerServiceAlias(InventoryScanServiceInterface::class, InventoryScanService::class);
-		$context->registerServiceAlias(InventoryValuationReportServiceInterface::class, InventoryValuationReportService::class);
-		$context->registerServiceAlias(InvoiceGenerationServiceInterface::class, InvoiceGenerationService::class);
-		$context->registerServiceAlias(InvoicePdfGeneratorInterface::class, InvoicePdfGenerator::class);
-		$context->registerServiceAlias(InvoiceSettlementServiceInterface::class, InvoiceSettlementService::class);
-		$context->registerServiceAlias(JointArrangementAllocationInterface::class, JointArrangementAllocation::class);
-		$context->registerServiceAlias(KlantbeeldResultInterface::class, KlantbeeldResult::class);
-		$context->registerServiceAlias(KorMonitorServiceInterface::class, KorMonitorService::class);
-		$context->registerServiceAlias(LandedCostAllocationServiceInterface::class, LandedCostAllocationService::class);
-		$context->registerServiceAlias(LeaseDisclosureServiceInterface::class, LeaseDisclosureService::class);
-		$context->registerServiceAlias(LeasePaymentScheduleServiceInterface::class, LeasePaymentScheduleService::class);
-		$context->registerServiceAlias(LeaseReassessmentServiceInterface::class, LeaseReassessmentService::class);
-		$context->registerServiceAlias(LedgerPivotServiceInterface::class, LedgerPivotService::class);
-		$context->registerServiceAlias(ListenerSchemaResolverInterface::class, ListenerSchemaResolver::class);
-		$context->registerServiceAlias(ManualMatchServiceInterface::class, ManualMatchService::class);
-		$context->registerServiceAlias(MeterReadingImportServiceInterface::class, MeterReadingImportService::class);
-		$context->registerServiceAlias(MeterReadingRatingInterface::class, MeterReadingRating::class);
-		$context->registerServiceAlias(MilestoneTemplateServiceInterface::class, MilestoneTemplateService::class);
-		$context->registerServiceAlias(MovingAverageValuationServiceInterface::class, MovingAverageValuationService::class);
-		$context->registerServiceAlias(MultiPoConsolidationServiceInterface::class, MultiPoConsolidationService::class);
-		$context->registerServiceAlias(NexusCalculationServiceInterface::class, NexusCalculationService::class);
-		$context->registerServiceAlias(NoShowFeeCaptureServiceInterface::class, NoShowFeeCaptureService::class);
-		$context->registerServiceAlias(NrvWriteDownServiceInterface::class, NrvWriteDownService::class);
-		$context->registerServiceAlias(ObjectApiRequestInterface::class, ObjectApiRequest::class);
-		$context->registerServiceAlias(ObjectPaymentRequestValidatorInterface::class, ObjectPaymentRequestValidator::class);
-		$context->registerServiceAlias(ObjectRequestBankMatcherInterface::class, ObjectRequestBankMatcher::class);
-		$context->registerServiceAlias(ObjectRequestBankSettlementInterface::class, ObjectRequestBankSettlement::class);
-		$context->registerServiceAlias(ObjectRequestCommandServiceInterface::class, ObjectRequestCommandService::class);
-		$context->registerServiceAlias(ObjectRequestInvoiceServiceInterface::class, ObjectRequestInvoiceService::class);
-		$context->registerServiceAlias(ObjectRequestReceiptMailerInterface::class, ObjectRequestReceiptMailer::class);
-		$context->registerServiceAlias(ObjectRequestRefundServiceInterface::class, ObjectRequestRefundService::class);
-		$context->registerServiceAlias(ObjectTransitionRunnerInterface::class, ObjectTransitionRunner::class);
-		$context->registerServiceAlias(ObligationTaskBridgeInterface::class, ObligationTaskBridge::class);
-		$context->registerServiceAlias(OssPaymentReconciliationInterface::class, OssPaymentReconciliation::class);
-		$context->registerServiceAlias(OssRateResolverInterface::class, OssRateResolver::class);
-		$context->registerServiceAlias(OssRecordResolverInterface::class, OssRecordResolver::class);
-		$context->registerServiceAlias(OssReturnGeneratorInterface::class, OssReturnGenerator::class);
-		$context->registerServiceAlias(PaymentActionAppGrantInterface::class, PaymentActionAppGrant::class);
-		$context->registerServiceAlias(PaymentActionAuthorizerInterface::class, PaymentActionAuthorizer::class);
-		$context->registerServiceAlias(PaymentReconciliationServiceInterface::class, PaymentReconciliationService::class);
-		$context->registerServiceAlias(PaymentRequestFinderInterface::class, PaymentRequestFinder::class);
-		$context->registerServiceAlias(PaymentRequestPortalScopeInterface::class, PaymentRequestPortalScope::class);
-		$context->registerServiceAlias(PaymentSettlementServiceInterface::class, PaymentSettlementService::class);
-		$context->registerServiceAlias(PayrollServiceInterface::class, PayrollService::class);
-		$context->registerServiceAlias(PeriodCloseAssistantServiceInterface::class, PeriodCloseAssistantService::class);
-		$context->registerServiceAlias(PeriodCloseServiceInterface::class, PeriodCloseService::class);
-		$context->registerServiceAlias(PipelinqConfigInterface::class, PipelinqConfig::class);
-		$context->registerServiceAlias(PipelinqContactAdapterInterface::class, PipelinqContactAdapter::class);
-		$context->registerServiceAlias(PortalPaymentSessionServiceInterface::class, PortalPaymentSessionService::class);
-		$context->registerServiceAlias(ProductCatalogServiceInterface::class, ProductCatalogService::class);
-		$context->registerServiceAlias(ProgrammabegrotingServiceInterface::class, ProgrammabegrotingService::class);
-		$context->registerServiceAlias(PurchaseOrderApprovalServiceInterface::class, PurchaseOrderApprovalService::class);
-		$context->registerServiceAlias(PurchaseOrderServiceInterface::class, PurchaseOrderService::class);
-		$context->registerServiceAlias(QuickDraftInvoiceServiceInterface::class, QuickDraftInvoiceService::class);
-		$context->registerServiceAlias(ReconciliationResolutionServiceInterface::class, ReconciliationResolutionService::class);
-		$context->registerServiceAlias(RecurringSeriesServiceInterface::class, RecurringSeriesService::class);
-		$context->registerServiceAlias(RegisterLocationInterface::class, RegisterLocation::class);
-		$context->registerServiceAlias(ReinvestmentReservesInterface::class, ReinvestmentReserves::class);
-		$context->registerServiceAlias(RelationBothSidesServiceInterface::class, RelationBothSidesService::class);
-		$context->registerServiceAlias(RelationLinkServiceInterface::class, RelationLinkService::class);
-		$context->registerServiceAlias(RequisitionConversionServiceInterface::class, RequisitionConversionService::class);
-		$context->registerServiceAlias(RequisitionServiceInterface::class, RequisitionService::class);
-		$context->registerServiceAlias(ReserveBalancesInterface::class, ReserveBalances::class);
-		$context->registerServiceAlias(RevenueContractRenameMigratorInterface::class, RevenueContractRenameMigrator::class);
-		$context->registerServiceAlias(RevenueCutoffServiceInterface::class, RevenueCutoffService::class);
-		$context->registerServiceAlias(RevenueRecognitionServiceInterface::class, RevenueRecognitionService::class);
-		$context->registerServiceAlias(RuleTestDataSeederInterface::class, RuleTestDataSeeder::class);
-		$context->registerServiceAlias(SalesDispatchStockIssueServiceInterface::class, SalesDispatchStockIssueService::class);
-		$context->registerServiceAlias(SchemaDefinitionsInterface::class, SchemaDefinitions::class);
-		$context->registerServiceAlias(SepaAuditServiceInterface::class, SepaAuditService::class);
-		$context->registerServiceAlias(ServiceReceiptServiceInterface::class, ServiceReceiptService::class);
-		$context->registerServiceAlias(SettingsServiceInterface::class, SettingsService::class);
-		$context->registerServiceAlias(SigningDelegationServiceInterface::class, SigningDelegationService::class);
-		$context->registerServiceAlias(SignoffDecisionServiceInterface::class, SignoffDecisionService::class);
-		$context->registerServiceAlias(SlotServiceInterface::class, SlotService::class);
-		$context->registerServiceAlias(SoftCloseExecutorInterface::class, SoftCloseExecutor::class);
-		$context->registerServiceAlias(SpendAnalyticsServiceInterface::class, SpendAnalyticsService::class);
-		$context->registerServiceAlias(StandardsPolicyServiceInterface::class, StandardsPolicyService::class);
-		$context->registerServiceAlias(StatementIntakeServiceInterface::class, StatementIntakeService::class);
-		$context->registerServiceAlias(StatementManifestServiceInterface::class, StatementManifestService::class);
-		$context->registerServiceAlias(StockLedgerServiceInterface::class, StockLedgerService::class);
-		$context->registerServiceAlias(SubjectCostServiceInterface::class, SubjectCostService::class);
-		$context->registerServiceAlias(SupplierInvoiceChecksInterface::class, SupplierInvoiceChecks::class);
-		$context->registerServiceAlias(SupplierInvoiceServiceInterface::class, SupplierInvoiceService::class);
-		$context->registerServiceAlias(SuspenseAgeingServiceInterface::class, SuspenseAgeingService::class);
-		$context->registerServiceAlias(TaxNotificationServiceInterface::class, TaxNotificationService::class);
-		$context->registerServiceAlias(TaxPaymentReconciliationServiceInterface::class, TaxPaymentReconciliationService::class);
-		$context->registerServiceAlias(TaxReportServiceInterface::class, TaxReportService::class);
-		$context->registerServiceAlias(TenderNedStatusSyncInterface::class, TenderNedStatusSync::class);
-		$context->registerServiceAlias(ThreeWayMatchingEngineInterface::class, ThreeWayMatchingEngine::class);
-		$context->registerServiceAlias(TimeIntakeServiceInterface::class, TimeIntakeService::class);
-		$context->registerServiceAlias(TransactionalGuardInterface::class, TransactionalGuard::class);
-		$context->registerServiceAlias(TrialBalanceServiceInterface::class, TrialBalanceService::class);
-		$context->registerServiceAlias(VATReturnServiceInterface::class, VATReturnService::class);
-		$context->registerServiceAlias(VatLineBackfillInterface::class, VatLineBackfill::class);
-		$context->registerServiceAlias(VatNumberCheckInterface::class, VatNumberCheck::class);
-		$context->registerServiceAlias(VendorPerformanceAggregationInterface::class, VendorPerformanceAggregation::class);
-		$context->registerServiceAlias(ViesServiceInterface::class, ViesService::class);
-		$context->registerServiceAlias(VoluntaryContributionPolicyInterface::class, VoluntaryContributionPolicy::class);
-		$context->registerServiceAlias(VsoLockingValidatorInterface::class, VsoLockingValidator::class);
-		$context->registerServiceAlias(WbsoAccountServiceInterface::class, WbsoAccountService::class);
-		$context->registerServiceAlias(WbsoAdministratieServiceInterface::class, WbsoAdministratieService::class);
-		$context->registerServiceAlias(WbsoDocumentServiceInterface::class, WbsoDocumentService::class);
-		$context->registerServiceAlias(WbsoRbacResolverInterface::class, WbsoRbacResolver::class);
-		$context->registerServiceAlias(WbsoTransactionServiceInterface::class, WbsoTransactionService::class);
-		$context->registerServiceAlias(WidgetAuthServiceInterface::class, WidgetAuthService::class);
-		$context->registerServiceAlias(WidgetServiceInterface::class, WidgetService::class);
+		foreach (self::ALIASES as $contract => $implementation) {
+			$context->registerServiceAlias($contract, $implementation);
+		}
 	}//end register()
 }//end class

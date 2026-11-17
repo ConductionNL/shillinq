@@ -41,6 +41,7 @@ use OCP\Mail\IMailer;
 use OCP\Mail\IMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Covers the two panel actions and, above all, who is refused (REQ-SOPR-004).
@@ -168,7 +169,9 @@ final class PaymentRequestActionControllerTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->saved[] = $object;
 				return $object;
 			}

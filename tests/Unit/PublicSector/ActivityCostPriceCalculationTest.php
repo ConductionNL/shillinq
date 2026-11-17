@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\PublicSector;
 
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\CalculateIntegralCostPriceAction;
 use OCA\Shillinq\Service\IntegralCostPriceCalculator;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
@@ -115,7 +116,7 @@ final class ActivityCostPriceCalculationTest extends TestCase {
 				$declared = RegisterSchema::schema($record['schema'])['x-openregister-lifecycle']['transitions'][$record['action']];
 				foreach (($declared['actions'] ?? []) as $step) {
 					if ($step['action'] === CalculateIntegralCostPriceAction::class) {
-						$object = $action->execute($object, [], ($step['actionParameters'] ?? []), $step['action']);
+						$object = $action->execute(new LifecycleActionContext(objectData: $object, previousData: [], parameters: ($step['actionParameters'] ?? []), actionName: $step['action']));
 						$store->setSchema($record['schema'])->saveObject($object);
 					}
 				}

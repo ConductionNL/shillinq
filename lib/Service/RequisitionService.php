@@ -41,7 +41,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\BudgetBlockerInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
 use OCP\IAppConfig;
@@ -122,7 +121,7 @@ class RequisitionService implements RequisitionServiceInterface {
 			'statusCode' => 'draft',
 		];
 
-		$persisted     = $this->saveObject(schema: 'Requisition', object: $requisition);
+		$persisted     = $this->records()->saveObject(schema: 'Requisition', object: $requisition);
 		$requisitionId = (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $requisitionNumber));
 		$this->saveLines(lines: $lines, requisition: ['requisitionId' => $requisitionId, 'administrationId' => $administrationId]);
 
@@ -211,7 +210,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	 */
 	private function saveLines(array $lines, array $requisition): void {
 		foreach ($lines as $line) {
-			$this->saveObject(schema: 'RequisitionLine', object: $line + $requisition);
+			$this->records()->saveObject(schema: 'RequisitionLine', object: $line + $requisition);
 		}
 	}//end saveLines()
 
@@ -245,7 +244,7 @@ class RequisitionService implements RequisitionServiceInterface {
 
 		$requisition['statusCode'] = 'submitted';
 
-		return $this->saveObject(schema: 'Requisition', object: $requisition);
+		return $this->records()->saveObject(schema: 'Requisition', object: $requisition);
 	}//end submitRequisition()
 
 	/**
@@ -288,7 +287,7 @@ class RequisitionService implements RequisitionServiceInterface {
 		$requisition['approvedBy'] = $approverId;
 		$requisition['approvedAt'] = $this->nowIso();
 
-		return $this->saveObject(schema: 'Requisition', object: $requisition);
+		return $this->records()->saveObject(schema: 'Requisition', object: $requisition);
 	}//end approveRequisition()
 
 	/**
@@ -327,7 +326,7 @@ class RequisitionService implements RequisitionServiceInterface {
 		$requisition['rejectedBy'] = $rejectorId;
 		$requisition['rejectionReason'] = $reason;
 
-		return $this->saveObject(schema: 'Requisition', object: $requisition);
+		return $this->records()->saveObject(schema: 'Requisition', object: $requisition);
 	}//end rejectRequisition()
 
 	/**
@@ -347,7 +346,7 @@ class RequisitionService implements RequisitionServiceInterface {
 			throw new RuntimeException('Requisition not found');
 		}
 
-		$requisition = $this->findOne(
+		$requisition = $this->records()->findOne(
 			schema: 'Requisition',
 			filters: [
 				'id' => $requisitionId,
@@ -372,7 +371,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
 	public function findLines(string $administrationId, string $requisitionId): array {
-		return $this->findAll(
+		return $this->records()->findAll(
 			schema: 'RequisitionLine',
 			filters: [
 				'requisitionId' => $requisitionId,
@@ -494,7 +493,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	private function generateRequisitionNumber(string $administrationId): string {
 		$year = (int)date('Y');
 
-		$existing = $this->findAll(
+		$existing = $this->records()->findAll(
 			schema: 'Requisition',
 			filters: ['administrationId' => $administrationId]
 		);
@@ -511,101 +510,6 @@ class RequisitionService implements RequisitionServiceInterface {
 
 		return sprintf('REQ-%d-%s-%s', $year, $administrationId, $sequence);
 	}//end generateRequisitionNumber()
-
-	/**
-	 * Persist an object via OpenRegister's real ObjectService API (saveObject).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object The object to persist.
-	 *
-	 * @return array<string,mixed> The persisted record (id stamped by OR).
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 
 	/**
 	 * Convert a euro float to integer cents, rounding half-up.
@@ -626,4 +530,17 @@ class RequisitionService implements RequisitionServiceInterface {
 	private function nowIso(): string {
 		return date('c');
 	}//end nowIso()
+
+	/**
+	 * The register records of this service.
+	 *
+	 * @return SchemaRecordStore The store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'RequisitionService')
+		);
+
+	}//end records()
 }//end class
