@@ -70,6 +70,21 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
+        // tax-cbcr-and-pillar2-returns tasks 6.1 to 6.3: the actions of the
+        // Group entities, Country-by-country reports and Minimum tax returns
+        // pages. Authorised per administration in CbcrController.
+            ['name' => 'cbcr#assessScope', 'url' => '/api/cbcr/entities/{entityId}/assess-scope', 'verb' => 'POST'],
+            ['name' => 'cbcr#readFigures', 'url' => '/api/cbcr/entities/{entityId}/read-figures', 'verb' => 'POST'],
+            ['name' => 'cbcrEnteredFigures#enter', 'url' => '/api/cbcr/entities/{entityId}/figures', 'verb' => 'POST'],
+            ['name' => 'cbcrEnteredFigures#import', 'url' => '/api/cbcr/entities/{entityId}/import-figures', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepare', 'url' => '/api/cbcr/entities/{entityId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbour', 'url' => '/api/cbcr/entities/{entityId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#qdmtt', 'url' => '/api/cbcr/computations/{computationId}/qdmtt', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepareReturn', 'url' => '/api/cbcr/returns/{returnId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbourReturn', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#cbcChecks', 'url' => '/api/cbcr/returns/{returnId}/checks', 'verb' => 'GET'],
+            ['name' => 'cbcr#girChecks', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/checks', 'verb' => 'GET'],
+            ['name' => 'cbcr#createCorrection', 'url' => '/api/cbcr/returns/{returnId}/correction', 'verb' => 'POST'],
         // banking-fx-at-booking task 3.1: the FX rates page's status line —
         // feed or typed, and the newest rate date per pair. Any signed-in
         // user; the rates are read with the caller's own register access.
@@ -252,6 +267,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'invoiceApi#post', 'url' => '/api/v1/invoices/{invoiceId}/post', 'verb' => 'POST'],
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
             ['name' => 'invoiceApi#show', 'url' => '/api/v1/invoices/{invoiceId}', 'verb' => 'GET'],
+
+        // Sales-billable-rate-per-hour: a project's rated hours of one month (REQ-BRPH-003).
+            ['name' => 'projectBillableHours#index', 'url' => '/api/v1/projects/{id}/billable-hours', 'verb' => 'GET'],
 
         // Billing intake (time-expense-invoice-intake): authenticated ingress for
         // pipelinq's time-billing-handoff-emit change to POST a batch of approved
@@ -538,8 +556,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // Bookkeeping-reconciliation-reports (T4) — REQ-REC-004 unmatched-item
         // resolution. POST one classification + reason at a time, or bulk-apply
         // across a list of matchIds (REQ-REC-008 Unmatched Items bulk workflow).
-        // Both endpoints are #[NoAdminRequired] but IDOR-guarded: the service
-        // verifies match.reconId matches the path reconId before writing.
+        // All are #[NoAdminRequired] but IDOR-guarded: the service checks the
+        // reconciliation's administration and that match.reconId matches it.
             [
                 'name' => 'reconciliationResolution#resolve',
                 'url'  => '/api/reconciliations/{reconId}/matches/{matchId}/resolve',
@@ -548,6 +566,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             [
                 'name' => 'reconciliationResolution#bulkResolve',
                 'url'  => '/api/reconciliations/{reconId}/matches/bulk-resolve',
+                'verb' => 'POST',
+            ],
+            // Match ids only: the server reads each match's reconciliation.
+            [
+                'name' => 'reconciliationResolution#bulkResolveMatches',
+                'url'  => '/api/reconciliation-matches/bulk-resolve',
                 'verb' => 'POST',
             ],
 
@@ -768,6 +792,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // (ADR-005 IDOR-safe). Declared before the SPA catch-all so
             // Symfony route ordering matches it first per ADR-016.
             ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
+            // Discard your own imported invoice while it is still a review draft.
+            ['name' => 'supplierInvoiceImport#discard', 'url' => '/api/v1/supplier-invoices/{id}/draft', 'verb' => 'DELETE'],
 
             // Receipt-extraction-consume (REQ-RXC-004 / REQ-RXC-005) — thin proxy
             // so the frontend never needs docudesk credentials directly. request()
