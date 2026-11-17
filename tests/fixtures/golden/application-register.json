@@ -2081,6 +2081,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SisaAppendixInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\SisaAppendix'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SlotServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\SlotService'"
         ]

@@ -21,6 +21,9 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\GrantAccountabilityController;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
+use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
+use OCP\AppFramework\Http\DataDownloadResponse;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -50,10 +53,11 @@ final class GrantAccountabilityControllerTest extends TestCase {
 	 * @param string|null     $user   The logged-in user.
 	 * @param bool            $member Whether the caller can access gem-1.
 	 * @param \Throwable|null $fail   What the report throws.
+	 * @param array<string,mixed> $params The request parameters.
 	 *
 	 * @return GrantAccountabilityController
 	 */
-	private function controller(?string $user='u1', bool $member=true, ?\Throwable $fail=null): GrantAccountabilityController {
+	private function controller(?string $user='u1', bool $member=true, ?\Throwable $fail=null, array $params=[]): GrantAccountabilityController {
 		$entity = $this->createStub(ObjectEntityInterface::class);
 		$entity->method('getObject')->willReturn(['id' => 'grant-1', 'administrationId' => 'gem-1', 'subsidyNumber' => 'SUB-1', 'grantedAmount' => 150000.0]);
 		$entity->method('getUuid')->willReturn('grant-1');
@@ -85,6 +89,7 @@ final class GrantAccountabilityControllerTest extends TestCase {
 
 		$context = $this->createStub(AdministrationContextServiceInterface::class);
 		$context->method('currentUserId')->willReturn($user);
+		$context->method('buildContext')->willReturn(['activeAdministrationId' => 'gem-1']);
 		$context->method('canAccess')->willReturnCallback(
 			static fn (string $administrationId): bool => ($member === true && $administrationId === 'gem-1')
 		);
@@ -106,9 +111,26 @@ final class GrantAccountabilityControllerTest extends TestCase {
 		$l10n = $this->createStub(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
+		$sisa = $this->createStub(SisaAppendixInterface::class);
+		$sisa->method('forYear')->willReturnCallback(
+			function (string $administrationId, string $fiscalYear) use ($fail): array {
+				if ($fail !== null) {
+					throw $fail;
+				}
+
+				$this->reported[] = $administrationId . '/' . $fiscalYear;
+				return [['indicatorCode' => 'D8/01', 'value' => 120000.0]];
+			}
+		);
+		$sisa->method('toCsv')->willReturn("\"Code\"\r\n");
+
+		$request = $this->createStub(IRequest::class);
+		$request->method('getParam')->willReturnCallback(static fn (string $key, mixed $default = null): mixed => ($params[$key] ?? $default));
+
 		return new GrantAccountabilityController(
-			request: $this->createStub(IRequest::class),
+			request: $request,
 			settlement: $settlement,
+			sisa: $sisa,
 			objectService: $objects,
 			context: $context,
 			appConfig: $config,
@@ -162,4 +184,40 @@ final class GrantAccountabilityControllerTest extends TestCase {
 		self::assertSame(['message' => 'The accountability report could not be stored.'], $failed->getData());
 
 	}//end testAFailedReportAnswersInWords()
+	/**
+	 * The appendix of the active administration as JSON, and as CSV on request.
+	 *
+	 * @return void
+	 */
+	public function testTheSisaAppendixIsServedAsTableAndCsv(): void {
+		$table = $this->controller(params: ['year' => '2026'])->sisa();
+		self::assertInstanceOf(JSONResponse::class, $table);
+		self::assertSame(200, $table->getStatus());
+		self::assertSame(['year' => 2026, 'administrationId' => 'gem-1', 'rows' => [['indicatorCode' => 'D8/01', 'value' => 120000.0]]], $table->getData());
+
+		$csv = $this->controller(params: ['year' => '2026', 'administrationId' => 'gem-1', 'format' => 'csv'])->sisa();
+		self::assertInstanceOf(DataDownloadResponse::class, $csv);
+		self::assertSame('text/csv', $csv->getHeaders()['Content-Type']);
+		self::assertStringContainsString('sisa-2026.csv', $csv->getHeaders()['Content-Disposition']);
+		self::assertSame(['gem-1/2026', 'gem-1/2026'], $this->reported);
+
+	}//end testTheSisaAppendixIsServedAsTableAndCsv()
+
+	/**
+	 * Logged out 401, another administration 404, no year 400, a failure 500;
+	 * none of the refusals reads the books.
+	 *
+	 * @return void
+	 */
+	public function testTheSisaAppendixRefusals(): void {
+		self::assertSame(401, $this->controller(user: null, params: ['year' => '2026'])->sisa()->getStatus());
+		self::assertSame(404, $this->controller(params: ['year' => '2026', 'administrationId' => 'gem-9'])->sisa()->getStatus());
+		self::assertSame(404, $this->controller(member: false, params: ['year' => '2026'])->sisa()->getStatus());
+		self::assertSame(400, $this->controller(params: ['year' => 'last'])->sisa()->getStatus());
+		self::assertSame([], $this->reported);
+
+		$failed = $this->controller(fail: new RuntimeException('down'), params: ['year' => '2026'])->sisa();
+		self::assertSame(500, $failed->getStatus());
+
+	}//end testTheSisaAppendixRefusals()
 }//end class

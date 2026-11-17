@@ -997,6 +997,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // #[NoAdminRequired], the grant's administration checked in the
             // controller (another administration's grant is masked as 404).
             ['name' => 'grantAccountability#report', 'url' => '/api/v1/public-sector/grants/{id}/report', 'verb' => 'POST'],
+            // public-sector-grant-accountability REQ-SISA-012/013: the SiSa appendix
+            // of a year, as a table or ?format=csv. #[NoAdminRequired], the
+            // administration checked in the controller (masked as 404).
+            ['name' => 'grantAccountability#sisa', 'url' => '/api/v1/public-sector/sisa', 'verb' => 'GET'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both

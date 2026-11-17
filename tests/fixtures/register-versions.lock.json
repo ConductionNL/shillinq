@@ -140,6 +140,10 @@
         {
             "appVersion": "0.5.7-unstable.20261117140000",
             "versionsSha256": "9e5dd0ad0834ecf3cf75d29a176cfd50e0bc9d9f52e28568e4091d6db57cb4fc"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117150000",
+            "versionsSha256": "976e3875120213ffad68aa875ada3763226f402cf481c2a806ca491a349fe15a"
         }
     ],
     "versions": {
@@ -585,6 +589,7 @@
         "schema:Service": "0.3.0",
         "schema:ServiceCategoryOverride": "0.1.0",
         "schema:SiSaAssurance": "0.1.0",
+        "schema:SisaIndicator": "0.1.0",
         "schema:SisaRegelingIndicator": "0.1.0",
         "schema:SisaReport": "0.1.0",
         "schema:SoProject": "0.1.0",

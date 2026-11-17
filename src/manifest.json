@@ -20509,6 +20509,11 @@
 						"type": "number"
 					},
 					{
+						"key": "sisaRegulationCode",
+						"label": "SiSa regulation code",
+						"type": "string"
+					},
+					{
 						"key": "state",
 						"label": "Status",
 						"type": "string"
@@ -20534,9 +20539,9 @@
 						"type": "string"
 					}
 				],
-				"actions": [{"id": "generate-accountability-report", "label": "Generate accountability report", "icon": "FileDocumentCheckOutline", "type": "api-call", "url": "/apps/shillinq/api/v1/public-sector/grants/@objectId/report", "method": "POST", "visibleWhen": {"field": "state", "in": ["granted", "determined", "disbursed", "reclaimed"]}, "successMessage": "Accountability report stored.", "errorMessage": "The accountability report could not be stored.", "description": "Store the grant's accountability report, with a pending auditor statement when the grant's amount requires one (REQ-SUBV-012)."}],
+				"actions": [{"id": "generate-accountability-report", "label": "Generate accountability report", "icon": "FileDocumentCheckOutline", "type": "api-call", "url": "/apps/shillinq/api/v1/public-sector/grants/@objectId/report", "method": "POST", "visibleWhen": {"field": "state", "in": ["granted", "determined", "disbursed", "reclaimed"]}, "successMessage": "Accountability report stored.", "errorMessage": "The accountability report could not be stored.", "description": "Store the grant's accountability report, with a pending auditor statement when the grant's amount requires one (REQ-SUBV-012)."}, {"id": "download-sisa-appendix", "label": "Download SiSa appendix", "icon": "DownloadOutline", "type": "api-call", "method": "GET", "url": "/apps/shillinq/api/v1/public-sector/sisa?administrationId=@object.administrationId&year=@object.budgetYear&format=csv", "download": true, "filename": "sisa-appendix.csv", "visibleWhen": {"field": "direction", "in": ["incoming"]}, "successMessage": "SiSa appendix downloaded.", "errorMessage": "The SiSa appendix could not be downloaded.", "description": "Download the SiSa appendix of the grant's administration for its budget year: one row per indicator in the column order of the BZK template (REQ-SISA-013)."}],
 				"lifecycleActions": true,
-				"relatedLists": [
+				"relatedLists": [{"id": "sisa-indicators", "title": "SiSa indicators", "schema": "SisaIndicator", "filter": {"grantId": "@self.id"}, "columns": [{"key": "fiscalYear", "label": "Year"}, {"key": "indicatorCode", "label": "Indicator"}, {"key": "description", "label": "Description"}, {"key": "kind", "label": "Kind"}, {"key": "value", "label": "Value"}, {"key": "unit", "label": "Unit"}]}, 
 					{
 						"id": "repayment-instalments",
 						"title": "Terugbetalingstermijnen",

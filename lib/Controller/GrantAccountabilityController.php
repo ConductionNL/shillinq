@@ -5,11 +5,13 @@
  *
  * The grant page's report action: it stores the grant's accountability report
  * and, when the grant's amount requires one, a pending auditor statement
- * (public-sector-grant-accountability REQ-SUBV-012).
+ * (public-sector-grant-accountability REQ-SUBV-012). And the SiSa appendix of
+ * an administration's specific grants for a year, as a table or as the CSV for
+ * the annual accounts (REQ-SISA-012, REQ-SISA-013).
  *
- * #[NoAdminRequired]: any member of the grant's administration may report on
- * it. The grant is read with OpenRegister's RBAC as the caller, and a grant of
- * an administration the caller cannot access answers 404, as one that does not
+ * #[NoAdminRequired]: any member of the administration may use them. The grant
+ * is read with OpenRegister's RBAC as the caller, and a grant or appendix of an
+ * administration the caller cannot access answers 404, as one that does not
  * exist.
  *
  * @category Controller
@@ -36,11 +38,13 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
+use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -60,6 +64,7 @@ class GrantAccountabilityController extends Controller {
 	 *
 	 * @param IRequest                              $request       The request.
 	 * @param GrantSettlementInterface              $settlement    Stores the report.
+	 * @param SisaAppendixInterface                 $sisa          The SiSa appendix.
 	 * @param ObjectServiceInterface                $objectService OpenRegister's object service.
 	 * @param AdministrationContextServiceInterface $context       Administration access.
 	 * @param IAppConfig                            $appConfig     App config for the register slug.
@@ -69,6 +74,7 @@ class GrantAccountabilityController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly GrantSettlementInterface $settlement,
+		private readonly SisaAppendixInterface $sisa,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly IAppConfig $appConfig,
@@ -109,6 +115,51 @@ class GrantAccountabilityController extends Controller {
 		}
 
 	}//end report()
+
+	/**
+	 * The SiSa appendix of an administration for a year.
+	 *
+	 * Query: `administrationId` (default the active administration), `year`
+	 * and `format` (`csv` for the export, else a JSON table).
+	 *
+	 * @return JSONResponse|DataDownloadResponse The rows and columns, or the CSV.
+	 *
+	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
+	 */
+	#[NoAdminRequired]
+	public function sisa(): JSONResponse|DataDownloadResponse {
+		if ($this->context->currentUserId() === null) {
+			return $this->message(text: 'Not logged in', status: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId === '') {
+			$administrationId = (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
+		}
+
+		if ($administrationId === '' || $this->context->canAccess(administrationId: $administrationId) === false) {
+			return $this->message(text: 'Administration not found', status: Http::STATUS_NOT_FOUND);
+		}
+
+		$year = trim((string)$this->request->getParam('year', ''));
+		if (preg_match('/^\d{4}$/', $year) !== 1) {
+			return $this->message(text: 'Choose the year of the appendix, for example 2026.', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$rows = $this->sisa->forYear(administrationId: $administrationId, fiscalYear: $year);
+		} catch (Throwable $e) {
+			$this->logger->error('GrantAccountabilityController: SiSa appendix failed', ['exception' => $e->getMessage()]);
+			return $this->message(text: 'The SiSa appendix could not be loaded.', status: Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		if ((string)$this->request->getParam('format', '') === 'csv') {
+			return new DataDownloadResponse(data: $this->sisa->toCsv(rows: $rows), filename: 'sisa-' . $year . '.csv', contentType: 'text/csv');
+		}
+
+		return new JSONResponse(data: ['year' => (int)$year, 'administrationId' => $administrationId, 'rows' => $rows]);
+
+	}//end sisa()
 
 	/**
 	 * The grant, read as the caller, when its administration is one the caller can access.

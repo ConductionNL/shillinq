@@ -4,7 +4,7 @@
         "spdx-copyright": "2026 Conduction B.V.",
         "change": "public-sector-grant-accountability",
         "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycles, imperative settlement (the reclaim amount, the SiSa sums and the EU declaration are calculations over the books)",
-        "description": "Grant settlement on Subsidie.vaststellen (SettleGrantAction: the reclaimed amount and a draft reclaim invoice or payable), the grant's SiSa regulation code and its reclaim document ids. The work lives in lib/Service/PublicSector; the report endpoint is GrantAccountabilityController."
+        "description": "Grant settlement on Subsidie.vaststellen (SettleGrantAction: the reclaimed amount and a draft reclaim invoice or payable), the grant's SiSa regulation code and its reclaim document ids. The work lives in lib/Service/PublicSector; the report endpoint is GrantAccountabilityController. The SiSa appendix: Subsidie.sisaRegulationCode, GLLine.subsidieId (the grant a posting belongs to) and SisaIndicator (entered indicators and indicator codes); SisaAppendix sums the books and the appendix is served by GrantAccountabilityController."
     },
     "components": {
         "schemas": {
@@ -21,6 +21,13 @@
                         "nullable": true,
                         "title": "Reclaim payable",
                         "description": "The draft payable determining a grant received wrote for what was received above the determined amount (REQ-SUBV-011). Set once."
+                    },
+                    "sisaRegulationCode": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "SiSa regulation code",
+                        "description": "The code of the specific grant in the SiSa appendix (for example D8). Set on a grant received that the annual accounts account for in the appendix (REQ-SISA-012).",
+                        "example": "D8"
                     }
                 },
                 "x-openregister-lifecycle": {
@@ -35,6 +42,119 @@
                             ]
                         }
                     }
+                }
+            },
+            "GLLine": {
+                "properties": {
+                    "subsidieId": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Grant",
+                        "description": "The grant (Subsidie) this posting is spent on or received for. The SiSa appendix sums the posted profit-and-loss lines tagged with a specific grant: debits as spending, credits as income (REQ-SISA-012)."
+                    }
+                }
+            },
+            "SisaIndicator": {
+                "slug": "SisaIndicator",
+                "icon": "TableCheck",
+                "version": "0.1.0",
+                "title": "SiSa indicator",
+                "description": "One indicator of a specific grant in the SiSa appendix for a year. Output indicators are entered here and kept as entered; spending and income are computed from the books, and a record of that kind only names the regulation's own indicator code and description (REQ-SISA-012).",
+                "x-schema-org": "schema:PropertyValue",
+                "x-spec": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md",
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "grantId",
+                    "indicatorCode",
+                    "fiscalYear",
+                    "kind"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "title": "Administration",
+                        "description": "The administration the grant belongs to.",
+                        "example": "gem-almelo"
+                    },
+                    "grantId": {
+                        "type": "string",
+                        "title": "Grant",
+                        "description": "The specific grant (Subsidie) the indicator belongs to."
+                    },
+                    "regulationCode": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Regulation code",
+                        "description": "The regulation's code, as on the grant (sisaRegulationCode).",
+                        "example": "D8"
+                    },
+                    "indicatorCode": {
+                        "type": "string",
+                        "title": "Indicator",
+                        "description": "The indicator's number in the BZK template, for example D8/01.",
+                        "example": "D8/01"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Description",
+                        "description": "What the indicator measures, as the template words it."
+                    },
+                    "fiscalYear": {
+                        "type": "integer",
+                        "minimum": 2000,
+                        "maximum": 2100,
+                        "title": "Year",
+                        "description": "The year the indicator is for.",
+                        "example": 2026
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "spending",
+                            "income",
+                            "output"
+                        ],
+                        "title": "Kind",
+                        "description": "spending and income are computed from the ledger; output is entered.",
+                        "example": "output"
+                    },
+                    "value": {
+                        "type": "number",
+                        "nullable": true,
+                        "title": "Value",
+                        "description": "The entered value of an output indicator. Empty is reported as missing."
+                    },
+                    "unit": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Unit",
+                        "description": "The unit of the value, for example EUR or an amount of homes.",
+                        "example": "aantal"
+                    }
+                },
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Who entered or changed an indicator, and when."
+                },
+                "authorization": {
+                    "create": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "read": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller",
+                        "shillinq_auditor"
+                    ],
+                    "update": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "delete": [
+                        "shillinq_admin"
+                    ]
                 }
             }
         }

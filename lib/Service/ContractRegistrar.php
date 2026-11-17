@@ -83,6 +83,7 @@ use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
+use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
 use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CrossSubsidyScanInterface;
@@ -303,6 +304,7 @@ use OCA\Shillinq\Service\PublicSector\GrantSettlement;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 use OCA\Shillinq\Service\PublicSector\JointArrangementAllocation;
 use OCA\Shillinq\Service\PublicSector\ReserveBalances;
+use OCA\Shillinq\Service\PublicSector\SisaAppendix;
 use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\Receivables\DirectDebitBatchService;
@@ -548,6 +550,7 @@ final class ContractRegistrar {
 		SettingsServiceInterface::class => SettingsService::class,
 		SigningDelegationServiceInterface::class => SigningDelegationService::class,
 		SignoffDecisionServiceInterface::class => SignoffDecisionService::class,
+		SisaAppendixInterface::class => SisaAppendix::class,
 		SlotServiceInterface::class => SlotService::class,
 		SoftCloseExecutorInterface::class => SoftCloseExecutor::class,
 		SpendAnalyticsServiceInterface::class => SpendAnalyticsService::class,

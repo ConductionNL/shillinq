@@ -9,8 +9,8 @@
 
 ## 2. SiSa
 
-- [ ] 2.1 `SisaIndicator` fragment, `Subsidie.sisaRegulationCode`, `SisaAppendix::forYear` (REQ-SISA-012). Verify: PHPUnit red first; payload validates against the real fragment.
-- [ ] 2.2 Endpoint and CSV, grant page panel (REQ-SISA-013). Verify: controller test, route-auth and IDOR gates, vitest on the panel.
+- [x] 2.1 `SisaIndicator` fragment, `Subsidie.sisaRegulationCode`, `SisaAppendix::forYear` (REQ-SISA-012). Verify: PHPUnit red first; payload validates against the real fragment.
+- [x] 2.2 Endpoint and CSV, grant page panel (REQ-SISA-013). Verify: controller test, route-auth and IDOR gates, vitest on the panel. — the panel is manifest configuration (a SisaIndicator related list and a CSV download on SubsidieDetail), so there is no Vue component for vitest.
 
 ## 3. EU funds
 
