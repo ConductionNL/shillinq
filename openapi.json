@@ -6476,6 +6476,130 @@
                 }
             }
         },
+        "/financial-documents/counter-sales": {
+            "post": {
+                "operationId": "counter-sale-create",
+                "summary": "Record a counter sale and take its payment",
+                "description": "Record a counter sale as a draft simplified invoice and take its payment on the caller's registered phone, or as a QR checkout. The invoice is issued when the payment is captured and cancelled when it fails. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-document-action"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "administrationId",
+                                    "lines"
+                                ],
+                                "properties": {
+                                    "administrationId": {
+                                        "type": "string",
+                                        "description": "The administration that sells."
+                                    },
+                                    "customerId": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "A CustomerMaster of the administration; absent for its counter-sales debtor."
+                                    },
+                                    "lines": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "maxItems": 50,
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "description",
+                                                "unitPrice",
+                                                "vatRate"
+                                            ],
+                                            "properties": {
+                                                "description": {
+                                                    "type": "string",
+                                                    "maxLength": 200
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "default": 1
+                                                },
+                                                "unitPrice": {
+                                                    "type": "number",
+                                                    "description": "Price per unit including VAT."
+                                                },
+                                                "vatRate": {
+                                                    "type": "number",
+                                                    "minimum": 0,
+                                                    "maximum": 100
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/financial-documents/counter-sales/{id}/cancel": {
+            "post": {
+                "operationId": "counter-sale-cancel",
+                "summary": "Cancel a counter sale",
+                "description": "Cancel a counter sale that is not paid yet, when the customer walks away. Nothing was booked. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-document-action"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The draft invoice of the sale.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/financial-documents/payouts": {
             "post": {
                 "operationId": "financial-document-action-raise-payout",

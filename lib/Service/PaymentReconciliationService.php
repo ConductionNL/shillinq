@@ -63,6 +63,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Payout\CaptureBookingService;
+use OCA\Shillinq\Service\Payout\CounterSaleSettlement;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -175,6 +176,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	 * @param ?PaymentSettlementService $settlements Stamps the settled edge; built on demand when absent.
 	 * @param ?ObjectTransitionRunner $transitions Posts the receipt's journal entry; built on demand when absent.
 	 * @param ?CaptureBookingService $captureBooking Books the capture of a paid invoice; built on demand when absent.
+	 * @param ?CounterSaleSettlement $counterSales Issues a captured counter sale and cancels a failed one; built on demand when absent.
 	 *
 	 * @return void
 	 */
@@ -187,6 +189,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		private readonly ?PaymentSettlementService $settlements = null,
 		private readonly ?ObjectTransitionRunner $transitions = null,
 		private readonly ?CaptureBookingService $captureBooking = null,
+		private readonly ?CounterSaleSettlement $counterSales = null,
 	) {
 	}//end __construct()
 
@@ -227,6 +230,21 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 			revenueAccounts: $this->revenueAccounts(),
 		));
 	}//end captureBooking()
+
+	/**
+	 * The counter-sale step of a payment outcome, built on demand when absent.
+	 *
+	 * @return CounterSaleSettlement
+	 *
+	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 */
+	private function counterSales(): CounterSaleSettlement {
+		return ($this->counterSales ?? new CounterSaleSettlement(
+			objectService: $this->objectService,
+			transitions: $this->transitions(),
+			logger: $this->logger,
+		));
+	}//end counterSales()
 
 	/**
 	 * The revenue-account mapping, resolved lazily so the existing callers that
@@ -290,6 +308,11 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		}
 
 		$record = $this->applyOutcome(record: $record, gateway: $gateway, outcome: $outcome, event: $event);
+
+		// A counter sale whose payment failed or was voided booked nothing: cancel its draft (REQ-RPPO-006).
+		if (($outcome === self::OUTCOME_FAILED || $outcome === self::OUTCOME_VOIDED) && $schema === self::SCHEMA_PAYMENT_REQUEST) {
+			$this->counterSales()->cancelOnFailure(registerSlug: $registerSlug, request: $record);
+		}
 
 		[$record, $result] = $this->settleWhenCapturedRequest(
 			registerSlug: $registerSlug,
@@ -502,6 +525,11 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 			// entity's `id` is not one — so every reference fell through to
 			// the slug arm and an invoice referenced by uuid never reconciled.
 			$invoices = $this->findLinkedInvoices(objectService: $objectService, registerSlug: $registerSlug, invoiceRef: $invoiceRef);
+
+			// A counter sale is a draft until its payment is captured: issue it first (REQ-RPPO-006).
+			if (is_array($invoices[0] ?? null) === true) {
+				$invoices[0] = $this->counterSales()->issueOnCapture(registerSlug: $registerSlug, invoice: $invoices[0]);
+			}
 
 			$invoice = $this->settleableInvoice(invoices: $invoices, invoiceRef: $invoiceRef);
 			if ($invoice === null) {
