@@ -40,6 +40,7 @@ namespace OCA\Shillinq\PaymentPlan;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
@@ -113,31 +114,16 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 			invoiceIds: array_values(array_filter(array_map('strval', (array)($input['invoiceIds'] ?? []))))
 		);
 
-		$charges = 0.0;
 		$includesCharges = (($input['includesCharges'] ?? false) === true);
-		if ($includesCharges === true) {
-			$charges = round(max(0.0, (float)($input['chargesAmount'] ?? 0)), 2);
-		}
+		$charges = $this->chargesOf(input: $input, includesCharges: $includesCharges);
 
 		$open = array_sum(array_map(static fn (array $invoice): float => (float)($invoice['amountDue'] ?? 0), $invoices));
 		$total = round($open + $charges, 2);
-		$count = null;
-		if ((int)($input['instalmentCount'] ?? 0) > 0) {
-			$count = (int)$input['instalmentCount'];
-		}
-
-		$amount = null;
-		if ($count === null && (float)($input['instalmentAmount'] ?? 0) > 0) {
-			$amount = round((float)$input['instalmentAmount'], 2);
-		}
+		[$count, $amount] = $this->instalmentTerms(input: $input);
 
 		$frequency = (string)($input['frequency'] ?? 'monthly');
 		$firstDueDate = (string)($input['firstDueDate'] ?? '');
-		try {
-			$rows = $this->schedule->build(total: $total, frequency: $frequency, firstDueDate: $firstDueDate, count: $count, amount: $amount);
-		} catch (InvalidArgumentException $e) {
-			throw new PaymentPlanRefusedException(template: $e->getMessage());
-		}
+		$rows = $this->scheduleRows(total: $total, input: $input, count: $count, amount: $amount);
 
 		$customer = $this->customer(customerId: $customerId);
 		$planNumber = $this->nextPlanNumber(administrationId: $administrationId);
@@ -171,6 +157,94 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 		];
 		$plan = $this->save(schema: 'PaymentPlan', object: $plan);
 
+		$instalments = $this->saveInstalments(rows: $rows, plan: $plan, planNumber: $planNumber, administrationId: $administrationId);
+
+		$this->logger->info('PaymentPlanService: plan drawn up', ['planNumber' => $planNumber, 'actor' => $actor]);
+		return ['plan' => $plan, 'instalments' => $instalments];
+
+	}//end draft()
+
+	/**
+	 * The charges a plan includes, rounded to cents and never negative.
+	 *
+	 * @param array<string,mixed> $input           The plan input.
+	 * @param bool                $includesCharges Whether the plan includes charges.
+	 *
+	 * @return float
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
+	 */
+	private function chargesOf(array $input, bool $includesCharges): float {
+		$charges = 0.0;
+		if ($includesCharges === true) {
+			$charges = round(max(0.0, (float)($input['chargesAmount'] ?? 0)), 2);
+		}
+
+		return $charges;
+	}//end chargesOf()
+
+	/**
+	 * The instalment count, or else the instalment amount, the input asks for.
+	 *
+	 * @param array<string,mixed> $input The plan input.
+	 *
+	 * @return array{0:int|null,1:float|null} Count and amount; at most one is set.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
+	 */
+	private function instalmentTerms(array $input): array {
+		$count = null;
+		if ((int)($input['instalmentCount'] ?? 0) > 0) {
+			$count = (int)$input['instalmentCount'];
+		}
+
+		$amount = null;
+		if ($count === null && (float)($input['instalmentAmount'] ?? 0) > 0) {
+			$amount = round((float)$input['instalmentAmount'], 2);
+		}
+
+		return [$count, $amount];
+	}//end instalmentTerms()
+
+	/**
+	 * Build the instalment schedule rows for the plan.
+	 *
+	 * @param float               $total  The plan total.
+	 * @param array<string,mixed> $input  The plan input (frequency, firstDueDate).
+	 * @param int|null            $count  Instalment count, if asked for.
+	 * @param float|null          $amount Instalment amount, if asked for.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @throws PaymentPlanRefusedException When the terms cannot make a schedule.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
+	 */
+	private function scheduleRows(float $total, array $input, int|null $count, float|null $amount): array {
+		$frequency = (string)($input['frequency'] ?? 'monthly');
+		$firstDueDate = (string)($input['firstDueDate'] ?? '');
+		try {
+			$rows = $this->schedule->build(total: $total, frequency: $frequency, firstDueDate: $firstDueDate, count: $count, amount: $amount);
+		} catch (InvalidArgumentException $e) {
+			throw new PaymentPlanRefusedException(template: $e->getMessage());
+		}
+
+		return $rows;
+	}//end scheduleRows()
+
+	/**
+	 * Save one pending instalment per schedule row.
+	 *
+	 * @param array<int,array<string,mixed>> $rows             Schedule rows.
+	 * @param array<string,mixed>            $plan             The saved plan.
+	 * @param string                         $planNumber       The plan number.
+	 * @param string                         $administrationId Administration scope.
+	 *
+	 * @return array<int,array<string,mixed>> The saved instalments.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
+	 */
+	private function saveInstalments(array $rows, array $plan, string $planNumber, string $administrationId): array {
 		$instalments = [];
 		foreach ($rows as $row) {
 			$instalments[] = $this->save(
@@ -186,10 +260,8 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 			);
 		}
 
-		$this->logger->info('PaymentPlanService: plan drawn up', ['planNumber' => $planNumber, 'actor' => $actor]);
-		return ['plan' => $plan, 'instalments' => $instalments];
-
-	}//end draft()
+		return $instalments;
+	}//end saveInstalments()
 
 	/**
 	 * Agree a drafted plan: pause dunning, stamp the invoices, mail the schedule.
@@ -230,7 +302,7 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 				hardDeadline: $deadline
 			);
 			$pauseIds[] = (string)($pause['id'] ?? '');
-			$this->scoped(schema: 'ARInvoice')->patchObject($invoiceId, ['paymentPlanId' => $planId]);
+			$this->scoped(schema: 'ARInvoice')->patchObject(new ObjectPatch(objectId: $invoiceId, data: ['paymentPlanId' => $planId]));
 		}
 
 		$mail = $this->mailer->confirmation(
@@ -244,7 +316,7 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 			$patch['confirmationSentAt'] = $this->time->getDateTime()->format(DATE_ATOM);
 		}
 
-		$this->scoped(schema: 'PaymentPlan')->patchObject($planId, $patch);
+		$this->scoped(schema: 'PaymentPlan')->patchObject(new ObjectPatch(objectId: $planId, data: $patch));
 		return $this->plan(planId: $planId);
 
 	}//end activate()
@@ -358,34 +430,7 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 	 * @return void
 	 */
 	private function monitorPlan(array $plan, array &$counts): void {
-		$today = $this->today();
-		$grace = (int)($plan['graceDays'] ?? 14);
-		$missed = null;
-		foreach ($this->allocator->instalments(planId: (string)$plan['id']) as $instalment) {
-			$state = (string)($instalment['state'] ?? 'pending');
-			$dueDate = (string)($instalment['dueDate'] ?? '');
-			if ($state === 'paid' || $dueDate === '' || $dueDate > $today) {
-				continue;
-			}
-
-			if ($state === 'missed') {
-				$missed = ($missed ?? $instalment);
-				continue;
-			}
-
-			$lastDay = (new DateTimeImmutable($dueDate))->modify('+' . $grace . ' days')->format('Y-m-d');
-			if ($lastDay < $today) {
-				$this->transitions->run(objectId: (string)$instalment['id'], action: 'miss');
-				$counts['missed']++;
-				$missed = ($missed ?? $instalment);
-				continue;
-			}
-
-			if ($state === 'pending') {
-				$this->transitions->run(objectId: (string)$instalment['id'], action: 'fall-due');
-				$counts['due']++;
-			}
-		}//end foreach
+		$missed = $this->scanInstalments(plan: $plan, counts: $counts);
 
 		if ($missed !== null) {
 			$reason = sprintf('Instalment %d, due on %s, was not paid.', (int)$missed['instalmentNumber'], (string)$missed['dueDate']);
@@ -398,6 +443,79 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 		$this->refresh(planId: (string)$plan['id']);
 
 	}//end monitorPlan()
+
+	/**
+	 * Move a plan's instalments past their due dates and find the first missed one.
+	 *
+	 * @param array<string,mixed>                                  $plan   The active plan.
+	 * @param array{due:int,missed:int,broken:int,completed:int} $counts Tally, updated.
+	 *
+	 * @return array<string,mixed>|null The first missed instalment, or null when none is missed.
+	 */
+	private function scanInstalments(array $plan, array &$counts): array|null {
+		$today = $this->today();
+		$grace = (int)($plan['graceDays'] ?? 14);
+		$missed = null;
+		foreach ($this->allocator->instalments(planId: (string)$plan['id']) as $instalment) {
+			if ($this->monitorInstalment(instalment: $instalment, today: $today, grace: $grace, counts: $counts) === true) {
+				$missed = ($missed ?? $instalment);
+			}
+		}
+
+		return $missed;
+	}//end scanInstalments()
+
+	/**
+	 * One instalment's daily pass.
+	 *
+	 * @param array<string,mixed>                                  $instalment The instalment.
+	 * @param string                                               $today      Today, Y-m-d.
+	 * @param int                                                  $grace      Grace days after the due date.
+	 * @param array{due:int,missed:int,broken:int,completed:int} $counts     Tally, updated.
+	 *
+	 * @return bool True when the instalment is missed.
+	 */
+	private function monitorInstalment(array $instalment, string $today, int $grace, array &$counts): bool {
+		$state = (string)($instalment['state'] ?? 'pending');
+		$dueDate = (string)($instalment['dueDate'] ?? '');
+		if ($state === 'paid' || $dueDate === '' || $dueDate > $today) {
+			return false;
+		}
+
+		if ($state === 'missed') {
+			return true;
+		}
+
+		return $this->advanceInstalment(instalment: $instalment, today: $today, grace: $grace, counts: $counts);
+	}//end monitorInstalment()
+
+	/**
+	 * Mark an open, past-due instalment missed after its grace, or due within it.
+	 *
+	 * @param array<string,mixed>                                  $instalment The instalment.
+	 * @param string                                               $today      Today, Y-m-d.
+	 * @param int                                                  $grace      Grace days after the due date.
+	 * @param array{due:int,missed:int,broken:int,completed:int} $counts     Tally, updated.
+	 *
+	 * @return bool True when the instalment is now missed.
+	 */
+	private function advanceInstalment(array $instalment, string $today, int $grace, array &$counts): bool {
+		$state = (string)($instalment['state'] ?? 'pending');
+		$dueDate = (string)($instalment['dueDate'] ?? '');
+		$lastDay = (new DateTimeImmutable($dueDate))->modify('+' . $grace . ' days')->format('Y-m-d');
+		if ($lastDay < $today) {
+			$this->transitions->run(objectId: (string)$instalment['id'], action: 'miss');
+			$counts['missed']++;
+			return true;
+		}
+
+		if ($state === 'pending') {
+			$this->transitions->run(objectId: (string)$instalment['id'], action: 'fall-due');
+			$counts['due']++;
+		}
+
+		return false;
+	}//end advanceInstalment()
 
 	/**
 	 * End a plan: its transition, its pauses resumed, and for a break the mail.
@@ -426,7 +544,9 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 			}
 		}
 
-		$this->scoped(schema: 'PaymentPlan')->patchObject($planId, ['endedOn' => $this->today(), 'endReason' => $reason]);
+		$this->scoped(schema: 'PaymentPlan')->patchObject(
+			new ObjectPatch(objectId: $planId, data: ['endedOn' => $this->today(), 'endReason' => $reason])
+		);
 		if ($action === 'break') {
 			$plan = $this->refresh(planId: $planId);
 			$this->mailer->send(recipient: (string)($plan['customerEmail'] ?? ''), mail: $this->mailer->ended(plan: $plan, reason: $reason));
@@ -473,7 +593,7 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 
 		$patch = ['paidAmount' => ($paid / 100.0), 'arrears' => ($arrears / 100.0)] + $thisMonth;
 		$patch += ($next ?? ['nextDueDate' => null, 'nextDueAmount' => null]);
-		$this->scoped(schema: 'PaymentPlan')->patchObject($planId, $patch);
+		$this->scoped(schema: 'PaymentPlan')->patchObject(new ObjectPatch(objectId: $planId, data: $patch));
 		return $this->plan(planId: $planId);
 
 	}//end refresh()

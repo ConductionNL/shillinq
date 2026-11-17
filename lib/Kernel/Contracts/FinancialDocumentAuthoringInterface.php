@@ -70,6 +70,7 @@ interface FinancialDocumentAuthoringInterface {
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $payload The quote.
+	 * @param string $appId The calling app when acting for another app, or empty for the signed-in user.
 	 *
 	 * @return array{id: string} The quote.
 	 *
@@ -77,12 +78,13 @@ interface FinancialDocumentAuthoringInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
-	public function createQuote(string $register, string $schema, string $objectId, array $payload): array;
+	public function createQuote(string $register, string $schema, string $objectId, array $payload, string $appId=''): array;
 
 	/**
 	 * Issue a credit note for the whole of an invoice, on the same objects.
 	 *
 	 * @param string $invoiceId The invoice.
+	 * @param string $appId The calling app when acting for another app, or empty for the signed-in user.
 	 *
 	 * @return array{id: string} The credit note.
 	 *
@@ -90,7 +92,7 @@ interface FinancialDocumentAuthoringInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
-	public function creditInvoice(string $invoiceId): array;
+	public function creditInvoice(string $invoiceId, string $appId=''): array;
 
 	/**
 	 * Raise a payout on the host object, with shillinq as the raising app.
@@ -102,6 +104,7 @@ interface FinancialDocumentAuthoringInterface {
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $payload The payout.
+	 * @param string $appId The calling app when acting for another app, or empty for the signed-in user.
 	 *
 	 * @return array{payableId: string, state: string} The payout.
 	 *
@@ -109,5 +112,5 @@ interface FinancialDocumentAuthoringInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
-	public function raisePayout(string $register, string $schema, string $objectId, array $payload): array;
+	public function raisePayout(string $register, string $schema, string $objectId, array $payload, string $appId=''): array;
 }//end interface

@@ -209,24 +209,59 @@ class IntegriqPaymentAdapter implements MolliePaymentAdapterInterface {
 			return $this->dormant(reason: 'command-not-handled', detail: 'Integriq did not answer the payment command.');
 		}
 
+		$refusal = self::refusalOf(event: $event);
+		if (is_array($refusal) === true) {
+			return $this->refused(refusal: $refusal);
+		}
+
+		$result = self::resultPayloadOf(event: $event);
+		if (is_array($result) === false) {
+			return $this->dormant(reason: 'command-not-handled', detail: 'Integriq answered the payment command without a result.');
+		}
+
+		return $this->paymentResultFrom(result: $result);
+	}//end resultOf()
+
+	/**
+	 * The event's refusal, or null when the event carries none.
+	 *
+	 * @param Event $event The answered payment command.
+	 *
+	 * @return mixed
+	 */
+	private static function refusalOf(Event $event): mixed {
 		$refusal = null;
 		if (method_exists($event, 'getRefusal') === true) {
 			$refusal = $event->getRefusal();
 		}
 
-		if (is_array($refusal) === true) {
-			return $this->refused(refusal: $refusal);
-		}
+		return $refusal;
+	}//end refusalOf()
 
+	/**
+	 * The event's result payload, or null when the event carries none.
+	 *
+	 * @param Event $event The answered payment command.
+	 *
+	 * @return mixed
+	 */
+	private static function resultPayloadOf(Event $event): mixed {
 		$result = null;
 		if (method_exists($event, 'getResult') === true) {
 			$result = $event->getResult();
 		}
 
-		if (is_array($result) === false) {
-			return $this->dormant(reason: 'command-not-handled', detail: 'Integriq answered the payment command without a result.');
-		}
+		return $result;
+	}//end resultPayloadOf()
 
+	/**
+	 * The payment result for an answered command: dormant when integriq uses its log provider.
+	 *
+	 * @param array<string, mixed> $result The command's result payload.
+	 *
+	 * @return MolliePaymentResult
+	 */
+	private function paymentResultFrom(array $result): MolliePaymentResult {
 		if ((bool)($result['dormant'] ?? false) === true) {
 			return $this->dormant(reason: 'log-provider', detail: 'The integriq payment source uses its log provider.');
 		}
@@ -238,7 +273,7 @@ class IntegriqPaymentAdapter implements MolliePaymentAdapterInterface {
 			dormant: false,
 			extras: ['paymentIntentId' => (string)($result['paymentIntentId'] ?? '')],
 		);
-	}//end resultOf()
+	}//end paymentResultFrom()
 
 	/**
 	 * A refused command answers dormant: there is no checkout, whatever the reason.

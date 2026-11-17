@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Tax;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Service\Tax\VatPositionService;
 use OCA\Shillinq\Service\VATReturnService;
@@ -31,6 +32,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * The position is read through the real VATReturnService over lines posted by
@@ -66,7 +68,14 @@ final class VatPositionServiceTest extends TestCase {
 		$objectService = $this->store->mock($this);
 		$action = new MaterialiseGlTransactionAction($objectService, $appConfig, $this->createMock(LoggerInterface::class));
 		foreach ($documents as [$document, $sourceSchema]) {
-			$action->execute($document, [], ['sourceSchema' => $sourceSchema], MaterialiseGlTransactionAction::class);
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $document,
+					previousData: [],
+					parameters: ['sourceSchema' => $sourceSchema],
+					actionName: MaterialiseGlTransactionAction::class
+				)
+			);
 		}
 
 		$this->store->rows['GLTransaction'] = $this->store->savedOf('GLTransaction');
@@ -280,7 +289,8 @@ final class VatPositionServiceTest extends TestCase {
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
+				$id = $deletion->uuid;
 				$this->rows[$this->schema] = array_values(
 					array_filter(($this->rows[$this->schema] ?? []), static fn (array $row): bool => (string)($row['id'] ?? '') !== $id)
 				);

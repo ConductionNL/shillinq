@@ -26,6 +26,8 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCA\Shillinq\Lifecycle\Action\RunConsolidationAction;
 use OCA\Shillinq\Service\ConsolidationMappingService;
@@ -76,8 +78,8 @@ final class RunConsolidationActionTest extends TestCase {
 			}
 		);
 		$objectService->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null): ObjectEntityInterface {
-				$this->saved[] = (string)$schema;
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntityInterface {
+				$this->saved[] = (string)$options->target?->schema;
 				return $this->createStub(ObjectEntityInterface::class);
 			}
 		);
@@ -110,7 +112,7 @@ final class RunConsolidationActionTest extends TestCase {
 		$period = ['id' => 'cp-1', 'consolidationGroupId' => 'g-1', 'periodEnd' => '2026-10-31', 'status' => 'eliminationPhase', 'totalEliminationCount' => 4];
 
 		$before = new DateTimeImmutable('-1 second');
-		$result = $this->action()->execute(objectData: $period, previousData: $period, parameters: [], actionName: 'runConsolidation');
+		$result = $this->action()->execute(new LifecycleActionContext(objectData: $period, previousData: $period, parameters: [], actionName: 'runConsolidation'));
 
 		self::assertSame(['ConsolidatedBalance', 'ConsolidatedIncomeStatement'], $this->saved);
 		$stamp = new DateTimeImmutable((string)$result['executionTimestamp']);
@@ -129,6 +131,6 @@ final class RunConsolidationActionTest extends TestCase {
 		$this->expectExceptionMessage('The consolidation group of this period is unknown or names no parent administration.');
 
 		$period = ['id' => 'cp-1', 'consolidationGroupId' => 'gone', 'periodEnd' => '2026-10-31'];
-		$this->action()->execute(objectData: $period, previousData: $period, parameters: [], actionName: 'runConsolidation');
+		$this->action()->execute(new LifecycleActionContext(objectData: $period, previousData: $period, parameters: [], actionName: 'runConsolidation'));
 	}//end testAPeriodThatCannotBeRunRefusesTheTransition()
 }//end class

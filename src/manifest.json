@@ -15,7 +15,7 @@
 			{ "id": "demo-data", "type": "choice", "display": "cards", "optionsSource": "datasets", "configKey": "demo_dataset", "loadAction": "load-demo-data", "title": "Load example data?", "required": false, "body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install." },
 			{ "id": "country", "type": "choice", "title": "Legal region (country)", "body": "In which country is this organisation legally established? This determines the available organisation types and standards.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Netherlands" }, { "value": "be", "label": "Belgium" }, { "value": "de", "label": "Germany" } ] },
 			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
-			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
+			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "optionsSource": "chartTemplates", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
 			{ "id": "administration", "type": "run-action", "title": "Create administration", "body": "Create the default administration. This registers your organisation as an administration in OpenRegister, so bookings, invoices and reports can be linked to it. Click \"Run\" to create the administration.", "action": "init-administration", "required": true },
 			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration. This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
 			{ "id": "done", "type": "summary", "title": "Done", "body": "Review your choices below and complete the installation.", "healthCheck": true }
@@ -1021,7 +1021,7 @@
 		},
 		{
 		  "id": "StoreMenu",
-		  "label": "Store",
+		  "label": "Marketplace",
 		  "icon": "StoreOutline",
 		  "route": "Store",
 		  "section": "footer",
@@ -1187,10 +1187,10 @@
 		  "id": "Store",
 		  "route": "/store",
 		  "type": "store",
-		  "title": "Store",
+		  "title": "Marketplace",
 		  "config": {
 		    "app": "shillinq",
-		    "title": "Store",
+		    "title": "Marketplace",
 		    "description": "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them."
 		  },
 		  "_note": "ADR-114 Decision 4 / ADR-080. Declarative: openregister hosts the store plane, so this app writes NO store controller. With no registry configured the page renders the app's built-in items and makes NO network call."
@@ -2681,6 +2681,14 @@
 						"route": "FinancialPivot"
 					},
 					{
+						"id": "CancellationReasons",
+						"label": "Cancellation reasons",
+						"description": "Why subscriptions ended, per quarter.",
+						"icon": "AccountCancelOutline",
+						"category": "financial",
+						"route": "CancellationReasons"
+					},
+					{
 						"id": "GeneratedReportsIndex",
 						"label": "Generated reports",
 						"description": "Everything Reporting & Compliance has already produced.",
@@ -2931,7 +2939,7 @@
 			"title": "SBR/XBRL Filing",
 			"config": {
 				"register": "shillinq",
-				"_note": "SBR/XBRL filing detail — an XBRL instance filed via Digipoort (entry point, taxonomy version, instance hash, receipt). The instance XML is available under Files; audit trail evidences submission and Digipoort acceptance/rejection.",
+				"_note": "SBR/XBRL filing detail — an XBRL instance filed via Digipoort (entry point, taxonomy version, instance hash, receipt). The instance XML is available under Files; audit trail evidences submission and Digipoort acceptance/rejection. The filing type, the Digipoort reference, the errors of a rejection and the Download XBRL action follow the filing through integriq (tax-digipoort-filing REQ-TDF-002, REQ-TDF-004).",
 				"auditTrail": true,
 				"schema": "XbrlInstance",
 				"fields": [
@@ -2943,6 +2951,11 @@
 					{
 						"key": "entryPoint",
 						"label": "Entry point",
+						"type": "string"
+					},
+					{
+						"key": "filingType",
+						"label": "Filing type",
 						"type": "string"
 					},
 					{
@@ -2966,6 +2979,11 @@
 						"type": "string"
 					},
 					{
+						"key": "sourceReturnId",
+						"label": "Source VAT return",
+						"type": "string"
+					},
+					{
 						"key": "mappingId",
 						"label": "Mapping",
 						"type": "string"
@@ -2982,7 +3000,12 @@
 					},
 					{
 						"key": "digipoortReceiptId",
-						"label": "Digipoort receipt id",
+						"label": "Digipoort reference",
+						"type": "string"
+					},
+					{
+						"key": "handOffReference",
+						"label": "Hand-off reference",
 						"type": "string"
 					},
 					{
@@ -2997,7 +3020,7 @@
 					},
 					{
 						"key": "rejectionReason",
-						"label": "Rejection reason",
+						"label": "Errors",
 						"type": "string"
 					},
 					{
@@ -3006,9 +3029,29 @@
 						"type": "string"
 					},
 					{
+						"key": "payloadFileUri",
+						"label": "Filed file",
+						"type": "string"
+					},
+					{
 						"key": "instanceXml",
 						"label": "XBRL instance",
 						"type": "code"
+					}
+				],
+				"actions": [
+					{
+						"id": "download-xbrl",
+						"label": "Download XBRL",
+						"icon": "DownloadOutline",
+						"type": "api-call",
+						"method": "GET",
+						"url": "/apps/shillinq/api/sbr-filings/@objectId/xbrl",
+						"download": true,
+						"filename": "sbr-filing.xbrl",
+						"successMessage": "XBRL file downloaded.",
+						"errorMessage": "The XBRL file could not be downloaded.",
+						"description": "Download the filing's XBRL instance, in any state."
 					}
 				],
 				"indexRoute": "SbrXbrlFilings",
@@ -7525,20 +7568,23 @@
 				"widgets": [
 					{
 						"id": "nearing-retention",
-						"title": "Retention periods expiring soon",
-						"type": "stats-block",
-						"iconClass": "icon-calendar",
-						"props": {
-							"countLabel": "bewaartermijnen",
-							"variant": "warning"
-						},
-						"dataSource": {
-							"register": "shillinq",
-							"schema": "RetentionRule",
-							"filter": {
-								"daysUntilRetention_lt": 90
+						"title": "Records due for destruction",
+						"type": "stat",
+						"content": {
+							"label": "Records due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/retention/due"
 							},
-							"aggregate": "count"
+							"valueField": "total",
+							"clickRoute": "RetentionDueRecords",
+							"variantWhen": [
+								{
+									"op": "gt",
+									"value": 0,
+									"variant": "warning"
+								}
+							]
 						}
 					}
 				],
@@ -7891,30 +7937,30 @@
 				"schema": "CustomerMaster",
 				"columns": [
 					{
+						"key": "customerId",
+						"label": "Code",
+						"sortable": true
+					},
+					{
 						"key": "legalName",
 						"label": "Name",
 						"sortable": true,
 						"secondary": "{tradeName}"
 					},
 					{
-						"key": "kvkNumber",
-						"label": "KvK Number",
+						"key": "paymentTermDays",
+						"label": "Payment term (days)",
 						"sortable": true
 					},
 					{
-						"key": "legalForm",
-						"label": "Legal form",
+						"key": "deliveryMethod",
+						"label": "Delivery method",
 						"sortable": true
 					},
 					{
-						"key": "address.city",
-						"label": "City",
-						"sortable": false
-					},
-					{
-						"key": "email",
-						"label": "Email",
-						"sortable": false
+						"key": "creditLimit",
+						"label": "Credit limit",
+						"sortable": true
 					},
 					{
 						"key": "lifecycleState",
@@ -7969,7 +8015,7 @@
 						"id": "customer-identity",
 						"type": "data",
 						"title": "Customer details",
-						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId"]}
+						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId", "paymentTermDays", "deliveryMethod", "invoiceEmail"]}
 					},
 					{
 						"id": "customer-stats-open-invoices",
@@ -8147,6 +8193,15 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ARInvoice",
+					"bulkActions": [
+						{
+							"id": "send-selected-invoices",
+							"label": "Send selected",
+							"icon": "EmailFastOutline",
+							"handler": "sendSelectedInvoices",
+							"description": "Send the selected invoices by each customer's delivery method. An invoice already sent is skipped; you get a notification when the batch is done."
+						}
+					],
 				"columns": [
 					{
 						"key": "invoiceNumber",
@@ -8192,7 +8247,7 @@
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "ARInvoiceDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/send-invoices",
 				"headerActions": [
 					{
 						"id": "new-down-payment-invoice",
@@ -8207,6 +8262,20 @@
 						"icon": "FileDocumentMultipleOutline",
 						"handler": "openInvoiceGenerateWizard",
 						"description": "From hours, costs, meter readings and retainers"
+					},
+					{
+						"id": "new-invoice-batch",
+						"label": "New invoice batch",
+						"icon": "FileDocumentMultipleOutline",
+						"handler": "openInvoiceBatchCreate",
+						"description": "Bill the same lines to several customers at once, each due by their own payment term."
+					},
+					{
+						"id": "invoice-batches",
+						"label": "Invoice batches",
+						"type": "open-page",
+						"route": "InvoiceBatches",
+						"icon": "EmailFastOutline"
 					},
 					{
 						"id": "new-invoice",
@@ -8263,7 +8332,9 @@
 						"action": "actions-menu",
 						"items": [
 							"new-down-payment-invoice",
-							"generate-invoices"
+							"generate-invoices",
+							"new-invoice-batch",
+							"invoice-batches"
 						]
 					},
 					{
@@ -19724,6 +19795,11 @@
 					}
 				],
 				"auditTrail": true,
+				"lifecycleActions": true,
+				"headerActions": [
+					{"id": "download-ensia-statement", "label": "Download statement", "type": "handler", "handler": "downloadEnsiaStatement", "icon": "Download", "visibleWhen": {"field": "declarationDocx", "op": "notEmpty"}, "description": "Download the college statement rendered when the cycle moved to college approval."},
+					{"id": "download-ensia-xml", "label": "Download XML", "type": "handler", "handler": "downloadEnsiaXml", "icon": "Download", "visibleWhen": {"field": "submissionXml", "op": "notEmpty"}, "description": "Download the ENSIA XML produced when the cycle was submitted."}
+				],
 				"schema": "ENSIAJaarcyclus",
 				"fields": [
 					{

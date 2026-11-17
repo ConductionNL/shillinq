@@ -26,6 +26,7 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCA\Shillinq\Service\ConsolidationMappingService;
 use OCA\Shillinq\Service\ConsolidationRunService;
@@ -117,8 +118,8 @@ final class ConsolidationRunServiceTest extends TestCase {
 			}
 		);
 		$objectService->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null): ObjectEntityInterface {
-				$this->saves[] = [(string)$schema, $object, $uuid];
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntityInterface {
+				$this->saves[] = [(string)$options->target?->schema, $object, $options->uuid];
 				return $this->createStub(ObjectEntityInterface::class);
 			}
 		);

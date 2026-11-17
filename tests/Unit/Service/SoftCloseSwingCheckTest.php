@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCA\Shillinq\Service\FluxService;
 use OCA\Shillinq\Service\SoftCloseSwingCheck;
@@ -87,8 +88,8 @@ final class SoftCloseSwingCheckTest extends TestCase {
 		}
 
 		$objectService->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null): ObjectEntityInterface {
-				$this->saves[] = [(string)$schema, $object];
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntityInterface {
+				$this->saves[] = [(string)$options->target?->schema, $object];
 				return $this->createStub(ObjectEntityInterface::class);
 			}
 		);

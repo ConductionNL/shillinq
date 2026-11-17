@@ -26,6 +26,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 
 /**
  * Tests for ContractLeafProvider's row reading.
@@ -104,7 +105,7 @@ final class ContractLeafProviderRowsTest extends TestCase {
 	public function testGetReturnsTheRequestedLinkedContract(): void {
 		$provider = $this->provider([$this->contract('c-1'), $this->contract('c-2'), $this->contract('c-3', 'zaak-8')]);
 
-		$contract = $provider->get('zaken', 'zaak', 'zaak-7', 'c-2');
+		$contract = $provider->get(new ObjectRef(register: 'zaken', schema: 'zaak', id: 'zaak-7'), 'c-2');
 
 		$this->assertSame('c-2', $contract['id']);
 		$this->assertSame('Contract c-2', $contract['title']);
@@ -131,7 +132,7 @@ final class ContractLeafProviderRowsTest extends TestCase {
 				$withJunkLink,
 				$twice,
 			]
-		)->list('zaken', 'zaak', 'zaak-7');
+		)->list(new ObjectRef(register: 'zaken', schema: 'zaak', id: 'zaak-7'));
 
 		$this->assertSame(['c-5', 'c-9'], array_column($listed['items'], 'id'));
 		$this->assertSame(2, $listed['total']);

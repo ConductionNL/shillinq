@@ -36,6 +36,8 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -422,7 +424,13 @@ class ConsolidationRunService {
 				$uuid = null;
 			}
 
-			$this->objectService->saveObject(object: $report, register: $this->register(), schema: $schema, uuid: $uuid);
+			$this->objectService->saveObject(
+				object: $report,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->register(), schema: $schema),
+					uuid: $uuid
+				)
+			);
 		}
 
 		$this->logger->info('ConsolidationRunService: consolidation stored', ['consolidationPeriodId' => $periodRecordId] + $totals);

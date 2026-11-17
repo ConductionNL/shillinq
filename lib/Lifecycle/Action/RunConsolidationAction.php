@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\ConsolidationRunService;
 
@@ -53,20 +54,16 @@ class RunConsolidationAction implements LifecycleActionInterface {
 	/**
 	 * Run the consolidation and return the period with the moment of the run.
 	 *
-	 * @param array<string,mixed> $objectData   The period with the transition applied.
-	 * @param array<string,mixed> $previousData The period before.
-	 * @param array<string,mixed> $parameters   Declared parameters (none).
-	 * @param string              $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the period with the transition applied.
 	 *
 	 * @return array<string,mixed> The period to save.
 	 *
 	 * @throws InvalidArgumentException When the period cannot be run (see ConsolidationRunService::run()).
 	 *
 	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
 		$asOf = new DateTimeImmutable();
 		$this->runs->run(period: $objectData, asOf: $asOf);
 
