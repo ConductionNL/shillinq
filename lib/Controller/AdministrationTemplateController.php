@@ -29,8 +29,8 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ChartTemplateServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,15 +50,15 @@ class AdministrationTemplateController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param IRequest                     $request   The request.
-	 * @param AdministrationContextService $context   Who may do what in which administration.
-	 * @param ChartTemplateService         $templates The templates.
-	 * @param LoggerInterface              $logger    Where failures are logged.
+	 * @param IRequest                              $request   The request.
+	 * @param AdministrationContextServiceInterface $context   Who may do what in which administration.
+	 * @param ChartTemplateServiceInterface         $templates The templates.
+	 * @param LoggerInterface                       $logger    Where failures are logged.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly ChartTemplateService $templates,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly ChartTemplateServiceInterface $templates,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -176,6 +176,8 @@
       the changed-file list; `composer check:strict`'s own `test:all` leg
       is the same full-suite PHPUnit run captured separately below).
 - [ ] `npx playwright test tests/e2e/budget-known-costs.spec.ts` — NOT RUN,
+      Live pass 2026-11-17: 1 passed (Derivations nav leaf), 3 skipped: KnownCostBudgetWriter has
+      not run for the administration, so no recurring/contract BudgetLine or derivation exists.
       per the implementer's explicit brief ("write... but do NOT execute
       it"). The spec is written and lint-clean (`npx eslint`); it should be
       spot-checked against a live run before this change ships, per its own

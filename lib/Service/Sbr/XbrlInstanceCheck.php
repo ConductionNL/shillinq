@@ -22,6 +22,7 @@ namespace OCA\Shillinq\Service\Sbr;
 
 use DOMDocument;
 use DOMElement;
+use OCA\Shillinq\Kernel\Contracts\XbrlInstanceCheckInterface;
 use OCP\IL10N;
 
 /**
@@ -36,7 +37,7 @@ use OCP\IL10N;
  *
  * @spec openspec/changes/tax-digipoort-filing/specs/bookkeeping-sbr-xbrl-reporting/spec.md#requirement-an-instance-is-validated-against-its-entry-point-before-submission-req-tdf-003
  */
-class XbrlInstanceCheck {
+class XbrlInstanceCheck implements XbrlInstanceCheckInterface {
 
 	/**
 	 * How far a total may differ from the sum of its parts (rounding).

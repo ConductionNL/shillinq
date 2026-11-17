@@ -4853,6 +4853,7 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail",
+				"rowRoute": "ChartOfAccountsDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts",
 				"_boardNote": "Board ShGrootboek is the chart of accounts: title, count line, Download / Actions / New account, chips for balance sheet, profit and loss and control accounts, the RGS code first and the account with its type under it. The board balance column waits on data: an account carries no balance.",
 				"showTitle": true,
@@ -7937,30 +7938,30 @@
 				"schema": "CustomerMaster",
 				"columns": [
 					{
+						"key": "customerId",
+						"label": "Code",
+						"sortable": true
+					},
+					{
 						"key": "legalName",
 						"label": "Name",
 						"sortable": true,
 						"secondary": "{tradeName}"
 					},
 					{
-						"key": "kvkNumber",
-						"label": "KvK Number",
+						"key": "paymentTermDays",
+						"label": "Payment term (days)",
 						"sortable": true
 					},
 					{
-						"key": "legalForm",
-						"label": "Legal form",
+						"key": "deliveryMethod",
+						"label": "Delivery method",
 						"sortable": true
 					},
 					{
-						"key": "address.city",
-						"label": "City",
-						"sortable": false
-					},
-					{
-						"key": "email",
-						"label": "Email",
-						"sortable": false
+						"key": "creditLimit",
+						"label": "Credit limit",
+						"sortable": true
 					},
 					{
 						"key": "lifecycleState",
@@ -8015,7 +8016,7 @@
 						"id": "customer-identity",
 						"type": "data",
 						"title": "Customer details",
-						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId"]}
+						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId", "paymentTermDays", "deliveryMethod", "invoiceEmail"]}
 					},
 					{
 						"id": "customer-stats-open-invoices",
@@ -8193,6 +8194,15 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ARInvoice",
+					"bulkActions": [
+						{
+							"id": "send-selected-invoices",
+							"label": "Send selected",
+							"icon": "EmailFastOutline",
+							"handler": "sendSelectedInvoices",
+							"description": "Send the selected invoices by each customer's delivery method. An invoice already sent is skipped; you get a notification when the batch is done."
+						}
+					],
 				"columns": [
 					{
 						"key": "invoiceNumber",
@@ -8238,7 +8248,7 @@
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "ARInvoiceDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/send-invoices",
 				"headerActions": [
 					{
 						"id": "new-down-payment-invoice",
@@ -8253,6 +8263,20 @@
 						"icon": "FileDocumentMultipleOutline",
 						"handler": "openInvoiceGenerateWizard",
 						"description": "From hours, costs, meter readings and retainers"
+					},
+					{
+						"id": "new-invoice-batch",
+						"label": "New invoice batch",
+						"icon": "FileDocumentMultipleOutline",
+						"handler": "openInvoiceBatchCreate",
+						"description": "Bill the same lines to several customers at once, each due by their own payment term."
+					},
+					{
+						"id": "invoice-batches",
+						"label": "Invoice batches",
+						"type": "open-page",
+						"route": "InvoiceBatches",
+						"icon": "EmailFastOutline"
 					},
 					{
 						"id": "new-invoice",
@@ -8309,7 +8333,9 @@
 						"action": "actions-menu",
 						"items": [
 							"new-down-payment-invoice",
-							"generate-invoices"
+							"generate-invoices",
+							"new-invoice-batch",
+							"invoice-batches"
 						]
 					},
 					{
@@ -12881,6 +12907,7 @@
 				],
 				"defaultSort": "subsidyNumber",
 				"detailRoute": "SubsidieDetail",
+				"rowRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
@@ -19770,6 +19797,11 @@
 					}
 				],
 				"auditTrail": true,
+				"lifecycleActions": true,
+				"headerActions": [
+					{"id": "download-ensia-statement", "label": "Download statement", "type": "handler", "handler": "downloadEnsiaStatement", "icon": "Download", "visibleWhen": {"field": "declarationDocx", "op": "notEmpty"}, "description": "Download the college statement rendered when the cycle moved to college approval."},
+					{"id": "download-ensia-xml", "label": "Download XML", "type": "handler", "handler": "downloadEnsiaXml", "icon": "Download", "visibleWhen": {"field": "submissionXml", "op": "notEmpty"}, "description": "Download the ENSIA XML produced when the cycle was submitted."}
+				],
 				"schema": "ENSIAJaarcyclus",
 				"fields": [
 					{
@@ -20311,6 +20343,7 @@
 				],
 				"defaultSort": "-aanvraagDate",
 				"detailRoute": "SubsidieDetail",
+				"rowRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
@@ -20359,6 +20392,7 @@
 				],
 				"defaultSort": "-uitbetaaldBedrag",
 				"detailRoute": "SubsidieDetail",
+				"rowRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},

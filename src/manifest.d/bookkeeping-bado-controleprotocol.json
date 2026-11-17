@@ -102,6 +102,15 @@
 						] }
 					]
 				},
+				"headerActions": [{"id": "draw-audit-sample", "label": "Draw sample", "type": "handler", "handler": "openAuditSampleDraw", "icon": "Shuffle", "description": "Draw a reproducible sample of posted ledger lines for this protocol (REQ-011)."}],
+				"band": [
+					{"widgetId": "audit-opinion", "span": 4},
+					{"widgetId": "audit-aggregation", "span": 8}
+				],
+				"widgets": [
+					{"id": "audit-opinion", "type": "stat", "title": "Proposed opinion", "content": {"label": "Proposed opinion", "icon": "ScaleBalance", "endpointSource": {"url": "/apps/shillinq/api/bado/controleprotocol/aggregation?protocol_id=@objectId"}, "valueField": "proposedOpinion"}},
+					{"id": "audit-aggregation", "type": "object-table", "title": "Findings per topic", "content": {"endpointSource": {"url": "/apps/shillinq/api/bado/controleprotocol/aggregation?protocol_id=@objectId", "responsePath": "topics"}, "emptyText": "No agreed or resolved findings yet.", "columns": [{"key": "topic", "label": "Topic"}, {"key": "acceptabelCount", "label": "Acceptable"}, {"key": "teCorrigerenCount", "label": "To correct"}, {"key": "materieelCount", "label": "Material"}, {"key": "rechtmatigheidAmount", "label": "Lawfulness errors", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}, {"key": "getrouwheidAmount", "label": "Fair presentation errors", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}, {"key": "verdict", "label": "Severity"}]}}
+				],
 				"indexRoute": "AuditProtocols"
 			}
 		},

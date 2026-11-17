@@ -287,6 +287,10 @@
       own computed properties bound via the codebase's established
       fake-`this` pattern, `useBudgetChartData` mocked).**
 - [ ] `npx playwright test tests/e2e/budget-charts.spec.ts` — PASS.
+      Live pass 2026-11-17: 1 passed (BudgetGrid inline chart), 3 skipped: ChartOfAccountsDetail's
+      Trend tab is declared under legacy `sidebarProps.tabs` and nc-vue's detail sidebar is off
+      unless `config.sidebar` is set, so the tab never renders (242 detail pages share this; a
+      decision for the boards, not a test fix).
       **NOT RUN, per this batch's explicit instruction ("Write the
       Playwright spec, do NOT execute it").**
 - [x] `openspec validate budget-charts --strict` — PASS.
