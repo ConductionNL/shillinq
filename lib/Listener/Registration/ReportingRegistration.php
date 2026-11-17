@@ -70,6 +70,8 @@ final class ReportingRegistration {
 		(new ProjectHoursRegistration())->register(context: $context);
 		// Receivables-object-request-settlement: the debtor's receipt mail.
 		(new ObjectRequestSettlementRegistration())->register(context: $context);
+		// Tax-vat-position-and-suppletie: a closed period checks the filed returns for drift.
+		(new VatDriftRegistration())->register(context: $context);
 
 	}//end register()
 }//end class

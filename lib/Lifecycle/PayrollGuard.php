@@ -44,6 +44,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -96,28 +97,7 @@ class PayrollGuard {
 	 */
 	public function canCalculate(string $payrollId, ?array $object = null): bool {
 		try {
-			$payroll = $this->resolvePayroll(payrollId: $payrollId, object: $object);
-			if ($payroll === null) {
-				return false;
-			}
-
-			$employeeId = (string)($payroll['employeeId'] ?? '');
-			if ($employeeId === '') {
-				return false;
-			}
-
-			// The employee must be active and not exited before the period start.
-			$employeeOk = $this->employeeAllowsPayroll(
-				employeeId: $employeeId,
-				periodStartDate: (string)($payroll['periodStartDate'] ?? '')
-			);
-			if ($employeeOk === false) {
-				return false;
-			}
-
-			// At least one deduction line item must be assigned.
-			$deductions = $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId));
-			return count($deductions) > 0;
+			return $this->calculable(payrollId: $payrollId, object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PayrollGuard: calculate check failed — denying transition (fail-closed)',
@@ -126,6 +106,43 @@ class PayrollGuard {
 			return false;
 		}//end try
 	}//end canCalculate()
+
+	/**
+	 * Whether the payroll's employee allows it and at least one deduction is assigned.
+	 *
+	 * @param string                   $payrollId The Payroll.id being transitioned.
+	 * @param array<string,mixed>|null $object    The in-flight Payroll object.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When a lookup fails.
+	 *
+	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 */
+	private function calculable(string $payrollId, array|null $object): bool {
+		$payroll = $this->resolvePayroll(payrollId: $payrollId, object: $object);
+		if ($payroll === null) {
+			return false;
+		}
+
+		$employeeId = (string)($payroll['employeeId'] ?? '');
+		if ($employeeId === '') {
+			return false;
+		}
+
+		// The employee must be active and not exited before the period start.
+		$employeeOk = $this->employeeAllowsPayroll(
+			employeeId: $employeeId,
+			periodStartDate: (string)($payroll['periodStartDate'] ?? '')
+		);
+		if ($employeeOk === false) {
+			return false;
+		}
+
+		// At least one deduction line item must be assigned.
+		$deductions = $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId));
+		return count($deductions) > 0;
+	}//end calculable()
 
 	/**
 	 * Returns true iff the payroll may transition calculated -> issued.
@@ -325,11 +342,6 @@ class PayrollGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

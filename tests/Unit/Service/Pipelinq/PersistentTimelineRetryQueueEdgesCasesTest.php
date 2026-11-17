@@ -42,6 +42,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Verifies the queue's id extraction, timestamp rendering and failure paths.
@@ -108,7 +109,9 @@ final class PersistentTimelineRetryQueueEdgesCasesTest extends TestCase {
 			 *
 			 * @return mixed
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null, bool $_rbac = true): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saved[] = $object;
 				return $this->result;
 			}//end saveObject()

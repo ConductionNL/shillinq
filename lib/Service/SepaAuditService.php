@@ -34,8 +34,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SepaAuditServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use ZipArchive;
@@ -403,11 +403,6 @@ class SepaAuditService implements SepaAuditServiceInterface {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

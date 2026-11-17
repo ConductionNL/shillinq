@@ -53,6 +53,32 @@ class BegrotingswijzigingStacker implements BegrotingswijzigingStackerInterface 
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
 	 */
 	public function currentStand(array $basisTaskFields, array $wijzigingen): array {
+		$position = $this->basisPosition(basisTaskFields: $basisTaskFields);
+
+		foreach ($wijzigingen as $wijziging) {
+			if (($wijziging['status'] ?? 'draft') !== 'determined') {
+				continue;
+			}
+
+			$movements = ($wijziging['movements'] ?? []);
+			if (is_array($movements) === true) {
+				$position = $this->applyMovements(position: $position, movements: $movements);
+			}
+		}
+
+		return $this->inEuro(position: $position);
+	}//end currentStand()
+
+	/**
+	 * The cent-keyed stand of the vastgestelde basis taakvelden.
+	 *
+	 * @param array<int,array<string,mixed>> $basisTaskFields The vastgestelde basis Taakveld rows.
+	 *
+	 * @return array<string,array{revenueCents:int,expensesCents:int}>
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+	 */
+	private function basisPosition(array $basisTaskFields): array {
 		$position = [];
 		foreach ($basisTaskFields as $taskField) {
 			$code = (string)($taskField['taskFieldCode'] ?? '');
@@ -66,17 +92,19 @@ class BegrotingswijzigingStacker implements BegrotingswijzigingStackerInterface 
 			];
 		}
 
-		foreach ($wijzigingen as $wijziging) {
-			if (($wijziging['status'] ?? 'draft') !== 'determined') {
-				continue;
-			}
+		return $position;
+	}//end basisPosition()
 
-			$movements = ($wijziging['movements'] ?? []);
-			if (is_array($movements) === true) {
-				$position = $this->applyMovements(position: $position, movements: $movements);
-			}
-		}
-
+	/**
+	 * The cent-keyed stand in euro.
+	 *
+	 * @param array<string,array{revenueCents:int,expensesCents:int}> $position The cent-keyed stand.
+	 *
+	 * @return array<string,array{revenue:float,expenses:float}>
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+	 */
+	private function inEuro(array $position): array {
 		$result = [];
 		foreach ($position as $code => $cents) {
 			$result[$code] = [
@@ -86,7 +114,7 @@ class BegrotingswijzigingStacker implements BegrotingswijzigingStackerInterface 
 		}
 
 		return $result;
-	}//end currentStand()
+	}//end inEuro()
 
 	/**
 	 * Apply one wijziging's mutaties onto the cent-keyed stand.

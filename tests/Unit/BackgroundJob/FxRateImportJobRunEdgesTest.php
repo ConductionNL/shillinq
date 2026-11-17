@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\BackgroundJob\FxRateImportJob;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateResult;
@@ -109,7 +110,7 @@ final class FxRateImportJobRunEdgesTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $object The record.
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?ObjectSaveOptions $options = null): void {
 				if ($this->saveFails === true) {
 					throw new RuntimeException('read-only');
 				}

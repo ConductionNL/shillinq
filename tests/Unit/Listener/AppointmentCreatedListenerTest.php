@@ -65,6 +65,15 @@ final class AppointmentCreatedListenerTest extends TestCase {
 			[[$bare, ['id' => '', 'userId' => '', 'name' => '', 'email' => '']]],
 			$this->outcome('created', '7', 'appointment', $bare)['issued']
 		);
+		// The stored id travels along, so the send is recorded on this appointment (REQ-BCF-013).
+		self::assertSame(
+			$bare + ['id' => 'uuid-2'],
+			$this->outcome('created', '7', 'appointment', $bare, 'uuid-2')['issued'][0][0]
+		);
+		self::assertSame(
+			['id' => 'kept'] + $bare,
+			$this->outcome('created', '7', 'appointment', ['id' => 'kept'] + $bare, 'uuid-2')['issued'][0][0]
+		);
 		self::assertSame(
 			[['error', 'AppointmentCreatedListener: token issuance failed', ['exception' => 'mail down']]],
 			$this->outcome('created', '7', 'Appointment', ['customerEmail' => 'fail'] + $pending)['logs']
@@ -81,7 +90,7 @@ final class AppointmentCreatedListenerTest extends TestCase {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function outcome(string $kind, string|null $schemaId, string $slug, array $appointment): array {
+	private function outcome(string $kind, string|null $schemaId, string $slug, array $appointment, ?string $uuid=null): array {
 		$issued = [];
 		$tokens = $this->createMock(ConfirmationTokenService::class);
 		$tokens->method('issueAndSend')->willReturnCallback(
@@ -107,6 +116,10 @@ final class AppointmentCreatedListenerTest extends TestCase {
 		$entity = new ObjectEntity();
 		$entity->setSchema($schemaId);
 		$entity->setObject($appointment);
+		if ($uuid !== null) {
+			$entity->setUuid($uuid);
+		}
+
 		$event = new Event();
 		if ($kind === 'created') {
 			$event = new ObjectCreatedEvent($entity);

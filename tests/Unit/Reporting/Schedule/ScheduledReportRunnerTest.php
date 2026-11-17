@@ -37,6 +37,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 
 class ScheduledReportRunnerTest extends TestCase {
@@ -105,7 +106,8 @@ class ScheduledReportRunnerTest extends TestCase {
 			$container,
 			$this->createMock(IUserSession::class),
 			$appConfig,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			$this->createMock(\OCP\IConfig::class)
 		);
 
 		$this->reports  = $this->createMock(ReportGenerationService::class);
@@ -169,7 +171,7 @@ class ScheduledReportRunnerTest extends TestCase {
 	 * @return array<string, mixed> The stored schedule.
 	 */
 	private function stored(): array {
-		$found = $this->store->find(id: 'sched-1', schema: 'ReportSchedule');
+		$found = $this->store->find(id: 'sched-1', options: new ObjectFindOptions(schema: 'ReportSchedule'));
 		self::assertNotNull($found);
 		$row = $found->getObject();
 		unset($row['id'], $row['owner']);
