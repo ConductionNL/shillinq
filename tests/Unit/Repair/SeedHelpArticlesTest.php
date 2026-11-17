@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Repair\SeedHelpArticles;
 use OCA\Shillinq\Service\Help\HelpArticleSource;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -90,7 +91,8 @@ final class SeedHelpArticlesTest extends TestCase {
 		$this->objects->method('runAsSystem')->willReturnCallback(static fn (callable $work): mixed => $work());
 		$entity = $this->createMock(ObjectEntityInterface::class);
 		$this->objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null) use ($entity): ObjectEntityInterface {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) use ($entity): ObjectEntityInterface {
+				$uuid = $options->uuid;
 				if ($object['sourcePath'] === 'docs/user-guide/bookkeeping/invoices.md' && $uuid === 'boom') {
 					throw new RuntimeException('save failed');
 				}
@@ -176,8 +178,8 @@ final class SeedHelpArticlesTest extends TestCase {
 		$objects->method('findAll')->willReturn([]);
 		$objects->method('runAsSystem')->willReturnCallback(static fn (callable $work): mixed => $work());
 		$objects->expects($this->exactly(3))->method('saveObject')->willReturnCallback(
-			static function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) use (&$saved, $entity): ObjectEntityInterface {
-				$saved[$object['sourcePath']] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'tenancy' => $_multitenancy];
+			static function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) use (&$saved, $entity): ObjectEntityInterface {
+				$saved[$object['sourcePath']] = ['object' => $object, 'register' => $options->target->register, 'schema' => $options->target->schema, 'rbac' => $_rbac, 'tenancy' => $_multitenancy];
 				return $entity;
 			}
 		);

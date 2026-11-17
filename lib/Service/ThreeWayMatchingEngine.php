@@ -68,11 +68,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ThreeWayMatchingEngineInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 06 — single-PO 3-way matching engine.
@@ -105,7 +105,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain logic (multi-axis match decision); deferred pending a dedicated
  * refactor.
  */
-class ThreeWayMatchingEngine {
+class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 
 	/**
 	 * Match outcome — exact 3-way match, zero divergence.
@@ -369,7 +369,7 @@ class ThreeWayMatchingEngine {
 
 		$invoice = null;
 		if ($invoiceId !== '') {
-			$invoice = $this->findOne(
+			$invoice = $this->records()->findOne(
 				schema: self::SCHEMA_SUPPLIER_INVOICE,
 				filters: [
 					'id' => $invoiceId,
@@ -426,11 +426,11 @@ class ThreeWayMatchingEngine {
 	 */
 	private function matchAgainstPo(ThreeWayMatchRun $run, string $poId): array {
 		$run->poId = $poId;
-		$run->po = $this->findOne(
+		$run->po = $this->records()->findOne(
 			schema: self::SCHEMA_PO,
 			filters: ['id' => $poId, 'administrationId' => $run->administrationId]
 		);
-		$run->poLines = $this->findAll(
+		$run->poLines = $this->records()->findAll(
 			schema: self::SCHEMA_PO_LINE,
 			filters: ['poId' => $poId, 'administrationId' => $run->administrationId]
 		);
@@ -461,12 +461,12 @@ class ThreeWayMatchingEngine {
 	private function recordLineMatch(ThreeWayMatchRun $run): array {
 		$tuples = $this->matchLineItems(
 			invoiceLines: (array)($run->invoice['lines'] ?? []),
-			poLines: $run->poLines,
+			poLines: self::withOrderDeliveryDate(poLines: $run->poLines, po: $run->po),
 			grnLines: $this->receiptLines(run: $run)
 		);
 		$scored = $this->scoreTuples(tuples: $tuples, profile: $this->profileFor(run: $run));
 
-		$saved = $this->saveObject(
+		$saved = $this->records()->saveObject(
 			schema: self::SCHEMA_THREE_WAY_MATCH,
 			object: [
 				'invoiceId' => $run->invoiceId,
@@ -505,7 +505,7 @@ class ThreeWayMatchingEngine {
 		$poId = $run->poId;
 		$receipts = [];
 		foreach (array_keys(self::RECEIPT_LINES) as $schema) {
-			$rows = $this->findAll(schema: $schema, filters: ['administrationId' => $run->administrationId]);
+			$rows = $this->records()->findAll(schema: $schema, filters: ['administrationId' => $run->administrationId]);
 			$receipts[$schema] = array_values(
 				array_filter(
 					$rows,
@@ -584,19 +584,72 @@ class ThreeWayMatchingEngine {
 				$receiptId = $this->idOf(row: $row);
 				$accepted = in_array((string)($row['statusCode'] ?? ''), self::ACCEPTED_RECEIPT_STATUSES[$schema], true);
 				if ($receiptId !== '' && $accepted === true) {
-					array_push(
-						$lines,
-						...$this->findAll(
-							schema: $lineSchema,
-							filters: [$receiptKey => $receiptId, 'administrationId' => $run->administrationId]
-						)
+					$found = $this->records()->findAll(
+						schema: $lineSchema,
+						filters: [$receiptKey => $receiptId, 'administrationId' => $run->administrationId]
 					);
+					// A goods receipt line is dated by its receipt; a service
+					// receipt is not date checked (REQ-TWM-003).
+					if ($schema === self::SCHEMA_GRN) {
+						$found = self::withReceivedAt(lines: $found, receivedAt: trim((string)($row['receivedAt'] ?? '')));
+					}
+
+					array_push($lines, ...$found);
 				}
 			}
 		}
 
 		return $lines;
 	}//end receiptLines()
+
+	/**
+	 * Goods receipt lines stamped with their receipt's `receivedAt` as
+	 * `_receivedAt`, the actual date the delivery-date check reads.
+	 *
+	 * @param array<int, array<string, mixed>> $lines      The receipt's lines.
+	 * @param string                           $receivedAt The receipt's receivedAt; '' leaves the lines undated.
+	 *
+	 * @return array<int, array<string, mixed>> The lines.
+	 *
+	 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md#requirement-a-delivery-outside-the-date-tolerance-is-an-exception-req-twm-003
+	 */
+	private static function withReceivedAt(array $lines, string $receivedAt): array {
+		if ($receivedAt === '') {
+			return $lines;
+		}
+
+		foreach ($lines as $index => $line) {
+			$lines[$index]['_receivedAt'] = $receivedAt;
+		}
+
+		return $lines;
+	}//end withReceivedAt()
+
+	/**
+	 * Order lines with the order's `expectedDeliveryDate` where a line names
+	 * none, so the line's own date wins and the order's is the fallback.
+	 *
+	 * @param array<int, array<string, mixed>> $poLines The order's lines.
+	 * @param array<string, mixed>|null        $po      The order.
+	 *
+	 * @return array<int, array<string, mixed>> The lines.
+	 *
+	 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md#requirement-a-delivery-outside-the-date-tolerance-is-an-exception-req-twm-003
+	 */
+	private static function withOrderDeliveryDate(array $poLines, ?array $po): array {
+		$orderDate = trim((string)($po['expectedDeliveryDate'] ?? ''));
+		if ($orderDate === '') {
+			return $poLines;
+		}
+
+		foreach ($poLines as $index => $poLine) {
+			if (is_array($poLine) === true && trim((string)($poLine['expectedDeliveryDate'] ?? '')) === '') {
+				$poLines[$index]['expectedDeliveryDate'] = $orderDate;
+			}
+		}
+
+		return $poLines;
+	}//end withOrderDeliveryDate()
 
 	/**
 	 * Resolve the most-specific applicable ToleranceProfile.
@@ -1117,7 +1170,7 @@ class ThreeWayMatchingEngine {
 			'administrationId' => $administrationId,
 		];
 
-		$saved = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
+		$saved = $this->records()->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
 		$this->safeTransition(administrationId: $administrationId, invoiceId: $invoiceId, toStatus: 'exception');
 
 		// Alert the crediteuren-administrateur. REQ-PO3W-004
@@ -1372,6 +1425,51 @@ class ThreeWayMatchingEngine {
 	 * @return array<int,string>
 	 */
 	private function resolvePoIds(string $administrationId, array $invoice): array {
+		$ids = $this->candidatePoIds(invoice: $invoice);
+
+		// Filter by tenant scope.
+		$validated = [];
+		foreach (array_values(array_unique($ids)) as $id) {
+			$po = $this->records()->findOne(
+				schema: self::SCHEMA_PO,
+				filters: ['id' => $id, 'administrationId' => $administrationId]
+			);
+			if ($po !== null) {
+				$validated[] = $id;
+			}
+		}
+
+		return $validated;
+	}//end resolvePoIds()
+
+	/**
+	 * The PO ids an invoice names: its matchedPoIds, else its single poId / purchaseOrderId.
+	 *
+	 * @param array<string,mixed> $invoice Loaded SupplierInvoice.
+	 *
+	 * @return array<int,string>
+	 */
+	private function candidatePoIds(array $invoice): array {
+		$ids = $this->matchedPoIds(invoice: $invoice);
+
+		if ($ids === []) {
+			$scalar = trim((string)($invoice['poId'] ?? $invoice['purchaseOrderId'] ?? ''));
+			if ($scalar !== '') {
+				$ids[] = $scalar;
+			}
+		}
+
+		return $ids;
+	}//end candidatePoIds()
+
+	/**
+	 * The non-empty ids of an invoice's matchedPoIds list.
+	 *
+	 * @param array<string,mixed> $invoice Loaded SupplierInvoice.
+	 *
+	 * @return array<int,string>
+	 */
+	private function matchedPoIds(array $invoice): array {
 		$ids = [];
 		$matched = $invoice['matchedPoIds'] ?? null;
 		if (is_array($matched) === true) {
@@ -1383,27 +1481,8 @@ class ThreeWayMatchingEngine {
 			}
 		}
 
-		if ($ids === []) {
-			$scalar = trim((string)($invoice['poId'] ?? $invoice['purchaseOrderId'] ?? ''));
-			if ($scalar !== '') {
-				$ids[] = $scalar;
-			}
-		}
-
-		// Filter by tenant scope.
-		$validated = [];
-		foreach (array_values(array_unique($ids)) as $id) {
-			$po = $this->findOne(
-				schema: self::SCHEMA_PO,
-				filters: ['id' => $id, 'administrationId' => $administrationId]
-			);
-			if ($po !== null) {
-				$validated[] = $id;
-			}
-		}
-
-		return $validated;
-	}//end resolvePoIds()
+		return $ids;
+	}//end matchedPoIds()
 
 	/**
 	 * Convert a quantity float to integer thousandths.
@@ -1467,103 +1546,6 @@ class ThreeWayMatchingEngine {
 	}//end safeTransition()
 
 	/**
-	 * Persist an object via OR's real ObjectService API (saveObject).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object to persist.
-	 *
-	 * @return array<string,mixed>
-	 *
-	 * @throws \RuntimeException When the persistence call fails.
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ThreeWayMatchingEngine: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API.
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ThreeWayMatchingEngine: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OR register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
-
-	/**
 	 * Current timestamp in ISO-8601 (Y-m-d\TH:i:sP) — server-authoritative.
 	 *
 	 * @return string
@@ -1571,4 +1553,17 @@ class ThreeWayMatchingEngine {
 	private function nowIso(): string {
 		return date('c');
 	}//end nowIso()
+
+	/**
+	 * The register records of this service.
+	 *
+	 * @return SchemaRecordStore The store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'ThreeWayMatchingEngine')
+		);
+
+	}//end records()
 }//end class

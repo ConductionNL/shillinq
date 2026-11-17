@@ -29,10 +29,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DomainException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Commitment\CommitmentCarryOverService;
-use OCA\Shillinq\Service\Commitment\CommitmentInvoicing;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\CommitmentCarryOverServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\CommitmentInvoicingInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -60,18 +60,18 @@ class CommitmentYearEndController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request   The request.
-	 * @param CommitmentCarryOverService   $carryOver The carry-over.
-	 * @param CommitmentInvoicing          $invoicing The last-invoice close.
-	 * @param AdministrationContextService $context   Administration access and roles.
+	 * @param CommitmentCarryOverServiceInterface   $carryOver The carry-over.
+	 * @param CommitmentInvoicingInterface          $invoicing The last-invoice close.
+	 * @param AdministrationContextServiceInterface $context   Administration access and roles.
 	 * @param IUserSession                 $session   The signed-in user.
 	 * @param IL10N                        $l10n      Translations.
 	 * @param LoggerInterface              $logger    Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly CommitmentCarryOverService $carryOver,
-		private readonly CommitmentInvoicing $invoicing,
-		private readonly AdministrationContextService $context,
+		private readonly CommitmentCarryOverServiceInterface $carryOver,
+		private readonly CommitmentInvoicingInterface $invoicing,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $session,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

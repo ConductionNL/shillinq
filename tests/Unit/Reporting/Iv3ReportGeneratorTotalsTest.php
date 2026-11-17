@@ -33,7 +33,7 @@ use RuntimeException;
  * The Iv3 report totals the period's ledger lines per task field.
  *
  * @covers \OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator
- * @uses   \OCA\Shillinq\Reporting\GeneratedFile
+ * @uses   \OCA\Shillinq\Kernel\Model\GeneratedFile
  */
 final class Iv3ReportGeneratorTotalsTest extends TestCase {
 

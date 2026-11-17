@@ -78,7 +78,10 @@ namespace OCA\Shillinq\Service;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;
@@ -87,7 +90,6 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Publishes compliance deadlines as calendar VEVENTs + NC notifications.
@@ -109,44 +111,12 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain's regulatory surface; splitting is out of scope for a mechanical
  * phpcs/phpmd cleanup. Deferred to a follow-up.
  */
-class ComplianceDeadlineCalendarService {
+class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarServiceInterface {
 
 	/**
 	 * The dedicated app-calendar URI looked up on the user's principal.
 	 */
 	public const CALENDAR_URI = 'shillinq-deadlines';
-
-	/**
-	 * Deadline category: BTW / ICP / VPB filing deadlines (REQ-CDC-002).
-	 */
-	public const CATEGORY_FILING = 'filing';
-
-	/**
-	 * Deadline category: payment-run execution dates (REQ-CDC-003).
-	 */
-	public const CATEGORY_PAYMENT_RUN = 'payment-run';
-
-	/**
-	 * Deadline category: AR invoice due dates — per-user opt-in (REQ-CDC-004).
-	 */
-	public const CATEGORY_AR_DUE = 'ar-due';
-
-	/**
-	 * Deadline category: contract renewal / opzegtermijn (REQ-CDC-005).
-	 */
-	public const CATEGORY_CONTRACT = 'contract';
-
-	/**
-	 * All known categories in publication order.
-	 *
-	 * @var array<int,string>
-	 */
-	public const CATEGORIES = [
-		self::CATEGORY_FILING,
-		self::CATEGORY_PAYMENT_RUN,
-		self::CATEGORY_AR_DUE,
-		self::CATEGORY_CONTRACT,
-	];
 
 	/**
 	 * Per-user preference defaults: filing / payment-run / contract ON,
@@ -1027,38 +997,7 @@ class ComplianceDeadlineCalendarService {
 			//
 			// Same defect and same normalisation as the VAT fix in this branch;
 			// house idiom is jsonSerialize() then getObject().
-			$rows = [];
-			foreach (array_values($result) as $row) {
-				if (is_array($row) === true) {
-					$rows[] = $row;
-					continue;
-				}
-
-				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-					$out = $row->jsonSerialize();
-					if (is_array($out) === true) {
-						$rows[] = $out;
-						continue;
-					}
-				}
-
-				if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-					$out = $row->getObject();
-					if (is_array($out) === true) {
-						$rows[] = $out;
-						continue;
-					}
-				}
-
-				// Skip loudly rather than appending something the callers will
-				// fatal on — a dropped row is recoverable, a fatal is not.
-				$this->logger->warning(
-					'ComplianceDeadlineCalendarService: unsupported row type from ObjectService::findAll',
-					['schema' => $schema, 'type' => get_debug_type($row)]
-				);
-			}//end foreach
-
-			return $rows;
+			return $this->normaliseRows(result: $result, schema: $schema);
 		} catch (Throwable $e) {
 			$this->logger->debug(
 				'ComplianceDeadlineCalendarService: schema read unavailable — treating as empty',
@@ -1070,17 +1009,95 @@ class ComplianceDeadlineCalendarService {
 	}//end fetchRows()
 
 	/**
+	 * The findAll() rows as arrays; a row of an unsupported type is logged and dropped.
+	 *
+	 * @param array<mixed> $result The findAll() result.
+	 * @param string       $schema The schema name.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function normaliseRows(array $result, string $schema): array {
+		$rows = [];
+		foreach (array_values($result) as $row) {
+			$arr = $this->rowArray(row: $row);
+			if ($arr !== null) {
+				$rows[] = $arr;
+				continue;
+			}
+
+			// Skip loudly rather than appending something the callers will
+			// fatal on — a dropped row is recoverable, a fatal is not.
+			$this->logger->warning(
+				'ComplianceDeadlineCalendarService: unsupported row type from ObjectService::findAll',
+				['schema' => $schema, 'type' => get_debug_type($row)]
+			);
+		}//end foreach
+
+		return $rows;
+	}//end normaliseRows()
+
+	/**
+	 * One row as an array: as is, serialised, or its getObject(); null when none applies.
+	 *
+	 * @param mixed $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function rowArray(mixed $row): array|null {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === false) {
+			return null;
+		}
+
+		return $this->serialisedRow(row: $row) ?? $this->innerRow(row: $row);
+	}//end rowArray()
+
+	/**
+	 * An object row's jsonSerialize() array, or null.
+	 *
+	 * @param object $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function serialisedRow(object $row): array|null {
+		if (method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return null;
+	}//end serialisedRow()
+
+	/**
+	 * An object row's getObject() array, or null.
+	 *
+	 * @param object $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function innerRow(object $row): array|null {
+		if (method_exists($row, 'getObject') === true) {
+			$out = $row->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return null;
+	}//end innerRow()
+
+	/**
 	 * Resolve the configured OpenRegister register slug (default 'shillinq').
 	 *
 	 * @return string The register slug.
 	 */
 	private function registerSlug(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end registerSlug()
 
 }//end class

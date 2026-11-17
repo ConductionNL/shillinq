@@ -23,7 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\Help\HelpArticleSource;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -132,9 +134,10 @@ class SeedHelpArticles implements IRepairStep {
 			try {
 				$this->objectService->saveObject(
 					object: $article,
-					register: $register,
-					schema: self::SCHEMA,
-					uuid: ($earlier['uuid'] ?? null),
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $register, schema: self::SCHEMA),
+						uuid: ($earlier['uuid'] ?? null)
+					),
 					_rbac: false,
 					_multitenancy: false,
 				);

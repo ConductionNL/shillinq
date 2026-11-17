@@ -29,7 +29,10 @@ namespace OCA\Shillinq\Service;
 use DomainException;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationMembershipServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -37,7 +40,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
  */
-class AdministrationMembershipService {
+class AdministrationMembershipService implements AdministrationMembershipServiceInterface {
 
 	/**
 	 * The membership roles, as the AdministrationMembership schema declares them.
@@ -97,6 +100,45 @@ class AdministrationMembershipService {
 			'role' => $role,
 			'grantedBy' => $grantedBy,
 		];
+		$membership = $this->withMembershipDates(membership: $membership, options: $options);
+		$membership = $this->withMembershipFlags(membership: $membership, options: $options);
+
+		$existing = $this->objectService
+			->setRegister($this->register())
+			->setSchema('AdministrationMembership')
+			->findAll(['filters' => ['userId' => $userId, 'administrationId' => $administrationId], 'limit' => 1]);
+		if (empty($existing) === false) {
+			throw new DomainException('The user is already a member of this administration.');
+		}
+
+		$saved = $this->objectService->saveObject(
+			object: $membership,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'AdministrationMembership')),
+			_rbac: false,
+			_multitenancy: false
+		);
+
+		$serialised = $saved->jsonSerialize();
+		if (is_array($serialised) === false) {
+			return $membership;
+		}
+
+		return $serialised;
+	}//end addMember()
+
+	/**
+	 * Copy the optional `validFrom` / `validUntil` dates onto the membership.
+	 *
+	 * @param array<string,mixed> $membership The membership.
+	 * @param array<string,mixed> $options The addMember() options.
+	 *
+	 * @return array<string,mixed> The membership with its dates.
+	 *
+	 * @throws InvalidArgumentException When a date is not YYYY-MM-DD.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	private function withMembershipDates(array $membership, array $options): array {
 		foreach (['validFrom', 'validUntil'] as $dateKey) {
 			$value = trim((string)($options[$dateKey] ?? ''));
 			if ($value === '') {
@@ -110,35 +152,28 @@ class AdministrationMembershipService {
 			$membership[$dateKey] = $value;
 		}
 
+		return $membership;
+	}//end withMembershipDates()
+
+	/**
+	 * Copy the optional permission flags onto the membership.
+	 *
+	 * @param array<string,mixed> $membership The membership.
+	 * @param array<string,mixed> $options The addMember() options.
+	 *
+	 * @return array<string,mixed> The membership with its flags.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	private function withMembershipFlags(array $membership, array $options): array {
 		foreach (['mayPostJournalEntries', 'mayCloseFiscalYear'] as $flagKey) {
 			if (array_key_exists($flagKey, $options) === true && $options[$flagKey] !== null) {
 				$membership[$flagKey] = ($options[$flagKey] === true);
 			}
 		}
 
-		$existing = $this->objectService
-			->setRegister($this->register())
-			->setSchema('AdministrationMembership')
-			->findAll(['filters' => ['userId' => $userId, 'administrationId' => $administrationId], 'limit' => 1]);
-		if (empty($existing) === false) {
-			throw new DomainException('The user is already a member of this administration.');
-		}
-
-		$saved = $this->objectService->saveObject(
-			object: $membership,
-			register: $this->register(),
-			schema: 'AdministrationMembership',
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		$serialised = $saved->jsonSerialize();
-		if (is_array($serialised) === false) {
-			return $membership;
-		}
-
-		return $serialised;
-	}//end addMember()
+		return $membership;
+	}//end withMembershipFlags()
 
 	/**
 	 * The configured register slug.

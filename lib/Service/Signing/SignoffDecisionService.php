@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\SignoffDecisionServiceInterface;
 use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
@@ -52,7 +53,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/shillinq-delegation-via-events/tasks.md
  */
-class SignoffDecisionService {
+class SignoffDecisionService implements SignoffDecisionServiceInterface {
 
 	/**
 	 * Terminal decision outcomes; repeated callbacks are a no-op.

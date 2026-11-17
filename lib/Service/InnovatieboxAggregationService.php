@@ -34,16 +34,17 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxAggregationServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCP\IAppConfig;
 
 /**
  * Computes the per-asset innovatiebox Vpb roll-up (REQ-IBA-006).
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  */
-class InnovatieboxAggregationService {
+class InnovatieboxAggregationService implements InnovatieboxAggregationServiceInterface {
 	/**
 	 * Construct the aggregation service.
 	 *
@@ -270,11 +271,6 @@ class InnovatieboxAggregationService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

@@ -29,8 +29,9 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 use DateTime;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
@@ -40,12 +41,14 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use ReflectionMethod;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Guards, entry shapes and failing side effects of one retry tick.
  *
  * @covers \OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob
- * @uses   \OCA\Shillinq\Service\Pipelinq\TimelineEventDto
+ * @uses   \OCA\Shillinq\Kernel\Model\TimelineEventDto
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  */
 final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
@@ -142,7 +145,9 @@ final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $object The object.
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if (isset($this->failures['saveObject']) === true) {
 					throw $this->failures['saveObject'];
 				}
@@ -151,7 +156,8 @@ final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
 				return $object;
 			}
 
-			public function deleteObject(string $id): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
+				$id = $deletion->uuid;
 				if (isset($this->failures['deleteObject']) === true) {
 					throw $this->failures['deleteObject'];
 				}
@@ -202,7 +208,7 @@ final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
 		/** @var ContainerInterface&MockObject $container */
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(static function (string $id) use ($store, $adapter): object {
-			if ($id === PipelinqContactAdapter::class) {
+			if ($id === PipelinqContactAdapter::class || $id === PipelinqContactAdapterInterface::class) {
 				return $adapter;
 			}
 

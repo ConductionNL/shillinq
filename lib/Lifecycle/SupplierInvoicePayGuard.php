@@ -29,10 +29,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -55,15 +56,15 @@ final class SupplierInvoicePayGuard implements LifecycleGuardInterface {
 	 * Construct the guard.
 	 *
 	 * @param ContainerInterface     $container       DI container for the lazy ObjectService.
-	 * @param RegisterLocation        $settingsService Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger          Logger.
-	 * @param ListenerSchemaResolver $schemas         Tells which register and schema an object is in.
+	 * @param ListenerSchemaResolverInterface $schemas         Tells which register and schema an object is in.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
-		private readonly ListenerSchemaResolver $schemas,
+		private readonly ListenerSchemaResolverInterface $schemas,
 	) {
 	}//end __construct()
 
@@ -115,7 +116,7 @@ final class SupplierInvoicePayGuard implements LifecycleGuardInterface {
 		$register = $this->settingsService->getRegisterSlug();
 		try {
 			$found = $this->container->get('OCA\OpenRegister\Service\ObjectService')
-				->find($id, register: $register, schema: 'APTransaction', _rbac: false);
+				->find($id, new ObjectFindOptions(register: $register, schema: 'APTransaction'), _rbac: false);
 		} catch (\OCP\AppFramework\Db\DoesNotExistException | \RuntimeException $notFound) {
 			return null;
 		}

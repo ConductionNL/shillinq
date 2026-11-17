@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanBankMatcherInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
@@ -57,14 +57,14 @@ class ExactMatchBooker {
 	 * @param ManualMatchService     $matches       Writes and confirms the match.
 	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
-	 * @param PaymentPlanBankMatcher|null $plans    Books a line naming a payment plan's reference to that plan.
+	 * @param PaymentPlanBankMatcherInterface|null $plans    Books a line naming a payment plan's reference to that plan.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ManualMatchService $matches,
 		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
-		private readonly ?PaymentPlanBankMatcher $plans = null,
+		private readonly ?PaymentPlanBankMatcherInterface $plans = null,
 	) {
 
 	}//end __construct()

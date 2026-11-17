@@ -32,8 +32,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -58,12 +60,12 @@ class BackfillLinkedObjects implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 */
 	public function __construct(
-		private readonly RegisterLocation $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -103,20 +105,22 @@ class BackfillLinkedObjects implements IRepairStep {
 			foreach ($rows as $row) {
 				$request = $this->rowPayload(row: $row);
 				$uuid = ObjectIdentifier::resolve(saved: $row);
-				$subject = $request['subject'] ?? null;
-				if ($uuid === '' || is_array($subject) === false || $subject === [] || empty($request['linkedObjects']) === false) {
+				if (self::skipsBackfill(uuid: $uuid, request: $request) === true) {
 					continue;
 				}
+
+				$subject = $request['subject'];
 
 				$payload = $this->withoutMetadata(row: $request);
 				$payload['linkedObjects'] = [$subject];
 				$this->objectService->saveObject(
 					object: $payload,
-					register: $registerSlug,
-					schema: self::SCHEMA,
-					uuid: $uuid,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: self::SCHEMA),
+						uuid: $uuid
+					),
 					_rbac: false,
-					_multitenancy: false,
+					_multitenancy: false
 				);
 				$listed++;
 			}
@@ -127,6 +131,21 @@ class BackfillLinkedObjects implements IRepairStep {
 			$this->logger->warning('Shillinq: the linked objects backfill failed', ['exception' => $e->getMessage()]);
 		}//end try
 	}//end run()
+
+	/**
+	 * Whether a payment request is left alone: no id, no subject, or already linked.
+	 *
+	 * @param string               $uuid    The request's id.
+	 * @param array<string, mixed> $request The request payload.
+	 *
+	 * @return bool True when there is nothing to backfill.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+	 */
+	private static function skipsBackfill(string $uuid, array $request): bool {
+		$subject = $request['subject'] ?? null;
+		return $uuid === '' || is_array($subject) === false || $subject === [] || empty($request['linkedObjects']) === false;
+	}//end skipsBackfill()
 
 	/**
 	 * A row without its id and OpenRegister metadata, ready to save back.

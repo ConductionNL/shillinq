@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Sales;
 
 use OCA\Shillinq\Service\Sales\QuickDraftInvoiceService;
-use OCA\Shillinq\Service\Sales\QuickDraftRefusedException;
+use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Security\ISecureRandom;

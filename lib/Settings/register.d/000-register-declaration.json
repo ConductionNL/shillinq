@@ -274,6 +274,7 @@
                     "InvesteringsaftrekClaim",
                     "InvestmentAsset",
                     "Invoice",
+                    "InvoiceBatch",
                     "InvoiceLine",
                     "IossImport",
                     "IroRecord",

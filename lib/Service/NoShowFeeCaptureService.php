@@ -39,8 +39,9 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\NoShowFeeCaptureServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,14 +54,7 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class NoShowFeeCaptureService {
-
-	/**
-	 * No fee defined / nothing to capture.
-	 *
-	 * @var string
-	 */
-	public const STATUS_NONE = 'none';
+class NoShowFeeCaptureService implements NoShowFeeCaptureServiceInterface {
 
 	/**
 	 * Fee captured through the provider.

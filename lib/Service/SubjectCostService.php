@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\SubjectCostServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -54,7 +55,7 @@ use Throwable;
  *
  * @spec openspec/specs/subject-cost-aggregation/spec.md
  */
-class SubjectCostService {
+class SubjectCostService implements SubjectCostServiceInterface {
 	/**
 	 * The schema holding hours booked against a domain object.
 	 *

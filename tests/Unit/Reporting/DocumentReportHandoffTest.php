@@ -227,7 +227,7 @@ final class HandoffEmptyObjectService {
  * @uses   \OCA\Shillinq\Reporting\Generator\AccountBucket
  * @uses   \OCA\Shillinq\Reporting\Generator\DocudeskTemplateSelection
  * @uses   \OCA\Shillinq\Reporting\Generator\StatementRun
- * @uses   \OCA\Shillinq\Reporting\GeneratedFile
+ * @uses   \OCA\Shillinq\Kernel\Model\GeneratedFile
  * @uses   \OCA\Shillinq\Reporting\ReportCatalogue
  * @uses   \OCA\Shillinq\Reporting\ReportSection
  * @uses   \OCA\Shillinq\Support\FleetAppId

@@ -30,13 +30,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\FixedAssetDepreciationInterface;
 
 /**
  * Revision, extra depreciation and the derived asset fields.
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
-class FixedAssetDepreciation {
+class FixedAssetDepreciation implements FixedAssetDepreciationInterface {
 
 	/**
 	 * Constructor.

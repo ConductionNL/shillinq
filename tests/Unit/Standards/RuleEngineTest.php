@@ -54,6 +54,7 @@ use PHPUnit\Framework\TestCase;
  * @uses \OCA\Shillinq\Standards\Checks\CheckFields
  * @uses \OCA\Shillinq\Standards\Checks\GlTransactionLines
  * @uses \OCA\Shillinq\Standards\Checks\InvoiceParts
+ * @uses \OCA\Shillinq\Standards\Checks\VatReturnChecks
  */
 class RuleEngineTest extends TestCase {
 

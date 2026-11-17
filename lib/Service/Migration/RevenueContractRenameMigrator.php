@@ -61,13 +61,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Migration;
 
+use OCA\Shillinq\Kernel\Contracts\RevenueContractRenameMigratorInterface;
 use RuntimeException;
 
 /**
  * Pure, unit-testable migration core for the IFRS-15 `Contract` →
  * `RevenueContract` rename.
  */
-final class RevenueContractRenameMigrator {
+final class RevenueContractRenameMigrator implements RevenueContractRenameMigratorInterface {
 
 	/**
 	 * The renamed IFRS-15 revenue-contract schema slug (source).
