@@ -34,6 +34,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
@@ -281,10 +284,10 @@ final class PurchaseOrderRegisterSchemaTest extends TestCase {
 		$runner = $this->createMock(ObjectTransitionRunner::class);
 		$runner->method('run')->willReturnCallback(
 			function (string $objectId, string $action): void {
-				$order = $this->store->find(id: $objectId, register: 'shillinq', schema: 'PurchaseOrder');
+				$order = $this->store->find(id: $objectId, options: new ObjectFindOptions(register: 'shillinq', schema: 'PurchaseOrder'));
 				$order = (is_array($order) === true ? $order : $order->jsonSerialize());
 				$order['statusCode'] = ($action === 'send' ? 'sent' : $order['statusCode']);
-				$this->store->saveObject(object: $order, register: 'shillinq', schema: 'PurchaseOrder');
+				$this->store->saveObject(object: $order, options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'shillinq', schema: 'PurchaseOrder')));
 			}
 		);
 
