@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Reporting\Schedule\ReportScheduleService;
+use OCA\Shillinq\Kernel\Contracts\ReportScheduleServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -68,15 +68,15 @@ class ReportScheduleController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param IRequest                     $request   The request.
-	 * @param AdministrationContextService $context   The caller.
-	 * @param ReportScheduleService        $schedules The write path.
-	 * @param LoggerInterface              $logger    The logger.
+	 * @param IRequest                       $request   The request.
+	 * @param AdministrationContextService   $context   The caller.
+	 * @param ReportScheduleServiceInterface $schedules The write path.
+	 * @param LoggerInterface                $logger    The logger.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly AdministrationContextService $context,
-		private readonly ReportScheduleService $schedules,
+		private readonly ReportScheduleServiceInterface $schedules,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);

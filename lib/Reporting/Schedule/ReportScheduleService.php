@@ -33,9 +33,10 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\ReportScheduleServiceInterface;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
 use OutOfBoundsException;
@@ -46,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
  */
-class ReportScheduleService {
+class ReportScheduleService implements ReportScheduleServiceInterface {
 
 	/**
 	 * The schema slug.
@@ -66,7 +67,7 @@ class ReportScheduleService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface       $objectService   OpenRegister object service.
-	 * @param SettingsService              $settings        Resolves the register slug.
+	 * @param RegisterLocationInterface    $settings        Resolves the register slug.
 	 * @param AdministrationContextService $administrations Answers administration access.
 	 * @param ReportRecipientPolicy        $recipients      Limits the recipients.
 	 * @param ReportScheduleCalendar       $calendar        Computes the next run.
@@ -74,7 +75,7 @@ class ReportScheduleService {
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly AdministrationContextService $administrations,
 		private readonly ReportRecipientPolicy $recipients,
 		private readonly ReportScheduleCalendar $calendar,

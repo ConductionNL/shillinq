@@ -27,7 +27,7 @@ use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
 use OCA\Shillinq\Reporting\Schedule\ReportScheduleService;
 use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Http;
@@ -88,7 +88,7 @@ class ReportScheduleControllerTest extends TestCase {
 		$groups->method('isInGroup')->willReturnCallback(
 			static fn (string $user, string $group): bool => $user === 'anna' && $group === 'controllers'
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocationInterface::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters));
