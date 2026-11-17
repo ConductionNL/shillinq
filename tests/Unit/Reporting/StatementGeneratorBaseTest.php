@@ -25,8 +25,10 @@ use OCA\Shillinq\Reporting\Generator\AbstractStatementReportGenerator;
 use OCA\Shillinq\Reporting\Generator\AccountBucket;
 use OCA\Shillinq\Reporting\Generator\StatementRun;
 use OCA\Shillinq\Reporting\ReportSection;
+use OCA\Shillinq\Reporting\StatementCalculator;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use RuntimeException;
 
 /**
  * A statement generator over fixture rows per schema, recording each read.
@@ -113,6 +115,7 @@ final class FixtureStatementGenerator extends AbstractStatementReportGenerator {
  * @uses   \OCA\Shillinq\Reporting\Generator\AccountBucket
  * @uses   \OCA\Shillinq\Reporting\Generator\StatementRun
  * @uses   \OCA\Shillinq\Reporting\ReportSection
+ * @uses   \OCA\Shillinq\Reporting\StatementPeriods
  */
 class StatementGeneratorBaseTest extends TestCase {
 
@@ -128,106 +131,37 @@ class StatementGeneratorBaseTest extends TestCase {
 	}//end generator()
 
 	/**
-	 * Movements sum per account, credits negative, from the first usable code and amount field.
+	 * An explicit range wins, then the period label, then the current year.
 	 *
 	 * @return void
 	 */
-	public function testMovementsAreSignedAndSummedPerAccount(): void {
-		$generator = $this->generator(
-			[
-				'GLLine' => [
-					'adm-1' => [
-						['accountNumber' => '8000', 'amount' => 100, 'side' => 'credit'],
-						['accountNumber' => '8000', 'amount' => '25.5', 'side' => 'CREDIT'],
-						['accountId' => '4000', 'baseCurrencyAmount' => 40, 'drcr' => 'debit'],
-						['account' => '4000', 'amount' => 'n/a', 'transactionAmount' => 10],
-						['account' => '1000', 'amount' => 5],
-						['account' => '1000', 'amount' => -2, 'side' => 'debit'],
-						['amount' => 999, 'side' => 'debit'],
-						['accountNumber' => '  ', 'amount' => 999],
-					],
-				],
-			]
-		);
-
-		$this->assertSame(['8000' => -125.5, '4000' => 50.0, '1000' => 3.0], $generator->call('deriveMovements', 'adm-1'));
-		$this->assertSame([['GLLine', ['administrationId' => 'adm-1']]], $generator->reads);
-	}//end testMovementsAreSignedAndSummedPerAccount()
-
-	/**
-	 * An administration without rows of its own falls back to the unscoped rows; no administration reads unscoped once.
-	 *
-	 * @return void
-	 */
-	public function testAnEmptyAdministrationFallsBackToTheUnscopedRows(): void {
-		$generator = $this->generator(['GLLine' => ['' => [['accountNumber' => '1000', 'amount' => 7]]]]);
-
-		$this->assertSame(['1000' => 7.0], $generator->call('deriveMovements', 'adm-9'));
-		$this->assertSame([['GLLine', ['administrationId' => 'adm-9']], ['GLLine', []]], $generator->reads);
-
-		$generator->reads = [];
-		$this->assertSame(['1000' => 7.0], $generator->call('deriveMovements', ''));
-		$this->assertSame([['GLLine', []]], $generator->reads);
-
-		$empty = $this->generator();
-		$this->assertSame([], $empty->call('deriveMovements', ''));
-		$this->assertSame([['GLLine', []]], $empty->reads);
-	}//end testAnEmptyAdministrationFallsBackToTheUnscopedRows()
-
-	/**
-	 * Accounts are deduplicated per administration and account key, keeping the first.
-	 *
-	 * @return void
-	 */
-	public function testAccountsAreDeduplicatedPerAdministrationAndKey(): void {
-		$generator = $this->generator(
-			[
-				'Account' => [
-					'adm-1' => [
-						['administrationId' => 'adm-1', 'accountNumber' => '1000', 'name' => 'Kas'],
-						['administrationId' => 'adm-1', 'code' => '1000', 'name' => 'Kas (copy)'],
-						['administrationId' => 'adm-2', 'accountNumber' => '1000', 'name' => 'Kas B'],
-						['administrationId' => 'adm-1', 'id' => 'uuid-7', 'name' => 'No number'],
-					],
-				],
-			]
-		);
-
-		$this->assertSame(
-			['Kas', 'Kas B', 'No number'],
-			array_column($generator->call('loadAccounts', 'adm-1'), 'name')
-		);
-		$this->assertSame([['Account', ['administrationId' => 'adm-1']]], $generator->reads);
-	}//end testAccountsAreDeduplicatedPerAdministrationAndKey()
-
-	/**
-	 * The currency is the first account currency, else EUR.
-	 *
-	 * @return void
-	 */
-	public function testTheCurrencyIsTheFirstAccountCurrency(): void {
+	public function testTheContextRange(): void {
 		$generator = $this->generator();
 
-		$this->assertSame('USD', $generator->call('accountsCurrency', [['currency' => ''], ['name' => 'x'], ['currency' => 'USD'], ['currency' => 'GBP']]));
-		$this->assertSame('EUR', $generator->call('accountsCurrency', [['currency' => '  ']]));
-		$this->assertSame('EUR', $generator->call('accountsCurrency', []));
-	}//end testTheCurrencyIsTheFirstAccountCurrency()
+		$this->assertSame(['from' => '2026-02-01', 'to' => '2026-02-15'], $generator->call('contextRange', ['from' => '2026-02-01', 'to' => '2026-02-15', 'period' => '2026']));
+		$this->assertSame(['from' => '2026-07-01', 'to' => '2026-09-30'], $generator->call('contextRange', ['from' => '2026-02-15', 'to' => '2026-02-01', 'period' => '2026-Q3']));
+		$this->assertSame(['from' => '2026-03-01', 'to' => '2026-03-31'], $generator->call('contextRange', ['period' => '2026-03']));
+		$this->assertSame(['from' => gmdate('Y') . '-01-01', 'to' => gmdate('Y') . '-12-31'], $generator->call('contextRange', ['period' => 'Q1']));
+	}//end testTheContextRange()
 
 	/**
-	 * An account is keyed and labelled by number and name, falling back to its id.
+	 * The calculator comes from the container; an unresolvable one is null.
 	 *
 	 * @return void
 	 */
-	public function testAccountKeysAndLabels(): void {
-		$generator = $this->generator();
+	public function testTheCalculatorComesFromTheContainer(): void {
+		$calculator = $this->createMock(StatementCalculator::class);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->with(StatementCalculator::class)->willReturn($calculator);
+		$missing = $this->createMock(ContainerInterface::class);
+		$missing->method('get')->willThrowException(new RuntimeException('not registered'));
+		$wrong = $this->createMock(ContainerInterface::class);
+		$wrong->method('get')->willReturn(new \stdClass());
 
-		$this->assertSame('4000', $generator->call('accountKey', ['code' => '4000', 'rgsCode' => 'WBedHui', 'id' => 'u1']));
-		$this->assertSame('u1', $generator->call('accountKey', ['id' => 'u1']));
-		$this->assertSame('4000 Huisvesting', $generator->call('accountLabel', ['code' => '4000', 'accountName' => 'Huisvesting']));
-		$this->assertSame('WBedHui', $generator->call('accountLabel', ['rgsCode' => 'WBedHui']));
-		$this->assertSame('Omzet', $generator->call('accountLabel', ['description' => 'Omzet']));
-		$this->assertSame('Rekening u1', $generator->call('accountLabel', ['id' => 'u1']));
-	}//end testAccountKeysAndLabels()
+		$this->assertSame($calculator, (new FixtureStatementGenerator($container, []))->call('calculator'));
+		$this->assertNull((new FixtureStatementGenerator($missing, []))->call('calculator'));
+		$this->assertNull((new FixtureStatementGenerator($wrong, []))->call('calculator'));
+	}//end testTheCalculatorComesFromTheContainer()
 
 	/**
 	 * An account table adds its lines with the bucket's total and answers that total.
