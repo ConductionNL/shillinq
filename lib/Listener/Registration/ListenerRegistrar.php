@@ -50,6 +50,7 @@ use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Listener\ChartTemplateVersionListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\WebshopOrderListener;
+use OCA\Shillinq\Listener\OfferHelperAgentTemplate;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
@@ -112,6 +113,14 @@ final class ListenerRegistrar {
 				listener: PaymentRequestLeafRegistrationListener::class
 			);
 		}
+
+		// Change platform-help-agent, REQ-PHA-002 — offer the "Shillinq helper" agent
+		// template when hermiq collects templates from installed apps. Registered
+		// by name: the event only exists, and only fires, when hermiq is installed.
+		$context->registerEventListener(
+			event: OfferHelperAgentTemplate::EVENT,
+			listener: OfferHelperAgentTemplate::class
+		);
 
 		// Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
 		// — dispatch posted StockMove records into the valuation engine
