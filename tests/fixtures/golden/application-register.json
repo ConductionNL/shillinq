@@ -2903,6 +2903,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReportScheduleServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ReportScheduleService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ScheduledReportDeliveryInterface'",
             "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ScheduledReportDelivery'"
         ]
