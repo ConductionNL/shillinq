@@ -33,17 +33,23 @@ final class ProviderPayoutSchemaTest extends TestCase {
 	private const SETTINGS_DIR = __DIR__ . '/../../../lib/Settings';
 
 	/**
-	 * The seeds of the fragment, without their @self block.
+	 * The seeds of the fragment for one schema, without their @self block.
+	 *
+	 * @param string $schema The schema of the seeds.
 	 *
 	 * @return list<array<string, mixed>>
 	 */
-	private function seeds(): array {
+	private function seeds(string $schema='ProviderPayout'): array {
 		$fragment = json_decode(
 			json: (string)file_get_contents(filename: self::SETTINGS_DIR . '/register.d/receivables-provider-payouts.json'),
 			associative: true
 		);
 		$seeds = [];
 		foreach ($fragment['objects'] as $seed) {
+			if ($seed['@self']['schema'] !== $schema) {
+				continue;
+			}
+
 			unset($seed['@self']);
 			$seeds[] = $seed;
 		}
@@ -120,4 +126,35 @@ final class ProviderPayoutSchemaTest extends TestCase {
 		self::assertNotSame(expected: [], actual: RegisterSchema::errors(slug: 'ProviderPayout', object: $seed));
 
 	}//end testAPayoutWithoutProviderOrAmountIsRefused()
+	/**
+	 * REQ-RPPO-005: the register declares PaymentDevice and its seed is valid.
+	 *
+	 * @return void
+	 */
+	public function testTheRegisterDeclaresPaymentDeviceWithAValidSeed(): void {
+		$declared = json_decode(
+			json: (string)file_get_contents(filename: self::SETTINGS_DIR . '/register.d/000-register-declaration.json'),
+			associative: true
+		);
+		self::assertContains(needle: 'PaymentDevice', haystack: $declared['components']['registers']['shillinq']['schemas']);
+
+		$seeds = $this->seeds(schema: 'PaymentDevice');
+		self::assertCount(expectedCount: 1, haystack: $seeds);
+		self::assertSame(expected: [], actual: RegisterSchema::errors(slug: 'PaymentDevice', object: $seeds[0]));
+		self::assertSame(expected: 'term_example0001', actual: $seeds[0]['deviceId']);
+
+	}//end testTheRegisterDeclaresPaymentDeviceWithAValidSeed()
+
+	/**
+	 * REQ-RPPO-004: a reconciliation match can target a provider payout.
+	 *
+	 * @return void
+	 */
+	public function testAReconciliationMatchCanTargetAProviderPayout(): void {
+		$schema = RegisterSchema::schema(slug: 'ReconciliationMatch');
+		self::assertContains(needle: 'provider-payout', haystack: $schema['properties']['targetType']['enum']);
+		self::assertContains(needle: 'provider-payout', haystack: $schema['properties']['matchType']['enum']);
+		self::assertContains(needle: 'ar-invoice', haystack: $schema['properties']['targetType']['enum']);
+
+	}//end testAReconciliationMatchCanTargetAProviderPayout()
 }//end class
