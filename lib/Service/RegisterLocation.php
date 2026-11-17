@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 
@@ -71,11 +71,6 @@ class RegisterLocation implements RegisterLocationInterface {
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
 	 */
 	public function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 }//end class

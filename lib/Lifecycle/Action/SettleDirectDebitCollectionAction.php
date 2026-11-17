@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
@@ -53,20 +54,17 @@ class SettleDirectDebitCollectionAction implements LifecycleActionInterface {
 	/**
 	 * Settle the collection's invoice and return the collection unchanged.
 	 *
-	 * @param array<string,mixed> $objectData   The collection after the transition.
-	 * @param array<string,mixed> $previousData The collection before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the collection after the transition.
 	 *
 	 * @return array<string,mixed> The collection, unchanged.
 	 *
 	 * @throws RuntimeException When the collection names no invoice or the settlement failed.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.4
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$invoiceId = trim((string)($objectData['invoiceId'] ?? ''));
 		if ($invoiceId === '') {
 			throw new RuntimeException('The collection names no invoice to settle.');

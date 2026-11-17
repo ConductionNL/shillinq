@@ -868,8 +868,8 @@
       "type": "library",
       "name": "nextcloud-vue",
       "group": "@conduction",
-      "version": "2.173.0",
-      "bom-ref": "shillinq@0.2.1|@conduction/nextcloud-vue@2.173.0",
+      "version": "2.181.0",
+      "bom-ref": "shillinq@0.2.1|@conduction/nextcloud-vue@2.181.0",
       "licenses": [
         {
           "license": {
@@ -877,15 +877,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40conduction/nextcloud-vue@2.173.0",
+      "purl": "pkg:npm/%40conduction/nextcloud-vue@2.181.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/@conduction/nextcloud-vue/-/nextcloud-vue-2.173.0.tgz",
+          "url": "https://registry.npmjs.org/@conduction/nextcloud-vue/-/nextcloud-vue-2.181.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "40068514b75fe4280b74ee3c573ef100b5b8ef16b09d96f141b805fd7adb1b03a3ae975d30d33ed335703cb0aa243700a21fc2d696282e2809dac916d03533bb"
+              "content": "4cbbcd40d463ccd080f1a3edaeca41c546842375bad9b7956540f0b289a94f3641ca79122d3ae762d6ae99d659767b057dff60ef40b1c4f0ab8937579b586f9b"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -19275,8 +19275,8 @@
     {
       "type": "library",
       "name": "pinia",
-      "version": "4.0.3",
-      "bom-ref": "shillinq@0.2.1|pinia@4.0.3",
+      "version": "4.1.0",
+      "bom-ref": "shillinq@0.2.1|pinia@4.1.0",
       "licenses": [
         {
           "license": {
@@ -19284,15 +19284,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/pinia@4.0.3",
+      "purl": "pkg:npm/pinia@4.1.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/pinia/-/pinia-4.0.3.tgz",
+          "url": "https://registry.npmjs.org/pinia/-/pinia-4.1.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "5cc42aa6f8e01bb2cca95861154cca2d3e0a11bb186df659d02654f4f81d166d4ed9528198893290bf3e49f36139a4fbb11d304fa04480a4f460d0d85a099544"
+              "content": "fb9fc732e5636107ca9420f9c50ef37d79f5c54cd81446bba5dd0340ae5268c7d909a1514c795a1ff734d8dd45a0639d9734a2c1fe4438f809c7fff5403c3a83"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""

@@ -212,9 +212,46 @@ final class ComplianceExportControllerTest extends TestCase {
 			)
 		);
 
+		$this->complianceExportService->expects(self::once())->method('recordExportRequest')->with(
+			'all',
+			'json',
+			'auditor-alice'
+		);
+
 		$response = $this->controller(logger: $logger)->export();
 
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
 	}//end testSuccessfulExportRecordsTheExportRequest()
+
+	/**
+	 * An export whose request cannot be recorded on the audit trail is not
+	 * served: the caller gets a 500 and none of the rows.
+	 *
+	 * @return void
+	 */
+	public function testAnExportThatCannotBeRecordedIsNotServed(): void {
+		$this->complianceExportService->method('generateExport')->willReturn(
+			[
+				'from' => '2026-01-01',
+				'to' => '2026-03-31',
+				'scope' => 'all',
+				'format' => 'csv',
+				'actorFilter' => null,
+				'generatedAt' => '2026-04-01T09:00:00+00:00',
+				'generatedBy' => 'auditor-alice',
+				'eventCount' => 1,
+				'headers' => ['objectId'],
+				'rows' => [['objectId' => 'inv-1']],
+			]
+		);
+		$this->complianceExportService->method('recordExportRequest')->willThrowException(new RuntimeException('trail unavailable'));
+		$this->complianceExportService->expects(self::never())->method('renderCsv');
+
+		$response = $this->controller()->export();
+
+		self::assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
+		self::assertStringNotContainsString(needle: 'inv-1', haystack: json_encode($response->getData()));
+
+	}//end testAnExportThatCannotBeRecordedIsNotServed()
 }//end class

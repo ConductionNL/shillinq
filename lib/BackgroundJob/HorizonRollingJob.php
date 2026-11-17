@@ -37,8 +37,10 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -97,12 +99,7 @@ class HorizonRollingJob extends TimedJob {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**
@@ -213,7 +210,13 @@ class HorizonRollingJob extends TimedJob {
 			$rolledHorizon = $this->shiftHorizon(horizon: $horizon, monday: $monday);
 			$objectService->setRegister($register);
 			$objectService->setSchema('CashflowForecastHorizon');
-			$objectService->saveObject($rolledHorizon, $register, 'CashflowForecastHorizon', $uuid);
+			$objectService->saveObject(
+				object: $rolledHorizon,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $register, schema: 'CashflowForecastHorizon'),
+					uuid: $uuid
+				)
+			);
 			return 'rolled';
 		} catch (\Throwable $e) {
 			$this->logger->error('Shillinq HorizonRollingJob: failed to roll horizon', ['uuid' => $uuid, 'exception' => $e->getMessage()]);

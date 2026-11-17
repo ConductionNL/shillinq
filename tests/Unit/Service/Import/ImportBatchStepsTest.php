@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\Listener\Registration\GuardTagServices;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
@@ -299,7 +300,14 @@ final class ImportBatchStepsTest extends TestCase {
 	 * @return array<string,mixed> The batch to save, checked against the real fragment.
 	 */
 	private function step(ImportBatchAction $action, array $batch, string $to, string $step): array {
-		$saved = $action->execute(array_merge($batch, ['status' => $to]), $batch, ['step' => $step], ImportBatchAction::class);
+		$saved = $action->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($batch, ['status' => $to]),
+				previousData: $batch,
+				parameters: ['step' => $step],
+				actionName: ImportBatchAction::class
+			)
+		);
 		$this->assertSame([], RegisterSchema::errors('ImportBatch', $saved), 'the batch the ' . $step . ' step saves');
 
 		return $saved;
@@ -331,7 +339,14 @@ final class ImportBatchStepsTest extends TestCase {
 
 		$this->expectException(DomainException::class);
 		$this->expectExceptionMessage('The file /Migrations/missing.xaf cannot be read.');
-		$this->action()->execute(array_merge($batch, ['status' => 'parsing']), $batch, ['step' => 'parse'], ImportBatchAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($batch, ['status' => 'parsing']),
+				previousData: $batch,
+				parameters: ['step' => 'parse'],
+				actionName: ImportBatchAction::class
+			)
+		);
 	}//end testAFileTheOwnerCannotReadRefusesParseWithItsName()
 
 	/**
@@ -344,7 +359,14 @@ final class ImportBatchStepsTest extends TestCase {
 		$batch     = $this->batch(status: 'draft');
 
 		$this->expectException(DomainException::class);
-		$this->action()->execute(array_merge($batch, ['status' => 'parsing']), $batch, ['step' => 'parse'], ImportBatchAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($batch, ['status' => 'parsing']),
+				previousData: $batch,
+				parameters: ['step' => 'parse'],
+				actionName: ImportBatchAction::class
+			)
+		);
 	}//end testAFileThatIsNotAnAuditfileRefusesParse()
 
 	/**
@@ -579,7 +601,14 @@ final class ImportBatchStepsTest extends TestCase {
 
 		$this->expectException(DomainException::class);
 		$this->expectExceptionMessage('batch-1');
-		$action->execute(array_merge($ready, ['status' => 'posting']), $ready, ['step' => 'post'], ImportBatchAction::class);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($ready, ['status' => 'posting']),
+				previousData: $ready,
+				parameters: ['step' => 'post'],
+				actionName: ImportBatchAction::class
+			)
+		);
 	}//end testTheSameImportIsNotPostedTwice()
 
 	/**

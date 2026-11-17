@@ -33,10 +33,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Tax\SuppletieFilingUnavailableException;
-use OCA\Shillinq\Service\Tax\VatSuppletieFilingService;
-use OCA\Shillinq\Service\VatSuppletieDetectionService;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieFilingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -66,18 +66,18 @@ class VatSuppletieFilingController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request   The request.
-	 * @param VatSuppletieDetectionService $suppletie Finds the correction.
-	 * @param VatSuppletieFilingService    $filing    Builds and files the supplementary return.
+	 * @param VatSuppletieDetectionServiceInterface $suppletie Finds the correction.
+	 * @param VatSuppletieFilingServiceInterface    $filing    Builds and files the supplementary return.
 	 * @param IUserSession                 $session   The user session.
-	 * @param AdministrationContextService $context   The caller's administrations.
+	 * @param AdministrationContextServiceInterface $context   The caller's administrations.
 	 * @param LoggerInterface              $logger    The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly VatSuppletieDetectionService $suppletie,
-		private readonly VatSuppletieFilingService $filing,
+		private readonly VatSuppletieDetectionServiceInterface $suppletie,
+		private readonly VatSuppletieFilingServiceInterface $filing,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

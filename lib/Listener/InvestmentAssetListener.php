@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Service\InvestmentDeduction\InvestmentDeductionService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -49,12 +49,12 @@ class InvestmentAssetListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param InvestmentDeductionService $deductions     The eligibility record.
-	 * @param ListenerSchemaResolver     $schemaResolver Which schema an event's object is.
+	 * @param ListenerSchemaResolverInterface     $schemaResolver Which schema an event's object is.
 	 * @param LoggerInterface            $logger         Where a failure is logged.
 	 */
 	public function __construct(
 		private readonly InvestmentDeductionService $deductions,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

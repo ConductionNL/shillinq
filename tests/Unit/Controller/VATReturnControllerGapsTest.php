@@ -30,13 +30,16 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use LogicException;
 use OCA\Shillinq\Controller\VATReturnController;
+use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Vat\VatReturnCheckService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -50,6 +53,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 #[CoversClass(VATReturnController::class)]
+#[UsesClass(VatReturnChecksGuard::class)]
 final class VATReturnControllerGapsTest extends TestCase {
 
 	/**
@@ -130,6 +134,9 @@ final class VATReturnControllerGapsTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
+		// No blocking VAT return check fails here; the checks have their own tests.
+		$checks = $this->createMock(VatReturnCheckService::class);
+
 		return new VATReturnController(
 			request: $request,
 			service: $this->service,
@@ -138,6 +145,8 @@ final class VATReturnControllerGapsTest extends TestCase {
 			context: $this->context,
 			logger: $this->logger,
 			l10n: $l10n,
+			checksGuard: new VatReturnChecksGuard(checks: $checks),
+			checks: $checks,
 		);
 	}//end controller()
 
