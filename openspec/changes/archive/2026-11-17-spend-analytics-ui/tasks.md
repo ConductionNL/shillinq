@@ -109,8 +109,10 @@ renaming one scenario heading makes it FAIL — verified both ways.
 - [x] gate-19 e2e-coverage PASS, gate-16 spec-coverage 0 findings, gate-52
       custom-widget-ratchet 0 findings (1 ratchet-excluded), gate-69
       page-type-discipline custom pages base=53 head=53 delta=+0.
-- [ ] Playwright against a deployment that actually serves this branch. NOT
-      DONE, and not doable from here: the dev box bind-mounts
+- [x] Playwright against a deployment that actually serves this branch.
+      Live pass 2026-11-17: `tests/e2e/spend-analytics.spec.ts` 4 passed, 0 skipped
+      on a fresh NC 34 + OpenRegister main + shillinq development instance.
+      Earlier note: on the dev box this was not doable: the dev box bind-mounts
       `apps-extra/shillinq` (branch `development`, bundle built 2026-08-21
       13:24), which contains 0 occurrences of `SpendAnalyticsPanel` and 0 of
       `reporting-compliance/spend-analytics`. All four tests fail there with

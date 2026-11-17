@@ -4853,6 +4853,7 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail",
+				"rowRoute": "ChartOfAccountsDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts",
 				"_boardNote": "Board ShGrootboek is the chart of accounts: title, count line, Download / Actions / New account, chips for balance sheet, profit and loss and control accounts, the RGS code first and the account with its type under it. The board balance column waits on data: an account carries no balance.",
 				"showTitle": true,
@@ -12906,6 +12907,7 @@
 				],
 				"defaultSort": "subsidyNumber",
 				"detailRoute": "SubsidieDetail",
+				"rowRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
@@ -20341,6 +20343,7 @@
 				],
 				"defaultSort": "-aanvraagDate",
 				"detailRoute": "SubsidieDetail",
+				"rowRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
@@ -20389,6 +20392,7 @@
 				],
 				"defaultSort": "-uitbetaaldBedrag",
 				"detailRoute": "SubsidieDetail",
+				"rowRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
