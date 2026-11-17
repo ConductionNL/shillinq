@@ -210,6 +210,7 @@ import { showSuccess } from '@nextcloud/dialogs'
 import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcCheckboxRadioSwitch, NcSelect, NcTextField } from '@nextcloud/vue'
+import { RATE_CARD_MODELS, rateLabel } from '../utils/billableRate.js'
 import {
 	BILLING_MODELS,
 	buildGenerateRequest,
@@ -338,8 +339,15 @@ export default {
 			}))
 		},
 
+		/**
+		 * Whether the model takes one rate card for the whole invoice; a time
+		 * and material invoice prices each hour by its own rate.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+		 */
 		needsRateCard() {
-			return ['t_and_m', 'mixed'].includes(this.source.billingModel)
+			return RATE_CARD_MODELS.includes(this.source.billingModel)
 		},
 
 		needsRetainer() {
@@ -527,7 +535,8 @@ export default {
 				rows: this.candidates.timeEntries.map((e) => ({
 					id: idOf(e),
 					title: String(e.description || e.personId || ''),
-					meta: [e.personId, e.date].filter(Boolean).join(' · '),
+					// What the hour is worth (sales-billable-rate-per-hour REQ-BRPH-005).
+					meta: [e.personId, e.date, rateLabel(e.rate)].filter(Boolean).join(' · '),
 					quantity: Number(e.hours || 0).toLocaleString(undefined, {
 						minimumFractionDigits: 1,
 					}),

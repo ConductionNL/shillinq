@@ -124,6 +124,10 @@
         {
             "appVersion": "0.5.7-unstable.20261117030000",
             "versionsSha256": "5eb8591cc159a1fcde7f8006e2a06faf90204e14f9319a988832ac204796a337"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117064000",
+            "versionsSha256": "78fa2cada42887f1bbdcd505d0e0ab7c1b5d8cd07a3010ee5d8d3b37c0aaa7b8"
         }
     ],
     "versions": {
@@ -496,7 +500,7 @@
         "schema:PricingTier": "0.1.0",
         "schema:Programma": "0.1.0",
         "schema:Programmabegroting": "0.1.0",
-        "schema:ProjectAssignment": "0.1.0",
+        "schema:ProjectAssignment": "0.2.0",
         "schema:ProjectBudget": "0.1.0",
         "schema:ProviderPayout": "0.2.0",
         "schema:ProvincialeFondsPosting": "0.1.0",
