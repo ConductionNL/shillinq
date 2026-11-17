@@ -14592,6 +14592,177 @@
                 }
             }
         },
+        "/report-schedules": {
+            "post": {
+                "operationId": "report-schedule-create",
+                "summary": "POST /api/report-schedules — create a report schedule",
+                "description": "POST /api/report-schedules — create a report schedule owned by the caller. The server sets `status` and `nextRunAt`; recipients are limited to users and groups the owner may share the administration's reports with. Needs a signed-in Nextcloud user who is a member of the administration.",
+                "tags": [
+                    "reporting"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration the schedule reports on (create only)."
+                                    },
+                                    "reportType": {
+                                        "description": "The report type (create only)."
+                                    },
+                                    "name": {
+                                        "description": "The schedule name."
+                                    },
+                                    "format": {
+                                        "description": "The output format; one the report offers."
+                                    },
+                                    "frequency": {
+                                        "description": "How often the report runs."
+                                    },
+                                    "runDay": {
+                                        "description": "The day of the period it runs on."
+                                    },
+                                    "periodRule": {
+                                        "description": "Which period each run reports on."
+                                    },
+                                    "recipients": {
+                                        "description": "Users or groups (`group:<gid>`) the owner may share the administration's reports with."
+                                    },
+                                    "folderPath": {
+                                        "description": "The folder the report is stored in."
+                                    },
+                                    "status": {
+                                        "description": "active or paused (update only)."
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The schedule was created.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/report-schedules/{id}": {
+            "put": {
+                "operationId": "report-schedule-update",
+                "summary": "PUT /api/report-schedules/{id} — change a report schedule",
+                "description": "PUT /api/report-schedules/{id} — change a schedule the caller owns. Only name, format, frequency, runDay, periodRule, recipients, folderPath and status change; the next run is recomputed when frequency or runDay changes. Needs a signed-in Nextcloud user who owns the schedule.",
+                "tags": [
+                    "reporting"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The schedule id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration the schedule reports on (create only)."
+                                    },
+                                    "reportType": {
+                                        "description": "The report type (create only)."
+                                    },
+                                    "name": {
+                                        "description": "The schedule name."
+                                    },
+                                    "format": {
+                                        "description": "The output format; one the report offers."
+                                    },
+                                    "frequency": {
+                                        "description": "How often the report runs."
+                                    },
+                                    "runDay": {
+                                        "description": "The day of the period it runs on."
+                                    },
+                                    "periodRule": {
+                                        "description": "Which period each run reports on."
+                                    },
+                                    "recipients": {
+                                        "description": "Users or groups (`group:<gid>`) the owner may share the administration's reports with."
+                                    },
+                                    "folderPath": {
+                                        "description": "The folder the report is stored in."
+                                    },
+                                    "status": {
+                                        "description": "active or paused (update only)."
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The schedule was changed.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/statements/profit-and-loss": {
             "get": {
                 "operationId": "financial-statement-profit-and-loss",
