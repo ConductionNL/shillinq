@@ -177,6 +177,26 @@ final class SettingsServiceGenericSeedGoldenTest extends TestCase {
 		return ['result' => $result, 'calls' => $objects->calls, 'log' => $logger->lines];
 
 	}//end runScenario()
+
+	/**
+	 * Every generic seed names a file that exists and holds its items key.
+	 *
+	 * The golden records whatever the seed did, so a misnamed file would be
+	 * recorded as an expected "Seed file not found".
+	 *
+	 * @return void
+	 */
+	public function testEveryGenericSeedFileExists(): void {
+		$seeds = (new \ReflectionClassConstant(SettingsService::class, 'GENERIC_SEEDS'))->getValue();
+		self::assertNotEmpty($seeds);
+		foreach ($seeds as $name => [$fileName, $itemsKey]) {
+			$path = __DIR__ . '/../../../lib/Settings/seeds/' . $fileName;
+			self::assertFileExists($path, "Seed $name names a missing file.");
+			$data = json_decode((string) file_get_contents($path), true);
+			self::assertIsArray($data[$itemsKey] ?? null, "Seed $name has no '$itemsKey' list.");
+		}
+
+	}//end testEveryGenericSeedFileExists()
 }//end class
 
 /**
