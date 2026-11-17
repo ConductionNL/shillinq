@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
+use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunCsvGenerator;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunGeneratorInterface;
 use OCA\Shillinq\PaymentRun\Generator\SepaPain001Generator;
@@ -102,7 +103,7 @@ class PaymentRunExportServiceEdgesTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function approvedRun(): array {
-		return [
+		$run = [
 			'id' => 'pr-2026-001',
 			'runNumber' => 'PR-2026-001',
 			'administrationId' => 'adm-consultancy',
@@ -116,6 +117,9 @@ class PaymentRunExportServiceEdgesTest extends TestCase {
 				['payeeName' => 'Jan de Vries (ZZP)', 'creditorIban' => 'NL00TEST0222222222', 'amount' => 605.00, 'remittanceInfo' => 'JDV-2026-06-0003', 'apTransactionRef' => 'b'],
 			],
 		];
+		$run['approvedLinesDigest'] = (new PaymentRunApprovalLock())->digest(run: $run);
+
+		return $run;
 	}//end approvedRun()
 
 	/**
