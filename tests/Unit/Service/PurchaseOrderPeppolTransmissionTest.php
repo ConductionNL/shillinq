@@ -180,15 +180,15 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 
 	/**
 	 * The send-block precondition (slice 02) is reused — neither
-	 * sendToPeppol nor sendToPDFEmail may transition a PO whose chain is
-	 * still pending (REQ-PO3W-002 send-block precondition).
+	 * sendToPeppol nor sendToPDFEmail may transition a PO that OpenRegister's
+	 * approval chain has not approved (REQ-PO3W-002 send-block precondition).
 	 *
 	 * @return void
 	 */
 	public function testSendToPeppolRefusesWhenApprovalIncomplete(): void {
 		$po = $this->approvedPo();
-		$po['approvalChain'][1]['decision'] = 'pending';
-		$po['approvalChain'][1]['decidedAt'] = '';
+		// OpenRegister's approval chain has not approved it yet.
+		$po['statusCode'] = 'draft';
 		$data = [
 			'PurchaseOrder' => [$po],
 		];
@@ -208,7 +208,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			$service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
 			self::fail('sendToPeppol must refuse to advance an incomplete chain');
 		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
+			self::assertSame('Purchase order cannot be sent: it is not approved', $e->getMessage());
 		}
 
 		// Nothing was persisted — no PurchaseOrder save touched the store.
@@ -296,7 +296,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			'projectCode' => 'P-FAC',
 			'totalAmount' => 18500.00,
 			'notes' => 'Coffee machine refresh.',
-			'statusCode' => 'draft',
+			'statusCode' => 'approved',
 			'lines' => [
 				[
 					'lineNumber' => 1,

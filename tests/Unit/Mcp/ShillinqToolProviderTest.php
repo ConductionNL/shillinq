@@ -56,11 +56,9 @@ use OCA\Shillinq\Mcp\McpExpenseTools;
 use OCA\Shillinq\Mcp\McpHoursTools;
 use OCA\Shillinq\Mcp\McpInvoiceTools;
 use OCA\Shillinq\Service\RecurringInvoiceGenerator;
-use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -81,7 +79,6 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(McpInvocationAudit::class)]
 #[UsesClass(McpArgumentValidator::class)]
 #[UsesClass(McpAdministrationGate::class)]
-#[UsesClass(McpPurchaseOrderTools::class)]
 #[UsesClass(McpPeriodCloseTools::class)]
 #[UsesClass(McpVatReturnTools::class)]
 #[UsesClass(McpDunningTools::class)]
@@ -95,11 +92,11 @@ use Psr\Log\LoggerInterface;
 class ShillinqToolProviderTest extends TestCase {
 
 	/**
-	 * The service behind purchase_order.decide.
+	 * The service behind requisition.decide.
 	 *
-	 * @var PurchaseOrderApprovalService&MockObject
+	 * @var RequisitionServiceInterface&MockObject
 	 */
-	private PurchaseOrderApprovalService&MockObject $approvals;
+	private RequisitionServiceInterface&MockObject $requisitions;
 
 	/**
 	 * The audit records dispatched, as [message, parameters].
@@ -128,7 +125,7 @@ class ShillinqToolProviderTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 		$context = $this->createMock(AdministrationContextService::class);
 		$context->method('canAccess')->willReturnCallback(static fn (string $id): bool => $id === 'adm-1');
-		$this->approvals = $this->createMock(PurchaseOrderApprovalService::class);
+		$this->requisitions = $this->createMock(RequisitionServiceInterface::class);
 		$dispatcher = $this->createMock(IEventDispatcher::class);
 		$dispatcher->method('dispatchTyped')->willReturnCallback(
 			function (object $event): void {
@@ -141,7 +138,6 @@ class ShillinqToolProviderTest extends TestCase {
 			new McpArgumentValidator(),
 			$gate,
 			new McpInvocationAudit($dispatcher),
-			new McpPurchaseOrderTools($gate, $this->approvals, $this->createMock(LoggerInterface::class)),
 			new McpPeriodCloseTools(
 				$gate,
 				$this->createMock(PeriodCloseServiceInterface::class),
@@ -164,7 +160,7 @@ class ShillinqToolProviderTest extends TestCase {
 			),
 			new McpRequisitionTools(
 				$gate,
-				$this->createMock(RequisitionServiceInterface::class),
+				$this->requisitions,
 				$this->createMock(RequisitionConversionServiceInterface::class),
 				$this->createMock(LoggerInterface::class)
 			),
@@ -325,15 +321,15 @@ class ShillinqToolProviderTest extends TestCase {
 	 * @return void
 	 */
 	public function testADecisionRunsAndIsAudited(): void {
-		$this->approvals->expects($this->once())->method('recordApprovalDecision')
-			->with('adm-1', 'po-7', 'rejected', null)
-			->willReturn(['id' => 'po-7', 'status' => 'rejected']);
+		$this->requisitions->expects($this->once())->method('rejectRequisition')
+			->with('adm-1', 'req-7', 'agent-alice', 'over budget')
+			->willReturn(['id' => 'req-7', 'status' => 'rejected']);
 
-		$result = $this->provider->invokeTool('shillinq.purchase_order.decide', ['administrationId' => 'adm-1', 'purchaseOrderId' => 'po-7', 'decision' => 'rejected']);
+		$result = $this->provider->invokeTool('shillinq.requisition.decide', ['administrationId' => 'adm-1', 'requisitionId' => 'req-7', 'decision' => 'rejected', 'reason' => 'over budget']);
 
-		$this->assertSame(['purchaseOrder' => ['id' => 'po-7', 'status' => 'rejected']], $result);
+		$this->assertSame(['requisition' => ['id' => 'req-7', 'status' => 'rejected']], $result);
 		$this->assertSame(
-			[[McpInvocationAudit::MESSAGE, ['tool' => 'shillinq.purchase_order.decide', 'user' => 'agent-alice', 'administrationId' => 'adm-1', 'outcome' => 'ok']]],
+			[[McpInvocationAudit::MESSAGE, ['tool' => 'shillinq.requisition.decide', 'user' => 'agent-alice', 'administrationId' => 'adm-1', 'outcome' => 'ok']]],
 			$this->audited
 		);
 	}//end testADecisionRunsAndIsAudited()
@@ -344,16 +340,17 @@ class ShillinqToolProviderTest extends TestCase {
 	 * @return void
 	 */
 	public function testMalformedArgumentsNeverReachTheServiceButAreAudited(): void {
-		$this->approvals->expects($this->never())->method('recordApprovalDecision');
+		$this->requisitions->expects($this->never())->method('rejectRequisition');
+		$this->requisitions->expects($this->never())->method('approveRequisition');
 
 		$result = $this->provider->invokeTool(
-			'shillinq.purchase_order.decide',
-			['administrationId' => 'adm-1', 'purchaseOrderId' => '../etc', 'decision' => 'maybe', 'userId' => 'bob']
+			'shillinq.requisition.decide',
+			['administrationId' => 'adm-1', 'requisitionId' => '../etc', 'decision' => 'maybe', 'userId' => 'bob']
 		);
 
 		$this->assertSame('invalid_arguments', $result['error']);
-		$this->assertStringContainsString('purchaseOrderId is not well-formed', $result['message']);
-		$this->assertStringContainsString('decision must be one of approved, rejected, delegated', $result['message']);
+		$this->assertStringContainsString('requisitionId is not well-formed', $result['message']);
+		$this->assertStringContainsString('decision must be one of approved, rejected', $result['message']);
 		$this->assertStringContainsString('userId is not an argument of this tool', $result['message']);
 		$this->assertSame('invalid_arguments', $this->audited[0][1]['outcome']);
 		$this->assertCount(1, $this->audited);
@@ -365,17 +362,17 @@ class ShillinqToolProviderTest extends TestCase {
 	 * @return void
 	 */
 	public function testRefusalsAndUnknownToolsAreAudited(): void {
-		$this->approvals->expects($this->never())->method('recordApprovalDecision');
+		$this->requisitions->expects($this->never())->method('approveRequisition');
 
-		$refused = $this->provider->invokeTool('shillinq.purchase_order.decide', ['administrationId' => 'adm-9', 'purchaseOrderId' => 'po-7', 'decision' => 'approved']);
+		$refused = $this->provider->invokeTool('shillinq.requisition.decide', ['administrationId' => 'adm-9', 'requisitionId' => 'req-7', 'decision' => 'approved']);
 		$unknown = $this->provider->invokeTool('shillinq.gl_transaction.delete', ['administrationId' => ['x']]);
 
 		$this->assertSame('not_found', $refused['error']);
 		$this->assertSame('unknown_tool', $unknown['error']);
-		$this->assertStringContainsString('shillinq.purchase_order.decide', $unknown['message']);
+		$this->assertStringContainsString('shillinq.requisition.decide', $unknown['message']);
 		$this->assertSame(
 			[
-				['tool' => 'shillinq.purchase_order.decide', 'user' => 'agent-alice', 'administrationId' => 'adm-9', 'outcome' => 'not_found'],
+				['tool' => 'shillinq.requisition.decide', 'user' => 'agent-alice', 'administrationId' => 'adm-9', 'outcome' => 'not_found'],
 				['tool' => 'shillinq.gl_transaction.delete', 'user' => 'agent-alice', 'administrationId' => '', 'outcome' => 'unknown_tool'],
 			],
 			array_column($this->audited, 1)

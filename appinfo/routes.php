@@ -456,7 +456,6 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // PII fields stripped; auditor / admin group only; the
         // export request itself is recorded in the audit-trail).
             ['name' => 'complianceExport#export', 'url' => '/api/audit/export', 'verb' => 'GET'],
-            ['name' => 'purchaseOrderApproval#decide', 'url' => '/api/purchase-orders/{id}/approval-decision', 'verb' => 'POST'],
 
         // Bookkeeping-waterschappen-bbv-variant slice 04 — JSON envelopes for
         // the waterschappen BBV chain: the compliance dashboard envelope that

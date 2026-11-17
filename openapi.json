@@ -352,10 +352,6 @@
             "description": "Purchase-order REST endpoints (create / preview / send-transition)."
         },
         {
-            "name": "purchase-order-approval",
-            "description": "Server-authoritative approval-decision endpoint."
-        },
-        {
             "name": "quick-draft-invoice",
             "description": "Quick-draft invoice endpoint."
         },
@@ -10340,45 +10336,6 @@
                         "in": "query",
                         "required": false,
                         "description": "The amount.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The request succeeded.",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Problem401"
-                    }
-                }
-            }
-        },
-        "/purchase-orders/{id}/approval-decision": {
-            "post": {
-                "operationId": "purchase-order-approval-decide",
-                "summary": "Record the authenticated user's decision on a PurchaseOrder's approval chain",
-                "description": "Record the authenticated user's decision on a PurchaseOrder's approval chain. POST /api/purchase-orders/{id}/approval-decision Body: administrationId, decision, comment (optional). Needs a signed-in Nextcloud user.",
-                "tags": [
-                    "purchase-order-approval"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "description": "The PurchaseOrder id (URL path param).",
                         "schema": {
                             "type": "string"
                         }

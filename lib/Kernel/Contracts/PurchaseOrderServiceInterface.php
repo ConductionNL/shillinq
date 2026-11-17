@@ -38,29 +38,29 @@ namespace OCA\Shillinq\Kernel\Contracts;
 interface PurchaseOrderServiceInterface {
 
 	/**
-	 * Refuse to advance a PO to lifecycle "sent" until the chain is fully signed.
+	 * Refuse to advance a PO to lifecycle "sent" until it is approved.
 	 *
-	 * Server-authoritative: the Vue layer never grants the transition. The method
-	 * inspects the persisted PurchaseOrder, asserts every approval_chain entry has
-	 * decision=approved + a non-empty decidedAt timestamp, and on success persists
-	 * statusCode="sent" with a sentAt stamp. On failure the PO is left in its
-	 * current state and a RuntimeException is raised so the controller maps it to
-	 * a 409 Conflict (ADR-005, REQ-PO3W-001 send-block).
+	 * Server-authoritative: the Vue layer never grants the transition. The order
+	 * must carry statusCode approved, which only OpenRegister's approval chain
+	 * sets (REQ-PAD-001); on success it persists statusCode="sent" with a sentAt
+	 * stamp. On failure the PO is left in its current state and a
+	 * RuntimeException is raised so the controller maps it to a 409 Conflict
+	 * (ADR-005, REQ-PO3W-001 send-block).
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $purchaseOrderId PO id (id of the persisted record).
 	 *
 	 * @return array<string,mixed> The PurchaseOrder after transition to "sent".
 	 *
-	 * @throws \RuntimeException When the PO is missing, not approved, or the chain
-	 *                           is incomplete.
+	 * @throws \RuntimeException When the PO is missing or its statusCode is not
+	 *                           approved by OpenRegister's approval chain.
 	 *
-	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
 	 */
-	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array;
+	public function markSent(string $administrationId, string $purchaseOrderId): array;
 
 	/**
-	 * Create a purchase order with a materialised approval chain (REQ-PO3W-001).
+	 * Create a purchase order in draft, routed to its approvers (REQ-PO3W-001).
 	 *
 	 * Server-authoritative:
 	 *  - the requesterId is derived from the validated administration membership;
@@ -68,8 +68,9 @@ interface PurchaseOrderServiceInterface {
 	 *  - the po_number is generated server-side using a CBS-conform sequence
 	 *    (PO-{year}-{administrationCode}-{6-digit-sequence});
 	 *  - cost-center budget is checked against the CostCenter record;
-	 *  - the approval chain is computed from determineApprovalChain() and an
-	 *    ApprovalTask record is created for each required approver;
+	 *  - the roles the amount needs are read from the PurchaseOrder schema's
+	 *    declared approval chain and an ApprovalTask record is created for each;
+	 *    the approval steps themselves are OpenRegister's;
 	 *  - every approver is notified via the notification manager;
 	 *  - statusCode starts at "draft", the schema's initial state, also while the approval chain is pending
 	 *    or "draft" (no chain — defensive fallback that should not occur for
@@ -90,24 +91,6 @@ interface PurchaseOrderServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public function createPurchaseOrder(string $administrationId, array $payload): array;
-
-	/**
-	 * Determine the ordered list of required approvers for a PO total.
-	 *
-	 * Threshold table (REQ-PO3W-001):
-	 *  - amount < €10,000          → [Teamleider]
-	 *  - €10,000 ≤ amount < €50,000 → [Teamleider, Facility Manager]
-	 *  - amount ≥ €50,000           → [Teamleider, Facility Manager, Procurement Manager]
-	 *
-	 * Comparison is done in integer cents to avoid float drift.
-	 *
-	 * @param float $amount The PO total in euro (multipleOf 0.01).
-	 *
-	 * @return array<int,array{role:string,order:int}> Ordered approver descriptors.
-	 *
-	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
-	 */
-	public function determineApprovalChain(float $amount): array;
 
 	/**
 	 * Transmit an approved PO via the PDF + email fallback path.
@@ -143,7 +126,7 @@ interface PurchaseOrderServiceInterface {
 	 * Transmit an approved PO to the supplier via Peppol BIS Ordering 3.0.
 	 *
 	 * Slice 03 surface. The method enforces the slice-02 approval-complete
-	 * precondition (re-using the same chain check as blockSendUntilApproved so
+	 * precondition (re-using the same approved-state check as markSent so
 	 * the guard stays single-sourced), resolves the supplier's Peppol participant
 	 * id via the adapter port, transforms the PO into a UBL 2.1 Order document
 	 * via PeppolBisOrderMapper, submits the document to the Peppol Access Point,

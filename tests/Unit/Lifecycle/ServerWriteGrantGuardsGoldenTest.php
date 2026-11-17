@@ -21,7 +21,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\PaymentRunReconcileGuard;
-use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
 use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\ServerWriteAuthority;
 use PHPUnit\Framework\TestCase;
@@ -56,7 +55,6 @@ final class ServerWriteGrantGuardsGoldenTest extends TestCase {
 		$guards = [
 			'reconcile' => PaymentRunReconcileGuard::class,
 			'exception' => SupplierInvoiceExceptionApprovalGuard::class,
-			'purchaseOrder' => PurchaseOrderApprovalGuard::class,
 		];
 		$result = [];
 		foreach ($guards as $guardName => $guardClass) {

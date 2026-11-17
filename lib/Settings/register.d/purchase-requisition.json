@@ -203,7 +203,7 @@
               "from": "approved",
               "to": "converted",
               "label": "Omzetten naar inkooporder",
-              "description": "Materialise a PurchaseOrder from the approved requisition via RequisitionConversionService:convertToPurchaseOrder, which reuses PurchaseOrderService:createPurchaseOrder unmodified. Guarded by RequisitionConversionGuard:canConvert (status must be 'approved'); the actual PO creation is imperative (creates a new cross-schema record and writes back its id) and is performed by the service, mirroring how PurchaseOrderService:blockSendUntilApproved itself mutates lifecycleState outside the generic transition engine.",
+              "description": "Materialise a PurchaseOrder from the approved requisition via RequisitionConversionService:convertToPurchaseOrder, which reuses PurchaseOrderService:createPurchaseOrder unmodified. Guarded by RequisitionConversionGuard:canConvert (status must be 'approved'); the actual PO creation is imperative (creates a new cross-schema record and writes back its id) and is performed by the service, mirroring how PurchaseOrderService:markSent itself sets statusCode outside the generic transition engine.",
               "requires": "OCA\\Shillinq\\Lifecycle\\RequisitionConversionGuard::canConvert"
             }
           }

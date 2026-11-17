@@ -1913,13 +1913,6 @@
     [
         "registerServiceAlias",
         [
-            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PurchaseOrderApprovalServiceInterface'",
-            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrderApprovalService'"
-        ]
-    ],
-    [
-        "registerServiceAlias",
-        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PurchaseOrderServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrderService'"
         ]

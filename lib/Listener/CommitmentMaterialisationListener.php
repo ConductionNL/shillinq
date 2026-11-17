@@ -14,7 +14,8 @@
  * PO path is fail-closed: {@see InsufficientCommitmentBudgetException} is
  * allowed to propagate. OR dispatches `ObjectTransitionedEvent` /
  * `ObjectCreatedEvent` synchronously in the same write path as the
- * originating PurchaseOrderApprovalService::saveObject() call (no queue),
+ * write that approves the order (OpenRegister's approval chain advancing
+ * its `approve` transition, REQ-PAD-001; no queue),
  * so an uncaught exception here surfaces back to the approval caller as a
  * failed request — the mechanism REQ-VPL-010's "insufficient budget blocks
  * the approval, not just the invoice" scenario relies on. This is a
@@ -99,7 +100,7 @@ class CommitmentMaterialisationListener implements IEventListener {
 	 * @listener-placement inline correctness — this handler must run INSIDE the
 	 *   write it observes, because the write's outcome depends on it. OR
 	 *   dispatches ObjectCreatedEvent synchronously in the same path as
-	 *   PurchaseOrderApprovalService::saveObject(), so an
+	 *   the write that approves the purchase order, so an
 	 *   InsufficientCommitmentBudgetException raised here propagates back to the
 	 *   approval caller and fails the request. That propagation IS the mechanism
 	 *   REQ-VPL-010 relies on for "insufficient budget blocks the approval, not

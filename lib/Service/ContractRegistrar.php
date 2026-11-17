@@ -187,7 +187,6 @@ use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ProductCatalogServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ProgrammabegrotingServiceInterface;
-use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
@@ -522,7 +521,6 @@ final class ContractRegistrar {
 		PortalPaymentSessionServiceInterface::class => PortalPaymentSessionService::class,
 		ProductCatalogServiceInterface::class => ProductCatalogService::class,
 		ProgrammabegrotingServiceInterface::class => ProgrammabegrotingService::class,
-		PurchaseOrderApprovalServiceInterface::class => PurchaseOrderApprovalService::class,
 		PurchaseOrderServiceInterface::class => PurchaseOrderService::class,
 		QuickDraftInvoiceServiceInterface::class => QuickDraftInvoiceService::class,
 		ReconciliationResolutionServiceInterface::class => ReconciliationResolutionService::class,
