@@ -119,7 +119,15 @@
         },
         {
             "appVersion": "0.5.7-unstable.20261117010000",
-            "versionsSha256": "fa55bbc4ac2afcc343d17a35172d4864565c686f3cc1802628321786fed1fd73"
+            "versionsSha256": "941921db8f3c6b77597da6ce89ec6d5bcf0ef2fcfce62c400d1f87e44e567af7"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117030000",
+            "versionsSha256": "5eb8591cc159a1fcde7f8006e2a06faf90204e14f9319a988832ac204796a337"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117063500",
+            "versionsSha256": "8db5ac2765f0c42150d01d0c37b2504cb18947cfa3f7218796277800611f2e60"
         }
     ],
     "versions": {
@@ -335,6 +343,7 @@
         "schema:FxRevaluationPosting": "0.1.0",
         "schema:GLLine": "0.2.0",
         "schema:GLTransaction": "0.3.0",
+        "schema:GRAllocationRun": "0.1.0",
         "schema:GRDeelnemer": "0.1.0",
         "schema:GRVerdeelsleutel": "0.1.0",
         "schema:GarantievoorzieningDetail": "0.1.0",
@@ -466,9 +475,10 @@
         "schema:PassThroughMarkupRule": "0.1.0",
         "schema:Payee": "0.2.0",
         "schema:Payment": "0.1.0",
+        "schema:PaymentDevice": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
-        "schema:PaymentRequest": "0.11.0",
+        "schema:PaymentRequest": "0.11.1",
         "schema:PaymentRun": "0.3.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",
@@ -492,7 +502,7 @@
         "schema:Programmabegroting": "0.1.0",
         "schema:ProjectAssignment": "0.1.0",
         "schema:ProjectBudget": "0.1.0",
-        "schema:ProviderPayout": "0.1.1",
+        "schema:ProviderPayout": "0.2.0",
         "schema:ProvincialeFondsPosting": "0.1.0",
         "schema:Provision": "0.1.0",
         "schema:ProvisionDisclosureTabel": "0.1.0",
@@ -519,7 +529,7 @@
         "schema:Rechtmatigheidsparagraaf": "0.2.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
-        "schema:ReconciliationMatch": "0.2.0",
+        "schema:ReconciliationMatch": "0.2.1",
         "schema:ReconciliationReport": "0.1.0",
         "schema:RecurringInvoiceProfile": "0.3.0",
         "schema:ReimbursementPolicy": "0.1.0",
