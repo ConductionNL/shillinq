@@ -25,6 +25,7 @@ export const RATE_CARD_MODELS = Object.freeze(['mixed'])
  *
  * @param {number|string|null|undefined} value The amount.
  * @return {string} The amount, or an em dash when it is not a number.
+ * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
  */
 export function euro(value) {
 	const amount = Number(value)
@@ -92,6 +93,7 @@ export function billedLabel(row) {
  *
  * @param {number|string} value The hours.
  * @return {string} The hours.
+ * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.2
  */
 export function hoursText(value) {
 	return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })
@@ -102,6 +104,7 @@ export function hoursText(value) {
  *
  * @param {Date} date The date.
  * @return {string} The month.
+ * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.2
  */
 export function monthOf(date) {
 	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
