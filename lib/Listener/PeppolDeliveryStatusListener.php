@@ -53,13 +53,13 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PeppolDeliveryStatusListenerInterface;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
-use OCA\Shillinq\Service\PurchaseOrderService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -139,7 +139,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
-	 * @param PurchaseOrderService|null $purchaseOrders Applies a status naming a purchase order (REQ-PODR-001).
+	 * @param PurchaseOrderServiceInterface|null $purchaseOrders Applies a status naming a purchase order (REQ-PODR-001).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -147,7 +147,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
-		private readonly ?PurchaseOrderService $purchaseOrders = null,
+		private readonly ?PurchaseOrderServiceInterface $purchaseOrders = null,
 	) {
 
 	}//end __construct()
@@ -219,7 +219,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	}//end deliveryStatusEvent()
 
 	/**
-		 * Apply one delivery-status payload to the matching purchase order or ARInvoice.
+	 * Apply one delivery-status payload to the matching purchase order or ARInvoice.
 	 *
 	 * @param array<string,mixed> $payload {objectUri, transmissionId, status, timestamp, detail}.
 	 *

@@ -36,7 +36,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\PurchaseOrderService;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Service\ListenerSlugContract;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -124,9 +124,9 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	/**
 	 * The purchase order service handed to the listener.
 	 *
-	 * @var PurchaseOrderService|null
+	 * @var PurchaseOrderServiceInterface|null
 	 */
-	private ?PurchaseOrderService $purchaseOrders = null;
+	private ?PurchaseOrderServiceInterface $purchaseOrders = null;
 
 	/**
 	 * Fresh store per test.
@@ -135,7 +135,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		$this->store = new OpenRegisterFaithfulObjectService();
-		$this->purchaseOrders = $this->createMock(PurchaseOrderService::class);
+		$this->purchaseOrders = $this->createMock(PurchaseOrderServiceInterface::class);
 	}//end setUp()
 
 	/**
@@ -557,7 +557,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 			IAppConfig::class => $appConfig,
 			INotificationManager::class => $this->notificationManager(),
 			LoggerInterface::class => ($this->listenerLogger ?? new NullLogger()),
-			PurchaseOrderService::class => $this->purchaseOrders,
+			PurchaseOrderServiceInterface::class => $this->purchaseOrders,
 			ListenerSchemaResolver::class => new ListenerSchemaResolver(
 				container: $container,
 				registerLocation: $settings,

@@ -69,6 +69,19 @@ interface PurchaseOrderServiceInterface {
 	public function dispatchChannels(): array;
 
 	/**
+	 * Apply integriq's Peppol delivery status to the purchase order it names (REQ-PODR-001).
+	 *
+	 * @param string $purchaseOrderId The order's id.
+	 * @param string $status          integriq's delivery status.
+	 * @param string $detail          integriq's reason, for a failure.
+	 *
+	 * @return bool True when the order changed.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
+	 */
+	public function applyPeppolDeliveryStatus(string $purchaseOrderId, string $status, string $detail): bool;
+
+	/**
 	 * Create a purchase order with a materialised approval chain (REQ-PO3W-001).
 	 *
 	 * Server-authoritative:
