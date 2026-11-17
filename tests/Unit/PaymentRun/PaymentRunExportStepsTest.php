@@ -182,7 +182,6 @@ final class PaymentRunExportStepsTest extends TestCase {
 			$session,
 			$logger,
 			new PaymentBlockChecker(new InMemoryObjectServiceStub(['APTransaction' => [['id' => 'a', 'invoiceNumber' => 'INV-1', 'state' => 'issued']]]), $settings),
-			new PaymentRunApprovalLock(),
 		);
 
 	}//end service()

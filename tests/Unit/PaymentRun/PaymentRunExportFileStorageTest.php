@@ -24,7 +24,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
-use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\PaymentRun\PaymentRunExportRun;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
@@ -57,7 +56,6 @@ final class PaymentRunExportFileStorageTest extends TestCase {
 			$this->createMock(IUserSession::class),
 			$tree,
 			$this->createMock(PaymentBlockChecker::class),
-			new PaymentRunApprovalLock(),
 		);
 		$run = new PaymentRunExportRun(['administrationId' => 'adm-1', 'runNumber' => 'PR-1'], 'admin');
 		$storeOne = new ReflectionMethod($service, 'storeOne');

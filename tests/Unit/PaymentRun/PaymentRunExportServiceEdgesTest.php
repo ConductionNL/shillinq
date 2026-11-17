@@ -270,7 +270,6 @@ class PaymentRunExportServiceEdgesTest extends TestCase {
 			$session,
 			$this->logger,
 			new PaymentBlockChecker(new InMemoryObjectServiceStub($records), $settings),
-			new PaymentRunApprovalLock(),
 		);
 	}//end service()
 

@@ -531,7 +531,7 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
-            "'OCA\\\\Shillinq\\\\Listener\\\\PaymentRunLockListener'",
+            "'OCA\\\\Shillinq\\\\PaymentRun\\\\PaymentRunLockListener'",
             "0"
         ]
     ],
@@ -539,7 +539,7 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
-            "'OCA\\\\Shillinq\\\\Listener\\\\PaymentRunLockListener'",
+            "'OCA\\\\Shillinq\\\\PaymentRun\\\\PaymentRunLockListener'",
             "0"
         ]
     ],

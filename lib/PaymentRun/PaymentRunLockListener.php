@@ -8,8 +8,8 @@
  * dates cannot change. On approval it stamps the digest of the approved lines
  * and the approver, which the export checks again before it writes a bank file.
  *
- * @category Listener
- * @package  OCA\Shillinq\Listener
+ * @category PaymentRun
+ * @package  OCA\Shillinq\PaymentRun
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -25,12 +25,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Listener;
+namespace OCA\Shillinq\PaymentRun;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IUserSession;
@@ -58,14 +57,14 @@ class PaymentRunLockListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param PaymentRunApprovalLock $lock           The lock rules.
-	 * @param ListenerSchemaResolver $schemaResolver Matches the written schema.
-	 * @param IUserSession           $userSession    The acting user.
-	 * @param LoggerInterface        $logger         Logger.
+	 * @param PaymentRunApprovalLock          $lock           The lock rules.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Matches the written schema.
+	 * @param IUserSession                    $userSession    The acting user.
+	 * @param LoggerInterface                 $logger         Logger.
 	 */
 	public function __construct(
 		private readonly PaymentRunApprovalLock $lock,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

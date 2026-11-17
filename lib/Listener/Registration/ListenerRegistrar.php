@@ -54,7 +54,6 @@ use OCA\Shillinq\Listener\OfferHelperAgentTemplate;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
-use OCA\Shillinq\Listener\PaymentRunLockListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\SbrFilingStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
@@ -65,6 +64,7 @@ use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Support\FleetAppId;
+use OCA\Shillinq\PaymentRun\PaymentRunLockRegistration;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\EventDispatcher\IEventDispatcher;
 
@@ -352,20 +352,10 @@ final class ListenerRegistrar {
 		// the pre-save veto is the only place the overlap, legal-basis and
 		// default-amount rules can run at all. Until this listener existed
 		// FeeScheduleService::assertNoOverlap() had tests and no caller.
-		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
-			$context->registerEventListener(
-				event: $preSaveEvent,
-				listener: FeeScheduleValidationListener::class
-			);
-		}
+		self::registerPreSave(context: $context, listener: FeeScheduleValidationListener::class);
 
 		// An approved payment run is immutable; approval stamps the digest the export checks.
-		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
-			$context->registerEventListener(
-				event: $preSaveEvent,
-				listener: PaymentRunLockListener::class
-			);
-		}
+		(new PaymentRunLockRegistration())->register(context: $context);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -468,6 +458,25 @@ final class ListenerRegistrar {
 
 		(new BbvValidationRegistration())->register(context: $context);
 	}//end register()
+
+	/**
+	 * Register a listener on OpenRegister's two pre-save events, create first, then update.
+	 *
+	 * The events are named by string so this compiles without OpenRegister installed.
+	 *
+	 * @param IRegistrationContext $context  The registration context.
+	 * @param class-string         $listener The listener class.
+	 *
+	 * @return void
+	 */
+	private static function registerPreSave(IRegistrationContext $context, string $listener): void {
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: $listener
+			);
+		}
+	}//end registerPreSave()
 
 	/**
 	 * Subscribe the listeners that only hear objects of some schemas.

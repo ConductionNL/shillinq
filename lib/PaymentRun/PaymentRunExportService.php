@@ -82,6 +82,13 @@ class PaymentRunExportService implements PaymentRunExportServiceInterface {
 	private ?array $generators = null;
 
 	/**
+	 * The approval lock rules: the digest of a run's lines as approved. Stateless.
+	 *
+	 * @var PaymentRunApprovalLock
+	 */
+	private readonly PaymentRunApprovalLock $approvalLock;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container App container — lazily resolves
@@ -93,7 +100,6 @@ class PaymentRunExportService implements PaymentRunExportServiceInterface {
 	 * @param IUserSession $userSession Current user (storage home).
 	 * @param LoggerInterface $logger Fail-soft warning logger.
 	 * @param PaymentBlockChecker $blockChecker Names blocked and disputed lines (REQ-BPR-005).
-	 * @param PaymentRunApprovalLock $approvalLock Digest of the lines as approved.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -103,8 +109,8 @@ class PaymentRunExportService implements PaymentRunExportServiceInterface {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly PaymentBlockChecker $blockChecker,
-		private readonly PaymentRunApprovalLock $approvalLock,
 	) {
+		$this->approvalLock = new PaymentRunApprovalLock();
 
 	}//end __construct()
 

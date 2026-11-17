@@ -242,7 +242,6 @@ class PaymentRunExportServiceTest extends TestCase {
 			$session,
 			$this->createMock(LoggerInterface::class),
 			new PaymentBlockChecker(new InMemoryObjectServiceStub($records), $settings),
-			new PaymentRunApprovalLock(),
 		);
 	}//end service()
 

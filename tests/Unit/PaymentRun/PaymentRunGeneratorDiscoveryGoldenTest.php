@@ -20,7 +20,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
-use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
 use OCP\Files\IRootFolder;
@@ -104,7 +103,6 @@ final class PaymentRunGeneratorDiscoveryGoldenTest extends TestCase {
 			userSession: $this->createMock(IUserSession::class),
 			logger: $this->logger(),
 			blockChecker: (new \ReflectionClass(PaymentBlockChecker::class))->newInstanceWithoutConstructor(),
-			approvalLock: new PaymentRunApprovalLock(),
 		);
 
 	}//end service()

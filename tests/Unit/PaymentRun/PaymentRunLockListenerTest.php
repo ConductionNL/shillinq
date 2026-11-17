@@ -4,7 +4,7 @@
  * Tests the approved payment run lock.
  *
  * @category Test
- * @package  OCA\Shillinq\Tests\Unit\Listener
+ * @package  OCA\Shillinq\Tests\Unit\PaymentRun
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,14 +20,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Tests\Unit\Listener;
+namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Listener\PaymentRunLockListener;
+use OCA\Shillinq\PaymentRun\PaymentRunLockListener;
 use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
@@ -249,7 +249,7 @@ final class PaymentRunLockListenerTest extends TestCase {
 	 * @return PaymentRunLockListener
 	 */
 	private function listener(bool $matches=true): PaymentRunLockListener {
-		$resolver = $this->createMock(ListenerSchemaResolver::class);
+		$resolver = $this->createMock(ListenerSchemaResolverInterface::class);
 		$resolver->method('matchesSchema')->willReturn($matches);
 
 		$user = $this->createMock(IUser::class);
