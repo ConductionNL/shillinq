@@ -37,6 +37,7 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import { NcSelect } from '@nextcloud/vue'
+import { fetchActiveAdministrationId } from '../../api/administrationApi.js'
 import { accountLabelParts, isAmount } from './accountLabel.js'
 import { recordPickerMixin } from './recordPickerMixin.js'
 
@@ -122,11 +123,17 @@ export default {
 		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 		 */
 		async fetchAccounts() {
-			const params = { _limit: 500 }
-			if (this.administrationId) {
-				params.administrationId = this.administrationId
+			const administrationId =
+				this.administrationId || (await fetchActiveAdministrationId())
+			if (!administrationId) {
+				this.accounts = []
+				this.fetchError = this.t(
+					'shillinq',
+					'No active administration, so the chart of accounts cannot be shown.',
+				)
+				return
 			}
-			await this.loadRecords(params)
+			await this.loadRecords({ _limit: 500, administrationId })
 		},
 	},
 }

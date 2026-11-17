@@ -4721,6 +4721,34 @@
 		{
 			"menu": [
 				{
+					"id": "Overheid",
+					"label": "Government",
+					"icon": "Domain",
+					"order": 30,
+					"children": [
+						{
+							"id": "SubjectCosts",
+							"label": "Case costs",
+							"icon": "ChartBoxOutline",
+							"route": "SubjectCosts",
+							"order": 12
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "iv3-report-takes-case-costs-by-case-type",
+					"id": "SubjectCosts",
+					"route": "/overheid/zaakkosten",
+					"type": "dashboard",
+					"title": "Case costs"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "PostingRestrictions",
 					"label": "Posting restrictions",
 					"icon": "Cancel",
@@ -5277,6 +5305,38 @@
 					"route": "/overheid/interest-allocation/:id",
 					"type": "detail",
 					"title": "Interest allocation run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "GRAllocationRuns",
+							"label": "Allocation runs",
+							"icon": "ScaleBalance",
+							"route": "GRAllocationRuns",
+							"order": 65
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRuns",
+					"route": "/gr/verdeelruns",
+					"type": "index",
+					"title": "Allocation runs"
+				},
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRunDetail",
+					"route": "/gr/verdeelruns/:id",
+					"type": "detail",
+					"title": "Allocation run"
 				}
 			]
 		},
