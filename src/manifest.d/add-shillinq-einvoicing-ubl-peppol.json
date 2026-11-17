@@ -349,7 +349,6 @@
             "label": "Reject self-billed invoice",
             "type": "open-form",
             "icon": "CloseCircleOutline",
-            "_note": "sales-einvoice-exchange REQ-SEIX-007: a self-billed invoice a customer sent arrives as a draft; the bookkeeper issues it (the issue transition refuses it without a current agreement) or rejects it here with a reason, which leaves it unbooked. The endpoint checks the administration (404 for another one).",
             "endpoint": {
               "url": "/apps/shillinq/api/ar-invoices/@object.invoiceNumber/reject-self-billed?administrationId=@object.administrationId",
               "method": "POST"
