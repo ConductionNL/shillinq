@@ -452,12 +452,17 @@ export default {
 		 * Items can change while the period is open or closing, never once it
 		 * is closed or locked for audit (REQ-LPE-002).
 		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
 		 * @return {boolean}
 		 */
 		checklistEditable() {
 			return !!this.period && [STATE_OPEN, STATE_CLOSING].includes(this.period.state || STATE_OPEN)
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 */
 		categoryOptions() {
 			return CHECKLIST_CATEGORIES.map((value) => ({ value, label: this.categoryLabel(value) }))
 		},
@@ -599,6 +604,12 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
+		 * @param {string} category The checklist item category.
+		 * @return {string} Its label.
+		 */
 		categoryLabel(category) {
 			switch (category) {
 				case 'ap':
@@ -639,6 +650,16 @@ export default {
 			)
 		},
 
+		/**
+		 * Run a period state transition and report its outcome.
+		 *
+		 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-9
+		 *
+		 * @param {string} action The transition endpoint suffix.
+		 * @param {string} successMessage The message shown when it succeeds.
+		 * @param {object} body The request body.
+		 * @return {Promise<void>}
+		 */
 		async transition(action, successMessage, body = {}) {
 			if (!this.recordId) return
 			this.transitioning = true
@@ -658,6 +679,8 @@ export default {
 		/**
 		 * Resolve one item; the server records who and when.
 		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
 		 * @param {object} item The checklist item.
 		 * @return {Promise<void>}
 		 */
@@ -668,6 +691,8 @@ export default {
 		/**
 		 * Reopen one resolved item.
 		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
 		 * @param {object} item The checklist item.
 		 * @return {Promise<void>}
 		 */
@@ -677,6 +702,8 @@ export default {
 
 		/**
 		 * Add the typed item, then clear the form.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 		 *
 		 * @return {Promise<void>}
 		 */
@@ -694,6 +721,8 @@ export default {
 
 		/**
 		 * Post a checklist change and take the period the server returns.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 		 *
 		 * @param {string} suffix The checklist path.
 		 * @param {object} body The request body.

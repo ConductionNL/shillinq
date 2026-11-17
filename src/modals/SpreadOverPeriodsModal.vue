@@ -178,16 +178,24 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 */
 		lines() {
 			return spreadableLines(this.side, this.loaded)
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 */
 		lineOptions() {
 			return this.lines.map((line) => ({ ...line, label: `${line.label} · EUR ${euros(line.cents)}` }))
 		},
 
 		/**
 		 * The request the form makes, without the preview.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 		 *
 		 * @return {object}
 		 */
@@ -205,6 +213,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 */
 		complete() {
 			const body = this.body
 			return body.sourceReference !== '' && body.totalCents > 0 && body.resultAccount !== '' && body.balanceAccount !== '' && body.periodFrom !== '' && body.periodTo !== ''
@@ -214,6 +225,9 @@ export default {
 	watch: {
 		body: {
 			deep: true,
+			/**
+			 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+			 */
 			handler() {
 				if (!this.done) {
 					this.preview = null
@@ -221,6 +235,11 @@ export default {
 			},
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 *
+		 * @param {object|null} line The chosen invoice line.
+		 */
 		chosenLine(line) {
 			if (line?.account) {
 				this.form.resultAccount = line.account
@@ -230,6 +249,8 @@ export default {
 
 	/**
 	 * Load the invoice when it was not handed in, and preselect the line.
+	 *
+	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 */
 	async mounted() {
 		try {
@@ -248,6 +269,8 @@ export default {
 
 		/**
 		 * Preselect the line and the invoice's own service period.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 		 */
 		takeInvoice() {
 			this.chosenLine = this.lineOptions.find((line) => line.key === this.lineKey) || (this.lineOptions.length === 1 ? this.lineOptions[0] : null)
@@ -260,12 +283,18 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 */
 		async showPreview() {
 			await this.run(async () => {
 				this.preview = await previewSchedule(this.body)
 			}, t('shillinq', 'The releases could not be worked out.'))
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 */
 		async submit() {
 			await this.run(async () => {
 				this.preview = await createSchedule(this.body)
@@ -275,6 +304,8 @@ export default {
 
 		/**
 		 * Run a call with the busy flag and its error message.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 		 *
 		 * @param {() => Promise<void>} call The call.
 		 * @param {string} fallback The message when the server gives none.
@@ -292,6 +323,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 */
 		close() {
 			this.$emit('close', this.done)
 		},
