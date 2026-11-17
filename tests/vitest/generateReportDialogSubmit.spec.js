@@ -78,15 +78,17 @@ describe('GenerateReportDialog', () => {
 	})
 
 	it('saves the schedule, tells its first run and emits it', async () => {
-		axios.post.mockResolvedValueOnce({ data: null })
+		const saved = { id: 's-1', nextRunAt: '2026-10-05T00:00:00+00:00' }
+		axios.post.mockResolvedValueOnce({ data: saved })
 		const vm = dialog()
 
 		await vm.onSchedule()
 
 		const [url, payload] = axios.post.mock.calls[0]
-		expect(url).toBe('/index.php/apps/openregister/api/objects/shillinq/ReportSchedule')
-		expect(payload).toMatchObject({ administrationId: 'adm-1', reportType: 'pnl', format: 'pdf', frequency: 'monthly', runDay: 5, nextRunAt: '2026-10-05T00:00:00+00:00' })
-		expect([vm.scheduledMessage, vm.emitted]).toEqual(['Scheduled. The first run is on 2026-10-05.', [['scheduled', payload]]])
+		expect(url).toBe('/index.php/apps/shillinq/api/report-schedules')
+		expect(payload).toMatchObject({ administrationId: 'adm-1', reportType: 'pnl', format: 'pdf', frequency: 'monthly', runDay: 5 })
+		expect(payload).not.toHaveProperty('nextRunAt')
+		expect([vm.scheduledMessage, vm.emitted]).toEqual(['Scheduled. The first run is on 2026-10-05.', [['scheduled', saved]]])
 	})
 
 	it('words a failed schedule, and does nothing when not allowed', async () => {
