@@ -198,23 +198,25 @@ describe('GenerateReportDialog generate', () => {
 })
 
 describe('GenerateReportDialog schedule', () => {
-	it('saves a schedule object and says when it first runs', async () => {
-		axios.post.mockResolvedValue({ data: { id: 's-1' } })
+	it('saves a schedule and says when the server runs it first', async () => {
+		axios.post.mockResolvedValue({ data: { id: 's-1', nextRunAt: '2026-12-01T00:00:00+00:00' } })
 		const vm = dialog({}, { form: { administrationId: 'a-1' }, schedule: { recipients: 'group:controllers' } })
 		await vm.onSchedule()
 		const [url, payload] = axios.post.mock.calls[0]
-		expect(url).toBe('/index.php/apps/openregister/api/objects/shillinq/ReportSchedule')
-		expect(payload).toMatchObject({ administrationId: 'a-1', reportType: 'balance-sheet', name: 'Balans', format: 'pdf', frequency: 'monthly', runDay: 1, periodRule: 'previous-period', status: 'active' })
-		expect(vm.scheduledMessage).toBe(`Scheduled. The first run is on ${payload.nextRunAt.slice(0, 10)}.`)
-		expect(vm.$emit).toHaveBeenCalledWith('scheduled', { id: 's-1' })
+		expect(url).toBe('/index.php/apps/shillinq/api/report-schedules')
+		expect(payload).toMatchObject({ administrationId: 'a-1', reportType: 'balance-sheet', name: 'Balans', format: 'pdf', frequency: 'monthly', runDay: 1, periodRule: 'previous-period' })
+		expect(payload).not.toHaveProperty('nextRunAt')
+		expect(payload).not.toHaveProperty('status')
+		expect(vm.scheduledMessage).toBe('Scheduled. The first run is on 2026-12-01.')
+		expect(vm.$emit).toHaveBeenCalledWith('scheduled', { id: 's-1', nextRunAt: '2026-12-01T00:00:00+00:00' })
 	})
 
-	it('hands the payload on when the answer is empty', async () => {
+	it('emits the server answer as is when it is empty', async () => {
 		axios.post.mockResolvedValue({})
 		const vm = dialog({}, { form: { administrationId: 'a-1' } })
 		await vm.onSchedule()
-		expect(vm.$emit.mock.calls[0][0]).toBe('scheduled')
-		expect(vm.$emit.mock.calls[0][1].reportType).toBe('balance-sheet')
+		expect(vm.$emit).toHaveBeenCalledWith('scheduled', undefined)
+		expect(vm.scheduledMessage).toBe('Scheduled. The first run is on .')
 	})
 
 	it('does not save without an administration, and shows the fallback on failure', async () => {

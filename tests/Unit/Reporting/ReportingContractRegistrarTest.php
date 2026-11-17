@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Reporting;
 
 use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
+use OCA\Shillinq\Kernel\Contracts\ReportScheduleServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ScheduledReportDeliveryInterface;
 use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
 use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
@@ -31,6 +32,7 @@ use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Reporting\ReportingContractRegistrar;
 use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
+use OCA\Shillinq\Reporting\Schedule\ReportScheduleService;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -54,7 +56,7 @@ final class ReportingContractRegistrarTest extends TestCase {
 		$aliases = [];
 		$context = $this->createMock(IRegistrationContext::class);
 		$context->expects($this->never())->method('registerService');
-		$context->expects($this->exactly(5))->method('registerServiceAlias')->willReturnCallback(
+		$context->expects($this->exactly(6))->method('registerServiceAlias')->willReturnCallback(
 			static function (string $alias, string $target) use (&$aliases): void {
 				$aliases[$alias] = $target;
 			}
@@ -66,6 +68,7 @@ final class ReportingContractRegistrarTest extends TestCase {
 			[
 				ReportGenerationServiceInterface::class => ReportGenerationService::class,
 				ReportRecipientPolicyInterface::class => ReportRecipientPolicy::class,
+				ReportScheduleServiceInterface::class => ReportScheduleService::class,
 				ScheduledReportDeliveryInterface::class => ScheduledReportDelivery::class,
 				ScheduledReportRunnerInterface::class => ScheduledReportRunner::class,
 				XafAuditfileGeneratorInterface::class => XafAuditfileGenerator::class,
