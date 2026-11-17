@@ -5092,6 +5092,41 @@
 		{
 			"menu": [
 				{
+					"id": "Documentation",
+					"label": "Documentation",
+					"icon": "BookOpenVariantOutline",
+					"order": 90,
+					"children": [
+						{
+							"id": "HelpArticles",
+							"label": "Help articles",
+							"icon": "HelpCircleOutline",
+							"route": "HelpArticles",
+							"order": 1
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-help-agent",
+					"id": "HelpArticles",
+					"route": "/documentation/help-articles",
+					"type": "index",
+					"title": "Help articles"
+				},
+				{
+					"_fragment": "platform-help-agent",
+					"id": "HelpArticleDetail",
+					"route": "/documentation/help-articles/:id",
+					"type": "detail",
+					"title": "Help article"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Integrations",
 					"label": "Integrations",
 					"icon": "StoreOutline",
