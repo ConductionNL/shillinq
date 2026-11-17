@@ -2720,6 +2720,8 @@
         "Standard-Specific Calculation": "Standard-Specific Calculation",
         "Standards policy": "Standards policy",
         "Standards policy saved.": "Standards policy saved.",
+        "The register Shillinq keeps its data in, and where a payment sends a person back to.": "The register Shillinq keeps its data in, and where a payment sends a person back to.",
+        "Use an address that starts with https://": "Use an address that starts with https://",
         "The connection to Pipelinq, which adds customer details to bookings.": "The connection to Pipelinq, which adds customer details to bookings.",
         "Enter an address that starts with https://": "Enter an address that starts with https://",
         "Stored in the Nextcloud secrets store and never shown again. Paste a new token to replace it.": "Stored in the Nextcloud secrets store and never shown again. Paste a new token to replace it.",
