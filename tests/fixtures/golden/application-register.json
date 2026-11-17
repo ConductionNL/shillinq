@@ -94,6 +94,14 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\Hermiq\\\\Event\\\\CollectAgentTemplatesEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\OfferHelperAgentTemplate'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\StockMoveTransitionedListener'",
             "0"
@@ -394,6 +402,22 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\AssignmentRateListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\AssignmentRateListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\ObjectRequestSettledListener'",
             "0"
@@ -500,6 +524,22 @@
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\FeeScheduleValidationListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
+            "'OCA\\\\Shillinq\\\\PaymentRun\\\\PaymentRunLockListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\PaymentRun\\\\PaymentRunLockListener'",
             "0"
         ]
     ],
@@ -713,6 +753,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\AccountantsdossierExportServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\AccountantsdossierExportService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ActivityCostPriceCalculationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\ActivityCostPriceCalculation'"
         ]
     ],
     [
@@ -1131,6 +1178,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CrossSubsidyScanInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\CrossSubsidyScan'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CustomerBridgeMetricsServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\CustomerBridgeMetricsService'"
         ]
@@ -1525,6 +1579,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\InvoiceSettlementServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Bank\\\\InvoiceSettlementService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\JointArrangementAllocationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\JointArrangementAllocation'"
         ]
     ],
     [
@@ -2573,6 +2634,12 @@
         ]
     ],
     [
+        "registerNotifierService",
+        [
+            "'OCA\\\\Shillinq\\\\Notification\\\\GroupScopeChangedNotifier'"
+        ]
+    ],
+    [
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Guard\\\\Iv3XmlValidationGuard::requireValidXml'",
@@ -2877,6 +2944,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReportRecipientPolicyInterface'",
             "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ReportRecipientPolicy'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReportScheduleServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ReportScheduleService'"
         ]
     ],
     [

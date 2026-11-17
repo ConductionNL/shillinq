@@ -119,7 +119,31 @@
         },
         {
             "appVersion": "0.5.7-unstable.20261117010000",
-            "versionsSha256": "eb7648c19a824f3ac5020832db836993d77e0ff95ac6a11f3e56af6995b4f589"
+            "versionsSha256": "941921db8f3c6b77597da6ce89ec6d5bcf0ef2fcfce62c400d1f87e44e567af7"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117030000",
+            "versionsSha256": "5eb8591cc159a1fcde7f8006e2a06faf90204e14f9319a988832ac204796a337"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117064000",
+            "versionsSha256": "78fa2cada42887f1bbdcd505d0e0ab7c1b5d8cd07a3010ee5d8d3b37c0aaa7b8"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117120000",
+            "versionsSha256": "be4ae3fa44f515a9d3d8253a6bea2e9a588e4f483ff7332ba192adaa0f4dee88"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117130000",
+            "versionsSha256": "4a6f87b001bcb21362bf934d0f90539f1814c9bc670bcee2c97e251069517509"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117140000",
+            "versionsSha256": "9e5dd0ad0834ecf3cf75d29a176cfd50e0bc9d9f52e28568e4091d6db57cb4fc"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117200000",
+            "versionsSha256": "fe008c9e8f258ef82e1bb723ec0b5186cd5a0dfc2ebb33f4bfda5ea0954e8c88"
         }
     ],
     "versions": {
@@ -131,7 +155,7 @@
         "schema:ARInvoice": "0.19.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
-        "schema:Account": "0.2.0",
+        "schema:Account": "0.4.0",
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
@@ -220,8 +244,9 @@
         "schema:CashflowRecurring": "0.1.0",
         "schema:CashflowScenario": "0.1.0",
         "schema:CashflowWeek": "0.1.0",
-        "schema:CbcrJurisdictionSummary": "0.1.0",
-        "schema:CbcrReturn": "0.1.0",
+        "schema:CbcrEntityFigures": "0.1.0",
+        "schema:CbcrJurisdictionSummary": "0.2.0",
+        "schema:CbcrReturn": "0.2.0",
         "schema:CcmAuditCommitteeReport": "0.1.0",
         "schema:CcmBaseline": "0.1.0",
         "schema:CcmFinding": "0.1.0",
@@ -335,19 +360,22 @@
         "schema:FxRevaluationPosting": "0.1.0",
         "schema:GLLine": "0.2.0",
         "schema:GLTransaction": "0.3.0",
+        "schema:GRAllocationRun": "0.1.0",
         "schema:GRDeelnemer": "0.1.0",
         "schema:GRVerdeelsleutel": "0.1.0",
         "schema:GarantievoorzieningDetail": "0.1.0",
         "schema:GeneratedReport": "0.1.1",
         "schema:GhgInventory": "0.1.0",
-        "schema:GlobeInformationReturn": "0.1.0",
+        "schema:GlobeInformationReturn": "0.2.0",
         "schema:GoodsReceipt": "0.1.0",
         "schema:GoodsReceiptLine": "0.1.0",
         "schema:GoodsReceiptNote": "0.1.0",
         "schema:Goodwill": "0.1.1",
         "schema:Grant": "0.1.0",
         "schema:GroupEntity": "0.1.1",
-        "schema:GroupEntityRegistry": "0.1.0",
+        "schema:GroupEntityRegistry": "0.2.0",
+        "schema:GroupScopeAssessment": "0.1.0",
+        "schema:HelpArticle": "0.1.0",
         "schema:HerstructureringsvoorzieningDetail": "0.1.0",
         "schema:IB47Record": "0.1.0",
         "schema:IBAangifte": "0.1.0",
@@ -466,10 +494,11 @@
         "schema:PassThroughMarkupRule": "0.1.0",
         "schema:Payee": "0.2.0",
         "schema:Payment": "0.1.0",
+        "schema:PaymentDevice": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
-        "schema:PaymentRequest": "0.11.0",
-        "schema:PaymentRun": "0.3.0",
+        "schema:PaymentRequest": "0.11.1",
+        "schema:PaymentRun": "0.4.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",
         "schema:PensionAssetDetail": "0.1.0",
@@ -482,7 +511,7 @@
         "schema:PerformanceObligation": "0.1.0",
         "schema:PeriodStatus": "0.1.0",
         "schema:PeriodicitySwitch": "0.1.0",
-        "schema:Pillar2JurisdictionComputation": "0.1.0",
+        "schema:Pillar2JurisdictionComputation": "0.2.0",
         "schema:Pillar2SafeHarbour": "0.1.0",
         "schema:PostingRestriction": "0.1.0",
         "schema:PreNotification": "0.1.0",
@@ -490,9 +519,9 @@
         "schema:PricingTier": "0.1.0",
         "schema:Programma": "0.1.0",
         "schema:Programmabegroting": "0.1.0",
-        "schema:ProjectAssignment": "0.1.0",
+        "schema:ProjectAssignment": "0.2.0",
         "schema:ProjectBudget": "0.1.0",
-        "schema:ProviderPayout": "0.1.1",
+        "schema:ProviderPayout": "0.2.0",
         "schema:ProvincialeFondsPosting": "0.1.0",
         "schema:Provision": "0.1.0",
         "schema:ProvisionDisclosureTabel": "0.1.0",
@@ -500,7 +529,7 @@
         "schema:PublicSectorStatement": "0.1.0",
         "schema:PurchaseOrder": "0.1.0",
         "schema:PurchaseOrderLine": "0.1.0",
-        "schema:QdmttReturn": "0.1.0",
+        "schema:QdmttReturn": "0.2.0",
         "schema:QualifyingAsset": "0.1.0",
         "schema:QuartaalrapportageFido": "0.2.0",
         "schema:QuarterlyTaxStatement": "0.1.0",
@@ -519,7 +548,7 @@
         "schema:Rechtmatigheidsparagraaf": "0.2.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
-        "schema:ReconciliationMatch": "0.2.0",
+        "schema:ReconciliationMatch": "0.2.1",
         "schema:ReconciliationReport": "0.1.0",
         "schema:RecurringInvoiceProfile": "0.3.0",
         "schema:ReimbursementPolicy": "0.1.0",

@@ -382,14 +382,10 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	/**
 	 * Not modelled.
 	 *
-	 * @param string $uuid The object UUID.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param ObjectDeletion $deletion The uuid, the register and schema, the acting user and whether to delete permanently.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
 	 * @param bool $_retentionSweep Run as part of a retention sweep.
-	 * @param ?IUser $currentUser Explicit acting user.
-	 * @param bool $permanent Delete permanently.
 	 *
 	 * @return bool
 	 */

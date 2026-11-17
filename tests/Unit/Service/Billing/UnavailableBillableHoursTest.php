@@ -44,6 +44,18 @@ final class UnavailableBillableHoursTest extends TestCase {
 		);
 	}//end testTheHoursAreUnavailableWithTheReason()
 
+	/**
+	 * The project's hours, billed or not, are unavailable too (sales-billable-rate-per-hour D5).
+	 *
+	 * @return void
+	 */
+	public function testTheProjectsHoursAreUnavailableWithTheReason(): void {
+		$this->assertSame(
+			['available' => false, 'reason' => 'no-hours-source', 'hours' => []],
+			(new UnavailableBillableHours())->forProject(projectId: 'p-1', from: '2026-10-01', to: '2026-10-31')
+		);
+	}//end testTheProjectsHoursAreUnavailableWithTheReason()
+
 	public function testTheAppBindsItAsTheHoursSourceUntilHumaniqIsBound(): void {
 		$registrar = (string)file_get_contents(__DIR__ . '/../../../../lib/Service/ServiceRegistrar.php');
 

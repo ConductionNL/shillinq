@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261117010000</version>
+    <version>0.5.7-unstable.20261117200000</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -99,6 +99,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\ScheduledReportJob</job>
         <!-- assets-method-change-and-reserve REQ-AMCR-001/005: daily, posts last month's depreciation and releases expired reinvestment reserves. -->
         <job>OCA\Shillinq\BackgroundJob\DepreciationRunJob</job>
+        <!-- public-sector-task-field-allocation REQ-WMO-014: daily cross-subsidy check over the active commercial activities, one AlertLog per new signal. -->
+        <job>OCA\Shillinq\BackgroundJob\CrossSubsidyScanJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
         <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
              monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/
@@ -363,6 +365,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  After InitializeSettings, which seeds the tariffs. Logs the lines
                  it cannot resolve. Idempotent, fail-soft. -->
             <step>OCA\Shillinq\Repair\StampVatReturnBoxes</step>
+            <!-- tax-cbcr-and-pillar2-returns task 1.2 (REQ-CBC-002): maps the old
+                 mainBusinessActivity onto bizActivities and fills tin from the
+                 administration's RSIN, only where still empty. After
+                 InitializeSettings, which imports the fields. Idempotent;
+                 a fresh install has no older group entities, so post-migration only. -->
+            <step>OCA\Shillinq\Repair\BackfillGroupEntityCbcFields</step>
+            <!-- platform-help-agent task 2.2 (REQ-PHA-001): upserts one HelpArticle
+                 per user-guide page; after InitializeSettings, which imports the
+                 HelpArticle schema. Unchanged pages are skipped by hash. -->
+            <step>OCA\Shillinq\Repair\SeedHelpArticles</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
@@ -379,12 +391,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
              /api/v2/calendars — on a clean install, for the admin, on every
              request. Measured in run 30903201789 (job 91972751340).
 
-             Only InitializeSettings belongs here. Every other step above is a
+             Only InitializeSettings and the help-article seed belong here. Every other step above is a
              migration or backfill over data that a fresh install does not yet
              have; they stay upgrade-only so a first install does not pay for
              folds and rematerialisations that can have nothing to fold. -->
         <install>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
+            <!-- platform-help-agent task 2.2: a fresh install needs the help
+                 articles too, or the assistant has nothing to ground on. -->
+            <step>OCA\Shillinq\Repair\SeedHelpArticles</step>
         </install>
     </repair-steps>
 
@@ -409,6 +424,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              carry subjectApp / subjectId before that overlay is retired
              (hours-to-humaniq task 2.1). Read-only. -->
         <command>OCA\Shillinq\Command\HoursSubjectAuditCommand</command>
+        <!-- List the invoices paid through a payment provider whose capture has
+             no booking yet, and on request book each at its capture date
+             (receivables-provider-payouts task 2.3). Read-only by default. -->
+        <command>OCA\Shillinq\Command\BookCapturesCommand</command>
     </commands>
 
     <settings>

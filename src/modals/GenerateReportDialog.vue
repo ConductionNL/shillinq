@@ -491,25 +491,27 @@ export default {
 			)
 		},
 
+		/**
+		 * Save the schedule through the report-schedules endpoint and show its first run date.
+		 *
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 */
 		async onSchedule() {
 			if (!this.canSchedule) {
 				return
 			}
 			await this.submitWith(
 				async () => {
-					const payload = this.scheduleRequest()
-					const response = await axios.post(
-						generateUrl(
-							'/apps/openregister/api/objects/shillinq/ReportSchedule',
-						),
-						payload,
+					const { data } = await axios.post(
+						generateUrl('/apps/shillinq/api/report-schedules'),
+						this.scheduleRequest(),
 					)
 					this.scheduledMessage = this.t(
 						'shillinq',
 						'Scheduled. The first run is on {date}.',
-						{ date: payload.nextRunAt.slice(0, 10) },
+						{ date: String(data?.nextRunAt ?? '').slice(0, 10) },
 					)
-					this.$emit('scheduled', response.data || payload)
+					this.$emit('scheduled', data)
 				},
 				() => this.t('shillinq', 'The schedule could not be saved'),
 			)
@@ -554,20 +556,18 @@ export default {
 		},
 
 		/**
-		 * The ReportSchedule to save, with its first run from now.
+		 * The schedule fields to send; the server sets the owner, the status
+		 * and the first run.
 		 *
 		 * @return {object}
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 		 */
 		scheduleRequest() {
-			return schedulePayload(
-				this.report,
-				{
-					...this.schedule,
-					administrationId: this.form.administrationId,
-					format: this.form.format,
-				},
-				new Date(),
-			)
+			return schedulePayload(this.report, {
+				...this.schedule,
+				administrationId: this.form.administrationId,
+				format: this.form.format,
+			})
 		},
 
 		/**
