@@ -28,7 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\PaymentBlockCheckerInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -37,7 +38,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/payment-control-guards/spec.md
  */
-class PaymentBlockChecker {
+class PaymentBlockChecker implements PaymentBlockCheckerInterface {
 
 	public const REASON_INVOICE_BLOCKED = 'invoice-blocked';
 	public const REASON_INVOICE_DISPUTED = 'invoice-disputed';
@@ -48,11 +49,11 @@ class PaymentBlockChecker {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 	) {
 
 	}//end __construct()

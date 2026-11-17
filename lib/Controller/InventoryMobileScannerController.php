@@ -48,10 +48,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\InventoryMobileScannerService;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -95,9 +95,9 @@ class InventoryMobileScannerController extends Controller {
 	 * @param IRequest $request The HTTP request.
 	 * @param IUserSession $userSession Authenticated user session.
 	 * @param IGroupManager $groupManager Group membership lookups.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param AdministrationContextService $admin Per-user administration scope.
-	 * @param InventoryMobileScannerService $scanner Sync core.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param AdministrationContextServiceInterface $admin Per-user administration scope.
+	 * @param InventoryMobileScannerServiceInterface $scanner Sync core.
 	 * @param ContainerInterface $container DI container (locations lookup).
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
@@ -105,9 +105,9 @@ class InventoryMobileScannerController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly RegisterLocation $registerLocation,
-		private readonly AdministrationContextService $admin,
-		private readonly InventoryMobileScannerService $scanner,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly AdministrationContextServiceInterface $admin,
+		private readonly InventoryMobileScannerServiceInterface $scanner,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {

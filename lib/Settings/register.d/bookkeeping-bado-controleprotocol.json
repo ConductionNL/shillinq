@@ -516,6 +516,14 @@
             "description": "UUID/hash for deterministic re-extraction (AFM-toetsing).",
             "title": "Reproducible Seed"
           },
+          "sampledLineIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ids of the posted ledger lines the draw selected, in draw order. Drawing again with the same seed over the same population returns the same ids (REQ-011).",
+            "title": "Sampled Lines"
+          },
           "extractedAt": {
             "type": "string",
             "format": "date-time",

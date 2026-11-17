@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * @covers \OCA\Shillinq\Guard\CashflowRecurringGuard
@@ -96,7 +97,9 @@ final class CashflowRecurringGuardFailClosedTest extends TestCase {
 		$contract = $this->createMock(ObjectEntityInterface::class);
 		$contract->method('jsonSerialize')->willReturn('contract-9');
 		$this->objects->method('setRegister')->willReturnSelf();
-		$this->objects->expects(self::once())->method('find')->with('contract-9')->willReturn($contract);
+		$this->objects->expects(self::once())->method('find')->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'contract-9',
+			]))->willReturn($contract);
 
 		self::assertTrue($this->guard()->validateOnSave($this->linked()));
 	}

@@ -27,8 +27,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\BcfClaimService;
+use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
 
 /**
  * The `compute` transition's executor.
@@ -40,30 +41,27 @@ class ComputeBcfClaimAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param BcfClaimService $claims Computes the compensable VAT of a quarter.
+	 * @param BcfClaimServiceInterface $claims Computes the compensable VAT of a quarter.
 	 */
 	public function __construct(
-		private readonly BcfClaimService $claims,
+		private readonly BcfClaimServiceInterface $claims,
 	) {
 	}//end __construct()
 
 	/**
 	 * Return the claim with its computed total and breakdown.
 	 *
-	 * @param array<string,mixed> $objectData   The claim with the transition applied.
-	 * @param array<string,mixed> $previousData The claim before.
-	 * @param array<string,mixed> $parameters   Declared parameters (none).
-	 * @param string              $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the claim with the transition applied.
 	 *
 	 * @return array<string,mixed> The claim to save.
 	 *
 	 * @throws InvalidArgumentException When the claim names no administration or quarter.
 	 *
 	 * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$administrationId = trim((string)($objectData['administrationId'] ?? ''));
 		$claimQuarter = trim((string)($objectData['claimQuarter'] ?? ''));
 		if ($administrationId === '' || $claimQuarter === '') {

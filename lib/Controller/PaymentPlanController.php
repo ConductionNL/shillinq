@@ -28,13 +28,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
-use OCA\Shillinq\PaymentPlan\PaymentPlanService;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
-use OCA\Shillinq\Service\Bank\ManualMatchService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanBankMatcherInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -56,20 +56,20 @@ class PaymentPlanController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request  The request.
-	 * @param PaymentPlanService           $plans    The plan flow.
-	 * @param PaymentPlanBankMatcher       $matcher  Bank line candidates and booking.
-	 * @param ManualMatchService           $lines    Reads bank lines.
-	 * @param AdministrationContextService $context  Administration access check.
+	 * @param PaymentPlanServiceInterface           $plans    The plan flow.
+	 * @param PaymentPlanBankMatcherInterface       $matcher  Bank line candidates and booking.
+	 * @param ManualMatchServiceInterface           $lines    Reads bank lines.
+	 * @param AdministrationContextServiceInterface $context  Administration access check.
 	 * @param IUserSession                 $session  The signed-in user.
 	 * @param IL10N                        $l10n     Translations for refusals.
 	 * @param LoggerInterface              $logger   Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PaymentPlanService $plans,
-		private readonly PaymentPlanBankMatcher $matcher,
-		private readonly ManualMatchService $lines,
-		private readonly AdministrationContextService $context,
+		private readonly PaymentPlanServiceInterface $plans,
+		private readonly PaymentPlanBankMatcherInterface $matcher,
+		private readonly ManualMatchServiceInterface $lines,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $session,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

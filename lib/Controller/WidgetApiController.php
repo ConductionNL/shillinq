@@ -31,17 +31,19 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SlotService;
-use OCA\Shillinq\Service\WidgetAuthService;
-use OCA\Shillinq\Service\WidgetService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SlotServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
+use OCA\Shillinq\Service\WidgetCorsPolicy;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -61,6 +63,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.ShortVariable)
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; variable renames deferred pending a dedicated pass.
+ *
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class WidgetApiController extends Controller {
 	/**
@@ -80,6 +84,13 @@ class WidgetApiController extends Controller {
 	];
 
 	/**
+	 * How long a browser may cache a preflight answer, in seconds.
+	 *
+	 * @var int
+	 */
+	private const PREFLIGHT_MAX_AGE = 600;
+
+	/**
 	 * The administration of the widget key guard() accepted; every read and
 	 * write of the request is scoped to it.
 	 *
@@ -91,21 +102,23 @@ class WidgetApiController extends Controller {
 	 * Construct the controller with DI dependencies.
 	 *
 	 * @param IRequest $request The HTTP request.
-	 * @param WidgetAuthService $auth API key + rate-limit gateway.
-	 * @param WidgetService $widgetService The single widget booking write path.
-	 * @param SlotService $slots Slot availability computation.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param WidgetAuthServiceInterface $auth API key + rate-limit gateway.
+	 * @param WidgetServiceInterface $widgetService The single widget booking write path.
+	 * @param SlotServiceInterface $slots Slot availability computation.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param WidgetCorsPolicy|null $corsPolicy The browser origins a widget key allows (REQ-WSW-011); without it no CORS headers are sent.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WidgetAuthService $auth,
-		private readonly WidgetService $widgetService,
-		private readonly SlotService $slots,
-		private readonly RegisterLocation $registerLocation,
+		private readonly WidgetAuthServiceInterface $auth,
+		private readonly WidgetServiceInterface $widgetService,
+		private readonly SlotServiceInterface $slots,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly ?WidgetCorsPolicy $corsPolicy = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -129,6 +142,16 @@ class WidgetApiController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function services(): JSONResponse {
+		return $this->withCors(response: $this->servicesAnswer());
+	}//end services()
+
+	/**
+	 * The answer of services(), before the CORS headers.
+	 *
+	 *
+	 * @return JSONResponse
+	 */
+	private function servicesAnswer(): JSONResponse {
 		$authResult = $this->guard();
 		if ($authResult instanceof JSONResponse) {
 			return $authResult;
@@ -138,62 +161,95 @@ class WidgetApiController extends Controller {
 			return $this->serverError(message: 'Service catalogue unavailable.');
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->registerLocation->getRegisterSlug();
-			$records = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Service')
-				->findAll(
-					[
-						'filters' => ['status' => 'active', 'administrationId' => $this->keyAdministrationId],
-						'limit' => 200,
-					]
-				);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq widget: services lookup failed',
-				['exception' => $e->getMessage()]
-			);
+		$records = $this->activeServiceRecords();
+		if ($records === null) {
 			return $this->serverError(message: 'Service catalogue unavailable.');
 		}
 
+		return new JSONResponse(data: ['services' => $this->publicServices(records: $records)]);
+	}//end servicesAnswer()
+
+	/**
+	 * The active Service records of the key's administration, or null when the lookup fails.
+	 *
+	 * @return array<int, mixed>|null
+	 */
+	private function activeServiceRecords(): array|null {
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$registerSlug  = $this->registerLocation->getRegisterSlug();
+			return $objectService
+				->setRegister($registerSlug)
+				->setSchema('Service')
+				->findAll(['filters' => ['status' => 'active', 'administrationId' => $this->keyAdministrationId], 'limit' => 200]);
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq widget: services lookup failed', ['exception' => $e->getMessage()]);
+			return null;
+		}
+	}//end activeServiceRecords()
+
+	/**
+	 * The public projection of the listable services.
+	 *
+	 * @param array<int, mixed> $records The Service records.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function publicServices(array $records): array {
 		$services = [];
 		foreach ($records as $record) {
 			$row = $this->toArray(object: $record);
-
-			// This endpoint is reachable by any visitor loading an embedded
-			// widget, so only services explicitly flagged isPublic may be
-			// listed. Filtered here rather than in the findAll() query so an
-			// absent or non-boolean value DENIES: a query filter that silently
-			// matched nothing would look identical to "no private services".
-			if ((bool)($row['isPublic'] ?? false) !== true) {
-				continue;
+			if ($this->isListable(row: $row) === true) {
+				$services[] = self::publicService(row: $row);
 			}
+		}
 
-			if ((string)($row['administrationId'] ?? '') !== $this->keyAdministrationId) {
-				continue;
-			}
+		return $services;
+	}//end publicServices()
 
-			$service = [
-				'serviceId' => (string)($row['serviceId'] ?? ''),
-				'name' => (string)($row['name'] ?? ''),
-				'duration' => (int)($row['duration'] ?? 0),
-				'currency' => (string)($row['currency'] ?? 'EUR'),
-				'description' => (string)($row['description'] ?? ''),
-			];
+	/**
+	 * This endpoint is reachable by any visitor loading an embedded
+	 * widget, so only services explicitly flagged isPublic may be
+	 * listed. Filtered here rather than in the findAll() query so an
+	 * absent or non-boolean value DENIES: a query filter that silently
+	 * matched nothing would look identical to "no private services".
+	 *
+	 * @param array<string, mixed> $row The Service row.
+	 *
+	 * @return bool
+	 */
+	private function isListable(array $row): bool {
+		if ((bool)($row['isPublic'] ?? false) !== true) {
+			return false;
+		}
 
-			// The priceVisible flag is a per-service choice; publishing the
-			// price regardless of it made the setting inert.
-			if ((bool)($row['priceVisible'] ?? false) === true) {
-				$service['price'] = ($row['basePrice'] ?? $row['price'] ?? null);
-			}
+		return (string)($row['administrationId'] ?? '') === $this->keyAdministrationId;
+	}//end isListable()
 
-			$services[] = $service;
-		}//end foreach
+	/**
+	 * A service's public fields; the price only when the service makes it visible.
+	 *
+	 * @param array<string, mixed> $row The Service row.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function publicService(array $row): array {
+		$service = [
+			'serviceId' => (string)($row['serviceId'] ?? ''),
+			'name' => (string)($row['name'] ?? ''),
+			'duration' => (int)($row['duration'] ?? 0),
+			'currency' => (string)($row['currency'] ?? 'EUR'),
+			'description' => (string)($row['description'] ?? ''),
+		];
 
-		return new JSONResponse(data: ['services' => $services]);
-	}//end services()
+		// The priceVisible flag is a per-service choice; publishing the
+		// price regardless of it made the setting inert.
+		if ((bool)($row['priceVisible'] ?? false) === true) {
+			$service['price'] = ($row['basePrice'] ?? $row['price'] ?? null);
+		}
+
+		return $service;
+	}//end publicService()
 
 	/**
 	 * GET /api/widget/slots — available slots for a service + resource + date.
@@ -213,15 +269,47 @@ class WidgetApiController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function slots(string $serviceId = '', string $resourceId = '', string $date = ''): JSONResponse {
+		return $this->withCors(response: $this->slotsAnswer(serviceId: $serviceId, resourceId: $resourceId, date: $date));
+	}//end slots()
+
+	/**
+	 * The answer of slots(), before the CORS headers.
+	 *
+	 * @param string $serviceId  The service.
+	 * @param string $resourceId The resource.
+	 * @param string $date       The date.
+	 *
+	 * @return JSONResponse
+	 */
+	private function slotsAnswer(string $serviceId = '', string $resourceId = '', string $date = ''): JSONResponse {
 		$authResult = $this->guard();
 		if ($authResult instanceof JSONResponse) {
 			return $authResult;
 		}
 
-		$serviceId = trim($serviceId);
+		$serviceId  = trim($serviceId);
 		$resourceId = trim($resourceId);
-		$date = trim($date);
+		$date       = trim($date);
 
+		$refusal = $this->refuseSlotQuery(serviceId: $serviceId, resourceId: $resourceId, date: $date);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$result = $this->slots->getAvailableSlots(serviceId: $serviceId, resourceId: $resourceId, date: $date);
+		return $this->slotsResponse(date: $date, result: $result);
+	}//end slotsAnswer()
+
+	/**
+	 * Refuse a slot query that is incomplete, malformed, or for a service that is not publicly bookable.
+	 *
+	 * @param string $serviceId  Service identifier.
+	 * @param string $resourceId Resource identifier.
+	 * @param string $date       Calendar date YYYY-MM-DD UTC.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the query may proceed.
+	 */
+	private function refuseSlotQuery(string $serviceId, string $resourceId, string $date): JSONResponse|null {
 		if ($serviceId === '' || $resourceId === '' || $date === '') {
 			return $this->badRequest(message: 'serviceId, resourceId and date are required.');
 		}
@@ -230,14 +318,24 @@ class WidgetApiController extends Controller {
 			return $this->badRequest(message: 'date must be ISO YYYY-MM-DD.');
 		}
 
-		// The #491 gate, third door. services() filters the catalogue to
-		// `isPublic` and appointments() refuses to book a service that is not,
-		// but availability was readable for ANY serviceId of this tenant.
-		// guard() only proves the caller holds the widget API key — which is
-		// shipped in a PUBLIC widget, so everyone who can see the page has it.
-		//
-		// 404 rather than 403, matching WidgetService: a 403 would confirm the
-		// service exists, which is the fact being withheld.
+		return $this->refuseUnbookableService(serviceId: $serviceId);
+	}//end refuseSlotQuery()
+
+	/**
+	 * The #491 gate, third door. services() filters the catalogue to
+	 * `isPublic` and appointments() refuses to book a service that is not,
+	 * but availability was readable for ANY serviceId of this tenant.
+	 * guard() only proves the caller holds the widget API key — which is
+	 * shipped in a PUBLIC widget, so everyone who can see the page has it.
+	 *
+	 * 404 rather than 403, matching WidgetService: a 403 would confirm the
+	 * service exists, which is the fact being withheld.
+	 *
+	 * @param string $serviceId Service identifier.
+	 *
+	 * @return JSONResponse|null The 404, or null when the service is publicly bookable.
+	 */
+	private function refuseUnbookableService(string $serviceId): JSONResponse|null {
 		if ($this->widgetService->isPubliclyBookable(serviceId: $serviceId, administrationId: $this->keyAdministrationId) === false) {
 			return new JSONResponse(
 				data: ['error' => 'service_not_found'],
@@ -245,12 +343,18 @@ class WidgetApiController extends Controller {
 			);
 		}
 
-		$result = $this->slots->getAvailableSlots(
-			serviceId: $serviceId,
-			resourceId: $resourceId,
-			date: $date,
-		);
+		return null;
+	}//end refuseUnbookableService()
 
+	/**
+	 * The slot list, or 304 Not Modified when the client's ETag is current (REQ-WSW-002).
+	 *
+	 * @param string               $date   Calendar date YYYY-MM-DD UTC.
+	 * @param array<string, mixed> $result The slot service's result.
+	 *
+	 * @return JSONResponse
+	 */
+	private function slotsResponse(string $date, array $result): JSONResponse {
 		$clientEtag = (string)$this->request->getHeader('If-None-Match');
 		if ($clientEtag !== '' && $clientEtag === $result['etag']) {
 			$notModified = new JSONResponse(data: [], statusCode: Http::STATUS_NOT_MODIFIED);
@@ -258,18 +362,12 @@ class WidgetApiController extends Controller {
 			return $notModified;
 		}
 
-		$response = new JSONResponse(
-			data: [
-				'date' => $date,
-				'slots' => $result['slots'],
-				'cached' => (bool)$result['cached'],
-			]
-		);
+		$response = new JSONResponse(data: ['date' => $date, 'slots' => $result['slots'], 'cached' => (bool)$result['cached']]);
 		$response->addHeader('ETag', $result['etag']);
-		$response->addHeader('Cache-Control', 'public, max-age=' . SlotService::SLOT_CACHE_TTL_SECONDS);
+		$response->addHeader('Cache-Control', 'public, max-age=' . SlotServiceInterface::SLOT_CACHE_TTL_SECONDS);
 
 		return $response;
-	}//end slots()
+	}//end slotsResponse()
 
 	/**
 	 * POST /api/widget/appointments — create an appointment from the widget.
@@ -320,6 +418,17 @@ class WidgetApiController extends Controller {
 			'notes' => ($notes ?? ''),
 		];
 
+		return $this->withCors(response: $this->appointmentsAnswer(payload: $payload));
+	}//end appointments()
+
+	/**
+	 * The answer of appointments(), before the CORS headers.
+	 *
+	 * @param array<string,string> $payload The booking request as the widget sent it.
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentsAnswer(array $payload): JSONResponse {
 		$refusal = $this->refuseAppointment(payload: $payload);
 		if ($refusal !== null) {
 			return $refusal;
@@ -345,7 +454,81 @@ class WidgetApiController extends Controller {
 
 		return $this->appointmentResponse(result: $result);
 
-	}//end appointments()
+	}//end appointmentsAnswer()
+
+	/**
+	 * OPTIONS on the widget API — the CORS preflight of a browser on another website (REQ-WSW-011).
+	 *
+	 * Answers 204 with the CORS headers when the widget key of `businessId`
+	 * allows the request's Origin, else 403 without them, so the browser
+	 * refuses the cross-origin call. The preflight carries no API key; it only
+	 * reveals whether that origin is registered for that business.
+	 *
+	 * @return Response
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md#requirement-the-widget-books-from-another-website-req-wsw-011
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function preflight(): Response {
+		$origin = $this->allowedOrigin();
+		if ($origin === null) {
+			return new Response(status: Http::STATUS_FORBIDDEN);
+		}
+
+		$response = new Response(status: Http::STATUS_NO_CONTENT);
+		$response->addHeader('Access-Control-Allow-Origin', $origin);
+		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+		$response->addHeader('Access-Control-Max-Age', (string)self::PREFLIGHT_MAX_AGE);
+		$response->addHeader('Vary', 'Origin');
+
+		return $response;
+	}//end preflight()
+
+	/**
+	 * Add the CORS headers when the request's Origin is allowed for its business; otherwise none.
+	 *
+	 * @param JSONResponse $response The answer.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 */
+	private function withCors(JSONResponse $response): JSONResponse {
+		$origin = $this->allowedOrigin();
+		if ($origin !== null) {
+			$response->addHeader('Access-Control-Allow-Origin', $origin);
+			$response->addHeader('Access-Control-Expose-Headers', 'Retry-After');
+			$response->addHeader('Vary', 'Origin');
+		}
+
+		return $response;
+	}//end withCors()
+
+	/**
+	 * The request's Origin when the widget key of its business allows it, else null.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 */
+	private function allowedOrigin(): ?string {
+		if ($this->corsPolicy === null) {
+			return null;
+		}
+
+		$origin = (string)$this->request->getHeader('Origin');
+		if ($origin === '') {
+			return null;
+		}
+
+		return $this->corsPolicy->allowedOrigin(
+			businessId: (string)$this->request->getParam('businessId', ''),
+			origin: $origin
+		);
+	}//end allowedOrigin()
 
 	/**
 	 * Authenticate + rate-limit the current request.
@@ -358,16 +541,39 @@ class WidgetApiController extends Controller {
 	 */
 	private function guard(): ?JSONResponse {
 		$businessId = (string)$this->request->getParam('businessId', '');
-		$authHeader = (string)$this->request->getHeader('Authorization');
-		$bearer = '';
-		if (str_starts_with(strtolower($authHeader), 'bearer ') === true) {
-			$bearer = trim(substr($authHeader, 7));
-		}
+		$bearer     = $this->bearerToken();
 
 		if ($businessId === '' || $bearer === '') {
 			return $this->unauthorised();
 		}
 
+		return $this->authorise(businessId: $businessId, bearer: $bearer);
+	}//end guard()
+
+	/**
+	 * The bearer token from the Authorization header, or '' when there is none.
+	 *
+	 * @return string
+	 */
+	private function bearerToken(): string {
+		$authHeader = (string)$this->request->getHeader('Authorization');
+		$bearer     = '';
+		if (str_starts_with(strtolower($authHeader), 'bearer ') === true) {
+			$bearer = trim(substr($authHeader, 7));
+		}
+
+		return $bearer;
+	}//end bearerToken()
+
+	/**
+	 * Validate the API key, scope it to its administration and consume its rate limit.
+	 *
+	 * @param string $businessId The widget's business id.
+	 * @param string $bearer     The API key.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the request is allowed.
+	 */
+	private function authorise(string $businessId, string $bearer): JSONResponse|null {
 		$auth = $this->auth->validateApiKey(businessId: $businessId, apiKey: $bearer);
 		if (($auth['valid'] ?? false) !== true) {
 			return $this->unauthorised();
@@ -380,26 +586,35 @@ class WidgetApiController extends Controller {
 			return $this->unauthorised();
 		}
 
-		$rateLimit = ((int)($key['rateLimit'] ?? WidgetAuthService::DEFAULT_RATE_LIMIT));
+		return $this->consumeRateLimit(businessId: $businessId, key: $key);
+	}//end authorise()
+
+	/**
+	 * Consume one request of the key's rate limit; 429 with Retry-After when it is spent.
+	 *
+	 * @param string $businessId The widget's business id.
+	 * @param mixed  $key        The validated key record.
+	 *
+	 * @return JSONResponse|null The 429, or null when the request is allowed.
+	 */
+	private function consumeRateLimit(string $businessId, mixed $key): JSONResponse|null {
+		$rateLimit = ((int)($key['rateLimit'] ?? WidgetAuthServiceInterface::DEFAULT_RATE_LIMIT));
 		if ($rateLimit <= 0) {
-			$rateLimit = WidgetAuthService::DEFAULT_RATE_LIMIT;
+			$rateLimit = WidgetAuthServiceInterface::DEFAULT_RATE_LIMIT;
 		}
 
 		$rl = $this->auth->consumeRateLimit(businessId: $businessId, limit: $rateLimit);
 		if (($rl['allowed'] ?? false) !== true) {
 			$response = new JSONResponse(
-				data: [
-					'error' => 'rate-limited',
-					'message' => 'Too many requests. Please retry shortly.',
-				],
+				data: ['error' => 'rate-limited', 'message' => 'Too many requests. Please retry shortly.'],
 				statusCode: Http::STATUS_TOO_MANY_REQUESTS,
 			);
-			$response->addHeader('Retry-After', (string)($rl['retryAfter'] ?? WidgetAuthService::RATE_LIMIT_WINDOW_SECONDS));
+			$response->addHeader('Retry-After', (string)($rl['retryAfter'] ?? WidgetAuthServiceInterface::RATE_LIMIT_WINDOW_SECONDS));
 			return $response;
 		}
 
 		return null;
-	}//end guard()
+	}//end consumeRateLimit()
 
 	/**
 	 * Refuse a booking request before anything is written.

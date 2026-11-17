@@ -32,10 +32,11 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use RuntimeException;
 
@@ -57,15 +58,15 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
-	 * @param SupplierInvoiceChecks  $checks        Payee lookup and the IBAN rule.
-	 * @param ObjectTransitionRunner $transitions   Runs the AP transaction's declared transitions.
+	 * @param RegisterLocationInterface        $settings Where the register lives (slug + OpenRegister availability).
+	 * @param SupplierInvoiceChecksInterface  $checks        Payee lookup and the IBAN rule.
+	 * @param ObjectTransitionRunnerInterface $transitions   Runs the AP transaction's declared transitions.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $settings,
-		private readonly SupplierInvoiceChecks $checks,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly RegisterLocationInterface $settings,
+		private readonly SupplierInvoiceChecksInterface $checks,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 	) {
 
 	}//end __construct()
@@ -73,18 +74,16 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	/**
 	 * Hand the invoice to accounts payable, once.
 	 *
-	 * @param array<string, mixed> $objectData   The SupplierInvoice as the transition leaves it.
-	 * @param array<string, mixed> $previousData The SupplierInvoice before.
-	 * @param array<string, mixed> $parameters   Declared parameters (none).
-	 * @param string               $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the SupplierInvoice as the transition
+	 *                                        leaves it.
 	 *
 	 * @return array<string, mixed> The invoice with apTransactionId set.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.3
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		if ((string)($objectData['apTransactionId'] ?? '') !== '') {
 			return $objectData;
 		}
@@ -121,25 +120,7 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.3
 	 */
 	public function apTransaction(array $invoice, array $payee): array {
-		$default = trim((string)($payee['defaultExpenseAccountNumber'] ?? ''));
-		$lines = [];
-		foreach ((array)($invoice['lines'] ?? []) as $line) {
-			$account = trim((string)($line['accountNumber'] ?? ''));
-			if ($account === '') {
-				$account = $default;
-			}
-
-			$lines[] = [
-				'description' => (string)($line['description'] ?? ($invoice['invoiceNumber'] ?? '')),
-				'accountNumber' => $account,
-				'amount' => self::euros(cents: ($line['lineExtension'] ?? 0)),
-			];
-		}
-
-		$net = self::euros(cents: ($invoice['totalExclVat'] ?? 0));
-		if ($lines === []) {
-			$lines[] = ['description' => (string)($invoice['invoiceNumber'] ?? ''), 'accountNumber' => $default, 'amount' => $net];
-		}
+		$lines = self::apLines(invoice: $invoice, payee: $payee);
 
 		$invoiceDate = (string)($invoice['invoiceDate'] ?? '');
 		$transaction = [
@@ -155,19 +136,78 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 			'administrationId' => (string)($invoice['administrationId'] ?? ''),
 		];
 
+		return self::withSourceAndPaymentBlock(transaction: $transaction, invoice: $invoice);
+
+	}//end apTransaction()
+
+	/**
+	 * The transaction lines: one per invoice line on its account (else the payee's default), or one for the net.
+	 *
+	 * @param array<string, mixed> $invoice The supplier invoice.
+	 * @param array<string, mixed> $payee   The payee.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private static function apLines(array $invoice, array $payee): array {
+		$default = trim((string)($payee['defaultExpenseAccountNumber'] ?? ''));
+		$lines   = [];
+		foreach ((array)($invoice['lines'] ?? []) as $line) {
+			$lines[] = [
+				'description' => (string)($line['description'] ?? ($invoice['invoiceNumber'] ?? '')),
+				'accountNumber' => self::lineAccount(line: $line, default: $default),
+				'amount' => self::euros(cents: ($line['lineExtension'] ?? 0)),
+			];
+		}
+
+		$net = self::euros(cents: ($invoice['totalExclVat'] ?? 0));
+		if ($lines === []) {
+			$lines[] = ['description' => (string)($invoice['invoiceNumber'] ?? ''), 'accountNumber' => $default, 'amount' => $net];
+		}
+
+		return $lines;
+
+	}//end apLines()
+
+	/**
+	 * The line's own account, else the payee's default.
+	 *
+	 * @param mixed  $line    The invoice line.
+	 * @param string $default The payee's default expense account.
+	 *
+	 * @return string
+	 */
+	private static function lineAccount(mixed $line, string $default): string {
+		$account = trim((string)($line['accountNumber'] ?? ''));
+		if ($account === '') {
+			$account = $default;
+		}
+
+		return $account;
+
+	}//end lineAccount()
+
+	/**
+	 * Carry the UBL source document, and block payment when the IBAN does not match.
+	 *
+	 * @param array<string, mixed> $transaction The AP transaction.
+	 * @param array<string, mixed> $invoice     The supplier invoice.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function withSourceAndPaymentBlock(array $transaction, array $invoice): array {
 		$source = trim((string)($invoice['ublSourceUri'] ?? ''));
 		if ($source !== '') {
 			$transaction['sourceDocumentUri'] = $source;
 		}
 
 		if (trim((string)($invoice['ibanMismatch'] ?? '')) !== '') {
-			$transaction['paymentBlocked'] = true;
+			$transaction['paymentBlocked']     = true;
 			$transaction['paymentBlockReason'] = self::IBAN_BLOCK_REASON;
 		}
 
 		return $transaction;
 
-	}//end apTransaction()
+	}//end withSourceAndPaymentBlock()
 
 	/**
 	 * The invoice's due date, else its date plus the payee's payment term.

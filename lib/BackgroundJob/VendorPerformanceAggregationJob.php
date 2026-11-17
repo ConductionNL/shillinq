@@ -42,8 +42,8 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\VendorPerformanceAggregation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -103,8 +103,8 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for scheduling and current-time reads.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param VendorPerformanceAggregation $aggregation Aggregation service (server-authoritative scoring).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param VendorPerformanceAggregationInterface $aggregation Aggregation service (server-authoritative scoring).
 	 * @param ContainerInterface $container DI container for OR ObjectService lookup.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 *
@@ -112,8 +112,8 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly RegisterLocation $registerLocation,
-		private readonly VendorPerformanceAggregation $aggregation,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly VendorPerformanceAggregationInterface $aggregation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {

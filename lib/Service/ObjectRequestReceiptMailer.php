@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestReceiptMailerInterface;
 use OCP\IL10N;
 use OCP\L10N\IFactory;
 use OCP\Mail\IMailer;
@@ -43,7 +44,7 @@ use Throwable;
  *
  * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
  */
-class ObjectRequestReceiptMailer {
+class ObjectRequestReceiptMailer implements ObjectRequestReceiptMailerInterface {
 	/**
 	 * Constructor.
 	 *

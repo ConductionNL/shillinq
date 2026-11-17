@@ -33,9 +33,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BcfClaimService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,16 +53,16 @@ class BcfClaimController extends Controller {
 	 * Constructor for the BcfClaimController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param BcfClaimService $bcfClaimService The BCF compensable-VAT computation service.
-	 * @param AdministrationContextService $context Administratie-aware IDOR guard (ADR-005).
+	 * @param BcfClaimServiceInterface $bcfClaimService The BCF compensable-VAT computation service.
+	 * @param AdministrationContextServiceInterface $context Administratie-aware IDOR guard (ADR-005).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BcfClaimService $bcfClaimService,
-		private readonly AdministrationContextService $context,
+		private readonly BcfClaimServiceInterface $bcfClaimService,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

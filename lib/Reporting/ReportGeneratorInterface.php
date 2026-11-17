@@ -59,6 +59,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting;
 
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
+
 /**
  * Contract for a single report type's generator.
  */

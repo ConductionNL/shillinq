@@ -44,10 +44,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\LeaseReassessmentServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Records and computes IFRS 16 lease-reassessment events.
@@ -64,7 +67,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class LeaseReassessmentService {
+class LeaseReassessmentService implements LeaseReassessmentServiceInterface {
 	/**
 	 * Approval-routing threshold (RoU asset delta in cents) above which an event
 	 * is created with status `pending-approval` for decidesk routing.
@@ -548,8 +551,7 @@ class LeaseReassessmentService {
 		try {
 			$saved = $this->objectService()->saveObject(
 				object: $row,
-				register: $this->register(),
-				schema: 'LeaseReassessmentEvent',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'LeaseReassessmentEvent'))
 			);
 			if (is_array($saved) === true) {
 				// Task 8.2: fire decidesk approval webhook for material events.
@@ -800,17 +802,7 @@ class LeaseReassessmentService {
 		$sourceLease = $this->resolveSourceLease(lease: $lease);
 
 		try {
-			$existing = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('LeaseReassessmentEvent')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'sourceLease' => $sourceLease,
-						],
-					]
-				);
+			$existing = $this->leases()->events(sourceLease: $sourceLease, administrationId: $administrationId);
 			if (is_array($existing) === true) {
 				$count = count($existing);
 			} else {
@@ -830,42 +822,17 @@ class LeaseReassessmentService {
 	/**
 	 * Fetch a lease and verify it belongs to the given administration (ADR-005).
 	 *
-	 * Mirrors LeasePaymentScheduleService::fetchLease so behaviour is consistent
-	 * across the lease services.
-	 *
 	 * @param string $leaseContractId The LeaseContract id or slug.
 	 * @param string $administrationId Administration scope.
 	 *
 	 * @return array<string,mixed>|null The lease, or null when not found / out of scope.
 	 */
 	private function fetchLease(string $leaseContractId, string $administrationId): ?array {
-		try {
-			$matches = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('LeaseContract')
-				->findAll(['filters' => ['administrationId' => $administrationId]]);
-		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'LeaseReassessmentService: failed to read leases',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-
-			return null;
-		}
-
-		foreach ($matches as $lease) {
-			if (is_array($lease) === false) {
-				continue;
-			}
-
-			$id = (string)($lease['id'] ?? ($lease['@self']['id'] ?? ''));
-			$slug = (string)($lease['@self']['slug'] ?? '');
-			if ($id === $leaseContractId || $slug === $leaseContractId) {
-				return $lease;
-			}
-		}
-
-		return null;
+		return $this->leases()->lease(
+			leaseContractId: $leaseContractId,
+			administrationId: $administrationId,
+			failure: 'LeaseReassessmentService: failed to read leases'
+		);
 	}//end fetchLease()
 
 	/**
@@ -887,17 +854,21 @@ class LeaseReassessmentService {
 	}//end objectService()
 
 	/**
+	 * The lease and event reads on the configured register.
+	 *
+	 * @return LeaseRecords The reader.
+	 */
+	private function leases(): LeaseRecords {
+		return new LeaseRecords(objectService: $this->objectService, register: $this->register(), logger: $this->logger);
+	}//end leases()
+
+	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
 	 *
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	/**

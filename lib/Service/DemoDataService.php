@@ -40,7 +40,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DemoDataServiceInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -51,7 +52,7 @@ use RuntimeException;
  *
  * @spec exclude Demo-data install action (ADR-111 rule 4); no per-app openspec change yet.
  */
-class DemoDataService {
+class DemoDataService implements DemoDataServiceInterface {
 	/**
 	 * App-relative path to the generated mock descriptor.
 	 *
@@ -97,24 +98,6 @@ class DemoDataService {
 	public function isAvailable(): bool {
 		return is_file($this->descriptorPath()) === true;
 	}//end isAvailable()
-
-	/**
-	 * The answer that means "plant nothing".
-	 *
-	 * 🔴 NOT THE ABSENCE OF AN ANSWER. An operator who declines has FINISHED the
-	 * step; a step that can never be marked done reopens the wizard over every
-	 * page (nextcloud-vue#806).
-	 *
-	 * @var string
-	 */
-	public const NONE_DATASET = 'none';
-
-	/**
-	 * The id of the dataset this app ships.
-	 *
-	 * @var string
-	 */
-	public const DEMO_DATASET = 'demo';
 
 	/**
 	 * Every answer the wizard's choice step may offer, declining included.
@@ -213,37 +196,12 @@ class DemoDataService {
 	 * @spec exclude Demo-data install action (ADR-111 rule 4); no per-app openspec change yet.
 	 */
 	public function install(): array {
-		$path = $this->descriptorPath();
-		if (is_file($path) === false) {
-			throw new RuntimeException('No demo dataset ships with this app (' . self::DESCRIPTOR . ' not found).');
-		}
-
-		// `is_readable()` first, so an unreadable descriptor is reported as
-		// such without PHP raising its own warning on the way: under PHPUnit
-		// that warning is promoted to a suite failure, which is how a green
-		// test read as red for a permission fault the test itself set up.
-		if (is_readable($path) === false) {
-			throw new RuntimeException('The demo dataset could not be read: ' . $path);
-		}
-
-		$raw = file_get_contents($path);
-		if ($raw === false) {
-			throw new RuntimeException('The demo dataset could not be read: ' . $path);
-		}
-
-		$data = json_decode($raw, true);
-		if (is_array($data) === false) {
-			throw new RuntimeException('The demo dataset is not valid JSON: ' . $path);
-		}
+		$data = $this->readDescriptor(path: $this->descriptorPath());
 
 		// Counted from the file rather than from the importer's reply, so the
 		// number reported is the number ASKED FOR. A discrepancy between this
 		// and what lands is a real condition an operator should be able to see.
-		$objects = 0;
-		$components = ($data['components'] ?? []);
-		if (is_array($components) === true && is_array(($components['objects'] ?? null)) === true) {
-			$objects = count($components['objects']);
-		}
+		$objects = self::askedObjectCount(data: $data);
 
 		$result = $this->configurationService()->importFromApp(
 			appId: self::CONFIG_APP_ID,
@@ -268,6 +226,62 @@ class DemoDataService {
 
 		return $imported;
 	}//end install()
+
+	/**
+	 * Read and decode the demo dataset descriptor.
+	 *
+	 * @param string $path The descriptor path.
+	 *
+	 * @return array<mixed> The decoded descriptor.
+	 *
+	 * @throws RuntimeException When the descriptor is missing, unreadable or not valid JSON.
+	 *
+	 * @spec exclude Demo-data install action (ADR-111 rule 4); no per-app openspec change yet.
+	 */
+	private function readDescriptor(string $path): array {
+		if (is_file($path) === false) {
+			throw new RuntimeException('No demo dataset ships with this app (' . self::DESCRIPTOR . ' not found).');
+		}
+
+		// `is_readable()` first, so an unreadable descriptor is reported as
+		// such without PHP raising its own warning on the way: under PHPUnit
+		// that warning is promoted to a suite failure, which is how a green
+		// test read as red for a permission fault the test itself set up.
+		if (is_readable($path) === false) {
+			throw new RuntimeException('The demo dataset could not be read: ' . $path);
+		}
+
+		$raw = file_get_contents($path);
+		if ($raw === false) {
+			throw new RuntimeException('The demo dataset could not be read: ' . $path);
+		}
+
+		$data = json_decode($raw, true);
+		if (is_array($data) === false) {
+			throw new RuntimeException('The demo dataset is not valid JSON: ' . $path);
+		}
+
+		return $data;
+	}//end readDescriptor()
+
+	/**
+	 * The number of objects the descriptor asks to import.
+	 *
+	 * @param array<mixed> $data The decoded descriptor.
+	 *
+	 * @return integer The count of `components.objects`, 0 when absent.
+	 *
+	 * @spec exclude Demo-data install action (ADR-111 rule 4); no per-app openspec change yet.
+	 */
+	private static function askedObjectCount(array $data): int {
+		$objects = 0;
+		$components = ($data['components'] ?? []);
+		if (is_array($components) === true && is_array(($components['objects'] ?? null)) === true) {
+			$objects = count($components['objects']);
+		}
+
+		return $objects;
+	}//end askedObjectCount()
 
 	/**
 	 * Absolute path to the shipped descriptor.

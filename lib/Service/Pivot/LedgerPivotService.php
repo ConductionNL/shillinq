@@ -37,7 +37,8 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Contracts\LedgerPivotServiceInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 
 /**
@@ -45,7 +46,7 @@ use OCA\Shillinq\Service\RegisterLocation;
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
-class LedgerPivotService {
+class LedgerPivotService implements LedgerPivotServiceInterface {
 	use ReadsSourceRowsInBatches;
 
 	/**

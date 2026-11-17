@@ -32,11 +32,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\PeriodCloseAssistantService;
-use OCA\Shillinq\Service\PeriodCloseException;
-use OCA\Shillinq\Service\PeriodCloseService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -70,17 +70,17 @@ class PeriodCloseController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param PeriodCloseService $periodCloseService Lifecycle orchestration service.
-	 * @param PeriodCloseAssistantService $assistantService Close-assistant detection service.
-	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
+	 * @param PeriodCloseServiceInterface $periodCloseService Lifecycle orchestration service.
+	 * @param PeriodCloseAssistantServiceInterface $assistantService Close-assistant detection service.
+	 * @param AdministrationContextServiceInterface $context Membership guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PeriodCloseService $periodCloseService,
-		private readonly PeriodCloseAssistantService $assistantService,
-		private readonly AdministrationContextService $context,
+		private readonly PeriodCloseServiceInterface $periodCloseService,
+		private readonly PeriodCloseAssistantServiceInterface $assistantService,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -153,7 +153,7 @@ class PeriodCloseController extends Controller {
 
 		return $this->transition(
 			periodId: $periodId,
-			action: static fn (PeriodCloseService $s, string $pid, string $adm, string $uid): array
+			action: static fn (PeriodCloseServiceInterface $s, string $pid, string $adm, string $uid): array
 				=> $s->closePeriod(periodId: $pid, administrationId: $adm, userId: $uid)
 		);
 
@@ -176,7 +176,7 @@ class PeriodCloseController extends Controller {
 
 		return $this->transition(
 			periodId: $periodId,
-			action: static fn (PeriodCloseService $s, string $pid, string $adm, string $uid): array
+			action: static fn (PeriodCloseServiceInterface $s, string $pid, string $adm, string $uid): array
 				=> $s->startClose(periodId: $pid, administrationId: $adm, userId: $uid)
 		);
 
@@ -201,7 +201,7 @@ class PeriodCloseController extends Controller {
 
 		return $this->transition(
 			periodId: $periodId,
-			action: static fn (PeriodCloseService $s, string $pid, string $adm, string $uid): array
+			action: static fn (PeriodCloseServiceInterface $s, string $pid, string $adm, string $uid): array
 				=> $s->reopenPeriod(periodId: $pid, administrationId: $adm, closeReason: $closeReason, userId: $uid)
 		);
 
@@ -224,7 +224,7 @@ class PeriodCloseController extends Controller {
 
 		return $this->transition(
 			periodId: $periodId,
-			action: static fn (PeriodCloseService $s, string $pid, string $adm, string $uid): array
+			action: static fn (PeriodCloseServiceInterface $s, string $pid, string $adm, string $uid): array
 				=> $s->lockForAudit(periodId: $pid, administrationId: $adm, userId: $uid)
 		);
 
@@ -266,9 +266,9 @@ class PeriodCloseController extends Controller {
 	 */
 	private function mapStatus(string $status): int {
 		return match ($status) {
-			PeriodCloseService::ERR_FORBIDDEN => Http::STATUS_FORBIDDEN,
-			PeriodCloseService::ERR_NOT_FOUND => Http::STATUS_NOT_FOUND,
-			PeriodCloseService::ERR_VALIDATION => Http::STATUS_UNPROCESSABLE_ENTITY,
+			PeriodCloseServiceInterface::ERR_FORBIDDEN => Http::STATUS_FORBIDDEN,
+			PeriodCloseServiceInterface::ERR_NOT_FOUND => Http::STATUS_NOT_FOUND,
+			PeriodCloseServiceInterface::ERR_VALIDATION => Http::STATUS_UNPROCESSABLE_ENTITY,
 			default => Http::STATUS_CONFLICT,
 		};
 

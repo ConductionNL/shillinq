@@ -216,8 +216,9 @@ final class ExceptionResolutionAlertTest extends TestCase {
 		$params = ['matchId' => 'twm-1', 'invoiceId' => 'inv-1', 'invoiceNumber' => 'N-1', 'supplierId' => 's-1', 'totalInclVat' => 1210, 'currency' => 'EUR'];
 		self::assertSame(
 			[
-				['find', 'ThreeWayMatch', ['id' => 'twm-1', 'administrationId' => 'adm-1']],
-				['find', 'SupplierInvoice', ['id' => 'inv-1', 'administrationId' => 'adm-1']],
+				// Read by id (an id filter on findAll matches nothing in OpenRegister); the double lists all and matches the id.
+				['find', 'ThreeWayMatch', []],
+				['find', 'SupplierInvoice', []],
 				['find', 'ToleranceProfile', ['profileId' => 'TP-NONE', 'administrationId' => 'adm-1']],
 				['find', 'ToleranceProfile', ['profileId' => 'TP-EMPTY', 'administrationId' => 'adm-1']],
 				['find', 'ToleranceProfile', ['profileId' => 'TP-C', 'administrationId' => 'adm-1']],
@@ -251,21 +252,22 @@ final class ExceptionResolutionAlertTest extends TestCase {
 
 		self::assertSame(
 			[
-				['find', 'ThreeWayMatch', ['id' => 'twm-x', 'administrationId' => 'adm-1']],
-				['find', 'ThreeWayMatch', ['id' => 'twm-2', 'administrationId' => 'adm-1']],
-				['find', 'ThreeWayMatch', ['id' => 'twm-3', 'administrationId' => 'adm-1']],
-				['find', 'AdministrationMembership', ['administrationId' => 'adm-1', 'role' => 'crediteuren_administrateur']],
+				// Read by id (an id filter on findAll matches nothing in OpenRegister); the double lists all and matches the id.
+				['find', 'ThreeWayMatch', []],
+				['find', 'ThreeWayMatch', []],
+				['find', 'ThreeWayMatch', []],
+				['find', 'AdministrationMembership', ['administrationId' => 'adm-1', 'role' => ExceptionResolutionService::ROLE_CREDITEUREN_ADMIN]],
 				[
 					'info',
 					'ExceptionResolutionService: no recipients for exception alert',
-					['administrationId' => 'adm-1', 'role' => 'crediteuren_administrateur', 'matchId' => 'twm-3'],
+					['administrationId' => 'adm-1', 'role' => ExceptionResolutionService::ROLE_CREDITEUREN_ADMIN, 'matchId' => 'twm-3'],
 				],
 			],
 			$this->events
 		);
 
 		$this->events = [];
-		$rows['AdministrationMembership'] = [['administrationId' => 'adm-1', 'role' => 'crediteuren_administrateur', 'userId' => 'ca']];
+		$rows['AdministrationMembership'] = [['administrationId' => 'adm-1', 'role' => ExceptionResolutionService::ROLE_CREDITEUREN_ADMIN, 'userId' => 'ca']];
 		$this->service($rows, [])->notifyOnException('adm-1', 'twm-3');
 		$params = ['matchId' => 'twm-3', 'invoiceId' => '', 'invoiceNumber' => '', 'supplierId' => '', 'totalInclVat' => 0, 'currency' => 'EUR'];
 		self::assertSame(['notify', 'ca', 'shillinq/three_way_match_exception/twm-3', 'three_way_match_exception_raised', $params], $this->events[2]);

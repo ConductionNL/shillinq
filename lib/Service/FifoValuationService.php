@@ -53,10 +53,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FifoValuationServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative FIFO cost layer engine driving {@see CogsPosterService}.
@@ -65,7 +66,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-7
  */
-class FifoValuationService {
+class FifoValuationService implements FifoValuationServiceInterface {
 	/**
 	 * Construct the service.
 	 *
@@ -444,11 +445,6 @@ class FifoValuationService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class
