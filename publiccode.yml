@@ -130,3 +130,7 @@ localisation:
     - ru
     - sq
     - tr
+
+# Common Ground layer (nl.vng profile), as a standard supports entry.
+supports:
+  - id: https://commonground.nl/cms/view/54476261/5-lagen-model#process
