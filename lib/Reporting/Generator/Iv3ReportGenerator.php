@@ -140,26 +140,53 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 				continue;
 			}
 
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			$taskField = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
-			if ($taskField === '') {
-				$taskField = '0.0';
-			}
-
-			if (isset($totals[$taskField]) === false) {
-				$totals[$taskField] = ['expenses' => 0.0, 'revenue' => 0.0];
-			}
-
-			$amount = $this->toFloat($line['amount'] ?? 0);
-			if ((string)($line['side'] ?? '') === 'debit') {
-				$totals[$taskField]['expenses'] += $amount;
-			} else {
-				$totals[$taskField]['revenue'] += $amount;
-			}
-		}//end foreach
+			$totals = $this->addToTaskField($totals, $this->lineTaskField($line, $accounts), $line);
+		}
 
 		return $totals;
 	}//end aggregateByTaakveld()
+
+	/**
+	 * The line's taakveld, inherited from its Account when the line carries none; '0.0' when neither does.
+	 *
+	 * @param array<string,mixed> $line The GLLine.
+	 * @param array<string,array<string,mixed>> $accounts Accounts by number.
+	 *
+	 * @return string The taakveld.
+	 */
+	private function lineTaskField(array $line, array $accounts): string {
+		$accountNumber = (string)($line['accountNumber'] ?? '');
+		$taskField = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
+		if ($taskField === '') {
+			$taskField = '0.0';
+		}
+
+		return $taskField;
+	}//end lineTaskField()
+
+	/**
+	 * Add a line's amount to its taakveld's lasten (debit) or baten (credit).
+	 *
+	 * @param array<string,array{expenses:float,revenue:float}> $totals The totals so far.
+	 * @param string $taskField The line's taakveld.
+	 * @param array<string,mixed> $line The GLLine.
+	 *
+	 * @return array<string,array{expenses:float,revenue:float}>
+	 */
+	private function addToTaskField(array $totals, string $taskField, array $line): array {
+		if (isset($totals[$taskField]) === false) {
+			$totals[$taskField] = ['expenses' => 0.0, 'revenue' => 0.0];
+		}
+
+		$amount = $this->toFloat($line['amount'] ?? 0);
+		if ((string)($line['side'] ?? '') === 'debit') {
+			$totals[$taskField]['expenses'] += $amount;
+		} else {
+			$totals[$taskField]['revenue'] += $amount;
+		}
+
+		return $totals;
+	}//end addToTaskField()
 
 	/**
 	 * Render the taakveld totals as CSV.

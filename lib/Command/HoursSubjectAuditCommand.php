@@ -114,21 +114,7 @@ class HoursSubjectAuditCommand extends Command {
 
 		$counts = $this->count(rows: $rows);
 
-		$total = ['entries' => 0, 'subjectApp' => 0, 'subjectId' => 0];
-		foreach ($counts as $administration => $count) {
-			$output->writeln(
-				sprintf(
-					'%s: %d entries, %d with subjectApp, %d with subjectId',
-					$administration,
-					$count['entries'],
-					$count['subjectApp'],
-					$count['subjectId']
-				)
-			);
-			foreach ($total as $key => $value) {
-				$total[$key] = ($value + $count[$key]);
-			}
-		}
+		$total = $this->printPerAdministration(output: $output, counts: $counts);
 
 		$output->writeln(
 			sprintf(
@@ -165,12 +151,7 @@ class HoursSubjectAuditCommand extends Command {
 				continue;
 			}
 
-			$administration = $row['administrationId'] ?? null;
-			if (is_scalar($administration) === false || (string)$administration === '') {
-				$administration = self::NO_ADMINISTRATION;
-			}
-
-			$administration = (string)$administration;
+			$administration = $this->administrationOf(row: $row);
 			$counts[$administration] ??= ['entries' => 0, 'subjectApp' => 0, 'subjectId' => 0];
 			$counts[$administration]['entries']++;
 			if (($row['subjectApp'] ?? null) !== null) {
@@ -186,4 +167,52 @@ class HoursSubjectAuditCommand extends Command {
 
 		return $counts;
 	}//end count()
+
+	/**
+	 * The administration an entry is counted under.
+	 *
+	 * @param array<string, mixed> $row The entry payload.
+	 *
+	 * @return string Its administrationId, or the no-administration bucket.
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-001-hours-on-a-domain-object-live-in-humaniq
+	 */
+	private function administrationOf(array $row): string {
+		$administration = $row['administrationId'] ?? null;
+		if (is_scalar($administration) === false || (string)$administration === '') {
+			$administration = self::NO_ADMINISTRATION;
+		}
+
+		return (string)$administration;
+	}//end administrationOf()
+
+	/**
+	 * Print one line per administration and sum the counts.
+	 *
+	 * @param OutputInterface                                                       $output Console output.
+	 * @param array<string, array{entries: int, subjectApp: int, subjectId: int}> $counts Counts per administration.
+	 *
+	 * @return array{entries: int, subjectApp: int, subjectId: int} The totals.
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-001-hours-on-a-domain-object-live-in-humaniq
+	 */
+	private function printPerAdministration(OutputInterface $output, array $counts): array {
+		$total = ['entries' => 0, 'subjectApp' => 0, 'subjectId' => 0];
+		foreach ($counts as $administration => $count) {
+			$output->writeln(
+				sprintf(
+					'%s: %d entries, %d with subjectApp, %d with subjectId',
+					$administration,
+					$count['entries'],
+					$count['subjectApp'],
+					$count['subjectId']
+				)
+			);
+			foreach ($total as $key => $value) {
+				$total[$key] = ($value + $count[$key]);
+			}
+		}
+
+		return $total;
+	}//end printPerAdministration()
 }//end class

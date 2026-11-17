@@ -106,41 +106,16 @@ final class ContributionInvoiceBuilder {
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
 	 */
 	public function normaliseCharge(array $payload, string $today): array {
-		$chargeable = $this->normaliseChargeable(chargeable: ($payload['chargeable'] ?? null));
-
-		$kind = (string)($payload['kind'] ?? '');
-		if (in_array($kind, self::KINDS, true) === false) {
-			throw new InvalidArgumentException(
-				sprintf('Unknown kind "%s"; expected one of %s.', $kind, implode(', ', self::KINDS))
-			);
-		}
-
-		$description = trim((string)($payload['description'] ?? ''));
-		if ($description === '') {
-			throw new InvalidArgumentException('A contribution needs a description; it is the line on the invoice.');
-		}
-
-		$amount = $this->money(value: ($payload['amount'] ?? null));
-		if ($amount === null) {
-			throw new InvalidArgumentException('A contribution needs an amount above zero.');
-		}
-
-		if (is_bool($payload['voluntary'] ?? null) === false) {
-			throw new InvalidArgumentException('Say whether the contribution is voluntary: voluntary is true or false.');
-		}
-
-		$administrationId = trim((string)($payload['administrationId'] ?? ''));
-		if (preg_match('/^[A-Za-z0-9_.\-]{1,64}$/', $administrationId) !== 1) {
-			throw new InvalidArgumentException('A contribution needs the administrationId of the school.');
-		}
-
-		$currency = strtoupper((string)($payload['currency'] ?? 'EUR'));
-		if (preg_match('/^[A-Z]{3}$/', $currency) !== 1) {
-			throw new InvalidArgumentException('The currency is a three-letter ISO 4217 code.');
-		}
+		$chargeable       = $this->normaliseChargeable(chargeable: ($payload['chargeable'] ?? null));
+		$kind             = self::requiredKind(payload: $payload);
+		$description      = self::requiredDescription(payload: $payload);
+		$amount           = $this->requiredAmount(payload: $payload);
+		self::assertVoluntaryFlag(payload: $payload);
+		$administrationId = self::requiredAdministrationId(payload: $payload);
+		$currency         = self::requiredCurrency(payload: $payload);
 
 		$invoiceDate = $this->date(value: (string)($payload['invoiceDate'] ?? $today), field: 'invoiceDate');
-		$dueDate = $this->dueDate(payload: $payload, invoiceDate: $invoiceDate);
+		$dueDate     = $this->dueDate(payload: $payload, invoiceDate: $invoiceDate);
 
 		return [
 			'chargeable' => $chargeable,
@@ -157,6 +132,113 @@ final class ContributionInvoiceBuilder {
 			'recipients' => $this->recipients(value: ($payload['recipients'] ?? null)),
 		];
 	}//end normaliseCharge()
+
+	/**
+	 * The charge's kind, refused when it is not a known one.
+	 *
+	 * @param array<string, mixed> $payload The charge request.
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When the kind is unknown.
+	 */
+	private static function requiredKind(array $payload): string {
+		$kind = (string)($payload['kind'] ?? '');
+		if (in_array($kind, self::KINDS, true) === false) {
+			throw new InvalidArgumentException(
+				sprintf('Unknown kind "%s"; expected one of %s.', $kind, implode(', ', self::KINDS))
+			);
+		}
+
+		return $kind;
+	}//end requiredKind()
+
+	/**
+	 * The charge's description, refused when empty.
+	 *
+	 * @param array<string, mixed> $payload The charge request.
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When the description is empty.
+	 */
+	private static function requiredDescription(array $payload): string {
+		$description = trim((string)($payload['description'] ?? ''));
+		if ($description === '') {
+			throw new InvalidArgumentException('A contribution needs a description; it is the line on the invoice.');
+		}
+
+		return $description;
+	}//end requiredDescription()
+
+	/**
+	 * The charge's amount, refused when it is not above zero.
+	 *
+	 * @param array<string, mixed> $payload The charge request.
+	 *
+	 * @return float
+	 *
+	 * @throws InvalidArgumentException When there is no amount above zero.
+	 */
+	private function requiredAmount(array $payload): float {
+		$amount = $this->money(value: ($payload['amount'] ?? null));
+		if ($amount === null) {
+			throw new InvalidArgumentException('A contribution needs an amount above zero.');
+		}
+
+		return $amount;
+	}//end requiredAmount()
+
+	/**
+	 * Refuse a charge that does not say whether it is voluntary.
+	 *
+	 * @param array<string, mixed> $payload The charge request.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When voluntary is not a boolean.
+	 */
+	private static function assertVoluntaryFlag(array $payload): void {
+		if (is_bool($payload['voluntary'] ?? null) === false) {
+			throw new InvalidArgumentException('Say whether the contribution is voluntary: voluntary is true or false.');
+		}
+	}//end assertVoluntaryFlag()
+
+	/**
+	 * The school's administration id, refused when malformed.
+	 *
+	 * @param array<string, mixed> $payload The charge request.
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When the administrationId is malformed.
+	 */
+	private static function requiredAdministrationId(array $payload): string {
+		$administrationId = trim((string)($payload['administrationId'] ?? ''));
+		if (preg_match('/^[A-Za-z0-9_.\-]{1,64}$/', $administrationId) !== 1) {
+			throw new InvalidArgumentException('A contribution needs the administrationId of the school.');
+		}
+
+		return $administrationId;
+	}//end requiredAdministrationId()
+
+	/**
+	 * The ISO 4217 currency, refused when malformed.
+	 *
+	 * @param array<string, mixed> $payload The charge request.
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When the currency is not a three-letter code.
+	 */
+	private static function requiredCurrency(array $payload): string {
+		$currency = strtoupper((string)($payload['currency'] ?? 'EUR'));
+		if (preg_match('/^[A-Z]{3}$/', $currency) !== 1) {
+			throw new InvalidArgumentException('The currency is a three-letter ISO 4217 code.');
+		}
+
+		return $currency;
+	}//end requiredCurrency()
 
 	/**
 	 * The amount one recipient is billed: their own when given, else the charge's.
@@ -433,7 +515,33 @@ final class ContributionInvoiceBuilder {
 			throw new InvalidArgumentException('A contribution needs the chargeable it is raised from.');
 		}
 
-		$missing = [];
+		$reference = self::chargeableReference(chargeable: $chargeable);
+
+		$type = trim((string)($chargeable['type'] ?? ''));
+		if ($type === '') {
+			$type = 'chargeable';
+		}
+
+		return [
+			'app' => $reference['app'],
+			'type' => $type,
+			'register' => $reference['register'],
+			'schema' => $reference['schema'],
+			'id' => $reference['id'],
+		];
+	}//end normaliseChargeable()
+
+	/**
+	 * The chargeable's app, register, schema and id, refused when any is missing.
+	 *
+	 * @param array<string, mixed> $chargeable The chargeable reference.
+	 *
+	 * @return array<string, string>
+	 *
+	 * @throws InvalidArgumentException When a part is missing.
+	 */
+	private static function chargeableReference(array $chargeable): array {
+		$missing   = [];
 		$reference = [];
 		foreach (self::CHARGEABLE_PARTS as $part) {
 			$value = trim((string)($chargeable[$part] ?? ''));
@@ -450,19 +558,8 @@ final class ContributionInvoiceBuilder {
 			);
 		}
 
-		$type = trim((string)($chargeable['type'] ?? ''));
-		if ($type === '') {
-			$type = 'chargeable';
-		}
-
-		return [
-			'app' => $reference['app'],
-			'type' => $type,
-			'register' => $reference['register'],
-			'schema' => $reference['schema'],
-			'id' => $reference['id'],
-		];
-	}//end normaliseChargeable()
+		return $reference;
+	}//end chargeableReference()
 
 	/**
 	 * Check the recipient list.

@@ -39,6 +39,9 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * REQ-TVNC-001 and REQ-TVNC-003.
@@ -113,7 +116,7 @@ class VatNumberCheckTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnInvalidNumberIsRecordedAsInvalid(): void {
-		$this->store->patchObject(objectId: self::MULLER, data: ['vatIdValidatedAt' => '2026-08-01T10:00:00+00:00'], register: 'shillinq', schema: 'CustomerMaster');
+		$this->store->patchObject(new ObjectPatch(objectId: self::MULLER, data: ['vatIdValidatedAt' => '2026-08-01T10:00:00+00:00'], target: new ObjectFindTarget(register: 'shillinq', schema: 'CustomerMaster')));
 
 		$result = $this->check(answer: '{"valid": false}')->checkRecord('customer', $this->record('CustomerMaster', self::MULLER));
 
@@ -132,7 +135,7 @@ class VatNumberCheckTest extends TestCase {
 	 */
 	public function testViesIsDown(): void {
 		$tenDaysAgo = gmdate('c', (time() - (10 * 86400)));
-		$this->store->saveObject(['vatId' => 'BE0000000000', 'valid' => true, 'outage' => false, 'validationTimestamp' => $tenDaysAgo, 'validUntil' => $tenDaysAgo, 'name' => 'Softwarehuis BVBA', 'address' => 'Gent', 'requestId' => 'R1', 'administrationId' => self::ADMIN], register: 'shillinq', schema: 'ViesValidation');
+		$this->store->saveObject(['vatId' => 'BE0000000000', 'valid' => true, 'outage' => false, 'validationTimestamp' => $tenDaysAgo, 'validUntil' => $tenDaysAgo, 'name' => 'Softwarehuis BVBA', 'address' => 'Gent', 'requestId' => 'R1', 'administrationId' => self::ADMIN], new ObjectSaveOptions(target: new ObjectFindTarget(register: 'shillinq', schema: 'ViesValidation')));
 		$check = $this->check(answer: null);
 
 		foreach ([1, 2] as $attempt) {

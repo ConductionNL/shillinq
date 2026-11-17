@@ -306,17 +306,7 @@ class DBAComplianceGuard {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function computeCompleteness(array $documents): array {
-		$presentTypes = [];
-		foreach ($documents as $stuk) {
-			if (is_array($stuk) === false) {
-				continue;
-			}
-
-			$type = (string)($stuk['type'] ?? '');
-			if ($type !== '') {
-				$presentTypes[$type] = true;
-			}
-		}
+		$presentTypes = self::presentTypesOf(documents: $documents);
 
 		$missing = [];
 		$present = 0;
@@ -340,6 +330,31 @@ class DBAComplianceGuard {
 		];
 
 	}//end computeCompleteness()
+
+	/**
+	 * The distinct stuk types present in the dossier.
+	 *
+	 * @param array<int,mixed> $documents The dossier stukken.
+	 *
+	 * @return array<string,bool> Type => true.
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	private static function presentTypesOf(array $documents): array {
+		$presentTypes = [];
+		foreach ($documents as $stuk) {
+			if (is_array($stuk) === false) {
+				continue;
+			}
+
+			$type = (string)($stuk['type'] ?? '');
+			if ($type !== '') {
+				$presentTypes[$type] = true;
+			}
+		}
+
+		return $presentTypes;
+	}//end presentTypesOf()
 
 	/**
 	 * Determine whether an invoice's effective hourly rate breaches the VBAR

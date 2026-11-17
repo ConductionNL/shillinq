@@ -140,20 +140,8 @@ class IntegriqCloudEventListener implements IEventListener {
 		}
 
 		try {
-			$entity = $event->getObject();
-			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || in_array(($cloudEvent['type'] ?? null), self::HANDLED_TYPES, true) === false) {
-				return;
-			}
-
-			// The type is cheap to read; the register and schema cost a mapper
-			// lookup each, so they are checked only for a matching type.
-			if ($this->schemaResolver->matchesRegisterAndSchema(
-				entity: $entity,
-				registerSlug: self::REGISTER_SLUG,
-				schemaSlug: self::SCHEMA_SLUG
-			) === false
-			) {
+			$cloudEvent = $this->handledCloudEvent(entity: $event->getObject());
+			if ($cloudEvent === null) {
 				return;
 			}
 
@@ -164,12 +152,37 @@ class IntegriqCloudEventListener implements IEventListener {
 
 			$this->reconcilePaymentStatus(data: $cloudEvent['data'] ?? null);
 		} catch (Throwable $e) {
-			$this->logger->warning(
-				'IntegriqCloudEventListener: failed to apply an integriq CloudEvent; skipped',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->warning('IntegriqCloudEventListener: failed to apply an integriq CloudEvent; skipped', ['exception' => $e->getMessage()]);
 		}//end try
 	}//end handle()
+
+	/**
+	 * The created object's CloudEvent when it is an integriq payment status or
+	 * settlement in the CloudEvent schema, else null.
+	 *
+	 * @param mixed $entity The created ObjectEntity, or null.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function handledCloudEvent(mixed $entity): array|null {
+		$cloudEvent = $entity?->getObject();
+		if (is_array($cloudEvent) === false || in_array(($cloudEvent['type'] ?? null), self::HANDLED_TYPES, true) === false) {
+			return null;
+		}
+
+		// The type is cheap to read; the register and schema cost a mapper
+		// lookup each, so they are checked only for a matching type.
+		if ($this->schemaResolver->matchesRegisterAndSchema(
+			entity: $entity,
+			registerSlug: self::REGISTER_SLUG,
+			schemaSlug: self::SCHEMA_SLUG
+		) === false
+		) {
+			return null;
+		}
+
+		return $cloudEvent;
+	}//end handledCloudEvent()
 
 	/**
 	 * Feed a payment status envelope into the shared reconciliation.

@@ -99,6 +99,9 @@ final class DeliveryDateMatchStore {
  * @uses   \OCA\Shillinq\Service\ToleranceProfileService
  * @uses   \OCA\Shillinq\Service\ThreeWayMatchRun
  * @uses   \OCA\Shillinq\Service\ExceptionRoute
+ * @uses   \OCA\Shillinq\Service\RecordStoreLog
+ * @uses   \OCA\Shillinq\Service\RegisterBinding
+ * @uses   \OCA\Shillinq\Service\SchemaRecordStore
  */
 final class ThreeWayMatchingEngineDeliveryDateTest extends TestCase {
 

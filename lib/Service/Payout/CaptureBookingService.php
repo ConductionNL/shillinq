@@ -32,6 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Payout;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
@@ -156,7 +158,11 @@ class CaptureBookingService {
 				return $existing;
 			}
 
-			$saved = $this->objectService->saveObject(object: $journal, register: $registerSlug, schema: 'JournalEntry', _rbac: false);
+			$saved = $this->objectService->saveObject(
+				object: $journal,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'JournalEntry')),
+				_rbac: false
+			);
 			$journalId = ObjectIdentifier::resolve(saved: $saved);
 			if ($journalId === '') {
 				$this->logger->warning('CaptureBookingService: the capture journal entry was saved without an id');

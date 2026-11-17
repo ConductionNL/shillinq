@@ -58,6 +58,7 @@ use OCA\Shillinq\Integration\IntegrationContractRegistrar;
 use OCA\Shillinq\Budget\BudgetContractRegistrar;
 use OCA\Shillinq\Portal\PortalContractRegistrar;
 use OCA\Shillinq\Dashboard\DashboardContractRegistrar;
+use OCA\Shillinq\Receivables\ReceivablesContractRegistrar;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
@@ -199,6 +200,18 @@ class Application extends App implements IBootstrap {
 
 		(new LifecycleRegistrar())->register(context: $context);
 
+		$this->registerDomainContracts(context: $context);
+
+	}//end register()
+
+	/**
+	 * Bind the Kernel contracts of each domain to its implementation.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerDomainContracts(IRegistrationContext $context): void {
 		(new LifecycleContractRegistrar())->register(context: $context);
 		(new ReportingContractRegistrar())->register(context: $context);
 		(new ListenerContractRegistrar())->register(context: $context);
@@ -210,8 +223,8 @@ class Application extends App implements IBootstrap {
 		(new BudgetContractRegistrar())->register(context: $context);
 		(new PortalContractRegistrar())->register(context: $context);
 		(new DashboardContractRegistrar())->register(context: $context);
-
-	}//end register()
+		(new ReceivablesContractRegistrar())->register(context: $context);
+	}//end registerDomainContracts()
 
 	/**
 	 * Register the action-tool provider under OpenRegister's per-app discovery key.

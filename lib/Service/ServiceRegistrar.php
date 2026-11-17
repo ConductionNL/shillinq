@@ -46,12 +46,12 @@ use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\Billing\BillableHoursSource;
 use OCA\Shillinq\Service\Billing\UnavailableBillableHours;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
-use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrBinding;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
 use OCA\Shillinq\Service\External\Ib47\LogIb47Adapter;
 use OCA\Shillinq\Service\External\Kvk\KvkHandelsregisterAdapterInterface;
 use OCA\Shillinq\Service\External\Kvk\LogKvkHandelsregisterAdapter;
-use OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter;
+use OCA\Shillinq\Service\External\Integriq\IntegriqPaymentAdapter;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\RvO\LogRvOAanvraagAdapter;
 use OCA\Shillinq\Service\External\RvO\RvOAanvraagAdapterInterface;
@@ -210,7 +210,14 @@ final class ServiceRegistrar {
 
 		$context->registerServiceAlias(BzkSisaUploadAdapterInterface::class, LogBzkSisaUploadAdapter::class);
 
-		$context->registerServiceAlias(DigipoortSbrAdapterInterface::class, LogDigipoortSbrAdapter::class);
+		// Change tax-digipoort-filing task 3.1: integriq's hand-off when integriq is
+		// enabled, else the log-only adapter, which HandToDigipoortAction refuses.
+		$context->registerService(
+			DigipoortSbrAdapterInterface::class,
+			static function (ContainerInterface $c): DigipoortSbrAdapterInterface {
+				return (new DigipoortSbrBinding())->adapter(container: $c);
+			}
+		);
 		// Until humaniq's hours read is bound (sales-time-and-expense-billing
 		// task 2.3), the invoice generator is told hours are unavailable (task 2.1).
 		$context->registerServiceAlias(BillableHoursSource::class, UnavailableBillableHours::class);
@@ -237,16 +244,18 @@ final class ServiceRegistrar {
 		// pull + werkgever-setup sectorindeling validation).
 		$context->registerServiceAlias(KvkHandelsregisterAdapterInterface::class, LogKvkHandelsregisterAdapter::class);
 
-		$context->registerServiceAlias(MolliePaymentAdapterInterface::class, LogMolliePaymentAdapter::class);
+		// Receivables-payment-links REQ-RPL-001/002: payments are created by
+		// integriq's payment providers through its typed payment command
+		// event. Without integriq, an unanswered command, a refusal or a
+		// log-provider source the adapter answers dormant with the reason.
+		$context->registerServiceAlias(MolliePaymentAdapterInterface::class, IntegriqPaymentAdapter::class);
 
 		// Portal-payment-initiation REQ-SPPI-001 — the payment-provider port
 		// the subject-initiated pay-now flow drives. Sits one layer ABOVE
-		// MolliePaymentAdapterInterface (already wired immediately above):
-		// the shipped MolliePaymentProvider binding delegates EVERY call to
-		// whichever MolliePaymentAdapterInterface is currently bound, so this
-		// port is dormant-by-default (LogMolliePaymentAdapter) and turns live
-		// automatically the moment the openconnector `mollie-payments` source
-		// is bound — no further change needed here.
+		// MolliePaymentAdapterInterface (wired immediately above): the
+		// MolliePaymentProvider delegates every call to that binding, so it is
+		// live exactly when integriq answers the payment command with a live
+		// payment source, and dormant otherwise.
 		$context->registerService(
 			PaymentProviderInterface::class,
 			static function ($c): PaymentProviderInterface {
