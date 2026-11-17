@@ -119,7 +119,8 @@ describe('InvoiceGenerateWizard source step', () => {
 				.filter((id) => !['igw-customer', 'igw-model', 'igw-project', 'igw-from', 'igw-to'].includes(id))
 		}
 		expect(shown).toEqual({
-			t_and_m: ['igw-rate-card'],
+			// Time and material prices each hour by its own rate (REQ-BRPH-005).
+			t_and_m: [],
 			fixed_fee: ['igw-fixed-fee'],
 			milestone: ['igw-milestone'],
 			retainer: ['igw-retainer'],

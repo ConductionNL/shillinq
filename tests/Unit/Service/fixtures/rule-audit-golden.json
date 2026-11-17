@@ -2,10 +2,10 @@
     "plain": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1303,
-            "machineCheckable": 696,
-            "enforceableRules": 618,
-            "coveragePct": 88.8,
+            "corpusTotal": 1313,
+            "machineCheckable": 706,
+            "enforceableRules": 628,
+            "coveragePct": 89.0,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -79,6 +79,12 @@
                     "withViolations": 3,
                     "violations": 3
                 },
+                "CbcrReturn": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
                 "SaftFile": {
                     "checked": 3,
                     "compliant": 0,
@@ -102,6 +108,12 @@
                     "compliant": 0,
                     "withViolations": 3,
                     "violations": 153
+                },
+                "GlobeInformationReturn": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
                 },
                 "EInvoiceMandate": {
                     "checked": 3,
@@ -158,8 +170,8 @@
                     "violations": 0
                 }
             },
-            "objectsChecked": 75,
-            "objectsCompliant": 12,
+            "objectsChecked": 81,
+            "objectsCompliant": 18,
             "objectsWithViolations": 63,
             "violationsBySeverity": {
                 "mandatory": 467,
@@ -343,6 +355,13 @@
             ],
             [
                 "find",
+                "CbcrReturn",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
                 "SaftFile",
                 {
                     "limit": 10000
@@ -365,6 +384,13 @@
             [
                 "find",
                 "FinancialStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GlobeInformationReturn",
                 {
                     "limit": 10000
                 }
@@ -437,10 +463,10 @@
     "jurisdiction": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1303,
-            "machineCheckable": 696,
-            "enforceableRules": 618,
-            "coveragePct": 88.8,
+            "corpusTotal": 1313,
+            "machineCheckable": 706,
+            "enforceableRules": 628,
+            "coveragePct": 89.0,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -514,6 +540,12 @@
                     "withViolations": 3,
                     "violations": 3
                 },
+                "CbcrReturn": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
                 "SaftFile": {
                     "checked": 3,
                     "compliant": 0,
@@ -537,6 +569,12 @@
                     "compliant": 0,
                     "withViolations": 3,
                     "violations": 153
+                },
+                "GlobeInformationReturn": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
                 },
                 "EInvoiceMandate": {
                     "checked": 3,
@@ -593,8 +631,8 @@
                     "violations": 0
                 }
             },
-            "objectsChecked": 75,
-            "objectsCompliant": 12,
+            "objectsChecked": 81,
+            "objectsCompliant": 18,
             "objectsWithViolations": 63,
             "violationsBySeverity": {
                 "mandatory": 467,
@@ -778,6 +816,13 @@
             ],
             [
                 "find",
+                "CbcrReturn",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
                 "SaftFile",
                 {
                     "limit": 10000
@@ -800,6 +845,13 @@
             [
                 "find",
                 "FinancialStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GlobeInformationReturn",
                 {
                     "limit": 10000
                 }
@@ -872,10 +924,10 @@
     "failing": {
         "report": {
             "catalogueVersion": "2026-06b",
-            "corpusTotal": 1303,
-            "machineCheckable": 696,
-            "enforceableRules": 618,
-            "coveragePct": 88.8,
+            "corpusTotal": 1313,
+            "machineCheckable": 706,
+            "enforceableRules": 628,
+            "coveragePct": 89.0,
             "types": {
                 "ARInvoice": {
                     "checked": 3,
@@ -949,6 +1001,12 @@
                     "withViolations": 3,
                     "violations": 3
                 },
+                "CbcrReturn": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
+                },
                 "SaftFile": {
                     "checked": 3,
                     "compliant": 0,
@@ -972,6 +1030,12 @@
                     "compliant": 0,
                     "withViolations": 3,
                     "violations": 153
+                },
+                "GlobeInformationReturn": {
+                    "checked": 3,
+                    "compliant": 3,
+                    "withViolations": 0,
+                    "violations": 0
                 },
                 "EInvoiceMandate": {
                     "checked": 3,
@@ -1028,8 +1092,8 @@
                     "violations": 0
                 }
             },
-            "objectsChecked": 72,
-            "objectsCompliant": 12,
+            "objectsChecked": 78,
+            "objectsCompliant": 18,
             "objectsWithViolations": 60,
             "violationsBySeverity": {
                 "mandatory": 432,
@@ -1190,6 +1254,13 @@
             ],
             [
                 "find",
+                "CbcrReturn",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
                 "SaftFile",
                 {
                     "limit": 10000
@@ -1212,6 +1283,13 @@
             [
                 "find",
                 "FinancialStatement",
+                {
+                    "limit": 10000
+                }
+            ],
+            [
+                "find",
+                "GlobeInformationReturn",
                 {
                     "limit": 10000
                 }

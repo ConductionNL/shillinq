@@ -149,7 +149,18 @@
 				</p>
 
 				<p
-					v-if="isDraftReview"
+					v-if="isImportReview"
+					class="bim__hint"
+					data-testid="bim-import-hint">
+					{{
+						t(
+							'shillinq',
+							'The invoice stays a draft until you save it. Discard removes it.',
+						)
+					}}
+				</p>
+				<p
+					v-else-if="isDraftReview"
 					class="bim__hint"
 					data-testid="bim-review-hint">
 					{{ reviewHint }}
@@ -309,8 +320,20 @@
 		</div>
 
 		<template #actions>
+			<NcButton
+				v-if="step === 'review' && isDraftReview"
+				variant="tertiary"
+				:disabled="busy"
+				data-testid="bim-discard"
+				@click="onDiscard">
+				{{ t('shillinq', 'Discard') }}
+			</NcButton>
 			<NcButton :disabled="busy" data-testid="bim-cancel" @click="onClose">
-				{{ t('shillinq', 'Cancel') }}
+				{{
+					step === 'review' && isDraftReview
+						? t('shillinq', 'Keep as draft')
+						: t('shillinq', 'Cancel')
+				}}
 			</NcButton>
 			<NcButton
 				v-if="step === 'review'"
@@ -342,6 +365,7 @@ import {
 	buildImportFormData,
 	canSaveReview,
 	confidenceForField,
+	confirmPayloadFromForm,
 	detectFormat,
 	hasKnownExtractionId,
 	importErrorMessage,
@@ -391,6 +415,15 @@ export default {
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isDraftReview() {
 			return isExtractionDraft(this.importedRecord)
+		},
+
+		/**
+		 * A draft from an uploaded file rather than from an extraction.
+		 *
+		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+		 */
+		isImportReview() {
+			return this.isDraftReview && !this.importedRecord?.fieldConfidence
 		},
 
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
@@ -656,26 +689,35 @@ export default {
 		},
 
 		/**
-		 * REQ-BIM-003/004 (manual UBL/CSV import) OR, for an extraction draft
-		 * (REQ-RXC-004), commits any operator corrections through the
-		 * ExtractionRequestController confirm proxy — which records
-		 * `humanCorrected` provenance server-side — instead of creating a
-		 * second SupplierInvoice record.
+		 * Confirm the imported or extracted draft through the confirm
+		 * endpoint, which writes only the corrected fields and records them
+		 * as human-corrected (REQ-BIM-003/004, REQ-RXC-004).
 		 *
 		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 		 * @spec openspec/specs/receipt-extraction-consume/spec.md
 		 */
 		async onSave() {
 			if (!this.canSave || this.busy) return
+			const id = this.importedRecord?.id
+			if (!this.isDraftReview || !id) {
+				this.error = t('shillinq', 'This invoice is already confirmed.')
+				return
+			}
 			this.busy = true
 			this.error = ''
 			try {
-				const created = await this.saveBill(this.reviewedRecord())
+				const response = await axios.put(
+					generateUrl(
+						`/apps/shillinq/api/v1/extraction/drafts/${encodeURIComponent(id)}?schema=${SUPPLIER_INVOICE_SCHEMA}`,
+					),
+					confirmPayloadFromForm(this.form),
+				)
+				const confirmed = response.data?.record ?? response.data ?? {}
 
 				showSuccess(t('shillinq', 'Bill imported.'))
 				// REQ-BIM-004: refresh the payables widget without navigation.
 				emit('cn:widget:refresh', refreshEventPayload())
-				this.$emit('imported', { id: created.id ?? created.uuid ?? '' })
+				this.$emit('imported', { id: confirmed.id ?? id })
 				this.$emit('close')
 			} catch (e) {
 				this.error = importErrorMessage(e)
@@ -686,54 +728,30 @@ export default {
 		},
 
 		/**
-		 * The imported record with the reviewed fields, amounts in cents, and
-		 * `received` as the status when it has none.
+		 * Delete the imported invoice while it is still a draft.
 		 *
-		 * @return {object}
+		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 		 */
-		reviewedRecord() {
-			const record = { ...(this.importedRecord || {}) }
-			record.supplierId = this.form.supplier
-			record.invoiceNumber = this.form.invoiceNumber
-			record.invoiceDate = this.form.invoiceDate
-			record.glAccount = this.form.glAccount
-			record.totalInclVat = Math.round((Number(this.form.amount) || 0) * 100)
-			record.totalVat = Math.round((Number(this.form.vatAmount) || 0) * 100)
-			record.statusCode = record.statusCode || 'received'
-			return record
-		},
-
-		/**
-		 * Save the bill: commit the correction on an existing extraction draft
-		 * (REQ-RXC-004, never a duplicate SupplierInvoice), else create one.
-		 *
-		 * @param {object} record The reviewed record.
-		 * @return {Promise<object>} The saved record.
-		 */
-		async saveBill(record) {
-			if (this.isDraftReview && record.id) {
-				const response = await axios.put(
+		async onDiscard() {
+			const id = this.importedRecord?.id
+			if (this.busy || !id) return
+			this.busy = true
+			this.error = ''
+			try {
+				await axios.delete(
 					generateUrl(
-						`/apps/shillinq/api/v1/extraction/drafts/${record.id}?schema=${SUPPLIER_INVOICE_SCHEMA}`,
+						`/apps/shillinq/api/v1/supplier-invoices/${encodeURIComponent(id)}/draft`,
 					),
-					{
-						supplierId: record.supplierId,
-						invoiceNumber: record.invoiceNumber,
-						invoiceDate: record.invoiceDate,
-						glAccount: record.glAccount,
-						totalInclVat: record.totalInclVat,
-						totalVat: record.totalVat,
-					},
 				)
-				return response.data?.record ?? response.data ?? {}
+				showSuccess(t('shillinq', 'Import discarded.'))
+				emit('cn:widget:refresh', refreshEventPayload())
+				this.$emit('close')
+			} catch (e) {
+				this.error = importErrorMessage(e)
+				showError(this.error)
+			} finally {
+				this.busy = false
 			}
-			const response = await axios.post(
-				generateUrl(
-					`/apps/openregister/api/objects/${REGISTER_SLUG}/${SUPPLIER_INVOICE_SCHEMA}`,
-				),
-				record,
-			)
-			return response.data?.object ?? response.data ?? {}
 		},
 
 		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
