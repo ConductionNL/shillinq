@@ -491,6 +491,11 @@ export default {
 			)
 		},
 
+		/**
+		 * Save the schedule through the report-schedules endpoint and show its first run date.
+		 *
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 */
 		async onSchedule() {
 			if (!this.canSchedule) {
 				return
@@ -555,6 +560,7 @@ export default {
 		 * and the first run.
 		 *
 		 * @return {object}
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 		 */
 		scheduleRequest() {
 			return schedulePayload(this.report, {
