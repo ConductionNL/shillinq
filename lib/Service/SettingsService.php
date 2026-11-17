@@ -94,7 +94,7 @@ class SettingsService implements SettingsServiceInterface {
 		'rj270' => ['rj-270-stages.json', 'stages', 'stageId', 'RJ270Stage', 'RJ-270 stages'],
 		'defaultAdministration' => ['administraties/default.json', 'administrations', 'administrationCode', 'Administration', 'Default administration'],
 		'btw' => ['btw-tariffs-2026.json', 'tariffs', 'code', 'VatTariff', 'BTW tariffs'],
-		'taakvelden' => ['bbv-task_fields-2024.json', 'taskFields', 'code', 'BbvTaakveld', 'BBV task_fields'],
+		'taakvelden' => ['bbv-taakvelden-2024.json', 'taskFields', 'code', 'BbvTaakveld', 'BBV task_fields'],
 	];
 
 	/**
@@ -747,7 +747,7 @@ class SettingsService implements SettingsServiceInterface {
 	}//end seedBtwTariffs()
 
 	/**
-	 * Seed the BBV task_field catalogue from bbv-task_fields-2024.json, idempotently.
+	 * Seed the BBV task_field catalogue from bbv-taakvelden-2024.json, idempotently.
 	 *
 	 * Imports the canonical Besluit BBV bijlage IV task_fields into the BbvTaakveld
 	 * schema. Deduplication key is code. Idempotent on re-run.
