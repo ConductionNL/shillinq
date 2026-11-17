@@ -224,6 +224,7 @@
                     "Grant",
                     "GroupEntity",
                     "GroupEntityRegistry",
+                    "HelpArticle",
                     "HerstructureringsvoorzieningDetail",
                     "IB47Record",
                     "IBAangifte",

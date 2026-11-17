@@ -13,7 +13,6 @@ import fs from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
-	nextRunAt,
 	parseRecipients,
 	schedulePayload,
 } from '../../src/utils/reportSchedule.js'
@@ -32,59 +31,7 @@ const fragment = JSON.parse(
 	),
 )
 
-describe('nextRunAt edge cases', () => {
-	it('clamps the run day and handles Sundays, exact moments and year ends', () => {
-		const cases = [
-			['weekly', 9, '2026-10-04T12:00:00Z'],
-			['weekly', 0, '2026-10-05T00:00:00Z'],
-			['weekly', 'x', '2026-10-04T00:00:00Z'],
-			['monthly', 31, '2026-12-28T00:00:00Z'],
-			['monthly', -3, '2026-12-31T23:00:00Z'],
-			['quarterly', 1, '2026-12-01T00:00:00Z'],
-			['quarterly', 15, '2026-11-15T00:00:00Z'],
-			['yearly', 2, '2026-06-02T00:00:00Z'],
-		]
-		expect(cases.map(([frequency, day, after]) => nextRunAt(frequency, day, new Date(after)))).toEqual([
-			'2026-10-11T00:00:00+00:00',
-			'2026-10-12T00:00:00+00:00',
-			'2026-10-05T00:00:00+00:00',
-			'2027-01-28T00:00:00+00:00',
-			'2027-01-01T00:00:00+00:00',
-			'2027-01-01T00:00:00+00:00',
-			'2027-01-15T00:00:00+00:00',
-			'2026-07-02T00:00:00+00:00',
-		])
-	})
-})
-
 describe('report schedules', () => {
-	it('runs a monthly schedule made on 29 September first on 5 October', () => {
-		expect(nextRunAt('monthly', 5, new Date('2026-09-29T14:00:00Z'))).toBe(
-			'2026-10-05T00:00:00+00:00',
-		)
-		expect(nextRunAt('monthly', 5, new Date('2026-10-05T01:00:00Z'))).toBe(
-			'2026-11-05T00:00:00+00:00',
-		)
-	})
-
-	it('runs a quarterly schedule in the first month of a quarter', () => {
-		expect(nextRunAt('quarterly', 10, new Date('2026-08-15T00:00:00Z'))).toBe(
-			'2026-10-10T00:00:00+00:00',
-		)
-		expect(nextRunAt('quarterly', 10, new Date('2026-10-10T01:00:00Z'))).toBe(
-			'2027-01-10T00:00:00+00:00',
-		)
-	})
-
-	it('runs a weekly schedule on its weekday', () => {
-		expect(nextRunAt('weekly', 1, new Date('2026-09-29T09:00:00Z'))).toBe(
-			'2026-10-05T00:00:00+00:00',
-		)
-		expect(nextRunAt('weekly', 4, new Date('2026-09-29T09:00:00Z'))).toBe(
-			'2026-10-01T00:00:00+00:00',
-		)
-	})
-
 	it('reads users and groups from the recipients field', () => {
 		expect(parseRecipients('group:controllers, anna  user:bert,anna')).toEqual([
 			'group:controllers',
@@ -106,7 +53,6 @@ describe('report schedules', () => {
 				recipients: 'group:controllers',
 				folderPath: '/Rapportages/Maand',
 			},
-			new Date('2026-09-29T14:00:00Z'),
 		)
 		expect(payload).toEqual({
 			administrationId: 'adm-voorbeeld',
@@ -118,8 +64,6 @@ describe('report schedules', () => {
 			periodRule: 'previous-period',
 			recipients: ['group:controllers'],
 			folderPath: '/Rapportages/Maand',
-			nextRunAt: '2026-10-05T00:00:00+00:00',
-			status: 'active',
 		})
 		const properties = fragment.components.schemas.ReportSchedule.properties
 		for (const key of Object.keys(payload)) {
@@ -130,5 +74,7 @@ describe('report schedules', () => {
 	it('offers Schedule this report on the report dialog', () => {
 		expect(dialog).toContain("t('shillinq', 'Schedule this report')")
 		expect(dialog).toContain("from '../utils/reportSchedule.js'")
+		expect(dialog).toContain("'/apps/shillinq/api/report-schedules'")
+		expect(dialog).not.toContain('/api/objects/shillinq/ReportSchedule')
 	})
 })
