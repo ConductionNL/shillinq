@@ -25,6 +25,8 @@ namespace OCA\Shillinq\Tests\Unit\Service\Accrual;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\Accrual\AccrualBooking;
 use OCA\Shillinq\Service\Deferral\DeferralService;
@@ -139,8 +141,8 @@ final class AccrualBookingTest extends TestCase {
 			}
 		);
 		$store->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null): ObjectEntityInterface {
-				$slug         = (string)($schema ?? $this->schema);
+			function (array $object, ?ObjectSaveOptions $options = null): ObjectEntityInterface {
+				$slug         = (string)($options?->target->schema ?? $this->schema);
 				$object['id'] = ($object['id'] ?? (strtolower($slug) . '-' . (++$this->next)));
 				$this->rows[$slug][$object['id']] = $object;
 				$entity = $this->createMock(ObjectEntityInterface::class);
@@ -149,8 +151,9 @@ final class AccrualBookingTest extends TestCase {
 			}
 		);
 		$store->method('patchObject')->willReturnCallback(
-			function (string $objectId, array $data, $register = null, $schema = null): ObjectEntityInterface {
-				$this->rows[(string)$schema][$objectId] = array_merge($this->rows[(string)$schema][$objectId], $data);
+			function (ObjectPatch $patch): ObjectEntityInterface {
+				$schema = (string)$patch->target->schema;
+				$this->rows[$schema][$patch->objectId] = array_merge($this->rows[$schema][$patch->objectId], $patch->data);
 				return $this->createMock(ObjectEntityInterface::class);
 			}
 		);

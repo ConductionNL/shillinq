@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\InstantiateCloseChecklistAction;
 use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
@@ -100,7 +101,7 @@ final class InstantiateCloseChecklistActionTest extends TestCase {
 		);
 
 		$period = ['id' => 'p-2026-09', 'administrationId' => 'ADM-001', 'state' => 'closing', 'taskChecklistItems' => []];
-		$result = $this->action()->execute($period, ['state' => 'open'], [], 'startClose');
+		$result = $this->action()->execute(new LifecycleActionContext(objectData: $period, previousData: ['state' => 'open'], parameters: [], actionName: 'startClose'));
 
 		$this->assertSame(
 			[
@@ -121,14 +122,14 @@ final class InstantiateCloseChecklistActionTest extends TestCase {
 		$items  = [['id' => 'ap', 'category' => 'ap', 'description' => 'Crediteuren', 'resolved' => true]];
 		$period = ['administrationId' => 'ADM-001', 'taskChecklistItems' => $items];
 
-		$this->assertSame($period, $this->action()->execute($period, [], [], 'startClose'));
+		$this->assertSame($period, $this->action()->execute(new LifecycleActionContext(objectData: $period, previousData: [], parameters: [], actionName: 'startClose')));
 
 	}//end testAChecklistThatAlreadyHasItemsIsKept()
 
 	public function testWithoutATemplateForTheLegalFormTheListStaysAsItWas(): void {
 		$period = ['administrationId' => 'ADM-001'];
 
-		$this->assertSame($period, $this->action()->execute($period, [], [], 'startClose'));
+		$this->assertSame($period, $this->action()->execute(new LifecycleActionContext(objectData: $period, previousData: [], parameters: [], actionName: 'startClose')));
 
 	}//end testWithoutATemplateForTheLegalFormTheListStaysAsItWas()
 
@@ -137,7 +138,7 @@ final class InstantiateCloseChecklistActionTest extends TestCase {
 
 		foreach ([[], ['administrationId' => ''], ['administrationId' => 'ADM-404'], ['administrationId' => 'ADM-002']] as $period) {
 			$period['taskChecklistItems'] = [];
-			$this->assertSame([], $this->action()->execute($period, [], [], 'startClose')['taskChecklistItems']);
+			$this->assertSame([], $this->action()->execute(new LifecycleActionContext(objectData: $period, previousData: [], parameters: [], actionName: 'startClose'))['taskChecklistItems']);
 		}
 
 	}//end testWithoutAnAdministrationOrALegalFormNothingIsCopied()
@@ -146,7 +147,7 @@ final class InstantiateCloseChecklistActionTest extends TestCase {
 		$this->bvTemplate('Zomer', [['taskId' => 'z', 'taskName' => 'Zomertaak']]);
 		$this->bvTemplate('Maandafsluiting', [['taskId' => 'm', 'taskName' => 'Maandtaak']]);
 
-		$result = $this->action()->execute(['administrationId' => 'ADM-001'], [], [], 'startClose');
+		$result = $this->action()->execute(new LifecycleActionContext(objectData: ['administrationId' => 'ADM-001'], previousData: [], parameters: [], actionName: 'startClose'));
 
 		$this->assertSame(['Maandtaak'], array_column($result['taskChecklistItems'], 'description'));
 
@@ -154,10 +155,10 @@ final class InstantiateCloseChecklistActionTest extends TestCase {
 
 	public function testTheItemsAreACopySoALaterTemplateEditDoesNotReachThem(): void {
 		$this->bvTemplate('Maandafsluiting', [['taskId' => 'bank', 'taskName' => 'Bank']]);
-		$started = $this->action()->execute(['administrationId' => 'ADM-001'], [], [], 'startClose');
+		$started = $this->action()->execute(new LifecycleActionContext(objectData: ['administrationId' => 'ADM-001'], previousData: [], parameters: [], actionName: 'startClose'));
 
 		$this->store->rows['CloseChecklistTemplate'][1]['tasks'][] = ['taskId' => 'nieuw', 'taskName' => 'Nieuwe taak'];
-		$again = $this->action()->execute($started, [], [], 'startClose');
+		$again = $this->action()->execute(new LifecycleActionContext(objectData: $started, previousData: [], parameters: [], actionName: 'startClose'));
 
 		$this->assertSame($started['taskChecklistItems'], $again['taskChecklistItems']);
 		$this->assertCount(1, $again['taskChecklistItems']);

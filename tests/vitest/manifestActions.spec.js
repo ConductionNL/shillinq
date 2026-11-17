@@ -89,7 +89,7 @@ const ROOT = path.resolve(__dirname, '../..')
 const { attachManifestActions, manifestActions } =
 	await import('../../src/manifestActions.js')
 const CnPageRenderer = (
-	await import('@conduction/nextcloud-vue/dist/esm/components/CnPageRenderer/CnPageRenderer.vue2.js')
+	await import('@conduction/nextcloud-vue/dist/esm/components/CnPageRenderer/CnPageRenderer.vue.js')
 ).default
 
 /**
@@ -245,7 +245,7 @@ describe('the import batch page lifecycle buttons', () => {
 	 */
 	async function buttonsFor(config, status) {
 		const CnLifecycleActions = (
-			await import('@conduction/nextcloud-vue/dist/esm/components/CnLifecycleActions/CnLifecycleActions.vue2.js')
+			await import('@conduction/nextcloud-vue/dist/esm/components/CnLifecycleActions/CnLifecycleActions.vue.js')
 		).default
 		const instance = {
 			config,

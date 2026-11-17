@@ -60,6 +60,14 @@
             "description": "The owner's path for adding members to an administration."
         },
         {
+            "name": "import-batch",
+            "description": "Server actions on an import batch (confirm suggested mappings)."
+        },
+        {
+            "name": "administration-template",
+            "description": "Office templates of a chart of accounts: save, list and seed from."
+        },
+        {
             "name": "b-bv-dashboard",
             "description": "Thin page controller for the waterschappen BBV compliance dashboard."
         },
@@ -156,6 +164,10 @@
             "description": "Per-user deadline-calendar category toggles (REQ-CDC-006)."
         },
         {
+            "name": "direct-debit-batch",
+            "description": "SEPA direct debit batches: propose the draft batches and download their pain.008 file."
+        },
+        {
             "name": "down-payment",
             "description": "Down-payment endpoints."
         },
@@ -166,6 +178,10 @@
         {
             "name": "dunning-preview",
             "description": "The Next run preview, the last run report and a ladder's stage texts."
+        },
+        {
+            "name": "ensia-cycle",
+            "description": "The files an ENSIA self-evaluation cycle's transitions store: the college statement and the submission XML."
         },
         {
             "name": "extraction-request",
@@ -230,6 +246,10 @@
         {
             "name": "inventory-valuation-report",
             "description": "GET /api/inventory/valuation-report — value-as-of-date (+ optional ageing)."
+        },
+        {
+            "name": "invoice-sending",
+            "description": "Sending issued ARInvoices by the customer's delivery method (email with PDF, Peppol, post), one at a time or as a queued batch."
         },
         {
             "name": "invoice-api",
@@ -356,8 +376,16 @@
             "description": "The multi-year reserve overview endpoint."
         },
         {
+            "name": "retention-due",
+            "description": "The records whose retention period has ended and are due for destruction."
+        },
+        {
             "name": "revenue",
             "description": "GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period."
+        },
+        {
+            "name": "sbr-filing",
+            "description": "HTTP API for downloading the XBRL file of an SBR filing."
         },
         {
             "name": "sepa-audit",
@@ -474,6 +502,14 @@
         {
             "name": "widget-settings",
             "description": "Admin endpoints to generate, rotate, and revoke widget API keys."
+        },
+        {
+            "name": "investment-deduction",
+            "description": "The yearly investment deduction (KIA, EIA, MIA) claims."
+        },
+        {
+            "name": "portal-subscription-cancel",
+            "description": "A customer ends their own subscription from the portal."
         },
         {
             "name": "deferral-schedules",
@@ -1173,6 +1209,54 @@
                 }
             }
         },
+        "/import-batches/{id}/confirm-suggestions": {
+            "post": {
+                "operationId": "import-batch-confirm-suggestions",
+                "summary": "Confirm the suggested mappings of an import batch",
+                "description": "Confirm every unconfirmed mapping of the batch that has a target account, in one call, and answer `{confirmed: <count>}`. The batch's administration must be one of the caller's, else a masked 404; a batch that is not being mapped answers 409. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "import-batch"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The import batch id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/administrations/{administrationId}/standards-policy": {
             "get": {
                 "operationId": "standards-policy-show",
@@ -1348,6 +1432,229 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/administration-templates": {
+            "get": {
+                "operationId": "administration-template-index",
+                "summary": "The active office templates, for the setup wizard's template step",
+                "description": "The active office templates, for the setup wizard's template step: id, name, version and the number of accounts and dimensions each carries. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-template"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/administrations/{id}/template": {
+            "post": {
+                "operationId": "administration-template-save-as",
+                "summary": "Save the administration's chart of accounts and dimensions as a template",
+                "description": "Save the administration's chart of accounts and dimensions as an office template at version 1, without postings, relations or balances (REQ-LMA-003). A non-member receives a masked 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-template"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "The template's name, at most 200 characters."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The record was created.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/administrations/{id}/seed-template": {
+            "post": {
+                "operationId": "administration-template-seed",
+                "summary": "Seed the administration from an office template",
+                "description": "Add every account and dimension of the template the administration does not have yet (REQ-LMA-004). Needs the right to post in the administration; anyone else receives a masked 404, as does an unknown template. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-template"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "templateId": {
+                                        "description": "The template to seed from."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/investment-deductions/{year}/calculate": {
+            "post": {
+                "operationId": "investment-deduction-calculate",
+                "summary": "Recalculate a year's investment deduction claims",
+                "description": "Work out the year's KIA, EIA and MIA deduction from the eligible assets acquired in that year and that year's tables, and write them as draft claims; a claim already used in a tax return is left as it is (REQ-IDC-002). Takes the administrationId from the body, else the active administration. Needs the right to post in that administration; anyone else receives a masked 404. A year without KIA tiers is refused with 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "investment-deduction"
+                ],
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "path",
+                        "required": true,
+                        "description": "The year.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration; the active one when left out."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
@@ -1943,6 +2250,131 @@
                 }
             }
         },
+        "/ar-invoices/{id}/send": {
+            "post": {
+                "operationId": "invoice-sending-send",
+                "summary": "Send an issued ARInvoice by the customer's delivery method",
+                "description": "Send an issued or overdue ARInvoice: by email with its PDF attached, through Peppol, or record post or none, by the customer's delivery method. POST /api/ar-invoices/{id}/send Body: { administrationId, via? } where via email mails the PDF whatever the method. Answers {status, sending, error}; status is sent, recorded, fallback (no Peppol participant: send by email instead) or failed. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-sending"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ARInvoice id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/ar-invoices/send-batch": {
+            "post": {
+                "operationId": "invoice-sending-send-batch",
+                "summary": "Send the selected ARInvoices in a queued batch",
+                "description": "Record an InvoiceBatch of kind send for up to 200 issued invoices of one administration and queue the job that sends each by its customer's delivery method. POST /api/ar-invoices/send-batch Body: { administrationId, invoiceIds, resend? }. An invoice already sent is skipped unless resend is true. Answers 202 with the queued batch; the batch records an outcome per invoice (sent, skipped or failed) and notifies the requester when done. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-sending"
+                ],
+                "responses": {
+                    "202": {
+                        "description": "The batch is queued.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/ar-invoices/batch": {
+            "post": {
+                "operationId": "invoice-batch-create",
+                "summary": "Create one ARInvoice per selected customer",
+                "description": "Write one ARInvoice per selected CustomerMaster of one administration from one set of lines. POST /api/ar-invoices/batch Body: { administrationId, batchId?, customerIds, charge: { invoiceDate, dueDate?, lines: [{ description, quantity, unitPrice, vatRate }] }, issue?, send? }. At most 200 customers. Each due date is the invoice date plus the customer's paymentTermDays unless the charge names a due date. Submitting the same batchId again writes only the invoices still missing. With issue the invoices are issued; with send (needs issue) they are queued for sending by each customer's delivery method. Answers 201 with the InvoiceBatch of kind create and an outcome per customer (created, existing, skipped or failed). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-sending"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The batch is written.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/audit/export": {
             "get": {
                 "operationId": "compliance-export-export",
@@ -2085,6 +2517,81 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/bado/controleprotocol/samples": {
+            "post": {
+                "operationId": "audit-sample-draw",
+                "summary": "Draw an audit sample for a protocol from its posted ledger lines",
+                "description": "Draw an audit sample for a Controleprotocol from the posted ledger lines of its administration and audit year, optionally on the accounts whose number starts with account_prefix. The same seed over the same population draws the same lines. 201 with the stored sample; 400 on a malformed request; 404 for a protocol of another administration; 422 when the size does not fit the population. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "bado-controleprotocol"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "protocol_id": {
+                                        "description": "The Controleprotocol id.",
+                                        "type": "string"
+                                    },
+                                    "size": {
+                                        "description": "The number of lines to draw.",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "seed": {
+                                        "description": "The seed; leave it out for a new one.",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "account_prefix": {
+                                        "description": "Only accounts whose number starts with this.",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "protocol_id",
+                                    "size"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The sample was drawn and stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
                     }
                 }
             }
@@ -7821,6 +8328,119 @@
                 }
             }
         },
+        "/direct-debit-batches/propose": {
+            "post": {
+                "operationId": "direct-debit-batch-propose",
+                "summary": "Propose the draft direct debit batches for a collection date",
+                "description": "Propose the draft direct debit batches for a collection date. Request: administrationId, collectionDate (YYYY-MM-DD). 201 with the batches and the skipped invoices; 422 with the skipped invoices when nothing can be collected; 400 on a malformed date; 403 outside the caller's administrations. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "direct-debit-batch"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration id.",
+                                        "type": "string"
+                                    },
+                                    "collectionDate": {
+                                        "description": "The requested collection date, YYYY-MM-DD.",
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "required": [
+                                    "administrationId",
+                                    "collectionDate"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/direct-debit-batches/{id}/file": {
+            "get": {
+                "operationId": "direct-debit-batch-file",
+                "summary": "Download the pain.008 file of a generated direct debit batch",
+                "description": "Download the pain.008.001.02 file of a generated direct debit batch as an XML attachment. 404 for a missing batch or one of another administration; 409 when the batch has no file yet. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "direct-debit-batch"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The DirectDebitBatch id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The pain.008 file.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "text/xml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    }
+                }
+            }
+        },
         "/payroll/journaalpost": {
             "get": {
                 "operationId": "payroll-journaalpost",
@@ -7958,160 +8578,6 @@
                         "in": "path",
                         "required": true,
                         "description": "The PeriodClose id or business periodId (path).",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The request succeeded.",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Problem401"
-                    }
-                }
-            }
-        },
-        "/period-close/{periodId}/checklist": {
-            "post": {
-                "operationId": "period-close-add-item",
-                "summary": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002)",
-                "description": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002). Needs a signed-in Nextcloud user.",
-                "tags": [
-                    "period-close"
-                ],
-                "parameters": [
-                    {
-                        "name": "periodId",
-                        "in": "path",
-                        "required": true,
-                        "description": "The PeriodClose id or business periodId (path).",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "category": {
-                                        "description": "The category."
-                                    },
-                                    "description": {
-                                        "description": "The description."
-                                    }
-                                },
-                                "additionalProperties": false
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "The request succeeded.",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Problem401"
-                    }
-                }
-            }
-        },
-        "/period-close/{periodId}/checklist/{itemId}/resolve": {
-            "post": {
-                "operationId": "period-close-resolve-item",
-                "summary": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002)",
-                "description": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002). Needs a signed-in Nextcloud user.",
-                "tags": [
-                    "period-close"
-                ],
-                "parameters": [
-                    {
-                        "name": "periodId",
-                        "in": "path",
-                        "required": true,
-                        "description": "The PeriodClose id or business periodId (path).",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "itemId",
-                        "in": "path",
-                        "required": true,
-                        "description": "The checklist item id (path).",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The request succeeded.",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Problem401"
-                    }
-                }
-            }
-        },
-        "/period-close/{periodId}/checklist/{itemId}/reopen": {
-            "post": {
-                "operationId": "period-close-reopen-item",
-                "summary": "POST reopen one resolved checklist item (REQ-LPE-002)",
-                "description": "POST reopen one resolved checklist item (REQ-LPE-002). Needs a signed-in Nextcloud user.",
-                "tags": [
-                    "period-close"
-                ],
-                "parameters": [
-                    {
-                        "name": "periodId",
-                        "in": "path",
-                        "required": true,
-                        "description": "The PeriodClose id or business periodId (path).",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "itemId",
-                        "in": "path",
-                        "required": true,
-                        "description": "The checklist item id (path).",
                         "schema": {
                             "type": "string"
                         }
@@ -8539,6 +9005,38 @@
                 }
             }
         },
+        "/portal/subscriptions/cancel": {
+            "post": {
+                "operationId": "portal-subscription-cancel-cancel",
+                "summary": "End the customer's own running subscription",
+                "description": "End the customer's own running subscription. Portaliq forwards `POST /apps/shillinq/api/portal/subscriptions/cancel` with `{\"profileId\": \"<uuid>\", \"reasonCode\": \"<code>\", \"reasonText\": \"<note>\"}` (reason optional) and the signed assertion header. Response contract: 200 `{status: cancelled}` (also for a repeat); 401 missing or invalid assertion; 403 wrong audience, or the profile is not a running subscription the customer owns (one body for every reason, no existence oracle); 502 on an OpenRegister failure, never with internals. Rate limit: a human clicks this, and each call can write. Public: it needs no login.",
+                "tags": [
+                    "portal-subscription-cancel"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
         "/portal/payments/initiate": {
             "post": {
                 "operationId": "portal-payment-initiation-initiate",
@@ -8777,6 +9275,101 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/public-sector/ensia/{id}/xml": {
+            "get": {
+                "operationId": "ensia-cycle-xml",
+                "summary": "Download the submission XML of a submitted ENSIA cycle",
+                "description": "Download the ENSIA submission XML that the cycle's submit transition produced, as an attachment. 404 for a missing cycle or one of another administration; 409 when the cycle has no XML yet. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "ensia-cycle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ENSIAJaarcyclus id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The submission XML.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "text/xml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    }
+                }
+            }
+        },
+        "/public-sector/ensia/{id}/statement": {
+            "get": {
+                "operationId": "ensia-cycle-statement",
+                "summary": "Download the college statement of an ENSIA cycle",
+                "description": "Download the college statement DOCX that the cycle's move to college approval rendered, as an attachment. 404 for a missing cycle or one of another administration; 409 when no statement is rendered yet. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "ensia-cycle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ENSIAJaarcyclus id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The college statement.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
                     }
                 }
             }
@@ -11875,6 +12468,54 @@
                 }
             }
         },
+        "/vat-returns/{returnId}/checks": {
+            "get": {
+                "operationId": "v-at-return-checks",
+                "summary": "Run the checks of a VAT return (REQ-TVRB-001)",
+                "description": "Run the checks of a VAT return (REQ-TVRB-001): each with whether it passed, whether it blocks submitting and what makes it fail. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "v-at-return"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The VATReturn id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/vat-returns/{returnId}/submit": {
             "post": {
                 "operationId": "v-at-return-submit",
@@ -12184,6 +12825,39 @@
                         "$ref": "#/components/responses/Problem429"
                     }
                 }
+            },
+            "options": {
+                "operationId": "widget-api-preflight-appointments",
+                "summary": "OPTIONS /api/widget/appointments — CORS preflight of an embed on another website",
+                "description": "The CORS preflight of the booking widget on another website (REQ-WSW-011). Answers 204 with the CORS headers when the widget key of `businessId` allows the request's Origin, else 403 without them. Public: it needs no login.",
+                "tags": [
+                    "widget-api"
+                ],
+                "security": [],
+                "parameters": [
+                    {
+                        "name": "businessId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The business id of the widget key.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The origin is allowed; the CORS headers are set.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The origin is not allowed for this business."
+                    }
+                }
             }
         },
         "/widget/services": {
@@ -12208,6 +12882,39 @@
                                 "schema": {}
                             }
                         }
+                    }
+                }
+            },
+            "options": {
+                "operationId": "widget-api-preflight-services",
+                "summary": "OPTIONS /api/widget/services — CORS preflight of an embed on another website",
+                "description": "The CORS preflight of the booking widget on another website (REQ-WSW-011). Answers 204 with the CORS headers when the widget key of `businessId` allows the request's Origin, else 403 without them. Public: it needs no login.",
+                "tags": [
+                    "widget-api"
+                ],
+                "security": [],
+                "parameters": [
+                    {
+                        "name": "businessId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The business id of the widget key.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The origin is allowed; the CORS headers are set.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The origin is not allowed for this business."
                     }
                 }
             }
@@ -12267,6 +12974,39 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            },
+            "options": {
+                "operationId": "widget-api-preflight-slots",
+                "summary": "OPTIONS /api/widget/slots — CORS preflight of an embed on another website",
+                "description": "The CORS preflight of the booking widget on another website (REQ-WSW-011). Answers 204 with the CORS headers when the widget key of `businessId` allows the request's Origin, else 403 without them. Public: it needs no login.",
+                "tags": [
+                    "widget-api"
+                ],
+                "security": [],
+                "parameters": [
+                    {
+                        "name": "businessId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The business id of the widget key.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The origin is allowed; the CORS headers are set.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The origin is not allowed for this business."
                     }
                 }
             }
@@ -12386,6 +13126,110 @@
                 }
             }
         },
+        "/vat-corrections/{correctionId}/supplementary-return": {
+            "get": {
+                "operationId": "vat-suppletie-download",
+                "summary": "Download the prepared supplementary VAT return (REQ-VPS-002)",
+                "description": "The prepared correction as a JSON document: the return it corrects, the per-box differences, the net correction and the threshold decision. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The prepared VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-corrections/{correctionId}/file": {
+            "post": {
+                "operationId": "vat-suppletie-file",
+                "summary": "File the prepared supplementary VAT return through Digipoort (REQ-VPS-002)",
+                "description": "Hands the supplementary return to the Digipoort port and marks the correction submitted. While Digipoort is not connected it answers 409 with the download address. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The prepared VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/vat-position": {
             "get": {
                 "operationId": "vat-position-show",
@@ -12398,8 +13242,8 @@
                     {
                         "name": "administrationId",
                         "in": "query",
-                        "required": true,
-                        "description": "The administration.",
+                        "required": false,
+                        "description": "The administration; the caller's active administration when left out.",
                         "schema": {
                             "type": "string"
                         }
@@ -12407,8 +13251,8 @@
                     {
                         "name": "period",
                         "in": "query",
-                        "required": true,
-                        "description": "YYYY-Qn, YYYY-MM or YYYY.",
+                        "required": false,
+                        "description": "YYYY-Qn, YYYY-MM or YYYY; the quarter of today when left out.",
                         "schema": {
                             "type": "string"
                         }
@@ -12439,6 +13283,310 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/retention/due": {
+            "get": {
+                "operationId": "retention-due-index",
+                "summary": "The records whose retention period has ended",
+                "description": "The records whose retention period has ended, oldest end date first, with the register, the record, the retention rule, the end date and the disposition. Records under a legal hold are left out. Query: `administrationId` (optional): one administration; without it, the caller's active administration. An administration the caller may not read answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "retention-due"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/sbr-filings/{id}/xbrl": {
+            "get": {
+                "operationId": "sbr-filing-download",
+                "summary": "Download the XBRL file of an SBR filing (GET /api/v1/sbr-filings/{id}/xbrl)",
+                "description": "Download the XBRL file of an SBR filing (an XbrlInstance: a VAT return or a set of annual accounts), in any state, so a filing can be checked before it is submitted. Answers 404 for a filing outside the caller's administrations, or one without a document. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "sbr-filing"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The XbrlInstance uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/xml": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/widget/admin/keys/origins": {
+            "post": {
+                "operationId": "widget-settings-origins",
+                "summary": "Set the websites that may embed the widget of a business (REQ-WSW-011)",
+                "description": "Set the websites that may embed the widget of a business (REQ-WSW-011). Takes `businessId` and `allowedOrigins`, a list of origins such as `https://www.example.com`; an empty list closes the API to every other website again. A wildcard, a path or an invalid origin refuses the whole list. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "widget-settings"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "businessId": {
+                                        "description": "The business id."
+                                    },
+                                    "allowedOrigins": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "The allowed origins."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "400": {
+                        "description": "A parameter is missing or an origin is invalid."
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist": {
+            "post": {
+                "operationId": "period-close-add-item",
+                "summary": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002)",
+                "description": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "category": {
+                                        "description": "The category."
+                                    },
+                                    "description": {
+                                        "description": "The description."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/resolve": {
+            "post": {
+                "operationId": "period-close-resolve-item",
+                "summary": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002)",
+                "description": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/reopen": {
+            "post": {
+                "operationId": "period-close-reopen-item",
+                "summary": "POST reopen one resolved checklist item (REQ-LPE-002)",
+                "description": "POST reopen one resolved checklist item (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }

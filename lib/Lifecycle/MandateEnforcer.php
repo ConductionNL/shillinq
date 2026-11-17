@@ -138,41 +138,44 @@ class MandateEnforcer implements MandateEnforcerInterface {
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
 	public function resolveApplicableMandate(array $commitment): ?array {
-		$kind = (string)($commitment['kind'] ?? '');
+		$kind   = (string)($commitment['kind'] ?? '');
 		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);
-		$admin = (string)($commitment['administrationId'] ?? '');
+		$admin  = (string)($commitment['administrationId'] ?? '');
 
 		$mandaten = $this->findMany(schema: 'SpendingMandate', filters: ['administrationId' => $admin]);
 
 		$best = null;
 		foreach ($mandaten as $mandate) {
-			if ($this->mandateApplies(mandate: $mandate, kind: $kind, amount: $amount) === false) {
-				continue;
-			}
-
-			if ($best === null) {
-				$best = $mandate;
-				continue;
-			}
-
-			// Prefer non-override, then the lowest sufficient ceiling (least-privilege).
-			$bestOverride = (bool)($best['is_override'] ?? false);
-			$candOverride = (bool)($mandate['is_override'] ?? false);
-			if ($bestOverride !== $candOverride) {
-				if ($candOverride === false) {
-					$best = $mandate;
-				}
-
-				continue;
-			}
-
-			if ((int)($mandate['maximumAmount'] ?? 0) < (int)($best['maximumAmount'] ?? 0)) {
+			$applies = $this->mandateApplies(mandate: $mandate, kind: $kind, amount: $amount);
+			if ($applies === true && self::isPreferredMandate(candidate: $mandate, best: $best) === true) {
 				$best = $mandate;
 			}
 		}//end foreach
 
 		return $best;
 	}//end resolveApplicableMandate()
+
+	/**
+	 * Prefer non-override, then the lowest sufficient ceiling (least-privilege).
+	 *
+	 * @param array<string,mixed>      $candidate An applicable mandate.
+	 * @param array<string,mixed>|null $best      The best applicable mandate so far, or null.
+	 *
+	 * @return bool Whether the candidate replaces the best so far.
+	 */
+	private static function isPreferredMandate(array $candidate, array|null $best): bool {
+		if ($best === null) {
+			return true;
+		}
+
+		$bestOverride = (bool)($best['is_override'] ?? false);
+		$candOverride = (bool)($candidate['is_override'] ?? false);
+		if ($bestOverride !== $candOverride) {
+			return ($candOverride === false);
+		}
+
+		return ((int)($candidate['maximumAmount'] ?? 0) < (int)($best['maximumAmount'] ?? 0));
+	}//end isPreferredMandate()
 
 	/**
 	 * Whether a commitment requires a second signature under the applicable mandaat

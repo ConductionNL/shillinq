@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodChecklistService;
@@ -98,8 +99,8 @@ final class PeriodChecklistServiceTest extends TestCase {
 	private function service(): PeriodChecklistService {
 		$objects = $this->createMock(ObjectServiceInterface::class);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null) {
-				$this->saved[] = [$object, $register, $schema];
+			function (array $object, ?ObjectSaveOptions $options = null) {
+				$this->saved[] = [$object, $options?->target->register, $options?->target->schema];
 				return $this->createMock(ObjectEntityInterface::class);
 			}
 		);

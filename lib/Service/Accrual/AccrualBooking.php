@@ -33,6 +33,8 @@ namespace OCA\Shillinq\Service\Accrual;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -170,10 +172,11 @@ class AccrualBooking {
 		);
 
 		$this->objectService->patchObject(
-			objectId: (string)$posting['id'],
-			data: ['reversalId' => $number, 'reversalState' => 'reversed'],
-			register: $this->settings->getRegisterSlug(),
-			schema: 'AutoAccrualPosting'
+			patch: new ObjectPatch(
+				objectId: (string)$posting['id'],
+				data: ['reversalId' => $number, 'reversalState' => 'reversed'],
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'AutoAccrualPosting')
+			)
 		);
 	}//end reverse()
 

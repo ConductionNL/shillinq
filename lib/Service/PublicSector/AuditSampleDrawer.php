@@ -75,18 +75,12 @@ class AuditSampleDrawer {
 		}
 
 		$ids = self::lineIds(population: $population);
-		if ($size < 1 || $size > count($ids)) {
-			throw new DomainException(sprintf('A sample must hold between 1 and %d lines; %d were asked.', count($ids), $size));
-		}
+		self::requireSampleSize(size: $size, ids: $ids);
 
-		if ($seed === null) {
-			$seed = random_int(1, 2147483647);
-		}
+		$seed = self::seedOrNew(seed: $seed);
 
 		$selected = self::select(ids: $ids, size: $size, seed: $seed);
-		if ($description === '') {
-			$description = sprintf('%d posted lines', count($ids));
-		}
+		$description = self::populationDescription(description: $description, ids: $ids);
 
 		$sampleId = $this->records->create(
 			schema: 'AuditSample',
@@ -105,6 +99,59 @@ class AuditSampleDrawer {
 		return ['id' => $sampleId, 'sampledLineIds' => $selected, 'reproducibleSeed' => (string)$seed];
 
 	}//end draw()
+
+	/**
+	 * Refuse a sample size outside 1 and the population size.
+	 *
+	 * @param int               $size How many lines to select.
+	 * @param array<int,string> $ids  The population's line ids.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the size is out of range.
+	 *
+	 * @spec openspec/changes/public-sector-council-and-auditor-statements/tasks.md#task-2.1
+	 */
+	private static function requireSampleSize(int $size, array $ids): void {
+		if ($size < 1 || $size > count($ids)) {
+			throw new DomainException(sprintf('A sample must hold between 1 and %d lines; %d were asked.', count($ids), $size));
+		}
+	}//end requireSampleSize()
+
+	/**
+	 * The given seed, or a new random one.
+	 *
+	 * @param int|null $seed The requested seed.
+	 *
+	 * @return int The seed to draw with.
+	 *
+	 * @spec openspec/changes/public-sector-council-and-auditor-statements/tasks.md#task-2.1
+	 */
+	private static function seedOrNew(int|null $seed): int {
+		if ($seed === null) {
+			$seed = random_int(1, 2147483647);
+		}
+
+		return $seed;
+	}//end seedOrNew()
+
+	/**
+	 * The population description, defaulting to the number of posted lines.
+	 *
+	 * @param string            $description The given description.
+	 * @param array<int,string> $ids         The population's line ids.
+	 *
+	 * @return string The description.
+	 *
+	 * @spec openspec/changes/public-sector-council-and-auditor-statements/tasks.md#task-2.1
+	 */
+	private static function populationDescription(string $description, array $ids): string {
+		if ($description === '') {
+			$description = sprintf('%d posted lines', count($ids));
+		}
+
+		return $description;
+	}//end populationDescription()
 
 	/**
 	 * Select `size` ids by a seeded partial Fisher-Yates shuffle over the sorted ids.

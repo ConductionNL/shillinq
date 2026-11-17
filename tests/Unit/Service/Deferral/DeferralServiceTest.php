@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Deferral;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Kernel\Exception\DeferralRefusedException;
 use OCA\Shillinq\Service\Deferral\DeferralService;
@@ -127,10 +128,11 @@ final class DeferralServiceTest extends TestCase {
 			}
 		);
 		$store->method('patchObject')->willReturnCallback(
-			function (string $objectId, array $data, $register = null, $schema = null): ObjectEntityInterface {
-				$this->assertSame('shillinq', $register);
-				$this->assertArrayHasKey($objectId, $this->rows[(string)$schema]);
-				$this->rows[(string)$schema][$objectId] = array_merge($this->rows[(string)$schema][$objectId], $data);
+			function (ObjectPatch $patch): ObjectEntityInterface {
+				$this->assertSame('shillinq', $patch->target->register);
+				$schema = (string)$patch->target->schema;
+				$this->assertArrayHasKey($patch->objectId, $this->rows[$schema]);
+				$this->rows[$schema][$patch->objectId] = array_merge($this->rows[$schema][$patch->objectId], $patch->data);
 				return $this->createMock(ObjectEntityInterface::class);
 			}
 		);

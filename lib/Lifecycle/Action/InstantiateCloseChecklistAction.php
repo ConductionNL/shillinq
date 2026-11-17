@@ -40,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -77,16 +78,15 @@ class InstantiateCloseChecklistAction implements LifecycleActionInterface {
 	/**
 	 * Fill an empty checklist from the administration's template.
 	 *
-	 * @param array<string, mixed> $objectData   The period as it will be stored.
-	 * @param array<string, mixed> $previousData The period before the transition.
-	 * @param array<string, mixed> $parameters   The declared parameters (none are read).
-	 * @param string               $actionName   The action's declared name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the period as it will be stored
+	 *                                        (its declared parameters are not read).
 	 *
 	 * @return array<string, mixed> The period, its checklist filled when it was empty.
 	 *
 	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
 		$existing = ($objectData[self::ITEMS] ?? []);
 		if (is_array($existing) === true && $existing !== []) {
 			return $objectData;

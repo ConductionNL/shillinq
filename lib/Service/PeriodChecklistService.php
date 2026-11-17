@@ -31,6 +31,8 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 use OCA\Shillinq\Lifecycle\Action\InstantiateCloseChecklistAction;
@@ -302,8 +304,7 @@ class PeriodChecklistService {
 		$record[InstantiateCloseChecklistAction::ITEMS] = $items;
 		$this->objectService->saveObject(
 			object: $record,
-			register: $this->settings->getRegisterSlug(),
-			schema: 'FiscalPeriod',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'FiscalPeriod'))
 		);
 
 		return $record;

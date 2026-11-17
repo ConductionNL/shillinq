@@ -479,46 +479,14 @@ class CashflowPdfRenderer {
 	 * @return string A PDF content stream.
 	 */
 	private function chartStream(array $horizon, array $weeks): string {
-		$balances = [];
-		foreach ($weeks as $week) {
-			$balances[] = (float)($week['closingBalance'] ?? 0);
-		}
-
-		$scale = 0.0;
-		foreach ($balances as $balance) {
-			$scale = max($scale, abs($balance));
-		}
-
-		if ($scale <= 0.0) {
-			$scale = 1.0;
-		}
+		$scale = $this->chartScale(weeks: $weeks);
 
 		$plotWidth = (self::PAGE_WIDTH - (2 * self::MARGIN_X));
 		$slot = ($plotWidth / max(count($weeks), 1));
 		$barWidth = max(($slot * 0.6), 1.0);
 		$zeroY = self::CHART_ZERO_Y;
 
-		$ops = [
-			'BT',
-			'/F2 14 Tf',
-			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y)),
-			'(13-WEEK CLOSING BALANCE) Tj',
-			'ET',
-			'BT',
-			'/F1 9 Tf',
-			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y - 18)),
-			'(' . $this->pdf->escapeString(
-				'Horizon ' . (string)($horizon['horizonStart'] ?? '?') . ' .. ' . (string)($horizon['horizonEnd'] ?? '?')
-				. '   blue = above buffer, amber = pre-alert, red = below buffer'
-			) . ') Tj',
-			'ET',
-			// Zero line.
-			'0.4 0.4 0.4 RG',
-			'0.8 w',
-			sprintf('%d %d m', self::MARGIN_X, $zeroY),
-			sprintf('%d %d l', (self::PAGE_WIDTH - self::MARGIN_X), $zeroY),
-			'S',
-		];
+		$ops = $this->chartHeaderOps(horizon: $horizon, zeroY: $zeroY);
 
 		foreach ($weeks as $index => $week) {
 			$balance = (float)($week['closingBalance'] ?? 0);
@@ -546,6 +514,63 @@ class CashflowPdfRenderer {
 
 		return implode("\n", $ops);
 	}//end chartStream()
+
+	/**
+	 * The largest absolute closing balance in the horizon, or 1.0 when every balance is zero.
+	 *
+	 * @param list<array<string,mixed>> $weeks The weeks to plot.
+	 *
+	 * @return float The bar scale.
+	 */
+	private function chartScale(array $weeks): float {
+		$balances = [];
+		foreach ($weeks as $week) {
+			$balances[] = (float)($week['closingBalance'] ?? 0);
+		}
+
+		$scale = 0.0;
+		foreach ($balances as $balance) {
+			$scale = max($scale, abs($balance));
+		}
+
+		if ($scale <= 0.0) {
+			$scale = 1.0;
+		}
+
+		return $scale;
+	}//end chartScale()
+
+	/**
+	 * The chart title, legend and zero line operators.
+	 *
+	 * @param array<string,mixed> $horizon The horizon (title metadata only).
+	 * @param int $zeroY The y coordinate of the zero line.
+	 *
+	 * @return list<string> PDF content-stream operators.
+	 */
+	private function chartHeaderOps(array $horizon, int $zeroY): array {
+		return [
+			'BT',
+			'/F2 14 Tf',
+			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y)),
+			'(13-WEEK CLOSING BALANCE) Tj',
+			'ET',
+			'BT',
+			'/F1 9 Tf',
+			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y - 18)),
+			'(' . $this->pdf->escapeString(
+				'Horizon ' . (string)($horizon['horizonStart'] ?? '?') . ' .. ' . (string)($horizon['horizonEnd'] ?? '?')
+				. '   blue = above buffer, amber = pre-alert, red = below buffer'
+			) . ') Tj',
+			'ET',
+			// Zero line.
+			'0.4 0.4 0.4 RG',
+			'0.8 w',
+			sprintf('%d %d m', self::MARGIN_X, $zeroY),
+			sprintf('%d %d l', (self::PAGE_WIDTH - self::MARGIN_X), $zeroY),
+			'S',
+		];
+	}//end chartHeaderOps()
 
 	/**
 	 * Map a week's buffer status onto a PDF fill colour operator.

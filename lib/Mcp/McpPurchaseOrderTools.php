@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Mcp;
 
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -46,12 +46,12 @@ class McpPurchaseOrderTools {
 	 * Constructor.
 	 *
 	 * @param McpAdministrationGate        $gate      The authorisation ladder.
-	 * @param PurchaseOrderApprovalService $approvals Records the decision.
+	 * @param PurchaseOrderApprovalServiceInterface $approvals Records the decision.
 	 * @param LoggerInterface              $logger    Logs an unexpected failure.
 	 */
 	public function __construct(
 		private readonly McpAdministrationGate $gate,
-		private readonly PurchaseOrderApprovalService $approvals,
+		private readonly PurchaseOrderApprovalServiceInterface $approvals,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

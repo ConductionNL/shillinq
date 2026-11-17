@@ -84,29 +84,10 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 	 */
 	public function draft(string $administrationId, array $request): array {
-		if ($administrationId === '') {
-			throw new QuickDraftRefusedException(message: 'Choose an administration before drafting an invoice.');
-		}
-
-		$customer = $this->customer(administrationId: $administrationId, customerId: trim((string)($request['customerId'] ?? '')));
-		if ($customer === null) {
-			throw new QuickDraftRefusedException(message: 'This customer is not part of your administration.');
-		}
-
-		$invoiceDate = trim((string)($request['invoiceDate'] ?? ''));
-		if (self::isDate(value: $invoiceDate) === false) {
-			throw new QuickDraftRefusedException(message: 'Enter a valid invoice date.');
-		}
-
-		$lines = self::lines(given: $request['lines'] ?? [], glAccount: trim((string)($request['glAccount'] ?? '')));
-		if ($lines === []) {
-			throw new QuickDraftRefusedException(message: 'Add at least one line with a description and a price.');
-		}
-
-		$dueDate = trim((string)($request['dueDate'] ?? ''));
-		if (self::isDate(value: $dueDate) === false || $dueDate < $invoiceDate) {
-			$dueDate = self::addDays(date: $invoiceDate, days: self::termDays(terms: (string)($customer['paymentTerms'] ?? '')));
-		}
+		$customer    = $this->draftCustomer(administrationId: $administrationId, request: $request);
+		$invoiceDate = self::requiredInvoiceDate(request: $request);
+		$lines       = self::requiredLines(request: $request);
+		$dueDate     = self::dueDateFor(request: $request, invoiceDate: $invoiceDate, customer: $customer);
 
 		$invoice = array_merge(
 			[
@@ -129,6 +110,83 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 
 		return $invoice;
 	}//end draft()
+
+	/**
+	 * The requested customer, refused without an administration or when it is not part of it.
+	 *
+	 * @param string              $administrationId The administration the invoice is drafted in.
+	 * @param array<string,mixed> $request          The quick draft request.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws QuickDraftRefusedException When there is no administration or the customer is outside it.
+	 */
+	private function draftCustomer(string $administrationId, array $request): array {
+		if ($administrationId === '') {
+			throw new QuickDraftRefusedException(message: 'Choose an administration before drafting an invoice.');
+		}
+
+		$customer = $this->customer(administrationId: $administrationId, customerId: trim((string)($request['customerId'] ?? '')));
+		if ($customer === null) {
+			throw new QuickDraftRefusedException(message: 'This customer is not part of your administration.');
+		}
+
+		return $customer;
+	}//end draftCustomer()
+
+	/**
+	 * The invoice date, refused when it is not a valid date.
+	 *
+	 * @param array<string,mixed> $request The quick draft request.
+	 *
+	 * @return string
+	 *
+	 * @throws QuickDraftRefusedException When the invoice date is not valid.
+	 */
+	private static function requiredInvoiceDate(array $request): string {
+		$invoiceDate = trim((string)($request['invoiceDate'] ?? ''));
+		if (self::isDate(value: $invoiceDate) === false) {
+			throw new QuickDraftRefusedException(message: 'Enter a valid invoice date.');
+		}
+
+		return $invoiceDate;
+	}//end requiredInvoiceDate()
+
+	/**
+	 * The invoice lines, refused when none has a description and a price.
+	 *
+	 * @param array<string,mixed> $request The quick draft request.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @throws QuickDraftRefusedException When there are no usable lines.
+	 */
+	private static function requiredLines(array $request): array {
+		$lines = self::lines(given: $request['lines'] ?? [], glAccount: trim((string)($request['glAccount'] ?? '')));
+		if ($lines === []) {
+			throw new QuickDraftRefusedException(message: 'Add at least one line with a description and a price.');
+		}
+
+		return $lines;
+	}//end requiredLines()
+
+	/**
+	 * The requested due date, else the invoice date plus the customer's payment term.
+	 *
+	 * @param array<string,mixed> $request     The quick draft request.
+	 * @param string              $invoiceDate The invoice date.
+	 * @param array<string,mixed> $customer    The customer.
+	 *
+	 * @return string
+	 */
+	private static function dueDateFor(array $request, string $invoiceDate, array $customer): string {
+		$dueDate = trim((string)($request['dueDate'] ?? ''));
+		if (self::isDate(value: $dueDate) === false || $dueDate < $invoiceDate) {
+			$dueDate = self::addDays(date: $invoiceDate, days: self::termDays(terms: (string)($customer['paymentTerms'] ?? '')));
+		}
+
+		return $dueDate;
+	}//end dueDateFor()
 
 	/**
 	 * The customer, by business key or id, only when it is the administration's.

@@ -35,6 +35,8 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Kernel\Exception\DeferralRefusedException;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -371,7 +373,13 @@ class DeferralService {
 	 * @return void
 	 */
 	private function patch(string $id, array $fields): void {
-		$this->objectService->patchObject(objectId: $id, data: $fields, register: $this->settings->getRegisterSlug(), schema: self::SCHEMA);
+		$this->objectService->patchObject(
+			patch: new ObjectPatch(
+				objectId: $id,
+				data: $fields,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: self::SCHEMA)
+			)
+		);
 	}//end patch()
 
 	/**

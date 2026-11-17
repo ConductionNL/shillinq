@@ -29,8 +29,8 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -173,12 +173,7 @@ class BookingReminderJob extends TimedJob {
 	 * @return string
 	 */
 	private function registerSlug(): string {
-		$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($registerSlug === '') {
-			return 'shillinq';
-		}
-
-		return $registerSlug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end registerSlug()
 
 	/**

@@ -189,10 +189,33 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	private function buildExportPayload(IOutput $output): ?array {
-		// Resolve OR ObjectService lazily via the DI container — mirrors the pattern
-		// used in UnifyAnalyticalDimensions and RetireCostProjectStep.
+		$objectService = $this->orObjectService();
+		if ($objectService === null) {
+			return null;
+		}
+
+		$registerSlug = $this->registerLocation->getRegisterSlug();
+
+		// ---- 1-3. Read all Product, ProductAttribute and VendorMaster objects ----
+		$products          = $this->readSchema(objectService: $objectService, registerSlug: $registerSlug, output: $output, schema: 'Product');
+		$productAttributes = $this->readSchema(objectService: $objectService, registerSlug: $registerSlug, output: $output, schema: 'ProductAttribute');
+		$vendorMasterRaw   = $this->readSchema(objectService: $objectService, registerSlug: $registerSlug, output: $output, schema: 'VendorMaster');
+
+		$vendorMasterData = $this->vendorMasterData(vendorMasterRaw: $vendorMasterRaw, output: $output);
+
+		return $this->exportPayload(products: $products, productAttributes: $productAttributes, vendorMasterData: $vendorMasterData);
+
+	}//end buildExportPayload()
+
+	/**
+	 * Resolve OR ObjectService lazily via the DI container — mirrors the pattern
+	 * used in UnifyAnalyticalDimensions and RetireCostProjectStep.
+	 *
+	 * @return object|null The ObjectService, or null when OpenRegister is not available.
+	 */
+	private function orObjectService(): object|null {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'MigrateProductVendorMasterToPipelinq: OpenRegister ObjectService not available: ' . $e->getMessage()
@@ -200,35 +223,32 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 			return null;
 		}
 
-		$registerSlug = $this->registerLocation->getRegisterSlug();
+	}//end orObjectService()
 
-		// ---- 1. Read all Product objects ----------------------------------------
-		$products = $this->readObjects(
-			objectService: $objectService,
-			registerSlug: $registerSlug,
-			schema: 'Product',
-			output: $output,
-			label: 'Product'
-		);
+	/**
+	 * Read all objects of one schema, labelled by the schema name.
+	 *
+	 * @param object  $objectService The OR ObjectService.
+	 * @param string  $registerSlug  The shillinq register slug.
+	 * @param IOutput $output        The repair output for progress.
+	 * @param string  $schema        The OR schema name to read.
+	 *
+	 * @return array<int,mixed> The list of objects (may be empty).
+	 */
+	private function readSchema(object $objectService, string $registerSlug, IOutput $output, string $schema): array {
+		return $this->readObjects(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, output: $output, label: $schema);
 
-		// ---- 2. Read all ProductAttribute objects --------------------------------
-		$productAttributes = $this->readObjects(
-			objectService: $objectService,
-			registerSlug: $registerSlug,
-			schema: 'ProductAttribute',
-			output: $output,
-			label: 'ProductAttribute'
-		);
+	}//end readSchema()
 
-		// ---- 3. Read all VendorMaster objects + resolve NC Contacts --------------
-		$vendorMasterRaw = $this->readObjects(
-			objectService: $objectService,
-			registerSlug: $registerSlug,
-			schema: 'VendorMaster',
-			output: $output,
-			label: 'VendorMaster'
-		);
-
+	/**
+	 * The VendorMaster payloads, each with its resolved NC Contact UID.
+	 *
+	 * @param array<int,mixed> $vendorMasterRaw The VendorMaster rows.
+	 * @param IOutput          $output          The repair output for progress.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function vendorMasterData(array $vendorMasterRaw, IOutput $output): array {
 		$vendorMasterData = [];
 		foreach ($vendorMasterRaw as $vendor) {
 			$vendorArr = $this->rowPayload(row: $vendor);
@@ -236,16 +256,22 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 			$vendorMasterData[] = $vendorArr;
 		}
 
+		return $vendorMasterData;
+
+	}//end vendorMasterData()
+
+	/**
+	 * Assemble the export payload.
+	 *
+	 * @param array<int,mixed>          $products          The Product rows.
+	 * @param array<int,mixed>          $productAttributes The ProductAttribute rows.
+	 * @param list<array<string,mixed>> $vendorMasterData  The VendorMaster payloads.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function exportPayload(array $products, array $productAttributes, array $vendorMasterData): array {
 		// ---- 4. Build skuToProductIdMap so shillinq stock FK (productId) resolves ----
-		$skuToProductIdMap = [];
-		foreach ($products as $product) {
-			$productArr = $this->rowPayload(row: $product);
-			$sku = (string)($productArr['sku'] ?? ($productArr['code'] ?? ''));
-			$id = (string)($productArr['id'] ?? ($productArr['uuid'] ?? ''));
-			if ($sku !== '' && $id !== '') {
-				$skuToProductIdMap[$sku] = $id;
-			}
-		}
+		$skuToProductIdMap = $this->skuToProductIdMap(products: $products);
 
 		// Cast objects to plain arrays for JSON serialisation.
 		$productsOut = array_map(fn ($p) => $this->rowPayload(row: $p), $products);
@@ -260,7 +286,29 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 			'skuToProductIdMap' => $skuToProductIdMap,
 		];
 
-	}//end buildExportPayload()
+	}//end exportPayload()
+
+	/**
+	 * Map each product's sku (or code) to its OR object id (or uuid).
+	 *
+	 * @param array<int,mixed> $products The Product rows.
+	 *
+	 * @return array<string,string>
+	 */
+	private function skuToProductIdMap(array $products): array {
+		$skuToProductIdMap = [];
+		foreach ($products as $product) {
+			$productArr = $this->rowPayload(row: $product);
+			$sku = (string)($productArr['sku'] ?? ($productArr['code'] ?? ''));
+			$id = (string)($productArr['id'] ?? ($productArr['uuid'] ?? ''));
+			if ($sku !== '' && $id !== '') {
+				$skuToProductIdMap[$sku] = $id;
+			}
+		}
+
+		return $skuToProductIdMap;
+
+	}//end skuToProductIdMap()
 
 	/**
 	 * Read all objects of a given schema from OpenRegister via findAll.
@@ -317,40 +365,112 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 	 * @return string The resolved NC Contact UID, or a placeholder string.
 	 */
 	private function resolveContactUid(array $vendor, IOutput $output): string {
-		$kvkNumber = (string)($vendor['kvkNumber'] ?? '');
-		$vatNumber = (string)($vendor['vatNumber'] ?? '');
-		$name = (string)($vendor['name'] ?? ($vendor['tradingName'] ?? ''));
-		$iban = (string)($vendor['iban'] ?? '');
-		$vendorSlug = (string)($vendor['slug'] ?? ($vendor['id'] ?? 'unknown'));
+		$uid = $this->kvkContactUid(vendor: $vendor, output: $output) ?? $this->btwContactUid(vendor: $vendor, output: $output)
+			?? $this->nameIbanContactUid(vendor: $vendor, output: $output);
+		if ($uid !== null) {
+			return $uid;
+		}
 
-		// Priority 1: KvK number (strongest identifier in NL).
+		$this->flagFuzzyNameMatch(vendor: $vendor);
+
+		// No reliable match — return a deterministic placeholder so pipelinq ingest
+		// can flag this vendor for manual contact linkage.
+		$vendorSlug  = self::vendorSlug(vendor: $vendor);
+		$placeholder = 'placeholder-contactsuid-' . $vendorSlug . '-' . date('Y');
+		$this->logger->warning(
+			'MigrateProductVendorMasterToPipelinq: no NC Contact match for vendor "' . $vendorSlug . '" — using placeholder: ' . $placeholder,
+			['vendor' => $vendorSlug]
+		);
+		return $placeholder;
+	}//end resolveContactUid()
+
+	/**
+	 * The vendor's slug for log messages.
+	 *
+	 * @param array<string,mixed> $vendor The VendorMaster object as an array.
+	 *
+	 * @return string
+	 */
+	private static function vendorSlug(array $vendor): string {
+		return (string)($vendor['slug'] ?? ($vendor['id'] ?? 'unknown'));
+	}//end vendorSlug()
+
+	/**
+	 * Priority 1: KvK number (strongest identifier in NL).
+	 *
+	 * @param array<string,mixed> $vendor The VendorMaster object as an array.
+	 * @param IOutput             $output The repair output for progress.
+	 *
+	 * @return string|null The matched contact UID, or null.
+	 */
+	private function kvkContactUid(array $vendor, IOutput $output): string|null {
+		$kvkNumber = (string)($vendor['kvkNumber'] ?? '');
 		if ($kvkNumber !== '') {
 			$uid = $this->searchContactByProperty(property: 'X-CUSTOM-KVK', value: $kvkNumber);
 			if ($uid !== null) {
+				$vendorSlug = self::vendorSlug(vendor: $vendor);
 				$output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via KvK ' . $kvkNumber . '.');
 				return $uid;
 			}
 		}
 
-		// Priority 2: BTW / VAT number.
+		return null;
+	}//end kvkContactUid()
+
+	/**
+	 * Priority 2: BTW / VAT number.
+	 *
+	 * @param array<string,mixed> $vendor The VendorMaster object as an array.
+	 * @param IOutput             $output The repair output for progress.
+	 *
+	 * @return string|null The matched contact UID, or null.
+	 */
+	private function btwContactUid(array $vendor, IOutput $output): string|null {
+		$vatNumber = (string)($vendor['vatNumber'] ?? '');
 		if ($vatNumber !== '') {
 			$uid = $this->searchContactByProperty(property: 'X-CUSTOM-BTW', value: $vatNumber);
 			if ($uid !== null) {
+				$vendorSlug = self::vendorSlug(vendor: $vendor);
 				$output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via BTW ' . $vatNumber . '.');
 				return $uid;
 			}
 		}
 
-		// Priority 3: name + IBAN (must match BOTH to avoid false positives).
+		return null;
+	}//end btwContactUid()
+
+	/**
+	 * Priority 3: name + IBAN (must match BOTH to avoid false positives).
+	 *
+	 * @param array<string,mixed> $vendor The VendorMaster object as an array.
+	 * @param IOutput             $output The repair output for progress.
+	 *
+	 * @return string|null The matched contact UID, or null.
+	 */
+	private function nameIbanContactUid(array $vendor, IOutput $output): string|null {
+		$name = (string)($vendor['name'] ?? ($vendor['tradingName'] ?? ''));
+		$iban = (string)($vendor['iban'] ?? '');
 		if ($name !== '' && $iban !== '') {
 			$uid = $this->searchContactByNameAndIban(name: $name, iban: $iban);
 			if ($uid !== null) {
-				$output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via name+IBAN.');
+				$output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . self::vendorSlug(vendor: $vendor) . '" to contact via name+IBAN.');
 				return $uid;
 			}
 		}
 
-		// Fuzzy name-only match — log for operator but do not auto-accept.
+		return null;
+	}//end nameIbanContactUid()
+
+	/**
+	 * Fuzzy name-only match — log for operator but do not auto-accept.
+	 *
+	 * @param array<string,mixed> $vendor The VendorMaster object as an array.
+	 *
+	 * @return void
+	 */
+	private function flagFuzzyNameMatch(array $vendor): void {
+		$name       = (string)($vendor['name'] ?? ($vendor['tradingName'] ?? ''));
+		$vendorSlug = self::vendorSlug(vendor: $vendor);
 		if ($name !== '') {
 			$uid = $this->searchContactByProperty(property: 'FN', value: $name);
 			if ($uid !== null) {
@@ -362,16 +482,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 				);
 			}
 		}
-
-		// No reliable match — return a deterministic placeholder so pipelinq ingest
-		// can flag this vendor for manual contact linkage.
-		$placeholder = 'placeholder-contactsuid-' . $vendorSlug . '-' . date('Y');
-		$this->logger->warning(
-			'MigrateProductVendorMasterToPipelinq: no NC Contact match for vendor "' . $vendorSlug . '" — using placeholder: ' . $placeholder,
-			['vendor' => $vendorSlug]
-		);
-		return $placeholder;
-	}//end resolveContactUid()
+	}//end flagFuzzyNameMatch()
 
 	/**
 	 * Search NC addressbook contacts by a vCard property name + value.

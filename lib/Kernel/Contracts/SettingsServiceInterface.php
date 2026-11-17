@@ -38,6 +38,13 @@ use InvalidArgumentException;
  * @spec exclude Structural contract, no functional requirement.
  */
 interface SettingsServiceInterface {
+	/**
+	 * The prefix of a template variant that names an office template by id.
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public const OFFICE_TEMPLATE_PREFIX = 'office:';
+
 
 	/**
 	 * Return the configured register slug, falling back to 'shillinq' if unset.
@@ -298,7 +305,7 @@ interface SettingsServiceInterface {
 	 * records via OpenRegister's ObjectService. Already-existing records (matched
 	 * by accountNumber + administrationId) are skipped, preserving operator edits.
 	 *
-	 * @param string $templateVariant Template to seed: 'mkb', 'zzp', or 'bbv'.
+	 * @param string $templateVariant Template to seed: 'mkb', 'zzp', 'bbv', or 'office:<id>' for an office template.
 	 * @param string $administrationId The administrationId to stamp on seeded records.
 	 *                                 Must be a non-empty tenant-specific identifier;
 	 *                                 callers must always supply an explicit value (C2).
@@ -308,6 +315,16 @@ interface SettingsServiceInterface {
 	 * @spec openspec/changes/spec/tasks.md#task-11
 	 */
 	public function seedRgsTemplate(string $templateVariant, string $administrationId): array;
+
+	/**
+	 * The chart templates the setup wizard's template step offers: the shipped
+	 * RGS variants, then every active office template as `office:<id>`.
+	 *
+	 * @return array<int, array<string, mixed>> Options with `value` and `label`.
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function chartTemplateChoices(): array;
 
 	/**
 	 * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
