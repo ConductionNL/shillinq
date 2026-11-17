@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Controller;
 
 use Closure;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Reporting\ProfitLossComparison;
 use OCA\Shillinq\Reporting\StatementCalculator;
 use OCA\Shillinq\Reporting\StatementPeriods;
