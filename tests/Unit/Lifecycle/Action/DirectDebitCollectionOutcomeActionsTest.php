@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\RecordDirectDebitRejectAction;
 use OCA\Shillinq\Lifecycle\Action\SettleDirectDebitCollectionAction;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
@@ -98,7 +99,14 @@ class DirectDebitCollectionOutcomeActionsTest extends TestCase {
 	public function testASucceededCollectionPaysItsInvoice(): void {
 		$collection = ['id' => 'dc-1', 'invoiceId' => 'inv-118', 'amount' => 500.0, 'status' => 'succeeded'];
 
-		$this->assertSame($collection, $this->settle()->execute($collection, ['status' => 'accepted_by_bank'] + $collection, [], 'succeed'));
+		$this->assertSame($collection, $this->settle()->execute(
+			new LifecycleActionContext(
+				objectData: $collection,
+				previousData: ['status' => 'accepted_by_bank'] + $collection,
+				parameters: [],
+				actionName: 'succeed'
+			)
+		));
 		$this->assertSame([['inv-118', 'mark-paid']], $this->ran);
 
 	}//end testASucceededCollectionPaysItsInvoice()
@@ -110,8 +118,22 @@ class DirectDebitCollectionOutcomeActionsTest extends TestCase {
 	 */
 	public function testAnOverdueInvoiceIsPaidAndAPaidOneIsLeftAlone(): void {
 		$action = $this->settle();
-		$action->execute(['invoiceId' => 'inv-120'], [], [], 'succeed');
-		$action->execute(['invoiceId' => 'inv-121'], [], [], 'succeed');
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: ['invoiceId' => 'inv-120'],
+				previousData: [],
+				parameters: [],
+				actionName: 'succeed'
+			)
+		);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: ['invoiceId' => 'inv-121'],
+				previousData: [],
+				parameters: [],
+				actionName: 'succeed'
+			)
+		);
 
 		$this->assertSame([['inv-120', 'pay-overdue']], $this->ran);
 
@@ -125,7 +147,14 @@ class DirectDebitCollectionOutcomeActionsTest extends TestCase {
 	public function testARefusedSettlementRefusesTheTransition(): void {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('Invoice inv-118 could not be settled: transition refused.');
-		$this->settle(refuse: true)->execute(['invoiceId' => 'inv-118'], [], [], 'succeed');
+		$this->settle(refuse: true)->execute(
+			new LifecycleActionContext(
+				objectData: ['invoiceId' => 'inv-118'],
+				previousData: [],
+				parameters: [],
+				actionName: 'succeed'
+			)
+		);
 
 	}//end testARefusedSettlementRefusesTheTransition()
 
@@ -136,14 +165,28 @@ class DirectDebitCollectionOutcomeActionsTest extends TestCase {
 	 */
 	public function testACollectionWithoutItsInvoiceIsRefused(): void {
 		try {
-			$this->settle()->execute(['invoiceId' => 'inv-missing'], [], [], 'succeed');
+			$this->settle()->execute(
+				new LifecycleActionContext(
+					objectData: ['invoiceId' => 'inv-missing'],
+					previousData: [],
+					parameters: [],
+					actionName: 'succeed'
+				)
+			);
 			$this->fail('A missing invoice settled.');
 		} catch (RuntimeException $e) {
 			$this->assertSame('Invoice inv-missing could not be settled: not found.', $e->getMessage());
 		}
 
 		$this->expectExceptionMessage('The collection names no invoice to settle.');
-		$this->settle()->execute(['invoiceId' => ' '], [], [], 'succeed');
+		$this->settle()->execute(
+			new LifecycleActionContext(
+				objectData: ['invoiceId' => ' '],
+				previousData: [],
+				parameters: [],
+				actionName: 'succeed'
+			)
+		);
 
 	}//end testACollectionWithoutItsInvoiceIsRefused()
 
@@ -155,7 +198,14 @@ class DirectDebitCollectionOutcomeActionsTest extends TestCase {
 	public function testARejectedCollectionKeepsItsReasonCode(): void {
 		$collection = ['id' => 'dc-2', 'invoiceId' => 'inv-119', 'status' => 'rejected', 'pain002ReasonCode' => ' am04 '];
 
-		$result = (new RecordDirectDebitRejectAction())->execute($collection, ['status' => 'submitted'] + $collection, [], 'reject');
+		$result = (new RecordDirectDebitRejectAction())->execute(
+			new LifecycleActionContext(
+				objectData: $collection,
+				previousData: ['status' => 'submitted'] + $collection,
+				parameters: [],
+				actionName: 'reject'
+			)
+		);
 
 		$this->assertSame(array_replace($collection, ['pain002ReasonCode' => 'AM04']), $result);
 		$this->assertSame('inv-119', $result['invoiceId']);
@@ -170,7 +220,14 @@ class DirectDebitCollectionOutcomeActionsTest extends TestCase {
 	public function testARejectionNeedsAReasonCode(): void {
 		foreach ([[], ['pain002ReasonCode' => 'AM0'], ['pain002ReasonCode' => 'AM04X']] as $collection) {
 			try {
-				(new RecordDirectDebitRejectAction())->execute($collection, [], [], 'reject');
+				(new RecordDirectDebitRejectAction())->execute(
+					new LifecycleActionContext(
+						objectData: $collection,
+						previousData: [],
+						parameters: [],
+						actionName: 'reject'
+					)
+				);
 				$this->fail('A rejection without a valid code was accepted.');
 			} catch (RuntimeException $e) {
 				$this->assertSame('A rejected collection needs its four-character reason code, such as AM04.', $e->getMessage());

@@ -11,7 +11,7 @@
             "WebshopOrder": {
                 "slug": "WebshopOrder",
                 "icon": "CartArrowDown",
-                "version": "0.1.0",
+                "version": "0.3.0",
                 "title": "Web shop order",
                 "description": "One order as a web shop sent it, written by integriq's shop connector into register shillinq. The schema is the intake contract (docs/integrations/webshop-order-intake.md). Shillinq turns a received order into one issued ARInvoice, once per channel and shop order number.",
                 "x-schema-org": "schema:Order",
@@ -283,6 +283,32 @@
                                 "type": "string",
                                 "description": "The payment provider's id, kept on the invoice for the payout match.",
                                 "title": "Provider payment id"
+                            },
+                            "refundedLines": {
+                                "type": "array",
+                                "description": "For a partial refund: the order lines refunded, each by its 1-based position in lines and the quantity refunded (the whole line when absent). Absent or empty with refundedShipping false credits the whole order.",
+                                "title": "Refunded lines",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "line": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "description": "The refunded line's 1-based position in lines.",
+                                            "title": "Line"
+                                        },
+                                        "quantity": {
+                                            "type": "number",
+                                            "description": "The quantity refunded; the whole line when absent.",
+                                            "title": "Quantity"
+                                        }
+                                    }
+                                }
+                            },
+                            "refundedShipping": {
+                                "type": "boolean",
+                                "description": "For a partial refund: whether the shipping charge is refunded too.",
+                                "title": "Shipping refunded"
                             }
                         }
                     },
@@ -308,6 +334,12 @@
                         "type": "string",
                         "description": "FK to the ARInvoice written for this order.",
                         "title": "Invoice"
+                    },
+                    "settlementJournalId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "FK to the JournalEntry that settled the paid order's invoice on the channel's clearing account. Set once, so a repeated paid status settles nothing twice.",
+                        "title": "Settlement"
                     },
                     "creditNoteId": {
                         "type": "string",
@@ -433,8 +465,95 @@
                                 "type": "string",
                                 "description": "The payment provider's id, kept for the payout match.",
                                 "title": "Payment reference"
+                            },
+                            "vatRoute": {
+                                "type": "string",
+                                "enum": [
+                                    "domestic",
+                                    "oss",
+                                    "icp"
+                                ],
+                                "description": "The VAT route the order was invoiced under: domestic at the line's own rate, oss at the destination member state's rate, icp under reverse charge.",
+                                "title": "VAT route"
+                            },
+                            "vatMention": {
+                                "type": "string",
+                                "description": "The mention a reverse-charged invoice carries, Btw verlegd.",
+                                "title": "VAT mention"
+                            },
+                            "refundStatus": {
+                                "type": "string",
+                                "enum": [
+                                    "refunded",
+                                    "cancelled"
+                                ],
+                                "description": "On a credit note written for a web shop order: whether the shop refunded or cancelled it.",
+                                "title": "Refund status"
                             }
                         }
+                    },
+                    "ossContext": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Union OSS context of a web shop sale to a consumer in another EU member state: the destination rate applied, its category and EuVatRate row, and the OSS return period the invoice lands in (sales-webshop-orders REQ-SWO-003).",
+                        "properties": {
+                            "destinationCountry": {
+                                "type": "string",
+                                "description": "ISO 3166-1 alpha-2 destination member state.",
+                                "example": "FR",
+                                "title": "Destination Country"
+                            },
+                            "appliedVatRate": {
+                                "type": "number",
+                                "description": "VAT rate that was applied, as a percentage.",
+                                "example": 20.0,
+                                "title": "Applied VAT Rate"
+                            },
+                            "appliedRateCategory": {
+                                "type": "string",
+                                "enum": [
+                                    "standard",
+                                    "reduced1",
+                                    "reduced2",
+                                    "superReduced",
+                                    "parking",
+                                    "zero"
+                                ],
+                                "description": "Rate category that was applied.",
+                                "title": "Applied Rate Category"
+                            },
+                            "tedbRateVersion": {
+                                "type": "string",
+                                "description": "FK to the EuVatRate row that supplied the rate; preserves the audit trail across TEDB refreshes.",
+                                "example": "euvat-de-standard-2024",
+                                "title": "Tedb Rate Version"
+                            },
+                            "ossEligible": {
+                                "type": "boolean",
+                                "description": "True when this invoice counts toward the OSS threshold and feeds the OSS return.",
+                                "example": true,
+                                "title": "OSS Eligible"
+                            },
+                            "ossReportingPeriod": {
+                                "type": "string",
+                                "description": "The YYYY-Qn this invoice lands in for aangifte generation.",
+                                "example": "2026-Q2",
+                                "title": "OSS Reporting Period"
+                            }
+                        },
+                        "title": "OSS Context"
+                    }
+                }
+            },
+            "CustomerMaster": {
+                "version": "0.4.0",
+                "properties": {
+                    "createdByWebshopChannelId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.",
+                        "example": "channel-theehuis",
+                        "title": "Created by web shop channel"
                     }
                 }
             }

@@ -98,6 +98,8 @@ rates it is split pro rata over those rates.
 
 A change of payment status is sent as an update of the same order record.
 
+Settling posts one receipt (debit the clearing account, credit receivables) for the invoice's gross amount and marks the invoice paid. It happens once per order, and only for an issued invoice: on a channel that leaves invoices as drafts, the bookkeeper settles them after issuing.
+
 ## Idempotency
 
 The idempotency key is the pair `channelId` + `shopOrderId`, never the id of

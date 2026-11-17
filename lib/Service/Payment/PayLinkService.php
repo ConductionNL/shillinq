@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Payment;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCP\IAppConfig;
 use OCP\IConfig;
 
@@ -69,14 +70,23 @@ class PayLinkService {
 	private const ID_PATTERN = '/^[A-Za-z0-9_.\-]{1,64}$/';
 
 	/**
+	 * ARInvoice states a pay link is printed for: the invoice is open.
+	 *
+	 * @var list<string>
+	 */
+	private const OPEN_STATES = ['issued', 'partially-paid', 'overdue'];
+
+	/**
 	 * Constructor.
 	 *
-	 * @param IConfig    $config    The instance secret.
-	 * @param IAppConfig $appConfig The key generations and the pay page.
+	 * @param IConfig                            $config    The instance secret.
+	 * @param IAppConfig                         $appConfig The key generations and the pay page.
+	 * @param MolliePaymentAdapterInterface|null $adapter   The bound payment adapter; a dormant or absent one prints no link.
 	 */
 	public function __construct(
 		private readonly IConfig $config,
 		private readonly IAppConfig $appConfig,
+		private readonly ?MolliePaymentAdapterInterface $adapter = null,
 	) {
 	}//end __construct()
 
@@ -135,6 +145,27 @@ class PayLinkService {
 
 		return $page . $separator . 'pay=' . rawurlencode($token);
 	}//end forInvoice()
+
+	/**
+	 * The pay URL to print on an invoice document or mail, or null when none
+	 * may be printed: the invoice is not open (draft, paid, written off), no
+	 * live payment adapter is bound, or forInvoice() gives none
+	 * (receivables-payment-links D5: no link rather than a fake one).
+	 *
+	 * @param array<string, mixed> $invoice The ARInvoice, with its id, administrationId and lifecycleState.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.2
+	 */
+	public function forOpenInvoice(array $invoice): ?string {
+		$state = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+		if (in_array($state, self::OPEN_STATES, true) === false || $this->adapter === null || $this->adapter->isDormant() === true) {
+			return null;
+		}
+
+		return $this->forInvoice(invoice: $invoice);
+	}//end forOpenInvoice()
 
 	/**
 	 * What a token was signed for, or null when it does not verify.

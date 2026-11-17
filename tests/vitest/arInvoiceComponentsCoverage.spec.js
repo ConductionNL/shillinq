@@ -115,7 +115,7 @@ describe('AREInvoiceActions', () => {
 
 		await vm.onSend()
 
-		expect(vm.fallbackNotice).toBe('No Peppol participant found for this debtor — use PDF + email instead.')
+		expect(vm.fallbackNotice).toBe('No Peppol participant was found for this customer. Send the invoice by email instead.')
 		expect(showSuccess).not.toHaveBeenCalled()
 	})
 

@@ -32,6 +32,8 @@ namespace OCA\Shillinq\Kernel\Model;
  *  - `deferred`         -> 503 — the bound provider is dormant; no checkout
  *                          URL is ever fabricated (REQ-SPPI-001).
  *  - `downstream_error` -> 502 — an OpenRegister or PSP call failed.
+ *  - `paid`             -> 200 `{status: paid}` — the invoice a pay link
+ *                          names needs no more payment (REQ-RPL-004).
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003)
  */
@@ -39,7 +41,7 @@ final class PortalPaymentSessionResult {
 	/**
 	 * Private constructor — use the named factory methods.
 	 *
-	 * @param string $status One of 'ok'|'forbidden'|'deferred'|'downstream_error'.
+	 * @param string $status One of 'ok'|'forbidden'|'deferred'|'downstream_error'|'paid'.
 	 * @param string|null $checkoutUrl The Mollie checkout URL (only set for 'ok').
 	 */
 	private function __construct(
@@ -82,6 +84,17 @@ final class PortalPaymentSessionResult {
 	public static function deferred(): self {
 		return new self(status: 'deferred');
 	}//end deferred()
+
+	/**
+	 * The invoice a pay link names needs no more payment; no checkout was opened (REQ-RPL-004).
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 */
+	public static function paid(): self {
+		return new self(status: 'paid');
+	}//end paid()
 
 	/**
 	 * An OpenRegister or PSP call failed.

@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\PublicSector;
 
+use OCA\Shillinq\Kernel\Contracts\TaskFieldRealisationInterface;
 use OCA\Shillinq\Service\LedgerActuals;
 
 /**
@@ -35,7 +36,7 @@ use OCA\Shillinq\Service\LedgerActuals;
  *
  * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
  */
-class TaskFieldRealisation {
+class TaskFieldRealisation implements TaskFieldRealisationInterface {
 
 	/**
 	 * Where an unmapped account is mapped.
