@@ -5138,7 +5138,26 @@ OC.L10N.register(
         "The checks could not be run.": "The checks could not be run.",
         "The previous return is submitted": "The previous return is submitted",
         "Unable to rebase VAT return": "Unable to rebase VAT return",
-        "Unable to submit VAT return": "Unable to submit VAT return"
+        "Unable to submit VAT return": "Unable to submit VAT return",
+        "Deposit": "Deposit",
+        "For a refund or chargeback: the provider's id of the payment it returns, which names the invoice it is booked against.": "For a refund or chargeback: the provider's id of the payment it returns, which names the invoice it is booked against.",
+        "Original payment ID": "Original payment ID",
+        "Whether the line matched a payment request, a booking deposit or an invoice.": "Whether the line matched a payment request, a booking deposit or an invoice.",
+        "Provider": "Provider",
+        "User": "User",
+        "Payment device": "Payment device",
+        "The Nextcloud user whose phone this is.": "The Nextcloud user whose phone this is.",
+        "The payment provider the phone is registered with.": "The payment provider the phone is registered with.",
+        "Device ID": "Device ID",
+        "The provider's id of the phone or terminal, entered from the provider's app.": "The provider's id of the phone or terminal, entered from the provider's app.",
+        "A name the user recognises the phone by.": "A name the user recognises the phone by.",
+        "The administration the phone takes payments for; empty for every administration of the user.": "The administration the phone takes payments for; empty for every administration of the user.",
+        "Open lines": "Open lines",
+        "Taken on the spot": "Taken on the spot",
+        "On the phone": "On the phone",
+        "QR code": "QR code",
+        "How a payment taken on the spot reached the customer: pushed to the phone, or shown as a QR code.": "How a payment taken on the spot reached the customer: pushed to the phone, or shown as a QR code.",
+        "The provider's id of the phone the payment was taken on.": "The provider's id of the phone the payment was taken on."
     },
     "nplurals=2; plural=(n != 1);"
 )
