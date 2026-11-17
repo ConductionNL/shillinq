@@ -254,54 +254,52 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 		$index = $this->indexAdministrationsByTransaction(glTransactions: $glTransactions);
 
 		$changed = [];
-		$backfilled = 0;
-		$unchanged = 0;
-		$unclassifiable = 0;
-		$conflicting = 0;
+		$counts  = ['backfilled' => 0, 'unchanged' => 0, 'unclassifiable' => 0, 'conflicting' => 0];
 
 		foreach ($glLines as $offset => $glLine) {
 			$classification = $this->classify(glLine: $glLine, index: $index);
 
 			if ($classification === self::CLASS_ALREADY_SCOPED) {
-				$unchanged++;
-				$parentScope = $this->resolveAdministrationId(glLine: $glLine, index: $index);
-				if ($parentScope !== null && $parentScope !== trim((string)$glLine[self::SCOPE_PROPERTY])) {
-					// Reported, never rewritten — see stampAdministrationId().
-					$conflicting++;
-				}
-
+				$counts = $this->countScoped(counts: $counts, glLine: $glLine, index: $index);
 				continue;
 			}
 
 			if ($classification === self::CLASS_RESOLVED) {
 				$administrationId = (string)$this->resolveAdministrationId(glLine: $glLine, index: $index);
-				$changed[$offset] = $this->stampAdministrationId(
-					glLine: $glLine,
-					administrationId: $administrationId
-				);
-				$backfilled++;
+				$changed[$offset] = $this->stampAdministrationId(glLine: $glLine, administrationId: $administrationId);
+				$counts['backfilled']++;
 				continue;
 			}
 
 			// Unclassifiable — deliberately NOT counted as classified, so the
 			// guard below sees the shortfall and aborts the whole batch.
-			$unclassifiable++;
+			$counts['unclassifiable']++;
 		}//end foreach
 
-		$this->assertCountsMatch(
-			sourceCount: count($glLines),
-			classifiedCount: ($backfilled + $unchanged)
-		);
+		$this->assertCountsMatch(sourceCount: count($glLines), classifiedCount: ($counts['backfilled'] + $counts['unchanged']));
 
-		return [
-			'lines' => $changed,
-			'total' => count($glLines),
-			'backfilled' => $backfilled,
-			'unchanged' => $unchanged,
-			'unclassifiable' => $unclassifiable,
-			'conflicting' => $conflicting,
-		];
+		return ['lines' => $changed, 'total' => count($glLines)] + $counts;
 	}//end backfillBatch()
+
+	/**
+	 * Count an already-scoped line as unchanged, and as conflicting when its parent names another administration.
+	 *
+	 * @param array<string, int>    $counts The batch counts so far.
+	 * @param array<string, mixed>  $glLine The GL line.
+	 * @param array<string, string> $index  The administrations by transaction.
+	 *
+	 * @return array<string, int>
+	 */
+	private function countScoped(array $counts, array $glLine, array $index): array {
+		$counts['unchanged']++;
+		$parentScope = $this->resolveAdministrationId(glLine: $glLine, index: $index);
+		if ($parentScope !== null && $parentScope !== trim((string)$glLine[self::SCOPE_PROPERTY])) {
+			// Reported, never rewritten — see stampAdministrationId().
+			$counts['conflicting']++;
+		}
+
+		return $counts;
+	}//end countScoped()
 
 	/**
 	 * Count `GLLine` rows that still carry no administration.

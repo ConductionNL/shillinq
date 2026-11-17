@@ -53,6 +53,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Payment;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
@@ -132,6 +134,14 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	private const CONFIG_REDIRECT_URL = 'portal_payment_redirect_url';
 
 	/**
+	 * ARInvoice states that mean the invoice needs no more payment: the pay
+	 * link answers paid and opens no checkout (REQ-RPL-004).
+	 *
+	 * @var array<int, string>
+	 */
+	private const SETTLED_STATES = ['paid', 'written-off', 'credited', 'cancelled'];
+
+	/**
 	 * Construct the service.
 	 *
 	 * @param ContainerInterface $container DI container — OpenRegister's ObjectService is
@@ -141,6 +151,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	 * @param IAppConfig $appConfig App config for the redirect-URL override.
 	 * @param LoggerInterface $logger Logger (never receives PSP/PII detail).
 	 * @param PortalSubjectResolver $subjects The ownership chain shared with the decline receiver.
+	 * @param PayLinkService|null $payLinks Verifies the signed pay link of an invoice; without it no pay token is accepted.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -149,6 +160,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly PortalSubjectResolver $subjects = new PortalSubjectResolver(),
+		private readonly ?PayLinkService $payLinks = null,
 	) {
 	}//end __construct()
 
@@ -182,6 +194,111 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	public function initiateForRequest(array $claims, string $target): PortalPaymentSessionResult {
 		return $this->openSession(claims: $claims, target: new PortalPaymentTarget(id: $target, kind: PortalPaymentTarget::REQUEST));
 	}//end initiateForRequest()
+
+	/**
+	 * Open the checkout for the invoice a signed pay link names, forwarded by
+	 * portaliq's guest page (REQ-RPL-006). The token is the credential: a
+	 * token that does not verify, a rotated one, an invoice that is missing
+	 * or of another administration, and an invoice that cannot be paid all
+	 * get the same forbidden. A paid invoice answers paid and opens nothing;
+	 * an unexpired checkout of the pending request is reused, else a new one
+	 * is created for the invoice (REQ-RPL-004).
+	 *
+	 * @param string $token The pay token from the invoice's pay link.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 * @spec openspec/changes/receivables-payment-links/specs/portal-payment-initiation/spec.md#requirement-a-signed-pay-link-is-accepted-from-the-portals-guest-page-req-rpl-006
+	 */
+	public function initiateForPayToken(string $token): PortalPaymentSessionResult {
+		$signed = null;
+		if ($this->payLinks !== null) {
+			$signed = $this->payLinks->verify(token: $token);
+		}
+
+		if ($signed === null) {
+			return PortalPaymentSessionResult::forbidden();
+		}
+
+		$objectService = $this->objectServiceOrNull();
+		if ($objectService === null) {
+			return PortalPaymentSessionResult::downstreamError();
+		}
+
+		try {
+			return $this->payTokenChain(objectService: $objectService, signed: $signed);
+		} catch (Throwable $e) {
+			$this->logDownstreamFailure(step: 'pay-link-chain-failed', exception: $e);
+			return PortalPaymentSessionResult::downstreamError();
+		}
+	}//end initiateForPayToken()
+
+	/**
+	 * The signed invoice's answer: paid, forbidden, a reused checkout or a new one.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array{administrationId: string, invoiceId: string} $signed What the token was signed for.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 */
+	private function payTokenChain(object $objectService, array $signed): PortalPaymentSessionResult {
+		$lookup  = new PaymentTargetLookup(objectService: $objectService, targetId: $signed['invoiceId'], kind: PortalPaymentTarget::INVOICE);
+		$invoice = $this->invoiceById(lookup: $lookup);
+		if ($invoice === null || (string)($invoice['administrationId'] ?? '') !== $signed['administrationId']) {
+			return PortalPaymentSessionResult::forbidden();
+		}
+
+		$invoice = $this->withTargetId(record: $invoice, targetId: $signed['invoiceId']);
+		$state   = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+		if (in_array($state, self::SETTLED_STATES, true) === true) {
+			return PortalPaymentSessionResult::paid();
+		}
+
+		if (in_array($state, self::PAYABLE_STATES, true) === false) {
+			return PortalPaymentSessionResult::forbidden();
+		}
+
+		$paymentRequest = $this->mintOrReusePaymentRequest(objectService: $objectService, invoice: $invoice);
+		$liveCheckout   = self::unexpiredCheckout(paymentRequest: $paymentRequest);
+		if ($liveCheckout !== null) {
+			return PortalPaymentSessionResult::success(checkoutUrl: $liveCheckout);
+		}
+
+		$session = $this->provider->createSession($this->buildSessionRequest(invoice: $invoice, paymentRequest: $paymentRequest));
+		$this->persistPaymentIntentId(
+			objectService: $objectService,
+			paymentRequest: $paymentRequest,
+			paymentIntentId: $session->paymentIntentId,
+			session: $session,
+		);
+		if ($session->dormant === true) {
+			return PortalPaymentSessionResult::deferred();
+		}
+
+		return PortalPaymentSessionResult::success(checkoutUrl: $session->checkoutUrl);
+	}//end payTokenChain()
+
+	/**
+	 * The request's stored checkout link while it can still be used, else null.
+	 *
+	 * @param array<string, mixed> $paymentRequest The pending PaymentRequest.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 */
+	private static function unexpiredCheckout(array $paymentRequest): ?string {
+		$link      = (string)($paymentRequest['paymentLink'] ?? '');
+		$expiresAt = strtotime((string)($paymentRequest['checkoutExpiresAt'] ?? ''));
+		if ($link === '' || preg_match('#^https://#i', $link) !== 1 || $expiresAt === false || $expiresAt <= time()) {
+			return null;
+		}
+
+		return $link;
+	}//end unexpiredCheckout()
 
 	/**
 	 * The chain both targets share: the target shape, the audience, the
@@ -274,6 +391,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			objectService: $lookup->objectService,
 			paymentRequest: $prepared['request'],
 			paymentIntentId: $session->paymentIntentId,
+			session: $session,
 		);
 		return $session;
 	}//end openProviderSession()
@@ -652,19 +770,37 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
 	private function mintOrReusePaymentRequest(object $objectService, array $invoice): array {
-		$invoiceKey = (string)($invoice['id'] ?? '');
+		$pending = $this->pendingPaymentRequest(objectService: $objectService, invoiceKey: (string)($invoice['id'] ?? ''));
+		if ($pending !== null) {
+			return $pending;
+		}
 
+		$paymentRequest = $this->withContribution(paymentRequest: $this->newPaymentRequest(invoice: $invoice), invoice: $invoice);
+
+		$saved = $objectService->saveObject(
+			object: $paymentRequest,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA_PAYMENT_REQUEST)),
+			_rbac: false,
+			_multitenancy: false
+		);
+
+		return (array)$saved;
+	}//end mintOrReusePaymentRequest()
+
+	/**
+	 * The invoice's existing pending PaymentRequest, or null when there is none.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $invoiceKey    The ARInvoice id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function pendingPaymentRequest(object $objectService, string $invoiceKey): array|null {
 		$pending = $objectService
 			->setRegister(self::REGISTER)
 			->setSchema(self::SCHEMA_PAYMENT_REQUEST)
 			->findAll(
-				config: [
-					'filters' => [
-						'invoiceReference' => $invoiceKey,
-						'state' => 'pending',
-					],
-					'limit' => 1,
-				],
+				config: ['filters' => ['invoiceReference' => $invoiceKey, 'state' => 'pending'], 'limit' => 1],
 				_rbac: false,
 				_multitenancy: false,
 			);
@@ -673,13 +809,46 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			return $pending[0];
 		}
 
-		// 🔴 NEVER MINT A REQUEST FOR AN AMOUNT NOBODY COULD READ. The cast
-		// below used to turn a missing or malformed `totalAmount` into 0.00,
-		// and the citizen was sent to a checkout for nothing. A payment page
-		// for zero euro is worse than a page that says the payment could not
-		// be started, because the person believes they have paid.
-		// ARInvoice declares `grossAmount`; `totalAmount` is kept first for the
-		// rows that carry it (REQ-SCON-010).
+		return null;
+	}//end pendingPaymentRequest()
+
+	/**
+	 * A new pending PaymentRequest for the invoice's server-side amount.
+	 *
+	 * @param array<string, mixed> $invoice The owned, payable ARInvoice row.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @throws RuntimeException When the invoice carries no chargeable amount.
+	 */
+	private function newPaymentRequest(array $invoice): array {
+		$amount = self::chargeableInvoiceAmount(invoice: $invoice);
+
+		return [
+			'invoiceReference' => (string)($invoice['id'] ?? ''),
+			'amount' => (float)$amount,
+			'currency' => (string)($invoice['currency'] ?? 'EUR'),
+			'paymentGateway' => self::GATEWAY,
+			'state' => 'pending',
+			'administrationId' => (string)($invoice['administrationId'] ?? ''),
+		];
+	}//end newPaymentRequest()
+
+	/**
+	 * 🔴 NEVER MINT A REQUEST FOR AN AMOUNT NOBODY COULD READ. A missing or
+	 * malformed `totalAmount` must not become 0.00 and send the citizen to a
+	 * checkout for nothing: a payment page for zero euro is worse than a page
+	 * that says the payment could not be started, because the person believes
+	 * they have paid. ARInvoice declares `grossAmount`; `totalAmount` is kept
+	 * first for the rows that carry it (REQ-SCON-010).
+	 *
+	 * @param array<string, mixed> $invoice The owned, payable ARInvoice row.
+	 *
+	 * @return mixed The numeric amount above zero.
+	 *
+	 * @throws RuntimeException When the invoice carries no chargeable amount.
+	 */
+	private static function chargeableInvoiceAmount(array $invoice): mixed {
 		$amount = ($invoice['totalAmount'] ?? ($invoice['grossAmount'] ?? null));
 		if (is_bool($amount) === true || is_numeric($amount) === false || (float)$amount <= 0.0) {
 			throw new RuntimeException(
@@ -687,18 +856,20 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			);
 		}
 
-		$paymentRequest = [
-			'invoiceReference' => $invoiceKey,
-			'amount' => (float)$amount,
-			'currency' => (string)($invoice['currency'] ?? 'EUR'),
-			'paymentGateway' => self::GATEWAY,
-			'state' => 'pending',
-			'administrationId' => (string)($invoice['administrationId'] ?? ''),
-		];
+		return $amount;
+	}//end chargeableInvoiceAmount()
 
-		// A fresh request for a school contribution (the raised one failed or
-		// expired) keeps the reference to the chargeable, or the settled signal
-		// would no longer name the owning app (REQ-SCON-010).
+	/**
+	 * A fresh request for a school contribution (the raised one failed or
+	 * expired) keeps the reference to the chargeable, or the settled signal
+	 * would no longer name the owning app (REQ-SCON-010).
+	 *
+	 * @param array<string, mixed> $paymentRequest The new PaymentRequest.
+	 * @param array<string, mixed> $invoice        The owned, payable ARInvoice row.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withContribution(array $paymentRequest, array $invoice): array {
 		$contribution = ($invoice['contribution'] ?? null);
 		if (is_array($contribution) === true && is_array($contribution['chargeable'] ?? null) === true) {
 			$paymentRequest += [
@@ -712,16 +883,8 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			];
 		}
 
-		$saved = $objectService->saveObject(
-			object: $paymentRequest,
-			register: self::REGISTER,
-			schema: self::SCHEMA_PAYMENT_REQUEST,
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		return (array)$saved;
-	}//end mintOrReusePaymentRequest()
+		return $paymentRequest;
+	}//end withContribution()
 
 	/**
 	 * Build the provider-facing session request — amount/currency/description
@@ -776,17 +939,27 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	/**
 	 * Persist the provider-assigned paymentIntentId onto the PaymentRequest,
 	 * stripping OR metadata keys before the roundtrip (mirrors the
-	 * fleet-reference receiver's normalise-then-save pattern).
+	 * fleet-reference receiver's normalise-then-save pattern). A live session
+	 * also stores its checkout link, the provider payment id and until when
+	 * the checkout can be used (receivables-payment-links D2); a dormant one
+	 * stores no link.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
 	 * @param array<string, mixed> $paymentRequest The minted/reused PaymentRequest row.
 	 * @param string $paymentIntentId The provider-assigned intent id.
+	 * @param PaymentSessionResult|null $session The provider session, when its link is to be stored.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
 	 */
-	private function persistPaymentIntentId(object $objectService, array $paymentRequest, string $paymentIntentId): void {
+	private function persistPaymentIntentId(
+		object $objectService,
+		array $paymentRequest,
+		string $paymentIntentId,
+		?PaymentSessionResult $session=null
+	): void {
 		$uuid = (string)($paymentRequest['id'] ?? '');
 
 		$data = [];
@@ -799,6 +972,9 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 		}
 
 		$data['paymentIntentId'] = $paymentIntentId;
+		if ($session !== null) {
+			$data = array_merge($data, PaymentLinkCreator::fieldsOf(session: $session));
+		}
 
 		$saveUuid = null;
 		if ($uuid !== '') {
@@ -807,11 +983,12 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 
 		$objectService->saveObject(
 			object: $data,
-			register: self::REGISTER,
-			schema: self::SCHEMA_PAYMENT_REQUEST,
-			uuid: $saveUuid,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA_PAYMENT_REQUEST),
+				uuid: $saveUuid
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end persistPaymentIntentId()
 

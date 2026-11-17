@@ -117,12 +117,14 @@ class AdministrationController extends Controller {
 	 * Switch the active administration for the session (REQ-MA-003).
 	 *
 	 * Validates the user has a valid membership for the requested administration.
-	 * On success returns the new active administration id; when the user has no
-	 * membership the response is a masked 404 (REQ-MA-001).
+	 * On success stores the choice for the user (REQ-LMA-001) and returns the new
+	 * active administration id; when the user has no membership the response is a
+	 * masked 404 (REQ-MA-001) and nothing is stored.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
 	 */
 	#[NoAdminRequired]
 	public function switch(): JSONResponse {
@@ -137,6 +139,9 @@ class AdministrationController extends Controller {
 
 		try {
 			$target = $this->context->resolveSwitchTarget(targetId: $administrationId);
+			if ($target !== null) {
+				$this->context->rememberActiveAdministration(administrationId: $target);
+			}
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AdministrationController: failed to resolve switch target',
@@ -237,13 +242,27 @@ class AdministrationController extends Controller {
 			return new JSONResponse(['error' => 'Invalid administration id'], Http::STATUS_BAD_REQUEST);
 		}
 
+		$refusal = $this->refuseWritableStatusAccess(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->writableStatusResponse(administrationId: $administrationId);
+
+	}//end writableStatus()
+
+	/**
+	 * Refuse a caller who is not a member of the administration (masked as 404), or 500 when the check fails.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may read the status.
+	 */
+	private function refuseWritableStatusAccess(string $administrationId): JSONResponse|null {
 		try {
 			$allowed = $this->context->canAccess(administrationId: $administrationId);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'AdministrationController: failed to check writable status access',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->error('AdministrationController: failed to check writable status access', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'Failed to resolve writable status'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
@@ -252,34 +271,35 @@ class AdministrationController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return null;
+
+	}//end refuseWritableStatusAccess()
+
+	/**
+	 * Whether the administration is writable, with the archival block message when it is not.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return JSONResponse
+	 */
+	private function writableStatusResponse(string $administrationId): JSONResponse {
 		try {
 			$this->archival->assertWritableById(administrationId: $administrationId);
 			return new JSONResponse(
-				[
-					'administrationId' => $administrationId,
-					'writable' => true,
-					'status' => 'actief_of_in_liquidatie',
-				],
+				['administrationId' => $administrationId, 'writable' => true, 'status' => 'actief_of_in_liquidatie'],
 				Http::STATUS_OK
 			);
 		} catch (RuntimeException $blocked) {
 			return new JSONResponse(
-				[
-					'administrationId' => $administrationId,
-					'writable' => false,
-					'message' => $blocked->getMessage(),
-				],
+				['administrationId' => $administrationId, 'writable' => false, 'message' => $blocked->getMessage()],
 				Http::STATUS_OK
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'AdministrationController: failed to resolve writable status',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->error('AdministrationController: failed to resolve writable status', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'Failed to resolve writable status'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
+		}
 
-	}//end writableStatus()
+	}//end writableStatusResponse()
 
 	/**
 	 * Validate an administration identifier slug before touching the data layer.

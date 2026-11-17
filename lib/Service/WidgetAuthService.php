@@ -31,6 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
@@ -115,9 +117,26 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 			return ['valid' => false, 'error' => 'Invalid or missing API key'];
 		}
 
+		if ($this->keyAccepts(record: $record, businessId: $businessId, apiKey: $apiKey) === false) {
+			return ['valid' => false, 'error' => 'Invalid or missing API key'];
+		}
+
+		return ['valid' => true, 'key' => $record];
+	}//end validateApiKey()
+
+	/**
+	 * Whether the active key record accepts the presented bearer token.
+	 *
+	 * @param array<string,mixed> $record     The active WidgetAccessKey.
+	 * @param string              $businessId Partner business id, for the log.
+	 * @param string              $apiKey     Plaintext bearer token.
+	 *
+	 * @return bool False when the record has no hash, the token does not match it, or the key is revoked.
+	 */
+	private function keyAccepts(array $record, string $businessId, string $apiKey): bool {
 		$hash = (string)($record['apiKeyHash'] ?? '');
 		if ($hash === '') {
-			return ['valid' => false, 'error' => 'Invalid or missing API key'];
+			return false;
 		}
 
 		if (password_verify($apiKey, $hash) !== true) {
@@ -125,16 +144,12 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 				'Shillinq widget auth: bearer token does not match active hash',
 				['businessId' => $businessId]
 			);
-			return ['valid' => false, 'error' => 'Invalid or missing API key'];
+			return false;
 		}
 
 		$status = (string)($record['status'] ?? '');
-		if ($status === 'revoked') {
-			return ['valid' => false, 'error' => 'Invalid or missing API key'];
-		}
-
-		return ['valid' => true, 'key' => $record];
-	}//end validateApiKey()
+		return $status !== 'revoked';
+	}//end keyAccepts()
 
 	/**
 	 * Check + increment the per-business rate-limit counter for the current
@@ -207,17 +222,9 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	 * @return array{success: bool, message?: string, businessId?: string, apiKey?: string, record?: array<string,mixed>}
 	 */
 	public function createApiKey(string $administrationId, string $businessId, string $actor): array {
-		if ($administrationId === '' || $businessId === '') {
-			return ['success' => false, 'message' => 'administrationId and businessId are required.'];
-		}
-
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return ['success' => false, 'message' => 'OpenRegister is not available.'];
-		}
-
-		$existing = $this->findActiveKeyByBusinessId(businessId: $businessId);
-		if ($existing !== null) {
-			return ['success' => false, 'message' => 'An active key already exists for this businessId.'];
+		$refusal = $this->createRefusal(administrationId: $administrationId, businessId: $businessId);
+		if ($refusal !== null) {
+			return ['success' => false, 'message' => $refusal];
 		}
 
 		$plaintext = $this->generatePlaintextKey();
@@ -255,6 +262,31 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 		];
 
 	}//end createApiKey()
+
+	/**
+	 * Why a key cannot be created for this business, or null when it can.
+	 *
+	 * @param string $administrationId Tenant boundary id.
+	 * @param string $businessId       Public partner business id.
+	 *
+	 * @return string|null The refusal message.
+	 */
+	private function createRefusal(string $administrationId, string $businessId): string|null {
+		if ($administrationId === '' || $businessId === '') {
+			return 'administrationId and businessId are required.';
+		}
+
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return 'OpenRegister is not available.';
+		}
+
+		$existing = $this->findActiveKeyByBusinessId(businessId: $businessId);
+		if ($existing !== null) {
+			return 'An active key already exists for this businessId.';
+		}
+
+		return null;
+	}//end createRefusal()
 
 	/**
 	 * Generate a new plaintext key and replace the active hash for businessId.
@@ -323,6 +355,42 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	}//end rotateApiKey()
 
 	/**
+	 * Replace the browser origins the active key of a business allows (REQ-WSW-011).
+	 *
+	 * The origins arrive validated and normalised by WidgetCorsPolicy; the
+	 * change is written to the key-lifecycle audit trail.
+	 *
+	 * @param string             $businessId Partner business id.
+	 * @param array<int, string> $origins    The normalised origins.
+	 * @param string             $actor      Nextcloud user id making the change.
+	 *
+	 * @return array{success: bool, message?: string, businessId?: string, allowedOrigins?: array<int, string>}
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 */
+	public function updateAllowedOrigins(string $businessId, array $origins, string $actor): array {
+		$existing = $this->findActiveKeyByBusinessId(businessId: $businessId);
+		$id = (string)($existing['id'] ?? '');
+		if ($existing === null || $id === '') {
+			return ['success' => false, 'message' => 'No active key found for businessId.'];
+		}
+
+		$existing['allowedOrigins'] = $origins;
+		if ($this->updateObject(schema: 'WidgetAccessKey', id: $id, data: $existing) === null) {
+			return ['success' => false, 'message' => 'Failed to persist the allowed origins.'];
+		}
+
+		$this->writeAudit(
+			administrationId: (string)($existing['administrationId'] ?? ''),
+			businessId: $businessId,
+			action: 'origins-changed',
+			actor: $actor
+		);
+
+		return ['success' => true, 'businessId' => $businessId, 'allowedOrigins' => $origins];
+	}//end updateAllowedOrigins()
+
+	/**
 	 * Administratively revoke an API key.
 	 *
 	 * Idempotent: re-revoking an already-revoked key is a no-op success.
@@ -377,13 +445,8 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 			return null;
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq widget auth: ObjectService unavailable',
-				['exception' => $e->getMessage()]
-			);
+		$objectService = $this->widgetObjectService();
+		if ($objectService === null) {
 			return null;
 		}
 
@@ -401,13 +464,7 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 					_rbac: false,
 				);
 
-			foreach ($records as $candidate) {
-				$row = $this->toArray(object: $candidate);
-				$status = (string)($row['status'] ?? '');
-				if ($status === 'active' || $status === 'rotating') {
-					return $row;
-				}
-			}
+			return $this->firstHonourableKey(records: $records);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq widget auth: lookup failed',
@@ -417,6 +474,42 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 
 		return null;
 	}//end findActiveKeyByBusinessId()
+
+	/**
+	 * OpenRegister's ObjectService, or null (logged) when it cannot be resolved.
+	 *
+	 * @return object|null
+	 */
+	private function widgetObjectService(): object|null {
+		try {
+			return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'Shillinq widget auth: ObjectService unavailable',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end widgetObjectService()
+
+	/**
+	 * The first key whose status is active or rotating.
+	 *
+	 * @param iterable<mixed> $records WidgetAccessKey records of one business.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstHonourableKey(iterable $records): array|null {
+		foreach ($records as $candidate) {
+			$row = $this->toArray(object: $candidate);
+			$status = (string)($row['status'] ?? '');
+			if ($status === 'active' || $status === 'rotating') {
+				return $row;
+			}
+		}
+
+		return null;
+	}//end firstHonourableKey()
 
 	/**
 	 * Resolve any WidgetAccessKey record for a businessId regardless of status.
@@ -545,9 +638,8 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 			$registerSlug = $this->settings->getRegisterSlug();
 			$saved = $objectService->saveObject(
 				object: $data,
-				register: $registerSlug,
-				schema: $schema,
-				_rbac: false,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: $schema)),
+				_rbac: false
 			);
 
 			return $this->toArray(object: $saved);
@@ -583,9 +675,10 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 			$registerSlug = $this->settings->getRegisterSlug();
 			$saved = $objectService->saveObject(
 				object: $data,
-				register: $registerSlug,
-				schema: $schema,
-				uuid: $id,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: $schema),
+					uuid: $id
+				)
 			);
 
 			return $this->toArray(object: $saved);

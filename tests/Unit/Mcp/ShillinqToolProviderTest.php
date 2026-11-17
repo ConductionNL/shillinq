@@ -22,15 +22,47 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Mcp;
 
+use OCA\Shillinq\Kernel\Contracts\TimeIntakeServiceInterface;
 use OCA\Shillinq\Mcp\McpAdministrationGate;
 use OCA\Shillinq\Mcp\McpArgumentValidator;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunExportServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Service\Extraction\ExtractionDraftCommitter;
 use OCA\Shillinq\Mcp\McpInvocationAudit;
+use OCA\Shillinq\Mcp\McpPeriodCloseTools;
+use OCA\Shillinq\Mcp\McpVatReturnTools;
+use OCA\Shillinq\Mcp\McpDunningTools;
+use OCA\Shillinq\Mcp\McpRequisitionTools;
+use OCA\Shillinq\Mcp\McpPaymentRunTools;
+use OCA\Shillinq\Mcp\McpBankTools;
+use OCA\Shillinq\Mcp\McpExpenseTools;
+use OCA\Shillinq\Mcp\McpHoursTools;
+use OCA\Shillinq\Mcp\McpInvoiceTools;
+use OCA\Shillinq\Service\RecurringInvoiceGenerator;
 use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
 use OCP\Log\Audit\CriticalActionPerformedEvent;
@@ -38,6 +70,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -49,6 +82,15 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(McpArgumentValidator::class)]
 #[UsesClass(McpAdministrationGate::class)]
 #[UsesClass(McpPurchaseOrderTools::class)]
+#[UsesClass(McpPeriodCloseTools::class)]
+#[UsesClass(McpVatReturnTools::class)]
+#[UsesClass(McpDunningTools::class)]
+#[UsesClass(McpRequisitionTools::class)]
+#[UsesClass(McpPaymentRunTools::class)]
+#[UsesClass(McpBankTools::class)]
+#[UsesClass(McpInvoiceTools::class)]
+#[UsesClass(McpHoursTools::class)]
+#[UsesClass(McpExpenseTools::class)]
 #[UsesClass(McpResult::class)]
 class ShillinqToolProviderTest extends TestCase {
 
@@ -99,7 +141,68 @@ class ShillinqToolProviderTest extends TestCase {
 			new McpArgumentValidator(),
 			$gate,
 			new McpInvocationAudit($dispatcher),
-			new McpPurchaseOrderTools($gate, $this->approvals, $this->createMock(LoggerInterface::class))
+			new McpPurchaseOrderTools($gate, $this->approvals, $this->createMock(LoggerInterface::class)),
+			new McpPeriodCloseTools(
+				$gate,
+				$this->createMock(PeriodCloseServiceInterface::class),
+				$this->createMock(PeriodCloseAssistantServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpVatReturnTools(
+				$gate,
+				$this->createMock(VATReturnServiceInterface::class),
+				$this->createMock(ContainerInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpDunningTools(
+				$gate,
+				$this->createMock(DunningRunServiceInterface::class),
+				$this->createMock(IncassoDossierComposerInterface::class),
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(IAppConfig::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpRequisitionTools(
+				$gate,
+				$this->createMock(RequisitionServiceInterface::class),
+				$this->createMock(RequisitionConversionServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpPaymentRunTools(
+				$gate,
+				$this->createMock(PaymentRunExportServiceInterface::class),
+				$this->createMock(PaymentRunReconciliationServiceInterface::class),
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpBankTools(
+				$gate,
+				$this->createMock(StatementParserInterface::class),
+				$this->createMock(StatementIntakeServiceInterface::class),
+				$this->createMock(ReconciliationResolutionServiceInterface::class),
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(IAppConfig::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpInvoiceTools(
+				$gate,
+				$this->createMock(InvoiceGenerationServiceInterface::class),
+				$this->createMock(BillableLinesServiceInterface::class),
+				$this->createMock(InvoicePdfGeneratorInterface::class),
+				$this->createMock(EInvoiceServiceInterface::class),
+				$this->createMock(RecurringInvoiceGenerator::class),
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpHoursTools($gate, $this->createMock(TimeIntakeServiceInterface::class), $this->createMock(LoggerInterface::class)),
+			new McpExpenseTools(
+				$gate,
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(ExtractionPrefillServiceInterface::class),
+				$this->createMock(ExtractionDraftCommitter::class),
+				$this->createMock(ObjectTransitionRunnerInterface::class),
+				$this->createMock(LoggerInterface::class)
+			)
 		);
 	}//end setUp()
 
@@ -159,6 +262,62 @@ class ShillinqToolProviderTest extends TestCase {
 			$this->assertSame('invalid_arguments', $result['error'], $tool['id']);
 		}
 	}//end testEveryCatalogueToolDispatches()
+
+	/**
+	 * Every catalogue tool, given well-formed arguments, reaches its handler:
+	 * the gate answers for an administration the caller may not reach, rather
+	 * than the dispatcher saying the tool has no handler.
+	 *
+	 * @return void
+	 */
+	public function testEveryCatalogueToolReachesItsHandler(): void {
+		$values = [
+			'administrationId' => 'adm-other',
+			'purchaseOrderId' => 'po-1',
+			'periodId' => '2026-10',
+			'decision' => 'approved',
+			'returnId' => 'ret-1',
+			'period' => 'quarter',
+			'periodYear' => 2024,
+			'periodNumber' => 1,
+			'regime' => 'standard',
+			'invoiceId' => 'inv-1',
+			'customerId' => 'cus-1',
+			'reason' => 'DISPUTED',
+			'pauseId' => 'pause-1',
+			'principalDepreciated' => 10.0,
+			'art29OBDeclaration' => 'Bankrupt',
+			'requisitionId' => 'req-1',
+			'programme' => 'ICT',
+			'financialYear' => 2026,
+			'neededByDate' => '2026-12-01',
+			'justification' => 'New starters',
+			'kind' => 'goods',
+			'lines' => [['description' => 'Laptop', 'glAccountSuggestion' => '4100', 'quantity' => 1, 'unitPrice' => 900]],
+			'paymentRunId' => 'run-1',
+			'contents' => 'statement',
+			'format' => 'camt053',
+			'reconId' => 'rec-1',
+			'matchIds' => ['m-1'],
+			'resolutionStatus' => 'matched',
+			'resolutionReason' => 'Paid',
+			'batchId' => 'b-1',
+			'organisationRef' => 'org-1',
+			'entries' => [['externalId' => 'e1', 'date' => '2026-11-02', 'minutes' => 60, 'description' => 'Work']],
+			'billingModel' => 'fixed_fee',
+			'fromDate' => '2026-10-01',
+			'toDate' => '2026-10-31',
+			'invoiceNumber' => 'F-1',
+			'profileId' => 'p-1',
+			'receiptId' => 'rcp-1',
+			'claimId' => 'clm-1',
+		];
+		foreach ($this->provider->getTools() as $tool) {
+			$args = array_intersect_key($values, array_flip($tool['inputSchema']['required']));
+			$result = $this->provider->invokeTool($tool['id'], $args);
+			$this->assertSame('not_found', $result['error'], $tool['id']);
+		}
+	}//end testEveryCatalogueToolReachesItsHandler()
 
 	/**
 	 * A permitted decision runs the service and is audited as ok under the principal.

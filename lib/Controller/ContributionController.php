@@ -95,6 +95,17 @@ class ContributionController extends Controller {
 			);
 		}
 
+		return $this->raiseResponse(payload: $this->requestPayload());
+	}//end raise()
+
+	/**
+	 * The request parameters without route parameters and framework keys.
+	 *
+	 * @return array<string,mixed> The payload.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
+	 */
+	private function requestPayload(): array {
 		$payload = [];
 		foreach ($this->request->getParams() as $key => $value) {
 			// Route parameters and framework keys start with an underscore.
@@ -103,6 +114,19 @@ class ContributionController extends Controller {
 			}
 		}
 
+		return $payload;
+	}//end requestPayload()
+
+	/**
+	 * Raise the contributions and map the outcome onto a response.
+	 *
+	 * @param array<string,mixed> $payload The raise payload.
+	 *
+	 * @return JSONResponse 200 with a result per recipient, 400, 403 or 500.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
+	 */
+	private function raiseResponse(array $payload): JSONResponse {
 		try {
 			$result = $this->raiser->raise(payload: $payload);
 		} catch (InvalidArgumentException $e) {
@@ -120,5 +144,5 @@ class ContributionController extends Controller {
 		}//end try
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end raise()
+	}//end raiseResponse()
 }//end class

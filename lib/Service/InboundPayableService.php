@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
@@ -46,6 +48,8 @@ use Throwable;
  * Raises, approves, pays and rejects a payable another app asked for.
  *
  * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class InboundPayableService implements InboundPayableServiceInterface {
 
@@ -287,16 +291,48 @@ class InboundPayableService implements InboundPayableServiceInterface {
 			return;
 		}
 
-		$payable = null;
-		if ($app !== '' && $reference !== '') {
-			$payable = $this->findByReference(app: $app, reference: $reference);
-		}
+		$payable = $this->payableFor(app: $app, reference: $reference);
 
 		if ($payable === null) {
 			$event->refuse(error: sprintf('%s raised no payable under reference %s.', $app, $reference));
 			return;
 		}
 
+		$this->answerCancel(event: $event, payable: $payable, reference: $reference, reason: $reason);
+	}//end cancel()
+
+	/**
+	 * The payable an app raised under a reference, or null.
+	 *
+	 * @param string $app       The raising app.
+	 * @param string $reference The app's reference.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 */
+	private function payableFor(string $app, string $reference): array|null {
+		$payable = null;
+		if ($app !== '' && $reference !== '') {
+			$payable = $this->findByReference(app: $app, reference: $reference);
+		}
+
+		return $payable;
+	}//end payableFor()
+
+	/**
+	 * Answer a cancel command for a found payable by its state.
+	 *
+	 * @param PayableCancelRequestedEvent $event     The command.
+	 * @param array<string, mixed>        $payable   The payable.
+	 * @param string                      $reference The app's reference.
+	 * @param string                      $reason    Why it is withdrawn.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 */
+	private function answerCancel(PayableCancelRequestedEvent $event, array $payable, string $reference, string $reason): void {
 		$state = (string)($payable['state'] ?? '');
 		if ($state === 'cancelled') {
 			$event->accept(payableId: (string)$payable['id'], state: 'cancelled');
@@ -310,6 +346,21 @@ class InboundPayableService implements InboundPayableServiceInterface {
 			return;
 		}
 
+		$this->withdraw(event: $event, payable: $payable, reason: $reason);
+	}//end answerCancel()
+
+	/**
+	 * Withdraw a requested payable and answer the command.
+	 *
+	 * @param PayableCancelRequestedEvent $event   The command.
+	 * @param array<string, mixed>        $payable The requested payable.
+	 * @param string                      $reason  Why it is withdrawn.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 */
+	private function withdraw(PayableCancelRequestedEvent $event, array $payable, string $reason): void {
 		$payable['state'] = 'cancelled';
 		$payable['cancelledAt'] = gmdate('Y-m-d\TH:i:s\Z');
 		$payable['cancelledReason'] = $reason;
@@ -322,7 +373,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 		}
 
 		$event->accept(payableId: (string)$payable['id'], state: 'cancelled');
-	}//end cancel()
+	}//end withdraw()
 
 	/**
 	 * Why a payout command is refused, or null.
@@ -332,11 +383,37 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 * @return string|null The refusal.
 	 */
 	private function refusal(array $payable): ?string {
+		return $this->sourceRefusal(payable: $payable)
+			?? $this->payeeRefusal(payable: $payable)
+			?? $this->referenceRefusal(payable: $payable)
+			?? $this->scheduleRefusal(payable: $payable)
+			?? $this->historicalRefusal(payable: $payable);
+	}//end refusal()
+
+	/**
+	 * Why the raising app may not raise a payable, or null.
+	 *
+	 * @param array<string, mixed> $payable The command's fields.
+	 *
+	 * @return string|null The refusal.
+	 */
+	private function sourceRefusal(array $payable): string|null {
 		$app = (string)$payable['sourceApp'];
 		if ($app === '' || $this->appManager->isInstalled($app) === false) {
 			return sprintf('Only an installed app can raise a payable; "%s" is not one.', $app);
 		}
 
+		return null;
+	}//end sourceRefusal()
+
+	/**
+	 * Why the amount or the payee is refused, or null.
+	 *
+	 * @param array<string, mixed> $payable The command's fields.
+	 *
+	 * @return string|null The refusal.
+	 */
+	private function payeeRefusal(array $payable): string|null {
 		if ((float)$payable['amount'] <= 0.0) {
 			return 'A payable needs an amount above zero.';
 		}
@@ -349,6 +426,17 @@ class InboundPayableService implements InboundPayableServiceInterface {
 			return 'The payee\'s IBAN is not valid.';
 		}
 
+		return null;
+	}//end payeeRefusal()
+
+	/**
+	 * Why the reference or the callback is refused, or null.
+	 *
+	 * @param array<string, mixed> $payable The command's fields.
+	 *
+	 * @return string|null The refusal.
+	 */
+	private function referenceRefusal(array $payable): string|null {
 		if (mb_strlen((string)$payable['reference']) < 6) {
 			return 'A payable needs a reference of at least 6 characters.';
 		}
@@ -358,6 +446,17 @@ class InboundPayableService implements InboundPayableServiceInterface {
 			return 'The callback must be an http or https address.';
 		}
 
+		return null;
+	}//end referenceRefusal()
+
+	/**
+	 * Why the pay-by date or the linked objects are refused, or null.
+	 *
+	 * @param array<string, mixed> $payable The command's fields.
+	 *
+	 * @return string|null The refusal.
+	 */
+	private function scheduleRefusal(array $payable): string|null {
 		if ($payable['dueOn'] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$payable['dueOn']) !== 1) {
 			return 'The pay-by date must read YYYY-MM-DD.';
 		}
@@ -366,8 +465,8 @@ class InboundPayableService implements InboundPayableServiceInterface {
 			return LinkedObjectReferences::MALFORMED;
 		}
 
-		return $this->historicalRefusal(payable: $payable);
-	}//end refusal()
+		return null;
+	}//end scheduleRefusal()
 
 	/**
 	 * Why a historical payout is refused, or null: its state must be one a
@@ -659,10 +758,9 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	private function save(string $schema, array $object): string {
 		$saved = $this->objectService->saveObject(
 			object: $object,
-			register: $this->registerSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema)),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 		$uuid = ObjectIdentifier::resolve(saved: $saved);
 		if ($uuid === '') {
