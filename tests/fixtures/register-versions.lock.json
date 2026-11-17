@@ -126,8 +126,12 @@
             "versionsSha256": "5eb8591cc159a1fcde7f8006e2a06faf90204e14f9319a988832ac204796a337"
         },
         {
-            "appVersion": "0.5.7-unstable.20261117100000",
-            "versionsSha256": "43a6167e70b4e1d78037d346b775668e8a6ce08324111db3ba8449bbb1e9cd84"
+            "appVersion": "0.5.7-unstable.20261117064000",
+            "versionsSha256": "78fa2cada42887f1bbdcd505d0e0ab7c1b5d8cd07a3010ee5d8d3b37c0aaa7b8"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117120000",
+            "versionsSha256": "be4ae3fa44f515a9d3d8253a6bea2e9a588e4f483ff7332ba192adaa0f4dee88"
         }
     ],
     "versions": {
@@ -502,7 +506,7 @@
         "schema:PricingTier": "0.1.0",
         "schema:Programma": "0.1.0",
         "schema:Programmabegroting": "0.1.0",
-        "schema:ProjectAssignment": "0.1.0",
+        "schema:ProjectAssignment": "0.2.0",
         "schema:ProjectBudget": "0.1.0",
         "schema:ProviderPayout": "0.2.0",
         "schema:ProvincialeFondsPosting": "0.1.0",
