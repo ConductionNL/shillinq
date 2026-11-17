@@ -45,7 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -115,24 +115,7 @@ class EuExpenditureGuard {
 				return false;
 			}
 
-			$costCategory = (string)($expenditure['costCategory'] ?? '');
-			$euProjectId = (string)($expenditure['euProjectId'] ?? '');
-			if ($costCategory === '' || $euProjectId === '') {
-				return false;
-			}
-
-			// The eligibilityConfirmed flag is set when the cost-category passed
-			// the booking-time validation against the fund's eligibility-rules.
-			if (($expenditure['eligibilityConfirmed'] ?? false) !== true) {
-				return false;
-			}
-
-			$fonds = $this->resolveProjectFonds(euProjectId: $euProjectId);
-			if ($fonds === null) {
-				return false;
-			}
-
-			return $this->isCostCategoryEligible(fonds: $fonds, costCategory: $costCategory);
+			return $this->isDeclarable(expenditure: $expenditure);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'EuExpenditureGuard: declare eligibility check failed — denying declare transition (fail-closed)',
@@ -141,6 +124,38 @@ class EuExpenditureGuard {
 			return false;
 		}//end try
 	}//end canDeclare()
+
+	/**
+	 * Whether the expenditure names a cost category and project, passed eligibility, and its fund allows the category.
+	 *
+	 * @param array<string,mixed> $expenditure The EuExpenditure.
+	 *
+	 * @return bool True when the expenditure may be declared.
+	 *
+	 * @throws \Throwable When the project's fund cannot be read.
+	 *
+	 * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+	 */
+	private function isDeclarable(array $expenditure): bool {
+		$costCategory = (string)($expenditure['costCategory'] ?? '');
+		$euProjectId = (string)($expenditure['euProjectId'] ?? '');
+		if ($costCategory === '' || $euProjectId === '') {
+			return false;
+		}
+
+		// The eligibilityConfirmed flag is set when the cost-category passed
+		// the booking-time validation against the fund's eligibility-rules.
+		if (($expenditure['eligibilityConfirmed'] ?? false) !== true) {
+			return false;
+		}
+
+		$fonds = $this->resolveProjectFonds(euProjectId: $euProjectId);
+		if ($fonds === null) {
+			return false;
+		}
+
+		return $this->isCostCategoryEligible(fonds: $fonds, costCategory: $costCategory);
+	}//end isDeclarable()
 
 	/**
 	 * Returns true iff the declaration may be submitted to the MA.
@@ -376,11 +391,6 @@ class EuExpenditureGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

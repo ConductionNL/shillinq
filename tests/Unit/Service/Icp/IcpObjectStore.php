@@ -20,6 +20,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Icp;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -76,8 +77,9 @@ trait IcpObjectStore {
 			}
 		);
 		$service->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend=[], string|int|null $register=null, string|int|null $schema=null, ?string $uuid=null): ObjectEntityInterface {
-				$this->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid];
+			function (array $object, ?ObjectSaveOptions $options=null): ObjectEntityInterface {
+				$uuid = $options?->uuid;
+				$this->saves[] = ['object' => $object, 'register' => $options?->target->register, 'schema' => $options?->target->schema, 'uuid' => $uuid];
 				$entity = $this->createMock(ObjectEntityInterface::class);
 				$entity->method('jsonSerialize')->willReturn($object + ['@self' => ['id' => ($uuid ?? 'new-id')]]);
 				return $entity;

@@ -34,8 +34,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -69,9 +69,13 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 * @var array<string, array{interface: class-string, consequence: string}>
 	 */
 	public const FAMILIES = [
+		// The supplementary VAT return and the ICP statement file through this
+		// port (tax-vat-position-and-suppletie REQ-VPS-002,
+		// tax-icp-and-reverse-charge).
 		'digipoort-sbr' => [
 			'interface' => DigipoortSbrAdapterInterface::class,
-			'consequence' => 'No ICP statement or other SBR filing reaches Digipoort; download the XML instead.',
+			'consequence' => 'No VAT return, supplementary return, ICP statement or annual accounts reach Digipoort; '
+				.'Submit is refused, a supplementary return is downloaded to file by hand and an ICP statement is downloaded as XML instead.',
 		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,

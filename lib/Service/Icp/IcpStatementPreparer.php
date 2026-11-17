@@ -24,6 +24,8 @@ namespace OCA\Shillinq\Service\Icp;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
 use OCP\IAppConfig;
@@ -120,9 +122,7 @@ class IcpStatementPreparer {
 
 		$saved = $this->objectService->saveObject(
 			object: $statement,
-			register: $this->register(),
-			schema: self::SCHEMA,
-			uuid: $uuid,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: self::SCHEMA), uuid: $uuid)
 		);
 
 		return [

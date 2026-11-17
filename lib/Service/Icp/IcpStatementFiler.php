@@ -24,6 +24,8 @@ namespace OCA\Shillinq\Service\Icp;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
@@ -183,9 +185,7 @@ class IcpStatementFiler {
 
 			$this->objectService->saveObject(
 				object: $update,
-				register: $this->register(),
-				schema: IcpStatementPreparer::SCHEMA,
-				uuid: $uuid,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: IcpStatementPreparer::SCHEMA), uuid: $uuid)
 			);
 		}
 

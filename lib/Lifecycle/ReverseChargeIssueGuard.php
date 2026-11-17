@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use RuntimeException;
@@ -53,20 +54,16 @@ class ReverseChargeIssueGuard implements LifecycleActionInterface {
 	/**
 	 * Refuse the issue when the invoice is reverse-charged without a buyer VAT number.
 	 *
-	 * @param array<string,mixed> $objectData   The invoice after its state moved.
-	 * @param array<string,mixed> $previousData The invoice before the transition.
-	 * @param array<string,mixed> $parameters   None.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; objectData is the invoice after its state moved.
 	 *
 	 * @return array<string,mixed> The invoice, unchanged.
 	 *
 	 * @throws RuntimeException Naming the missing buyer VAT number.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
 		if ($this->notice->lacksBuyerVatNumber(invoice: $objectData) === true) {
 			throw new RuntimeException(ReverseChargeNotice::MISSING_VAT_NUMBER);
 		}

@@ -40,6 +40,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Unit coverage for the sync core.
@@ -201,6 +203,7 @@ final class InventoryMobileScannerServiceTest extends TestCase {
 
 		$captured = [];
 		$objectService->method('saveObject')->willReturnCallback(function (...$args) use (&$captured) {
+			$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 			$named = self::namedArgs($args);
 			$captured[] = $named;
 			return null;
@@ -376,6 +379,6 @@ abstract class InventoryMobileScannerStubObjectService {
 	 *
 	 * @return mixed
 	 */
-	abstract public function saveObject(mixed $object, ?string $register = null, ?string $schema = null): mixed;
+	abstract public function saveObject(mixed $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed;
 
 }//end class

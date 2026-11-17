@@ -232,12 +232,27 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
 // Raised to 1,259,400: 6,262 B of headroom, 0.50%.
 //
-// Re-measured 2026-11-14 (tax-icp-and-reverse-charge 2.3: the ICP page reads
+// Re-measured 2026-11-14 (receivables-sepa-direct-debit 2.1: the new
+// receivables-sepa-direct-debit.json fragment with the mandates, direct debit
+// batches and collections and their pages): development held 1,257,096 bytes.
+// This change adds 9,467 B. 1,266,563 in all.
+// Raised to 1,272,900: 6,337 B of headroom, 0.50%.
+//
+// Re-measured 2026-11-14 (investment deductions, tax-investment-deduction-
+// claims REQ-IDC-003: the claims and investment assets pages under Taxes,
+// their detail pages, and FixedAssetDetail copied whole to add the
+// Investment deduction tab): development held 1,280,220 bytes, already over
+// the 1,272,900 above. This change adds the 11,254 B
+// tax-investment-deduction-claims.json. 1,291,474 in all.
+// Raised to 1,297,900: 6,426 B of headroom, 0.50%.
+//
+// Re-measured 2026-11-17 (tax-icp-and-reverse-charge 2.3: the ICP page reads
 // the line-bearing IcpOpgaaf statements, with Prepare, Reconcile, Download XML
-// and File): development held 1,257,205 bytes. This change adds 4,866 B in the
-// new tax-icp-and-reverse-charge.json fragment. 1,262,071 in all.
-// Raised to 1,268,400: 6,329 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_268_400
+// and File): development held 1,309,105 bytes, already over the 1,297,900
+// above. This change adds 4,975 B in the tax-icp-and-reverse-charge.json
+// fragment and the chart-of-accounts choice. 1,314,080 in all.
+// Raised to 1,320,700: 6,620 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_320_700
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

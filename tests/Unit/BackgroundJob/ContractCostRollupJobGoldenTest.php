@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Pins which contracts are rolled up, the reads, the writes and every log line in order.
@@ -112,7 +113,9 @@ class ContractCostRollupJobGoldenTest extends TestCase {
 			 *
 			 * @return array
 			 */
-			public function saveObject(array $object, string|null $register=null, string|null $schema=null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->test->calls[] = ['save', ($object['id'] ?? null), $object['incurredCostUnreadableLinks'], $register, $schema];
 				if (($object['fail'] ?? false) === true) {
 					throw new RuntimeException('save refused ' . ($object['id'] ?? '-'));

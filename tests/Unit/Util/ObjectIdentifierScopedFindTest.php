@@ -13,6 +13,8 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * findOne() over a service that reports its register and schema, with a find()
@@ -35,7 +37,7 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 	 * @param string $slug The slug.
 	 */
 	private static function named(int $id, string $slug): object {
-		return new class($id, $slug) {
+		return new class($id, $slug) implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 			public function __construct(private int $id, private string $slug) {
 			}
 			public function getId(): int {
@@ -73,7 +75,9 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 			public function getCurrentSchemaEntity(): ?object {
 				return $this->schema;
 			}
-			public function find(string $id, ?object $register = null, ?object $schema = null, bool $_rbac = true): ObjectEntity {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ObjectEntity {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$this->calls[] = ['find', $id, $register?->getSlug(), $schema?->getSlug(), $_rbac];
 				$hit = $this->lookup(id: $id, schema: $schema);
 				if ($hit === null && $schema !== null && preg_match('/^[0-9a-f-]{36}$/', $id) === 1) {
@@ -135,13 +139,14 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 				return new \stdClass();
 			}
 			public function getCurrentSchemaEntity(): object {
-				return new class() {
+				return new class() implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 					public function getId(): int {
 						return 7;
 					}
 				};
 			}
 			public function find(string $id, mixed ...$named): array {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				return ['name' => 'unchecked'];
 			}
 		};
@@ -154,13 +159,14 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 				return new \stdClass();
 			}
 			public function getCurrentSchemaEntity(): object {
-				return new class() {
+				return new class() implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 					public function getId(): string {
 						return '';
 					}
 				};
 			}
 			public function find(string $id, mixed ...$named): ObjectEntity {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				$entity = new ObjectEntity();
 				$entity->setSchema('');
 				$entity->setObject(['name' => 'nameless']);
@@ -179,7 +185,7 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 					return new \stdClass();
 				}
 				public function getCurrentSchemaEntity(): object {
-					return new class() {
+					return new class() implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
 						public function getId(): int {
 							return 7;
 						}
@@ -192,6 +198,7 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 					};
 				}
 				public function find(string $id, mixed ...$named): ObjectEntity {
+					$named = LegacyObjectArgs::flatten(args: $named);
 					$entity = new ObjectEntity();
 					$entity->setSchema($this->stored);
 					$entity->setObject(['name' => 'by ' . $this->stored]);

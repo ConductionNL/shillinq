@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Repair\BackfillAdministrationJurisdiction;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -73,9 +74,9 @@ final class BackfillAdministrationJurisdictionTest extends TestCase {
 			['Shillinq: 2 administration(s) given jurisdiction NL.', 'Shillinq: 0 administration(s) given jurisdiction NL.'],
 			$messages
 		);
-		$this->assertSame('NL', $store->find(id: 'a-1', schema: 'Administration')->getObject()['jurisdiction']);
-		$this->assertSame('BE', $store->find(id: 'a-2', schema: 'Administration')->getObject()['jurisdiction']);
-		$this->assertSame('NL', $store->find(id: 'a-3', schema: 'Administration')->getObject()['jurisdiction']);
+		$this->assertSame('NL', $store->find(id: 'a-1', options: new ObjectFindOptions(schema: 'Administration'))->getObject()['jurisdiction']);
+		$this->assertSame('BE', $store->find(id: 'a-2', options: new ObjectFindOptions(schema: 'Administration'))->getObject()['jurisdiction']);
+		$this->assertSame('NL', $store->find(id: 'a-3', options: new ObjectFindOptions(schema: 'Administration'))->getObject()['jurisdiction']);
 		$this->assertStringContainsString('jurisdiction', $step->getName());
 	}//end testEmptyJurisdictionsBecomeDutchAndOthersAreKept()
 

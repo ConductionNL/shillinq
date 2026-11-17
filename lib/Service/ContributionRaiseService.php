@@ -42,7 +42,10 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
+use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -89,6 +92,7 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param ITimeFactory $timeFactory Today, for the default invoice date.
 	 * @param LoggerInterface $logger Logs a write that failed, never a guardian's data.
+	 * @param PaymentLinkCreator|null $linkCreator Creates the checkout link of a raised request (receivables-payment-links D2).
 	 *
 	 * @return void
 	 */
@@ -102,6 +106,7 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 		private readonly IAppConfig $appConfig,
 		private readonly ITimeFactory $timeFactory,
 		private readonly LoggerInterface $logger,
+		private readonly ?PaymentLinkCreator $linkCreator = null,
 	) {
 	}//end __construct()
 
@@ -238,6 +243,7 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 			$request = $probe;
 			$request['invoiceReference'] = $invoiceId;
 			$requestId = $this->save(object: $request, schema: 'PaymentRequest');
+			$this->storePaymentLink(request: $request, requestId: $requestId);
 
 			$taken[$key] = $requestId;
 			$existing[] = $request + ['id' => $requestId];
@@ -320,9 +326,8 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 	private function save(array $object, string $schema): string {
 		$saved = $this->objectService->saveObject(
 			object: $object,
-			register: $this->registerSlug(),
-			schema: $schema,
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema)),
+			_rbac: false
 		);
 
 		$uuid = ObjectIdentifier::resolve(saved: $saved);
@@ -332,6 +337,38 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 
 		return $uuid;
 	}//end save()
+
+	/**
+	 * Give the raised request its checkout link from the provider, stored
+	 * with the provider payment id and the checkout expiry (REQ-RPL-001).
+	 * Without a live provider the request stays without a link.
+	 *
+	 * @param array<string, mixed> $request   The saved request.
+	 * @param string               $requestId Its id.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
+	 */
+	private function storePaymentLink(array $request, string $requestId): void {
+		if ($this->linkCreator === null) {
+			return;
+		}
+
+		$fields = $this->linkCreator->linkFieldsFor(request: $request + ['id' => $requestId]);
+		if ($fields === []) {
+			return;
+		}
+
+		$this->objectService->saveObject(
+			object: array_merge($request, $fields),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'PaymentRequest'),
+				uuid: $requestId
+			),
+			_rbac: false,
+		);
+	}//end storePaymentLink()
 
 	/**
 	 * The register slug holding shillinq's own objects.

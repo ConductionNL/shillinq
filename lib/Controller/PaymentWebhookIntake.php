@@ -145,16 +145,8 @@ final class PaymentWebhookIntake {
 	 * @return bool
 	 */
 	private function verifyStripeSignature(string $provided, string $rawBody, string $secret): bool {
-		$timestamp = null;
-		$signatures = [];
-		foreach (explode(',', $provided) as $part) {
-			[$key, $value] = array_pad(explode('=', trim($part), 2), 2, '');
-			if ($key === 't' && ctype_digit($value) === true) {
-				$timestamp = $value;
-			} else if ($key === 'v1' && $value !== '') {
-				$signatures[] = strtolower($value);
-			}
-		}
+		$timestamp = $this->stripeTimestamp(provided: $provided);
+		$signatures = $this->stripeSignatures(provided: $provided);
 
 		if ($timestamp === null || $signatures === []) {
 			return false;
@@ -165,6 +157,58 @@ final class PaymentWebhookIntake {
 		}
 
 		$expected = hash_hmac('sha256', $timestamp . '.' . $rawBody, $secret);
+
+		return $this->anySignatureMatches(expected: $expected, signatures: $signatures);
+
+	}//end verifyStripeSignature()
+
+	/**
+	 * The last numeric `t=` value of a Stripe-Signature header, or null.
+	 *
+	 * @param string $provided The Stripe-Signature header.
+	 *
+	 * @return string|null
+	 */
+	private function stripeTimestamp(string $provided): string|null {
+		$timestamp = null;
+		foreach (explode(',', $provided) as $part) {
+			[$key, $value] = array_pad(explode('=', trim($part), 2), 2, '');
+			if ($key === 't' && ctype_digit($value) === true) {
+				$timestamp = $value;
+			}
+		}
+
+		return $timestamp;
+	}//end stripeTimestamp()
+
+	/**
+	 * The non-empty `v1=` values of a Stripe-Signature header, lower-cased.
+	 *
+	 * @param string $provided The Stripe-Signature header.
+	 *
+	 * @return list<string>
+	 */
+	private function stripeSignatures(string $provided): array {
+		$signatures = [];
+		foreach (explode(',', $provided) as $part) {
+			[$key, $value] = array_pad(explode('=', trim($part), 2), 2, '');
+			if ($key === 'v1' && $value !== '') {
+				$signatures[] = strtolower($value);
+			}
+		}
+
+		return $signatures;
+	}//end stripeSignatures()
+
+	/**
+	 * Whether any signature equals the expected HMAC (timing-safe).
+	 *
+	 * @param string $expected The expected HMAC.
+	 * @param list<string> $signatures The provided signatures.
+	 *
+	 * @return bool
+	 */
+	private function anySignatureMatches(string $expected, array $signatures): bool {
 		foreach ($signatures as $signature) {
 			if (hash_equals($expected, $signature) === true) {
 				return true;
@@ -172,8 +216,7 @@ final class PaymentWebhookIntake {
 		}
 
 		return false;
-
-	}//end verifyStripeSignature()
+	}//end anySignatureMatches()
 
 	/**
 	 * The configured shared secret of a gateway, '' when not provisioned.

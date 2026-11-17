@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\ReverseChargeIssueGuard;
 use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -57,6 +58,17 @@ final class ReverseChargeIssueGuardTest extends TestCase {
 	}//end invoice()
 
 	/**
+	 * The issue transition's action context for this invoice.
+	 *
+	 * @param array<string,mixed> $invoice The invoice after its state moved.
+	 *
+	 * @return LifecycleActionContext
+	 */
+	private static function context(array $invoice): LifecycleActionContext {
+		return new LifecycleActionContext(objectData: $invoice, previousData: [], parameters: [], actionName: 'issue');
+	}//end context()
+
+	/**
 	 * A reverse-charged invoice without the buyer's number is refused, saying what is missing.
 	 *
 	 * @return void
@@ -65,7 +77,7 @@ final class ReverseChargeIssueGuardTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage("The buyer's VAT number is required for reverse charge.");
 
-		(new ReverseChargeIssueGuard())->execute(self::invoice('K', ''), [], [], 'issue');
+		(new ReverseChargeIssueGuard())->execute(self::context(self::invoice('K', '')));
 	}//end testAMissingBuyerNumberIsRefused()
 
 	/**
@@ -75,7 +87,7 @@ final class ReverseChargeIssueGuardTest extends TestCase {
 	 */
 	public function testADomesticReverseChargeNeedsTheNumberToo(): void {
 		$this->expectException(RuntimeException::class);
-		(new ReverseChargeIssueGuard())->execute(self::invoice('AE', '  '), [], [], 'issue');
+		(new ReverseChargeIssueGuard())->execute(self::context(self::invoice('AE', '  ')));
 	}//end testADomesticReverseChargeNeedsTheNumberToo()
 
 	/**
@@ -88,8 +100,8 @@ final class ReverseChargeIssueGuardTest extends TestCase {
 		$withNumber = self::invoice('K', 'BE0123456749');
 		$standard = self::invoice('S', '');
 
-		$this->assertSame($withNumber, $guard->execute($withNumber, [], [], 'issue'));
-		$this->assertSame($standard, $guard->execute($standard, [], [], 'issue'));
+		$this->assertSame($withNumber, $guard->execute(self::context($withNumber)));
+		$this->assertSame($standard, $guard->execute(self::context($standard)));
 	}//end testAnInvoiceWithTheNumberOrWithoutReverseChargePasses()
 
 	/**

@@ -249,19 +249,7 @@ class GlLineFiscalYearBackfillMigrator implements GlLineFiscalYearBackfillMigrat
 			if ($class === self::CLASS_ALREADY_STAMPED) {
 				$alreadyStamped++;
 
-				// A line that already carries a year is never rewritten, but a
-				// parent that now disagrees is worth surfacing: silently
-				// keeping either value hides a real inconsistency.
-				$parentYear = $this->resolveFiscalYearId(glLine: $glLine, index: $index);
-				$ownYear    = trim((string)($glLine[self::YEAR_PROPERTY] ?? ''));
-				if ($parentYear !== null && $parentYear !== $ownYear) {
-					$disagreements[] = sprintf(
-						'line at offset %d carries "%s" while its transaction says "%s"',
-						(int)$offset,
-						$ownYear,
-						$parentYear
-					);
-				}
+				array_push($disagreements, ...$this->disagreementsOf(glLine: $glLine, index: $index, offset: $offset));
 
 				continue;
 			}
@@ -293,6 +281,37 @@ class GlLineFiscalYearBackfillMigrator implements GlLineFiscalYearBackfillMigrat
 			'disagreements'  => $disagreements,
 		];
 	}//end backfillBatch()
+
+	/**
+	 * The disagreement, if any, between an already-stamped line's year and its transaction's year.
+	 *
+	 * @param array<string, mixed> $glLine The already-stamped line.
+	 * @param array<string, string> $index  Output of indexFiscalYearsByTransaction().
+	 * @param int|string           $offset The line's offset in the batch.
+	 *
+	 * @return list<string> One message when the years disagree, none otherwise.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
+	 */
+	private function disagreementsOf(array $glLine, array $index, int|string $offset): array {
+		// A line that already carries a year is never rewritten, but a
+		// parent that now disagrees is worth surfacing: silently
+		// keeping either value hides a real inconsistency.
+		$parentYear = $this->resolveFiscalYearId(glLine: $glLine, index: $index);
+		$ownYear    = trim((string)($glLine[self::YEAR_PROPERTY] ?? ''));
+		if ($parentYear !== null && $parentYear !== $ownYear) {
+			return [
+				sprintf(
+					'line at offset %d carries "%s" while its transaction says "%s"',
+					(int)$offset,
+					$ownYear,
+					$parentYear
+				),
+			];
+		}
+
+		return [];
+	}//end disagreementsOf()
 
 	/**
 	 * Count the rows still carrying no fiscal year.

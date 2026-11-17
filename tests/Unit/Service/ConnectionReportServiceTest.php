@@ -52,6 +52,7 @@ use RuntimeException;
  * @covers \OCA\Shillinq\Service\ConnectionReportService
  * @uses   \OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter
  * @uses   \OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter
+ * @uses   \OCA\Shillinq\Service\External\Digipoort\DigipoortSubmissionResult
  * @uses   \OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter
  */
 class ConnectionReportServiceTest extends TestCase {
@@ -173,6 +174,10 @@ class ConnectionReportServiceTest extends TestCase {
 			actual: $result
 		);
 		$this->assertCount(expectedCount: 3, haystack: $this->sent);
+		$this->assertSame(
+			expected: 'A log-only adapter answers here. No VAT return, supplementary return, ICP statement or annual accounts reach Digipoort; Submit is refused, a supplementary return is downloaded to file by hand and an ICP statement is downloaded as XML instead.',
+			actual: $this->sentByKey()['digipoort-sbr']->message
+		);
 
 		$deposit = $this->sentByKey()['deposit-payment'];
 		$this->assertSame(expected: 'shillinq', actual: $deposit->app);
