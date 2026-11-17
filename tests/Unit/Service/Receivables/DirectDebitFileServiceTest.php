@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Receivables;
 
 use DOMDocument;
 use DOMXPath;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\GenerateDirectDebitFileAction;
 use OCA\Shillinq\Receivables\SepaPain008Generator;
 use OCA\Shillinq\Receivables\SepaPain008Validator;
@@ -173,7 +174,14 @@ class DirectDebitFileServiceTest extends TestCase {
 	public function testGenerateStoresTheValidatedFileOnTheBatch(): void {
 		$service = $this->service(administration: self::administration(), mandates: [self::mandate(id: 'm-1'), self::mandate(id: 'm-2')]);
 
-		$batch = (new GenerateDirectDebitFileAction(files: $service))->execute(self::BATCH, ['status' => 'draft'] + self::BATCH, [], 'generate');
+		$batch = (new GenerateDirectDebitFileAction(files: $service))->execute(
+			new LifecycleActionContext(
+				objectData: self::BATCH,
+				previousData: ['status' => 'draft'] + self::BATCH,
+				parameters: [],
+				actionName: 'generate'
+			)
+		);
 
 		$this->assertSame(2, $batch['collectionCount']);
 		$this->assertSame(1250.0, $batch['controlSum']);
@@ -241,7 +249,14 @@ class DirectDebitFileServiceTest extends TestCase {
 
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('The pain.008 file was not stored: Mandate MR-m-2: the debtor IBAN NL92ABNA0417164300 is not valid.');
-		(new GenerateDirectDebitFileAction(files: $service))->execute(self::BATCH, self::BATCH, [], 'generate');
+		(new GenerateDirectDebitFileAction(files: $service))->execute(
+			new LifecycleActionContext(
+				objectData: self::BATCH,
+				previousData: self::BATCH,
+				parameters: [],
+				actionName: 'generate'
+			)
+		);
 
 	}//end testAnInvalidIbanRefusesTheTransitionNamingTheMandate()
 

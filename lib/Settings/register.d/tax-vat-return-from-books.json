@@ -111,7 +111,7 @@
         }
       },
       "BtwAangifte": {
-        "version": "0.1.2",
+        "version": "0.3.0",
         "properties": {
           "fiscalUnityId": {
             "type": "string",

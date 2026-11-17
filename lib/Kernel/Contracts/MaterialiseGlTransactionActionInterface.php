@@ -38,6 +38,13 @@ namespace OCA\Shillinq\Kernel\Contracts;
 interface MaterialiseGlTransactionActionInterface {
 
 	/**
+	 * App-config key: receivables control account (RGS 3.5 MKB 1100 Debiteuren).
+	 *
+	 * @var string
+	 */
+	public const CFG_AR_CONTROL_ACCOUNT = 'ledger_ar_control_account';
+
+	/**
 	 * App-config key: output VAT account (RGS 3.5 MKB 2110 BTW-schuld).
 	 *
 	 * @var string

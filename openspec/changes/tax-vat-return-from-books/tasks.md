@@ -34,24 +34,14 @@
 ## 3. Checks
 
 - [x] 3.1 Add `lib/Standards/Checks/VatReturnChecks.php` with the six checks and their severities, registered for `BtwAangifte` (REQ-TVRB-001). Verify: PHPUnit per check, pass and fail.
-      DONE 2026-11-14: a ledger-reading service rather than a RuleEngine provider, because the engine's checks see one
-      object and these read the period's lines, the VAT accounts and the previous return. `VatReturnChecks::run()`
-      answers id, severity, passed and message for `vat-line-has-box` (blocking), `vat-equals-base-times-rate`
-      (warning), `vat-accounts-match-return` (blocking), `no-unposted-documents` (warning), `previous-return-filed`
-      (warning) and `reverse-charge-owed-and-deductible` (blocking); books that cannot be read fail every check.
-      Messages in English and Dutch. Tests: `tests/Unit/Standards/Checks/VatReturnChecksTest.php` (8).
+      DONE on development (feat/vat-return-checks): `VatReturnChecks` as a CheckProvider with the six rule ids,
+      evaluated by `VatReturnCheckService`. This branch's earlier ledger-reading variant was dropped in favour of it.
 - [x] 3.2 Add `VatReturnChecksGuard` as the `requires` of `BtwAangifte.submit`, registered in `Application.php` (REQ-TVRB-001). Verify: PHPUnit with the real guard interface; a live submit with a failing check is refused.
-      DONE 2026-11-14 (code and PHPUnit; the live submit is not run here): `VatReturnChecksGuard` implements
-      `LifecycleGuardInterface` and denies naming the first failing blocking check, or when the checks cannot run;
-      `BtwAangifte.submit` declares `requires: OCA\\Shillinq\\Lifecycle\\VatReturnChecksGuard::check`, bound by
-      `VatReturnGuardServices` through `GuardTagServices` (called from `Application::register()`); BtwAangifte 0.1.1.
-      Tests: `tests/Unit/Lifecycle/VatReturnChecksGuardTest.php` (4).
+      DONE on development: `VatReturnChecksGuard::canSubmit` refuses with a PostingRefusedException naming every failing
+      blocking check (`tests/Unit/Lifecycle/VatReturnChecksGuardTest.php`). The live submit is not run here.
 - [x] 3.3 Add the Checks tab on `VATReturnDetail` (REQ-TVRB-001). Verify: Playwright shows a failed and a passed check on seed data.
-      DONE 2026-11-14 (code and PHPUnit; the Playwright run is not done here): `GET /api/vat-returns/{returnId}/checks`
-      (`VatReturnChecksController::index`, authorised on the return's administration, 404 otherwise) answers per check its
-      name (`VatReturnChecks::title()`), severity, passed or failed and message, and whether a blocking check fails. The
-      `checks` body widget on `VATReturnDetail` is an `object-table` over that endpoint. Tests:
-      `tests/Unit/Controller/VatReturnChecksControllerTest.php` (4), `VatReturnChecksTest::testEveryCheckHasATitle`.
+      DONE on development: the `checks` tab with `VatReturnChecksPanel` over `GET /api/vat-returns/{returnId}/checks`
+      (`VATReturnController::checks`). The Playwright run is not done here.
 
 ## 4. Broken year
 

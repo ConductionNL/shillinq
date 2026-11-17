@@ -74,6 +74,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\PosStockDecrementListenerInterface;
 use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -548,11 +549,6 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

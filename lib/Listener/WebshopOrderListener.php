@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\Webshop\WebshopOrderInvoicer;
+use OCA\Shillinq\Kernel\Contracts\WebshopOrderInvoicerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -51,12 +51,12 @@ class WebshopOrderListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param WebshopOrderInvoicer            $invoicer       Writes the order's invoice.
+	 * @param WebshopOrderInvoicerInterface   $invoicer       Writes the order's invoice.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface                 $logger         Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly WebshopOrderInvoicer $invoicer,
+		private readonly WebshopOrderInvoicerInterface $invoicer,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
@@ -82,13 +82,22 @@ class WebshopOrderListener implements IEventListener {
 		}
 
 		$order = $entity->getObject();
-		if (is_array($order) === false || WebshopOrderInvoicer::isWaiting(order: $order) === false) {
+		if (is_array($order) === false) {
 			return;
 		}
 
 		$orderId = ObjectIdentifier::resolve(saved: $entity);
 		try {
-			$this->invoicer->handle(order: $order, orderId: $orderId, today: gmdate('Y-m-d'));
+			if ($this->invoicer::isWaiting(order: $order) === true) {
+				$this->invoicer->handle(order: $order, orderId: $orderId, today: gmdate('Y-m-d'));
+				return;
+			}
+
+			// REQ-SWO-004: a payment status sent later as an update of the order settles its invoice.
+			$this->invoicer->settle(order: $order, orderId: $orderId);
+
+			// REQ-SWO-005: a refund or cancellation sent later credits it.
+			$this->invoicer->credit(order: $order, orderId: $orderId, today: gmdate('Y-m-d'));
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'WebshopOrderListener: the web shop order could not be invoiced',

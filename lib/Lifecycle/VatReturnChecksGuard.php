@@ -1,9 +1,13 @@
 <?php
 
 /**
- * VAT Return Checks Guard
+ * Shillinq VatReturnChecksGuard
  *
- * The lifecycle guard behind the BtwAangifte `submit` transition.
+ * The `requires` of BtwAangifte.submit (REQ-TVRB-001, design D3): a return
+ * may be submitted only while none of its blocking checks fails. The refusal
+ * names every failing blocking check and what makes it fail, through a
+ * PostingRefusedException, which RegisterRequiresGuardAdapter shows as the
+ * transition's refusal and VATReturnController answers as a 409.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle
@@ -24,79 +28,56 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\OpenRegister\Lifecycle\GuardResult;
-use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Standards\Checks\VatReturnChecks;
-use OCP\IL10N;
-use Psr\Log\LoggerInterface;
-use Throwable;
+use OCA\Shillinq\Service\Vat\VatReturnCheckService;
 
 /**
- * Refuses to submit a VAT return while one of its blocking checks fails, naming the check.
+ * Submit precondition of a BTW return: no failing blocking check.
  *
- * A warning does not refuse. A check run that throws refuses: a return is
- * never submitted on checks that did not run.
- *
- * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.2
+ * @spec openspec/changes/tax-vat-return-from-books/specs/bookkeeping-vat-btw-filing/spec.md#requirement-checks-run-on-the-vat-return-and-block-filing-when-they-fail-req-tvrb-001
  */
-final class VatReturnChecksGuard implements LifecycleGuardInterface {
+class VatReturnChecksGuard {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param VatReturnChecks $checks The checks.
-	 * @param IL10N           $l10n   The refusal message.
-	 * @param LoggerInterface $logger Records a check run that failed.
+	 * @param VatReturnCheckService $checks The VAT return checks.
 	 */
 	public function __construct(
-		private readonly VatReturnChecks $checks,
-		private readonly IL10N $l10n,
-		private readonly LoggerInterface $logger,
+		private readonly VatReturnCheckService $checks,
 	) {
 	}//end __construct()
 
 	/**
-	 * Allow the transition when no blocking check fails.
+	 * Allow submitting a return only while none of its blocking checks fails.
 	 *
-	 * @param array<string, mixed> $object The BtwAangifte.
-	 * @param string               $action The transition.
-	 * @param string               $userId The user asking.
+	 * @param string|array<string,mixed> $returnOrId The BtwAangifte, or its id.
 	 *
-	 * @return GuardResult
+	 * @return bool True when the return may be submitted.
 	 *
-	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.2
-	 */
-	public function check(array $object, string $action, string $userId): GuardResult {
-		try {
-			$failed = $this->firstBlockingFailure(results: $this->checks->run(return: $object));
-		} catch (Throwable $e) {
-			$this->logger->error('VatReturnChecksGuard: checks did not run, submit refused', ['exception' => $e->getMessage()]);
-			return GuardResult::deny($this->l10n->t('The checks of this return could not run, so it cannot be submitted.'));
-		}
-
-		if ($failed === null) {
-			return GuardResult::allow();
-		}
-
-		return GuardResult::deny($this->l10n->t('The check "%1$s" failed: %2$s', [$failed['id'], $failed['message']]));
-	}//end check()
-
-	/**
-	 * The first failing blocking check, or null when none fails.
-	 *
-	 * @param list<array{id: string, severity: string, passed: bool, message: string}> $results The run.
-	 *
-	 * @return array{id: string, severity: string, passed: bool, message: string}|null
+	 * @throws PostingRefusedException When a blocking check fails, naming it.
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.2
 	 */
-	private function firstBlockingFailure(array $results): ?array {
-		foreach ($results as $result) {
-			if ($result['severity'] === VatReturnChecks::BLOCKING && $result['passed'] === false) {
-				return $result;
-			}
+	public function canSubmit(string|array $returnOrId): bool {
+		$returnId = $returnOrId;
+		if (is_array($returnOrId) === true) {
+			$returnId = (string)($returnOrId['id'] ?? ($returnOrId['@self']['id'] ?? ''));
 		}
 
-		return null;
-	}//end firstBlockingFailure()
+		if ($returnId === '') {
+			return false;
+		}
+
+		$failures = $this->checks->blockingFailures(returnId: $returnId);
+		if ($failures === []) {
+			return true;
+		}
+
+		$named = [];
+		foreach ($failures as $failure) {
+			$named[] = rtrim($failure['statement'], '.') . ': ' . implode(', ', $failure['offenders']) . '.';
+		}
+
+		throw new PostingRefusedException('The return cannot be submitted until these checks pass. ' . implode(' ', $named));
+	}//end canSubmit()
 }//end class

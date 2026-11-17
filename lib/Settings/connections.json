@@ -94,7 +94,7 @@
             "title": "Treasury rates",
             "description": "Daily reference rates and exchange rates from the ECB or a market data provider.",
             "order": 120,
-            "settingsUrl": "/apps/shillinq/bookkeeping/multi-currency/fx-rates/admin",
+            "settingsUrl": "/apps/shillinq/bookkeeping/multi-currency/fx-rates",
             "reportedOnly": true,
             "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
         },

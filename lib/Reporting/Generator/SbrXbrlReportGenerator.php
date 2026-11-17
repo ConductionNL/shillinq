@@ -22,7 +22,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
-use OCA\Shillinq\Service\Sbr\AnnualAccountsXbrlBuilder;
+use OCA\Shillinq\Kernel\Contracts\AnnualAccountsXbrlBuilderInterface;
 use OCA\Shillinq\Service\Sbr\SbrRecords;
 use RuntimeException;
 
@@ -42,14 +42,14 @@ final class SbrXbrlReportGenerator implements ReportGeneratorInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param SbrRecords                $records The financial statements.
-	 * @param AnnualAccountsXbrlBuilder $builder Builds the instance.
+	 * @param SbrRecords                         $records The financial statements.
+	 * @param AnnualAccountsXbrlBuilderInterface $builder Builds the instance.
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.3
 	 */
 	public function __construct(
 		private readonly SbrRecords $records,
-		private readonly AnnualAccountsXbrlBuilder $builder,
+		private readonly AnnualAccountsXbrlBuilderInterface $builder,
 	) {
 	}//end __construct()
 

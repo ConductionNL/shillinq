@@ -150,28 +150,14 @@
 								{"key": "totalTaxableAmount", "label": "Taxable turnover", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}
 							]
 						}
-					},
-					{
-						"id": "checks",
-						"type": "object-table",
-						"title": "Checks",
-						"placement": "after-data",
-						"_note": "tax-vat-return-from-books REQ-TVRB-001: the checks tab. GET /api/vat-returns/{id}/checks runs the six checks on the return's period and answers per check its name, whether it blocks filing, passed or failed, and the message naming what failed. Submit is refused by VatReturnChecksGuard while a blocking check fails.",
-						"content": {
-							"endpointSource": {"url": "/apps/shillinq/api/vat-returns/@objectId/checks", "responsePath": "data"},
-							"emptyText": "The checks could not run for this return.",
-							"columns": [
-								{"key": "title", "label": "Check"},
-								{"key": "status", "label": "Result"},
-								{"key": "severityLabel", "label": "Severity"},
-								{"key": "message", "label": "Message"}
-							]
-						}
 					}
 				],
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
+						{"id": "checks", "label": "Checks", "icon": "ShieldCheckOutline", "order": 70, "widgets": [
+							{"type": "VatReturnChecksPanel"}
+						]},
 						{"id": "documents", "label": "Source documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "BtwAangifte", "objectId": ":id"}}
 						]},

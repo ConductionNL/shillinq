@@ -1,10 +1,31 @@
 <?php
 
 /**
- * VAT Return Checks
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
+ * VAT return check provider
  *
- * The checks a VAT return (BtwAangifte) runs before it is filed, read from
- * the books of its administration and period.
+ * The checks a BTW return (BtwAangifte) must pass before it is filed
+ * (REQ-TVRB-001, design D3): every VAT line has a box; posted VAT equals base
+ * times rate per tariff within one cent; the VAT accounts' period movement
+ * equals the return's totals; nothing in the period is still a draft; the
+ * previous period's return is submitted; reverse-charge VAT is both owed and
+ * deducted. Each is a rule in lib/Standards/rules/vat-return-checks.json, whose
+ * severity says whether it blocks filing (`mandatory`) or warns
+ * (`recommended`).
+ *
+ * A return check needs the period's ledger, not only the return object, so
+ * each predicate reads the facts VatReturnCheckService puts in the context
+ * under `vatReturnFacts`. Without those facts (the generic rule audit, which
+ * evaluates every object type with a bare context) a check cannot be run and
+ * is not counted as a violation; the service, which is the only caller that
+ * decides anything, always supplies them.
+ *
+ * `offenders()` names what makes a check fail (transaction numbers, accounts,
+ * documents), so the checks tab and the submit refusal can say what to fix.
  *
  * @category Standards
  * @package  OCA\Shillinq\Standards\Checks
@@ -25,505 +46,346 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
-use DateTimeImmutable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
-use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\Vat\VatLineStamper;
-use OCA\Shillinq\Util\ObjectIdentifier;
-use OCP\IAppConfig;
-use OCP\IL10N;
-use Throwable;
-
 /**
- * Six checks on a BtwAangifte, each with an id, a severity and a message.
+ * Executable checks on a BtwAangifte, over the facts of its period.
  *
- * Unlike the invoice checks of the RuleEngine, which look at one object,
- * these read the ledger: the posted lines of the return's period, the VAT
- * accounts' movement and the previous return. A blocking check that fails
- * stops the `submit` transition (VatReturnChecksGuard); a warning is shown
- * but does not stop it. When the books cannot be read every check fails, so
- * a return is never filed on checks that did not run.
- *
- * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.1
- *
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Six independent ledger checks share one read of the books.
+ * @spec openspec/changes/tax-vat-return-from-books/specs/bookkeeping-vat-btw-filing/spec.md#requirement-checks-run-on-the-vat-return-and-block-filing-when-they-fail-req-tvrb-001
  */
-class VatReturnChecks {
+final class VatReturnChecks implements CheckProvider {
+
+	public const LINE_BOX = 'nl-vat-return-line-box';
+
+	public const RATE_PER_LINE = 'nl-vat-return-rate-per-line';
+
+	public const ACCOUNT_MOVEMENT = 'nl-vat-return-account-movement';
+
+	public const NO_DRAFTS = 'nl-vat-return-no-drafts';
+
+	public const PREVIOUS_FILED = 'nl-vat-return-previous-filed';
+
+	public const REVERSE_CHARGE_PAIR = 'nl-vat-return-reverse-charge-pair';
 
 	/**
-	 * A failing check of this severity refuses the submit.
-	 *
-	 * @var string
+	 * The checks in the order the checks tab shows them.
 	 */
-	public const BLOCKING = 'blocking';
-
-	/**
-	 * A failing check of this severity is shown and does not refuse.
-	 *
-	 * @var string
-	 */
-	public const WARNING = 'warning';
-
-	/**
-	 * The check ids, in the order they run, with their severity.
-	 *
-	 * @var array<string, string>
-	 */
-	public const CHECKS = [
-		'vat-line-has-box' => self::BLOCKING,
-		'vat-equals-base-times-rate' => self::WARNING,
-		'vat-accounts-match-return' => self::BLOCKING,
-		'no-unposted-documents' => self::WARNING,
-		'previous-return-filed' => self::WARNING,
-		'reverse-charge-owed-and-deductible' => self::BLOCKING,
+	public const RULE_IDS = [
+		self::LINE_BOX,
+		self::RATE_PER_LINE,
+		self::ACCOUNT_MOVEMENT,
+		self::NO_DRAFTS,
+		self::PREVIOUS_FILED,
+		self::REVERSE_CHARGE_PAIR,
 	];
 
 	/**
-	 * The return states that count as filed with the tax authority.
-	 *
-	 * @var array<int, string>
+	 * The box input VAT is declared in.
 	 */
-	private const FILED_STATES = ['submitted', 'verified', 'filed'];
+	private const INPUT_VAT_BOX = '5b';
 
 	/**
-	 * Transaction states that are booked.
+	 * {@inheritDoc}
 	 *
-	 * @var array<int, string>
-	 */
-	private const BOOKED_STATES = ['posted', 'reversed'];
-
-	/**
-	 * Transaction states that are neither booked nor pending.
-	 *
-	 * @var array<int, string>
-	 */
-	private const CLOSED_STATES = ['posted', 'reversed', 'cancelled', 'voided'];
-
-	/**
-	 * The boxes whose VAT is owed under reverse charge.
-	 *
-	 * @var array<int, string>
-	 */
-	private const REVERSE_CHARGE_BOXES = ['2a', '4a', '4b'];
-
-	/**
-	 * Constructor.
-	 *
-	 * @param ObjectServiceInterface $objectService    Reads the books.
-	 * @param RegisterLocation       $registerLocation Where the register lives.
-	 * @param IAppConfig             $appConfig        The output and input VAT account numbers.
-	 * @param IL10N                  $l10n             The check messages.
-	 */
-	public function __construct(
-		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $registerLocation,
-		private readonly IAppConfig $appConfig,
-		private readonly IL10N $l10n,
-	) {
-	}//end __construct()
-
-	/**
-	 * Run every check on a return.
-	 *
-	 * @param array<string, mixed> $return The BtwAangifte: administrationId, startDate, endDate, totals.
-	 *
-	 * @return list<array{id: string, severity: string, passed: bool, message: string}>
+	 * @return array<string, array<string, callable>>
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.1
 	 */
-	public function run(array $return): array {
-		try {
-			$books = $this->books(return: $return);
-		} catch (Throwable $e) {
-			$message = $this->l10n->t('The books of this period could not be read: %s', [$e->getMessage()]);
-			return array_map(
-				static fn (string $id): array => ['id' => $id, 'severity' => self::CHECKS[$id], 'passed' => false, 'message' => $message],
-				array_keys(self::CHECKS)
-			);
+	public static function checks(): array {
+		$checks = [];
+		foreach (self::RULE_IDS as $ruleId) {
+			$checks[$ruleId] = static function (array $object, array $context) use ($ruleId): bool {
+				$facts = ($context['vatReturnFacts'] ?? null);
+				if (is_array($facts) === false) {
+					return true;
+				}
+
+				return self::offenders(ruleId: $ruleId, facts: $facts) === [];
+			};
 		}
 
-		$failures = [
-			'vat-line-has-box' => $this->linesWithoutBox(books: $books),
-			'vat-equals-base-times-rate' => $this->vatOffRate(books: $books),
-			'vat-accounts-match-return' => $this->accountsOffReturn(books: $books, return: $return),
-			'no-unposted-documents' => $this->unposted(books: $books),
-			'previous-return-filed' => $this->previousNotFiled(return: $return),
-			'reverse-charge-owed-and-deductible' => $this->reverseChargeOneSided(books: $books),
-		];
-
-		$results = [];
-		foreach ($failures as $id => $failure) {
-			$results[] = [
-				'id' => $id,
-				'severity' => self::CHECKS[$id],
-				'passed' => $failure === null,
-				'message' => ($failure ?? $this->l10n->t('Passed')),
-			];
-		}
-
-		return $results;
-	}//end run()
+		return ['BtwAangifte' => $checks];
+	}//end checks()
 
 	/**
-	 * The name of a check as the checks tab shows it.
+	 * {@inheritDoc}
 	 *
-	 * @param string $id The check id.
+	 * @return array<string, array<string, mixed>>
 	 *
-	 * @return string The check's name in the reader's language; the id for an unknown check.
-	 *
-	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.3
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.1
 	 */
-	public function title(string $id): string {
-		return match ($id) {
-			'vat-line-has-box' => $this->l10n->t('Every VAT line has a box'),
-			'vat-equals-base-times-rate' => $this->l10n->t('Posted VAT equals base times rate'),
-			'vat-accounts-match-return' => $this->l10n->t('The VAT accounts match the return'),
-			'no-unposted-documents' => $this->l10n->t('No unposted documents in the period'),
-			'previous-return-filed' => $this->l10n->t('The previous return is filed'),
-			'reverse-charge-owed-and-deductible' => $this->l10n->t('Reverse-charged VAT is owed and deducted'),
-			default => $id,
+	public static function seedSpec(): array {
+		return [];
+	}//end seedSpec()
+
+	/**
+	 * What makes a check fail, named so a bookkeeper can find it. Empty when
+	 * the check passes.
+	 *
+	 * @param string              $ruleId One of RULE_IDS.
+	 * @param array<string,mixed> $facts  The facts VatReturnCheckService gathered.
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.1
+	 */
+	public static function offenders(string $ruleId, array $facts): array {
+		return match ($ruleId) {
+			self::LINE_BOX => self::linesWithoutBox(facts: $facts),
+			self::RATE_PER_LINE => self::ratesOff(facts: $facts),
+			self::ACCOUNT_MOVEMENT => self::accountsOff(facts: $facts),
+			self::NO_DRAFTS => array_values(array_map('strval', (array)($facts['drafts'] ?? []))),
+			self::PREVIOUS_FILED => self::previousNotFiled(facts: $facts),
+			self::REVERSE_CHARGE_PAIR => self::reverseChargeUnpaired(facts: $facts),
+			default => [],
 		};
-	}//end title()
+	}//end offenders()
 
 	/**
-	 * The period's transactions and booked lines, and the VAT accounts.
+	 * Transactions with a line on a VAT account, or carrying VAT, that has no box.
 	 *
-	 * @param array<string, mixed> $return The return.
+	 * @param array<string,mixed> $facts The facts.
 	 *
-	 * @return array{booked: array<string, array>, pending: array<string, array>, lines: list<array>, output: string, input: string}
+	 * @return list<string>
 	 */
-	private function books(array $return): array {
-		$administrationId = (string)($return['administrationId'] ?? '');
-		$start = substr((string)($return['startDate'] ?? ''), 0, 10);
-		$end   = substr((string)($return['endDate'] ?? ''), 0, 10);
-
-		$booked  = [];
-		$pending = [];
-		foreach ($this->rows(schema: 'GLTransaction', administrationId: $administrationId) as $transaction) {
-			$date = substr((string)($transaction['postingDate'] ?? ($transaction['transactionDate'] ?? '')), 0, 10);
-			if ($date < $start || $date > $end) {
-				continue;
-			}
-
-			$state = (string)($transaction['state'] ?? '');
-			if (in_array($state, self::BOOKED_STATES, true) === true) {
-				$booked[(string)$transaction['id']] = $transaction;
-			} else if (in_array($state, self::CLOSED_STATES, true) === false) {
-				$pending[(string)$transaction['id']] = $transaction;
+	private static function linesWithoutBox(array $facts): array {
+		$vatAccounts = array_values((array)($facts['vatAccounts'] ?? []));
+		$found = [];
+		foreach (self::lines(facts: $facts) as $line) {
+			$onVatAccount = in_array((string)($line['accountNumber'] ?? ''), $vatAccounts, true);
+			$carriesVat = (($line['vatAmountKind'] ?? null) === 'vat');
+			if (($onVatAccount === true || $carriesVat === true) && (string)($line['vatReturnBox'] ?? '') === '') {
+				$found[self::transactionName(facts: $facts, line: $line)] = true;
 			}
 		}
 
-		$lines = array_values(
-			array_filter(
-				$this->rows(schema: 'GLLine', administrationId: $administrationId),
-				static fn (array $line): bool => isset($booked[(string)($line['transactionId'] ?? '')]) === true
-			)
-		);
-
-		return [
-			'booked' => $booked,
-			'pending' => $pending,
-			'lines' => $lines,
-			'output' => $this->vatAccount(key: MaterialiseGlTransactionActionInterface::CFG_OUTPUT_VAT_ACCOUNT, default: '2110'),
-			'input' => $this->vatAccount(key: MaterialiseGlTransactionActionInterface::CFG_INPUT_VAT_ACCOUNT, default: '1230'),
-		];
-	}//end books()
-
-	/**
-	 * Lines on a VAT account, or with a tariff, that carry no box or amount kind.
-	 *
-	 * @param array $books The books.
-	 *
-	 * @return string|null The failure message, or null when the check passes.
-	 */
-	private function linesWithoutBox(array $books): ?string {
-		$names = [];
-		foreach ($books['lines'] as $line) {
-			$account = (string)($line['accountNumber'] ?? '');
-			$onVat   = in_array($account, [$books['output'], $books['input']], true) || (string)($line['vatTariffCode'] ?? '') !== '';
-			$stamped = (string)($line['vatReturnBox'] ?? '') !== '' && in_array(($line['vatAmountKind'] ?? null), ['base', 'vat'], true) === true;
-			if ($onVat === true && $stamped === false) {
-				$names[] = $this->transactionName(books: $books, id: (string)$line['transactionId']);
-			}
-		}
-
-		if ($names === []) {
-			return null;
-		}
-
-		return $this->l10n->t('These transactions have a VAT line without a box: %s', [implode(', ', array_unique($names))]);
+		return array_keys($found);
 	}//end linesWithoutBox()
 
 	/**
-	 * Transactions whose VAT per tariff differs from base times rate by more than one cent.
+	 * Transaction and tariff pairs whose VAT is more than a cent off base times rate.
+	 * A reverse-charge tariff is left to the reverse-charge check.
 	 *
-	 * @param array $books The books.
+	 * @param array<string,mixed> $facts The facts.
 	 *
-	 * @return string|null
+	 * @return list<string>
 	 */
-	private function vatOffRate(array $books): ?string {
+	private static function ratesOff(array $facts): array {
+		$rates = (array)($facts['rates'] ?? []);
+		$reverse = (array)($facts['reverseChargeCodes'] ?? []);
 		$groups = [];
-		foreach ($books['lines'] as $line) {
+		foreach (self::lines(facts: $facts) as $line) {
 			$code = (string)($line['vatTariffCode'] ?? '');
 			$kind = (string)($line['vatAmountKind'] ?? '');
-			if ($code === '' || in_array($kind, ['base', 'vat'], true) === false) {
+			if ($code === '' || in_array($code, $reverse, true) === true || in_array($kind, ['base', 'vat'], true) === false) {
 				continue;
 			}
 
-			$key = (string)$line['transactionId'].'|'.$code;
-			$groups[$key] ??= ['transactionId' => (string)$line['transactionId'], 'code' => $code, 'base' => 0, 'vat' => 0];
-			$groups[$key][$kind] += self::cents(value: ($line['amount'] ?? 0));
+			$key = self::transactionName(facts: $facts, line: $line) . ' (' . $code . ')';
+			$groups[$key] ??= ['code' => $code, 'base' => 0, 'vat' => 0];
+			$groups[$key][$kind] += abs(self::cents(amount: ($line['amount'] ?? 0)));
 		}
 
-		$stamper = new VatLineStamper(objectService: $this->objectService, register: $this->registerLocation->getRegisterSlug());
-		$names   = [];
-		foreach ($groups as $group) {
-			$rate = $stamper->ratePercentage(code: $group['code']);
-			if ($rate === null || $rate <= 0.0 || $group['base'] === 0 || $group['vat'] === 0) {
+		$found = [];
+		foreach ($groups as $key => $group) {
+			$rate = ($rates[$group['code']] ?? null);
+			if ($rate === null) {
 				continue;
 			}
 
-			if (abs($group['vat'] - (int)round($group['base'] * $rate / 100)) > 1) {
-				$names[] = $this->transactionName(books: $books, id: $group['transactionId']).' ('.$group['code'].')';
+			if (abs((int)round($group['base'] * (float)$rate / 100) - $group['vat']) > 1) {
+				$found[] = $key;
 			}
 		}
 
-		if ($names === []) {
-			return null;
-		}
-
-		return $this->l10n->t('The VAT posted differs from the base times the rate on: %s', [implode(', ', $names)]);
-	}//end vatOffRate()
+		return $found;
+	}//end ratesOff()
 
 	/**
-	 * The output and input VAT accounts' period movement against the return's totals.
+	 * The VAT accounts whose period movement differs from the return.
 	 *
-	 * @param array                $books  The books.
-	 * @param array<string, mixed> $return The return.
+	 * @param array<string,mixed> $facts The facts.
 	 *
-	 * @return string|null
+	 * @return list<string>
 	 */
-	private function accountsOffReturn(array $books, array $return): ?string {
-		$movement = [$books['output'] => 0, $books['input'] => 0];
-		foreach ($books['lines'] as $line) {
+	private static function accountsOff(array $facts): array {
+		$accounts = (array)($facts['vatAccounts'] ?? []);
+		$output = (string)($accounts['output'] ?? '');
+		$input = (string)($accounts['input'] ?? '');
+		$movement = [$output => 0, $input => 0];
+		foreach (self::lines(facts: $facts) as $line) {
 			$account = (string)($line['accountNumber'] ?? '');
 			if (array_key_exists($account, $movement) === false) {
 				continue;
 			}
 
-			$credit = (string)($line['side'] ?? '') === 'credit';
-			$cents  = self::cents(value: ($line['amount'] ?? 0));
-			if (($account === $books['output']) !== $credit) {
+			$cents = self::cents(amount: ($line['amount'] ?? 0));
+			if ((string)($line['side'] ?? '') !== 'credit') {
 				$cents = -$cents;
 			}
 
 			$movement[$account] += $cents;
 		}
 
-		$expected = [
-			$books['output'] => self::cents(value: ($return['totalVATCollected'] ?? 0)),
-			$books['input'] => self::cents(value: ($return['totalVATPaid'] ?? 0)),
-		];
-		$off = [];
-		foreach ($expected as $account => $cents) {
-			if ($movement[$account] !== $cents) {
-				$off[] = $this->l10n->t(
-					'account %1$s moved %2$s, the return says %3$s',
-					[(string)$account, self::euros(cents: $movement[$account]), self::euros(cents: $cents)]
-				);
-			}
+		$found = [];
+		$owed = (int)($facts['totals']['collectedCents'] ?? 0);
+		if ($movement[$output] !== $owed) {
+			$found[] = sprintf(
+				'%s: %s on the account, %s owed in the return',
+				$output,
+				self::money(cents: $movement[$output]),
+				self::money(cents: $owed)
+			);
 		}
 
-		if ($off === []) {
-			return null;
+		$deductible = (int)($facts['totals']['paidCents'] ?? 0);
+		if (-$movement[$input] !== $deductible) {
+			$found[] = sprintf(
+				'%s: %s on the account, %s input tax in the return',
+				$input,
+				self::money(cents: -$movement[$input]),
+				self::money(cents: $deductible)
+			);
 		}
 
-		return $this->l10n->t('The VAT accounts do not match the return: %s', [implode('; ', $off)]);
-	}//end accountsOffReturn()
+		return $found;
+	}//end accountsOff()
 
 	/**
-	 * Draft or otherwise unposted transactions dated in the period.
+	 * The previous period's return when it is missing or still a draft, unless
+	 * the administration has no earlier return at all.
 	 *
-	 * @param array $books The books.
+	 * @param array<string,mixed> $facts The facts.
 	 *
-	 * @return string|null
+	 * @return list<string>
 	 */
-	private function unposted(array $books): ?string {
-		if ($books['pending'] === []) {
-			return null;
-		}
-
-		$names = array_map(static fn (array $transaction): string => self::nameOf(transaction: $transaction), array_values($books['pending']));
-
-		return $this->l10n->t('These documents in the period are not posted: %s', [implode(', ', $names)]);
-	}//end unposted()
-
-	/**
-	 * Whether the return of the period before is filed, when the administration has an earlier return.
-	 *
-	 * @param array<string, mixed> $return The return.
-	 *
-	 * @return string|null
-	 */
-	private function previousNotFiled(array $return): ?string {
-		$start = substr((string)($return['startDate'] ?? ''), 0, 10);
-		$dayBefore = (new DateTimeImmutable($start))->modify('-1 day')->format('Y-m-d');
-
+	private static function previousNotFiled(array $facts): array {
+		$previous = (array)($facts['previousPeriod'] ?? []);
+		$start = (string)($facts['period']['start'] ?? '');
 		$earlier = false;
-		foreach ($this->rows(schema: 'BtwAangifte', administrationId: (string)($return['administrationId'] ?? '')) as $other) {
-			if ((string)$other['id'] === (string)($return['id'] ?? '')) {
+		$filed = false;
+		$draft = '';
+		foreach ((array)($facts['returns'] ?? []) as $other) {
+			if ((string)($other['startDate'] ?? '') === '' || (string)$other['startDate'] >= $start) {
 				continue;
 			}
 
-			$end = substr((string)($other['endDate'] ?? ''), 0, 10);
-			if ($end === $dayBefore) {
-				if (in_array((string)($other['statusCode'] ?? ''), self::FILED_STATES, true) === true) {
-					return null;
-				}
-
-				return $this->l10n->t('The return %s of the previous period is not filed yet.', [(string)($other['returnNumber'] ?? $other['id'])]);
+			$earlier = true;
+			if ((string)($other['period'] ?? '') !== (string)($previous['kind'] ?? '')
+				|| (int)($other['periodYear'] ?? 0) !== (int)($previous['year'] ?? 0)
+				|| (int)($other['periodNumber'] ?? 0) !== (int)($previous['number'] ?? 0)
+			) {
+				continue;
 			}
 
-			$earlier = ($earlier || ($end !== '' && $end < $start));
+			if ((string)($other['statusCode'] ?? 'draft') !== 'draft') {
+				$filed = true;
+				continue;
+			}
+
+			$draft = (string)($other['returnNumber'] ?? '');
+		}//end foreach
+
+		if ($earlier === false || $filed === true) {
+			return [];
 		}
 
-		if ($earlier === false) {
-			return null;
+		if ($draft !== '') {
+			return [$draft . ' is still a draft'];
 		}
 
-		return $this->l10n->t('There is no return for the period ending %s.', [$dayBefore]);
+		return ['No return for ' . (string)($previous['label'] ?? 'the previous period')];
 	}//end previousNotFiled()
 
 	/**
-	 * Reverse-charged transactions whose owed VAT differs from the VAT they deduct.
+	 * Transactions with a reverse-charged base whose VAT is not both owed in
+	 * the tariff's box and deducted in 5b for the same amount.
 	 *
-	 * @param array $books The books.
+	 * @param array<string,mixed> $facts The facts.
 	 *
-	 * @return string|null
+	 * @return list<string>
 	 */
-	private function reverseChargeOneSided(array $books): ?string {
-		$byTransaction = [];
-		foreach ($books['lines'] as $line) {
-			$box = (string)($line['vatReturnBox'] ?? '');
-			$id  = (string)$line['transactionId'];
-			if (in_array($box, self::REVERSE_CHARGE_BOXES, true) === true) {
-				$byTransaction[$id] ??= ['owed' => 0, 'deducted' => 0];
-				if (($line['vatAmountKind'] ?? null) === 'vat') {
-					$byTransaction[$id]['owed'] += self::cents(value: ($line['amount'] ?? 0));
-				}
+	private static function reverseChargeUnpaired(array $facts): array {
+		$reverse = (array)($facts['reverseChargeCodes'] ?? []);
+		$pairs = [];
+		foreach (self::lines(facts: $facts) as $line) {
+			$code = (string)($line['vatTariffCode'] ?? '');
+			if (in_array($code, $reverse, true) === false) {
+				continue;
+			}
+
+			$name = self::transactionName(facts: $facts, line: $line);
+			$pairs[$name] ??= ['base' => false, 'owed' => 0, 'deducted' => 0];
+			$cents = abs(self::cents(amount: ($line['amount'] ?? 0)));
+			if (($line['vatAmountKind'] ?? null) === 'base') {
+				$pairs[$name]['base'] = true;
+				continue;
+			}
+
+			if (($line['vatReturnBox'] ?? null) === self::INPUT_VAT_BOX) {
+				$pairs[$name]['deducted'] += $cents;
+				continue;
+			}
+
+			$pairs[$name]['owed'] += $cents;
+		}//end foreach
+
+		$found = [];
+		foreach ($pairs as $name => $pair) {
+			if ($pair['base'] === true && ($pair['owed'] === 0 || $pair['owed'] !== $pair['deducted'])) {
+				$found[] = $name;
 			}
 		}
 
-		foreach ($books['lines'] as $line) {
-			$id = (string)$line['transactionId'];
-			$deducts = (string)($line['vatReturnBox'] ?? '') === VatLineStamper::INPUT_VAT_BOX && ($line['vatAmountKind'] ?? null) === 'vat';
-			if (isset($byTransaction[$id]) === true && $deducts === true) {
-				$byTransaction[$id]['deducted'] += self::cents(value: ($line['amount'] ?? 0));
-			}
-		}
-
-		$names = [];
-		foreach ($byTransaction as $id => $sides) {
-			if ($sides['owed'] !== $sides['deducted']) {
-				$names[] = $this->transactionName(books: $books, id: (string)$id);
-			}
-		}
-
-		if ($names === []) {
-			return null;
-		}
-
-		return $this->l10n->t('Reverse-charged VAT is not both owed and deducted on: %s', [implode(', ', $names)]);
-	}//end reverseChargeOneSided()
+		return $found;
+	}//end reverseChargeUnpaired()
 
 	/**
-	 * The rows of a schema in the administration, as records with an id.
+	 * The ledger lines of the period's booked transactions.
 	 *
-	 * @param string $schema           The schema.
-	 * @param string $administrationId The administration.
+	 * @param array<string,mixed> $facts The facts.
 	 *
-	 * @return list<array<string, mixed>>
+	 * @return list<array<string,mixed>>
 	 */
-	private function rows(string $schema, string $administrationId): array {
-		$rows = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema)
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-
-		$records = [];
-		foreach ($rows as $row) {
-			$record = ObjectIdentifier::recordWithId(candidate: $row);
-			if ($record !== null && (string)($record['id'] ?? '') !== '') {
-				$records[] = $record;
-			}
-		}
-
-		return $records;
-	}//end rows()
+	private static function lines(array $facts): array {
+		return array_values(array_filter((array)($facts['lines'] ?? []), 'is_array'));
+	}//end lines()
 
 	/**
-	 * A booked transaction's journal number, else its id.
+	 * The number of a line's transaction, else its id.
 	 *
-	 * @param array  $books The books.
-	 * @param string $id    The transaction id.
+	 * @param array<string,mixed> $facts The facts.
+	 * @param array<string,mixed> $line  The line.
 	 *
 	 * @return string
 	 */
-	private function transactionName(array $books, string $id): string {
-		return self::nameOf(transaction: ($books['booked'][$id] ?? ['id' => $id]));
+	private static function transactionName(array $facts, array $line): string {
+		$id = (string)($line['transactionId'] ?? '');
+		$number = (string)($facts['transactions'][$id]['transactionNumber'] ?? '');
+		if ($number === '') {
+			return $id;
+		}
+
+		return $number;
 	}//end transactionName()
 
 	/**
-	 * A transaction's journal number, else its transaction number, else its id.
+	 * An amount in whole cents.
 	 *
-	 * @param array<string, mixed> $transaction The transaction.
-	 *
-	 * @return string
-	 */
-	private static function nameOf(array $transaction): string {
-		return (string)($transaction['journalNumber'] ?? ($transaction['transactionNumber'] ?? ($transaction['id'] ?? '')));
-	}//end nameOf()
-
-	/**
-	 * A configured VAT account number, else its default.
-	 *
-	 * @param string $key     The app config key.
-	 * @param string $default The default number.
-	 *
-	 * @return string
-	 */
-	private function vatAccount(string $key, string $default): string {
-		$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $key, ''));
-		if ($configured === '') {
-			return $default;
-		}
-
-		return $configured;
-	}//end vatAccount()
-
-	/**
-	 * An amount in cents.
-	 *
-	 * @param mixed $value The amount in euros.
+	 * @param mixed $amount The amount.
 	 *
 	 * @return int
 	 */
-	private static function cents(mixed $value): int {
-		if (is_numeric($value) === false) {
-			return 0;
-		}
-
-		return (int)round((float)$value * 100);
+	private static function cents(mixed $amount): int {
+		return (int)round((float)$amount * 100);
 	}//end cents()
 
 	/**
-	 * Cents as euros with two decimals.
+	 * Cents as EUR with two decimals.
 	 *
-	 * @param int $cents The amount.
+	 * @param int $cents The amount in cents.
 	 *
 	 * @return string
 	 */
-	private static function euros(int $cents): string {
-		return 'EUR '.number_format($cents / 100, 2, '.', '');
-	}//end euros()
+	private static function money(int $cents): string {
+		return 'EUR ' . number_format(($cents / 100), 2, '.', '');
+	}//end money()
 }//end class

@@ -1,9 +1,11 @@
 <?php
 
 /**
- * VatReturnChecksGuard: submit is refused while a blocking check fails,
- * naming it, allowed when only warnings fail, and refused when the checks
- * cannot run.
+ * Unit tests for VatReturnChecksGuard (REQ-TVRB-001).
+ *
+ * The guard runs on BtwAangifte.submit through the real
+ * RegisterRequiresGuardAdapter and the real VatReturnCheckService, over a
+ * quarter posted through the real posting mapper.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle
@@ -22,152 +24,127 @@
 
 declare(strict_types=1);
 
-// phpcs:disable CustomSniffs.Functions.NamedParameters
-
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
+use OCA\Shillinq\Lifecycle\LedgerPostingRegistration;
+use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
-use OCA\Shillinq\Listener\Registration\VatReturnGuardServices;
-use OCA\Shillinq\Standards\Checks\VatReturnChecks;
-use OCP\AppFramework\Bootstrap\IRegistrationContext;
-use OCP\IL10N;
+use OCA\Shillinq\Service\Vat\VatReturnCheckService;
+use OCA\Shillinq\Service\VATReturnService;
+use OCA\Shillinq\Standards\RuleEngine;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Vat\VatQuarterBooks;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
-use RuntimeException;
+use Psr\Log\NullLogger;
 
 /**
- * The submit guard of a VAT return.
+ * Submit is refused while a blocking check fails, and the refusal names it.
  *
- * @covers \OCA\Shillinq\Lifecycle\VatReturnChecksGuard
- * @covers \OCA\Shillinq\Listener\Registration\VatReturnGuardServices
- * @uses   \OCA\Shillinq\Standards\Checks\VatReturnChecks
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class VatReturnChecksGuardTest extends TestCase {
+	use VatQuarterBooks;
 
 	/**
-	 * A guard over checks that answer these results, or throw.
-	 *
-	 * @param list<array<string, mixed>>|null $results The results; null throws.
-	 * @param LoggerInterface|null            $logger  The logger.
-	 *
-	 * @return VatReturnChecksGuard
+	 * The literal requires tag of BtwAangifte.submit.
 	 */
-	private function guard(?array $results, ?LoggerInterface $logger = null): VatReturnChecksGuard {
-		$checks = $this->createMock(VatReturnChecks::class);
-		if ($results === null) {
-			$checks->method('run')->willThrowException(new RuntimeException('boom'));
-		} else {
-			$checks->expects($this->once())->method('run')->with(['id' => 'ret-q3'])->willReturn($results);
-		}
-
-		$l10n = $this->createMock(IL10N::class);
-		$l10n->method('t')->willReturnCallback(static fn (string $text, array $params = []): string => vsprintf($text, $params));
-
-		return new VatReturnChecksGuard(checks: $checks, l10n: $l10n, logger: ($logger ?? $this->createMock(LoggerInterface::class)));
-	}//end guard()
+	private const TAG = 'OCA\Shillinq\Lifecycle\VatReturnChecksGuard::canSubmit';
 
 	/**
-	 * A check result.
-	 *
-	 * @param string $id       The check.
-	 * @param string $severity Its severity.
-	 * @param bool   $passed   Whether it passed.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private static function outcome(string $id, string $severity, bool $passed): array {
-		return ['id' => $id, 'severity' => $severity, 'passed' => $passed, 'message' => $passed ? 'Passed' : 'MEM-7'];
-	}//end result()
-
-	/**
-	 * A failing blocking check refuses, naming the check and its message.
+	 * Reset the rule engine's memo, so the providers are discovered.
 	 *
 	 * @return void
 	 */
-	public function testAFailingBlockingCheckRefusesNamingIt(): void {
-		$guard = $this->guard([
-			self::outcome('vat-equals-base-times-rate', 'warning', false),
-			self::outcome('vat-line-has-box', 'blocking', false),
-		]);
-
-		$result = $guard->check(['id' => 'ret-q3'], 'submit', 'controller');
-
-		$this->assertInstanceOf(LifecycleGuardInterface::class, $guard);
-		$this->assertFalse($result->isAllowed());
-		$this->assertSame('The check "vat-line-has-box" failed: MEM-7', $result->getMessage());
-	}//end testAFailingBlockingCheckRefusesNamingIt()
+	protected function setUp(): void {
+		parent::setUp();
+		RuleEngine::reset();
+	}//end setUp()
 
 	/**
-	 * Only failing warnings do not refuse.
+	 * Prepare Q3 2026 over the rows; answer the adapter on its submit and the prepared return.
 	 *
-	 * @return void
-	 */
-	public function testFailingWarningsDoNotRefuse(): void {
-		$guard = $this->guard([self::outcome('no-unposted-documents', 'warning', false), self::outcome('vat-line-has-box', 'blocking', true)]);
-
-		$this->assertTrue($guard->check(['id' => 'ret-q3'], 'submit', 'controller')->isAllowed());
-	}//end testFailingWarningsDoNotRefuse()
-
-	/**
-	 * Checks that cannot run refuse, and the failure is logged.
+	 * @param array<string,list<array<string,mixed>>> $rows Rows per schema.
 	 *
-	 * @return void
+	 * @return array{0: RegisterRequiresGuardAdapter, 1: array<string,mixed>}
 	 */
-	public function testChecksThatCannotRunRefuse(): void {
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->once())->method('error')->with('VatReturnChecksGuard: checks did not run, submit refused', ['exception' => 'boom']);
+	private function adapterFor(array $rows): array {
+		$saved = [];
+		$store = new InMemoryObjectServiceStub($rows, $saved, true);
+		$prepared = (new VATReturnService(appConfig: $this->defaultsConfig(), logger: new NullLogger(), objectService: $store))
+			->createReturn(administrationId: 'adm-kb', period: 'quarter', periodYear: 2026, periodNumber: 3, regime: 'standard');
 
-		$result = $this->guard(null, $logger)->check(['id' => 'ret-q3'], 'submit', 'controller');
-
-		$this->assertFalse($result->isAllowed());
-		$this->assertSame('The checks of this return could not run, so it cannot be submitted.', $result->getMessage());
-	}//end testChecksThatCannotRunRefuse()
-
-	/**
-	 * The register's `requires` tag resolves to the guard.
-	 *
-	 * @return void
-	 */
-	public function testTheSubmitTagResolvesToTheGuard(): void {
-		$registered = [];
-		$context = $this->createMock(IRegistrationContext::class);
-		$context->method('registerService')->willReturnCallback(
-			static function (string $name, callable $factory) use (&$registered): void {
-				$registered[$name] = $factory;
-			}
+		$checks = new VatReturnCheckService(objectService: $store, appConfig: $this->defaultsConfig());
+		$adapter = new RegisterRequiresGuardAdapter(
+			guard: new VatReturnChecksGuard(checks: $checks),
+			method: 'canSubmit',
+			denyMessage: 'The return cannot be submitted.',
+			logger: new NullLogger()
 		);
 
-		(new VatReturnGuardServices())->register($context);
+		return [$adapter, $prepared];
+	}//end adapterFor()
 
-		$guard = $this->guard([]);
-		$container = new class($guard) {
-			/**
-			 * Constructor.
-			 *
-			 * @param object $guard The guard.
-			 */
-			public function __construct(private readonly object $guard) {
-			}
+	/**
+	 * The spec's scenario: a posted purchase line with input VAT but no tariff
+	 * refuses Submit with the check's name and the transaction.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.2
+	 */
+	public function testSubmitIsRefusedNamingTheFailingCheck(): void {
+		$rows = $this->withEntry(
+			$this->posted([$this->sale(), $this->purchase()]),
+			'MEM-77',
+			[
+				['accountNumber' => '7200', 'side' => 'debit', 'amount' => 100.0],
+				['accountNumber' => '1230', 'side' => 'debit', 'amount' => 21.0],
+				['accountNumber' => '1600', 'side' => 'credit', 'amount' => 121.0],
+			]
+		);
+		[$adapter, $prepared] = $this->adapterFor($rows);
 
-			/**
-			 * The guard, for its class name.
-			 *
-			 * @param string $id The service id.
-			 *
-			 * @return object
-			 */
-			public function get(string $id): object {
-				return $this->guard;
-			}
-		};
+		$result = $adapter->check($prepared, 'submit', 'alice');
 
-		$this->assertSame(['OCA\Shillinq\Lifecycle\VatReturnChecksGuard::check'], array_keys($registered));
-		$this->assertSame($guard, $registered[VatReturnGuardServices::SUBMIT_TAG]($container));
-		$guard->check(['id' => 'ret-q3'], 'submit', 'controller');
+		self::assertFalse($result->isAllowed());
+		self::assertStringContainsString('has a VAT return box', (string)$result->getMessage());
+		self::assertStringContainsString('MEM-77', (string)$result->getMessage());
+	}//end testSubmitIsRefusedNamingTheFailingCheck()
 
-		$register = json_decode((string)file_get_contents(__DIR__.'/../../../lib/Settings/register.d/bookkeeping-vat-btw-filing.json'), true);
-		$submit = $register['components']['schemas']['BtwAangifte']['x-openregister-lifecycle']['transitions']['submit'];
-		$this->assertSame(VatReturnGuardServices::SUBMIT_TAG, $submit['requires']);
-	}//end testTheSubmitTagResolvesToTheGuard()
+	/**
+	 * A clean return may be submitted, and a failing warning does not block it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.2
+	 */
+	public function testACleanReturnOrAWarningOnlyMaySubmit(): void {
+		[$adapter, $prepared] = $this->adapterFor($this->posted([$this->sale(), $this->purchase()]));
+		self::assertTrue($adapter->check($prepared, 'submit', 'alice')->isAllowed());
+
+		$rows = $this->posted([$this->sale(), $this->purchase()]);
+		$rows['ARInvoice'] = [
+			['id' => 'ar-d1', 'invoiceNumber' => 'CONCEPT-1', 'invoiceDate' => '2026-09-20', 'administrationId' => 'adm-kb', 'lifecycleState' => 'draft'],
+		];
+		[$adapter, $prepared] = $this->adapterFor($rows);
+		self::assertTrue($adapter->check($prepared, 'submit', 'alice')->isAllowed());
+	}//end testACleanReturnOrAWarningOnlyMaySubmit()
+
+	/**
+	 * The guard is the requires of BtwAangifte.submit, and the app registers
+	 * that exact tag through the adapter (LedgerPostingRegistration).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.2
+	 */
+	public function testTheGuardIsWiredOnSubmit(): void {
+		$fragment = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/register.d/bookkeeping-vat-btw-filing.json'), true);
+		$submit = $fragment['components']['schemas']['BtwAangifte']['x-openregister-lifecycle']['transitions']['submit'];
+		self::assertSame(self::TAG, $submit['requires']);
+
+		self::assertSame([VatReturnChecksGuard::class, 'canSubmit'], array_slice(LedgerPostingRegistration::GUARDS[self::TAG], 0, 2));
+		$application = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		self::assertStringContainsString('(new LedgerPostingRegistration())->register(context: $context);', $application);
+	}//end testTheGuardIsWiredOnSubmit()
 }//end class
