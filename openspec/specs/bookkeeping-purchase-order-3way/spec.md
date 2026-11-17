@@ -151,7 +151,7 @@ _Result of matching a supplier invoice against purchase order(s) and goods recei
 | invoice_id | string | Yes | FK to SupplierInvoice |
 | matched_po_ids | array | Yes | FK list to PurchaseOrder(s) |
 | matched_grn_ids | array | Yes | FK list to GoodsReceiptNote(s) |
-| match_status | enum | Yes | auto_approved, within_tolerance, exception_price, exception_quantity, exception_missing_grn, exception_missing_po, fraud_alert |
+| match_status | enum | Yes | auto_approved, within_tolerance, exception_price, exception_quantity, exception_date, exception_missing_grn, exception_missing_po, fraud_alert |
 | divergence_details | object | No | JSON: {price_delta, price_pct, quantity_delta, quantity_pct, vat_delta, date_delta, grn_notes, supplier_note} |
 | resolved_by | string | No | FK to Person if exception resolved manually |
 | resolution_action | enum | No | auto_approve, accepted_with_motivation, dispute_filed, rejected |

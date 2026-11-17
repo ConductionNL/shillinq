@@ -14,11 +14,23 @@
  * @spec openspec/changes/tax-vat-number-check/tasks.md#task-3.2
  */
 
+import type { Page } from '@playwright/test'
+
 import { expect, test } from '@playwright/test'
 
 const mullerId = 'c0570000-0000-4000-8000-000000000001'
 const softwarehuisId = 'b0570000-0000-4000-8000-000000000002'
 const billId = '5b570000-0000-4000-8000-000000000003'
+
+/**
+ * Run the "Check VAT number" header action, which the detail page lists in its More menu.
+ *
+ * @param page The page.
+ */
+async function checkVatNumber(page: Page): Promise<void> {
+	await page.getByTestId('cn-detail-page').getByRole('button', { name: /^more$/i }).first().click()
+	await page.getByRole('menuitem', { name: 'Check VAT number' }).click()
+}
 
 test.describe('tax-vat-number-check', () => {
 	/**
@@ -54,7 +66,7 @@ test.describe('tax-vat-number-check', () => {
 		)
 
 		await page.goto(`/index.php/apps/shillinq/bookkeeping/customers/${mullerId}`)
-		await page.getByRole('button', { name: 'Check VAT number' }).click()
+		await checkVatNumber(page)
 
 		await expect(page.getByText(/VAT number DE000000000 is valid/)).toBeVisible()
 	})
@@ -95,7 +107,7 @@ test.describe('tax-vat-number-check', () => {
 		await page.goto(
 			`/index.php/apps/shillinq/bookkeeping/payees/${softwarehuisId}`,
 		)
-		await page.getByRole('button', { name: 'Check VAT number' }).click()
+		await checkVatNumber(page)
 
 		await expect(
 			page.getByText(
