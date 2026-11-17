@@ -41,13 +41,13 @@ class DimensionTemplateSeedsTest extends TestCase {
 	public function testTemplateRowsCarryEveryRequiredProperty(): void {
 		$schema = $this->shippedSchemas()['AnalyticalDimension'];
 		$required = array_unique($schema['required'] ?? []);
-		self::assertNotSame([], $required);
+		self::assertNotSame(expected: [], actual: $required);
 
 		$seeds = __DIR__.'/../../../lib/Settings/seeds/';
 		$missing = [];
 		foreach (['cost-center-templates.json' => 'costCenters', 'project-templates.json' => 'projects'] as $file => $key) {
-			$rows = json_decode((string) file_get_contents($seeds.$file), true)[$key];
-			self::assertNotEmpty($rows, "$file has no rows.");
+			$rows = json_decode(json: (string) file_get_contents(filename: $seeds.$file), associative: true)[$key];
+			self::assertNotEmpty(actual: $rows, message: "$file has no rows.");
 			foreach ($rows as $row) {
 				$row['administrationId'] = 'ADM-001';
 				foreach ($required as $property) {
@@ -59,6 +59,6 @@ class DimensionTemplateSeedsTest extends TestCase {
 			}
 		}
 
-		self::assertSame([], $missing);
+		self::assertSame(expected: [], actual: $missing);
 	}//end testTemplateRowsCarryEveryRequiredProperty()
 }//end class

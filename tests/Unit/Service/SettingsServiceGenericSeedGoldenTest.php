@@ -187,13 +187,13 @@ final class SettingsServiceGenericSeedGoldenTest extends TestCase {
 	 * @return void
 	 */
 	public function testEveryGenericSeedFileExists(): void {
-		$seeds = (new \ReflectionClassConstant(SettingsService::class, 'GENERIC_SEEDS'))->getValue();
-		self::assertNotEmpty($seeds);
+		$seeds = (new \ReflectionClassConstant(class: SettingsService::class, constant: 'GENERIC_SEEDS'))->getValue();
+		self::assertNotEmpty(actual: $seeds);
 		foreach ($seeds as $name => [$fileName, $itemsKey]) {
 			$path = __DIR__ . '/../../../lib/Settings/seeds/' . $fileName;
-			self::assertFileExists($path, "Seed $name names a missing file.");
-			$data = json_decode((string) file_get_contents($path), true);
-			self::assertIsArray($data[$itemsKey] ?? null, "Seed $name has no '$itemsKey' list.");
+			self::assertFileExists(filename: $path, message: "Seed $name names a missing file.");
+			$data = json_decode(json: (string) file_get_contents(filename: $path), associative: true);
+			self::assertIsArray(actual: $data[$itemsKey] ?? null, message: "Seed $name has no '$itemsKey' list.");
 		}
 
 	}//end testEveryGenericSeedFileExists()

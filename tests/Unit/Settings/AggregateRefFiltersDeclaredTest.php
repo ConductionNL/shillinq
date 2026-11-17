@@ -46,7 +46,7 @@ class AggregateRefFiltersDeclaredTest extends TestCase {
 		foreach ($schemas as $name => $schema) {
 			foreach (($schema['x-openregister-aggregate-refs'] ?? []) as $refName => $ref) {
 				$target = ($ref['schema'] ?? '');
-				self::assertArrayHasKey($target, $schemas, "$name.$refName targets unknown schema $target.");
+				self::assertArrayHasKey(key: $target, array: $schemas, message: "$name.$refName targets unknown schema $target.");
 				$properties = ($schemas[$target]['properties'] ?? []);
 				foreach (array_keys($ref['filters'] ?? []) as $field) {
 					$checked++;
@@ -57,7 +57,11 @@ class AggregateRefFiltersDeclaredTest extends TestCase {
 			}
 		}
 
-		self::assertGreaterThan(0, $checked, 'No aggregate-ref filters were found, so nothing was checked.');
-		self::assertSame([], $undeclared, 'Aggregate-ref filters on undeclared properties: '.implode(', ', $undeclared));
+		self::assertGreaterThan(expected: 0, actual: $checked, message: 'No aggregate-ref filters were found, so nothing was checked.');
+		self::assertSame(
+			expected: [],
+			actual: $undeclared,
+			message: 'Aggregate-ref filters on undeclared properties: '.implode(separator: ', ', array: $undeclared)
+		);
 	}//end testEveryAggregateRefFilterIsADeclaredTargetProperty()
 }//end class
