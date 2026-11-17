@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
@@ -38,6 +39,7 @@ use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use OCP\Lock\ILockingProvider;
 use PHPUnit\Framework\TestCase;
@@ -60,9 +62,16 @@ final class InvoiceGenerationNumberSeriesTest extends TestCase {
 			[
 				'CustomerMaster' => [['id' => 'cust-1', 'administrationId' => 'adm-1', 'legalName' => 'Bakkerij Jansen']],
 				'UrenRegistratie' => [
-					['id' => 'te-1', 'administrationId' => 'adm-1', 'hours' => 8, 'date' => '2026-03-10', 'resourceType' => 'consultant'],
-					['id' => 'te-2', 'administrationId' => 'adm-1', 'hours' => 4, 'date' => '2026-03-11', 'resourceType' => 'consultant'],
+					['id' => 'te-1', 'administrationId' => 'adm-1', 'personId' => 'user-a', 'projectId' => 'p-1', 'hours' => 8, 'date' => '2026-03-10', 'resourceType' => 'consultant'],
+					['id' => 'te-2', 'administrationId' => 'adm-1', 'personId' => 'user-a', 'projectId' => 'p-1', 'hours' => 4, 'date' => '2026-03-11', 'resourceType' => 'consultant'],
 				],
+				// Each hour is priced from the assignment's rate card.
+				'ProjectAssignment' => [
+					['id' => 'pa-1', 'administrationId' => 'adm-1', 'personId' => 'user-a', 'projectId' => 'p-1', 'rateCardId' => 'rct-1', 'startDate' => '2026-01-01'],
+				],
+				'RateCardTemplate' => [['id' => 'rct-1', 'administrationId' => 'adm-1']],
+				'RateCardVersion' => [['id' => 'rcv-1', 'templateId' => 'rct-1', 'status' => 'active', 'effectiveDate' => '2026-01-01', 'administrationId' => 'adm-1']],
+				'RateSchedule' => [['id' => 'rs-1', 'versionId' => 'rcv-1', 'tier' => 'blended', 'rate' => 100, 'unit' => 'hourly', 'status' => 'active', 'effectiveDate' => '2026-01-01', 'administrationId' => 'adm-1']],
 				// Earlier invoices: a count would give BIL-2026-0003.
 				'BillableInvoice' => [
 					['id' => 'b-1', 'administrationId' => 'adm-1', 'invoiceNumber' => 'BIL-2026-0011'],
@@ -92,6 +101,7 @@ final class InvoiceGenerationNumberSeriesTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: $store,
 			billedReadings: $this->createMock(BilledReadings::class),
+			billableRates: new BillableRateService($store, $location, $this->createMock(ITimeFactory::class)),
 			sequences: new InvoiceNumberSequenceService(objectService: $store, registerLocation: $location, locks: $this->createMock(ILockingProvider::class), lockPause: 0),
 		);
 	}//end service()

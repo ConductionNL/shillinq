@@ -68,4 +68,18 @@ interface ReconciliationResolutionServiceInterface {
 		string $resolutionReason,
 		string $actor,
 	): array;
+
+	/**
+	 * Resolve several matches, each under the reconciliation it belongs to.
+	 *
+	 * @param list<string> $matchIds         The ReconciliationMatch ids.
+	 * @param string       $resolutionStatus One of matched/timing/pending/adjustment.
+	 * @param string       $resolutionReason The shared reason.
+	 * @param string       $actor            Nextcloud UID of the operator.
+	 *
+	 * @return array{applied: int, failed: array<string, \Throwable>}
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+	 */
+	public function resolveMatches(array $matchIds, string $resolutionStatus, string $resolutionReason, string $actor): array;
 }//end interface

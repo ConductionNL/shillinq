@@ -9273,11 +9273,11 @@
 			"twinfield": "unknown",
 			"odoo": "unknown",
 			"built": {
-				"state": "specified",
-				"evidence": "The archived change ticked all 35 tasks, but the tree holds only declarations and a guard: lib/Settings/register.d/bookkeeping-cbcr-pillar2.json declares 8 schemas (GroupEntityRegistry, CbcrJurisdictionSummary, Pillar2JurisdictionComputation, Pillar2SafeHarbour, QdmttReturn, GlobeInformationReturn, CbcrReturn, TaxTreatyOverview; three carry x-openregister-calculations) and lib/Lifecycle/CbcrPillar2Guard.php:99-229 guards four transitions. git grep -i 'cbcr|pillar2' over src/ finds no page, and lib/ has no service for the EUR 750M threshold, the per-jurisdiction aggregation or the CbCR, GIR and QDMTT XML exports.",
-				"reachedOn": "nothing reaches it",
+				"state": "building",
+				"evidence": "Branch quality/build-tax-cbcr-and-pillar2-returns (PR #2997): lib/Service/Cbcr/GroupScopeService.php assesses the EUR 750M threshold (one-year CbC rule, two-in-four Pillar Two rule, deadlines) with the weekly GroupScopeAssessmentJob; CbcrFiguresService reads the figures per entity from the ledger and summarises them per jurisdiction; Pillar2SafeHarbourService runs the transitional safe harbour tests and the NL QDMTT; CbcrPillar2Guard gates submit and approve; src/manifest.d/tax-cbcr-and-pillar2-returns.json adds the Group entities, Country-by-country reports and Minimum tax returns pages under Taxes. Not yet built: the CbC and GIR XML generators (the OECD XSDs are not bundled yet) and entering or importing figures by hand.",
+				"reachedOn": "Taxes > Group entities (GroupEntities /taxes/group-entities), Country-by-country reports and Minimum tax returns; actions Assess scope, Read figures from the books, Prepare from the books, Run safe harbour tests",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-10-07",
+				"readOn": "2026-11-14",
 				"change": "tax-cbcr-and-pillar2-returns",
 				"delivered": "2026-06-14-bookkeeping-cbcr-pillar2",
 				"requirement": [
