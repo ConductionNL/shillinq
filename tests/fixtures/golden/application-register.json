@@ -718,6 +718,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ActivityCostPriceCalculationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\ActivityCostPriceCalculation'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\AdministrationArchivalServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\AdministrationArchivalService'"
         ]
@@ -1131,6 +1138,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CrossSubsidyScanInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\CrossSubsidyScan'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CustomerBridgeMetricsServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\CustomerBridgeMetricsService'"
         ]
@@ -1525,6 +1539,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\InvoiceSettlementServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Bank\\\\InvoiceSettlementService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\JointArrangementAllocationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\JointArrangementAllocation'"
         ]
     ],
     [

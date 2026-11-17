@@ -8,12 +8,11 @@
 /**
  * Statement report generator base
  *
- * Shared account loading for the financial-statement generators (balance
- * sheet, profit and loss): the chart of accounts for an administration, one
- * row per (administration, account key), falling back to every account when
- * the install does not scope Account by administration; the net GLLine
- * movement per account; account keys, labels, the reporting currency and the
- * account-table layout both statements use.
+ * Shared plumbing for the financial-statement generators (balance sheet,
+ * profit and loss): the StatementCalculator both take their figures from, so
+ * a document shows the figures of the on-screen statement
+ * (reporting-financial-statements REQ-RFS-004); the date range a generation
+ * context names; and the account-table layout both statements use.
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting\Generator
@@ -49,8 +48,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use OCA\Shillinq\Reporting\StatementCalculator;
+use OCA\Shillinq\Reporting\StatementPeriods;
+use Throwable;
+
 /**
- * Base for the generators that render a statement from Account totals.
+ * Base for the generators that render a statement from StatementCalculator figures.
+ *
+ * @spec openspec/changes/reporting-financial-statements
  */
 abstract class AbstractStatementReportGenerator extends AbstractDocumentReportGenerator {
 
@@ -64,91 +69,60 @@ abstract class AbstractStatementReportGenerator extends AbstractDocumentReportGe
 	}//end accountAmountHead()
 
 	/**
-	 * Load the Account objects for the administration (all accounts when no
-	 * administration is supplied, or when the scoped read finds none), one row
-	 * per (administration, account key).
+	 * The calculator the on-screen statements use, or null when it cannot be resolved.
 	 *
-	 * @param string $administrationId The administration scope (may be empty).
+	 * @return StatementCalculator|null
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @spec openspec/changes/reporting-financial-statements
 	 */
-	protected function loadAccounts(string $administrationId): array {
-		return $this->dedupeAccounts($this->loadScoped('Account', $administrationId));
-	}//end loadAccounts()
-
-	/**
-	 * Derive net movements per account code from the posted GLLine movements
-	 * (debit positive, credit negative), scoped to the administration.
-	 *
-	 * @param string $administrationId The administration scope (may be empty).
-	 *
-	 * @return array<string, float> accountNumber => net (debit - credit).
-	 */
-	protected function deriveMovements(string $administrationId): array {
-		$balances = [];
-		foreach ($this->loadScoped('GLLine', $administrationId) as $line) {
-			$code = $this->str($line, 'accountNumber', 'accountId', 'account');
-			if ($code === '') {
-				continue;
-			}
-
-			$amount = $this->num($line, 'amount', 'baseCurrencyAmount', 'transactionAmount');
-			$side = strtolower($this->str($line, 'side', 'drcr'));
-			$signed = $side === 'credit' ? (-1 * $amount) : $amount;
-
-			$balances[$code] = (($balances[$code] ?? 0.0) + $signed);
+	protected function calculator(): ?StatementCalculator {
+		try {
+			$calculator = $this->container->get(StatementCalculator::class);
+		} catch (Throwable $e) {
+			return null;
 		}
 
-		return $balances;
-	}//end deriveMovements()
+		return $calculator instanceof StatementCalculator ? $calculator : null;
+	}//end calculator()
 
 	/**
-	 * The reporting currency: the first account's currency, else EUR.
+	 * The date range of a generation context.
 	 *
-	 * @param array<int, array<string, mixed>> $accounts The Account objects.
+	 * Explicit `from` and `to` win; else the `period` label (`2026`,
+	 * `2026-Q3`, `2026-09`); else the current calendar year.
 	 *
-	 * @return string
+	 * @param array<string, mixed> $context The generation context.
+	 *
+	 * @return array{from: string, to: string}
+	 *
+	 * @spec openspec/changes/reporting-financial-statements
 	 */
-	protected function accountsCurrency(array $accounts): string {
-		foreach ($accounts as $account) {
-			$accountCurrency = $this->str($account, 'currency');
-			if ($accountCurrency !== '') {
-				return $accountCurrency;
+	protected function contextRange(array $context): array {
+		$from = $this->str($context, 'from');
+		$to = $this->str($context, 'to');
+		if ($from !== '' && $to !== '') {
+			try {
+				StatementPeriods::assertRange(from: $from, to: $to);
+				return ['from' => $from, 'to' => $to];
+			} catch (Throwable $e) {
+				// An unreadable explicit range falls back to the period label.
 			}
 		}
 
-		return 'EUR';
-	}//end accountsCurrency()
+		$range = StatementPeriods::rangeOfLabel(label: $this->str($context, 'period'));
+		if ($range !== null) {
+			return $range;
+		}
+
+		$year = gmdate('Y');
+
+		return ['from' => $year . '-01-01', 'to' => $year . '-12-31'];
+	}//end contextRange()
 
 	/**
-	 * The account's join key (accountNumber preferred, then code/rgsCode/id).
+	 * Sum of the `amount` field across lines.
 	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return string
-	 */
-	protected function accountKey(array $account): string {
-		return $this->str($account, 'accountNumber', 'code', 'rgsCode', 'id');
-	}//end accountKey()
-
-	/**
-	 * A display label for an account row: "<number> <name>".
-	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return string
-	 */
-	protected function accountLabel(array $account): string {
-		$number = $this->str($account, 'accountNumber', 'code', 'rgsCode');
-		$name = $this->str($account, 'name', 'accountName', 'title', 'description');
-		$label = trim($number . ' ' . $name);
-		return $label !== '' ? $label : ('Rekening ' . $this->str($account, 'id'));
-	}//end accountLabel()
-
-	/**
-	 * Sum the amounts in a set of lines.
-	 *
-	 * @param array<int, array{label: string, amount: float}> $lines The lines.
+	 * @param array<int, array<string, mixed>> $lines The rows to sum.
 	 *
 	 * @return float
 	 */
@@ -158,17 +132,16 @@ abstract class AbstractStatementReportGenerator extends AbstractDocumentReportGe
 			$sum += (float)($row['amount'] ?? 0.0);
 		}
 
-		return $sum;
+		return round($sum, 2);
 	}//end total()
 
 	/**
-	 * Add an account table — the account lines and their bold total — and
-	 * answer the total.
+	 * Render one account table with its total row, and return the total.
 	 *
-	 * @param StatementRun  $run    The section and currency being rendered.
-	 * @param AccountBucket $bucket The account lines and their total label.
+	 * @param StatementRun  $run    The statement being rendered.
+	 * @param AccountBucket $bucket The total-row label and the account lines.
 	 *
-	 * @return float The total of the lines.
+	 * @return float The table total.
 	 */
 	protected function addAccountTable(StatementRun $run, AccountBucket $bucket): float {
 		$total = $this->total($bucket->lines);
@@ -183,53 +156,4 @@ abstract class AbstractStatementReportGenerator extends AbstractDocumentReportGe
 
 		return $total;
 	}//end addAccountTable()
-
-	/**
-	 * Load a schema scoped to the administration, falling back to every row
-	 * when the scoped read finds none (some installs do not scope by
-	 * administration).
-	 *
-	 * @param string $schema           The schema slug.
-	 * @param string $administrationId The administration scope (may be empty).
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private function loadScoped(string $schema, string $administrationId): array {
-		$filters = [];
-		if ($administrationId !== '') {
-			$filters['administrationId'] = $administrationId;
-		}
-
-		$rows = $this->loadObjects($schema, $filters);
-		if ($rows === [] && $filters !== []) {
-			$rows = $this->loadObjects($schema);
-		}
-
-		return $rows;
-	}//end loadScoped()
-
-	/**
-	 * Collapse the chart of accounts to one row per (administration, account key)
-	 * so an unscoped read does not list or count the same general-ledger account
-	 * twice. The first occurrence wins.
-	 *
-	 * @param array<int, array<string, mixed>> $accounts The Account objects.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private function dedupeAccounts(array $accounts): array {
-		$seen = [];
-		$out = [];
-		foreach ($accounts as $account) {
-			$key = $this->str($account, 'administrationId') . '|' . $this->accountKey($account);
-			if (isset($seen[$key]) === true) {
-				continue;
-			}
-
-			$seen[$key] = true;
-			$out[] = $account;
-		}
-
-		return $out;
-	}//end dedupeAccounts()
 }//end class

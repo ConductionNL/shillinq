@@ -8,14 +8,15 @@
       DONE (b6fdad347): `lib/Settings/register.d/tax-vat-return-from-books.json` (GLLine, VATDeclaration and
       VATLine at 0.2.0); `check:registers` passes. The live re-import is not re-run here.
 - [x] 1.2 Stamp the three fields in the posting mappers from the line's tariff, including reverse charge to the owed box and 5b (REQ-VBTW-004). Verify: PHPUnit for a sale, a purchase, a split purchase and a reverse-charged purchase.
-      DONE 2026-11-14: `VatLineStamper` plus `MaterialiseGlTransactionAction`, tested by
+      DONE: `VatLineStamper` plus `MaterialiseGlTransactionAction`, tested by
       `testASaleAtTwoRatesBooksVatPerTariffWithItsBox`, `testAPurchaseInvoiceBooksExpenseVatAndPayables`,
-      `testASplitPurchaseBooksInputVatPerTariffInBox5b`, `testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff` and
-      `testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate`. Decision on the rate of reverse-charged VAT: the
-      purchase line's own `vatRate` when it names one above zero, else the general rate of the `high` tariff
-      (`VatLineStamper::selfAssessedRate()`); the reverse-charge tariffs keep rate 0 because the supplier charges
-      nothing. Per tariff the posting credits the owed VAT on the output VAT account in the tariff's box (2a, 4a or 4b)
-      and debits the same amount on the input VAT account in 5b, so it stays balanced.
+      `testASplitPurchaseBooksInputVatPerTariffInBox5b` and `testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff`.
+      The self-assessed VAT of a reverse-charged purchase is booked at the purchase line's own `vatRate` when it names
+      one above zero, else at the high tariff's rate (`VatLineStamper::selfAssessedRate()`, falling back to
+      `reverseChargeRate()`; `testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate`), deducted in 5b and owed in
+      the tariff's own box (`testAReverseChargedPurchaseBooksItsVatOwedAndDeducted`); the reverse-charge tariffs keep
+      rate 0 because the supplier charges nothing. Without either rate nothing is guessed
+      (`testWithoutAHighTariffNoReverseChargePairIsGuessed`) and the return's reverse-charge check names the purchase.
 - [x] 1.3 Add a backfill repair step for posted lines from the tariff code, else the account's VAT settings, logging lines it cannot resolve (REQ-VBTW-004). Verify: repair run twice on a local instance stamps the seed lines once.
       DONE (185ccd289): `lib/Repair/StampVatReturnBoxes.php` over `VatLineBackfill`, registered in info.xml;
       `VatLineBackfillTest::testLinesWithATariffGetTheirBoxOnceAndASecondRunWritesNothing` covers the second run.

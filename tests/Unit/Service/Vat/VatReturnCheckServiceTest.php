@@ -233,9 +233,9 @@ final class VatReturnCheckServiceTest extends TestCase {
 	}//end testThePreviousReturnMustBeSubmitted()
 
 	/**
-	 * A posted reverse-charged purchase books its VAT owed and deducted and
-	 * passes the pair check; without those lines it fails; with its VAT owed
-	 * in 2a and deducted in 5b it passes again.
+	 * A reverse-charged purchase posted by the real mapper passes the pair
+	 * check; without its VAT lines it fails; with its VAT owed in 2a and
+	 * deducted in 5b by hand it passes again.
 	 *
 	 * @return void
 	 *
@@ -260,13 +260,15 @@ final class VatReturnCheckServiceTest extends TestCase {
 		}
 
 		self::assertNotSame('', $transaction);
-		self::assertTrue($this->checksOf($rows)[VatReturnChecks::REVERSE_CHARGE_PAIR]['passed'], 'The posting books the self-assessed VAT pair.');
+		$posted = $this->checksOf($rows);
+		self::assertTrue($posted[VatReturnChecks::REVERSE_CHARGE_PAIR]['passed'], 'the posting books the pair (task 1.2)');
+		self::assertTrue($posted[VatReturnChecks::ACCOUNT_MOVEMENT]['passed'], implode(', ', $posted[VatReturnChecks::ACCOUNT_MOVEMENT]['offenders']));
 
-		// Without its self-assessed VAT lines (a purchase booked by hand), the pair check fails.
+		// The same purchase as posted before task 1.2: the base only.
 		$rows['GLLine'] = array_values(
 			array_filter(
 				$rows['GLLine'],
-				static fn (array $line): bool => ((string)$line['transactionId'] !== $transaction || ($line['vatAmountKind'] ?? '') !== 'vat')
+				static fn (array $l): bool => (($l['vatTariffCode'] ?? '') !== 'reverse-charge' || ($l['vatAmountKind'] ?? '') !== 'vat')
 			)
 		);
 		$check = $this->checksOf($rows)[VatReturnChecks::REVERSE_CHARGE_PAIR];

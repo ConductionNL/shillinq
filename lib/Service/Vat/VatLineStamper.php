@@ -49,9 +49,11 @@ class VatLineStamper {
 	public const INPUT_VAT_BOX = '5b';
 
 	/**
-	 * The tariff of the general rate, used for reverse-charged VAT when a line names no rate.
+	 * The tariff whose rate a reverse-charged purchase is booked at: the
+	 * supplier charges nothing, so the reverse-charge tariffs carry 0 percent
+	 * and the VAT owed and deducted is the general rate (decision 72).
 	 */
-	public const GENERAL_TARIFF = 'high';
+	public const REVERSE_CHARGE_RATE_TARIFF = 'high';
 
 	/**
 	 * Sales VAT categories (UNTDID 5305) that map to one tariff whatever the rate.
@@ -177,6 +179,38 @@ class VatLineStamper {
 	}//end stamp()
 
 	/**
+	 * The fields of the line that owes a reverse-charged purchase's VAT: the
+	 * VAT kind, in the box of the purchase's own tariff (2a, 4a or 4b).
+	 *
+	 * @param string $code The reverse-charge tariff code.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function stampOwed(string $code): array {
+		$stamp = ['vatTariffCode' => $code, 'vatAmountKind' => 'vat'];
+		$box   = (string)($this->tariff(code: $code)['section'] ?? '');
+		if ($box !== '') {
+			$stamp['vatReturnBox'] = $box;
+		}
+
+		return $stamp;
+	}//end stampOwed()
+
+	/**
+	 * The rate a reverse-charged purchase's VAT is booked at, null when the
+	 * tariff that supplies it has no record (then no rate is guessed).
+	 *
+	 * @return float|null
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function reverseChargeRate(): ?float {
+		return $this->ratePercentage(code: self::REVERSE_CHARGE_RATE_TARIFF);
+	}//end reverseChargeRate()
+
+	/**
 	 * Whether a purchase at this tariff is reverse-charged: its VAT is not on
 	 * the supplier's invoice.
 	 *
@@ -214,7 +248,7 @@ class VatLineStamper {
 			return $own;
 		}
 
-		$general = $this->ratePercentage(code: self::GENERAL_TARIFF);
+		$general = $this->reverseChargeRate();
 		if ($general === null || $general <= 0) {
 			return null;
 		}

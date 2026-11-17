@@ -26,7 +26,7 @@ function instance(state = {}) {
 		requiredFieldCount: null,
 		...state,
 	}
-	for (const name of ['pageSections', 'tabs', 'breadcrumbs', 'pipelinqFields', 'pipelinqSettingsUrl', 'fxImportStatusFields', 'fxImportStatusUrl']) {
+	for (const name of ['pageSections', 'tabs', 'breadcrumbs', 'configurationFields', 'settingsUrl', 'pipelinqFields', 'pipelinqSettingsUrl', 'fxImportStatusFields', 'fxImportStatusUrl']) {
 		Object.defineProperty(vm, name, {
 			get: () => AdminRoot.computed[name].call(vm),
 		})
@@ -51,6 +51,15 @@ describe('admin settings tabs', () => {
 			label: 'Required fields',
 			count: 2,
 		})
+	})
+
+	it('chooses the register from OpenRegister and checks the return address', () => {
+		const [register, returnAddress] = instance().configurationFields
+		expect(register).toMatchObject({ key: 'register', type: 'select', optionsPath: 'results', optionValue: 'slug' })
+		expect(register.optionsUrl).toContain('/apps/openregister/api/registers')
+		expect(new RegExp(returnAddress.pattern).test('https://portal.example.nl')).toBe(true)
+		expect(new RegExp(returnAddress.pattern).test('http://portal.example.nl')).toBe(false)
+		expect(instance().settingsUrl).toContain('/apps/shillinq/api/settings')
 	})
 
 	it('declares the Pipelinq connection as fields: address, a secret token and a test', () => {

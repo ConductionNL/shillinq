@@ -452,10 +452,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines    = [];
-		$vat      = $this->vatStamper();
-		$groups   = [];
-		$assessed = [];
+		$lines   = [];
+		$vat     = $this->vatStamper();
+		$groups  = [];
+		$reverse = [];
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
@@ -471,11 +471,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
 
 			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it:
-			// the buyer self-assesses it at the line's rate instead (design D1).
+			// the buyer self-assesses it at the line's own rate, else the general rate (design D1).
 			if ($vat->isReverseCharge(code: $code) === true) {
 				$rate = $vat->selfAssessedRate(line: $line);
 				if ($rate !== null) {
-					$assessed[$code] = (($assessed[$code] ?? 0.0) + (float)$vat->vatCents(baseCents: $cents, rate: $rate));
+					$reverse[$code] = (($reverse[$code] ?? 0.0) + (float)$vat->vatCents(baseCents: $cents, rate: $rate));
 				}
 			}
 
@@ -498,7 +498,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				'description' => $label . ' VAT',
 			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
 		}
-		$lines = array_merge($lines, $this->selfAssessedVatLines(assessed: $assessed, label: $label));
+
+		$lines   = array_merge($lines, $this->reverseChargePair(reverse: $reverse, label: $label));
 		$lines[] = [
 			'accountNumber' => $this->account(key: self::CFG_AP_CONTROL_ACCOUNT),
 			'side' => 'credit',
@@ -520,44 +521,46 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	}//end mapApInvoice()
 
 	/**
-	 * The self-assessed VAT of reverse-charged purchase lines: per tariff, the
-	 * VAT owed in the tariff's box (2a, 4a or 4b) on the output VAT account and
-	 * the same amount deducted in box 5b on the input VAT account, so the
-	 * posting stays balanced (REQ-VBTW-004, design D1).
+	 * The VAT a supplier did not charge on a reverse-charged purchase, booked
+	 * twice per tariff: deducted in 5b and owed in the tariff's own box (2a,
+	 * 4a or 4b), so the net is nil and the return shows both (REQ-VBTW-004,
+	 * design D1). The rate is the line's own, else the general rate
+	 * ({@see VatLineStamper::selfAssessedRate()}); without a rate to book it
+	 * at, nothing is booked and the return's reverse-charge check names the
+	 * purchase.
 	 *
-	 * @param array<string, float> $assessed Unrounded VAT cents per reverse-charge tariff code.
-	 * @param string               $label    The posting label.
+	 * @param array<string,float> $reverse The unrounded self-assessed VAT in cents per tariff code.
+	 * @param string              $label   The document label.
 	 *
 	 * @return list<array<string,mixed>>
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
 	 */
-	private function selfAssessedVatLines(array $assessed, string $label): array {
+	private function reverseChargePair(array $reverse, string $label): array {
 		$vat   = $this->vatStamper();
 		$lines = [];
-		foreach ($assessed as $code => $unrounded) {
+		foreach ($reverse as $code => $unrounded) {
 			$cents = (int)round($unrounded);
 			if ($cents === 0) {
 				continue;
 			}
 
-			$code    = (string)$code;
-			$lines[] = [
-				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
-				'side' => 'credit',
-				'cents' => $cents,
-				'description' => $label . ' VAT reverse-charged',
-			] + $vat->stamp(code: $code, kind: 'vat', purchase: false);
 			$lines[] = [
 				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
 				'side' => 'debit',
 				'cents' => $cents,
-				'description' => $label . ' VAT reverse-charged',
-			] + $vat->stamp(code: $code, kind: 'vat', purchase: true);
+				'description' => $label . ' reverse-charged VAT deducted',
+			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
+				'side' => 'credit',
+				'cents' => $cents,
+				'description' => $label . ' reverse-charged VAT owed',
+			] + $vat->stampOwed(code: (string)$code);
 		}
 
 		return $lines;
-	}//end selfAssessedVatLines()
+	}//end reverseChargePair()
 
 	/**
 	 * Book a foreign-currency posting at its rate: each line's amount becomes
