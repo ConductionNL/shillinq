@@ -104,7 +104,7 @@ class DeferralScheduleController extends Controller {
 	/**
 	 * POST create the schedule and post its opening entry.
 	 *
-	 * @return JSONResponse 201 with the schedule; 401, 404, 409 or 422 with a message.
+	 * @return JSONResponse 201 with the schedule; 401, 403, 404, 409 or 422 with a message.
 	 *
 	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 */
@@ -130,6 +130,11 @@ class DeferralScheduleController extends Controller {
 		$input = $this->input();
 		if ($this->context->canAccess(administrationId: trim((string)$input['administrationId'])) === false) {
 			return $this->message(text: 'Administration not found', status: Http::STATUS_NOT_FOUND);
+		}
+
+		// Creating a schedule posts its opening entry: the caller needs posting rights (REQ-MA-003).
+		if ($created === true && $this->context->canPostJournalEntry(administrationId: trim((string)$input['administrationId'])) === false) {
+			return $this->message(text: 'You may not post journal entries in this administration.', status: Http::STATUS_FORBIDDEN);
 		}
 
 		try {

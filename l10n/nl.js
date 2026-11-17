@@ -259,6 +259,7 @@ OC.L10N.register(
         "Administration is required": "Administratie is verplicht",
         "Administration not found": "Administratie niet gevonden",
         "Administration not found.": "Administratie niet gevonden.",
+        "You may not post journal entries in this administration.": "U mag in deze administratie geen journaalposten boeken.",
         "Administrations": "Administraties",
         "Administrators": "Beheerders",
         "Advance Notice": "Vooraankondiging",

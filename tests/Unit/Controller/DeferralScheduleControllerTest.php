@@ -63,6 +63,13 @@ final class DeferralScheduleControllerTest extends TestCase {
 	private bool $signedIn = true;
 
 	/**
+	 * The administrations the caller may post journal entries in.
+	 *
+	 * @var list<string>
+	 */
+	private array $postable = ['adm-consultancy-nl'];
+
+	/**
 	 * The request body of the licence.
 	 *
 	 * @var array<string,mixed>
@@ -89,6 +96,7 @@ final class DeferralScheduleControllerTest extends TestCase {
 		$this->deferrals  = $this->createMock(DeferralService::class);
 		$this->accessible = ['adm-consultancy-nl'];
 		$this->signedIn   = true;
+		$this->postable   = ['adm-consultancy-nl'];
 
 	}//end setUp()
 
@@ -108,6 +116,7 @@ final class DeferralScheduleControllerTest extends TestCase {
 
 		$context = $this->createMock(AdministrationContextServiceInterface::class);
 		$context->method('canAccess')->willReturnCallback(fn (string $id): bool => in_array($id, $this->accessible, true));
+		$context->method('canPostJournalEntry')->willReturnCallback(fn (string $id): bool => in_array($id, $this->postable, true));
 
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => 'NL:' . $text);
@@ -179,4 +188,23 @@ final class DeferralScheduleControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller(['administrationId' => ''] + self::BODY)->create()->getStatus());
 
 	}//end testAForeignOrMissingAdministrationIs404AndNothingIsWritten()
+
+	public function testAMemberWithoutPostingRightsIs403AndNothingIsPosted(): void {
+		$this->postable = [];
+		$this->deferrals->expects($this->never())->method('spread');
+
+		$response = $this->controller(self::BODY)->create();
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(['message' => 'NL:You may not post journal entries in this administration.'], $response->getData());
+
+	}//end testAMemberWithoutPostingRightsIs403AndNothingIsPosted()
+
+	public function testAMemberWithoutPostingRightsStillPreviews(): void {
+		$this->postable = [];
+		$this->deferrals->expects($this->once())->method('preview')->with(self::BODY)->willReturn(['releases' => []]);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller(self::BODY)->preview()->getStatus());
+
+	}//end testAMemberWithoutPostingRightsStillPreviews()
 }//end class

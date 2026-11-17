@@ -261,6 +261,7 @@ OC.L10N.register(
         "Administration is required": "Administration is required",
         "Administration not found": "Administration not found",
         "Administration not found.": "Administration not found.",
+        "You may not post journal entries in this administration.": "You may not post journal entries in this administration.",
         "Administrations": "Administrations",
         "Administrators": "Administrators",
         "Advance Notice": "Advance Notice",
