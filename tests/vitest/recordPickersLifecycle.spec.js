@@ -14,7 +14,7 @@ const requests = []
 vi.mock('@nextcloud/axios', () => ({
 	default: {
 		get: (url, config) => {
-			requests.push([url, config.params])
+			requests.push([url, config?.params])
 			return Promise.resolve({ data: { results: [] } })
 		},
 	},
@@ -86,7 +86,7 @@ describe('GlAccountPicker', () => {
 		requests.length = 0
 	})
 
-	it('loads the accounts on creation and again for a new administration', async () => {
+	it('asks for the active administration on creation, and loads the accounts of a new administration', async () => {
 		const vm = instance(component, { administrationId: '' })
 		await component.created.call(vm)
 		vm.administrationId = 'adm-2'
@@ -95,7 +95,7 @@ describe('GlAccountPicker', () => {
 
 		expect(component.watch.administrationId.immediate).toBe(false)
 		expect(requests).toEqual([
-			['/apps/openregister/api/objects/shillinq/Account', { _limit: 500 }],
+			['/apps/shillinq/api/administrations/context', undefined],
 			['/apps/openregister/api/objects/shillinq/Account', { _limit: 500, administrationId: 'adm-2' }],
 		])
 	})
