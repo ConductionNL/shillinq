@@ -328,9 +328,12 @@ final class ThreeWayMatchingEngineTest extends TestCase {
 
 		// SupplierInvoice transitioned received → matching → matched.
 		$invoiceSaves = array_values(array_filter($saved, static fn ($r) => $r['schema'] === 'SupplierInvoice'));
-		self::assertCount(2, $invoiceSaves);
+		// ... and then approved: below the approval chain's lowest tier the
+		// match approves it (REQ-PAD-004).
+		self::assertCount(3, $invoiceSaves);
 		self::assertSame('matching', $invoiceSaves[0]['object']['statusCode']);
 		self::assertSame('matched', $invoiceSaves[1]['object']['statusCode']);
+		self::assertSame('approved', $invoiceSaves[2]['object']['statusCode']);
 
 	}//end testEvaluateMatchAutoApprovesExactMatch()
 
@@ -633,9 +636,12 @@ final class ThreeWayMatchingEngineTest extends TestCase {
 		// sibling test above using the same fixture shape minus the
 		// SvcReceipt).
 		$invoiceSaves = array_values(array_filter($saved, static fn ($r) => $r['schema'] === 'SupplierInvoice'));
-		self::assertCount(2, $invoiceSaves);
+		// ... and then approved: below the approval chain's lowest tier the
+		// match approves it (REQ-PAD-004).
+		self::assertCount(3, $invoiceSaves);
 		self::assertSame('matching', $invoiceSaves[0]['object']['statusCode']);
 		self::assertSame('matched', $invoiceSaves[1]['object']['statusCode']);
+		self::assertSame('approved', $invoiceSaves[2]['object']['statusCode']);
 
 	}//end testEvaluateMatchAutoApprovesServicePoWithAcceptedServiceReceipt()
 

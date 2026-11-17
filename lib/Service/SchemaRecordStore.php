@@ -72,7 +72,9 @@ final class SchemaRecordStore {
 				event: 'failed to persist object',
 				context: ['schema' => $schema, 'exception' => $e->getMessage()]
 			);
-			throw new RuntimeException('Failed to persist ' . $schema);
+			// Keep the cause, so a caller can tell a refusal by an OpenRegister
+			// hook (such as a pending approval chain) from a storage failure.
+			throw new RuntimeException('Failed to persist ' . $schema, 0, $e);
 		}
 
 	}//end saveObject()
