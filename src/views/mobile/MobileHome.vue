@@ -322,4 +322,9 @@ export default {
 .mobile-home__state--synced {
 	color: var(--color-success-text, var(--color-success));
 }
+
+/* Touch targets at phone width (WCAG 2.2 AA, ADR-059): Issue as tall as a list row. */
+.mobile-home :deep(.button-vue) {
+	min-height: 44px;
+}
 </style>

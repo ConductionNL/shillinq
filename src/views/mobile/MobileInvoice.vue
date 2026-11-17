@@ -230,4 +230,9 @@ export default {
 	justify-content: space-between;
 	gap: 12px;
 }
+
+/* Touch targets at phone width (WCAG 2.2 AA, ADR-059): buttons as tall as the inputs. */
+.mobile-form :deep(.button-vue) {
+	min-height: 44px;
+}
 </style>
