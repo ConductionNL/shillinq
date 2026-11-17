@@ -239,7 +239,7 @@ class PeriodCloseLeaseDisclosureTest extends TestCase {
 		try {
 			$service->closePeriod('2026', 'adm-1', 'alice');
 			$this->fail('A closed period was closed again.');
-		} catch (\OCA\Shillinq\Service\PeriodCloseException $e) {
+		} catch (\OCA\Shillinq\Kernel\Exception\PeriodCloseException $e) {
 			$this->assertSame('Period is not in a closable state', $e->getMessage());
 		}
 

@@ -34,6 +34,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for BackfillFiscalPeriods.
@@ -372,11 +373,12 @@ class BackfillFiscalPeriodsTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register = '',
-				string $schema = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_multitenancy = true,
+				bool $_multitenancy = true
 			): void {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				// The schema may arrive positionally or, when the caller reaches
 				// this double through the ADR-084 contract adapter, via the
 				// preceding setSchema() on the fluent chain.

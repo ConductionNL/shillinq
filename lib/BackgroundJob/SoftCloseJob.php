@@ -29,8 +29,8 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -177,11 +177,6 @@ class SoftCloseJob extends TimedJob {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

@@ -28,6 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
@@ -95,10 +97,11 @@ class BackfillAdministrationJurisdiction implements IRepairStep {
 				}
 
 				$this->objectService->patchObject(
-					objectId: $id,
-					data: ['jurisdiction' => AdministrationJurisdiction::DEFAULT],
-					register: $register,
-					schema: 'Administration'
+					new ObjectPatch(
+						objectId: $id,
+						data: ['jurisdiction' => AdministrationJurisdiction::DEFAULT],
+						target: new ObjectFindTarget(register: $register, schema: 'Administration')
+					)
 				);
 				$stamped++;
 			}

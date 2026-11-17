@@ -24,6 +24,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Purchase order and supplier invoice approvals only happen through their services.
@@ -95,6 +96,7 @@ final class PurchasingGuardsTest extends TestCase {
 				return $this;
 			}
 			public function find(string $id, ...$named): ObjectEntity {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				foreach ($this->rows as $row) {
 					if ($row['id'] === $id) {
 						$entity = new ObjectEntity();

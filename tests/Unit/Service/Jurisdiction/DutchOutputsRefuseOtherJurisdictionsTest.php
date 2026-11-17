@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Jurisdiction;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Service\IcpCalculator;
 use OCA\Shillinq\Service\IcpService;
 use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
@@ -128,7 +129,7 @@ final class DutchOutputsRefuseOtherJurisdictionsTest extends TestCase {
 			$this->assertSame('Dutch VAT return submission (SBR)', $e->getOutput());
 		}
 
-		$this->assertSame('draft', $this->store->find(id: 'r-be', schema: 'BtwAangifte')->getObject()['statusCode']);
+		$this->assertSame('draft', $this->store->find(id: 'r-be', options: new ObjectFindOptions(schema: 'BtwAangifte'))->getObject()['statusCode']);
 		$this->assertSame('submitted', $this->vatReturns()->submitReturn(returnId: 'r-nl', userId: 'alice')['statusCode']);
 	}//end testABelgianReturnIsNotSubmittedOverSbr()
 

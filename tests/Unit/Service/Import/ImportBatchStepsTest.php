@@ -30,12 +30,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\Listener\Registration\GuardTagServices;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Lifecycle\ImportReverseGuard;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\LineDimensionCheck;
 use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Service\Import\AuditfileParser;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
@@ -60,6 +62,8 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
@@ -196,7 +200,8 @@ final class ImportBatchStepsTest extends TestCase {
 			$appConfig,
 			$this->createMock(LoggerInterface::class),
 			$this->store,
-			new PostingRestrictionGuard($appConfig, $this->store, $l10n)
+			new PostingRestrictionGuard($appConfig, $this->store, $l10n),
+			new LineDimensionCheck($appConfig, $this->store, $l10n)
 		);
 
 		return new class ($this->store, $guard, new LifecycleFaithfulTransitionEngine($this->store, ['JournalEntry'])) {
@@ -224,7 +229,7 @@ final class ImportBatchStepsTest extends TestCase {
 			 * @return object
 			 */
 			public function transition(string $objectId, string $action, array $data = []): object {
-				$entry = $this->store->find($objectId, schema: 'JournalEntry');
+				$entry = $this->store->find($objectId, new ObjectFindOptions(schema: 'JournalEntry'));
 				if ($entry !== null && $this->guard->canPost($entry->getObject()) !== true) {
 					throw new \RuntimeException('The journal entry ' . $objectId . ' cannot be posted.');
 				}
@@ -295,7 +300,14 @@ final class ImportBatchStepsTest extends TestCase {
 	 * @return array<string,mixed> The batch to save, checked against the real fragment.
 	 */
 	private function step(ImportBatchAction $action, array $batch, string $to, string $step): array {
-		$saved = $action->execute(array_merge($batch, ['status' => $to]), $batch, ['step' => $step], ImportBatchAction::class);
+		$saved = $action->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($batch, ['status' => $to]),
+				previousData: $batch,
+				parameters: ['step' => $step],
+				actionName: ImportBatchAction::class
+			)
+		);
 		$this->assertSame([], RegisterSchema::errors('ImportBatch', $saved), 'the batch the ' . $step . ' step saves');
 
 		return $saved;
@@ -327,7 +339,14 @@ final class ImportBatchStepsTest extends TestCase {
 
 		$this->expectException(DomainException::class);
 		$this->expectExceptionMessage('The file /Migrations/missing.xaf cannot be read.');
-		$this->action()->execute(array_merge($batch, ['status' => 'parsing']), $batch, ['step' => 'parse'], ImportBatchAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($batch, ['status' => 'parsing']),
+				previousData: $batch,
+				parameters: ['step' => 'parse'],
+				actionName: ImportBatchAction::class
+			)
+		);
 	}//end testAFileTheOwnerCannotReadRefusesParseWithItsName()
 
 	/**
@@ -340,7 +359,14 @@ final class ImportBatchStepsTest extends TestCase {
 		$batch     = $this->batch(status: 'draft');
 
 		$this->expectException(DomainException::class);
-		$this->action()->execute(array_merge($batch, ['status' => 'parsing']), $batch, ['step' => 'parse'], ImportBatchAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($batch, ['status' => 'parsing']),
+				previousData: $batch,
+				parameters: ['step' => 'parse'],
+				actionName: ImportBatchAction::class
+			)
+		);
 	}//end testAFileThatIsNotAnAuditfileRefusesParse()
 
 	/**
@@ -575,7 +601,14 @@ final class ImportBatchStepsTest extends TestCase {
 
 		$this->expectException(DomainException::class);
 		$this->expectExceptionMessage('batch-1');
-		$action->execute(array_merge($ready, ['status' => 'posting']), $ready, ['step' => 'post'], ImportBatchAction::class);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: array_merge($ready, ['status' => 'posting']),
+				previousData: $ready,
+				parameters: ['step' => 'post'],
+				actionName: ImportBatchAction::class
+			)
+		);
 	}//end testTheSameImportIsNotPostedTwice()
 
 	/**
@@ -605,7 +638,7 @@ final class ImportBatchStepsTest extends TestCase {
 		);
 		$action = $this->action();
 		$posted = $this->step(action: $action, batch: $this->throughDryRun(action: $action, batch: $this->batch(status: 'draft')), to: 'posting', step: 'post');
-		$this->store->setSchema('FiscalYear')->patchObject((string)$year->getObject()['id'], ['state' => 'closed']);
+		$this->store->setSchema('FiscalYear')->patchObject(new ObjectPatch(objectId: (string)$year->getObject()['id'], data: ['state' => 'closed']));
 
 		try {
 			$this->step(action: $action, batch: $posted, to: 'reversed', step: 'reverse');

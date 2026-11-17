@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A copy of OpenRegister's lib/AppHost/Routes.php, the pure array builder that
  * appinfo/routes.php calls, for unit runs without the OpenRegister sources.
  *
@@ -56,9 +59,6 @@
  * a leaf needs the prelude for its `register()` regardless of what its
  * `routes.php` does.
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V.
- *
  * @category AppHost
  * @package  OCA\OpenRegister\AppHost
  *
@@ -69,8 +69,6 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenRegister.nl
- *
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

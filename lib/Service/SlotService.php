@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\SlotServiceInterface;
+use OCA\Shillinq\Service\Booking\AvailabilityWindows;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -51,6 +52,7 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.BooleanArgumentFlag)    Pre-existing debt (issue
  *     #506): changing this signature would ripple to callers; deferred.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class SlotService implements SlotServiceInterface {
 
@@ -83,6 +85,7 @@ class SlotService implements SlotServiceInterface {
 	 * @param ICacheFactory $cacheFactory Distributed cache factory (slot result cache).
 	 * @param ITimeFactory $time Time provider for past-slot filtering.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param AvailabilityWindows $windows The availability rules, breaks and constraints policy.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -90,6 +93,7 @@ class SlotService implements SlotServiceInterface {
 		private readonly ICacheFactory $cacheFactory,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
+		private readonly AvailabilityWindows $windows = new AvailabilityWindows(),
 	) {
 	}//end __construct()
 
@@ -186,12 +190,28 @@ class SlotService implements SlotServiceInterface {
 	/**
 	 * Enumerate a resource's slots of the requested duration on the requested date.
 	 *
+	 * With an active availability rule the slots follow the rules, the breaks
+	 * and the booking constraints (REQ-BAR-011); without one, the resource's
+	 * own opening and closing time. When the rules, breaks or constraints
+	 * cannot be read, nothing is offered rather than slots they may forbid.
+	 *
 	 * @param array{serviceId: string, resourceId: string, date: string, duration: int} $request The slot request.
 	 * @param array<string,mixed> $resource The Resource row.
 	 *
 	 * @return array<int,array<string,string>> The slots.
+	 *
+	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.1
 	 */
 	private function slotsOfResource(array $request, array $resource): array {
+		$rules = $this->rowsOf(schema: 'AvailabilityRule', filters: ['resource' => $request['resourceId']]);
+		if ($rules === null) {
+			return [];
+		}
+
+		if ($this->windows->hasActiveRule(rules: $rules) === true) {
+			return $this->ruledSlots(request: $request, resource: $resource, rules: $rules);
+		}
+
 		return $this->enumerateSlots(
 			date: $request['date'],
 			openingTime: $this->resourceTime(resource: $resource, field: 'openingTime'),
@@ -201,6 +221,114 @@ class SlotService implements SlotServiceInterface {
 			allowOverlap: (bool)($resource['allowOverlap'] ?? false),
 		);
 	}//end slotsOfResource()
+
+	/**
+	 * The slots inside the windows of the applying rules, outside the breaks and inside the notice limits.
+	 *
+	 * @param array{serviceId: string, resourceId: string, date: string, duration: int} $request The slot request.
+	 * @param array<string,mixed> $resource The Resource row.
+	 * @param array<int,array<string,mixed>> $rules The resource's AvailabilityRule rows.
+	 *
+	 * @return array<int,array<string,string>> The slots, by start time.
+	 *
+	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.2
+	 */
+	private function ruledSlots(array $request, array $resource, array $rules): array {
+		$linked = $this->rowsLinkedTo(rules: $rules);
+		if ($linked === null) {
+			return [];
+		}
+
+		$breaks = $this->windows->breaksOn(breaks: $linked['ResourceBreak'], date: $request['date']);
+		$limits = $this->windows->noticeLimits(constraints: $linked['BookingConstraint']);
+		$now = (new DateTimeImmutable('@' . $this->time->getTime()))->setTimezone(new DateTimeZone('UTC'));
+		$appointments = $this->loadAppointmentsForResourceOnDate(resourceId: $request['resourceId'], date: $request['date']);
+
+		$slots = [];
+		foreach ($this->windows->windowsOn(rules: $rules, date: $request['date']) as [$open, $close]) {
+			$candidates = $this->enumerateSlots(
+				date: $request['date'],
+				openingTime: $open,
+				closingTime: $close,
+				durationMinutes: $request['duration'],
+				existingAppointments: $appointments,
+				allowOverlap: (bool)($resource['allowOverlap'] ?? false),
+			);
+			foreach ($candidates as $slot) {
+				$start = new DateTimeImmutable($slot['startTime']);
+				$end = new DateTimeImmutable($slot['endTime']);
+				if ($this->windows->admits(start: $start, end: $end, breaks: $breaks, limits: $limits, now: $now) === true) {
+					$slots[$slot['startTime']] = $slot;
+				}
+			}
+		}
+
+		ksort($slots);
+
+		return array_values($slots);
+	}//end ruledSlots()
+
+	/**
+	 * The breaks and the booking constraints of the active rules, or null when a read failed.
+	 *
+	 * @param array<int,array<string,mixed>> $rules The resource's AvailabilityRule rows.
+	 *
+	 * @return array{ResourceBreak: array<int,array<string,mixed>>, BookingConstraint: array<int,array<string,mixed>>}|null
+	 */
+	private function rowsLinkedTo(array $rules): ?array {
+		$linked = ['ResourceBreak' => [], 'BookingConstraint' => []];
+		foreach ($rules as $rule) {
+			$ruleId = (string)($rule['availabilityRuleId'] ?? '');
+			if (($rule['status'] ?? '') !== 'active' || $ruleId === '') {
+				continue;
+			}
+
+			foreach (array_keys($linked) as $schema) {
+				$rows = $this->rowsOf(schema: $schema, filters: ['availabilityRule' => $ruleId]);
+				if ($rows === null) {
+					return null;
+				}
+
+				$linked[$schema] = array_merge($linked[$schema], $rows);
+			}
+		}
+
+		return $linked;
+	}//end rowsLinkedTo()
+
+	/**
+	 * The rows of a schema matching filters, read without RBAC; null when the read failed.
+	 *
+	 * @param string               $schema  OR schema slug.
+	 * @param array<string,string> $filters The filters.
+	 *
+	 * @return array<int,array<string,mixed>>|null The rows.
+	 */
+	private function rowsOf(string $schema, array $filters): ?array {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
+			return [];
+		}
+
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$records = $objectService
+				->setRegister($this->registerLocation->getRegisterSlug())
+				->setSchema($schema)
+				->findAll(
+					config: ['filters' => $filters, 'limit' => 500],
+					// Availability must follow every rule of the resource, not only those the caller may read.
+					_rbac: false,
+				);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'Shillinq slot service: availability lookup failed',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		return array_map(fn ($record): array => $this->toArray(object: $record), array_values((array)$records));
+	}//end rowsOf()
 
 	/**
 	 * A resource's opening or closing time, the default when absent or empty.
@@ -295,6 +423,49 @@ class SlotService implements SlotServiceInterface {
 	): array {
 		$tz = new DateTimeZone('UTC');
 
+		$window = $this->slotWindow(date: $date, openingTime: $openingTime, closingTime: $closingTime);
+		if ($window === null) {
+			return [];
+		}
+
+		[$windowStart, $windowEnd] = $window;
+
+		$now = (new DateTimeImmutable('@' . $this->time->getTime()))->setTimezone($tz);
+
+		$slots = [];
+		$current = $windowStart;
+		while (true) {
+			$slotEnd = $current->modify('+' . $durationMinutes . ' minutes');
+			if ($slotEnd > $windowEnd) {
+				break;
+			}
+
+			$isPast = ($current < $now);
+			if ($isPast === false) {
+				$slots = array_merge(
+					$slots,
+					$this->freeSlot(slotStart: $current, slotEnd: $slotEnd, existing: $existingAppointments, allowOverlap: $allowOverlap)
+				);
+			}
+
+			$current = $current->modify('+' . self::SLOT_STEP_MINUTES . ' minutes');
+		}//end while
+
+		return $slots;
+	}//end enumerateSlots()
+
+	/**
+	 * Parse the operational-hours window; null when it is invalid (logged) or empty.
+	 *
+	 * @param string $date Calendar date YYYY-MM-DD UTC.
+	 * @param string $openingTime HH:MM lower bound.
+	 * @param string $closingTime HH:MM upper bound.
+	 *
+	 * @return array{0: DateTimeImmutable, 1: DateTimeImmutable}|null The window start and end, or null.
+	 */
+	private function slotWindow(string $date, string $openingTime, string $closingTime): array|null {
+		$tz = new DateTimeZone('UTC');
+
 		try {
 			$windowStart = new DateTimeImmutable($date . 'T' . $openingTime . ':00', $tz);
 			$windowEnd = new DateTimeImmutable($date . 'T' . $closingTime . ':00', $tz);
@@ -308,50 +479,47 @@ class SlotService implements SlotServiceInterface {
 					'exception' => $e->getMessage(),
 				]
 			);
-			return [];
+			return null;
 		}
 
 		if ($windowStart >= $windowEnd) {
+			return null;
+		}
+
+		return [$windowStart, $windowEnd];
+	}//end slotWindow()
+
+	/**
+	 * The slot as a one-element list when it is free (or overlap is allowed), else an empty list.
+	 *
+	 * @param DateTimeImmutable $slotStart Candidate slot start.
+	 * @param DateTimeImmutable $slotEnd Candidate slot end.
+	 * @param array<int,array{startTime:string,endTime:string}> $existing Existing booked windows.
+	 * @param bool $allowOverlap Skip conflict check when true.
+	 *
+	 * @return list<array{startTime:string,endTime:string}>
+	 */
+	private function freeSlot(DateTimeImmutable $slotStart, DateTimeImmutable $slotEnd, array $existing, bool $allowOverlap): array {
+		$conflict = false;
+		if ($allowOverlap === false) {
+			$conflict = $this->overlapsAny(
+				slotStart: $slotStart,
+				slotEnd: $slotEnd,
+				existing: $existing,
+			);
+		}
+
+		if ($conflict === true) {
 			return [];
 		}
 
-		$now = (new DateTimeImmutable('@' . $this->time->getTime()))->setTimezone($tz);
-
-		$slots = [];
-		$current = $windowStart;
-		while (true) {
-			$slotEnd = $current->modify('+' . $durationMinutes . ' minutes');
-			if ($slotEnd > $windowEnd) {
-				break;
-			}
-
-			$isPast = ($current < $now);
-			if ($isPast === true) {
-				$current = $current->modify('+' . self::SLOT_STEP_MINUTES . ' minutes');
-				continue;
-			}
-
-			$conflict = false;
-			if ($allowOverlap === false) {
-				$conflict = $this->overlapsAny(
-					slotStart: $current,
-					slotEnd: $slotEnd,
-					existing: $existingAppointments,
-				);
-			}
-
-			if ($conflict === false) {
-				$slots[] = [
-					'startTime' => $current->format('Y-m-d\TH:i:s\Z'),
-					'endTime' => $slotEnd->format('Y-m-d\TH:i:s\Z'),
-				];
-			}
-
-			$current = $current->modify('+' . self::SLOT_STEP_MINUTES . ' minutes');
-		}//end while
-
-		return $slots;
-	}//end enumerateSlots()
+		return [
+			[
+				'startTime' => $slotStart->format('Y-m-d\TH:i:s\Z'),
+				'endTime' => $slotEnd->format('Y-m-d\TH:i:s\Z'),
+			],
+		];
+	}//end freeSlot()
 
 	/**
 	 * Detect whether [slotStart, slotEnd) overlaps any element of $existing.
@@ -365,18 +533,12 @@ class SlotService implements SlotServiceInterface {
 	private function overlapsAny(DateTimeImmutable $slotStart, DateTimeImmutable $slotEnd, array $existing): bool {
 		$tz = new DateTimeZone('UTC');
 		foreach ($existing as $appointment) {
-			$startRaw = (string)($appointment['startTime'] ?? '');
-			$endRaw = (string)($appointment['endTime'] ?? '');
-			if ($startRaw === '' || $endRaw === '') {
+			$bounds = $this->appointmentBounds(appointment: $appointment, tz: $tz);
+			if ($bounds === null) {
 				continue;
 			}
 
-			try {
-				$aptStart = new DateTimeImmutable($startRaw, $tz);
-				$aptEnd = new DateTimeImmutable($endRaw, $tz);
-			} catch (\Throwable $e) {
-				continue;
-			}
+			[$aptStart, $aptEnd] = $bounds;
 
 			if ($slotStart < $aptEnd && $slotEnd > $aptStart) {
 				return true;
@@ -385,6 +547,31 @@ class SlotService implements SlotServiceInterface {
 
 		return false;
 	}//end overlapsAny()
+
+	/**
+	 * Parse an existing appointment's start and end; null when either is missing or unparseable.
+	 *
+	 * @param array<string,mixed> $appointment Existing booked window.
+	 * @param DateTimeZone $tz The timezone to parse in.
+	 *
+	 * @return array{0: DateTimeImmutable, 1: DateTimeImmutable}|null
+	 */
+	private function appointmentBounds(array $appointment, DateTimeZone $tz): array|null {
+		$startRaw = (string)($appointment['startTime'] ?? '');
+		$endRaw = (string)($appointment['endTime'] ?? '');
+		if ($startRaw === '' || $endRaw === '') {
+			return null;
+		}
+
+		try {
+			$aptStart = new DateTimeImmutable($startRaw, $tz);
+			$aptEnd = new DateTimeImmutable($endRaw, $tz);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		return [$aptStart, $aptEnd];
+	}//end appointmentBounds()
 
 	/**
 	 * Load non-cancelled appointments for a resource that fall on the given date.
@@ -399,6 +586,19 @@ class SlotService implements SlotServiceInterface {
 			return [];
 		}
 
+		$records = $this->findResourceAppointments(resourceId: $resourceId);
+
+		return $this->appointmentsOnDate(records: $records, date: $date);
+	}//end loadAppointmentsForResourceOnDate()
+
+	/**
+	 * Read every appointment of a resource; a failed lookup is logged and yields none.
+	 *
+	 * @param string $resourceId Resource logical id.
+	 *
+	 * @return mixed The appointment records.
+	 */
+	private function findResourceAppointments(string $resourceId): mixed {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$registerSlug = $this->registerLocation->getRegisterSlug();
@@ -421,37 +621,64 @@ class SlotService implements SlotServiceInterface {
 			return [];
 		}
 
+		return $records;
+	}//end findResourceAppointments()
+
+	/**
+	 * Keep the non-cancelled appointment windows that fall on the given date.
+	 *
+	 * @param mixed $records Appointment records.
+	 * @param string $date Calendar date YYYY-MM-DD UTC.
+	 *
+	 * @return array<int,array{startTime:string,endTime:string}>
+	 */
+	private function appointmentsOnDate(mixed $records, string $date): array {
 		$dayStart = ($date . 'T00:00:00Z');
 		$dayEnd = ($date . 'T23:59:59Z');
 		$results = [];
 
 		foreach ($records as $record) {
-			$row = $this->toArray(object: $record);
-			$status = (string)($row['status'] ?? '');
-			if ($status === 'cancelled') {
-				continue;
-			}
-
-			$startTime = (string)($row['startTime'] ?? '');
-			$endTime = (string)($row['endTime'] ?? '');
-			if ($startTime === '' || $endTime === '') {
+			$window = $this->appointmentWindow(row: $this->toArray(object: $record));
+			if ($window === null) {
 				continue;
 			}
 
 			// Range filter is applied in-PHP because the OR filter DSL does
 			// not yet expose half-open interval predicates.
-			if ($endTime < $dayStart || $startTime > $dayEnd) {
+			if ($window['endTime'] < $dayStart || $window['startTime'] > $dayEnd) {
 				continue;
 			}
 
-			$results[] = [
-				'startTime' => $startTime,
-				'endTime' => $endTime,
-			];
+			$results[] = $window;
 		}//end foreach
 
 		return $results;
-	}//end loadAppointmentsForResourceOnDate()
+	}//end appointmentsOnDate()
+
+	/**
+	 * The start/end window of a non-cancelled appointment, or null when it has none.
+	 *
+	 * @param array<string,mixed> $row Appointment row.
+	 *
+	 * @return array{startTime:string,endTime:string}|null
+	 */
+	private function appointmentWindow(array $row): array|null {
+		$status = (string)($row['status'] ?? '');
+		if ($status === 'cancelled') {
+			return null;
+		}
+
+		$startTime = (string)($row['startTime'] ?? '');
+		$endTime = (string)($row['endTime'] ?? '');
+		if ($startTime === '' || $endTime === '') {
+			return null;
+		}
+
+		return [
+			'startTime' => $startTime,
+			'endTime' => $endTime,
+		];
+	}//end appointmentWindow()
 
 	/**
 	 * Find a record by a logical id field (serviceId / resourceId) rather than @self.id.

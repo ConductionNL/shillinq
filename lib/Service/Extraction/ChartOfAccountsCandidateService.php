@@ -31,8 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ChartOfAccountsCandidateServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -174,11 +174,6 @@ class ChartOfAccountsCandidateService implements ChartOfAccountsCandidateService
 	 * @return string
 	 */
 	private function registerSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end registerSlug()
 }//end class

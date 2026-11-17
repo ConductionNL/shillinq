@@ -54,7 +54,8 @@
 						data-testid="rip-customer"
 						:placeholder="
 							t('shillinq', 'Nextcloud contact reference')
-						" />
+						"
+						@change="applyCustomerTerm" />
 				</div>
 			</div>
 
@@ -119,7 +120,8 @@
 						type="number"
 						min="0"
 						class="rip__input"
-						data-testid="rip-payment-terms" />
+						data-testid="rip-payment-terms"
+						@input="termTouched = true" />
 				</div>
 				<div class="rip__field">
 					<NcSelect
@@ -253,9 +255,12 @@ import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
+import { fetchAdministrationContext } from '../api/administrationApi.js'
 import {
 	buildProfilePayload,
+	customerTermDays,
 	defaultRecurringLine,
+	matchCustomer,
 	perPeriodNet,
 	validateProfile,
 } from './recurringInvoiceProfile.js'
@@ -298,6 +303,7 @@ export default {
 		return {
 			saving: false,
 			errors: [],
+			termTouched: false,
 			frequencyOptions: [
 				{ value: 'weekly', display: t('shillinq', 'Weekly') },
 				{ value: 'monthly', display: t('shillinq', 'Monthly') },
@@ -369,6 +375,7 @@ export default {
 		open(next) {
 			if (next === true) {
 				this.errors = []
+				this.termTouched = false
 				this.form = this.blankForm()
 				if (this.recordId) {
 					this.fetchProfile()
@@ -435,6 +442,35 @@ export default {
 		 */
 		onVatSelected(line, option) {
 			line.vatCode = option ? Number(option.value) : 21
+		},
+
+		/**
+		 * A new profile takes its payment term from the customer the typed
+		 * reference names in the active administration (code, legal name or
+		 * trade name), unless the term was already typed. An edited profile
+		 * keeps its own term.
+		 *
+		 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+		 */
+		async applyCustomerTerm() {
+			const reference = String(this.form.customerReference || '').trim()
+			if (this.recordId || this.termTouched || reference === '') {
+				return
+			}
+			try {
+				const context = await fetchAdministrationContext()
+				const response = await axios.get(
+					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/CustomerMaster`),
+					{ params: { administrationId: context?.activeAdministrationId || '', _limit: 500 } },
+				)
+				const rows = response?.data?.results ?? response?.data?.objects ?? []
+				const days = customerTermDays(matchCustomer(rows, reference))
+				if (days !== null && !this.termTouched && this.form.customerReference.trim() === reference) {
+					this.form.paymentTermsDays = days
+				}
+			} catch {
+				// No customer list: the term keeps its default, which the user can change.
+			}
 		},
 
 		/** @spec openspec/specs/recurring-invoicing/spec.md */

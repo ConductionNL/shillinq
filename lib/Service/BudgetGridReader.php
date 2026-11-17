@@ -464,20 +464,12 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	public function columnsFor(array $range, string $granularity): array {
-		$start = $this->parseYearMonth(value: (string)($range['start'] ?? ''));
-		$end = $this->parseYearMonth(value: (string)($range['end'] ?? ''));
-		if ($start === null || $end === null) {
+		$ordinals = $this->rangeOrdinals(range: $range);
+		if ($ordinals === null) {
 			return [];
 		}
 
-		// 0-based month ordinal (year*12 + (month-1)) — MUST match
-		// buildColumn()'s own decode (`$year = intdiv($ordinal, 12); $month =
-		// ($ordinal % 12) + 1`), which assumes ordinal 0 = January.
-		$startOrdinal = (($start[0] * 12) + ($start[1] - 1));
-		$endOrdinal = (($end[0] * 12) + ($end[1] - 1));
-		if ($startOrdinal > $endOrdinal) {
-			return [];
-		}
+		[$startOrdinal, $endOrdinal] = $ordinals;
 
 		$step = match ($granularity) {
 			'quarter' => 3,
@@ -485,14 +477,7 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 			default => 1,
 		};
 
-		// Align the first column's start to a period boundary so a
-		// mid-quarter/mid-year start still produces a whole aligned column
-		// (a quarter column is always Q1/Q2/Q3/Q4, never a partial span).
-		$alignedStartOrdinal = $startOrdinal;
-		if ($step > 1) {
-			$offset = ($startOrdinal % $step);
-			$alignedStartOrdinal = ($startOrdinal - $offset);
-		}
+		$alignedStartOrdinal = $this->alignedOrdinal(startOrdinal: $startOrdinal, step: $step);
 
 		$columns = [];
 		for ($ordinal = $alignedStartOrdinal; $ordinal <= $endOrdinal; $ordinal += $step) {
@@ -502,6 +487,57 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 		return $columns;
 
 	}//end columnsFor()
+
+	/**
+	 * The 0-based month ordinals of a range's start and end, or null when unparseable or reversed.
+	 *
+	 * @param array{start:string,end:string} $range `YYYY-MM` start/end, inclusive.
+	 *
+	 * @return array{0:int,1:int}|null
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function rangeOrdinals(array $range): array|null {
+		$start = $this->parseYearMonth(value: (string)($range['start'] ?? ''));
+		$end = $this->parseYearMonth(value: (string)($range['end'] ?? ''));
+		if ($start === null || $end === null) {
+			return null;
+		}
+
+		// 0-based month ordinal (year*12 + (month-1)) — MUST match
+		// buildColumn()'s own decode (`$year = intdiv($ordinal, 12); $month =
+		// ($ordinal % 12) + 1`), which assumes ordinal 0 = January.
+		$startOrdinal = (($start[0] * 12) + ($start[1] - 1));
+		$endOrdinal = (($end[0] * 12) + ($end[1] - 1));
+		if ($startOrdinal > $endOrdinal) {
+			return null;
+		}
+
+		return [$startOrdinal, $endOrdinal];
+	}//end rangeOrdinals()
+
+	/**
+	 * The first column's start, aligned down to a period boundary.
+	 *
+	 * A mid-quarter/mid-year start still produces a whole aligned column
+	 * (a quarter column is always Q1/Q2/Q3/Q4, never a partial span).
+	 *
+	 * @param int $startOrdinal The range's start ordinal.
+	 * @param int $step         Months per column.
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function alignedOrdinal(int $startOrdinal, int $step): int {
+		$alignedStartOrdinal = $startOrdinal;
+		if ($step > 1) {
+			$offset = ($startOrdinal % $step);
+			$alignedStartOrdinal = ($startOrdinal - $offset);
+		}
+
+		return $alignedStartOrdinal;
+	}//end alignedOrdinal()
 
 	/**
 	 * The set of column keys that are "past" per REQ-BGV-003 / design.md

@@ -278,23 +278,35 @@ final class UrenPrognoseService {
 				continue;
 			}
 
-			if (isset($holidayMonths[$key]) === true && $holidayMonths[$key] === 'full') {
-				$forecast[$key] = 0.0;
-				continue;
-			}
-
-			$seasonal = (self::SEASONAL_FACTORS[$m] ?? 1.0);
-			// 4.33 weeks per maand average.
-			$monthHours = ($weekGemiddelde * 4.33 * $seasonal);
-			if (isset($holidayMonths[$key]) === true && $holidayMonths[$key] === 'partial') {
-				$monthHours *= 0.5;
-			}
-
-			$forecast[$key] = round($monthHours, 2);
+			$forecast[$key] = self::monthHours(month: $m, weekGemiddelde: $weekGemiddelde, holiday: ($holidayMonths[$key] ?? ''));
 		}//end for
 
 		return $forecast;
 	}//end perMaandPrognose()
+
+	/**
+	 * The forecast hours of one month: none in a full holiday month, half in a partial one.
+	 *
+	 * @param int    $month          The calendar month, 1..12.
+	 * @param float  $weekGemiddelde The weekly average hours.
+	 * @param string $holiday        'full', 'partial', or '' when the month has no holiday.
+	 *
+	 * @return float
+	 */
+	private static function monthHours(int $month, float $weekGemiddelde, string $holiday): float {
+		if ($holiday === 'full') {
+			return 0.0;
+		}
+
+		$seasonal = (self::SEASONAL_FACTORS[$month] ?? 1.0);
+		// 4.33 weeks per maand average.
+		$monthHours = ($weekGemiddelde * 4.33 * $seasonal);
+		if ($holiday === 'partial') {
+			$monthHours *= 0.5;
+		}
+
+		return round($monthHours, 2);
+	}//end monthHours()
 
 	/**
 	 * The planned hours per month (YYYY-MM); a later plan for a month replaces

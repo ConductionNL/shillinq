@@ -64,7 +64,9 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -80,7 +82,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class VatSuppletieDetectionService {
+class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterface {
 	/**
 	 * Statutory suppletie threshold in euros. Verified 2026-07-13 via
 	 * WebSearch against belastingdienst.nl (not from training-data memory):
@@ -602,7 +604,10 @@ class VatSuppletieDetectionService {
 				);
 			}
 
-			$delta['glAccountNumber'] = $account;
+			// '' rather than null: the stored correction's categoryDeltas
+			// declare glAccountNumber a string, and deltaAccount() books an
+			// empty one on the clearing account either way.
+			$delta['glAccountNumber'] = (string)$account;
 			$result[] = $delta;
 		}//end foreach
 
@@ -923,6 +928,29 @@ class VatSuppletieDetectionService {
 	}//end fetchCorrection()
 
 	/**
+	 * A VatCorrection by id, or null when there is none, for a caller that
+	 * has to check the correction's administration before acting on it.
+	 *
+	 * @param string $vatCorrectionId The VatCorrection id.
+	 *
+	 * @return array<string,mixed>|null The correction, or null when it does not exist.
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+	 */
+	public function findCorrection(string $vatCorrectionId): ?array {
+		$correction = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('VatCorrection'),
+			id: $vatCorrectionId
+		);
+
+		if ($correction === null) {
+			return null;
+		}
+
+		return $correction->jsonSerialize();
+	}//end findCorrection()
+
+	/**
 	 * Persist a record via the real OR ObjectService API.
 	 *
 	 * @param string $schema Schema slug.
@@ -954,11 +982,6 @@ class VatSuppletieDetectionService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

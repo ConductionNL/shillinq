@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 use DateTime;
 use OCA\Shillinq\PaymentPlan\PaymentPlanAllocator;
 use OCA\Shillinq\PaymentPlan\PaymentPlanMailer;
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanSchedule;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use OCA\Shillinq\Service\DunningRunService;
@@ -44,6 +44,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * The service over an in-memory store with every collaborator a double.
@@ -133,7 +134,7 @@ final class PaymentPlanServiceFailuresTest extends TestCase {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $id): array {
-		$entity = $this->store->find(id: $id, schema: 'PaymentPlan');
+		$entity = $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'PaymentPlan'));
 		$this->assertNotNull($entity);
 		return $entity->getObject();
 
