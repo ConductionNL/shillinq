@@ -22,6 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Sales;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Sales\SalesOrderInvoicingService;
 use OCA\Shillinq\Service\Sales\SalesOrderRefusedException;
@@ -222,9 +225,7 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 				'id' => 'ql-3', 'quote' => self::QUOTE_ID, 'lineNumber' => 3, 'description' => 'Baking mat',
 				'quantity' => 3, 'unitPrice' => 19.99, 'discount' => 10, 'vatRate' => 9,
 			],
-			[],
-			null,
-			'QuoteLine'
+			new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'QuoteLine'))
 		);
 
 		$order = $this->service()->orderFromQuote(self::QUOTE_ID, 'adm-korenaar');
@@ -240,7 +241,10 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAQuoteThatIsNotAcceptedIsRefused(): void {
-		$this->store->saveObject(array_merge($this->stored('Quote', self::QUOTE_ID), ['status' => 'sent']), [], null, 'Quote');
+		$this->store->saveObject(
+			array_merge($this->stored('Quote', self::QUOTE_ID), ['status' => 'sent']),
+			new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'Quote'))
+		);
 		$this->saved = [];
 
 		try {
@@ -365,9 +369,7 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 				'id' => 'ol-2', 'orderId' => self::ORDER_ID, 'lineNumber' => 2, 'description' => 'Installation',
 				'quantity' => 1, 'unitPrice' => 300.0, 'vatRate' => 21,
 			],
-			[],
-			null,
-			'OrderLine'
+			new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'OrderLine'))
 		);
 		$first = $this->service()->invoiceFromOrder(self::ORDER_ID, 'adm-korenaar');
 		$this->assertSame([6.0, 1.0], array_column($first['invoiceLines'], 'quantity'));
@@ -378,11 +380,15 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 				'id' => 'ol-3', 'orderId' => self::ORDER_ID, 'lineNumber' => 3, 'description' => 'Delivery',
 				'quantity' => 1, 'unitPrice' => 25.0, 'vatRate' => 21,
 			],
-			[],
-			null,
-			'OrderLine'
+			new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'OrderLine'))
 		);
-		$this->store->patchObject(self::ORDER_ID, ['state' => 'partly-invoiced'], null, 'OrderPrimitive');
+		$this->store->patchObject(
+			new ObjectPatch(
+				objectId: self::ORDER_ID,
+				data: ['state' => 'partly-invoiced'],
+				target: new ObjectFindTarget(schema: 'OrderPrimitive')
+			)
+		);
 
 		$second = $this->service()->invoiceFromOrder(self::ORDER_ID, 'adm-korenaar');
 
@@ -400,9 +406,7 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 	public function testAnOrderWithALineWithoutQuantityStaysOpenOnlyForRealRemainders(): void {
 		$this->store->saveObject(
 			['id' => 'ol-0', 'orderId' => self::ORDER_ID, 'lineNumber' => 0, 'description' => 'Note', 'quantity' => null],
-			[],
-			null,
-			'OrderLine'
+			new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'OrderLine'))
 		);
 
 		$invoice = $this->service()->invoiceFromOrder(self::ORDER_ID, 'adm-korenaar');
@@ -438,7 +442,13 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAConfirmedOrderWithNothingLeftIsRefused(): void {
-		$this->store->patchObject('ol-1', ['invoicedQuantity' => 10], null, 'OrderLine');
+		$this->store->patchObject(
+			new ObjectPatch(
+				objectId: 'ol-1',
+				data: ['invoicedQuantity' => 10],
+				target: new ObjectFindTarget(schema: 'OrderLine')
+			)
+		);
 
 		$this->expectException(SalesOrderRefusedException::class);
 		$this->expectExceptionMessage('Every line of order SO-Q-2026-020 is already invoiced.');
@@ -452,7 +462,13 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testADraftOrderIsRefused(): void {
-		$this->store->patchObject(self::ORDER_ID, ['state' => 'draft'], null, 'OrderPrimitive');
+		$this->store->patchObject(
+			new ObjectPatch(
+				objectId: self::ORDER_ID,
+				data: ['state' => 'draft'],
+				target: new ObjectFindTarget(schema: 'OrderPrimitive')
+			)
+		);
 
 		$this->expectException(SalesOrderRefusedException::class);
 		$this->expectExceptionMessage('Confirm order SO-Q-2026-020 before you invoice it.');
@@ -466,7 +482,13 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAPurchaseOrderIsRefused(): void {
-		$this->store->patchObject(self::ORDER_ID, ['orderType' => 'purchase'], null, 'OrderPrimitive');
+		$this->store->patchObject(
+			new ObjectPatch(
+				objectId: self::ORDER_ID,
+				data: ['orderType' => 'purchase'],
+				target: new ObjectFindTarget(schema: 'OrderPrimitive')
+			)
+		);
 
 		$this->expectException(SalesOrderRefusedException::class);
 		$this->expectExceptionMessage('Order SO-Q-2026-020 is not a sales order.');
@@ -480,7 +502,13 @@ final class SalesOrderInvoicingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnOrderWithoutACustomerIsRefused(): void {
-		$this->store->patchObject(self::ORDER_ID, ['counterpartyId' => ''], null, 'OrderPrimitive');
+		$this->store->patchObject(
+			new ObjectPatch(
+				objectId: self::ORDER_ID,
+				data: ['counterpartyId' => ''],
+				target: new ObjectFindTarget(schema: 'OrderPrimitive')
+			)
+		);
 
 		$this->expectException(SalesOrderRefusedException::class);
 		$this->expectExceptionMessage('Order SO-Q-2026-020 has no customer to invoice.');

@@ -34,6 +34,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Sales;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OutOfBoundsException;
@@ -259,19 +261,21 @@ class SalesOrderInvoicingService {
 		// Mark what this invoice took, then move the order on (patch, never update).
 		foreach ($open as $line) {
 			$this->objectService->patchObject(
-				(string)$line['id'],
-				['invoicedQuantity' => (float)$line['quantity']],
-				$this->registerLocation->getRegisterSlug(),
-				'OrderLine'
+				new ObjectPatch(
+					objectId: (string)$line['id'],
+					data: ['invoicedQuantity' => (float)$line['quantity']],
+					target: new ObjectFindTarget(register: $this->registerLocation->getRegisterSlug(), schema: 'OrderLine')
+				)
 			);
 		}
 
 		$invoice['orderState'] = self::stateAfter(orderLines: $orderLines, invoiced: array_column($open, 'id'));
 		$this->objectService->patchObject(
-			(string)$order['id'],
-			['state' => $invoice['orderState']],
-			$this->registerLocation->getRegisterSlug(),
-			'OrderPrimitive'
+			new ObjectPatch(
+				objectId: (string)$order['id'],
+				data: ['state' => $invoice['orderState']],
+				target: new ObjectFindTarget(register: $this->registerLocation->getRegisterSlug(), schema: 'OrderPrimitive')
+			)
 		);
 
 		$this->logger->info(
