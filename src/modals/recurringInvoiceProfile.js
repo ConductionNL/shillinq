@@ -206,3 +206,43 @@ function endConditionFields(form) {
 	}
 	return {}
 }
+
+/**
+ * The customer a typed reference names: the first row whose customer code,
+ * legal name or trade name equals it, ignoring case and outer spaces.
+ *
+ * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+ * @param {Array<object>} customers CustomerMaster rows.
+ * @param {string} reference The typed customer reference.
+ * @return {object|null} The customer, or null.
+ */
+export function matchCustomer(customers, reference) {
+	const wanted = String(reference || '').trim().toLowerCase()
+	if (wanted === '') {
+		return null
+	}
+	for (const customer of Array.isArray(customers) ? customers : []) {
+		const names = [customer?.customerId, customer?.legalName, customer?.tradeName]
+		if (names.some((name) => String(name ?? '').trim().toLowerCase() === wanted)) {
+			return customer
+		}
+	}
+	return null
+}
+
+/**
+ * The payment term a new profile takes from its customer: the customer's
+ * `paymentTermDays` (0 to 365), or null when the customer carries none.
+ *
+ * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+ * @param {object|null} customer The CustomerMaster.
+ * @return {number|null} The days, or null.
+ */
+export function customerTermDays(customer) {
+	const raw = customer?.paymentTermDays
+	if (raw === null || raw === undefined || raw === '') {
+		return null
+	}
+	const days = Number(raw)
+	return Number.isInteger(days) && days >= 0 && days <= 365 ? days : null
+}
