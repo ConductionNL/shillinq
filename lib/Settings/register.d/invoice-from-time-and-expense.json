@@ -71,9 +71,10 @@
               "fixed_fee",
               "milestone",
               "retainer",
+              "usage",
               "mixed"
             ],
-            "description": "Billing-model selector (D1). Drives line-item composition and revenue-account choice on GL posting.",
+            "description": "Billing-model selector (D1); usage bills rated meter readings (usage-metered-billing). Drives line-item composition and revenue-account choice on GL posting.",
             "example": "t_and_m",
             "title": "Billing Model"
           },
@@ -128,6 +129,18 @@
               "exp-001"
             ],
             "title": "Expense Ids"
+          },
+          "meterReadingIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "FKs to the rated MeterReading rows a usage invoice bills.",
+            "example": [
+              "mr-001"
+            ],
+            "title": "Meter Reading Ids"
           },
           "rateCardId": {
             "type": "string",
@@ -307,6 +320,7 @@
               "expense",
               "retainer_charge",
               "fixed_fee",
+              "usage",
               "manual"
             ],
             "description": "What this line represents.",
