@@ -55,7 +55,8 @@
 					{"key": "state", "label": "State", "sortable": true}
 				],
 				"defaultSort": "groupName",
-				"detailRoute": "ConsolidationGroupDetail"
+				"detailRoute": "ConsolidationGroupDetail",
+				"rowRoute": "ConsolidationGroupDetail"
 			}
 		},
 		{
