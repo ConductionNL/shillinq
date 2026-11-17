@@ -5535,7 +5535,9 @@ OC.L10N.register(
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.",
         "Get one help article by id, with its markdown body and documentation link.": "Get one help article by id, with its markdown body and documentation link.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.",
+        "Approval": "Approval",
+        "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted.": "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted."
     },
     "nplurals=2; plural=(n != 1);"
 )

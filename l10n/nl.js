@@ -7705,7 +7705,8 @@ OC.L10N.register(
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Doorzoek de gebruikershandleiding van shillinq (helpartikelen). Gebruik dit voor hoe-doe-ik-vragen over shillinq; filter op pageIds met de pagina waarop de gebruiker staat om het artikel te kiezen dat die pagina uitlegt.",
         "Get one help article by id, with its markdown body and documentation link.": "Haal één helpartikel op via zijn id, met de markdowntekst en de documentatielink.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte.",
+        "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted.": "Nog geen goedkeuringsstappen. Een order van nul heeft er geen nodig; elke andere order krijgt zijn stappen van OpenRegister zodra hij is ingediend."
     },
     "nplurals=2; plural=(n != 1);"
 )

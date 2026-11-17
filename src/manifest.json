@@ -15138,6 +15138,27 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "approval",
+							"label": "Approval",
+							"icon": "CheckDecagram",
+							"order": 10,
+							"_note": "purchasing-approval-delegation REQ-PAD-001: the order's approval steps are OpenRegister flow tasks provisioned from the purchase-order-approval chain. Each row shows the role, state, handler and deadline; Complete is offered to the user who may decide the step, and the server refuses the requester (separation of duties) and anyone outside the step's group.",
+							"widgets": [
+								{
+									"type": "tasks",
+									"content": {
+										"objectUuid": "@objectId",
+										"scope": "all",
+										"variant": "table",
+										"includeDone": true,
+										"limit": 10,
+										"pollSeconds": 30,
+										"emptyText": "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted."
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "History",
