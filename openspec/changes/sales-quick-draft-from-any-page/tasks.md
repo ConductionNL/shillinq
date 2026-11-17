@@ -10,5 +10,6 @@
 ## 2. End to end
 
 - [ ] 2.1 Open the action on the purchase invoices page and on a customer page, save a draft and confirm the page did not change (REQ-IQD-009). Verify: Playwright test tagged with `@e2e` references to the scenarios.
+  - Written: `tests/e2e/sales-quick-draft-from-any-page.spec.ts`, the three scenarios tagged. The customer page scenario runs today; the purchase invoices and bank reconciliation scenarios skip while those pages offer no Create invoice action (task 1.1). Not run here, no live instance; tick after a live run once 1.1 is built.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `npm run lint` and `npm run format`.
