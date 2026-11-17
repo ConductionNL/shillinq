@@ -363,6 +363,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  After InitializeSettings, which seeds the tariffs. Logs the lines
                  it cannot resolve. Idempotent, fail-soft. -->
             <step>OCA\Shillinq\Repair\StampVatReturnBoxes</step>
+            <!-- ledger-foreign-legislation task 1.1: an administration that names no
+                 jurisdiction gets NL, the rules it was kept under before jurisdictions
+                 existed. After InitializeSettings (the register must exist);
+                 idempotent, never overwrites a jurisdiction that is set. -->
+            <step>OCA\Shillinq\Repair\BackfillAdministrationJurisdiction</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
