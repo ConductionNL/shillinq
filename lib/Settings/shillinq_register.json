@@ -18826,7 +18826,6 @@
         "required": [
           "code",
           "name",
-          "dataType",
           "administrationId"
         ],
         "properties": {
