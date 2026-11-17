@@ -926,6 +926,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
             ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
             ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+            // Report schedules are written only here: the caller owns them, the server sets status and next run.
+            ['name' => 'reportSchedule#create', 'url' => '/api/report-schedules', 'verb' => 'POST'],
+            ['name' => 'reportSchedule#update', 'url' => '/api/report-schedules/{id}', 'verb' => 'PUT'],
             // iv3-report-takes-case-costs-by-case-type: the rows of the case cost tables
             // (per taakveld on the Iv3 page, per type on its own page). Static URL, before
             // the SPA catch-all.

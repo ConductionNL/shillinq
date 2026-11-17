@@ -148,6 +148,8 @@ const NON_BOOKKEEPING = new Set([
 	'BookingReminderTemplate',
 	'BookingCancellationTemplate',
 	'BookingConstraint',
+	// platform-help-agent: the user guide held as help articles, not a ledger record.
+	'HelpArticle',
 	'BookingNotificationTrigger',
 	'BookingSmsReminderChannel',
 	'Calendar',
