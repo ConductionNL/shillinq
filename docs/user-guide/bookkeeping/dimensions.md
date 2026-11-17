@@ -36,6 +36,8 @@ Give each person on a project an estimate of their hours. The project page then 
 
 The project's responsible user gets a notification when an assignment reaches 80 percent of its hours and again at 100 percent, once for each. Changing the estimate starts the count again. Filter the projects list on **Over hours budget** to find every project with an assignment past 100 percent.
 
+Each assignment also carries a rate card and an optional billing role, which decide the rate its hours are billed at; the project page's **Billable hours** card shows what a month of hours is worth. See [How an hour gets its rate](../people-projects/overview.md#how-an-hour-gets-its-rate).
+
 ## Cost projects
 
 **Cost projects** are a simpler variant — just cost tracking without revenue or budgets. Use them for internal initiatives where you want to accumulate costs but don't invoice customers.
