@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\EvaluateAllocationRulesAction;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -105,7 +106,14 @@ final class EvaluateAllocationRulesActionTest extends TestCase {
 	 * @return void
 	 */
 	public function testAMatchingRuleSplitsTheCostAndStaysBalanced(): void {
-		$result = $this->action([$this->rentRule()])->execute(self::TRANSACTION, [], [], EvaluateAllocationRulesAction::class);
+		$result = $this->action([$this->rentRule()])->execute(
+			new LifecycleActionContext(
+				objectData: self::TRANSACTION,
+				previousData: [],
+				parameters: [],
+				actionName: EvaluateAllocationRulesAction::class
+			)
+		);
 
 		self::assertSame(self::TRANSACTION, $result);
 
@@ -140,7 +148,14 @@ final class EvaluateAllocationRulesActionTest extends TestCase {
 		$paused = $this->rentRule('paused');
 		$elsewhere = array_merge($this->rentRule(), ['id' => 'rule-it', 'sourceAccountPattern' => '4500-4599']);
 
-		$this->action([$paused, $elsewhere])->execute(self::TRANSACTION, [], [], EvaluateAllocationRulesAction::class);
+		$this->action([$paused, $elsewhere])->execute(
+			new LifecycleActionContext(
+				objectData: self::TRANSACTION,
+				previousData: [],
+				parameters: [],
+				actionName: EvaluateAllocationRulesAction::class
+			)
+		);
 
 		self::assertSame([], $this->store->saved);
 	}//end testNoMatchingRuleWritesNothing()
@@ -153,8 +168,22 @@ final class EvaluateAllocationRulesActionTest extends TestCase {
 	public function testARepeatedRunDoesNotAllocateTwice(): void {
 		$action = $this->action([$this->rentRule()]);
 
-		$action->execute(self::TRANSACTION, [], [], EvaluateAllocationRulesAction::class);
-		$action->execute(self::TRANSACTION, [], [], EvaluateAllocationRulesAction::class);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: self::TRANSACTION,
+				previousData: [],
+				parameters: [],
+				actionName: EvaluateAllocationRulesAction::class
+			)
+		);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: self::TRANSACTION,
+				previousData: [],
+				parameters: [],
+				actionName: EvaluateAllocationRulesAction::class
+			)
+		);
 
 		self::assertCount(3, $this->store->savedOf('GLLine'));
 	}//end testARepeatedRunDoesNotAllocateTwice()
@@ -170,6 +199,13 @@ final class EvaluateAllocationRulesActionTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('Huur naar afdelingen');
 
-		$this->action([$rule])->execute(self::TRANSACTION, [], [], EvaluateAllocationRulesAction::class);
+		$this->action([$rule])->execute(
+			new LifecycleActionContext(
+				objectData: self::TRANSACTION,
+				previousData: [],
+				parameters: [],
+				actionName: EvaluateAllocationRulesAction::class
+			)
+		);
 	}//end testAPerPostingHeadcountRuleRefusesByName()
 }//end class
