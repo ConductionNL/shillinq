@@ -539,8 +539,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // Bookkeeping-reconciliation-reports (T4) — REQ-REC-004 unmatched-item
         // resolution. POST one classification + reason at a time, or bulk-apply
         // across a list of matchIds (REQ-REC-008 Unmatched Items bulk workflow).
-        // Both endpoints are #[NoAdminRequired] but IDOR-guarded: the service
-        // verifies match.reconId matches the path reconId before writing.
+        // All are #[NoAdminRequired] but IDOR-guarded: the service checks the
+        // reconciliation's administration and that match.reconId matches it.
             [
                 'name' => 'reconciliationResolution#resolve',
                 'url'  => '/api/reconciliations/{reconId}/matches/{matchId}/resolve',
@@ -549,6 +549,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             [
                 'name' => 'reconciliationResolution#bulkResolve',
                 'url'  => '/api/reconciliations/{reconId}/matches/bulk-resolve',
+                'verb' => 'POST',
+            ],
+            // Match ids only: the server reads each match's reconciliation.
+            [
+                'name' => 'reconciliationResolution#bulkResolveMatches',
+                'url'  => '/api/reconciliation-matches/bulk-resolve',
                 'verb' => 'POST',
             ],
 

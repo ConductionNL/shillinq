@@ -9742,6 +9742,53 @@
                 }
             }
         },
+        "/reconciliation-matches/bulk-resolve": {
+            "post": {
+                "operationId": "reconciliation-resolution-bulk-resolve-matches",
+                "summary": "Bulk-resolve matches by id alone, across reconciliations. The reconciliation is read from each match, and its administration must be one ...",
+                "description": "Bulk-resolve matches by id alone, across reconciliations. The reconciliation is read from each match, and its administration must be one the caller may use; a match without a reconciliation fails. Body parameters: - matchIds (required) — non-empty array of ReconciliationMatch ids - resolutionStatus (required) — see resolve() - resolutionReason (required) — see resolve(). Returns HTTP 200 with { applied: int, failed: array<string,string> }; per-id failures carry a generic message and do not stop the batch. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "reconciliation-resolution"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "matchIds": {
+                                        "description": "The match ids."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/reconciliations/{reconId}/matches/{matchId}/resolve": {
             "post": {
                 "operationId": "reconciliation-resolution-resolve",
