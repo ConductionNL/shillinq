@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261117130000</version>
+    <version>0.5.7-unstable.20261117140000</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -372,6 +372,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  InitializeSettings, which imports the fields. Idempotent;
                  a fresh install has no older group entities, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillGroupEntityCbcFields</step>
+            <!-- platform-help-agent task 2.2 (REQ-PHA-001): upserts one HelpArticle
+                 per user-guide page; after InitializeSettings, which imports the
+                 HelpArticle schema. Unchanged pages are skipped by hash. -->
+            <step>OCA\Shillinq\Repair\SeedHelpArticles</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
@@ -388,12 +392,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
              /api/v2/calendars — on a clean install, for the admin, on every
              request. Measured in run 30903201789 (job 91972751340).
 
-             Only InitializeSettings belongs here. Every other step above is a
+             Only InitializeSettings and the help-article seed belong here. Every other step above is a
              migration or backfill over data that a fresh install does not yet
              have; they stay upgrade-only so a first install does not pay for
              folds and rematerialisations that can have nothing to fold. -->
         <install>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
+            <!-- platform-help-agent task 2.2: a fresh install needs the help
+                 articles too, or the assistant has nothing to ground on. -->
+            <step>OCA\Shillinq\Repair\SeedHelpArticles</step>
         </install>
     </repair-steps>
 
