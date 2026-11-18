@@ -5543,7 +5543,18 @@ OC.L10N.register(
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.",
         "Get one help article by id, with its markdown body and documentation link.": "Get one help article by id, with its markdown body and documentation link.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.",
+        "Prepare last year's batch": "Prepare last year's batch",
+        "Last year's IB47 batch was prepared from the confirmed payment runs.": "Last year's IB47 batch was prepared from the confirmed payment runs.",
+        "The IB47 batch could not be prepared.": "The IB47 batch could not be prepared.",
+        "Sum last year's confirmed payments to every payee marked as an IB47 recipient into one record per payee. Preparing again updates those records.": "Sum last year's confirmed payments to every payee marked as an IB47 recipient into one record per payee. Preparing again updates those records.",
+        "IB47 recipient": "IB47 recipient",
+        "True for someone paid outside the payroll who must be reported to the Belastingdienst once a year on the IB47 statement, such as a freelancer without a VAT number or a volunteer above the allowance.": "True for someone paid outside the payroll who must be reported to the Belastingdienst once a year on the IB47 statement, such as a freelancer without a VAT number or a volunteer above the allowance.",
+        "BSN": "BSN",
+        "Burgerservicenummer of an IB47 recipient, which the statement names. Special-category PII (ADR-005): validated by the 11-proef on write (OpenRegister's bsn format), masked as ***<last4> on display, readable and writable only to the payroll officer, never written to the audit trail.": "Burgerservicenummer of an IB47 recipient, which the statement names. Special-category PII (ADR-005): validated by the 11-proef on write (OpenRegister's bsn format), masked as ***<last4> on display, readable and writable only to the payroll officer, never written to the audit trail.",
+        "IB47 payment type": "IB47 payment type",
+        "The Belastingdienst IB47 payment type code for this recipient's payments. A recipient without one is left out of the batch and named as incomplete, rather than reported under a code nobody chose.": "The Belastingdienst IB47 payment type code for this recipient's payments. A recipient without one is left out of the batch and named as incomplete, rather than reported under a code nobody chose.",
+        "The payee this record was prepared from. Preparing the same year again updates the record of this payee and never writes a second one.": "The payee this record was prepared from. Preparing the same year again updates the record of this payee and never writes a second one."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -576,6 +576,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // ICP opgaaf (bookkeeping-icp-opgaaf, REQ-ICP-002..010). Read-only ledger
             // / reconcile / periodicity / VIES lookup endpoints plus the correction
             // + audit-export write surface. All admin-scoped + IDOR-safe.
+            // IB47 annual batch (people-ib47-statement, REQ-DPA-021): payroll officer only,
+            // within an administration the caller holds a membership of.
+            ['name' => 'ib47#prepare', 'url' => '/api/ib47/batches/prepare', 'verb' => 'POST'],
             ['name' => 'icp#ledger', 'url' => '/api/icp/ledger', 'verb' => 'GET'],
             ['name' => 'icp#reconcile', 'url' => '/api/icp/reconcile', 'verb' => 'GET'],
             ['name' => 'icp#periodicity', 'url' => '/api/icp/periodicity', 'verb' => 'GET'],
