@@ -2,6 +2,7 @@ publiccodeYmlVersion: "0.4"
 
 name: Shillinq
 url: "https://github.com/ConductionNL/shillinq"
+logo: img/app-store.svg
 softwareVersion: "0.5.0"
 releaseDate: "2026-09-12"
 developmentStatus: beta
