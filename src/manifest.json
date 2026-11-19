@@ -8191,6 +8191,14 @@
 						"handler": "checkCustomerVatNumber",
 						"icon": "CheckDecagramOutline",
 						"description": "Check the VAT number against the EU VIES register and keep the outcome on this record."
+					},
+					{
+						"id": "create-invoice",
+						"label": "Create invoice",
+						"type": "open-modal",
+						"target": "InvoiceQuickDraftModal",
+						"icon": "FileDocumentPlus",
+						"props": { "open": true, "from": "customer" }
 					}
 				],
 				"lifecycleActions": true,
