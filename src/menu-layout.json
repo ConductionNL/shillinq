@@ -53,6 +53,7 @@
 		"VATReturns": "Taxes",
 		"InvestmentDeductions": "Taxes",
 		"InvestmentAssets": "Taxes",
+		"VatTariffs": "Taxes",
 		"VATReports": "Taxes",
 		"VatFiscalUnities": "Taxes",
 		"OssRegistration": "Taxes",

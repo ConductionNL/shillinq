@@ -45,6 +45,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -67,6 +68,8 @@ use Psr\Log\NullLogger;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class InvoiceGenerationServiceIdorTest extends TestCase {
+	use SeededVatTariffs;
+
 
 	private const ADMIN_ATTACKER = 'adm-attacker';
 
@@ -352,7 +355,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			new RetainerResolver($container, $appConfig, $logger),
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
-			new VATCalculationService(),
+			$this->seededVat(),
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
 			billedReadings: $this->createMock(BilledReadings::class),

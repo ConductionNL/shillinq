@@ -50,6 +50,11 @@
  *     claim is left to its own declaration, which is refused: it has no
  *     mapper yet.
  *
+ * A cost line whose deductible percentage (the line's, else its account's)
+ * is below 100 posts in two parts: the deductible share with its input VAT,
+ * and the private share plus the VAT on it to the account's private-share
+ * account, marked nonDeductible (DeductibleShareSplitter, REQ-TVRD-004).
+ *
  * The InventoryValuation declarations were removed: sale dispatch is booked per
  * stock move by CogsPosterService, and a running valuation snapshot cannot
  * key one posting per event.
@@ -73,7 +78,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
-use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -84,6 +88,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCA\Shillinq\Service\ExpenseAccountResolver;
+use OCA\Shillinq\Service\Ledger\DeductibleShareSplitter;
 use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Support\RegisterSlug;
@@ -310,7 +315,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$header = $booked['header'];
 
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
-		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
+		$header = (new PostingStamps())->applyNow(transaction: $header, user: $this->actor());
 
 		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
 		return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $objectData['glTransactionId']);
@@ -404,7 +409,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @return array{header: array<string,mixed>, lines: list<array<string,mixed>>}
 	 */
 	private function mapJournalEntry(array $entry, string $sourceId): array {
-		$lines = [];
+		$lines  = [];
+		$shares = new DeductibleShareSplitter(
+			objectService: $this->objectService,
+			register: $this->register(),
+			administrationId: (string)($entry['administrationId'] ?? '')
+		);
 		foreach ((array)($entry['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A journal entry line is not an object.');
@@ -426,7 +436,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			}
 
 			// A rate typed on the line wins over the booking-date rate (REQ-BFX-003).
-			$lines[] = array_merge($mapped, self::typedRateFields(line: $line));
+			$mapped = array_merge($mapped, self::typedRateFields(line: $line));
+			array_push($lines, ...$this->splitJournalLine(mapped: $mapped, line: $line, shares: $shares));
 		}//end foreach
 
 		return [
@@ -440,6 +451,50 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			'lines' => $lines,
 		];
 	}//end mapJournalEntry()
+
+	/**
+	 * A journal line on a partly deductible account, in its deductible and
+	 * private shares (REQ-TVRD-004). With a `taxCode` the VAT on the private
+	 * share moves from the input VAT account to the private-share account;
+	 * without one the line's own amount is split and the entry's VAT lines
+	 * are left as entered.
+	 *
+	 * @param array<string,mixed>     $mapped The mapped posting line.
+	 * @param array<string,mixed>     $line   The journal entry line.
+	 * @param DeductibleShareSplitter $shares The administration's deductible shares.
+	 *
+	 * @return list<array<string,mixed>> The posting lines; the mapped line alone at 100 percent.
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.2
+	 */
+	private function splitJournalLine(array $mapped, array $line, DeductibleShareSplitter $shares): array {
+		$percentage = $shares->percentage(line: $line);
+		if ($percentage >= DeductibleShareSplitter::FULL) {
+			return [$mapped];
+		}
+
+		$vat      = $this->vatStamper();
+		$code     = $vat->purchaseTariff(line: $line);
+		$vatCents = null;
+		if ($code !== '' && $vat->isReverseCharge(code: $code) === false) {
+			$vatCents = $vat->vatCents(baseCents: (int)$mapped['cents'], rate: $vat->ratePercentage(code: $code));
+		}
+
+		$split = $shares->split(costLine: $mapped, percentage: $percentage, vatCents: $vatCents);
+		$out   = $split['lines'];
+		if ($split['privateVat'] !== 0) {
+			$out[] = [
+				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
+				'side' => self::OPPOSITE_SIDE[(string)$mapped['side']] ?? 'credit',
+				'cents' => $split['privateVat'],
+				'description' => (string)$mapped['description'] . ' VAT not deductible',
+			] + $vat->stamp(code: $code, kind: 'vat', purchase: true);
+		}
+
+		// The shares keep the line's dimensions and typed rate.
+		$carried = array_intersect_key($mapped, array_flip(self::LINE_DIMENSIONS)) + self::typedRateFields(line: $line);
+		return array_map(static fn (array $posting): array => $posting + $carried, $out);
+	}//end splitJournalLine()
 
 	/**
 	 * ARInvoice: receivables against revenue and output VAT (REQ-LPP-007).
@@ -555,45 +610,43 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines   = [];
-		$vat     = $this->vatStamper();
-		$groups  = [];
-		$reverse = [];
+		$lines      = [];
+		$vat        = $this->vatStamper();
+		$shares     = new DeductibleShareSplitter(
+			objectService: $this->objectService,
+			register: $this->register(),
+			administrationId: (string)($invoice['administrationId'] ?? '')
+		);
+		$groups     = [];
+		$reverse    = [];
+		$privateVat = 0;
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
 			}
 
-			$code    = $vat->purchaseTariff(line: $line);
-			$cents   = $this->cents(amount: ($line['amount'] ?? 0));
-			$lines[] = [
-				'accountNumber' => (string)($line['accountNumber'] ?? ''),
-				'side' => 'debit',
-				'cents' => $cents,
-				'description' => (string)($line['description'] ?? $label),
-			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
+			['code' => $code, 'cents' => $cents, 'split' => $split] = $this->apCostLine(line: $line, label: $label, shares: $shares);
+			$isReverse = $vat->isReverseCharge(code: $code);
+			array_push($lines, ...$split['lines']);
+			$privateVat += $split['privateVat'];
 
 			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it:
 			// the buyer self-assesses it at the line's own rate, else the general rate (design D1).
-			if ($vat->isReverseCharge(code: $code) === true) {
+			if ($isReverse === true) {
 				$rate = $vat->selfAssessedRate(line: $line);
 				if ($rate !== null) {
 					$reverse[$code] = (($reverse[$code] ?? 0.0) + (float)$vat->vatCents(baseCents: $cents, rate: $rate));
 				}
 			}
 
-			if ($vat->isReverseCharge(code: $code) === false) {
-				$groups = $this->addToVatGroup(
-					groups: $groups,
-					code: $code,
-					baseCents: $cents,
-					vatCents: $vat->vatCents(baseCents: $cents, rate: $vat->ratePercentage(code: $code))
-				);
+			if ($isReverse === false) {
+				$groups = $this->addToVatGroup(groups: $groups, code: $code, baseCents: $split['base'], vatCents: $split['vat']);
 			}
 		}//end foreach
 
-		// Input VAT per tariff, in box 5b (REQ-VBTW-004).
-		foreach ($vat->splitVat(groups: $groups, totalCents: $this->cents(amount: ($invoice['taxAmount'] ?? 0))) as $code => $cents) {
+		// Input VAT per tariff, in box 5b (REQ-VBTW-004), less the VAT booked on private shares.
+		$inputVat = ($this->cents(amount: ($invoice['taxAmount'] ?? 0)) - $privateVat);
+		foreach ($vat->splitVat(groups: $groups, totalCents: $inputVat) as $code => $cents) {
 			$lines[] = [
 				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
 				'side' => 'debit',
@@ -622,6 +675,41 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * One purchase invoice cost line, split in its deductible share with its
+	 * input VAT and, below 100 percent, the private share plus the VAT on it
+	 * (REQ-TVRD-004). A reverse-charged line carries no VAT to split.
+	 *
+	 * @param array<string,mixed>     $line   The purchase invoice line.
+	 * @param string                  $label  The document label.
+	 * @param DeductibleShareSplitter $shares The administration's deductible shares.
+	 *
+	 * @return array{code: string, cents: int, split: array<string,mixed>}
+	 */
+	private function apCostLine(array $line, string $label, DeductibleShareSplitter $shares): array {
+		$vat      = $this->vatStamper();
+		$code     = $vat->purchaseTariff(line: $line);
+		$cents    = $this->cents(amount: ($line['amount'] ?? 0));
+		$vatCents = null;
+		if ($vat->isReverseCharge(code: $code) === false) {
+			$vatCents = $vat->vatCents(baseCents: $cents, rate: $vat->ratePercentage(code: $code));
+		}
+
+		$split = $shares->split(
+			costLine: [
+				'accountNumber' => (string)($line['accountNumber'] ?? ''),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => (string)($line['description'] ?? $label),
+			] + $vat->stamp(code: $code, kind: 'base', purchase: true),
+			percentage: $shares->percentage(line: $line),
+			vatCents: $vatCents
+		);
+
+		return ['code' => $code, 'cents' => $cents, 'split' => $split];
+
+	}//end apCostLine()
 
 	/**
 	 * The VAT a supplier did not charge on a reverse-charged purchase, booked
@@ -1116,7 +1204,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 					}
 				}
 
-				foreach (['vatTariffCode', 'vatReturnBox', 'vatAmountKind'] as $vatField) {
+				foreach (['vatTariffCode', 'vatReturnBox', 'vatAmountKind', 'taxTreatment'] as $vatField) {
 					if (isset($line[$vatField]) === true) {
 						$row[$vatField] = (string)$line[$vatField];
 					}

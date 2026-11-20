@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-vat-rates-and-deductibility",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative data, imperative split inside the posting mappers",
+    "description": "Tasks 3.1 and 3.2 (REQ-TVRD-003, REQ-TVRD-004): a ledger account carries the share of its costs that is deductible (0 to 100, default 100) and the account the rest goes to. A journal entry line and an AP transaction line may override the account's percentage. Below 100 MaterialiseGlTransactionAction posts the deductible share with its input VAT on the cost account and the private share plus the VAT on it on the private-share account, marked nonDeductible. AccountDeductibleShareListener refuses an account below 100 without a private-share account.",
+    "spec": "openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-chart-of-accounts/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "Account": {
+        "properties": {
+          "deductiblePercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 100,
+            "nullable": true,
+            "description": "The share of costs booked on this account that is deductible, from 0 to 100. Below 100 the rest of the net amount and the VAT on it is booked on the private-share account. Empty counts as 100.",
+            "example": 70,
+            "title": "Deductible percentage"
+          },
+          "privateShareAccountNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Account.accountNumber: where the non-deductible share of a cost on this account is booked, for example 1810 Privé-opnames for a sole trader or a non-deductible cost account for an organisation. Required when the deductible percentage is below 100.",
+            "example": "1810",
+            "title": "Private-share account"
+          }
+        }
+      },
+      "JournalEntry": {
+        "properties": {
+          "lines": {
+            "title": "Lines",
+            "description": "The entry's booking lines. Each line books an amount on one account, debit or credit, optionally on a cost centre and a project.",
+            "items": {
+              "properties": {
+                "deductiblePercentage": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "nullable": true,
+                  "description": "Overrides the account's deductible percentage for this line, for example 100 for a business-only trip on a mixed account.",
+                  "title": "Deductible percentage"
+                },
+                "taxCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The VAT tariff of this cost line (high, low, zero, or a legacy code such as BTW21). On a partly deductible account the VAT on the private share then moves from input VAT to the private-share account.",
+                  "title": "Tax Code"
+                }
+              }
+            }
+          }
+        }
+      },
+      "APTransaction": {
+        "properties": {
+          "lines": {
+            "title": "Lines",
+            "description": "Invoice line breakdown. Each line maps to one GL expense account.",
+            "items": {
+              "properties": {
+                "deductiblePercentage": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "nullable": true,
+                  "description": "Overrides the account's deductible percentage for this line, for example 100 for a business-only trip on a mixed account.",
+                  "title": "Deductible percentage"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -414,6 +414,13 @@
             "example": 6000.0,
             "title": "Cost Amount"
           },
+          "vatTariff": {
+            "type": "string",
+            "nullable": true,
+            "description": "The VatTariff code the line is taxed at, resolved on the invoice date; vatRate is that tariff's rate (tax-vat-rates-and-deductibility REQ-TVRD-002).",
+            "example": "high",
+            "title": "VAT tariff"
+          },
           "vatRate": {
             "type": "number",
             "multipleOf": 0.01,

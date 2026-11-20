@@ -40,6 +40,7 @@ use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use OCP\Lock\ILockingProvider;
@@ -51,6 +52,8 @@ use Psr\Log\NullLogger;
  * The generator over an in-memory register with a real series.
  */
 final class InvoiceGenerationNumberSeriesTest extends TestCase {
+	use SeededVatTariffs;
+
 	/**
 	 * The generator, with the billable series of adm-1 for 2026 at the given value.
 	 *
@@ -98,7 +101,7 @@ final class InvoiceGenerationNumberSeriesTest extends TestCase {
 			new RetainerResolver($container, $appConfig, $logger),
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
-			new VATCalculationService(),
+			$this->seededVat(),
 			new UsageRatingCalculator(),
 			objectService: $store,
 			billedReadings: $this->createMock(BilledReadings::class),

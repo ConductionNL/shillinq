@@ -204,6 +204,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120103200",
             "versionsSha256": "538c0f1b9f0520ea7b605d7e17e75c953e0cc15145aa045f9e8fe99a650b3bcb"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120110000",
+            "versionsSha256": "04a5a0fb971150a830a8a5d4b90894a4bc362f80c00520f63d585d8ea3bdfbda"
         }
     ],
     "versions": {
@@ -721,7 +725,7 @@
         "schema:VatFiscalUnity": "0.1.0",
         "schema:VatReturn": "0.1.0",
         "schema:VatReturnFiling": "0.3.0",
-        "schema:VatTariff": "0.4.0",
+        "schema:VatTariff": "0.5.0",
         "schema:VendorPerformance": "0.1.0",
         "schema:VerklaringDraft": "0.1.0",
         "schema:ViesValidation": "0.1.0",

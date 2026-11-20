@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Usage;
 
 use OCA\Shillinq\Service\BillableRateService;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use DomainException;
 use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\RateMeterReadingAction;
@@ -60,6 +61,8 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
  * REQ-USB-001 and REQ-USB-002.
  */
 class SalesUsageBillingTest extends TestCase {
+	use SeededVatTariffs;
+
 
 	private const ADMIN = 'adm-holding-nl';
 
@@ -337,7 +340,7 @@ class SalesUsageBillingTest extends TestCase {
 			new RetainerResolver($container, $appConfig, $logger),
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
-			new VATCalculationService(),
+			$this->seededVat(),
 			new UsageRatingCalculator(),
 			objectService: $this->store,
 			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),

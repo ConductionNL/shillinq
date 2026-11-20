@@ -59,6 +59,38 @@ final class PreSaveWrite {
 	}//end incomingEntity()
 
 	/**
+	 * Whether the event saves a new object.
+	 *
+	 * @param Event $event The OpenRegister pre-save event.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-1.3
+	 */
+	public function isCreate(Event $event): bool {
+		return $event instanceof ObjectCreatingEvent;
+
+	}//end isCreate()
+
+	/**
+	 * The stored version an updating event replaces, or null on any other event.
+	 *
+	 * @param Event $event The OpenRegister pre-save event.
+	 *
+	 * @return object|null
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-1.3
+	 */
+	public function storedEntity(Event $event): object|null {
+		if ($event instanceof ObjectUpdatingEvent === true) {
+			return $event->getOldObject();
+		}
+
+		return null;
+
+	}//end storedEntity()
+
+	/**
 	 * The entity's payload as an array ([] when it has none).
 	 *
 	 * @param object $entity The incoming entity.

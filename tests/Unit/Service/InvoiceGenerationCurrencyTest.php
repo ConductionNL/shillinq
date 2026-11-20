@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -49,6 +50,8 @@ use Psr\Log\NullLogger;
  * The generator over an in-memory register with real collaborators.
  */
 final class InvoiceGenerationCurrencyTest extends TestCase {
+	use SeededVatTariffs;
+
 	/**
 	 * The generator over the given customers and administrations.
 	 *
@@ -87,7 +90,7 @@ final class InvoiceGenerationCurrencyTest extends TestCase {
 			new RetainerResolver($container, $appConfig, $logger),
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
-			new VATCalculationService(),
+			$this->seededVat(),
 			new UsageRatingCalculator(),
 			objectService: $store,
 			billedReadings: $this->createMock(BilledReadings::class),

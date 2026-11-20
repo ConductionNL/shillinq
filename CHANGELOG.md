@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- VAT rates from the register, and partly deductible costs
+  (`tax-vat-rates-and-deductibility`). The five statutory VAT tariffs (high
+  21, low 9, zero, exempt, reverse-charge) are now **seeded on every install
+  and upgrade**, marked statutory and read-only; an administrator adds a rate
+  with its own code and dates under Taxes > VAT rates. Every VAT calculation
+  uses the tariff valid on the document date and refuses an unknown or
+  expired code; there is no default rate any more. Legacy line codes are
+  mapped once: `BTW21` to high, `BTW9` to low, `BTW0` to zero, `VERLEGD` to
+  reverse-charge. A ledger account gains a deductible percentage
+  (**default 100**, so nothing changes until it is set) and a private-share
+  account; a cost line below 100 percent, on a purchase invoice, AP
+  transaction or journal entry, posts its deductible share with its input
+  VAT and the rest plus the VAT on it to the private-share account, marked
+  non-deductible. A line can override the account's percentage.
 - E-invoices over Peppol through Integriq (`sales-einvoice-exchange`). Send
   e-invoice hands the invoice to Integriq's Peppol connection, with the UBL file
   and the hybrid PDF stored in the administration's Files folder; delivery

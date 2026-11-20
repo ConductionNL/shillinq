@@ -6146,6 +6146,13 @@ OC.L10N.register(
         "No stock on this date.": "No stock on this date.",
         "Valuation Method": "Valuation Method",
         "Total Value": "Total Value",
+        "VAT rates": "VAT rates",
+        "New VAT rate": "New VAT rate",
+        "Statutory": "Statutory",
+        "Suggested account (RGS)": "Suggested account (RGS)",
+        "All rates": "All rates",
+        "Deductible percentage": "Deductible percentage",
+        "Private-share account": "Private-share account",
         "No active administration, so the budget lines cannot be shown.": "No active administration, so the budget lines cannot be shown."
     },
     "nplurals=2; plural=(n != 1);"
