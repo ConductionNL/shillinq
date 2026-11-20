@@ -1489,6 +1489,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\Ib47BatchServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Ib47\\\\Ib47BatchService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\IcpServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\IcpService'"
         ]

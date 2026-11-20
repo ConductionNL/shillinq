@@ -5807,7 +5807,18 @@ OC.L10N.register(
         "The billable hours and expenses could not be loaded.": "The billable hours and expenses could not be loaded.",
         "{date} {person}: {hours} hours": "{date} {person}: {hours} hours",
         "{date} {person}: {hours} hours at EUR {rate}, EUR {amount}": "{date} {person}: {hours} hours at EUR {rate}, EUR {amount}",
-        "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}": "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}"
+        "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}": "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}",
+        "Prepare last year's batch": "Prepare last year's batch",
+        "Last year's IB47 batch was prepared from the confirmed payment runs.": "Last year's IB47 batch was prepared from the confirmed payment runs.",
+        "The IB47 batch could not be prepared.": "The IB47 batch could not be prepared.",
+        "Sum last year's confirmed payments to every payee marked as an IB47 recipient into one record per payee. Preparing again updates those records.": "Sum last year's confirmed payments to every payee marked as an IB47 recipient into one record per payee. Preparing again updates those records.",
+        "IB47 recipient": "IB47 recipient",
+        "True for someone paid outside the payroll who must be reported to the Belastingdienst once a year on the IB47 statement, such as a freelancer without a VAT number or a volunteer above the allowance.": "True for someone paid outside the payroll who must be reported to the Belastingdienst once a year on the IB47 statement, such as a freelancer without a VAT number or a volunteer above the allowance.",
+        "BSN": "BSN",
+        "Burgerservicenummer of an IB47 recipient, which the statement names. Special-category PII (ADR-005): validated by the 11-proef on write (OpenRegister's bsn format), masked as ***<last4> on display, readable and writable only to the payroll officer, never written to the audit trail.": "Burgerservicenummer of an IB47 recipient, which the statement names. Special-category PII (ADR-005): validated by the 11-proef on write (OpenRegister's bsn format), masked as ***<last4> on display, readable and writable only to the payroll officer, never written to the audit trail.",
+        "IB47 payment type": "IB47 payment type",
+        "The Belastingdienst IB47 payment type code for this recipient's payments. A recipient without one is left out of the batch and named as incomplete, rather than reported under a code nobody chose.": "The Belastingdienst IB47 payment type code for this recipient's payments. A recipient without one is left out of the batch and named as incomplete, rather than reported under a code nobody chose.",
+        "The payee this record was prepared from. Preparing the same year again updates the record of this payee and never writes a second one.": "The payee this record was prepared from. Preparing the same year again updates the record of this payee and never writes a second one."
     },
     "nplurals=2; plural=(n != 1);"
 )

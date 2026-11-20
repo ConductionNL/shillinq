@@ -7965,7 +7965,18 @@ OC.L10N.register(
         "The billable hours and expenses could not be loaded.": "De factureerbare uren en kosten konden niet worden geladen.",
         "{date} {person}: {hours} hours": "{date} {person}: {hours} uur",
         "{date} {person}: {hours} hours at EUR {rate}, EUR {amount}": "{date} {person}: {hours} uur à EUR {rate}, EUR {amount}",
-        "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}": "{date} {description}: kosten EUR {cost}, opslag EUR {markup}, EUR {amount}"
+        "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}": "{date} {description}: kosten EUR {cost}, opslag EUR {markup}, EUR {amount}",
+        "Prepare last year's batch": "Batch van vorig jaar voorbereiden",
+        "Last year's IB47 batch was prepared from the confirmed payment runs.": "De IB47-batch van vorig jaar is voorbereid uit de bevestigde betaalruns.",
+        "The IB47 batch could not be prepared.": "De IB47-batch kon niet worden voorbereid.",
+        "Sum last year's confirmed payments to every payee marked as an IB47 recipient into one record per payee. Preparing again updates those records.": "Tel de bevestigde betalingen van vorig jaar aan elke begunstigde die als IB47-ontvanger is gemarkeerd op tot één regel per begunstigde. Opnieuw voorbereiden werkt die regels bij.",
+        "IB47 recipient": "IB47-ontvanger",
+        "True for someone paid outside the payroll who must be reported to the Belastingdienst once a year on the IB47 statement, such as a freelancer without a VAT number or a volunteer above the allowance.": "Waar voor iemand die buiten de loonadministratie wordt betaald en eens per jaar op de IB47-opgaaf aan de Belastingdienst moet worden gemeld, zoals een freelancer zonder btw-nummer of een vrijwilliger boven de vrijwilligersvergoeding.",
+        "BSN": "BSN",
+        "Burgerservicenummer of an IB47 recipient, which the statement names. Special-category PII (ADR-005): validated by the 11-proef on write (OpenRegister's bsn format), masked as ***<last4> on display, readable and writable only to the payroll officer, never written to the audit trail.": "Burgerservicenummer van een IB47-ontvanger, dat de opgaaf vermeldt. Bijzonder persoonsgegeven (ADR-005): bij opslaan gecontroleerd met de 11-proef, getoond als ***<laatste 4>, alleen te lezen en te wijzigen door de salarisadministrateur en nooit in het auditspoor geschreven.",
+        "IB47 payment type": "IB47-soort betaling",
+        "The Belastingdienst IB47 payment type code for this recipient's payments. A recipient without one is left out of the batch and named as incomplete, rather than reported under a code nobody chose.": "De IB47-code van de Belastingdienst voor de soort betalingen aan deze ontvanger. Een ontvanger zonder code blijft buiten de batch en wordt als onvolledig genoemd, in plaats van gemeld onder een code die niemand koos.",
+        "The payee this record was prepared from. Preparing the same year again updates the record of this payee and never writes a second one.": "De begunstigde waaruit deze regel is voorbereid. Hetzelfde jaar opnieuw voorbereiden werkt de regel van deze begunstigde bij en schrijft nooit een tweede."
     },
     "nplurals=2; plural=(n != 1);"
 )

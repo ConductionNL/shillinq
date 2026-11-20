@@ -124,6 +124,7 @@ use OCA\Shillinq\Kernel\Contracts\GoodsReceiptNoteServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
 use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\Ib47BatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ImportBatchStepsInterface;
 use OCA\Shillinq\Kernel\Contracts\ImportPeriodInterface;
@@ -281,6 +282,7 @@ use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
+use OCA\Shillinq\Service\Ib47\Ib47BatchService;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
 use OCA\Shillinq\Service\Import\ImportPeriod;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
@@ -460,6 +462,7 @@ final class ContractRegistrar {
 		GoodsReceiptNoteServiceInterface::class => GoodsReceiptNoteService::class,
 		HrmqCostRateAdapterInterface::class => HrmqCostRateAdapter::class,
 		IcpFilingServiceInterface::class => IcpFilingService::class,
+		Ib47BatchServiceInterface::class => Ib47BatchService::class,
 		IcpServiceInterface::class => IcpService::class,
 		ImportBatchStepsInterface::class => ImportBatchSteps::class,
 		ImportPeriodInterface::class => ImportPeriod::class,
