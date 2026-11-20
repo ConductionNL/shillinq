@@ -23,6 +23,7 @@
 ## 4. End to end and strings
 
 - [ ] 4.1 Playwright `tests/e2e/ledger-multi-administration.spec.ts`: switch, reload, scoped list, start from an office template. Verify: passes locally.
+  Written (17 Nov): the four scenarios plus a session-less visitor refused; not run here (no live instance), so unticked until it passes against one.
 - [x] 4.2 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push; IDOR check on the template endpoints (ADR-005).
