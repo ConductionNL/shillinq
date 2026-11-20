@@ -26,9 +26,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\BudgetGridController;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioReaderInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BudgetGridCalculator;
 use OCA\Shillinq\Service\BudgetGridReader;
+use OCA\Shillinq\Service\BudgetGridScenarioOverlay;
 use OCA\Shillinq\Service\BudgetVsActualsCalculator;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -141,7 +143,13 @@ final class BudgetGridEnvelopeGoldenTest extends TestCase {
 		$context->method('canAccess')->willReturn(true);
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($this->createMock(IUser::class));
-		$controller = new BudgetGridController($request, $l10n, new NullLogger(), $reader, new BudgetGridCalculator(new BudgetVsActualsCalculator()), $context, $session);
+		// No scenarioId: the scenario reader and overlay are never asked.
+		$scenarioReader = $this->createMock(BudgetScenarioReaderInterface::class);
+		$scenarioReader->expects($this->never())->method('loadContext');
+		$scenarioOverlay = $this->createMock(BudgetGridScenarioOverlay::class);
+		$scenarioOverlay->expects($this->never())->method('apply');
+
+		$controller = new BudgetGridController($request, $l10n, new NullLogger(), $reader, new BudgetGridCalculator(new BudgetVsActualsCalculator()), $context, $session, $scenarioReader, $scenarioOverlay);
 
 		return $controller->index()->getData();
 

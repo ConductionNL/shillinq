@@ -276,7 +276,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -462,7 +463,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -648,7 +650,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -808,7 +811,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": [
@@ -1144,7 +1148,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -1327,7 +1332,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -1524,7 +1530,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -1710,7 +1717,8 @@
                 "projectId": null,
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -1966,7 +1974,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -2135,7 +2144,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -2421,7 +2431,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -2567,7 +2578,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -2753,7 +2765,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []
@@ -3058,7 +3071,8 @@
                 "projectId": "proj-1",
                 "notes": "June",
                 "meterReadingIds": [],
-                "usageRatePlanId": null
+                "usageRatePlanId": null,
+                "expenseItemRefs": []
             }
         ],
         "errors": []

@@ -560,6 +560,13 @@
 							"order": 20
 						},
 						{
+							"id": "EuBetaalaanvragen",
+							"label": "Declarations",
+							"icon": "CashCheck",
+							"route": "EuBetaalaanvragen",
+							"order": 25
+						},
+						{
 							"id": "EuBewijsstukken",
 							"label": "Supporting documents",
 							"icon": "FileDocumentMultipleOutline",
@@ -653,6 +660,20 @@
 					"route": "/eu-fondsen/audit-portaal/:id",
 					"type": "detail",
 					"title": "Audit-trail"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuBetaalaanvragen",
+					"route": "/eu-fondsen/betaalaanvragen",
+					"type": "index",
+					"title": "Declarations"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuBetaalaanvraagDetail",
+					"route": "/eu-fondsen/betaalaanvragen/:id",
+					"type": "detail",
+					"title": "Declaration"
 				}
 			]
 		},
@@ -2825,6 +2846,14 @@
 							"order": 65
 						}
 					]
+				},
+				{
+					"id": "CloseChecklistTemplates",
+					"label": "Close checklist templates",
+					"icon": "FormatListChecks",
+					"route": "CloseChecklistTemplates",
+					"section": "settings",
+					"order": 94
 				}
 			],
 			"pages": [
@@ -2841,6 +2870,20 @@
 					"route": "/bookkeeping/period-close/:id",
 					"type": "custom",
 					"title": "Period Close"
+				},
+				{
+					"_fragment": "bookkeeping-period-close",
+					"id": "CloseChecklistTemplates",
+					"route": "/settings/close-checklist-templates",
+					"type": "index",
+					"title": "Close checklist templates"
+				},
+				{
+					"_fragment": "bookkeeping-period-close",
+					"id": "CloseChecklistTemplateDetail",
+					"route": "/settings/close-checklist-templates/:id",
+					"type": "detail",
+					"title": "Close checklist template"
 				}
 			]
 		},
@@ -4365,6 +4408,33 @@
 		{
 			"menu": [
 				{
+					"id": "ExpenseCategories",
+					"label": "Expense categories",
+					"icon": "TagMultipleOutline",
+					"route": "ExpenseCategories",
+					"order": 85
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "expenses-category-mapping",
+					"id": "ExpenseCategories",
+					"route": "/expense-categories",
+					"type": "index",
+					"title": "Expense categories"
+				},
+				{
+					"_fragment": "expenses-category-mapping",
+					"id": "ExpenseCategoryDetail",
+					"route": "/expense-categories/:id",
+					"type": "detail",
+					"title": "Expense category"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "ExternalConnections",
 					"label": "External Connections",
 					"icon": "TransitConnectionVariant",
@@ -5209,6 +5279,45 @@
 		{
 			"menu": [
 				{
+					"id": "Sales",
+					"children": [
+						{
+							"id": "MobileHome",
+							"label": "Shillinq Mobile",
+							"icon": "ReceiptOutline",
+							"route": "MobileHome",
+							"order": 90
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileHome",
+					"route": "/mobile",
+					"type": "custom",
+					"title": "Shillinq Mobile"
+				},
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileReceipt",
+					"route": "/mobile/receipt",
+					"type": "custom",
+					"title": "Capture a receipt"
+				},
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileInvoice",
+					"route": "/mobile/invoice",
+					"type": "custom",
+					"title": "Draft an invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RequiredFields",
 					"label": "Required fields",
 					"icon": "TextBoxCheckOutline",
@@ -5371,6 +5480,45 @@
 					"route": "/gr/verdeelruns/:id",
 					"type": "detail",
 					"title": "Allocation run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"children": [
+						{
+							"id": "ServiceReceipts",
+							"label": "Service receipts",
+							"icon": "ClipboardCheckOutline",
+							"route": "ServiceReceipts",
+							"order": 6.5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceipts",
+					"route": "/inkoop/service-receipts",
+					"type": "index",
+					"title": "Service receipts"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptForm",
+					"route": "/inkoop/service-receipts/new",
+					"type": "custom",
+					"title": "Confirm service"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptDetail",
+					"route": "/inkoop/service-receipts/:id",
+					"type": "detail",
+					"title": "Service receipt"
 				}
 			]
 		},
@@ -5539,6 +5687,32 @@
 					"route": "/bookkeeping/recurring-invoices/:id",
 					"type": "detail",
 					"title": "Recurring Invoice Profile"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "reporting-cash-flow-statement",
+					"id": "FinancialStatementCashFlow",
+					"route": "/reports/cash-flow",
+					"type": "dashboard",
+					"title": "Cash flow statement"
+				},
+				{
+					"_fragment": "reporting-cash-flow-statement",
+					"id": "CashFlowLines",
+					"route": "/reports/cash-flow/lines/:id",
+					"type": "dashboard",
+					"title": "Cash flow lines"
+				},
+				{
+					"_fragment": "reporting-cash-flow-statement",
+					"id": "CashFlowAccountCheck",
+					"route": "/reports/cash-flow/accounts",
+					"type": "index",
+					"title": "Accounts without a cash flow category"
 				}
 			]
 		},
@@ -5727,6 +5901,26 @@
 		{
 			"menu": [
 				{
+					"id": "SelfBilledInvoiceRefusals",
+					"label": "Refused self-billed invoices",
+					"icon": "CloseCircleOutline",
+					"route": "SelfBilledInvoiceRefusals",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-einvoice-exchange",
+					"id": "SelfBilledInvoiceRefusals",
+					"route": "/sales/self-billed-refusals",
+					"type": "index",
+					"title": "Refused self-billed invoices"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "InvoiceBatches",
 					"label": "Invoice batches",
 					"icon": "EmailFastOutline",
@@ -5869,6 +6063,25 @@
 					"route": "/reporting-compliance/spend-analytics",
 					"type": "dashboard",
 					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-icp-and-reverse-charge",
+					"id": "IcpOpgaaf",
+					"route": "/belastingen/icp-opgaaf",
+					"type": "index",
+					"title": "ICP-opgaaf"
+				},
+				{
+					"_fragment": "tax-icp-and-reverse-charge",
+					"id": "IcpOpgaafDetail",
+					"route": "/belastingen/icp-opgaaf/:id",
+					"type": "detail",
+					"title": "ICP-opgaaf"
 				}
 			]
 		},

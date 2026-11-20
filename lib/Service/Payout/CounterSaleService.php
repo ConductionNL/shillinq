@@ -134,6 +134,8 @@ class CounterSaleService {
 	 * @throws FinancialDocumentActionRefusedException When the caller may not, or the sale is no longer a draft.
 	 *
 	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CounterSaleSettlement::isDraftSale() is a pure check of the invoice record.
 	 */
 	public function abandon(string $invoiceId): array {
 		$this->guard->assertMay(action: PaymentActionAuthorizerInterface::ACTION_REQUEST);

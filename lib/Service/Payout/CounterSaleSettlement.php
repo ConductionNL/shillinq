@@ -31,6 +31,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -93,7 +94,7 @@ class CounterSaleSettlement {
 	 *
 	 * @return array<string, mixed> The invoice, issued when it was a draft sale.
 	 *
-	 * @throws \RuntimeException When the issue transition does not leave the invoice issued.
+	 * @throws RuntimeException When the issue transition does not leave the invoice issued.
 	 *
 	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
 	 */
@@ -107,7 +108,7 @@ class CounterSaleSettlement {
 
 		$issued = $this->reread(registerSlug: $registerSlug, id: $id);
 		if ($issued === null || (string)($issued['lifecycleState'] ?? '') !== 'issued') {
-			throw new \RuntimeException('The counter sale was not issued, so its payment cannot settle it.');
+			throw new RuntimeException('The counter sale was not issued, so its payment cannot settle it.');
 		}
 
 		return $issued;

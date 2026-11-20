@@ -69,12 +69,13 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 * @var array<string, array{interface: class-string, consequence: string}>
 	 */
 	public const FAMILIES = [
-		// The supplementary VAT return files through this port
-		// (tax-vat-position-and-suppletie REQ-VPS-002).
+		// The supplementary VAT return and the ICP statement file through this
+		// port (tax-vat-position-and-suppletie REQ-VPS-002,
+		// tax-icp-and-reverse-charge).
 		'digipoort-sbr' => [
 			'interface' => DigipoortSbrAdapterInterface::class,
-			'consequence' => 'No VAT return, supplementary return or annual accounts reach Digipoort; '
-				.'Submit is refused and a supplementary return is downloaded to file by hand.',
+			'consequence' => 'No VAT return, supplementary return, ICP statement or annual accounts reach Digipoort; '
+				.'Submit is refused, a supplementary return is downloaded to file by hand and an ICP statement is downloaded as XML instead.',
 		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,

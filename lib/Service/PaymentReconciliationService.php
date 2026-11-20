@@ -79,6 +79,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Matching, settling and reversing a payment share one reconciliation state.
  */
 class PaymentReconciliationService implements PaymentReconciliationServiceInterface {
 
