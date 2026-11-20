@@ -21,9 +21,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\FinancialStatementController;
+use OCA\Shillinq\Reporting\CashFlowCalculator;
 use OCA\Shillinq\Reporting\ProfitLossComparison;
 use OCA\Shillinq\Reporting\StatementCalculator;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Reporting\Statement\VanDijkLedger;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -35,6 +38,7 @@ use RuntimeException;
  * The statement endpoints check the caller and the administration first (REQ-RFS-001, REQ-RFS-002).
  *
  * @covers \OCA\Shillinq\Controller\FinancialStatementController
+ * @uses   \OCA\Shillinq\Reporting\CashFlowCalculator
  * @uses   \OCA\Shillinq\Reporting\ProfitLossComparison
  * @uses   \OCA\Shillinq\Reporting\StatementCalculator
  * @uses   \OCA\Shillinq\Reporting\StatementPeriods
@@ -50,10 +54,11 @@ class FinancialStatementControllerTest extends TestCase {
 	 * @param string|null              $userId     The caller.
 	 * @param StatementCalculator|null $calculator The calculator; the seed's when null.
 	 * @param LoggerInterface|null     $logger     The logger.
+	 * @param CashFlowCalculator|null  $cashFlow   The cash flow calculator; one over the seed when null.
 	 *
 	 * @return FinancialStatementController
 	 */
-	private function controller(array $params, ?string $userId = 'director', ?StatementCalculator $calculator = null, ?LoggerInterface $logger = null): FinancialStatementController {
+	private function controller(array $params, ?string $userId = 'director', ?StatementCalculator $calculator = null, ?LoggerInterface $logger = null, ?CashFlowCalculator $cashFlow = null): FinancialStatementController {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParam')->willReturnCallback(
 			static fn (string $key, mixed $default = null): mixed => ($params[$key] ?? $default)
@@ -69,8 +74,109 @@ class FinancialStatementControllerTest extends TestCase {
 			$context,
 			$calculator,
 			new ProfitLossComparison($calculator),
+			($cashFlow ?? $this->cashFlow($calculator)),
 			($logger ?? $this->createMock(LoggerInterface::class))
 		);
+	}
+
+	/**
+	 * A cash flow calculator over a statement calculator and the seed's register.
+	 *
+	 * @param StatementCalculator $calculator The statement calculator.
+	 *
+	 * @return CashFlowCalculator
+	 */
+	private function cashFlow(StatementCalculator $calculator): CashFlowCalculator {
+		$location = $this->getMockBuilder(RegisterLocation::class)->disableOriginalConstructor()->getMock();
+		$location->method('getRegisterSlug')->willReturn('shillinq');
+
+		return new CashFlowCalculator($calculator, new InMemoryObjectServiceStub(VanDijkLedger::rows()), $location);
+	}
+
+	/**
+	 * The cash flow statement of the active administration: the seed's
+	 * accounts carry no category, so every balance movement is unclassified
+	 * and the statement still adds up.
+	 *
+	 * @return void
+	 */
+	public function testTheCashFlowOfTheActiveAdministration(): void {
+		$response = $this->controller(['from' => '2026-01-01', 'to' => '2026-09-30'])->cashFlow();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame([VanDijkLedger::ADM, 'indirect'], [$data['administrationId'], $data['method']]);
+		self::assertSame(48000.0, $data['totals']['operating']);
+		self::assertSame(-48000.0, $data['totals']['unclassified']);
+		self::assertSame(0.0, $data['totals']['cashChange']);
+		self::assertSame(0.0, $data['totals']['difference']);
+	}
+
+	/**
+	 * The cash flow refuses like the other statements, before anything is read.
+	 *
+	 * @return void
+	 */
+	public function testCashFlowRefusals(): void {
+		$untouched = $this->getMockBuilder(CashFlowCalculator::class)->disableOriginalConstructor()->getMock();
+		$untouched->expects(self::never())->method('between');
+		$calculator = $this->createMock(StatementCalculator::class);
+
+		$anonymous = $this->controller(['from' => '2026-01-01', 'to' => '2026-09-30'], null, $calculator, null, $untouched)->cashFlow();
+		self::assertSame([Http::STATUS_UNAUTHORIZED, ['error' => 'Not authenticated']], [$anonymous->getStatus(), $anonymous->getData()]);
+
+		$foreign = $this->controller(['from' => '2026-01-01', 'to' => '2026-09-30', 'administrationId' => 'adm-other'], 'director', $calculator, null, $untouched)->cashFlow();
+		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Not found']], [$foreign->getStatus(), $foreign->getData()]);
+
+		$reversed = $this->controller(['from' => '2026-09-30', 'to' => '2026-01-01'], 'director', $calculator, null, $untouched)->cashFlow();
+		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'to must not be before from.']], [$reversed->getStatus(), $reversed->getData()]);
+
+		$noDate = $this->controller(['to' => '2026-09-30'], 'director', $calculator, null, $untouched)->cashFlow();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $noDate->getStatus());
+	}
+
+	/**
+	 * The lines behind one cash flow figure of the active administration add
+	 * up to it; the seed's result row is the profit and loss of the period.
+	 *
+	 * @return void
+	 */
+	public function testTheLinesBehindACashFlowFigure(): void {
+		$statement = $this->controller(['from' => '2026-01-01', 'to' => '2026-09-30'])->cashFlow()->getData();
+		$result = $statement['operating']['rows'][0];
+
+		$response = $this->controller(['key' => $result['linesKey']])->cashFlowLines();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame([VanDijkLedger::ADM, 'result', '2026-01-01', '2026-09-30'], [$data['administrationId'], $data['scope'], $data['from'], $data['to']]);
+		self::assertSame($result['amount'], $data['total']);
+		self::assertNotSame([], $data['lines']);
+	}
+
+	/**
+	 * The lines refuse like the statements, before anything is read, and a
+	 * malformed key is a bad request.
+	 *
+	 * @return void
+	 */
+	public function testCashFlowLinesRefusals(): void {
+		$untouched = $this->getMockBuilder(CashFlowCalculator::class)->disableOriginalConstructor()->getMock();
+		$untouched->expects(self::never())->method('lines');
+		$calculator = $this->createMock(StatementCalculator::class);
+		$key = 'result~2026-01-01~2026-09-30';
+
+		$anonymous = $this->controller(['key' => $key], null, $calculator, null, $untouched)->cashFlowLines();
+		self::assertSame([Http::STATUS_UNAUTHORIZED, ['error' => 'Not authenticated']], [$anonymous->getStatus(), $anonymous->getData()]);
+
+		$foreign = $this->controller(['key' => $key, 'administrationId' => 'adm-other'], 'director', $calculator, null, $untouched)->cashFlowLines();
+		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Not found']], [$foreign->getStatus(), $foreign->getData()]);
+
+		$malformed = $this->controller(['key' => 'result'])->cashFlowLines();
+		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'key must be scope~from~to.']], [$malformed->getStatus(), $malformed->getData()]);
+
+		$reversed = $this->controller(['key' => 'result~2026-09-30~2026-01-01'])->cashFlowLines();
+		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'to must not be before from.']], [$reversed->getStatus(), $reversed->getData()]);
 	}
 
 	/**
@@ -141,7 +247,7 @@ class FinancialStatementControllerTest extends TestCase {
 		$context->expects(self::never())->method('canAccess');
 		$calculator = $this->createMock(StatementCalculator::class);
 
-		$response = (new FinancialStatementController($request, $context, $calculator, new ProfitLossComparison($calculator), $this->createMock(LoggerInterface::class)))->balanceSheet();
+		$response = (new FinancialStatementController($request, $context, $calculator, new ProfitLossComparison($calculator), $this->cashFlow($calculator), $this->createMock(LoggerInterface::class)))->balanceSheet();
 
 		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'No administration selected']], [$response->getStatus(), $response->getData()]);
 	}

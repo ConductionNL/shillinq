@@ -24,6 +24,12 @@ import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { downloadEnsiaStatement, downloadEnsiaXml } from './utils/ensiaApi.js'
+import {
+	downloadIcpStatementXml,
+	fileIcpStatement,
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+} from './utils/icpStatementActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import {
 	approvePayable,
@@ -37,6 +43,12 @@ import {
 import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
 import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
+import { openRegenerateKnownCosts } from './utils/knownCostActions.js'
+import {
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+} from './utils/openItemClearingActions.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -131,6 +143,17 @@ export const manifestActions = Object.freeze({
 	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// ledger-open-item-clearing 3.1: Clear on a suggested pair, Clear
+	// selected on Lines to clear, Undo clearing on a group.
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+	// tax-icp-and-reverse-charge: Prepare statement on the ICP page, and
+	// Reconcile, Download XML and File on a statement.
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+	downloadIcpStatementXml,
+	fileIcpStatement,
 	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
 	// Prepare / Download / File on a correction, and the position's lines.
 	checkVatReturnForCorrections,
@@ -145,6 +168,9 @@ export const manifestActions = Object.freeze({
 	openRepeatAppointment,
 	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
 	openRecalculateInvestmentDeductions,
+	// budget-known-costs design.md §12: "Regenerate known costs" on
+	// Budget Line Derivations.
+	openRegenerateKnownCosts,
 })
 
 /**

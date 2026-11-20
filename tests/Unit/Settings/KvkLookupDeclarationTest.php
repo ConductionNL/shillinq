@@ -50,7 +50,7 @@ final class KvkLookupDeclarationTest extends TestCase {
 	 */
 	private const FILLED = [
 		'CustomerMaster' => ['legalName', 'tradeName'],
-		'Payee' => ['name', 'tradingName', 'address.street', 'address.houseNumber', 'address.postcode', 'address.city', 'address.country'],
+		'Payee' => ['name', 'tradingName', 'address.street', 'address.postcode', 'address.city', 'address.country'],
 	];
 
 	/**
@@ -115,7 +115,8 @@ final class KvkLookupDeclarationTest extends TestCase {
 
 	/**
 	 * The customer fills names only; the supplier fills its address from the
-	 * main branch and fixes the country.
+	 * record integriq's kvk provider resolves (a KvK Zoeken row, the head
+	 * office first) and fixes the country.
 	 *
 	 * @return void
 	 */
@@ -124,16 +125,34 @@ final class KvkLookupDeclarationTest extends TestCase {
 		self::assertSame(['legalName' => 'naam', 'tradeName' => 'handelsnamen[0].naam'], $customer);
 
 		$supplier = $this->properties('Payee')['kvkNumber']['x-openregister-property-source']['config']['fill'];
-		self::assertSame('naam', $supplier['name']);
-		self::assertSame('_embedded.hoofdvestiging.adressen[0].postcode', $supplier['address.postcode']);
 		self::assertSame(
 			[
-				'_embedded.hoofdvestiging.adressen[0].huisnummer',
-				'_embedded.hoofdvestiging.adressen[0].huisletter',
-				'_embedded.hoofdvestiging.adressen[0].huisnummerToevoeging',
+				'name' => 'naam',
+				'tradingName' => 'handelsnamen[0].naam',
+				'address.street' => 'adres.binnenlandsAdres.straatnaam',
+				'address.postcode' => 'adres.binnenlandsAdres.postcode',
+				'address.city' => 'adres.binnenlandsAdres.plaats',
+				'address.country' => '=NL',
 			],
-			$supplier['address.houseNumber']['join']
+			$supplier
 		);
-		self::assertSame(['value' => 'NL'], $supplier['address.country']);
 	}//end testTheFillMapsReadTheKvkRecord()
+
+	/**
+	 * The form renderer reads a fill source only as a string: a dotted path
+	 * into the resolved record, or `=literal`. Any other shape (an object
+	 * with `join` or `value`) is skipped without a word, so the target would
+	 * silently never fill.
+	 *
+	 * @return void
+	 */
+	public function testEveryFillSourceIsAPathOrALiteral(): void {
+		foreach (array_keys(self::SCHEMAS) as $schema) {
+			$fill = $this->properties($schema)['kvkNumber']['x-openregister-property-source']['config']['fill'];
+			foreach ($fill as $target => $source) {
+				self::assertIsString($source, $schema . ': ' . $target . ' must name a path or =literal');
+				self::assertMatchesRegularExpression('/^(=.+|[A-Za-z_][A-Za-z0-9_]*(\[\d+\])*(\.[A-Za-z_][A-Za-z0-9_]*(\[\d+\])*)*)$/', $source, $schema . ': ' . $target);
+			}
+		}
+	}//end testEveryFillSourceIsAPathOrALiteral()
 }//end class

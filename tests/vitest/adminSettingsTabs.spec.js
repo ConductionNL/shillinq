@@ -39,6 +39,7 @@ describe('admin settings tabs', () => {
 		expect(instance().tabs.map((tab) => tab.id)).toEqual([
 			'general',
 			'required-fields',
+			'custom-record-types',
 			'connections',
 			'appointments',
 			'exchange-rates',
@@ -95,6 +96,7 @@ describe('admin settings tabs', () => {
 		})
 		expect(sections.filter((s) => s.widget).map((s) => s.id)).toEqual([
 			'required-fields',
+			'custom-record-types',
 		])
 	})
 

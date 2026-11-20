@@ -81,6 +81,9 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Detection and preparation of a correction share one comparison of filed and current figures.
+ * @SuppressWarnings(PHPMD.TooManyMethods) Each rubriek comparison is its own small step.
  */
 class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterface {
 	/**

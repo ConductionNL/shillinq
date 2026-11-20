@@ -68,6 +68,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 
 /**
  * HTTP API for VAT returns (REQ-VAT-001 .. REQ-VAT-012).
@@ -327,6 +328,11 @@ class VATReturnController extends Controller {
 				],
 				Http::STATUS_CONFLICT
 			);
+		} catch (JurisdictionRefusedException $e) {
+			return new JSONResponse(
+				['error' => 'jurisdiction-refused', 'message' => $e->getMessage(), 'jurisdiction' => $e->getJurisdiction()],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'VATReturnController: failed to create VAT return',
@@ -489,6 +495,11 @@ class VATReturnController extends Controller {
 			// REQ-TVRB-001: a failing blocking check refuses the submit and names itself.
 			$this->checksGuard->canSubmit(returnOrId: $returnId);
 			$vatReturn = $this->service->submitReturn(returnId: $returnId, userId: $userId);
+		} catch (JurisdictionRefusedException $e) {
+			return new JSONResponse(
+				['error' => 'jurisdiction-refused', 'message' => $e->getMessage(), 'jurisdiction' => $e->getJurisdiction()],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
 		} catch (PostingRefusedException $e) {
 			return new JSONResponse(
 				['message' => $e->getMessage(), 'error' => 'vat-return-checks-failed'],
