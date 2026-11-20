@@ -36,7 +36,7 @@ Each of these first runs `node scripts/generate-manifest-shell.js`, which regene
 ## Test
 
 ```bash
-composer test:unit       # PHPUnit, tests/Unit and tests/unit (phpunit.xml)
+composer test:unit       # PHPUnit, tests/Unit and tests/unit (phpunit-unit.xml)
 npm run test:unit        # Vitest frontend unit tests
 npm run test:e2e         # Playwright, tests/e2e (needs a running Nextcloud)
 npm run test:e2e:install # one-time Chromium download for Playwright
