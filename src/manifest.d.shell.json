@@ -5375,6 +5375,45 @@
 			]
 		},
 		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"children": [
+						{
+							"id": "ServiceReceipts",
+							"label": "Service receipts",
+							"icon": "ClipboardCheckOutline",
+							"route": "ServiceReceipts",
+							"order": 6.5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceipts",
+					"route": "/inkoop/service-receipts",
+					"type": "index",
+					"title": "Service receipts"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptForm",
+					"route": "/inkoop/service-receipts/new",
+					"type": "custom",
+					"title": "Confirm service"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptDetail",
+					"route": "/inkoop/service-receipts/:id",
+					"type": "detail",
+					"title": "Service receipt"
+				}
+			]
+		},
+		{
 			"menu": [],
 			"pages": [
 				{
