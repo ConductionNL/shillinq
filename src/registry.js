@@ -117,6 +117,7 @@ import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboar
 // with dimmed projection columns — a genuinely custom two-source transform
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
+import ClaimReceiptAccounts from './components/expenses/ClaimReceiptAccounts.vue'
 // bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
 // the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
 // flow with rejection-reason picker + delivery-photo upload, and the detail
@@ -200,6 +201,8 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
 import SalesOverview from './components/sales/SalesOverview.vue'
+// purchasing-order-dispatch-and-receipt task 4.2: three confirmation modes per line.
+import ServiceReceiptForm from './components/service-receipt/ServiceReceiptForm.vue'
 // Import bank statements lives under the Configuratie (settings) group as a
 // page that hosts BankStatementWizard — moved off the Financial overview
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
@@ -259,6 +262,7 @@ import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 import RelationLinkDialog from './modals/RelationLinkDialog.vue'
+import SpreadOverPeriodsModal from './modals/SpreadOverPeriodsModal.vue'
 // accountant-portal: the multi-client dashboard composes a per-card status
 // (period-close state, BTW filing + deadline, missing documents, open items
 // from PeriodCloseAssistantService) plus a per-card "Download handover pack"
@@ -374,6 +378,9 @@ import ReceivePage from './views/inventory/ReceivePage.vue'
 import TransferPage from './views/inventory/TransferPage.vue'
 import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
 import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
+import MobileHome from './views/mobile/MobileHome.vue'
+import MobileInvoice from './views/mobile/MobileInvoice.vue'
+import MobileReceipt from './views/mobile/MobileReceipt.vue'
 // receipt-extraction-consume (REQ-RXC-003) — custom detail page for a single
 // Receipt record: prefills from a docudesk extraction draft with per-field
 // confidence + correction + re-request, none of which fits the built-in
@@ -412,6 +419,8 @@ export default {
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
+	// ledger-period-end REQ-LPE-004: Spread over periods on ARInvoiceDetail.
+	SpreadOverPeriodsModal: { kind: 'modal', component: SpreadOverPeriodsModal },
 	// reporting-relation-both-sides: link a customer to its supplier record.
 	RelationLinkDialog: { kind: 'modal', component: RelationLinkDialog },
 	PaymentPlanActionModal: { kind: 'modal', component: PaymentPlanActionModal },
@@ -424,6 +433,10 @@ export default {
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },
 	MobileScannerPick: { kind: 'page', component: PickPage },
 	MobileScannerCount: { kind: 'page', component: CountPage },
+	// platform-mobile-pwa: the Shillinq Mobile app (receipts, invoice drafts, offline queue).
+	MobileHome: { kind: 'page', component: MobileHome },
+	MobileReceipt: { kind: 'page', component: MobileReceipt },
+	MobileInvoice: { kind: 'page', component: MobileInvoice },
 
 	InvoiceGenerator: { kind: 'page', component: InvoiceGenerator },
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
@@ -440,6 +453,7 @@ export default {
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
+	ServiceReceiptForm: { kind: 'page', component: ServiceReceiptForm },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 
@@ -528,6 +542,16 @@ export default {
 		kind: 'widget',
 		component: SpendAnalyticsPanel,
 		_note: 'Renders all four /api/analytics/spend dimensions with four distinct states (loading / unavailable / no-rows / rows) and prints no figure for a view that did not answer. No built-in widget surfaces an endpoint error as anything but "no data" (CnChartWidget discards ep.error) or a bare em dash (CnStatWidget), which would report REQ-GLS-003\'s deliberate raise as a zero total.',
+	},
+
+	// expenses-category-mapping (REQ-ECM-003): the account each receipt of
+	// a claim posts to, beside its docudesk suggestion, through the slot
+	// widget-claim-receipt-accounts on ExpenseClaimDetail.
+	ClaimReceiptAccounts: {
+		// @custom-widget-ratchet exclude each row joins a receipt to its administration's expense category to show the account it posts to (confirmed account, else the category's account) beside the docudesk suggestion; no declarative widget resolves a value through a second schema by code.
+		kind: 'widget',
+		component: ClaimReceiptAccounts,
+		_note: 'Shows the account each receipt of the claim posts to, in ExpenseAccountResolver order, next to the docudesk suggestion, which never replaces it.',
 	},
 
 	// sales-down-payments (REQ-SDP-003, REQ-SDP-005): the order's down

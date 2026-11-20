@@ -42,6 +42,13 @@ final class InvoiceGenerationRequest {
 	public const MODELS = ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed', 'usage'];
 
 	/**
+	 * The schemas a ticked pass-through item can come from.
+	 *
+	 * @var list<string>
+	 */
+	public const ITEM_SCHEMAS = ['Receipt', 'MileageEntry', 'PerDiem'];
+
+	/**
 	 * Refusal message per billing model when its required input is missing.
 	 *
 	 * @var array<string,string>
@@ -74,6 +81,8 @@ final class InvoiceGenerationRequest {
 	 * @param string|null $notes Free-text notes.
 	 * @param array<int,string> $meterReadingIds FKs to MeterReading rows; required for usage.
 	 * @param string|null $usageRatePlanId Default UsageRatePlan FK when a reading declares none.
+	 * @param array<int,array{schema:string,id:string,disbursement:bool}> $expenseItemRefs Ticked
+	 *        pass-through items (Receipt, MileageEntry or PerDiem), each optionally a disbursement.
 	 */
 	public function __construct(
 		public readonly string $administrationId,
@@ -91,6 +100,7 @@ final class InvoiceGenerationRequest {
 		public readonly ?string $notes = null,
 		public readonly array $meterReadingIds = [],
 		public readonly ?string $usageRatePlanId = null,
+		public readonly array $expenseItemRefs = [],
 	) {
 		$this->assertValid();
 
@@ -126,6 +136,7 @@ final class InvoiceGenerationRequest {
 			notes: self::optionalString(body: $body, key: 'notes'),
 			meterReadingIds: self::stringList(body: $body, key: 'meterReadingIds'),
 			usageRatePlanId: self::optionalString(body: $body, key: 'usageRatePlanId'),
+			expenseItemRefs: self::itemRefs(body: $body),
 		);
 
 	}//end fromArray()
@@ -146,6 +157,40 @@ final class InvoiceGenerationRequest {
 		return null;
 
 	}//end optionalString()
+
+	/**
+	 * The ticked pass-through items: each needs a schema (Receipt,
+	 * MileageEntry or PerDiem) and an id; `disbursement` marks a cost paid
+	 * in the client's name.
+	 *
+	 * @param array<string,mixed> $body Decoded request body.
+	 *
+	 * @return array<int,array{schema:string,id:string,disbursement:bool}>
+	 *
+	 * @throws InvalidArgumentException When an entry names no known schema or no id.
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	private static function itemRefs(array $body): array {
+		$refs = [];
+		foreach ((array)($body['expenseItemRefs'] ?? []) as $ref) {
+			$schema = '';
+			$id     = '';
+			if (is_array($ref) === true) {
+				$schema = (string)($ref['schema'] ?? '');
+				$id     = trim((string)($ref['id'] ?? ''));
+			}
+
+			if (in_array($schema, self::ITEM_SCHEMAS, true) === false || $id === '') {
+				throw new InvalidArgumentException('Each expenseItemRefs entry needs a schema (Receipt, MileageEntry or PerDiem) and an id.');
+			}
+
+			$refs[] = ['schema' => $schema, 'id' => $id, 'disbursement' => (($ref['disbursement'] ?? false) === true)];
+		}
+
+		return $refs;
+
+	}//end itemRefs()
 
 	/**
 	 * Read an id-list field as a list of strings (a scalar becomes one entry).

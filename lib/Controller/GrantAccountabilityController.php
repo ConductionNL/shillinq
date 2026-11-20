@@ -34,6 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use DateTimeImmutable;
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
@@ -228,7 +229,7 @@ class GrantAccountabilityController extends Controller {
 
 		$firstMonth = (((int)$match[2] - 1) * 3) + 1;
 		$start = sprintf('%s-%02d-01', $match[1], $firstMonth);
-		$end = (new \DateTimeImmutable($start))->modify('+2 months')->format('Y-m-t');
+		$end = (new DateTimeImmutable($start))->modify('+2 months')->format('Y-m-t');
 		return [$start, $end];
 
 	}//end period()

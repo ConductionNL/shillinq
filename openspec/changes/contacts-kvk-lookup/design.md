@@ -42,11 +42,20 @@ properties is shillinq knowledge, so it sits in shillinq's declaration:
 ```
 
 For `Payee`: `name` from `naam`, `tradingName` from `handelsnamen[0].naam`,
-`address.street` from `_embedded.hoofdvestiging.adressen[0].straatnaam`,
-`address.houseNumber` from `...huisnummer` with `huisletter` and
-`huisnummerToevoeging` appended, `address.postcode`, `address.city` from
-`plaats`, `address.country` fixed `NL`. `CustomerMaster` has no address
-property; it fills names only.
+`address.street` from `adres.binnenlandsAdres.straatnaam`, `address.postcode`
+and `address.city` (from `plaats`) beside it, `address.country` the literal
+`=NL`. `CustomerMaster` has no address property; it fills names only.
+
+Read against the renderer as it shipped (nextcloud-vue `propertySourceFill`)
+and integriq's `kvk` provider: a fill source is a string, either a dotted path
+into the resolved record or `=literal`; an object such as `{join: [...]}` or
+`{value: ...}` is skipped without a word. The provider resolves a KvK Zoeken
+row (the head office first), so the paths read `adres.binnenlandsAdres`, not
+the Basisprofiel's `_embedded.hoofdvestiging.adressen`. `address.houseNumber`
+is not filled: the row carries `huisnummer` as a number while the property is
+a string, and the renderer can neither join the letter and addition nor cast.
+The trade-name paths fill when a source answers `handelsnamen` and are skipped
+otherwise.
 
 The key name `fill` is a proposal to the renderer. If nextcloud-vue settles on
 another name when it builds the renderer, this change follows it: the decision
