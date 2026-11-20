@@ -40,6 +40,27 @@ class BillingModelEngine {
 	public const DEFAULT_VAT_RATE = 21.0;
 
 	/**
+	 * VAT treatment of a recharged cost billed as part of the main supply.
+	 *
+	 * @var string
+	 */
+	public const VAT_MAIN_SUPPLY = 'main-supply';
+
+	/**
+	 * VAT treatment of a cost paid in the client's name, outside the VAT base.
+	 *
+	 * @var string
+	 */
+	public const VAT_DISBURSEMENT = 'disbursement';
+
+	/**
+	 * The mention a disbursement line carries on the invoice.
+	 *
+	 * @var string
+	 */
+	public const DISBURSEMENT_MENTION = 'Verschotten, buiten de btw-grondslag';
+
+	/**
 	 * T&M calculation: hours × rate + expenses, grouped by (rate, resourceType).
 	 *
 	 * @param array<int,array<string,mixed>> $timeEntries Resolved time entries (timeEntryId, resourceType, hours, rateCents, rateApplied, vatRate).
@@ -402,8 +423,9 @@ class BillingModelEngine {
 	 * @return array<int,array<string,mixed>> The lines with the expenses appended.
 	 */
 	private function withExpenses(array $lines, array $expenses): array {
+		$mainSupplyRate = self::mainSupplyRate(lines: $lines);
 		foreach ($expenses as $exp) {
-			$lines[] = $this->expenseLine(expense: $exp, lineNumber: (count($lines) + 1));
+			$lines[] = $this->expenseLine(expense: $exp, lineNumber: (count($lines) + 1), mainSupplyRate: $mainSupplyRate);
 		}
 
 		return $lines;
@@ -411,15 +433,43 @@ class BillingModelEngine {
 	}//end withExpenses()
 
 	/**
+	 * The VAT rate of the invoice's main supply: the rate of its first
+	 * non-expense line, else the default rate.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The lines before the expenses.
+	 *
+	 * @return float
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.2
+	 */
+	private static function mainSupplyRate(array $lines): float {
+		foreach ($lines as $line) {
+			if (($line['sourceType'] ?? '') !== 'expense' && isset($line['vatRate']) === true) {
+				return (float)$line['vatRate'];
+			}
+		}
+
+		return self::DEFAULT_VAT_RATE;
+	}//end mainSupplyRate()
+
+	/**
 	 * Build an expense line.
 	 *
-	 * @param array<string,mixed> $expense Expense (expenseId, description, costAmountCents, vatRate).
-	 * @param int $lineNumber Sequential line number.
+	 * A whole claim keeps its own VAT rate. A ticked pass-through item
+	 * (`recharge` present) is billed at its cost plus the markup locked at
+	 * submit, at the main supply's VAT rate, or outside the VAT base when it
+	 * is marked a disbursement (REQ-STEB-003).
+	 *
+	 * @param array<string,mixed> $expense        Expense (expenseId, description, costAmountCents, vatRate, recharge?).
+	 * @param int                 $lineNumber     Sequential line number.
+	 * @param float               $mainSupplyRate The VAT rate of the invoice's main supply.
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
-	private function expenseLine(array $expense, int $lineNumber): array {
-		return [
+	private function expenseLine(array $expense, int $lineNumber, float $mainSupplyRate = self::DEFAULT_VAT_RATE): array {
+		$line = [
 			'lineNumber' => $lineNumber,
 			'sourceType' => 'expense',
 			'sourceId' => (string)$expense['expenseId'],
@@ -431,8 +481,59 @@ class BillingModelEngine {
 			'vatRate' => (float)($expense['vatRate'] ?? self::DEFAULT_VAT_RATE),
 			'modelSpecificFields' => null,
 		];
+		if (isset($expense['recharge']) === false || is_array($expense['recharge']) === false) {
+			return $line;
+		}
+
+		return $this->rechargeLine(line: $line, recharge: $expense['recharge'], mainSupplyRate: $mainSupplyRate);
 
 	}//end expenseLine()
+
+	/**
+	 * A recharged item's line: cost plus markup, the markup rate as a
+	 * percentage, the VAT treatment and the `recharge` record.
+	 *
+	 * @param array<string,mixed> $line           The plain expense line.
+	 * @param array<string,mixed> $recharge       Cost, markup and disbursement facts of the item.
+	 * @param float               $mainSupplyRate The VAT rate of the invoice's main supply.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.2
+	 */
+	private function rechargeLine(array $line, array $recharge, float $mainSupplyRate): array {
+		$costCents   = (int)($recharge['costAmountCents'] ?? $line['costAmountCents']);
+		$markupCents = (int)($recharge['markupAmountCents'] ?? 0);
+		$markupRate  = null;
+		if (isset($recharge['markupRate']) === true) {
+			$markupRate = (float)$recharge['markupRate'];
+		}
+
+		$vatRate   = $mainSupplyRate;
+		$treatment = self::VAT_MAIN_SUPPLY;
+		$mention   = null;
+		if (($recharge['disbursement'] ?? false) === true) {
+			$vatRate   = 0.0;
+			$treatment = self::VAT_DISBURSEMENT;
+			$mention   = self::DISBURSEMENT_MENTION;
+		}
+
+		$line['costAmountCents'] = ($costCents + $markupCents);
+		$line['markup']          = round((($markupRate ?? 0.0) * 100), 2);
+		$line['vatRate']         = $vatRate;
+		$line['recharge']        = [
+			'schema' => (string)($recharge['schema'] ?? ''),
+			'claimId' => (string)($recharge['claimId'] ?? ''),
+			'costAmount' => round($costCents / 100, 2),
+			'markupRuleId' => $recharge['markupRuleId'] ?? null,
+			'markupRate' => $markupRate,
+			'markupAmount' => round($markupCents / 100, 2),
+			'vatTreatment' => $treatment,
+			'vatMention' => $mention,
+		];
+
+		return $line;
+	}//end rechargeLine()
 
 	/**
 	 * Apply a markup percentage to a cents amount with bankers' rounding.

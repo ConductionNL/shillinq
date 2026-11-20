@@ -32,11 +32,15 @@ use OCA\Shillinq\Reporting\Generator\AnnualAccountsReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BalanceSheetReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BbvJaarstukkenReportGenerator;
 use OCA\Shillinq\Reporting\Generator\GeneralLedgerReportGenerator;
+use OCA\Shillinq\Reporting\Generator\Ib47StatementReportGenerator;
+use OCA\Shillinq\Reporting\Generator\IcpReportGenerator;
 use OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator;
 use OCA\Shillinq\Reporting\Generator\ManagementLetterReportGenerator;
 use OCA\Shillinq\Reporting\Generator\ProfitLossReportGenerator;
 use OCA\Shillinq\Reporting\Generator\RuleAuditReportGenerator;
 use OCA\Shillinq\Reporting\Generator\SaftReportGenerator;
+use OCA\Shillinq\Reporting\Generator\SbrXbrlReportGenerator;
+use OCA\Shillinq\Reporting\Generator\SubjectCostsPerTypeReportGenerator;
 use OCA\Shillinq\Reporting\Generator\TrialBalanceReportGenerator;
 use OCA\Shillinq\Reporting\Generator\VatReturnReportGenerator;
 use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
@@ -52,11 +56,14 @@ use ReflectionClass;
  * @covers \OCA\Shillinq\Reporting\Generator\BalanceSheetReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\BbvJaarstukkenReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\GeneralLedgerReportGenerator
+ * @covers \OCA\Shillinq\Reporting\Generator\IcpReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\ManagementLetterReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\ProfitLossReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\RuleAuditReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\SaftReportGenerator
+ * @covers \OCA\Shillinq\Reporting\Generator\SbrXbrlReportGenerator
+ * @covers \OCA\Shillinq\Reporting\Generator\SubjectCostsPerTypeReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\TrialBalanceReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\VatReturnReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator
@@ -75,11 +82,15 @@ class ReportGeneratorCatalogueContractTest extends TestCase {
 		BalanceSheetReportGenerator::class,
 		BbvJaarstukkenReportGenerator::class,
 		GeneralLedgerReportGenerator::class,
+		Ib47StatementReportGenerator::class,
+		IcpReportGenerator::class,
 		Iv3ReportGenerator::class,
 		ManagementLetterReportGenerator::class,
 		ProfitLossReportGenerator::class,
 		RuleAuditReportGenerator::class,
 		SaftReportGenerator::class,
+		SbrXbrlReportGenerator::class,
+		SubjectCostsPerTypeReportGenerator::class,
 		TrialBalanceReportGenerator::class,
 		VatReturnReportGenerator::class,
 		XafAuditfileGenerator::class,

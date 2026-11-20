@@ -33,8 +33,8 @@ use OCA\Integriq\Event\ConnectionStatusReportedEvent;
 use OCA\Shillinq\Service\ConnectionReportService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
-use OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter;
-use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
@@ -51,7 +51,8 @@ use RuntimeException;
  *
  * @covers \OCA\Shillinq\Service\ConnectionReportService
  * @uses   \OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter
- * @uses   \OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter
+ * @uses   \OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter
+ * @uses   \OCA\Shillinq\Service\External\Digipoort\DigipoortSubmissionResult
  * @uses   \OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter
  */
 class ConnectionReportServiceTest extends TestCase {
@@ -124,7 +125,7 @@ class ConnectionReportServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		return [
-			MolliePaymentAdapterInterface::class => new LogMolliePaymentAdapter(logger: $logger),
+			DigipoortSbrAdapterInterface::class => new LogDigipoortSbrAdapter(logger: $logger),
 			TreasuryRateAdapterInterface::class => new LogTreasuryRateAdapter(logger: $logger),
 			DepositPaymentAdapterInterface::class => new LogDepositPaymentAdapter(logger: $logger),
 		];
@@ -169,16 +170,23 @@ class ConnectionReportServiceTest extends TestCase {
 		$result = $this->service(bindings: $this->shippedBindings())->reportAdapterBindings();
 
 		$this->assertSame(
-			expected: ['mollie' => 'simulated', 'treasury-rates' => 'simulated', 'deposit-payment' => 'simulated'],
+			expected: ['digipoort-sbr' => 'simulated', 'treasury-rates' => 'simulated', 'deposit-payment' => 'simulated'],
 			actual: $result
 		);
 		$this->assertCount(expectedCount: 3, haystack: $this->sent);
+		$this->assertSame(
+			expected: 'A log-only adapter answers here. No VAT return, supplementary return, ICP statement or annual accounts reach Digipoort; Submit is refused, a supplementary return is downloaded to file by hand and an ICP statement is downloaded as XML instead.',
+			actual: $this->sentByKey()['digipoort-sbr']->message
+		);
 
-		$mollie = $this->sentByKey()['mollie'];
-		$this->assertSame(expected: 'shillinq', actual: $mollie->app);
-		$this->assertSame(expected: 'mollie', actual: $mollie->key);
-		$this->assertSame(expected: 'simulated', actual: $mollie->status);
-		$this->assertSame(expected: 'A log-only adapter answers here. No payment reaches Mollie.', actual: $mollie->message);
+		$deposit = $this->sentByKey()['deposit-payment'];
+		$this->assertSame(expected: 'shillinq', actual: $deposit->app);
+		$this->assertSame(expected: 'deposit-payment', actual: $deposit->key);
+		$this->assertSame(expected: 'simulated', actual: $deposit->status);
+		$this->assertSame(
+			expected: 'A log-only adapter answers here. Deposits stay pending and no payment provider is called.',
+			actual: $deposit->message
+		);
 	}//end testShippedLogOnlyAdaptersAreReportedSimulated()
 
 	/**
@@ -213,7 +221,7 @@ class ConnectionReportServiceTest extends TestCase {
 		$result = $this->service(bindings: $bindings)->reportAdapterBindings();
 
 		$this->assertSame(expected: 'error', actual: $result['deposit-payment']);
-		$this->assertSame(expected: 'simulated', actual: $result['mollie']);
+		$this->assertSame(expected: 'simulated', actual: $result['treasury-rates']);
 		$this->assertStringContainsString(
 			needle: 'Shillinq could not load the adapter: No binding for ' . DepositPaymentAdapterInterface::class,
 			haystack: $this->sentByKey()['deposit-payment']->message

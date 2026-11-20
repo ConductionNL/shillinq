@@ -27,6 +27,9 @@ use OCA\Shillinq\Integration\ContractLeafProvider;
 use OCA\Shillinq\Integration\FinancialDocumentLeafProvider;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
+use OCA\Shillinq\Service\FinancialDocumentActions;
+use OCA\Shillinq\Service\FinancialDocumentAuthoring;
 use OCA\Shillinq\Service\FinancialDocumentFinder;
 use OCA\Shillinq\Service\FinancialDocumentRows;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
@@ -38,6 +41,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 
 /**
  * An in-memory store per schema that answers a system read in full and a
@@ -136,7 +140,7 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	 *
 	 * @return FinancialDocumentLeafProvider
 	 */
-	private function provider(FinancialDocumentStore $store, array $actions = []): FinancialDocumentLeafProvider {
+	private function provider(FinancialDocumentStore $store, array $actions = [], ?FinancialDocumentActions $acts = null, ?FinancialDocumentAuthoring $authoring = null): FinancialDocumentLeafProvider {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
 			static function (string $app, string $key, string $default = '') use ($actions): string {
@@ -158,6 +162,8 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 			finder: new FinancialDocumentFinder(objectService: new DuckObjectServiceAdapter(inner: $store), appConfig: $appConfig),
 			rows: new FinancialDocumentRows(),
 			authorizer: new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groups),
+			actions: ($acts ?? $this->createMock(FinancialDocumentActions::class)),
+			authoring: ($authoring ?? $this->createMock(FinancialDocumentAuthoring::class)),
 		);
 	}//end provider()
 
@@ -169,7 +175,7 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	 * @return array<string, array<string, mixed>>
 	 */
 	private function listed(FinancialDocumentStore $store): array {
-		$items = $this->provider($store)->list('dossiq', 'case', self::CASE_ID)['items'];
+		$items = $this->provider($store)->list(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID))['items'];
 
 		return array_column($items, null, 'id');
 	}//end listed()
@@ -227,8 +233,8 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	}//end testADocumentTheCallerMayNotReadIsCountedWithoutItsAmountOrNumber()
 
 	public function testTheListSaysWhichActsTheCallerHolds(): void {
-		$none = $this->provider(new FinancialDocumentStore([]))->list('dossiq', 'case', self::CASE_ID)['acts'];
-		$some = $this->provider(new FinancialDocumentStore([]), ['invoice.issue', 'payment.administer', 'invoice.credit'])->list('dossiq', 'case', self::CASE_ID)['acts'];
+		$none = $this->provider(new FinancialDocumentStore([]))->list(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID))['acts'];
+		$some = $this->provider(new FinancialDocumentStore([]), ['invoice.issue', 'payment.administer', 'invoice.credit'])->list(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID))['acts'];
 
 		self::assertSame(['issueInvoice' => false, 'requestPayment' => false, 'administerPayments' => false, 'createQuote' => false, 'creditInvoice' => false, 'raisePayout' => false], $none);
 		self::assertSame(['issueInvoice' => true, 'requestPayment' => false, 'administerPayments' => true, 'createQuote' => false, 'creditInvoice' => true, 'raisePayout' => false], $some);
@@ -237,10 +243,10 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	public function testGetAnswersAReadableRowAndRefusesTheRest(): void {
 		$provider = $this->provider(new FinancialDocumentStore(self::rows(), hidden: ['i-1']));
 
-		self::assertSame('payout', $provider->get('dossiq', 'case', self::CASE_ID, 'o-1')['kind']);
+		self::assertSame('payout', $provider->get(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), 'o-1')['kind']);
 		foreach (['i-1', 'i-9', 'nope'] as $id) {
 			try {
-				$provider->get('dossiq', 'case', self::CASE_ID, $id);
+				$provider->get(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), $id);
 				self::fail($id . ' was answered');
 			} catch (RuntimeException $e) {
 				self::assertStringStartsWith('404', $e->getMessage(), $id);
@@ -248,22 +254,116 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 		}
 	}//end testGetAnswersAReadableRowAndRefusesTheRest()
 
-	public function testTheLeafWritesNothingYet(): void {
+	public function testTheLeafChangesAndDeletesNothingAndRefusesANamelessAct(): void {
 		$provider = $this->provider(new FinancialDocumentStore(self::rows()));
 
 		foreach ([
-			static fn () => $provider->create('dossiq', 'case', self::CASE_ID, []),
-			static fn () => $provider->update('dossiq', 'case', self::CASE_ID, 'i-1', []),
-			static fn () => $provider->delete('dossiq', 'case', self::CASE_ID, 'i-1'),
-		] as $write) {
+			'400' => static fn () => $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), []),
+			'400 ' => static fn () => $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'deleteEverything']),
+			'' => static fn () => $provider->update(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), 'i-1', []),
+			' ' => static fn () => $provider->delete(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), 'i-1'),
+		] as $status => $write) {
 			try {
 				$write();
 				self::fail('a write went through');
 			} catch (RuntimeException $e) {
 				self::assertNotSame('', $e->getMessage());
+				if (trim((string)$status) !== '') {
+					self::assertStringStartsWith(trim((string)$status).' ', $e->getMessage());
+				}
 			}
 		}
-	}//end testTheLeafWritesNothingYet()
+	}//end testTheLeafChangesAndDeletesNothingAndRefusesANamelessAct()
+
+	public function testEachActIsHandedToItsServiceForTheCaller(): void {
+		$acts = $this->createMock(FinancialDocumentActions::class);
+		$authoring = $this->createMock(FinancialDocumentAuthoring::class);
+		$fields = ['amount' => 10, 'debtor' => ['name' => 'X', 'email' => 'x@example.nl']];
+		$acts->expects(self::once())->method('issueInvoice')->with('dossiq', 'case', self::CASE_ID, $fields, '')->willReturn(['id' => 'inv-1']);
+		$acts->expects(self::once())->method('requestPayment')->with('i-1', '')->willReturn(['id' => 'pr-1']);
+		$authoring->expects(self::once())->method('createQuote')->with('dossiq', 'case', self::CASE_ID, $fields, '')->willReturn(['id' => 'q-9']);
+		$authoring->expects(self::once())->method('creditInvoice')->with('i-1', '')->willReturn(['id' => 'cn-1']);
+		$authoring->expects(self::once())->method('raisePayout')->with('dossiq', 'case', self::CASE_ID, $fields, '')->willReturn(['payableId' => 'po-1', 'state' => 'requested']);
+		$provider = $this->provider(new FinancialDocumentStore(self::rows()), acts: $acts, authoring: $authoring);
+
+		self::assertSame(['id' => 'inv-1'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'issueInvoice'] + $fields));
+		self::assertSame(['id' => 'pr-1'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'requestPayment', 'invoiceId' => 'i-1']));
+		self::assertSame(['id' => 'q-9'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'createQuote'] + $fields));
+		self::assertSame(['id' => 'cn-1'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'creditInvoice', 'invoiceId' => 'i-1']));
+		self::assertSame(['payableId' => 'po-1', 'state' => 'requested'], $provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'raisePayout'] + $fields));
+	}//end testEachActIsHandedToItsServiceForTheCaller()
+
+	public function testAnInvoiceActOnlyReachesAnInvoiceOnThisObject(): void {
+		$acts = $this->createMock(FinancialDocumentActions::class);
+		$acts->expects(self::never())->method('requestPayment');
+		$authoring = $this->createMock(FinancialDocumentAuthoring::class);
+		$authoring->expects(self::never())->method('creditInvoice');
+		$provider = $this->provider(new FinancialDocumentStore(self::rows(), ['i-1']), acts: $acts, authoring: $authoring);
+
+		foreach ([
+			'an invoice on another case' => 'i-9',
+			'a credit note' => 'i-2',
+			'a payment request' => 'p-1',
+			'an invoice the caller may not read' => 'i-1',
+			'no invoice named' => '',
+		] as $label => $invoiceId) {
+			foreach (['requestPayment', 'creditInvoice'] as $act) {
+				try {
+					$provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => $act, 'invoiceId' => $invoiceId]);
+					self::fail($label.' was reached through '.$act);
+				} catch (RuntimeException $e) {
+					self::assertStringStartsWith('404 ', $e->getMessage(), $label);
+				}
+			}
+		}
+	}//end testAnInvoiceActOnlyReachesAnInvoiceOnThisObject()
+
+	public function testARefusedActAnswersWithItsStatus(): void {
+		$acts = $this->createMock(FinancialDocumentActions::class);
+		$acts->method('issueInvoice')->willThrowException(new FinancialDocumentActionRefusedException(message: 'This needs the invoice.issue action.', status: 403));
+		$provider = $this->provider(new FinancialDocumentStore(self::rows()), acts: $acts);
+
+		try {
+			$provider->create(new ObjectRef(register: 'dossiq', schema: 'case', id: self::CASE_ID), ['act' => 'issueInvoice', 'amount' => 10]);
+			self::fail('the refusal was swallowed');
+		} catch (RuntimeException $e) {
+			self::assertSame('403 This needs the invoice.issue action.', $e->getMessage());
+			self::assertInstanceOf(FinancialDocumentActionRefusedException::class, $e->getPrevious());
+		}
+	}//end testARefusedActAnswersWithItsStatus()
+
+	public function testAnAppActsUnderItsOwnIdAndReachesAnInvoiceNoUserCouldRead(): void {
+		$acts = $this->createMock(FinancialDocumentActions::class);
+		$acts->expects(self::once())->method('requestPayment')->with('i-1', 'dossiq')->willReturn(['id' => 'pr-2']);
+		$authoring = $this->createMock(FinancialDocumentAuthoring::class);
+		$authoring->expects(self::once())->method('raisePayout')
+			->with('dossiq', 'case', self::CASE_ID, ['amount' => 357, 'administrationId' => 'adm-1'], 'dossiq')
+			->willReturn(['payableId' => 'po-2', 'state' => 'requested']);
+		$provider = $this->provider(new FinancialDocumentStore(self::rows(), ['i-1']), acts: $acts, authoring: $authoring);
+
+		self::assertSame(['id' => 'pr-2'], $provider->createAsApp('dossiq', 'dossiq', 'case', self::CASE_ID, ['act' => 'requestPayment', 'invoiceId' => 'i-1']));
+		self::assertSame(
+			['payableId' => 'po-2', 'state' => 'requested'],
+			$provider->createAsApp('dossiq', 'dossiq', 'case', self::CASE_ID, ['act' => 'raisePayout', 'amount' => 357, 'administrationId' => 'adm-1'])
+		);
+
+		try {
+			$provider->createAsApp('dossiq', 'dossiq', 'case', self::CASE_ID, ['act' => 'creditInvoice', 'invoiceId' => 'i-9']);
+			self::fail('an app reached an invoice on another case');
+		} catch (RuntimeException $e) {
+			self::assertStringStartsWith('404 ', $e->getMessage());
+		}
+	}//end testAnAppActsUnderItsOwnIdAndReachesAnInvoiceNoUserCouldRead()
+
+	public function testAnAppWithoutAnIdIsRefusedBeforeAnyAct(): void {
+		$acts = $this->createMock(FinancialDocumentActions::class);
+		$acts->expects(self::never())->method('issueInvoice');
+		$provider = $this->provider(new FinancialDocumentStore(self::rows()), acts: $acts);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessageMatches('/^403 /');
+		$provider->createAsApp('', 'dossiq', 'case', self::CASE_ID, ['act' => 'issueInvoice', 'amount' => 10]);
+	}//end testAnAppWithoutAnIdIsRefusedBeforeAnyAct()
 
 	public function testTheLeafIsRegisteredBesideThePaymentRequests(): void {
 		$event = new RegisterLeafProvidersEvent();

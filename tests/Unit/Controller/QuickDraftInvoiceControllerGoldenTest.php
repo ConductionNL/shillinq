@@ -120,7 +120,7 @@ class QuickDraftInvoiceControllerGoldenTest extends TestCase {
 	}//end testForeignAdministrationRefused()
 
 	/**
-	 * A member's draft gets the six fields in order; without an administration the active one is used, unchecked.
+	 * A member's draft gets the seven fields in order, the mobile app's client id last; without an administration the active one is used, unchecked.
 	 *
 	 * @return void
 	 */
@@ -134,6 +134,7 @@ class QuickDraftInvoiceControllerGoldenTest extends TestCase {
 			'reference' => 'R',
 			'glAccount' => null,
 			'lines' => [['q' => 1]],
+			'clientId' => null,
 		];
 		self::assertSame(
 			expected: [
@@ -145,6 +146,7 @@ class QuickDraftInvoiceControllerGoldenTest extends TestCase {
 				['getParam', 'reference'],
 				['getParam', 'glAccount'],
 				['getParam', 'lines'],
+				['getParam', 'clientId'],
 				['draft', 'a1', $fields],
 			],
 			actual: $this->calls

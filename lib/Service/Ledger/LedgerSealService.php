@@ -41,6 +41,8 @@ namespace OCA\Shillinq\Service\Ledger;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\IAppConfig;
@@ -249,10 +251,11 @@ class LedgerSealService {
 
 		try {
 			$this->objectService->patchObject(
-				objectId: $id,
-				data: $fields,
-				register: $this->register(),
-				schema: 'GLTransaction',
+				patch: new ObjectPatch(
+					objectId: $id,
+					data: $fields,
+					target: new ObjectFindTarget(register: $this->register(), schema: 'GLTransaction')
+				),
 				_rbac: false,
 				_multitenancy: false
 			);

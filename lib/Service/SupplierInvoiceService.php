@@ -45,8 +45,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
+use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCP\IAppConfig;
@@ -185,7 +185,8 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 * @param string $ublXml UBL Invoice XML document.
 	 * @param array<string,mixed> $context Optional context: ublSourceUri,
 	 *                                     peppolReceivedAt (ISO-8601),
-	 *                                     peppolMessageId.
+	 *                                     peppolMessageId, reviewDraft (true stores the
+	 *                                     invoice as a draft awaiting confirmation).
 	 *
 	 * @return array<string,mixed> The persisted SupplierInvoice (id stamped by OR).
 	 *
@@ -196,17 +197,11 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function ingestUBLInvoice(string $administrationId, string $ublXml, array $context = []): array {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Administration not found');
-		}
+		$this->requireAccessibleAdministration(administrationId: $administrationId, deniedMessage: 'Administration not found');
 
 		$parsed = $this->resolveSupplier(administrationId: $administrationId, parsed: $this->parseUblInvoice(ublXml: $ublXml));
 
-		$existing = $this->findOne(
+		$existing = $this->records()->findOne(
 			schema: 'SupplierInvoice',
 			filters: [
 				'administrationId' => $administrationId,
@@ -219,15 +214,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 			return $existing;
 		}
 
-		$peppolReceivedAt = trim((string)($context['peppolReceivedAt'] ?? ''));
-		if ($peppolReceivedAt === '') {
-			$peppolReceivedAt = $this->nowIso();
-		}
-
-		$ublSourceUri = trim((string)($context['ublSourceUri'] ?? ''));
-		if ($ublSourceUri === '' && isset($context['peppolMessageId']) === true) {
-			$ublSourceUri = 'peppol:' . trim((string)$context['peppolMessageId']);
-		}
+		[$peppolReceivedAt, $ublSourceUri] = $this->peppolProvenance(context: $context);
 
 		$record = array_merge(
 			$parsed,
@@ -242,8 +229,11 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 		);
 
 		$record = array_merge($record, array_filter($this->checks->warnings(invoice: $record)));
+		if (($context['reviewDraft'] ?? false) === true) {
+			$record['extractionStatus'] = ExtractionPrefillService::STATUS_PENDING_REVIEW;
+		}
 
-		return $this->checkSeller(invoice: $this->saveObject(schema: 'SupplierInvoice', object: $record));
+		return $this->checkSeller(invoice: $this->records()->saveObject(schema: 'SupplierInvoice', object: $record));
 	}//end ingestUBLInvoice()
 
 	/**
@@ -371,7 +361,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 
 		$normalised = $this->normaliseOcrPayload(ocrPayload: $ocrPayload);
 
-		$existing = $this->findOne(
+		$existing = $this->records()->findOne(
 			schema: 'SupplierInvoice',
 			filters: [
 				'administrationId' => $administrationId,
@@ -407,7 +397,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 			]
 		);
 
-		return $this->saveObject(schema: 'SupplierInvoice', object: $record);
+		return $this->records()->saveObject(schema: 'SupplierInvoice', object: $record);
 	}//end ingestPDFInvoice()
 
 	/**
@@ -483,7 +473,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 		$invoice['matchedPoIds'] = self::matchedPoIdsWith(invoice: $invoice, linkedPoId: $linkedPoId);
 		$invoice['consolidatedAt'] = $this->nowIso();
 
-		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
+		return $this->records()->saveObject(schema: 'SupplierInvoice', object: $invoice);
 	}//end linkInvoiceLineToPo()
 
 	/**
@@ -537,7 +527,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 * @throws \RuntimeException When the invoice is not found in the administration.
 	 */
 	private function loadInvoiceToLink(string $administrationId, string $invoiceId): array {
-		$invoice = $this->findOne(
+		$invoice = $this->records()->findOne(
 			schema: 'SupplierInvoice',
 			filters: [
 				'id' => $invoiceId,
@@ -676,19 +666,13 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function setStatus(string $administrationId, string $invoiceId, string $toStatus): array {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Supplier invoice not found');
-		}
+		$this->requireAccessibleAdministration(administrationId: $administrationId, deniedMessage: 'Supplier invoice not found');
 
 		if ($invoiceId === '') {
 			throw new RuntimeException('Supplier invoice not found');
 		}
 
-		$invoice = $this->findOne(
+		$invoice = $this->records()->findOne(
 			schema: 'SupplierInvoice',
 			filters: [
 				'id' => $invoiceId,
@@ -700,6 +684,49 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 		}
 
 		$fromStatus = (string)($invoice['statusCode'] ?? '');
+		$this->assertAllowedTransition(fromStatus: $fromStatus, toStatus: $toStatus);
+
+		$invoice['statusCode'] = $toStatus;
+		$invoice[$toStatus . 'At'] = $this->nowIso();
+
+		return $this->records()->saveObject(schema: 'SupplierInvoice', object: $invoice);
+	}//end setStatus()
+
+	/**
+	 * Require a non-empty administration the caller may access.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $deniedMessage The message when the caller has no access.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the id is empty or the administration is inaccessible.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function requireAccessibleAdministration(string $administrationId, string $deniedMessage): void {
+		if ($administrationId === '') {
+			throw new RuntimeException('administrationId is required');
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			throw new RuntimeException($deniedMessage);
+		}
+	}//end requireAccessibleAdministration()
+
+	/**
+	 * Require the status transition to be allowed.
+	 *
+	 * @param string $fromStatus The current status.
+	 * @param string $toStatus The target status.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException On an unknown current status or an illegal transition.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function assertAllowedTransition(string $fromStatus, string $toStatus): void {
 		if (isset(self::ALLOWED_TRANSITIONS[$fromStatus]) === false) {
 			throw new RuntimeException('Invalid current statusCode: ' . $fromStatus);
 		}
@@ -707,12 +734,30 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 		if (in_array($toStatus, self::ALLOWED_TRANSITIONS[$fromStatus], true) === false) {
 			throw new RuntimeException('Illegal transition from ' . $fromStatus . ' to ' . $toStatus);
 		}
+	}//end assertAllowedTransition()
 
-		$invoice['statusCode'] = $toStatus;
-		$invoice[$toStatus . 'At'] = $this->nowIso();
+	/**
+	 * When the invoice arrived over Peppol (default now) and where its UBL came from.
+	 *
+	 * @param array<string,mixed> $context The ingestion context.
+	 *
+	 * @return array{0: string, 1: string} The received-at timestamp and the UBL source URI.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function peppolProvenance(array $context): array {
+		$peppolReceivedAt = trim((string)($context['peppolReceivedAt'] ?? ''));
+		if ($peppolReceivedAt === '') {
+			$peppolReceivedAt = $this->nowIso();
+		}
 
-		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
-	}//end setStatus()
+		$ublSourceUri = trim((string)($context['ublSourceUri'] ?? ''));
+		if ($ublSourceUri === '' && isset($context['peppolMessageId']) === true) {
+			$ublSourceUri = 'peppol:' . trim((string)$context['peppolMessageId']);
+		}
+
+		return [$peppolReceivedAt, $ublSourceUri];
+	}//end peppolProvenance()
 
 	/**
 	 * Parse a UBL Invoice XML document into the structured field shape used
@@ -1198,101 +1243,6 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	}//end toCentsLoose()
 
 	/**
-	 * Persist an object via OR's real ObjectService API (saveObject).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object Object to persist.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'SupplierInvoiceService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'SupplierInvoiceService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OR register slug from app config (defaults to "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
-
-	/**
 	 * Convert a decimal amount to integer cents, rounding half-up.
 	 *
 	 * @param float $amount Amount in the document currency.
@@ -1311,4 +1261,17 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	private function nowIso(): string {
 		return date('c');
 	}//end nowIso()
+
+	/**
+	 * The register records of this service.
+	 *
+	 * @return SchemaRecordStore The store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'SupplierInvoiceService')
+		);
+
+	}//end records()
 }//end class

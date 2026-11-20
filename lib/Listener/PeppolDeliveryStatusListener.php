@@ -53,6 +53,8 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PeppolDeliveryStatusListenerInterface;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -77,6 +79,13 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 * @var string
 	 */
 	public const CLOUDEVENT_TYPE = 'nl.conduction.peppol.delivery.status';
+
+	/**
+	 * The objectUri segment of a purchase order (`openregister://shillinq/PurchaseOrder/<id>`).
+	 *
+	 * @var string
+	 */
+	public const PURCHASE_ORDER_SEGMENT = '/PurchaseOrder/';
 
 	/**
 	 * Notification object type for the finance-operator "rejected" alert.
@@ -130,6 +139,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
+	 * @param PurchaseOrderServiceInterface|null $purchaseOrders Applies a status naming a purchase order (REQ-PODR-001).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -137,6 +147,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
+		private readonly ?PurchaseOrderServiceInterface $purchaseOrders = null,
 	) {
 
 	}//end __construct()
@@ -167,8 +178,8 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 
 		try {
 			$entity = $event->getObject();
-			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			$cloudEvent = self::deliveryStatusEvent(entity: $entity);
+			if ($cloudEvent === null) {
 				return;
 			}
 
@@ -192,7 +203,23 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	}//end handle()
 
 	/**
-	 * Apply one delivery-status payload to the matching ARInvoice.
+	 * The entity's CloudEvent when it is an integriq delivery-status event.
+	 *
+	 * @param mixed $entity The created object entity, or null.
+	 *
+	 * @return array<string,mixed>|null The CloudEvent, or null for any other object.
+	 */
+	private static function deliveryStatusEvent(mixed $entity): array|null {
+		$cloudEvent = $entity?->getObject();
+		if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			return null;
+		}
+
+		return $cloudEvent;
+	}//end deliveryStatusEvent()
+
+	/**
+	 * Apply one delivery-status payload to the matching purchase order or ARInvoice.
 	 *
 	 * @param array<string,mixed> $payload {objectUri, transmissionId, status, timestamp, detail}.
 	 *
@@ -209,6 +236,27 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 			return;
 		}
 
+		if (str_contains($update->objectUri, self::PURCHASE_ORDER_SEGMENT) === true) {
+			$this->purchaseOrders?->applyPeppolDeliveryStatus(
+				purchaseOrderId: $this->extractId(objectUri: $update->objectUri),
+				status: $update->status,
+				detail: $update->detail
+			);
+			return;
+		}
+
+		$this->applyToInvoice(update: $update);
+	}//end apply()
+
+	/**
+	 * Record a delivery status on the ARInvoice the update points at, and alert
+	 * the finance operators on a rejection.
+	 *
+	 * @param DeliveryStatusUpdate $update The delivery-status update.
+	 *
+	 * @return void
+	 */
+	private function applyToInvoice(DeliveryStatusUpdate $update): void {
 		$invoice = $this->matchingInvoice(update: $update);
 		if ($invoice === null || $this->transitionAllowed(invoice: $invoice, update: $update) === false) {
 			return;
@@ -225,8 +273,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 		if ($update->status === 'rejected') {
 			$this->notifyFinanceOperators(invoice: $invoice, detail: $update->detail);
 		}
-
-	}//end apply()
+	}//end applyToInvoice()
 
 	/**
 	 * The ARInvoice the update's objectUri points at; a miss is logged.
@@ -478,11 +525,6 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

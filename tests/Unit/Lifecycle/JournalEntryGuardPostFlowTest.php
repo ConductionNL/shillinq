@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
 use OCA\Shillinq\Lifecycle\PostingRefusedException;
+use OCA\Shillinq\Lifecycle\LineDimensionCheck;
 use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -105,6 +106,7 @@ class JournalEntryGuardPostFlowTest extends TestCase {
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($store),
 			restrictions: $this->restrictions,
+			dimensions: $this->createMock(LineDimensionCheck::class),
 		);
 	}
 

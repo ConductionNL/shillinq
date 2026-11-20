@@ -298,16 +298,12 @@ class LeaseAmortizationCalculator {
 		$rows = [];
 		for ($sequence = 1; $sequence <= $periods; $sequence++) {
 			$openingLiability = $liabilityCents;
-			$interestCents = (int)round($openingLiability * $rate);
-
-			// The non-final periods apply the level payment; the final payment fully
-			// extinguishes the liability (absorbing accumulated rounding).
-			$paymentTotal = $paymentCents;
-			$principalCents = ($paymentTotal - $interestCents);
-			if ($sequence === $periods) {
-				$principalCents = $openingLiability;
-				$paymentTotal = ($interestCents + $principalCents);
-			}
+			[$interestCents, $principalCents, $paymentTotal] = $this->paymentParts(
+				openingLiability: $openingLiability,
+				rate: $rate,
+				paymentCents: $paymentCents,
+				isFinal: ($sequence === $periods)
+			);
 
 			// Closing liability = opening − principal repaid. The interest accrual
 			// is funded by the payment (payment = interest + principal), so it does
@@ -315,11 +311,7 @@ class LeaseAmortizationCalculator {
 			$closingLiability = ($openingLiability - $principalCents);
 
 			$openingRou = $rouCents;
-			$depreciationCents = $depreciationPer;
-			// The final period absorbs RoU rounding to land exactly on zero.
-			if ($sequence === $periods || $depreciationCents > $openingRou) {
-				$depreciationCents = $openingRou;
-			}
+			$depreciationCents = $this->depreciationFor(openingRou: $openingRou, depreciationPer: $depreciationPer, isFinal: ($sequence === $periods));
 
 			$closingRou = ($openingRou - $depreciationCents);
 
@@ -342,6 +334,54 @@ class LeaseAmortizationCalculator {
 
 		return $rows;
 	}//end buildSchedule()
+
+	/**
+	 * One period's interest, principal and total payment in cents.
+	 *
+	 * @param int   $openingLiability The opening lease liability in cents.
+	 * @param float $rate             The periodic rate.
+	 * @param int   $paymentCents     The level payment in cents.
+	 * @param bool  $isFinal          Whether this is the final period.
+	 *
+	 * @return array{0:int,1:int,2:int} Interest, principal and total payment.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	private function paymentParts(int $openingLiability, float $rate, int $paymentCents, bool $isFinal): array {
+		$interestCents = (int)round($openingLiability * $rate);
+
+		// The non-final periods apply the level payment; the final payment fully
+		// extinguishes the liability (absorbing accumulated rounding).
+		$paymentTotal = $paymentCents;
+		$principalCents = ($paymentTotal - $interestCents);
+		if ($isFinal === true) {
+			$principalCents = $openingLiability;
+			$paymentTotal = ($interestCents + $principalCents);
+		}
+
+		return [$interestCents, $principalCents, $paymentTotal];
+	}//end paymentParts()
+
+	/**
+	 * One period's RoU depreciation in cents.
+	 *
+	 * @param int  $openingRou      The opening RoU asset in cents.
+	 * @param int  $depreciationPer The straight-line charge per period in cents.
+	 * @param bool $isFinal         Whether this is the final period.
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	private function depreciationFor(int $openingRou, int $depreciationPer, bool $isFinal): int {
+		$depreciationCents = $depreciationPer;
+		// The final period absorbs RoU rounding to land exactly on zero.
+		if ($isFinal === true || $depreciationCents > $openingRou) {
+			$depreciationCents = $openingRou;
+		}
+
+		return $depreciationCents;
+	}//end depreciationFor()
 
 	/**
 	 * Straight-line per-period charge in cents (REQ-LA-002 depreciation column).

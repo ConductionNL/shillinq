@@ -74,6 +74,22 @@ export function paymentTermDays(terms) {
 }
 
 /**
+ * The payment terms of a customer as a terms string: its `paymentTermDays`
+ * (0 to 365) when set, else 30 days (sales-invoice-sending REQ-SIS-005).
+ *
+ * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+ * @param {object|null|undefined} customer The CustomerMaster record.
+ * @return {string} The terms, e.g. `net14`.
+ */
+export function customerTerms(customer) {
+	const days = Number(customer?.paymentTermDays)
+	if (customer?.paymentTermDays === null || customer?.paymentTermDays === undefined || customer?.paymentTermDays === '') {
+		return 'net30'
+	}
+	return Number.isInteger(days) && days >= 0 && days <= 365 ? `net${days}` : 'net30'
+}
+
+/**
  * Compute a due date string (YYYY-MM-DD) from an invoice date plus the
  * customer's payment terms.
  *
@@ -243,4 +259,30 @@ function fillBlankLineFields(line, prefs) {
 	for (const field of ['description', 'unitPrice']) {
 		if (prefs[field] && !line[field]) line[field] = prefs[field]
 	}
+}
+
+/**
+ * The customer option a quick draft starts with: the one whose customer is
+ * the record `ref` names, by its object id, its `@self` id or its customer
+ * number. Null when `ref` is empty or names no listed customer, so the
+ * dialog then starts without a customer as it does elsewhere.
+ *
+ * @param {Array<{value: string, customer: object}>} options The customer options of the dialog.
+ * @param {string} ref The starting customer: an object id or a customer number.
+ * @return {object|null} The matching option, or null.
+ *
+ * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+ */
+export function startingCustomerOption(options, ref) {
+	const wanted = String(ref ?? '').trim()
+	if (wanted === '' || !Array.isArray(options)) {
+		return null
+	}
+	return (
+		options.find((option) => {
+			const customer = option?.customer || {}
+			return [customer.id, customer['@self']?.id, customer.uuid, option?.value]
+				.some((candidate) => candidate !== undefined && candidate !== null && String(candidate) === wanted)
+		}) || null
+	)
 }

@@ -22,6 +22,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\ProductCatalogController;
 use OCA\Shillinq\Service\ProductCatalogService;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -85,23 +86,51 @@ class ProductCatalogControllerGoldenTest extends TestCase {
 			}
 		);
 
-		$response = (new ProductCatalogController($this->createMock(IRequest::class), $service, $session, $logger))->$action();
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+
+		$response = (new ProductCatalogController($this->createMock(IRequest::class), $service, $session, $logger, $l10n))->$action();
 		return [$response->getStatus(), $response->getData()];
 	}//end act()
 
 	/**
-	 * Each listing: 401 without a session, 403 without an administration, the rows, or a logged 500.
+	 * Each listing: 401 without a session, 403 without an administration, the rows
+	 * with the note for the source that answered, or a logged 500.
 	 *
 	 * @return void
 	 */
 	public function testListings(): void {
-		$cases = [['products', 'listProducts', 'product catalog'], ['productAttributes', 'listAttributes', 'product attribute']];
-		foreach ($cases as [$action, $method, $label]) {
+		$refusal = [
+			'error'   => 'no_accessible_administration',
+			'message' => 'You have no administration yet, so there is no inventory to show. Ask an administrator for access.',
+		];
+		$cases   = [
+			[
+				'products',
+				'listProducts',
+				'product catalog',
+				'These products come from the product master.',
+				'The product master is unavailable, so these are the products your stock and barcode records reference.'
+					. ' Names, categories and prices are owned elsewhere and stay blank.',
+			],
+			[
+				'productAttributes',
+				'listAttributes',
+				'product attribute',
+				'These are the attribute names the product master\'s own products declare.',
+				'The product master is unavailable, so these are the attributes the integration contract publishes.'
+					. ' Owned by says which application authors each value.',
+			],
+		];
+		foreach ($cases as [$action, $method, $label, $masterNote, $fallbackNote]) {
 			$this->calls = [];
 			self::assertSame(expected: [401, ['error' => 'Authentication required']], actual: $this->act(action: $action, loggedIn: false));
-			self::assertSame(expected: [403, ['error' => 'no_accessible_administration']], actual: $this->act(action: $action, loggedIn: true));
-			self::assertSame(expected: [200, ['rows' => [1]]], actual: $this->act(action: $action, loggedIn: true, rows: ['rows' => [1]]));
-			self::assertSame(expected: [200, []], actual: $this->act(action: $action, loggedIn: true, rows: []));
+			self::assertSame(expected: [403, $refusal], actual: $this->act(action: $action, loggedIn: true));
+			self::assertSame(
+				expected: [200, ['rows' => [1], 'authoritative' => true, 'sourceNote' => $masterNote]],
+				actual: $this->act(action: $action, loggedIn: true, rows: ['rows' => [1], 'authoritative' => true])
+			);
+			self::assertSame(expected: [200, ['sourceNote' => $fallbackNote]], actual: $this->act(action: $action, loggedIn: true, rows: []));
 			self::assertSame(expected: [500, ['error' => 'catalog_unavailable']], actual: $this->act(action: $action, loggedIn: true, rows: 'throw'));
 			$log      = ['error', 'ProductCatalogController: ' . $label . ' lookup failed', ['exception' => 'store down']];
 			$expected = [['getUser'], ['getUser'], [$method], ['getUser'], [$method], ['getUser'], [$method], ['getUser'], [$method], $log];

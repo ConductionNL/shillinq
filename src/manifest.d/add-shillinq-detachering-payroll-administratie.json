@@ -326,7 +326,22 @@
 					}
 				],
 				"defaultSort": "-belastingjaar",
-				"detailRoute": "IB47RecordDetail"
+				"detailRoute": "IB47RecordDetail",
+				"headerActions": [
+					{
+						"id": "prepare-ib47-batch",
+						"label": "Prepare last year's batch",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/ib47/batches/prepare",
+						"method": "POST",
+						"icon": "CalculatorVariantOutline",
+						"variant": "primary",
+						"confirm": true,
+						"successMessage": "Last year's IB47 batch was prepared from the confirmed payment runs.",
+						"errorMessage": "The IB47 batch could not be prepared.",
+						"description": "Sum last year's confirmed payments to every payee marked as an IB47 recipient into one record per payee. Preparing again updates those records."
+					}
+				]
 			}
 		},
 		{

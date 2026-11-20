@@ -16,6 +16,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Ledger;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Service\Ledger\LedgerSealCanonicaliser;
 use OCA\Shillinq\Service\Ledger\LedgerSealService;
 use OCP\IAppConfig;
@@ -126,9 +127,11 @@ final class LedgerSealServiceTest extends TestCase {
 			));
 			return array_slice($rows, (int)($config['offset'] ?? 0), (int)($config['limit'] ?? 1000));
 		});
-		$objects->method('patchObject')->willReturnCallback(function (string $objectId, array $data, $register = null, $schemaName = null, bool $_rbac = true, bool $_multitenancy = true) {
-			self::assertSame('GLTransaction', $schemaName);
+		$objects->method('patchObject')->willReturnCallback(function (ObjectPatch $patch, bool $_rbac = true, bool $_multitenancy = true) {
+			self::assertSame('GLTransaction', $patch->target->schema);
 			self::assertFalse($_rbac);
+			$objectId = $patch->objectId;
+			$data = $patch->data;
 			$this->patches[] = [$objectId, $data];
 			$this->store['GLTransaction'][$objectId] = array_merge($this->store['GLTransaction'][$objectId], $data);
 			return $this->createStub(\OCA\OpenRegister\Contract\ObjectEntityInterface::class);

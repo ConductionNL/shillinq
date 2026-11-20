@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -95,7 +95,7 @@ class InvoiceDeduplicationService {
 		}
 
 		$timeOverlap = array_values(array_intersect($claim->timeEntryIds, array_map('strval', (array)($invoice['timeEntryIds'] ?? []))));
-		$expOverlap = array_values(array_intersect($claim->expenseIds, array_map('strval', (array)($invoice['expenseIds'] ?? []))));
+		$expOverlap = array_values(array_intersect($claim->expenseIds, self::expenseIdsOf(invoice: $invoice)));
 		if (count($timeOverlap) === 0 && count($expOverlap) === 0) {
 			return null;
 		}
@@ -109,6 +109,27 @@ class InvoiceDeduplicationService {
 		];
 
 	}//end conflictWith()
+
+	/**
+	 * The expenses an invoice bills: its claim ids and the ids of the
+	 * pass-through items it bills one by one (`expenseItemRefs`).
+	 *
+	 * @param array<string,mixed> $invoice Existing BillableInvoice.
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	private static function expenseIdsOf(array $invoice): array {
+		$ids = array_map('strval', (array)($invoice['expenseIds'] ?? []));
+		foreach ((array)($invoice['expenseItemRefs'] ?? []) as $ref) {
+			if (is_array($ref) === true && (string)($ref['id'] ?? '') !== '') {
+				$ids[] = (string)$ref['id'];
+			}
+		}
+
+		return array_values(array_unique($ids));
+	}//end expenseIdsOf()
 
 	/**
 	 * The invoice's id when it can conflict — a draft or posted invoice other
@@ -164,11 +185,6 @@ class InvoiceDeduplicationService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

@@ -126,20 +126,7 @@ final class OpenRegisterAutoloader {
 				return true;
 			}
 
-			$path = rtrim($appManager->getAppPath(self::OPENREGISTER_APP_ID), '/');
-			if (is_dir($path.'/lib') === false) {
-				return false;
-			}
-
-			self::$loader = static function (string $class) use ($path): void {
-				$file = self::classFile(appPath: $path, class: $class);
-				if ($file !== null && is_file($file) === true) {
-					require_once $file;
-				}
-			};
-			spl_autoload_register(self::$loader);
-
-			return true;
+			return self::registerFrom(path: rtrim($appManager->getAppPath(self::OPENREGISTER_APP_ID), '/'));
 		} catch (\Throwable) {
 			// OpenRegister absent, or the server container is not up (unit
 			// tests). The caller's class_exists() guard then skips the AppHost
@@ -150,6 +137,31 @@ final class OpenRegisterAutoloader {
 		}//end try
 
 	}//end register()
+
+	/**
+	 * Register the PSR-4 loader for an OpenRegister install at the given path.
+	 *
+	 * @param string $path The OpenRegister app path, without trailing slash.
+	 *
+	 * @return bool True when registered, false when the path holds no `lib/`.
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	private static function registerFrom(string $path): bool {
+		if (is_dir($path.'/lib') === false) {
+			return false;
+		}
+
+		self::$loader = static function (string $class) use ($path): void {
+			$file = self::classFile(appPath: $path, class: $class);
+			if ($file !== null && is_file($file) === true) {
+				require_once $file;
+			}
+		};
+		spl_autoload_register(self::$loader);
+
+		return true;
+	}//end registerFrom()
 
 	/**
 	 * Take the loader off the SPL chain (tests, and OpenRegister disabled).

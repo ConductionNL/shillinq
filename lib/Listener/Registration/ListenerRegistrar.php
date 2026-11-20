@@ -26,18 +26,22 @@ use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
+use OCA\Shillinq\Listener\ActuarialValuationApprovedListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
+use OCA\Shillinq\Listener\ExpenseCategoryAccountListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\PaymentBlockLockListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GLTransactionSealListener;
@@ -45,12 +49,18 @@ use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
+use OCA\Shillinq\Listener\InvestmentAssetListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
+use OCA\Shillinq\Listener\ChartTemplateVersionListener;
+use OCA\Shillinq\Listener\InvoiceNumberLockListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\WebshopOrderListener;
+use OCA\Shillinq\Listener\OfferHelperAgentTemplate;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
+use OCA\Shillinq\Listener\SbrFilingStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
@@ -59,6 +69,7 @@ use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Support\FleetAppId;
+use OCA\Shillinq\PaymentRun\PaymentRunLockRegistration;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\EventDispatcher\IEventDispatcher;
 
@@ -108,6 +119,14 @@ final class ListenerRegistrar {
 				listener: PaymentRequestLeafRegistrationListener::class
 			);
 		}
+
+		// Change platform-help-agent, REQ-PHA-002 — offer the "Shillinq helper" agent
+		// template when hermiq collects templates from installed apps. Registered
+		// by name: the event only exists, and only fires, when hermiq is installed.
+		$context->registerEventListener(
+			event: OfferHelperAgentTemplate::EVENT,
+			listener: OfferHelperAgentTemplate::class
+		);
 
 		// Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
 		// — dispatch posted StockMove records into the valuation engine
@@ -217,6 +236,15 @@ final class ListenerRegistrar {
 			listener: PeppolDeliveryStatusListener::class
 		);
 
+		// Change tax-digipoort-filing task 3.3: integriq's Digipoort connector
+		// reports a filing's delivery and outcome as a
+		// `nl.conduction.sbr.filing.status` CloudEvent object, the way its
+		// Peppol access point does; the filing and its VAT return follow it.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: SbrFilingStatusListener::class
+		);
+
 		// Change receivables-payment-links design D3 / REQ-RPL-003 (#1681): integriq
 		// saves every CloudEvent as an OpenRegister object in register
 		// `integriq`, schema `event`, and dispatches no Nextcloud event of its
@@ -301,6 +329,13 @@ final class ListenerRegistrar {
 			listener: CommitmentTransitionListener::class
 		);
 
+		// Reporting-ifrs-calculations REQ-PEN-011: approving an
+		// ActuarialValuation posts its IAS 19 journal entry.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: ActuarialValuationApprovedListener::class
+		);
+
 		// Task 5.3 — OrderFulfilmentTransitionListener emits
 		// `milestone.completed` on every completed OrderFulfilment and
 		// (for the approved eindoplevering of a tenderned-sourced
@@ -318,6 +353,9 @@ final class ListenerRegistrar {
 
 		(new PurchasingControlsRegistration())->register(context: $context);
 
+		// An assigned AR invoice number cannot be changed (sales-invoice-issue-controls REQ-SIIC-002).
+		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: InvoiceNumberLockListener::class);
+
 		(new PaymentControlsRegistration())->register(context: $context);
 
 		(new ReportingRegistration())->register(context: $context);
@@ -329,12 +367,27 @@ final class ListenerRegistrar {
 		// the pre-save veto is the only place the overlap, legal-basis and
 		// default-amount rules can run at all. Until this listener existed
 		// FeeScheduleService::assertNoOverlap() had tests and no caller.
+		self::registerPreSave(context: $context, listener: FeeScheduleValidationListener::class);
+
+		// An approved payment run is immutable; approval stamps the digest the export checks.
+		(new PaymentRunLockRegistration())->register(context: $context);
+
+		// REQ-ECM-001: an expense category is refused on save when its account
+		// is not an expense account of its administration's chart. Categories
+		// are written straight into OpenRegister, so the pre-save veto is the
+		// only place the rule can run.
 		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
 			$context->registerEventListener(
 				event: $preSaveEvent,
-				listener: FeeScheduleValidationListener::class
+				listener: ExpenseCategoryAccountListener::class
 			);
 		}
+
+		// Payment block fields change only through the block endpoint.
+		$context->registerEventListener(
+			event: 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent',
+			listener: PaymentBlockLockListener::class
+		);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -439,6 +492,25 @@ final class ListenerRegistrar {
 	}//end register()
 
 	/**
+	 * Register a listener on OpenRegister's two pre-save events, create first, then update.
+	 *
+	 * The events are named by string so this compiles without OpenRegister installed.
+	 *
+	 * @param IRegistrationContext $context  The registration context.
+	 * @param class-string         $listener The listener class.
+	 *
+	 * @return void
+	 */
+	private static function registerPreSave(IRegistrationContext $context, string $listener): void {
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: $listener
+			);
+		}
+	}//end registerPreSave()
+
+	/**
 	 * Subscribe the listeners that only hear objects of some schemas.
 	 *
 	 * @param IEventDispatcher $dispatcher The live event dispatcher
@@ -483,6 +555,21 @@ final class ListenerRegistrar {
 			schemas: ['ContractObligation']
 		);
 		// --- end gate-57 region ---
+		// tax-investment-deduction-claims REQ-IDC-001: an active fixed asset
+		// gets its investment deduction eligibility recorded.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectCreatedEvent::class,
+			listener: InvestmentAssetListener::class,
+			schemas: ['FixedAsset']
+		);
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: InvestmentAssetListener::class,
+			schemas: ['FixedAsset']
+		);
+
 		// IFRS-16 lease schedule trigger (revive-lease-capabilities,
 		// shillinq#446). When a LeaseContract is created already `active` or is
 		// updated across the `draft → active` edge, materialise its
@@ -494,6 +581,14 @@ final class ListenerRegistrar {
 		// Interest declared up front: the handler's own
 		// `isLeaseContractSchema()` accepts `leasecontract` or
 		// `…/leasecontract`, i.e. exactly the `LeaseContract` schema slug.
+		// ledger-multi-administration REQ-LMA-005: a template saved with a
+		// higher version queues the sync of the administrations following it.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: ChartTemplateVersionListener::class,
+			schemas: ['AdministrationTemplate']
+		);
 		$this->registerFilteredObjectListener(
 			dispatcher: $dispatcher,
 			event: ObjectCreatedEvent::class,
@@ -623,6 +718,21 @@ final class ListenerRegistrar {
 			event: ObjectCreatedEvent::class,
 			listener: CommitmentTransitionListener::class,
 			schemas: ['Commitment']
+		);
+
+		// Sales-webshop-orders REQ-SWO-001: a saved WebshopOrder that waits
+		// for its invoice is invoiced, marked duplicate or refused.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectCreatedEvent::class,
+			listener: WebshopOrderListener::class,
+			schemas: ['WebshopOrder']
+		);
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: WebshopOrderListener::class,
+			schemas: ['WebshopOrder']
 		);
 	}//end subscribe()
 }//end class

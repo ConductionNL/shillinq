@@ -48,6 +48,7 @@ use OCP\Mail\IMailer;
 use OCP\Mail\IMessage;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * Builds the services over one store.
@@ -311,7 +312,7 @@ trait PaymentPlanFixture {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find($id, schema: $schema)->getObject();
+		return $this->store->find($id, new ObjectFindOptions(schema: $schema))->getObject();
 
 	}//end stored()
 

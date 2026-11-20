@@ -34,9 +34,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\VATReturnService;
-use OCA\Shillinq\Service\VatSuppletieDetectionService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,18 +64,18 @@ class VatSuppletieController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request    The request.
-	 * @param VatSuppletieDetectionService $suppletie  The detection service.
-	 * @param VATReturnService             $vatReturns The VAT return service.
+	 * @param VatSuppletieDetectionServiceInterface $suppletie  The detection service.
+	 * @param VATReturnServiceInterface             $vatReturns The VAT return service.
 	 * @param IUserSession                 $session    The user session.
-	 * @param AdministrationContextService $context    The caller's administrations.
+	 * @param AdministrationContextServiceInterface $context    The caller's administrations.
 	 * @param LoggerInterface              $logger     The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly VatSuppletieDetectionService $suppletie,
-		private readonly VATReturnService $vatReturns,
+		private readonly VatSuppletieDetectionServiceInterface $suppletie,
+		private readonly VATReturnServiceInterface $vatReturns,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

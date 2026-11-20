@@ -97,19 +97,7 @@ class BudgetBlocker implements BudgetBlockerInterface {
 				return false;
 			}
 
-			// Override-mandate holders (e.g. CFO) may force-accept a budget-exceeding
-			// commitment; the override reason is recorded on the commitment (REQ-VPL-001).
-			if ($this->hasOverrideMandate(commitment: $commitment) === true) {
-				return true;
-			}
-
-			$unfit = $this->firstUnfitRule(commitment: $commitment);
-			if ($unfit !== null) {
-				$this->logInsufficientBudget(commitmentNumber: $commitmentNumber, rule: $unfit);
-				return false;
-			}
-
-			return true;
+			return $this->fitsBudgetOrOverride(commitmentNumber: $commitmentNumber, commitment: $commitment);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BudgetBlocker: canCommit failed — denying commitment (fail-closed)',
@@ -119,6 +107,32 @@ class BudgetBlocker implements BudgetBlockerInterface {
 		}//end try
 
 	}//end canCommit()
+
+	/**
+	 * Whether every rule fits its budget, or the signer may override the budget.
+	 *
+	 * @param string $commitmentNumber The commitment identifier.
+	 * @param array<string,mixed> $commitment The Commitment.
+	 *
+	 * @return bool True when the commitment may be signed.
+	 *
+	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+	 */
+	private function fitsBudgetOrOverride(string $commitmentNumber, array $commitment): bool {
+		// Override-mandate holders (e.g. CFO) may force-accept a budget-exceeding
+		// commitment; the override reason is recorded on the commitment (REQ-VPL-001).
+		if ($this->hasOverrideMandate(commitment: $commitment) === true) {
+			return true;
+		}
+
+		$unfit = $this->firstUnfitRule(commitment: $commitment);
+		if ($unfit !== null) {
+			$this->logInsufficientBudget(commitmentNumber: $commitmentNumber, rule: $unfit);
+			return false;
+		}
+
+		return true;
+	}//end fitsBudgetOrOverride()
 
 	/**
 	 * The first of the commitment's rules that does not fit its budget, or
