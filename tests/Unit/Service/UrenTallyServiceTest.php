@@ -137,4 +137,29 @@ final class UrenTallyServiceTest extends TestCase {
 
 	}//end testTallyYearToDateReturnsPatch()
 
+	/**
+	 * Golden: the whole tally, with per-category sums and the overage record.
+	 *
+	 * @return void
+	 */
+	public function testTallyDagGolden(): void {
+		$result = $this->build()->tallyDag(
+			entries: [
+				['category' => 'TRAVEL_TIME_BUSINESS', 'hours' => '9'],
+				'garbage',
+				['hours' => 3],
+				['category' => 'ADMINISTRATION', 'hours' => 1],
+				['category' => 'ADMINISTRATION'],
+			]
+		);
+
+		$overage = $result['overages'][0];
+		unset($result['overages']);
+		self::assertSame(['totalHours' => 5.0, 'perCategory' => ['TRAVEL_TIME_BUSINESS' => 4.0, 'ADMINISTRATION' => 1.0]], $result);
+		self::assertSame(['category', 'ingevoerd', 'geteld', 'notitie'], array_keys($overage));
+		self::assertSame(['TRAVEL_TIME_BUSINESS', 9.0, 4.0], [$overage['category'], $overage['ingevoerd'], $overage['geteld']]);
+		self::assertIsString($overage['notitie']);
+
+	}//end testTallyDagGolden()
+
 }//end class

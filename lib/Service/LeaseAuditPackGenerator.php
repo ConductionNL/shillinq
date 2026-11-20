@@ -3,6 +3,9 @@
 /**
  * Lease Audit Pack Generator (skeleton)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * One-click audit-pack export skeleton for an IFRS 16 lease — packages the
  * lease-contract, full LeasePaymentSchedule, IBR derivation evidence, and every
  * LeaseReassessmentEvent (with before/after snapshots) into a single ZIP for
@@ -26,16 +29,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -235,33 +235,11 @@ class LeaseAuditPackGenerator {
 	 * @return array<string,mixed>|null The lease, or null when out of scope.
 	 */
 	private function fetchLease(string $leaseContractId, string $administrationId): ?array {
-		try {
-			$matches = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('LeaseContract')
-				->findAll(['filters' => ['administrationId' => $administrationId]]);
-		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'LeaseAuditPackGenerator: failed to read lease',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-
-			return null;
-		}
-
-		foreach ($matches as $lease) {
-			if (is_array($lease) === false) {
-				continue;
-			}
-
-			$id = (string)($lease['id'] ?? ($lease['@self']['id'] ?? ''));
-			$slug = (string)($lease['@self']['slug'] ?? '');
-			if ($id === $leaseContractId || $slug === $leaseContractId) {
-				return $lease;
-			}
-		}
-
-		return null;
+		return $this->leases()->lease(
+			leaseContractId: $leaseContractId,
+			administrationId: $administrationId,
+			failure: 'LeaseAuditPackGenerator: failed to read lease'
+		);
 	}//end fetchLease()
 
 	/**
@@ -274,17 +252,7 @@ class LeaseAuditPackGenerator {
 	 */
 	private function fetchEvents(string $sourceLease, string $administrationId): array {
 		try {
-			$events = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('LeaseReassessmentEvent')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'sourceLease' => $sourceLease,
-						],
-					]
-				);
+			$events = $this->leases()->events(sourceLease: $sourceLease, administrationId: $administrationId);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'LeaseAuditPackGenerator: failed to read reassessment events',
@@ -302,13 +270,13 @@ class LeaseAuditPackGenerator {
 	}//end fetchEvents()
 
 	/**
-	 * Resolve OpenRegister's ObjectService lazily.
+	 * The lease and event reads on the configured register.
 	 *
-	 * @return object The ObjectService instance.
+	 * @return LeaseRecords The reader.
 	 */
-	private function objectService(): object {
-		return $this->objectService;
-	}//end objectService()
+	private function leases(): LeaseRecords {
+		return new LeaseRecords(objectService: $this->objectService, register: $this->register(), logger: $this->logger);
+	}//end leases()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
@@ -316,11 +284,6 @@ class LeaseAuditPackGenerator {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

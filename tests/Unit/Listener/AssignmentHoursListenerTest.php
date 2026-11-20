@@ -30,12 +30,15 @@ use OCA\Shillinq\Listener\AssignmentHoursListener;
 use OCA\Shillinq\Repair\BackfillAssignmentHours;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Project\AssignmentHours;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Booking hours keeps the assignment's hours budget current and warns the project owner once per threshold.
@@ -158,7 +161,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	 * @return AssignmentHours
 	 */
 	private function hours(): AssignmentHours {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new AssignmentHours($this->store, $settings);
@@ -206,7 +209,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	 */
 	private function book(string $id, float $hours): void {
 		$row = $this->hour(id: $id, hours: $hours, assignment: self::ASSIGNMENT);
-		$this->store->saveObject(object: $row, schema: 'UrenRegistratie');
+		$this->store->saveObject(object: $row, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'UrenRegistratie')));
 		$this->listener()->handle(new ObjectCreatedEvent($this->entity('UrenRegistratie', $row)));
 
 	}//end book()
@@ -220,7 +223,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find(id: $id, schema: $schema)->getObject();
+		return $this->store->find(id: $id, options: new ObjectFindOptions(schema: $schema))->getObject();
 
 	}//end stored()
 
@@ -315,7 +318,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	public function testAChangedHourReSumsBothAssignments(): void {
 		$old = $this->hour(id: 'u1', hours: 10, assignment: self::ASSIGNMENT);
 		$new = $this->hour(id: 'u1', hours: 4, assignment: self::OTHER_ASSIGNMENT);
-		$this->store->saveObject(object: $new, schema: 'UrenRegistratie');
+		$this->store->saveObject(object: $new, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'UrenRegistratie')));
 
 		$this->listener()->handle(new ObjectUpdatedEvent($this->entity('UrenRegistratie', $new), $this->entity('UrenRegistratie', $old)));
 
@@ -345,7 +348,7 @@ class AssignmentHoursListenerTest extends TestCase {
 		$this->book(id: 'u10', hours: 6);
 		$warned = $this->stored('ProjectAssignment', self::ASSIGNMENT);
 		$raised = array_merge($warned, ['estimatedHours' => 110]);
-		$this->store->saveObject(object: $raised, schema: 'ProjectAssignment');
+		$this->store->saveObject(object: $raised, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'ProjectAssignment')));
 		$this->saved = [];
 
 		$this->listener()->handle(new ObjectUpdatedEvent($this->entity('ProjectAssignment', $raised), $this->entity('ProjectAssignment', $warned)));
@@ -434,8 +437,8 @@ class AssignmentHoursListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListenerAndTheRepairStep(): void {
 		$root = __DIR__ . '/../../..';
-		$reporting = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ProjectHoursRegistration.php');
+		$reporting = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ProjectHoursRegistration.php');
 		$info = (string)file_get_contents($root . '/appinfo/info.xml');
 
 		$this->assertStringContainsString('(new ProjectHoursRegistration())->register(context: $context);', $reporting);

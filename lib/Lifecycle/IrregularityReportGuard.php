@@ -3,17 +3,23 @@
 /**
  * Irregularity Report Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the IrregularityReport register
  * (bookkeeping-single-audit-eu-fondsen, T3 regulatory + compliance). One
  * precondition is referenced from the IrregularityReport schema's
  * x-openregister-lifecycle transitions because it encodes the OLAF €10k
  * IMS-meldplicht that the declarative `requires:` clause cannot yet express:
  *
- *  - canEscalate(): when amountConcerned reaches the OLAF threshold (€10.000),
- *                   an imsReference MUST be present before the report may move
- *                   to vervolgcontrole — i.e. the IMS-melding must have been
- *                   filed (REQ-EUF-007). Below the threshold the IMS-melding is
- *                   not mandatory and escalation is allowed.
+ *  - canEscalate(): when amountConcerned reaches the reporting threshold
+ *                   (€10.000 unless the app configuration's
+ *                   `eu_irregularity_threshold` says otherwise), an
+ *                   imsReference and a recoveryAmount MUST be present before the
+ *                   report may move to vervolgcontrole — i.e. the IMS-melding
+ *                   must have been filed and the amount to recover decided
+ *                   (REQ-EUF-007). Below the threshold the IMS-melding is not
+ *                   mandatory and escalation is allowed.
  *
  * ADR-031 exception reason: the threshold-conditional mandatory-field check is
  * not yet expressible in the declarative lifecycle DSL. When the engine gains
@@ -29,9 +35,6 @@
  *
  * @link https://conduction.nl
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  */
 
@@ -39,7 +42,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -100,14 +104,15 @@ class IrregularityReportGuard {
 			}
 
 			$amount = (float)($report['amountConcerned'] ?? 0.0);
-			if ($amount < self::OLAF_THRESHOLD_EUR) {
-				// Below OLAF threshold — IMS-melding not mandatory.
+			if ($amount < $this->threshold()) {
+				// Below the reporting threshold — the external report is not mandatory.
 				return true;
 			}
 
-			// At/above threshold — IMS-melding (imsReference) must be present.
+			// At/above the threshold — the external report's reference and the
+			// amount to recover must both be recorded (public-sector-grant-accountability REQ-EUF-007).
 			$imsReference = trim((string)($report['imsReference'] ?? ''));
-			return $imsReference !== '';
+			return $imsReference !== '' && is_numeric($report['recoveryAmount'] ?? null) === true;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'IrregularityReportGuard: escalate check failed — denying escalate transition (fail-closed)',
@@ -150,16 +155,27 @@ class IrregularityReportGuard {
 	}//end resolveReport()
 
 	/**
+	 * The reporting threshold: the app configuration's `eu_irregularity_threshold`
+	 * in euros when it is a positive number, else EUR 10,000 (REQ-EUF-007).
+	 *
+	 * @return float
+	 */
+	private function threshold(): float {
+		$raw = trim($this->appConfig->getValueString(AppIdentity::APP_ID, 'eu_irregularity_threshold', ''));
+		if (is_numeric($raw) === false || (float)$raw <= 0) {
+			return self::OLAF_THRESHOLD_EUR;
+		}
+
+		return (float)$raw;
+
+	}//end threshold()
+
+	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
 	 *
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

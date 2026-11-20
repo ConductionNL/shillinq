@@ -30,9 +30,12 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Event\PaymentCreditRequestedEvent;
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Event\PaymentSettlementCommandEvent;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestCommandServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -43,7 +46,7 @@ use Throwable;
  *
  * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
  */
-class ObjectRequestCommandService {
+class ObjectRequestCommandService implements ObjectRequestCommandServiceInterface {
 
 	/**
 	 * States a request cannot be refunded or credited from again.
@@ -197,10 +200,9 @@ class ObjectRequestCommandService {
 			$changed = $change($request);
 			$this->objectService->saveObject(
 				object: $changed,
-				register: $this->registerSlug(),
-				schema: 'PaymentRequest',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'PaymentRequest')),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 		} catch (InvalidArgumentException $e) {
 			$event->refuse(error: $e->getMessage());

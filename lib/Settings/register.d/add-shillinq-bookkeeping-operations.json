@@ -503,7 +503,7 @@
       "VatTariff": {
         "slug": "VatTariff",
         "icon": "PercentOutline",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "title": "BTW-tarief",
         "description": "VAT rate definition. Seeded from btw-tariffs-2026.json with the current statutory rates (21%, 9%, 0%, vrijgesteld, verlegd) and RGS account hints per Wet OB 1968.",
         "x-schema-org": "schema:DefinedTerm",
@@ -563,6 +563,13 @@
             "nullable": true,
             "description": "Citation, e.g. Wet OB 1968 art. 9.",
             "title": "Legal Basis"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.",
+            "title": "Jurisdiction"
           }
         }
       },

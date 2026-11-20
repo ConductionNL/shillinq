@@ -25,8 +25,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
+use OCA\Shillinq\Kernel\Contracts\ReinvestmentReservesInterface;
 
 /**
  * The `applyReinvestmentReserve` transition's executor.
@@ -38,28 +39,26 @@ class ApplyReinvestmentReserveAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ReinvestmentReserves $reserves The reserves.
+	 * @param ReinvestmentReservesInterface $reserves The reserves.
 	 */
 	public function __construct(
-		private readonly ReinvestmentReserves $reserves,
+		private readonly ReinvestmentReservesInterface $reserves,
 	) {
 	}//end __construct()
 
 	/**
 	 * Apply the reserve and return the asset with its fiscal cost basis.
 	 *
-	 * @param array<string,mixed> $objectData   The asset with the transition's inputs merged in.
-	 * @param array<string,mixed> $previousData The asset before.
-	 * @param array<string,mixed> $parameters   Declared parameters (none).
-	 * @param string              $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the asset with the transition's inputs
+	 *                                        merged in.
 	 *
 	 * @return array<string,mixed> The asset to save.
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		return $this->reserves->apply(asset: $objectData);
 
 	}//end execute()

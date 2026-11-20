@@ -167,31 +167,39 @@ export default {
 			this.error = ''
 			this.submitting = true
 			try {
-				let result
-				if (this.mode === 'activate') {
-					result = await activatePlan(this.effectiveId)
-					showSuccess(t('shillinq', 'The plan is active.'))
-				} else if (this.mode === 'cancel') {
-					result = await cancelPlan(this.effectiveId, this.reason)
-					showSuccess(t('shillinq', 'The plan is cancelled.'))
-				} else {
-					result = await settlePlan(this.effectiveId, {
-						amount: this.amount,
-						paidDate: this.paidDate,
-						reference: this.reference,
-					})
-					showSuccess(t('shillinq', 'The payment is recorded.'))
-				}
+				const result = await this.runAction()
 				emit('cn:page:refresh', {})
 				this.$emit('close', result)
 			} catch (error) {
-				this.error = errorMessage(
-					error,
-					t('shillinq', 'The payment plan could not be updated.'),
-				)
+				this.error = errorMessage(error, t('shillinq', 'The payment plan could not be updated.'))
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * Activate, cancel or settle the plan by mode, and announce it.
+		 *
+		 * @return {Promise<object>} The server's answer.
+		 */
+		async runAction() {
+			if (this.mode === 'activate') {
+				const result = await activatePlan(this.effectiveId)
+				showSuccess(t('shillinq', 'The plan is active.'))
+				return result
+			}
+			if (this.mode === 'cancel') {
+				const result = await cancelPlan(this.effectiveId, this.reason)
+				showSuccess(t('shillinq', 'The plan is cancelled.'))
+				return result
+			}
+			const result = await settlePlan(this.effectiveId, {
+				amount: this.amount,
+				paidDate: this.paidDate,
+				reference: this.reference,
+			})
+			showSuccess(t('shillinq', 'The payment is recorded.'))
+			return result
 		},
 
 		/**

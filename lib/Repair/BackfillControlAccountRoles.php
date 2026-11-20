@@ -3,6 +3,9 @@
 /**
  * Backfill Control Account Roles
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `Account.controlAccountFor` names the ledger that owns a control account,
  * and a journal entry by hand on such an account is refused
  * (ledger-booking-rules REQ-LBR-001, REQ-LBR-002). New administrations get
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,8 +39,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -70,12 +72,12 @@ class BackfillControlAccountRoles implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The register slug.
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -105,41 +107,9 @@ class BackfillControlAccountRoles implements IRepairStep {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 			$set = 0;
-			foreach (self::CONTROL_ACCOUNTS as $number => [$name, $role]) {
-				$rows = $this->readAllRows(
-					objectService: $this->objectService,
-					registerSlug: $registerSlug,
-					schema: 'Account',
-					filters: ['accountNumber' => (string)$number]
-				);
-				foreach ($rows as $row) {
-					$account = $this->rowPayload(row: $row);
-					$uuid = ObjectIdentifier::resolve(saved: $row);
-					if ($uuid === '' || $this->needsRole(account: $account, name: $name) === false) {
-						continue;
-					}
-
-					$account['controlAccountFor'] = $role;
-					$this->objectService->saveObject(
-						object: $this->withoutMetadata(row: $account),
-						register: $registerSlug,
-						schema: 'Account',
-						uuid: $uuid,
-						_rbac: false,
-						_multitenancy: false,
-					);
-					$set++;
-					$output->info(
-						sprintf(
-							'Shillinq: account %s %s in administration %s is now the %s control account.',
-							(string)$number,
-							$name,
-							(string)($account['administrationId'] ?? ''),
-							$role
-						)
-					);
-				}//end foreach
-			}//end foreach
+			foreach (self::CONTROL_ACCOUNTS as $number => $nameAndRole) {
+				$set += $this->markControlAccounts(output: $output, registerSlug: $registerSlug, number: $number, nameAndRole: $nameAndRole);
+			}
 
 			$output->info(sprintf('Shillinq: %d control account(s) marked.', $set));
 		} catch (Throwable $e) {
@@ -147,6 +117,59 @@ class BackfillControlAccountRoles implements IRepairStep {
 			$this->logger->warning('Shillinq: marking the control accounts failed', ['exception' => $e->getMessage()]);
 		}//end try
 	}//end run()
+
+	/**
+	 * Set the role on the accounts with one seed number that have none.
+	 *
+	 * @param IOutput $output The repair-step output.
+	 * @param string $registerSlug The register slug.
+	 * @param int|string $number The seed account number.
+	 * @param array{0: string, 1: string} $nameAndRole The seed name and the control role.
+	 *
+	 * @return int The number of accounts marked.
+	 *
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
+	 */
+	private function markControlAccounts(IOutput $output, string $registerSlug, int|string $number, array $nameAndRole): int {
+		[$name, $role] = $nameAndRole;
+		$marked = 0;
+		$rows = $this->readAllRows(
+			objectService: $this->objectService,
+			registerSlug: $registerSlug,
+			schema: 'Account',
+			filters: ['accountNumber' => (string)$number]
+		);
+		foreach ($rows as $row) {
+			$account = $this->rowPayload(row: $row);
+			$uuid = ObjectIdentifier::resolve(saved: $row);
+			if ($uuid === '' || $this->needsRole(account: $account, name: $name) === false) {
+				continue;
+			}
+
+			$account['controlAccountFor'] = $role;
+			$this->objectService->saveObject(
+				object: $this->withoutMetadata(row: $account),
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'Account'),
+					uuid: $uuid
+				),
+				_rbac: false,
+				_multitenancy: false
+			);
+			$marked++;
+			$output->info(
+				sprintf(
+					'Shillinq: account %s %s in administration %s is now the %s control account.',
+					(string)$number,
+					$name,
+					(string)($account['administrationId'] ?? ''),
+					$role
+				)
+			);
+		}//end foreach
+
+		return $marked;
+	}//end markControlAccounts()
 
 	/**
 	 * Whether an account still carries the seed's name and has no role yet.

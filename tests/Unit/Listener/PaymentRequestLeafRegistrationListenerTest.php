@@ -68,23 +68,53 @@ final class PaymentRequestLeafRegistrationListenerTest extends TestCase {
 				$fields[$property->getName()] = $property->getValue($leaf['descriptor']);
 			}
 
-			$fields['provider'] = ($leaf['provider'] === null) ? null : $providers[spl_object_id($leaf['provider'])];
+			$fields['provider'] = null;
+			if ($leaf['provider'] !== null) {
+				$fields['provider'] = $providers[spl_object_id($leaf['provider'])];
+			}
+
+			ksort($fields);
 			$leaves[] = $fields;
 		}
 
-		$panel = ['kinds' => ['render-surface'], 'requiredApp' => 'shillinq', 'group' => 'Finance', 'surfaces' => ['detail-page', 'single-entity'], 'referenceType' => null, 'requiresPermission' => null, 'renderMode' => 'mount', 'provider' => null];
-		$data = ['kinds' => ['data-provider'], 'requiredApp' => 'shillinq', 'group' => 'Finance', 'surfaces' => [], 'referenceType' => null, 'requiresPermission' => null, 'renderMode' => 'component'];
-		self::assertSame(
+		$panel = [
+			'kinds'              => ['render-surface'],
+			'requiredApp'        => 'shillinq',
+			'group'              => 'Finance',
+			'surfaces'           => ['detail-page', 'single-entity'],
+			'referenceType'      => null,
+			'requiresPermission' => null,
+			'renderMode'         => 'mount',
+			'provider'           => null,
+		];
+		$data  = [
+			'kinds'              => ['data-provider'],
+			'requiredApp'        => 'shillinq',
+			'group'              => 'Finance',
+			'surfaces'           => [],
+			'referenceType'      => null,
+			'requiresPermission' => null,
+			'renderMode'         => 'component',
+		];
+		$paymentData = ['requiresPermission' => PaymentRequestLeafProvider::ACTION_REQUEST, 'provider' => 'payment-requests'];
+		$expected    = [
+			['id' => PaymentRequestLeafProvider::LEAF_ID, 'label' => 'Payment requests', 'icon' => 'CreditCardOutline'] + array_merge($data, $paymentData),
+			['id' => 'shillinq-payment-requests-panel', 'label' => 'Payment requests', 'icon' => 'CreditCardOutline'] + $panel,
+			['id' => ContractLeafProvider::LEAF_ID, 'label' => 'Contract', 'icon' => 'FileDocumentOutline'] + $data + ['provider' => 'contracts'],
 			[
-				['id' => PaymentRequestLeafProvider::LEAF_ID, 'label' => 'Payment requests', 'icon' => 'CreditCardOutline'] + array_merge($data, ['requiresPermission' => PaymentRequestLeafProvider::ACTION_REQUEST, 'provider' => 'payment-requests']),
-				['id' => 'shillinq-payment-requests-panel', 'label' => 'Payment requests', 'icon' => 'CreditCardOutline'] + $panel,
-				['id' => ContractLeafProvider::LEAF_ID, 'label' => 'Contract', 'icon' => 'FileDocumentOutline'] + $data + ['provider' => 'contracts'],
-				['id' => FinancialDocumentLeafProvider::LEAF_ID, 'label' => 'Financial documents', 'icon' => 'FileDocumentMultipleOutline'] + $data + ['provider' => 'documents'],
-				['id' => 'shillinq-financial-documents-panel', 'label' => 'Financial documents', 'icon' => 'FileDocumentMultipleOutline'] + $panel,
-				['id' => 'shillinq-contracts-panel', 'label' => 'Contract', 'icon' => 'FileDocumentOutline'] + $panel,
-			],
-			$leaves
-		);
+				'id'    => FinancialDocumentLeafProvider::LEAF_ID,
+				'label' => 'Financial documents',
+				'icon'  => 'FileDocumentMultipleOutline',
+			] + $data + ['provider' => 'documents'],
+			['id' => 'shillinq-financial-documents-panel', 'label' => 'Financial documents', 'icon' => 'FileDocumentMultipleOutline'] + $panel,
+			['id' => 'shillinq-contracts-panel', 'label' => 'Contract', 'icon' => 'FileDocumentOutline'] + $panel,
+		];
+		foreach ($expected as $index => $leaf) {
+			ksort($leaf);
+			$expected[$index] = $leaf;
+		}
+
+		self::assertSame($expected, $leaves);
 
 	}//end testRegisteredLeaves()
 }//end class

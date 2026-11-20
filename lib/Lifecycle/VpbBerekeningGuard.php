@@ -3,6 +3,9 @@
 /**
  * Vpb Berekening Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path calculation fallbacks for the Vpb (vennootschapsbelasting)
  * registers of the bookkeeping-vpb-mkb change (T3). The declarative
  * x-openregister-calculations metadata on the VpbAangifte and Voorvoegingsverlies
@@ -33,16 +36,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -220,11 +220,6 @@ class VpbBerekeningGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

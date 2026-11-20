@@ -33,7 +33,7 @@ use OCA\Shillinq\Controller\BookingDepthController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -42,6 +42,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use RuntimeException;
 use Stringable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Recurring series create golden tests.
@@ -107,7 +108,7 @@ final class BookingSeriesCreateGoldenTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn($world['or']);
 		$settings->method('getRegisterSlug')->willReturn('books');
 
@@ -322,7 +323,9 @@ final class GoldenSeriesObjects {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = ['register' => $register, 'schema' => $schema, 'object' => $object];
 		if ($this->resource === 'saveFails' && $schema === 'Appointment') {
 			throw new RuntimeException('disk full');

@@ -4,6 +4,9 @@
  * Unit tests for ExceptionResolutionService (slice 08 of
  * bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers REQ-PO3W-005:
  *  - acceptWithMotivation() stamps resolution_action=accepted +
  *    resolved_by + resolved_at + notes; the linked invoice advances to
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -50,6 +50,8 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Service\ForbiddenActionException;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -409,6 +411,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 					'totalInclVat' => 1925000,
 					'statusCode' => 'exception',
 					'administrationId' => 'adm-1',
+					'owner' => 'clerk-carl',
 				],
 			],
 			'ToleranceProfile' => [],
@@ -442,7 +445,8 @@ final class ExceptionResolutionServiceTest extends TestCase {
 		$service = $this->buildService(
 			data: $this->baselineSeed(),
 			saved: $saved,
-			accessibleAdministrations: ['adm-1']
+			accessibleAdministrations: ['adm-1'],
+			userId: 'creditadmin'
 		);
 
 		$result = $service->acceptWithMotivation(
@@ -453,7 +457,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 
 		self::assertSame('twm-1', $result['id']);
 		self::assertSame(ExceptionResolutionService::ACTION_ACCEPTED, $result['resolutionAction']);
-		self::assertSame('alice', $result['resolvedBy']);
+		self::assertSame('creditadmin', $result['resolvedBy']);
 		self::assertNotSame('', (string)$result['resolvedAt']);
 		self::assertSame(
 			'Verschil binnen jaarcontract tolerantie — alsnog akkoord.',
@@ -809,4 +813,279 @@ final class ExceptionResolutionServiceTest extends TestCase {
 		self::assertCount(0, $defaultQueue);
 
 	}//end testNotifyOnExceptionHonoursToleranceProfileRouting()
+	/**
+	 * F2-S6: a user outside the exception's approver role cannot accept it.
+	 *
+	 * @return void
+	 */
+	public function testAcceptRefusesAUserOutsideTheApproverRole(): void {
+		$saved = [];
+		$service = $this->buildService(data: $this->baselineSeed(), saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'inkoper-bob');
+
+		try {
+			$service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+			self::fail('A user outside the approver role must be refused.');
+		} catch (ForbiddenActionException $e) {
+			self::assertSame('Only the approver role for this exception can accept it.', $e->getMessage());
+		}
+
+		self::assertSame([], $saved, 'Nothing is written, so payment stays blocked.');
+
+	}//end testAcceptRefusesAUserOutsideTheApproverRole()
+
+	/**
+	 * F2-S6: the person who entered the invoice cannot accept its exception, even in the role.
+	 *
+	 * @return void
+	 */
+	public function testAcceptRefusesTheInvoiceCreator(): void {
+		$seed = $this->baselineSeed();
+		$seed['SupplierInvoice'][0]['owner'] = 'creditadmin';
+		$saved = [];
+		$service = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
+
+		$this->expectException(ForbiddenActionException::class);
+		$this->expectExceptionMessage('The person who entered the invoice cannot accept its exception.');
+
+		$service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+
+	}//end testAcceptRefusesTheInvoiceCreator()
+
+	/**
+	 * F2-S6: an invoice whose creator cannot be read is refused (fail closed).
+	 *
+	 * @return void
+	 */
+	public function testAcceptFailsClosedWithoutAKnownCreator(): void {
+		$seed = $this->baselineSeed();
+		unset($seed['SupplierInvoice'][0]['owner']);
+		$saved = [];
+		$service = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
+
+		$this->expectException(ForbiddenActionException::class);
+
+		$service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+
+	}//end testAcceptFailsClosedWithoutAKnownCreator()
+
+	/**
+	 * F2-S6: with exceptionRouting set, only that role accepts; the default queue does not.
+	 *
+	 * @return void
+	 */
+	public function testAcceptFollowsTheToleranceProfileRouting(): void {
+		$seed = $this->baselineSeed();
+		$seed['ThreeWayMatch'][0]['divergenceDetails'][0]['toleranceProfileId'] = 'TP-CONTROLLER';
+		$seed['ToleranceProfile'][] = [
+			'id' => 'tp-1',
+			'profileId' => 'TP-CONTROLLER',
+			'exceptionRouting' => 'controller_approval',
+			'administrationId' => 'adm-1',
+		];
+		$seed['AdministrationMembership'][] = [
+			'id' => 'mem-3',
+			'administrationId' => 'adm-1',
+			'role' => 'controller_approval',
+			'userId' => 'controller-claire',
+		];
+
+		$saved = [];
+		$refused = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
+		try {
+			$refused->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+			self::fail('The default queue must not accept a routed exception.');
+		} catch (ForbiddenActionException $e) {
+			self::assertSame([], $saved);
+		}
+
+		$accepted = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'controller-claire')
+			->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'Within contract');
+		self::assertSame('controller-claire', $accepted['resolvedBy']);
+
+	}//end testAcceptFollowsTheToleranceProfileRouting()
+	/**
+	 * OpenRegister's findAll matches nothing on an `id` filter; the match and
+	 * the invoice are read by id, so accepting still finds them.
+	 *
+	 * @return void
+	 */
+	public function testAcceptReadsTheMatchAndInvoiceById(): void {
+		$saved = [];
+		$objects = new InMemoryObjectServiceStub($this->baselineSeed(), $saved, false, true);
+
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('creditadmin');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$administrations = $this->createMock(AdministrationContextService::class);
+		$administrations->method('canAccess')->willReturn(true);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$service = new ExceptionResolutionService(
+			appConfig: $appConfig,
+			administrationContext: $administrations,
+			userSession: $session,
+			notificationManager: $this->createMock(INotificationManager::class),
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: $objects,
+		);
+
+		$result = $service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'Within contract');
+
+		self::assertSame('creditadmin', $result['resolvedBy']);
+		self::assertSame('approved', array_values(array_filter($saved, static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'))[0]['object']['statusCode']);
+
+	}//end testAcceptReadsTheMatchAndInvoiceById()
+
+	/**
+	 * Run one resolution call and report its outcome: the refusal message or
+	 * `ok`, plus the side effects (saves, dispatches, notifications).
+	 *
+	 * @param array<string,mixed> $seedPatch Per-case edits to the baseline seed.
+	 * @param array<int,mixed>    $call      [method, administrationId, matchId, text].
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function outcomeOf(array $seedPatch, array $call): array {
+		$this->dispatchedPayloads = [];
+		$this->notifications = [];
+		$saved = [];
+		// creditadmin holds the approver role and did not enter the invoice, so accepting is open to them.
+		$service = $this->buildService(array_replace($this->baselineSeed(), $seedPatch), $saved, ['adm-1'], userId: 'creditadmin');
+		[$method, $administrationId, $matchId, $text] = $call;
+		try {
+			$service->$method($administrationId, $matchId, $text);
+			$outcome = 'ok';
+		} catch (\RuntimeException $exception) {
+			$outcome = $exception->getMessage();
+		}
+
+		return [$outcome, count($saved), count($this->dispatchedPayloads), count($this->notifications)];
+
+	}//end outcomeOf()
+
+	/**
+	 * Pin every allowed and refused outcome of the three resolution actions,
+	 * including which guard wins when several inputs are bad at once.
+	 *
+	 * @return void
+	 */
+	public function testResolutionGuardsAllowAndRefuseInOrder(): void {
+		$seed = $this->baselineSeed();
+		$resolved = ['ThreeWayMatch' => [array_replace($seed['ThreeWayMatch'][0], ['matchStatus' => 'matched'])]];
+		$noInvoiceId = ['ThreeWayMatch' => [array_replace($seed['ThreeWayMatch'][0], ['invoiceId' => ''])]];
+		$cases = [
+			'ok' => [[], 'adm-1', 'twm-1', ' why '],
+			'noAdmin' => [[], '', '', ''],
+			'foreignAdmin' => [[], 'adm-9', '', ''],
+			'noMatchId' => [[], 'adm-1', '', ''],
+			'blankText' => [[], 'adm-1', 'twm-x', "  \t"],
+			'unknownMatch' => [[], 'adm-1', 'twm-x', 'why'],
+			'resolved' => [$resolved, 'adm-1', 'twm-1', 'why'],
+			'noInvoiceId' => [$noInvoiceId, 'adm-1', 'twm-1', 'why'],
+			'missingInvoice' => [['SupplierInvoice' => []], 'adm-1', 'twm-1', 'why'],
+		];
+		$actual = [];
+		foreach (['acceptWithMotivation', 'fileDispute', 'rejectAndBlockPayment'] as $method) {
+			foreach ($cases as $label => [$patch, $administrationId, $matchId, $text]) {
+				$actual[$method][$label] = $this->outcomeOf($patch, [$method, $administrationId, $matchId, $text]);
+			}
+		}
+
+		$refusals = [
+			'noAdmin' => ['administrationId is required', 0, 0, 0],
+			'foreignAdmin' => ['Administration not found', 0, 0, 0],
+			'noMatchId' => ['ThreeWayMatch not found', 0, 0, 0],
+			'unknownMatch' => ['ThreeWayMatch not found', 0, 0, 0],
+			'resolved' => ['Match is not in an exception state', 0, 0, 0],
+		];
+		self::assertSame(
+			[
+				'acceptWithMotivation' => [
+					'ok' => ['ok', 2, 0, 0],
+					'blankText' => ['resolutionNotes is required', 0, 0, 0],
+					// No readable invoice means no known creator: accepting fails closed.
+					'noInvoiceId' => ['The person who entered the invoice cannot accept its exception.', 0, 0, 0],
+					'missingInvoice' => ['The person who entered the invoice cannot accept its exception.', 0, 0, 0],
+				] + $refusals,
+				'fileDispute' => [
+					'ok' => ['ok', 1, 1, 1],
+					'blankText' => ['disputeReason is required', 0, 0, 0],
+					'noInvoiceId' => ['Match has no linked invoice', 0, 0, 0],
+					'missingInvoice' => ['Supplier invoice not found', 0, 0, 0],
+				] + $refusals,
+				'rejectAndBlockPayment' => [
+					'ok' => ['ok', 2, 0, 0],
+					'blankText' => ['rejectionReason is required', 0, 0, 0],
+					'noInvoiceId' => ['ok', 1, 0, 0],
+					'missingInvoice' => ['ok', 1, 0, 0],
+				] + $refusals,
+			],
+			array_map(
+				static function (array $byCase): array {
+					$order = ['ok', 'blankText', 'noInvoiceId', 'missingInvoice', 'noAdmin', 'foreignAdmin', 'noMatchId', 'unknownMatch', 'resolved'];
+					return array_replace(array_flip($order), $byCase);
+				},
+				$actual
+			)
+		);
+
+	}//end testResolutionGuardsAllowAndRefuseInOrder()
+
+	/**
+	 * Pin the exact records written by a successful dispute and a successful
+	 * accept: stamped fields in order, trimmed text, the dispatch id suffix,
+	 * the payload and the requestedAt/resolvedAt equality.
+	 *
+	 * @return void
+	 */
+	public function testResolutionRecordsAndDisputePayloadAreExact(): void {
+		$saved = [];
+		$service = $this->buildService($this->baselineSeed(), $saved, ['adm-1']);
+		$dispute = $service->fileDispute('adm-1', 'twm-1', '  te duur  ');
+		$match = $dispute['match'];
+		$at = $match['resolvedAt'];
+		self::assertMatchesRegularExpression('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d$/', $at);
+		$expectedMatch = $this->baselineSeed()['ThreeWayMatch'][0] + [
+			'resolutionAction' => 'credit_note_requested',
+			'resolutionNotes' => 'te duur [creditNoteDispatchId=urn:uuid:cn-test]',
+			'resolvedBy' => 'alice',
+			'resolvedAt' => $at,
+		];
+		self::assertSame([['schema' => 'ThreeWayMatch', 'object' => $expectedMatch]], $saved);
+		self::assertSame(['accepted' => true, 'dispatchId' => 'urn:uuid:cn-test', 'error' => null], $dispute['dispatch']);
+		self::assertSame(
+			[
+				[
+					'matchId' => 'twm-1',
+					'invoiceId' => 'inv-1',
+					'invoiceNumber' => 'INV-NW-001',
+					'supplierId' => 'sup-1',
+					'administrationId' => 'adm-1',
+					'currency' => 'EUR',
+					'totalExclVat' => 1900000,
+					'totalVat' => 25000,
+					'totalInclVat' => 1925000,
+					'reason' => 'te duur',
+					'divergenceDetails' => $this->baselineSeed()['ThreeWayMatch'][0]['divergenceDetails'],
+					'matchedPoIds' => ['po-1'],
+					'requestedAt' => $at,
+				],
+			],
+			$this->dispatchedPayloads
+		);
+		self::assertSame(['inkoper-bob'], array_column($this->notifications, 'user'));
+
+		$saved = [];
+		$service = $this->buildService($this->baselineSeed(), $saved, ['adm-1'], userId: 'creditadmin');
+		$service->acceptWithMotivation('adm-1', 'twm-1', ' ok ');
+		self::assertSame(['ThreeWayMatch', 'SupplierInvoice'], array_column($saved, 'schema'));
+		self::assertSame(
+			['accepted', 'ok', 'creditadmin'],
+			[$saved[0]['object']['resolutionAction'], $saved[0]['object']['resolutionNotes'], $saved[0]['object']['resolvedBy']]
+		);
+		self::assertSame('approved', $saved[1]['object']['statusCode']);
+
+	}//end testResolutionRecordsAndDisputePayloadAreExact()
 }//end class

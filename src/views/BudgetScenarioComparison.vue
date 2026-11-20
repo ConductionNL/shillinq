@@ -184,8 +184,38 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
+import { administrationOptions, fetchAdministrationContext } from '../utils/administrationContext.js'
 
 const REGISTER_SLUG = 'shillinq'
+
+/**
+ * The rows of a list response: its results, its objects or the body itself;
+ * empty when that is not an array.
+ *
+ * @param {object|Array|null|undefined} data The response body.
+ * @return {Array<object>}
+ */
+function listRows(data) {
+	const rows = data?.results ?? data?.objects ?? data ?? []
+	return Array.isArray(rows) ? rows : []
+}
+
+/**
+ * Ledger-group display names by id; a row without an id is skipped.
+ *
+ * @param {Array<object>} rows The ledger-group rows.
+ * @return {{[id: string]: string}}
+ */
+function ledgerGroupNames(rows) {
+	const names = {}
+	for (const row of rows) {
+		const id = row.id || row['@self']?.id
+		if (id) {
+			names[id] = row.name || row.code || id
+		}
+	}
+	return names
+}
 
 export default {
 	name: 'BudgetScenarioComparison',
@@ -289,16 +319,10 @@ export default {
 		async loadAdministrationContext() {
 			this.loading = true
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				const admins = response.data?.administrations || []
-				this.administrationOptions = admins.map((a) => ({
-					value: a.administrationId,
-					label: a.name || a.administrationCode || a.administrationId,
-				}))
+				const context = await fetchAdministrationContext()
+				this.administrationOptions = administrationOptions(context)
 				this.administrationId =
-					response.data?.activeAdministrationId
+					context?.activeAdministrationId
 					|| this.administrationOptions[0]?.value
 					|| ''
 			} catch {
@@ -408,19 +432,7 @@ export default {
 						},
 					},
 				)
-				const rows =
-					response.data?.results
-					?? response.data?.objects
-					?? response.data
-					?? []
-				const names = {}
-				for (const row of Array.isArray(rows) ? rows : []) {
-					const id = row.id || row['@self']?.id
-					if (id) {
-						names[id] = row.name || row.code || id
-					}
-				}
-				this.ledgerGroupNames = names
+				this.ledgerGroupNames = ledgerGroupNames(listRows(response.data))
 			} catch {
 				this.ledgerGroupNames = {}
 			}

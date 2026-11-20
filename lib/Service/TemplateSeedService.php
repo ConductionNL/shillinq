@@ -33,8 +33,8 @@ use OCA\Shillinq\Service\Seed\SeedMessages;
 /**
  * Imports the template and reference-rule seed files through the seed importer.
  *
- * SettingsService runs these seeds and supplies the OpenRegister availability
- * check and the register slug.
+ * SettingsService runs these seeds; RegisterLocation supplies the OpenRegister
+ * availability check and the register slug.
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  */
@@ -100,14 +100,14 @@ class TemplateSeedService {
 	/**
 	 * Constructor for the TemplateSeedService.
 	 *
-	 * @param SettingsService $settings The settings service
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param SeedImporter $importer The seed file importer
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private SettingsService $settings,
+		private RegisterLocation $registerLocation,
 		private SeedImporter $importer,
 		private LoggerInterface $logger,
 	) {
@@ -312,7 +312,7 @@ class TemplateSeedService {
 	 * @return array<string, mixed>|null
 	 */
 	private function administrationRefusal(string $administrationId): ?array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->importer->failed(message: self::NO_OPENREGISTER);
 		}
 
@@ -348,7 +348,7 @@ class TemplateSeedService {
 	 * @return array<string, mixed> ['rows' => list] or ['error' => failed result].
 	 */
 	private function fileRows(string $seed): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return ['error' => $this->importer->failed(message: self::NO_OPENREGISTER)];
 		}
 

@@ -1,0 +1,47 @@
+{
+  "info": {
+    "version": "0.1.0-ledger-sealed-entries"
+  },
+  "components": {
+    "schemas": {
+      "GLTransaction": {
+        "version": "0.6.0",
+        "properties": {
+          "sealSequence": {
+            "type": "integer",
+            "nullable": true,
+            "readOnly": true,
+            "description": "Position of this posted transaction in its administration's seal chain, from 1. Written when the transaction is posted (ledger-sealed-entries REQ-LSE-001).",
+            "example": 3,
+            "title": "Seal sequence"
+          },
+          "previousSealHash": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true,
+            "description": "The seal hash of the previous transaction in the chain, or 64 zeros for the first one.",
+            "example": "0000000000000000000000000000000000000000000000000000000000000000",
+            "title": "Previous seal hash"
+          },
+          "sealHash": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true,
+            "description": "SHA-256 of the previous seal hash and the canonical posted content (header and lines, state excluded).",
+            "example": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+            "title": "Seal hash"
+          },
+          "sealedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "readOnly": true,
+            "description": "When the seal was written.",
+            "example": "2026-09-30T10:15:00+00:00",
+            "title": "Sealed at"
+          }
+        }
+      }
+    }
+  }
+}

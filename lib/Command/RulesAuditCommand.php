@@ -20,13 +20,16 @@
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
-use OCA\Shillinq\Service\RuleAuditService;
+use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -39,10 +42,10 @@ class RulesAuditCommand extends Command {
 	/**
 	 * Construct the rule-audit command.
 	 *
-	 * @param RuleAuditService $auditService The compliance auditor.
+	 * @param RuleAuditServiceInterface $auditService The compliance auditor.
 	 */
 	public function __construct(
-		private readonly RuleAuditService $auditService,
+		private readonly RuleAuditServiceInterface $auditService,
 	) {
 		parent::__construct();
 

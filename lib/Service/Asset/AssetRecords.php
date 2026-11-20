@@ -28,8 +28,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -37,19 +41,19 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
-class AssetRecords {
+class AssetRecords implements AssetRecordsInterface {
 
 	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param ObjectTransitionRunner $transitions   Runs declared transitions.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 	) {
 	}//end __construct()
 
@@ -136,7 +140,13 @@ class AssetRecords {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function patch(string $schema, string $id, array $fields): void {
-		$this->objectService->patchObject(objectId: $id, data: $fields, register: $this->settings->getRegisterSlug(), schema: $schema);
+		$this->objectService->patchObject(
+			new ObjectPatch(
+				objectId: $id,
+				data: $fields,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema)
+			)
+		);
 
 	}//end patch()
 
@@ -151,7 +161,9 @@ class AssetRecords {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function delete(string $schema, string $id): void {
-		$this->objectService->deleteObject(uuid: $id, register: $this->settings->getRegisterSlug(), schema: $schema);
+		$this->objectService->deleteObject(
+			new ObjectDeletion(uuid: $id, target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema))
+		);
 
 	}//end delete()
 
