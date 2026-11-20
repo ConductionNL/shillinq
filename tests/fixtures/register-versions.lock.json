@@ -176,6 +176,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120095000",
             "versionsSha256": "a22a7426bb24af1439cc83182bfdd296de6923e07e45681012bbd4a20b2d3cdc"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102100",
+            "versionsSha256": "c92eba6afb234aa4f6c51f99347ba3254b8cb1519ac09044abd9fb20bb4a2e4d"
         }
     ],
     "versions": {
@@ -388,7 +392,7 @@
         "schema:FluxAttribution": "0.1.0",
         "schema:FluxItem": "0.1.0",
         "schema:FluxRun": "0.2.0",
-        "schema:FrameworkAgreement": "0.1.0",
+        "schema:FrameworkAgreement": "0.2.0",
         "schema:FrameworkElection": "0.1.0",
         "schema:FundsTransfer": "0.1.0",
         "schema:FxRate": "0.1.0",
@@ -589,6 +593,7 @@
         "schema:ReimbursementPolicy": "0.1.0",
         "schema:ReinvestmentReserve": "0.1.0",
         "schema:RenteRisicoNorm": "0.1.0",
+        "schema:ReorderProposal": "0.1.0",
         "schema:RepaymentInstallment": "0.1.0",
         "schema:ReportSchedule": "0.1.0",
         "schema:Requisition": "0.1.0",

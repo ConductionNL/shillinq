@@ -5917,7 +5917,13 @@
         "Give a reason.": "Give a reason.",
         "Payment is already blocked.": "Payment is already blocked.",
         "Payment is not blocked.": "Payment is not blocked.",
-        "This record cannot be found.": "This record cannot be found."
+        "This record cannot be found.": "This record cannot be found.",
+        "Agreed price": "Agreed price",
+        "Failed to load framework agreements": "Failed to load framework agreements",
+        "Framework agreement (optional)": "Framework agreement (optional)",
+        "Left under the ceiling after this order": "Left under the ceiling after this order",
+        "This order exceeds the ceiling of the framework agreement": "This order exceeds the ceiling of the framework agreement",
+        "Framework agreement is with another supplier.": "Framework agreement is with another supplier."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

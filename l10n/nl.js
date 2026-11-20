@@ -8048,7 +8048,13 @@ OC.L10N.register(
         "Give a reason.": "Geef een reden.",
         "Payment is already blocked.": "De betaling is al geblokkeerd.",
         "Payment is not blocked.": "De betaling is niet geblokkeerd.",
-        "This record cannot be found.": "Dit record is niet gevonden."
+        "This record cannot be found.": "Dit record is niet gevonden.",
+        "Agreed price": "Afgesproken prijs",
+        "Failed to load framework agreements": "Raamovereenkomsten laden mislukt",
+        "Framework agreement (optional)": "Raamovereenkomst (optioneel)",
+        "Left under the ceiling after this order": "Resterend onder het plafond na deze inkooporder",
+        "This order exceeds the ceiling of the framework agreement": "Deze inkooporder overschrijdt het plafond van de raamovereenkomst",
+        "Framework agreement is with another supplier.": "Raamovereenkomst is met een andere leverancier."
     },
     "nplurals=2; plural=(n != 1);"
 )

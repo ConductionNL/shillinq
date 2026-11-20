@@ -274,6 +274,7 @@
 		"RecurringInvoiceProfile",
 		"ReimbursementPolicy",
 		"ReinvestmentReserve",
+		"ReorderProposal",
 		"ReportSchedule",
 		"Requisition",
 		"RequisitionLine",
