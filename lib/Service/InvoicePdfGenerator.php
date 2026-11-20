@@ -52,6 +52,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
+use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
+use OCA\Shillinq\Service\Payment\PayLinkService;
 
 /**
  * Dutch-formatted invoice HTML / PDF builder.
@@ -82,6 +84,16 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 * @var integer
 	 */
 	private const HYBRID_PAGE_LINES = 45;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param PayLinkService|null $payLinks Gives the pay link an open invoice prints; without it none is printed.
+	 */
+	public function __construct(
+		private readonly ?PayLinkService $payLinks = null,
+	) {
+	}//end __construct()
 
 	/**
 	 * Generate the renderable invoice payload.
@@ -414,7 +426,9 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 			. '<strong>BTW:</strong> € %s &nbsp; '
 			. '<strong>Te betalen:</strong> € %s</p>'
 			. '<p>Betalingscondities: %s</p>'
+			. '%s'
 			. '<p>%s</p>'
+			. '%s'
 			. '<div class="footer">Gegenereerd op %s — Shillinq invoice-from-time-and-expense</div>'
 			. '</body></html>',
 			htmlspecialchars((string)($invoice['invoiceNumber'] ?? ''), ENT_QUOTES),
@@ -433,11 +447,62 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 			$this->fmtMoney(value: (float)($invoice['vatAmount'] ?? 0)),
 			$this->fmtMoney(value: (float)($invoice['grossAmount'] ?? 0)),
 			htmlspecialchars((string)($invoice['paymentTerms'] ?? 'net 30'), ENT_QUOTES),
+			$this->payLinkHtml(invoice: $invoice),
 			htmlspecialchars((string)($invoice['notes'] ?? ''), ENT_QUOTES),
+			$this->reverseChargeHtml(invoice: $invoice, recipient: $recipient),
 			date('Y-m-d H:i')
 		);
 
 	}//end renderHtml()
+
+	/**
+	 * The reverse-charge notice with the buyer's VAT number, or '' when no
+	 * line is reverse-charged (tax-icp-and-reverse-charge REQ-ICR-001).
+	 *
+	 * @param array<string,mixed> $invoice   Invoice.
+	 * @param array<string,mixed> $recipient Recipient.
+	 *
+	 * @return string The paragraph, or ''.
+	 *
+	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 */
+	private function reverseChargeHtml(array $invoice, array $recipient): string {
+		$notice = (new ReverseChargeNotice())->forInvoice(invoice: $invoice, customer: $recipient);
+		if ($notice === null) {
+			return '';
+		}
+
+		return sprintf(
+			'<p class="reverse-charge"><strong>%s</strong> &nbsp; BTW-nummer afnemer: %s</p>',
+			htmlspecialchars($notice['noticeNl'], ENT_QUOTES),
+			htmlspecialchars($notice['buyerVatNumber'], ENT_QUOTES)
+		);
+
+	}//end reverseChargeHtml()
+
+	/**
+	 * The "Betaal online" paragraph under the totals, or '' when the invoice
+	 * gets no pay link (receivables-payment-links D4, D5).
+	 *
+	 * @param array<string,mixed> $invoice Invoice.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.2
+	 */
+	private function payLinkHtml(array $invoice): string {
+		$url = null;
+		if ($this->payLinks !== null) {
+			$url = $this->payLinks->forOpenInvoice(invoice: $invoice);
+		}
+
+		if ($url === null) {
+			return '';
+		}
+
+		$escaped = htmlspecialchars($url, ENT_QUOTES);
+		return '<p class="pay-link"><strong>Betaal online:</strong> <a href="' . $escaped . '">' . $escaped . '</a></p>';
+	}//end payLinkHtml()
 
 	/**
 	 * Format a 2-decimal float with Dutch locale.

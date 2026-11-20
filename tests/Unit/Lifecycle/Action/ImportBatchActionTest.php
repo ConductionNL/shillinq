@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
 use PHPUnit\Framework\TestCase;
@@ -76,7 +77,14 @@ final class ImportBatchActionTest extends TestCase {
 
 		$this->assertSame(
 			['id' => 'batch-1', 'status' => $step],
-			(new ImportBatchAction($steps))->execute(self::BATCH, [], ['step' => $step], 'run')
+			(new ImportBatchAction($steps))->execute(
+				new LifecycleActionContext(
+					objectData: self::BATCH,
+					previousData: [],
+					parameters: ['step' => $step],
+					actionName: 'run'
+				)
+			)
 		);
 
 	}//end testAKnownStepRunsThatMethodOnly()
@@ -115,7 +123,14 @@ final class ImportBatchActionTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage(sprintf('ImportBatchAction does not know the step "%s".', $named));
 
-		(new ImportBatchAction($steps))->execute(self::BATCH, [], $parameters, 'run');
+		(new ImportBatchAction($steps))->execute(
+			new LifecycleActionContext(
+				objectData: self::BATCH,
+				previousData: [],
+				parameters: $parameters,
+				actionName: 'run'
+			)
+		);
 
 	}//end testAStepOutsideTheListIsRefused()
 }//end class

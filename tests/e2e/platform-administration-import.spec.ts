@@ -29,13 +29,21 @@ const fixture = fs.readFileSync(
  * @param name The file name under /Migrations.
  * @param body The file content.
  */
-async function putAuditfile(request, name: string, body: string): Promise<void> {
-	await request.fetch('/remote.php/dav/files/admin/Migrations', {
+async function putAuditfile(page, name: string, body: string): Promise<void> {
+	// WebDAV refuses a cookie-authenticated write without the page's request token.
+	await page.goto('/index.php/apps/shillinq/')
+	const requesttoken = await page.evaluate(() => (window as any).OC.requestToken)
+	const headers = { requesttoken }
+	const folder = await page.request.fetch('/remote.php/dav/files/admin/Migrations', {
 		method: 'MKCOL',
+		headers,
 	})
-	await request.put(`/remote.php/dav/files/admin/Migrations/${name}`, {
+	expect([201, 405], 'create the Migrations folder (405: it exists)').toContain(folder.status())
+	const file = await page.request.put(`/remote.php/dav/files/admin/Migrations/${name}`, {
+		headers,
 		data: body,
 	})
+	expect([201, 204], `upload ${name}`).toContain(file.status())
 }
 
 /**
@@ -59,7 +67,7 @@ test.describe('platform-administration-import', () => {
 	test('a Snelstart auditfile is posted with its opening entry', async ({
 		page,
 	}) => {
-		await putAuditfile(page.request, 'snelstart-2025.xaf', fixture)
+		await putAuditfile(page, 'snelstart-2025.xaf', fixture)
 		await page.goto('/index.php/apps/shillinq/import/wizard')
 
 		await pickAuditfile(page, 'snelstart-2025.xaf')
@@ -98,7 +106,7 @@ test.describe('platform-administration-import', () => {
 	 */
 	test('an unbalanced auditfile stops at validation', async ({ page }) => {
 		await putAuditfile(
-			page.request,
+			page,
 			'unbalanced-2025.xaf',
 			fixture.replace('<amnt>5800.00</amnt>', '<amnt>5900.00</amnt>'),
 		)

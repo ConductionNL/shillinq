@@ -13,8 +13,8 @@
 
 ## 3. End to end, once nextcloud-vue renders the key
 
-- [ ] 3.1 With the KvK source linked (sandbox or the integriq seed), add a supplier from the KvK and read the filled name and address; type a name first and confirm the replace question (REQ-KVKL-002). Verify: Playwright test tagged with `@e2e` references to the scenarios; skipped with a stated reason while the renderer is absent.
-- [ ] 3.2 With no source linked, add a customer with a typed number and confirm it saves with the not-set-up message (REQ-KVKL-003). Verify: Playwright, same tagging.
+- [ ] 3.1 With the KvK source linked (sandbox or the integriq seed), add a supplier from the KvK and read the filled name and address; type a name first and confirm the replace question (REQ-KVKL-002). Verify: Playwright test tagged with `@e2e` references to the scenarios; skipped with a stated reason while the renderer is absent. Spec written: `tests/e2e/contacts-kvk-lookup.spec.ts` (integriq answered from a fixture; skips when integriq is not installed); not yet run against an instance.
+- [ ] 3.2 With no source linked, add a customer with a typed number and confirm it saves with the not-set-up message (REQ-KVKL-003). Verify: Playwright, same tagging. Spec written in the same file; skips when a source is linked; not yet run against an instance.
 
 ## 4. Docs
 

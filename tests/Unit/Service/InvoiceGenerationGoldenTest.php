@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -31,6 +34,7 @@ use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -203,7 +207,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 5.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 				[
 					'id' => 'ure-victim-1',
@@ -211,7 +215,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 8.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 			],
 			'ExpenseClaimEntry' => [
@@ -343,6 +347,8 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
 			billedReadings: $this->createMock(BilledReadings::class),
+			passThrough: $this->createMock(PassThroughBilling::class),
+			billableRates: new BillableRateService(new DuckObjectServiceAdapter($this->objectService), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 	}//end setUp()
 
@@ -384,6 +390,58 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 	}//end testDraftMatchesTheSnapshot()
 
 	/**
+	 * sales-invoice-sending REQ-SIS-005: the drafted invoice is due the
+	 * customer's payment term after the period end, and says so.
+	 *
+	 * @return array<string, array{0: array<string,mixed>|null, 1: string, 2: string}>
+	 */
+	public static function customerTerms(): array {
+		return [
+			'a 30-day customer' => [['paymentTermDays' => 30], '2026-11-30', 'net 30'],
+			'a 14-day customer' => [['paymentTermDays' => 14], '2026-11-14', 'net 14'],
+			'a customer without a term' => [[], '2026-11-30', 'net 30'],
+			'a term out of range' => [['paymentTermDays' => 400], '2026-11-30', 'net 30'],
+			'a customer of another administration' => [['paymentTermDays' => 7, 'administrationId' => self::ADMIN_VICTIM], '2026-11-30', 'net 30'],
+			'no customer record' => [null, '2026-11-30', 'net 30'],
+		];
+	}//end customerTerms()
+
+	/**
+	 * @param array<string,mixed>|null $customer The CustomerMaster fields, or null for none.
+	 * @param string                   $dueDate  The expected due date.
+	 * @param string                   $terms    The expected payment terms.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider customerTerms
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+	 */
+	public function testTheDraftIsDueTheCustomersPaymentTermAfterThePeriodEnd(?array $customer, string $dueDate, string $terms): void {
+		if ($customer !== null) {
+			$this->objectService->store['CustomerMaster'] = [
+				array_merge(['id' => 'cust-1', 'administrationId' => self::ADMIN_ATTACKER, 'legalName' => 'Gemeente Voorbeeld'], $customer),
+			];
+		}
+
+		$this->service->draftInvoice(
+			new InvoiceGenerationRequest(
+				administrationId: self::ADMIN_ATTACKER,
+				customerId: 'cust-1',
+				fromDate: '2026-10-01',
+				toDate: '2026-10-31',
+				billingModel: 'fixed_fee',
+				fixedFeeCents: 150000
+			)
+		);
+
+		$invoice = $this->objectService->saved['BillableInvoice'][0];
+		self::assertSame('2026-10-31', $invoice['invoiceDate']);
+		self::assertSame($dueDate, $invoice['dueDate']);
+		self::assertSame($terms, $invoice['paymentTerms']);
+	}//end testTheDraftIsDueTheCustomersPaymentTermAfterThePeriodEnd()
+
+	/**
 	 * A post saves the obligation, the journal and the posted invoice, in
 	 * that order, and matches the snapshot.
 	 *
@@ -411,7 +469,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 		foreach ([
 			['status' => 'posted'],
 			['status' => 'cancelled'],
-			['status' => 'draft', 'administrationId' => self::ADMIN_ATTACKER, 'billingModel' => 't_and_m'],
+			['status' => 'draft', 'administrationId' => self::ADMIN_ATTACKER, 'billingModel' => 'retainer'],
 			['status' => 'draft', 'administrationId' => self::ADMIN_ATTACKER, 'billingModel' => 'mixed', 'rateCardId' => 'x'],
 		] as $invoice) {
 			try {
@@ -426,7 +484,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 			[
 				'Invoice is already posted.',
 				'Cancelled invoices cannot be posted.',
-				'Invoice failed validation: rateCardId is required for t_and_m model.',
+				'Invoice failed validation: retainerScheduleId is required for retainer model.',
 				'Invoice failed validation: retainerScheduleId is required for mixed model.',
 			],
 			$messages

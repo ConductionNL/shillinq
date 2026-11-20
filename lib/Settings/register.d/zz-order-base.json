@@ -133,7 +133,7 @@
             "shillinq_controller"
           ]
         },
-        "version": "0.1.0",
+        "version": "0.2.0",
         "slug": "OrderLine",
         "title": "Order Line",
         "type": "object",
@@ -206,6 +206,14 @@
             "nullable": true,
             "title": "Line Amount",
             "description": "The line amount as a numeric value."
+          },
+          "invoicedQuantity": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "nullable": true,
+            "title": "Invoiced quantity",
+            "description": "How much of the quantity is already invoiced; the next invoice takes only the rest."
           }
         },
         "x-openregister-audit-trail": {

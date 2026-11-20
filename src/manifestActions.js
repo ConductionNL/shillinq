@@ -14,13 +14,22 @@
 // So every handler is registered in both, from this one list.
 
 import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
+import { openRepeatAppointment } from './utils/appointmentSeriesActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
+import { openAuditSampleDraw } from './utils/auditSampleApi.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openProposeDirectDebit } from './utils/directDebitActions.js'
 import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
+import { downloadEnsiaStatement, downloadEnsiaXml } from './utils/ensiaApi.js'
+import {
+	downloadIcpStatementXml,
+	fileIcpStatement,
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+} from './utils/icpStatementActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import {
 	approvePayable,
@@ -32,7 +41,14 @@ import {
 	openIntegriqStore,
 } from './utils/integriqConnections.js'
 import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
+import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
+import { openRegenerateKnownCosts } from './utils/knownCostActions.js'
+import {
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+} from './utils/openItemClearingActions.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -41,6 +57,7 @@ import {
 	openPayeeRelation,
 	openRelationsExport,
 } from './utils/relationActions.js'
+import { createSalesOrderFromQuote, invoiceSalesOrder } from './utils/salesOrderActions.js'
 import {
 	openMeterReadingImport,
 	rateMeterReadings,
@@ -51,6 +68,7 @@ import {
 } from './utils/vatNumberCheck.js'
 import { openPrepareVatReturn } from './utils/vatReturnActions.js'
 import {
+	checkVatFiscalYearCorrections,
 	checkVatReturnForCorrections,
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
@@ -74,6 +92,10 @@ export const manifestActions = Object.freeze({
 	openDownPaymentInvoice,
 	// Generate invoices on Sales invoices (board ShFactuurGenereren).
 	openInvoiceGenerateWizard,
+	// sales-invoice-sending 3.2: Send selected on Accounts Receivable.
+	sendSelectedInvoices,
+	// sales-invoice-sending 3.3: New invoice batch on Sales invoices and Invoice batches.
+	openInvoiceBatchCreate,
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
@@ -81,6 +103,11 @@ export const manifestActions = Object.freeze({
 	// batches and Download pain.008 on a generated batch.
 	openProposeDirectDebit,
 	downloadDirectDebitFile,
+	// public-sector-council-and-auditor-statements: Draw sample on an audit
+	// protocol, and the XML and statement downloads on an ENSIA cycle.
+	openAuditSampleDraw,
+	downloadEnsiaXml,
+	downloadEnsiaStatement,
 	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
 	approvePayable,
 	markPayablePaid,
@@ -117,15 +144,38 @@ export const manifestActions = Object.freeze({
 	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// sales-quote-and-order-to-invoice 2.1: Create sales order on a quote,
+	// Invoice order on a sales order.
+	createSalesOrderFromQuote,
+	invoiceSalesOrder,
+	// ledger-open-item-clearing 3.1: Clear on a suggested pair, Clear
+	// selected on Lines to clear, Undo clearing on a group.
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+	// tax-icp-and-reverse-charge: Prepare statement on the ICP page, and
+	// Reconcile, Download XML and File on a statement.
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+	downloadIcpStatementXml,
+	fileIcpStatement,
 	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
 	// Prepare / Download / File on a correction, and the position's lines.
 	checkVatReturnForCorrections,
+	// tax-vat-return-from-books 4.1: Check fiscal year on a broken fiscal year.
+	checkVatFiscalYearCorrections,
 	prepareSupplementaryReturn,
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
 	openVatPositionLines,
+	// bookings-messages-and-embedding 1.4: New repeating appointment on
+	// Appointments.
+	openRepeatAppointment,
 	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
 	openRecalculateInvestmentDeductions,
+	// budget-known-costs design.md §12: "Regenerate known costs" on
+	// Budget Line Derivations.
+	openRegenerateKnownCosts,
 })
 
 /**

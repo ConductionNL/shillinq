@@ -15,7 +15,7 @@
 
 ## 3. End to end and strings
 
-- [ ] 3.1 Playwright `tests/e2e/reporting-data-delivery.spec.ts` for creating and pausing a schedule. Verify: passes locally. Written 30 Sep (routes answered by page.route); not run, no live instance in the build lane.
+- [x] 3.1 Playwright `tests/e2e/reporting-data-delivery.spec.ts` for creating and pausing a schedule. Verify: passes locally. Live pass 2026-11-17: 1 passed on a fresh NC 34 + OpenRegister main instance. Written 30 Sep (routes answered by page.route); not run, no live instance in the build lane.
 - [x] 3.2 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

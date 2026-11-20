@@ -51,12 +51,11 @@ async function stub(name, tag) {
 
 vi.mock('@conduction/nextcloud-vue', async () => ({
 	CnAdminSettingsShell: await stub('CnAdminSettingsShell', 'div'),
+	CnSettingsFieldsSection: await stub('CnSettingsFieldsSection', 'section'),
 	CnSettingsSection: await stub('CnSettingsSection', 'section'),
 	CnToggleTableWidget: await stub('CnToggleTableWidget', 'table'),
 }))
 vi.mock('@nextcloud/vue', async () => ({ NcButton: await stub('NcButton', 'a') }))
-vi.mock('../../src/views/settings/Settings.vue', async () => ({ default: await stub('Settings', 'form') }))
-vi.mock('../../src/views/settings/PipelinqIntegration.vue', async () => ({ default: await stub('PipelinqIntegration', 'form') }))
 
 const { default: AdminRoot } = await import('../../src/views/settings/AdminRoot.vue')
 
@@ -101,21 +100,37 @@ describe('AdminRoot render', () => {
 			breadcrumbNote: 'only for administrators, each section saves on its own',
 			docUrl: 'https://shillinq.conduction.nl/docs/intro',
 		})
-		expect(shell.attrs.tabs.map((tab) => [tab.id, tab.count])).toEqual([['general', undefined], ['required-fields', 3], ['connections', undefined], ['appointments', undefined]])
+		expect(shell.attrs.tabs.map((tab) => [tab.id, tab.count])).toEqual([['general', undefined], ['required-fields', 3], ['custom-record-types', undefined], ['connections', undefined], ['appointments', undefined], ['exchange-rates', undefined]])
 		expect(shell.attrs.breadcrumbs.map((crumb) => crumb.label)).toEqual(['Administration settings', 'Shillinq', 'General'])
-		expect(Object.keys(shell.slots)).toEqual(['default', 'tab-required-fields', 'tab-connections', 'tab-appointments'])
+		expect(Object.keys(shell.slots)).toEqual(['tab-exchange-rates', 'default', 'tab-required-fields', 'tab-custom-record-types', 'tab-connections', 'tab-appointments'])
 	})
 
-	it('shows the embedded settings forms only once the stores are ready', async () => {
-		const waiting = await render({ storesReady: false })
-		expect(named('Settings')).toEqual([])
-		expect(named('PipelinqIntegration')).toEqual([])
-		expect(waiting.html).not.toContain('data-stub="Settings"')
+	it('maps every kind of payment request and the clearing account to a revenue account (REQ-SOPR-002)', async () => {
+		await render({ storesReady: false })
+		const [accounts] = named('CnSettingsFieldsSection').filter((node) => node.attrs['data-testid'] === 'admin-section-revenue-accounts')
+		expect(accounts.attrs).toMatchObject({ appId: 'shillinq', name: 'Revenue accounts for payment requests', url: '/index.php/apps/shillinq/api/settings/payment-revenue-accounts' })
+		expect(accounts.attrs.fields.map((field) => field.key)).toEqual(['leges', 'dwangsom', 'deposit', 'contribution', 'event-fee', 'other', 'clearing'])
+		const pattern = new RegExp(accounts.attrs.fields[0].pattern)
+		expect(['8400', '1100.10', 'AR-01'].every((value) => pattern.test(value))).toBe(true)
+		expect(['84 00', '', 'x'.repeat(33), '<b>'].some((value) => pattern.test(value))).toBe(false)
+	})
+
+	it('shows the configuration and Pipelinq sections at once, each reading its own settings', async () => {
+		await render({ storesReady: false })
+		const sections = named('CnSettingsFieldsSection')
+		const [configuration] = sections.filter((node) => node.attrs['data-testid'] === 'admin-section-configuration')
+		expect(configuration.attrs).toMatchObject({ appId: 'shillinq', name: 'Configuration', url: '/index.php/apps/shillinq/api/settings' })
+		expect(configuration.attrs.fields.map((field) => field.key)).toEqual(['register', 'portal_payment_redirect_url'])
+		expect(sections.filter((node) => node.attrs['data-testid'] === 'admin-section-pipelinq')).toHaveLength(1)
 
 		const ready = await render({ storesReady: true })
-		expect(ready.html).toMatch(/<!--slot:default--><!--\[--><form data-stub="Settings"><\/form><form data-stub="PipelinqIntegration"><\/form>/)
+		expect(ready.html).toMatch(/<!--slot:default--><!--\[--><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-configuration"><\/section><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-revenue-accounts"><\/section><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-pipelinq"><\/section>/)
 		const [shell] = named('CnAdminSettingsShell').slice(-1)
-		expect(shell.slots.default.map((node) => node.type.name)).toEqual(['Settings', 'PipelinqIntegration'])
+		expect(shell.slots.default.map((node) => node.type.name)).toEqual(['CnSettingsFieldsSection', 'CnSettingsFieldsSection', 'CnSettingsFieldsSection'])
+		const [pipelinq] = named('CnSettingsFieldsSection').filter((node) => node.attrs['data-testid'] === 'admin-section-pipelinq').slice(-1)
+		// saveAll: the settings POST replaces the endpoint, so a token-only save must still carry it.
+		expect(pipelinq.attrs).toMatchObject({ appId: 'shillinq', url: '/index.php/apps/shillinq/api/pipelinq/settings', saveMethod: 'POST', saveAll: true })
+		expect(pipelinq.attrs.fields.map((field) => [field.key, field.type])).toEqual([['endpoint', 'text'], ['token', 'secret'], ['test', 'action']])
 	})
 
 	it('draws each page tab as a section linking to its page, with the widget where declared', async () => {
@@ -124,20 +139,24 @@ describe('AdminRoot render', () => {
 		const sections = named('CnSettingsSection')
 		expect(sections.map((entry) => [entry.attrs['data-testid'], entry.attrs.name, entry.attrs.wide])).toEqual([
 			['admin-section-required-fields', 'Required fields', ''],
+			['admin-section-custom-record-types', 'Own records', ''],
 			['admin-section-connections', 'Connections', ''],
 			['admin-section-appointments', 'Appointments', ''],
 		])
-		expect(sections[1].attrs.description).toBe('See which connections work before you rely on them.')
+		expect(sections[2].attrs.description).toBe('See which connections work before you rely on them.')
 		const components = (nodes) => nodes.filter((node) => typeof node.type === 'object').map((node) => node.type.name)
 		expect(components(sections[0].slots.default)).toEqual(['CnToggleTableWidget', 'NcButton'])
-		expect(components(sections[1].slots.default)).toEqual(['NcButton'])
+		expect(components(sections[1].slots.default)).toEqual(['CnToggleTableWidget', 'NcButton'])
+		expect(components(sections[2].slots.default)).toEqual(['NcButton'])
 
 		const widgets = named('CnToggleTableWidget')
-		expect(widgets).toHaveLength(1)
+		expect(widgets).toHaveLength(2)
 		expect(widgets[0].attrs.content.bind.schema).toBe('FieldRequirement')
+		expect(widgets[1].attrs.content.bind).toEqual({ mode: 'map', url: '/apps/shillinq/api/custom-record-types/available', path: 'shown' })
 
 		expect(named('NcButton').map((entry) => [entry.attrs.href, entry.slots.default[0].children])).toEqual([
 			['/index.php/apps/shillinq/settings/required-fields', 'Manage required fields'],
+			['/index.php/apps/shillinq/records', 'Open own records'],
 			['/index.php/apps/shillinq/external-adapters', 'Open the connections'],
 			['/index.php/apps/shillinq/settings/booking-widget-keys', 'Manage widget keys'],
 		])

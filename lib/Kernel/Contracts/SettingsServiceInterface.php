@@ -138,7 +138,7 @@ interface SettingsServiceInterface {
 	public function seedBbvProgrammes(string $administrationId): array;
 
 	/**
-	 * Seed the BBV task_field catalogue from bbv-task_fields-2024.json, idempotently.
+	 * Seed the BBV task_field catalogue from bbv-taakvelden-2024.json, idempotently.
 	 *
 	 * Imports the canonical Besluit BBV bijlage IV task_fields into the BbvTaakveld
 	 * schema. Deduplication key is code. Idempotent on re-run.
@@ -265,6 +265,19 @@ interface SettingsServiceInterface {
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
 	 */
 	public function seedInventoryValuationExamples(string $administrationId): array;
+
+	/**
+	 * Seed an administration from the legislation pack of a country: its chart
+	 * of accounts and VAT rates, and the administration's jurisdiction.
+	 *
+	 * @param string $country          ISO 3166 alpha-2, e.g. `BE`.
+	 * @param string $administrationId The administration (its administrationCode or uuid).
+	 *
+	 * @return array<string,mixed> Result with success flag and message.
+	 *
+	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 */
+	public function seedLegislationPack(string $country, string $administrationId): array;
 
 	/**
 	 * Seed mandaat (signing-authority) templates from mandaat-templates.json, idempotently.

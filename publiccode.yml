@@ -2,17 +2,38 @@ publiccodeYmlVersion: "0.4"
 
 name: Shillinq
 url: "https://github.com/ConductionNL/shillinq"
-softwareVersion: "0.1.2"
-releaseDate: "2026-05-26"
+landingURL: "https://shillinq.conduction.nl"
+roadmap: "https://github.com/ConductionNL/shillinq/blob/development/openspec/ROADMAP.md"
+softwareVersion: "0.5.0"
+releaseDate: "2026-09-12"
+logo: img/app-store.svg
 developmentStatus: beta
 softwareType: "standalone/other"
 
 platforms:
-  - nextcloud
+  - web
 
 categories:
   - financial-reporting
   - accounting
+  - billing-and-invoicing
+  - procurement
+  - budgeting
+
+dependsOn:
+  open:
+    - name: Nextcloud
+      versionMin: "32"
+      versionMax: "35"
+    - name: OpenRegister
+
+intendedAudience:
+  countries:
+    - nl
+  scope:
+    - government
+    - local-authorities
+    - finance-and-economic-development
 
 description:
   en:
@@ -24,11 +45,20 @@ description:
       and administering financial records. Built on Open Register, it integrates
       with Nextcloud's collaboration ecosystem and is designed to meet Dutch
       government and SME financial administration requirements.
+      Conduction maintains this component within the Nextcloud ISV programme.
+      Shillinq is available in the Nextcloud App Store at
+      https://apps.nextcloud.com/apps/shillinq.
     features:
-      - Invoice creation and management
-      - Payment tracking
-      - Financial record administration
-      - Integration with Nextcloud collaboration tools
+      - Bookkeeping and general ledger with double-entry accounting
+      - Accounts payable and receivable
+      - Sales invoicing and e-invoicing (UBL/Peppol)
+      - Purchase orders and procurement workflows
+      - Supplier management and approval chains
+      - Contract lifecycle management
+      - Bank reconciliation and payment matching
+      - VAT reporting and compliance
+      - Financial statements, budget planning and forecasting
+      - Dutch government compliance (BBV, IV3, SiSa, DigiInkoop)
 
   nl:
     shortDescription: >
@@ -40,11 +70,20 @@ description:
       Register integreert het met het Nextcloud-ecosysteem en is ontworpen om te
       voldoen aan de financiële administratievereisten van de Nederlandse overheid
       en het MKB.
+      Conduction onderhoudt dit component binnen het Nextcloud ISV-programma.
+      Shillinq is beschikbaar in de Nextcloud App Store via
+      https://apps.nextcloud.com/apps/shillinq.
     features:
-      - Facturen aanmaken en beheren
-      - Betalingen bijhouden
-      - Financiële administratie
-      - Integratie met Nextcloud-samenwerkingstools
+      - Boekhouding en grootboek met dubbel boekhouden
+      - Crediteuren- en debiteurenbeheer
+      - Verkoopfacturen en e-facturatie (UBL/Peppol)
+      - Inkooporders en inkoopworkflows
+      - Leveranciersbeheer en goedkeuringsketens
+      - Contractbeheer over de hele levenscyclus
+      - Bankafstemming en betalingsmatching
+      - Btw-aangifte en compliance
+      - Financiële overzichten, begroting en prognoses
+      - Naleving van overheidseisen (BBV, IV3, SiSa, DigiInkoop)
 
 legal:
   license: EUPL-1.2
@@ -52,7 +91,12 @@ legal:
   repoOwner: "Conduction B.V."
 
 maintenance:
-  type: community
+  type: contract
+  contractors:
+    - name: Conduction B.V.
+      until: "2028-12-31"
+      email: info@conduction.nl
+      website: https://conduction.nl
   contacts:
     - name: Conduction B.V.
       email: info@conduction.nl
@@ -61,8 +105,31 @@ maintenance:
 localisation:
   localisationReady: true
   availableLanguages:
-    - nl
+    - bg
+    - da
+    - de
+    - el
     - en
+    - es
+    - et
+    - fi
+    - fr
+    - ga
+    - hr
+    - hu
+    - is
+    - it
+    - lt
+    - lv
+    - mt
+    - nb
+    - nl
+    - pl
+    - pt
+    - ro
+    - ru
+    - sq
+    - tr
 
 # Common Ground layer (nl.vng profile), as a standard supports entry.
 supports:

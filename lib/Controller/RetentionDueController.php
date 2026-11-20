@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\RetentionDueService;
+use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -60,7 +60,7 @@ class RetentionDueController extends Controller {
 	 *
 	 * @param IRequest                              $request The request.
 	 * @param AdministrationContextServiceInterface $context Who the caller is and which administrations they may read.
-	 * @param RetentionDueService                   $due     Lists the records past their retention end date.
+	 * @param RetentionDueServiceInterface                   $due     Lists the records past their retention end date.
 	 * @param ITimeFactory                          $time    Today.
 	 * @param LoggerInterface                       $logger  Where a failed read is reported.
 	 *
@@ -69,7 +69,7 @@ class RetentionDueController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly AdministrationContextServiceInterface $context,
-		private readonly RetentionDueService $due,
+		private readonly RetentionDueServiceInterface $due,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
 	) {

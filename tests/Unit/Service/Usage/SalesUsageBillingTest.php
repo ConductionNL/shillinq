@@ -26,7 +26,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Usage;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCP\AppFramework\Utility\ITimeFactory;
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\RateMeterReadingAction;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
@@ -44,6 +47,7 @@ use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
@@ -176,7 +180,14 @@ class SalesUsageBillingTest extends TestCase {
 	public function testRatingAReadingKeepsItsAmount(): void {
 		$reading = ['administrationId' => self::ADMIN, 'customerId' => 'cust-hosting-noord', 'resourceType' => 'storage_gb', 'quantity' => 250, 'ratePlanId' => self::PLAN, 'periodStart' => '2026-09-01', 'periodEnd' => '2026-09-30', 'status' => 'rated'];
 
-		$rated = (new RateMeterReadingAction($this->rating()))->execute($reading, ($reading + ['status' => 'unrated']), [], 'rate');
+		$rated = (new RateMeterReadingAction($this->rating()))->execute(
+			new LifecycleActionContext(
+				objectData: $reading,
+				previousData: ($reading + ['status' => 'unrated']),
+				parameters: [],
+				actionName: 'rate'
+			)
+		);
 
 		$this->assertSame(30.0, $rated['ratedAmount']);
 		$this->assertSame([], RegisterSchema::errors('MeterReading', $rated));
@@ -194,7 +205,14 @@ class SalesUsageBillingTest extends TestCase {
 		$this->expectException(DomainException::class);
 		$reading = ['administrationId' => 'adm-other', 'customerId' => 'c', 'resourceType' => 'storage_gb', 'quantity' => 1, 'ratePlanId' => self::PLAN];
 
-		(new RateMeterReadingAction($this->rating()))->execute($reading, $reading, [], 'rate');
+		(new RateMeterReadingAction($this->rating()))->execute(
+			new LifecycleActionContext(
+				objectData: $reading,
+				previousData: $reading,
+				parameters: [],
+				actionName: 'rate'
+			)
+		);
 
 	}//end testAReadingWithoutAPlanInItsAdministrationIsNotRated()
 
@@ -323,6 +341,8 @@ class SalesUsageBillingTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: $this->store,
 			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
+			passThrough: $this->createMock(PassThroughBilling::class),
+			billableRates: new BillableRateService($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 
 	}//end generator()

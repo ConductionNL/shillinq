@@ -78,18 +78,6 @@ const rows = [
 
 let live = null
 
-/**
- * A keyup event as Vue's key modifiers read it.
- */
-class KeyboardEventLike {
-	/**
-	 * @param {string} key The key.
-	 */
-	constructor(key) {
-		this.key = key
-		this.type = 'keyup'
-	}
-}
 const loadGrid = vi.fn()
 
 /**
@@ -218,14 +206,16 @@ describe('BudgetGrid template handlers', () => {
 		expect(byTestId(after, 'budget-grid-account-link')).toHaveLength(1)
 	})
 
-	it('toggles a group from the keyboard with enter and space', async () => {
-		const { vm, vnodes } = await mountView({ loading: false, columns, rows })
-		const keyup = [].concat(byTestId(vnodes, 'budget-grid-expand-toggle')[0].props.onKeyup)
+	it('leaves enter and space to the native button, so a key press toggles a group once', async () => {
+		const { vnodes } = await mountView({ loading: false, columns, rows })
+		const toggle = byTestId(vnodes, 'budget-grid-expand-toggle')[0]
 
-		keyup.forEach((handler) => handler(new KeyboardEventLike('Enter')))
-		expect(vm.expandedIds.has('lg-1')).toBe(true)
-		keyup.forEach((handler) => handler(new KeyboardEventLike(' ')))
-		expect(vm.expandedIds.has('lg-1')).toBe(false)
+		// A native button turns Enter and Space into a click; a key handler of
+		// its own would toggle a second time and undo the first.
+		expect(toggle.type).toBe('button')
+		expect(toggle.props.type).toBe('button')
+		expect(toggle.props.onKeyup).toBeUndefined()
+		expect(toggle.props.onKeydown).toBeUndefined()
 	})
 
 	it('opens and closes a row trend chart from its toggle', async () => {
@@ -241,11 +231,9 @@ describe('BudgetGrid template handlers', () => {
 		trend[1].props.onClick()
 		expect(vm.openChartRowId).toBe(null)
 
-		const keyup = [].concat(trend[0].props.onKeyup)
-		keyup.forEach((handler) => handler(new KeyboardEventLike('Enter')))
-		expect(vm.openChartRowId).toBe('lg-1')
-		keyup.forEach((handler) => handler(new KeyboardEventLike(' ')))
-		expect(vm.openChartRowId).toBe(null)
+		expect(trend[0].type).toBe('button')
+		expect(trend[0].props.onKeyup).toBeUndefined()
+		expect(trend[0].props.onKeydown).toBeUndefined()
 	})
 
 	it('renders the computed footer rows and the error alert', async () => {

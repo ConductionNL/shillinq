@@ -36,6 +36,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Service\ListenerSlugContract;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -121,13 +122,48 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	private bool $notifyFails = false;
 
 	/**
+	 * The purchase order service handed to the listener.
+	 *
+	 * @var PurchaseOrderServiceInterface|null
+	 */
+	private ?PurchaseOrderServiceInterface $purchaseOrders = null;
+
+	/**
 	 * Fresh store per test.
 	 *
 	 * @return void
 	 */
 	protected function setUp(): void {
 		$this->store = new OpenRegisterFaithfulObjectService();
+		$this->purchaseOrders = $this->createMock(PurchaseOrderServiceInterface::class);
 	}//end setUp()
+
+	/**
+	 * A status naming a purchase order goes to the purchase order service, not to an invoice.
+	 *
+	 * @return void
+	 */
+	public function testAPurchaseOrderStatusGoesToThePurchaseOrderService(): void {
+		$this->seedInvoice(deliveryStatus: 'sent');
+		$this->purchaseOrders->expects(self::once())->method('applyPeppolDeliveryStatus')
+			->with('po-9', 'failed', 'receiver unreachable')
+			->willReturn(true);
+
+		$this->listener()->handle(
+			$this->deliveryStatus(
+				data: [
+					'objectUri' => 'openregister://shillinq/PurchaseOrder/po-9',
+					'transmissionId' => 'urn:uuid:po',
+					'status' => 'failed',
+					'timestamp' => '2026-06-20T10:00:00+00:00',
+					'detail' => 'receiver unreachable',
+				]
+			)
+		);
+
+		self::assertSame('sent', $this->invoice()['deliveryStatus'], 'no invoice is touched');
+
+	}//end testAPurchaseOrderStatusGoesToThePurchaseOrderService()
 
 	/**
 	 * REQ-AR-011 scenario: sent -> delivered advances the sub-lifecycle and
@@ -156,6 +192,38 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 		self::assertCount(1, $this->store->dump(schema: 'ARInvoice'), 'the invoice is updated, not copied');
 
 	}//end testSentToDeliveredAdvancesAndPersistsDetail()
+
+	/**
+	 * REQ-SEIX-003 scenario: an invoice integriq accepted for transmission moves
+	 * from queued to sent on the id-stamped CloudEvent object integriq saves, and
+	 * takes the transmission id integriq assigned.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 */
+	public function testQueuedToSentTakesIntegriqsTransmissionId(): void {
+		$this->seedInvoice(deliveryStatus: 'queued');
+
+		$this->listener()->handle(
+			$this->deliveryStatus(
+				data: [
+					'objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID,
+					'transmissionId' => 'urn:uuid:5f0c1e2a-9b7d-4c3e-8a10-2b6f4d9e7c11',
+					'status' => 'sent',
+					'timestamp' => '2026-09-27T09:00:00+00:00',
+					'detail' => 'Handed to the access point',
+				]
+			)
+		);
+
+		$invoice = $this->invoice();
+		self::assertSame('sent', $invoice['deliveryStatus']);
+		self::assertSame('urn:uuid:5f0c1e2a-9b7d-4c3e-8a10-2b6f4d9e7c11', $invoice['transmissionId']);
+		self::assertSame('Handed to the access point', $invoice['deliveryDetail']);
+		self::assertSame([], $this->notifications, 'only a rejection notifies');
+
+	}//end testQueuedToSentTakesIntegriqsTransmissionId()
 
 	/**
 	 * REQ-AR-011 / REQ-EINV-005 scenario: an in-flight invoice rejected;
@@ -521,6 +589,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 			IAppConfig::class => $appConfig,
 			INotificationManager::class => $this->notificationManager(),
 			LoggerInterface::class => ($this->listenerLogger ?? new NullLogger()),
+			PurchaseOrderServiceInterface::class => $this->purchaseOrders,
 			ListenerSchemaResolver::class => new ListenerSchemaResolver(
 				container: $container,
 				registerLocation: $settings,

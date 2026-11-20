@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
 use DateTime;
 use DateTimeZone;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\RecordCancellationAction;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IUser;
@@ -61,15 +62,17 @@ class RecordCancellationActionTest extends TestCase {
 	 */
 	public function testAStaffEndIsRecordedWithTheReasonAndTheEndOfThePeriod(): void {
 		$saved = $this->action()->execute(
-			[
+			new LifecycleActionContext(
+				objectData: [
 				'status' => 'ended',
 				'cancellationReasonCode' => 'too-expensive',
 				'cancellationReasonText' => ' Te duur geworden ',
 				'nextRunDate' => '2026-10-01',
 			],
-			['status' => 'active'],
-			[],
-			'endFromActive'
+				previousData: ['status' => 'active'],
+				parameters: [],
+				actionName: 'endFromActive'
+			)
 		);
 
 		$this->assertSame(
@@ -91,7 +94,14 @@ class RecordCancellationActionTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnEndWithNobodySignedInIsTheCustomers(): void {
-		$saved = $this->action(signedIn: false)->execute(['nextRunDate' => '2026-12-01'], [], [], 'endFromActive');
+		$saved = $this->action(signedIn: false)->execute(
+			new LifecycleActionContext(
+				objectData: ['nextRunDate' => '2026-12-01'],
+				previousData: [],
+				parameters: [],
+				actionName: 'endFromActive'
+			)
+		);
 
 		$this->assertSame('not-given', $saved['cancellation']['reasonCode']);
 		$this->assertNull($saved['cancellation']['reasonText']);
@@ -109,7 +119,14 @@ class RecordCancellationActionTest extends TestCase {
 	public function testAnEndByTheProfilesOwnConditionIsNoCancellation(): void {
 		$profile = ['status' => 'ended', 'remainingOccurrences' => 0];
 
-		$this->assertSame($profile, $this->action(signedIn: false)->execute($profile, [], [], 'endFromActive'));
+		$this->assertSame($profile, $this->action(signedIn: false)->execute(
+			new LifecycleActionContext(
+				objectData: $profile,
+				previousData: [],
+				parameters: [],
+				actionName: 'endFromActive'
+			)
+		));
 	}//end testAnEndByTheProfilesOwnConditionIsNoCancellation()
 
 	/**
@@ -132,16 +149,18 @@ class RecordCancellationActionTest extends TestCase {
 	 */
 	public function testTheReportFieldsAreWrittenWithTheCancellation(): void {
 		$saved = $this->action()->execute(
-			[
+			new LifecycleActionContext(
+				objectData: [
 				'cancellationReasonCode' => 'switched-provider',
 				'nextRunDate' => '2026-10-01',
 				'frequency' => 'quarterly',
 				'interval' => 1,
 				'lines' => [['quantity' => 2, 'unitPrice' => 150.0], ['quantity' => 1, 'unitPrice' => 50.0]],
 			],
-			[],
-			[],
-			'endFromActive'
+				previousData: [],
+				parameters: [],
+				actionName: 'endFromActive'
+			)
 		);
 
 		$this->assertSame('switched-provider', $saved['cancellationReasonCode']);

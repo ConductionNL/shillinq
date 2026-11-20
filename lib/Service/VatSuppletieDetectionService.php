@@ -64,7 +64,9 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -79,8 +81,11 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Detection and preparation of a correction share one comparison of filed and current figures.
+ * @SuppressWarnings(PHPMD.TooManyMethods) Each rubriek comparison is its own small step.
  */
-class VatSuppletieDetectionService {
+class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterface {
 	/**
 	 * Statutory suppletie threshold in euros. Verified 2026-07-13 via
 	 * WebSearch against belastingdienst.nl (not from training-data memory):
@@ -291,6 +296,20 @@ class VatSuppletieDetectionService {
 	}//end prepare()
 
 	/**
+	 * The net change in VAT payable a detected correction amounts to, in
+	 * euros, read from its snapshots without preparing it (REQ-TVRB-002).
+	 *
+	 * @param array<string,mixed> $correction The VatCorrection with its filed and current snapshots.
+	 *
+	 * @return float
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function correctionTotal(array $correction): float {
+		return $this->netCorrection(deltas: $this->snapshotDeltas(correction: $correction));
+	}//end correctionTotal()
+
+	/**
 	 * Fetch a VatCorrection that is still in the detected sub-state.
 	 *
 	 * @param string $vatCorrectionId The VatCorrection id.
@@ -375,6 +394,11 @@ class VatSuppletieDetectionService {
 		$correction['correctionAmount']  = $netCorrection;
 		$correction['adjustmentAmount']  = $netCorrection;
 		$correction['thresholdExceeded'] = (abs($netCorrection) >= self::SUPPLETIE_THRESHOLD_EUR);
+
+		// REQ-TVRB-002: in a broken fiscal year the grens applies to the total of the year's corrections.
+		if (is_numeric($correction['fiscalYearCorrectionTotal'] ?? null) === true) {
+			$correction['thresholdExceeded'] = (abs((float)$correction['fiscalYearCorrectionTotal']) >= self::SUPPLETIE_THRESHOLD_EUR);
+		}
 
 		return $correction;
 
@@ -980,11 +1004,6 @@ class VatSuppletieDetectionService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

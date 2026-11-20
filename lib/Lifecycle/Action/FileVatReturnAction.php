@@ -20,10 +20,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
-use OCA\Shillinq\Service\Sbr\VatReturnXbrlBuilder;
+use OCA\Shillinq\Kernel\Contracts\VatReturnXbrlBuilderInterface;
 use RuntimeException;
 
 /**
@@ -47,14 +48,14 @@ class FileVatReturnAction implements LifecycleActionInterface {
 	 * Constructor.
 	 *
 	 * @param DigipoortSbrAdapterInterface    $adapter     The Digipoort port: is filing configured.
-	 * @param VatReturnXbrlBuilder            $builder     Builds the return's instance.
+	 * @param VatReturnXbrlBuilderInterface   $builder     Builds the return's instance.
 	 * @param ObjectTransitionRunnerInterface $transitions Validates and submits it.
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.4
 	 */
 	public function __construct(
 		private readonly DigipoortSbrAdapterInterface $adapter,
-		private readonly VatReturnXbrlBuilder $builder,
+		private readonly VatReturnXbrlBuilderInterface $builder,
 		private readonly ObjectTransitionRunnerInterface $transitions,
 	) {
 	}//end __construct()
@@ -62,20 +63,17 @@ class FileVatReturnAction implements LifecycleActionInterface {
 	/**
 	 * Build, validate and hand off the return's instance.
 	 *
-	 * @param array<string, mixed> $objectData   The BtwAangifte as the transition leaves it.
-	 * @param array<string, mixed> $previousData The BtwAangifte before.
-	 * @param array<string, mixed> $parameters   Declared parameters (none).
-	 * @param string               $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the BtwAangifte as the transition leaves it.
 	 *
 	 * @return array<string, mixed> The return with xbrlInstanceId set.
 	 *
 	 * @throws RuntimeException When filing is not configured, or the instance is refused or already done.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.4
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		if ($this->adapter->isDormant() === true) {
 			throw new RuntimeException(HandToDigipoortAction::NOT_CONFIGURED);
 		}
