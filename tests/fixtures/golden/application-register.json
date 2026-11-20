@@ -714,6 +714,14 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\JurisdictionLockListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\BbvAllocationValidationListener'",
             "0"
@@ -2406,6 +2414,21 @@
         [
             "'OCA\\\\Shillinq\\\\Service\\\\Peppol\\\\PeppolTransmissionPortInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Peppol\\\\LogPeppolTransmissionAdapter'"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrder\\\\PeppolTransmissionAdapterInterface'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrder\\\\PurchaseOrderMailerInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrder\\\\IntegriqPurchaseOrderMailer'"
         ]
     ],
     [

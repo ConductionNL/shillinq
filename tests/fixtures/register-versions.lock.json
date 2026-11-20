@@ -142,8 +142,12 @@
             "versionsSha256": "9e5dd0ad0834ecf3cf75d29a176cfd50e0bc9d9f52e28568e4091d6db57cb4fc"
         },
         {
-            "appVersion": "0.5.7-unstable.20261117200000",
-            "versionsSha256": "fe008c9e8f258ef82e1bb723ec0b5186cd5a0dfc2ebb33f4bfda5ea0954e8c88"
+            "appVersion": "0.5.7-unstable.20261117230000",
+            "versionsSha256": "3e073e193417bcbed3cf7df1ec8c55be9f6781e2235e289742e0afff01b3b6a4"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120071700",
+            "versionsSha256": "6e23e16d5cf410c7b5b5000a1ba4f31101e5ccb183465d5df5dfd18ab9ae74ef"
         }
     ],
     "versions": {
@@ -652,7 +656,7 @@
         "schema:VatCorrection": "0.1.0",
         "schema:VatReturn": "0.1.0",
         "schema:VatReturnFiling": "0.3.0",
-        "schema:VatTariff": "0.3.0",
+        "schema:VatTariff": "0.4.0",
         "schema:VendorPerformance": "0.1.0",
         "schema:VerklaringDraft": "0.1.0",
         "schema:ViesValidation": "0.1.0",
