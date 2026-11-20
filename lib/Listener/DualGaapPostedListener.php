@@ -66,23 +66,12 @@ class DualGaapPostedListener implements IEventListener {
 	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public function handle(Event $event): void {
-		if ($event instanceof ObjectTransitionedEvent === false || $event->getTo() !== 'posted') {
-			return;
-		}
-
-		$object = $event->getObject();
-		if ($this->schemaResolver->matchesSchema(entity: $object, expectedSlug: 'GLTransaction') === false) {
-			return;
-		}
-
-		$transaction = (array)$object->getObject();
-		$reason = (string)($transaction['divergenceReasonCode'] ?? '');
-		if ($reason === '' || $reason === 'NONE') {
+		$transaction = $this->divergentPosting(event: $event);
+		if ($transaction === null) {
 			return;
 		}
 
 		try {
-			$transaction['id'] = (string)($transaction['id'] ?? $object->getUuid());
 			$result = $this->derivation->deriveOnPost(transaction: $transaction);
 		} catch (Throwable $e) {
 			$this->logger->warning('DualGaapPostedListener: derivation failed', ['exception' => $e->getMessage()]);
@@ -93,4 +82,34 @@ class DualGaapPostedListener implements IEventListener {
 			$this->logger->info('DualGaapPostedListener: nothing derived', ['transaction' => $transaction['id'], 'reason' => $result['message']]);
 		}
 	}//end handle()
+
+	/**
+	 * The transaction of a move to posted when it is marked as divergent, else null.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return array<string, mixed>|null The transaction with its `id`.
+	 *
+	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 */
+	private function divergentPosting(Event $event): ?array {
+		if (($event instanceof ObjectTransitionedEvent) === false) {
+			return null;
+		}
+
+		$object = $event->getObject();
+		$isPosting = ($event->getTo() === 'posted' && $this->schemaResolver->matchesSchema(entity: $object, expectedSlug: 'GLTransaction') === true);
+		if ($isPosting === false) {
+			return null;
+		}
+
+		$transaction = (array)$object->getObject();
+		if (in_array((string)($transaction['divergenceReasonCode'] ?? ''), ['', 'NONE'], true) === true) {
+			return null;
+		}
+
+		$transaction['id'] = (string)($transaction['id'] ?? $object->getUuid());
+
+		return $transaction;
+	}//end divergentPosting()
 }//end class

@@ -18,6 +18,8 @@
  * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
  */
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
@@ -48,7 +50,9 @@ class DualGaapPostedListenerTest extends TestCase {
 	 * @return ObjectTransitionedEvent
 	 */
 	private function event(string $to = 'posted', string $reason = 'ECL_IFRS9'): ObjectTransitionedEvent {
-		$entity = (new ObjectEntity())->setSchema('12')->setUuid('tx-1')->setObject(['periodId' => '2026', 'divergenceReasonCode' => $reason, 'adjustmentCalculationId' => 'calc-ecl']);
+		$entity = (new ObjectEntity())->setSchema('12')->setUuid('tx-1')->setObject(
+			['periodId' => '2026', 'divergenceReasonCode' => $reason, 'adjustmentCalculationId' => 'calc-ecl']
+		);
 
 		return new ObjectTransitionedEvent(
 			object: $entity,
@@ -67,9 +71,15 @@ class DualGaapPostedListenerTest extends TestCase {
 	 *
 	 * @return DualGaapPostedListener
 	 */
-	private function listener(DualGaapDerivationServiceInterface $derivation, bool $isTransaction = true, ?LoggerInterface $logger = null): DualGaapPostedListener {
+	private function listener(
+		DualGaapDerivationServiceInterface $derivation,
+		bool $isTransaction = true,
+		?LoggerInterface $logger = null
+	): DualGaapPostedListener {
 		$resolver = $this->createMock(ListenerSchemaResolverInterface::class);
-		$resolver->method('matchesSchema')->willReturnCallback(static fn (?object $entity, string $expectedSlug): bool => $isTransaction && $expectedSlug === 'GLTransaction');
+		$resolver->method('matchesSchema')->willReturnCallback(
+			static fn (?object $entity, string $expectedSlug): bool => $isTransaction && $expectedSlug === 'GLTransaction'
+		);
 
 		return new DualGaapPostedListener($derivation, $resolver, ($logger ?? $this->createMock(LoggerInterface::class)));
 	}//end listener()
@@ -117,7 +127,10 @@ class DualGaapPostedListenerTest extends TestCase {
 		);
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->expects($this->once())->method('warning');
-		$logger->expects($this->once())->method('info')->with($this->anything(), $this->callback(static fn (array $context): bool => $context['reason'] === 'This transaction is already derived.'));
+		$logger->expects($this->once())->method('info')->with(
+			$this->anything(),
+			$this->callback(static fn (array $context): bool => $context['reason'] === 'This transaction is already derived.')
+		);
 
 		$listener = $this->listener($derivation, logger: $logger);
 		$listener->handle($this->event());

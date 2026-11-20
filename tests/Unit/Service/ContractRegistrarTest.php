@@ -68,7 +68,7 @@ final class ContractRegistrarTest extends TestCase {
 		$aliases = $this->recordAliases();
 		$names = array_column($aliases, 0);
 
-		self::assertCount(246, $aliases);
+		self::assertCount(expectedCount: 246, haystack: $aliases);
 		self::assertSame($names, array_values(array_unique($names)));
 
 	}//end testEveryContractIsBoundExactlyOnce()

@@ -14,11 +14,12 @@ namespace OCA\Shillinq\Kernel\Contracts;
 /**
  * Contract of DualGaapDerivationService.
  *
- * @category Kernel
- * @package  OCA\Shillinq\Kernel\Contracts
- * @author   Conduction b.v. <info@conduction.nl>
- * @license  EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- * @link     https://github.com/ConductionNL/shillinq
+ * @category  Kernel
+ * @package   OCA\Shillinq\Kernel\Contracts
+ * @author    Conduction b.v. <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @link      https://github.com/ConductionNL/shillinq
  *
  * @spec exclude Structural contract, no functional requirement.
  */

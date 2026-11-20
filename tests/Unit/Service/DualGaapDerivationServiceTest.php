@@ -23,6 +23,8 @@
  * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
  */
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
@@ -89,7 +91,7 @@ class DualGaapDerivationServiceTest extends TestCase {
 				return array_values(
 					array_filter(
 						($this->rows[$schema] ?? []),
-						static fn (array $row): bool => array_intersect_assoc($filters, array_map(static fn ($v) => is_scalar($v) ? (string)$v : '', $row)) === $filters
+						static fn (array $row): bool => array_intersect_assoc($filters, array_map('strval', array_filter($row, 'is_scalar'))) === $filters
 					)
 				);
 			}
@@ -143,7 +145,9 @@ class DualGaapDerivationServiceTest extends TestCase {
 	 * @return void
 	 */
 	private function seed(array $outputs = ['ifrsAmount' => 5200]): void {
-		$this->rows['StandardSpecificCalculation'] = [['id' => 'calc-ecl', 'standardCode' => 'IFRS-9', 'calculationMethod' => 'expected_credit_loss_stages', 'outputs' => $outputs]];
+		$this->rows['StandardSpecificCalculation'] = [
+			['id' => 'calc-ecl', 'standardCode' => 'IFRS-9', 'calculationMethod' => 'expected_credit_loss_stages', 'outputs' => $outputs],
+		];
 		$this->rows['GLLine'] = [
 			['transactionId' => 'tx-1', 'accountNumber' => '4910', 'side' => 'debit', 'amount' => 4000],
 			['transactionId' => 'tx-1', 'accountNumber' => '1310', 'side' => 'credit', 'amount' => 4000],
@@ -158,7 +162,9 @@ class DualGaapDerivationServiceTest extends TestCase {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function savedOf(string $schema): array {
-		return array_values(array_map(static fn (array $save): array => $save[1], array_filter($this->saved, static fn (array $save): bool => $save[0] === $schema)));
+		$ofSchema = array_filter($this->saved, static fn (array $save): bool => $save[0] === $schema);
+
+		return array_values(array_map(static fn (array $save): array => $save[1], $ofSchema));
 	}//end savedOf()
 
 	/**
@@ -253,10 +259,16 @@ class DualGaapDerivationServiceTest extends TestCase {
 		$this->seed();
 		$service = $this->service();
 
-		$this->assertSame('The transaction is not marked as divergent.', $service->deriveOnPost($this->transaction(['divergenceReasonCode' => 'NONE']))['message']);
-		$this->assertSame('The transaction is not marked as divergent.', $service->deriveOnPost($this->transaction(['adjustmentCalculationId' => '']))['message']);
-		$this->assertSame('The adjustment calculation does not exist.', $service->deriveOnPost($this->transaction(['adjustmentCalculationId' => 'calc-x']))['message']);
-		$this->assertSame('The adjustment calculation gives no amount under the other framework.', $service->deriveOnPost($this->transaction(['reportingFramework' => 'IFRS-EU']))['message']);
+		$cases = [
+			'The transaction is not marked as divergent.' => ['divergenceReasonCode' => 'NONE'],
+			'The adjustment calculation does not exist.' => ['adjustmentCalculationId' => 'calc-x'],
+			'The adjustment calculation gives no amount under the other framework.' => ['reportingFramework' => 'IFRS-EU'],
+		];
+		foreach ($cases as $message => $overrides) {
+			$this->assertSame($message, $service->deriveOnPost($this->transaction($overrides))['message']);
+		}
+
+		$this->assertFalse($service->deriveOnPost($this->transaction(['adjustmentCalculationId' => '']))['derived']);
 
 		$this->rows['DualTransaction'] = [['id' => 'dual-1', 'baseTransactionId' => 'tx-1']];
 		$this->assertSame('This transaction is already derived.', $service->deriveOnPost($this->transaction())['message']);
@@ -273,7 +285,8 @@ class DualGaapDerivationServiceTest extends TestCase {
 		$this->rows['GLLine'] = [];
 		$this->assertSame('The transaction has no amount to derive from.', $this->service()->deriveOnPost($this->transaction())['message']);
 
-		$result = $this->service(failSave: true)->deriveOnPost($this->transaction(['lines' => [['accountNumber' => '4910', 'side' => 'debit', 'amount' => 10], ['accountNumber' => '1310', 'side' => 'credit', 'amount' => 10]]]));
+		$lines = [['accountNumber' => '4910', 'side' => 'debit', 'amount' => 10], ['accountNumber' => '1310', 'side' => 'credit', 'amount' => 10]];
+		$result = $this->service(failSave: true)->deriveOnPost($this->transaction(['lines' => $lines]));
 		$this->assertFalse($result['derived']);
 		$this->assertSame('The other framework\'s entry could not be stored.', $result['message']);
 	}//end testNoLinesOrAFailingStoreDeriveNothing()
@@ -295,7 +308,8 @@ class DualGaapDerivationServiceTest extends TestCase {
 		$scaled = DualGaapDerivationService::scaleLines($lines, 10000, 20001);
 
 		$this->assertCount(4, $scaled);
-		$debit = array_sum(array_map(static fn (array $l): int => (int)round($l['amount'] * 100), array_filter($scaled, static fn (array $l): bool => $l['side'] === 'debit')));
+		$debitLines = array_filter($scaled, static fn (array $l): bool => $l['side'] === 'debit');
+		$debit = array_sum(array_map(static fn (array $l): int => (int)round($l['amount'] * 100), $debitLines));
 		$this->assertSame(20001, $debit);
 		$this->assertSame(200.01, $scaled[3]['amount']);
 		$this->assertSame(66.66, $scaled[0]['amount']);

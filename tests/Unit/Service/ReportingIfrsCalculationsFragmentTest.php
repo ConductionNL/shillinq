@@ -18,6 +18,8 @@
  * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
  */
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;

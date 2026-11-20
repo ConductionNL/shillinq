@@ -257,6 +257,35 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	}//end withAdjustment()
 
 	/**
+	 * The Dutch GAAP and IFRS lines and totals: the posted lines under their framework, the scaled ones under the other.
+	 *
+	 * @param array<int, array<string, mixed>>              $lines   The posted lines.
+	 * @param array{posted: int, other: int, framework: string} $amounts Debit totals in cents and the posted framework.
+	 *
+	 * @return array{rjLines: array<int, array<string, mixed>>, ifrsLines: array<int, array<string, mixed>>, rjCents: int, ifrsCents: int}
+	 *
+	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 */
+	public static function entriesByFramework(array $lines, array $amounts): array {
+		$posted = array_values(
+			array_map(
+				static fn (array $line): array => [
+					'accountNumber' => (string)($line['accountNumber'] ?? ''),
+					'side' => (string)($line['side'] ?? ''),
+					'amount' => round(abs((float)($line['amount'] ?? 0)), 2),
+				],
+				$lines
+			)
+		);
+		$derived = self::scaleLines(lines: $lines, fromCents: $amounts['posted'], targetCents: $amounts['other']);
+		if ($amounts['framework'] === self::FRAMEWORK_IFRS) {
+			return ['rjLines' => $derived, 'ifrsLines' => $posted, 'rjCents' => $amounts['other'], 'ifrsCents' => $amounts['posted']];
+		}
+
+		return ['rjLines' => $posted, 'ifrsLines' => $derived, 'rjCents' => $amounts['posted'], 'ifrsCents' => $amounts['other']];
+	}//end entriesByFramework()
+
+	/**
 	 * Store the DualTransaction and the bridge line.
 	 *
 	 * @param array<string, mixed>                                    $transaction The posted transaction.
@@ -269,28 +298,11 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	private function write(array $transaction, array $calculation, array $lines, array $amounts): array {
 		$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
 		$administrationId = (string)($transaction['administrationId'] ?? '');
-		$posted = array_values(
-			array_map(
-				static fn (array $line): array => [
-					'accountNumber' => (string)($line['accountNumber'] ?? ''),
-					'side' => (string)($line['side'] ?? ''),
-					'amount' => round(abs((float)($line['amount'] ?? 0)), 2),
-				],
-				$lines
-			)
-		);
-		$derived = self::scaleLines(lines: $lines, fromCents: $amounts['posted'], targetCents: $amounts['other']);
-		$rjLines = $posted;
-		$ifrsLines = $derived;
-		$rjCents = $amounts['posted'];
-		$ifrsCents = $amounts['other'];
-		if ($amounts['framework'] === self::FRAMEWORK_IFRS) {
-			$rjLines = $derived;
-			$ifrsLines = $posted;
-			$rjCents = $amounts['other'];
-			$ifrsCents = $amounts['posted'];
-		}
-
+		$entries = self::entriesByFramework(lines: $lines, amounts: $amounts);
+		$rjLines = $entries['rjLines'];
+		$ifrsLines = $entries['ifrsLines'];
+		$rjCents = $entries['rjCents'];
+		$ifrsCents = $entries['ifrsCents'];
 		$differenceCents = ($ifrsCents - $rjCents);
 		try {
 			$dual = $this->save(
