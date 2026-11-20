@@ -33,6 +33,7 @@ use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\ActuarialValuationApprovedListener;
+use OCA\Shillinq\Listener\DualGaapPostedListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
@@ -336,6 +337,13 @@ final class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: ActuarialValuationApprovedListener::class
+		);
+
+		// Reporting-ifrs-calculations REQ-DGAAP-011: posting a divergent
+		// GLTransaction derives the other framework's entry and the bridge line.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: DualGaapPostedListener::class
 		);
 
 		// Task 5.3 — OrderFulfilmentTransitionListener emits

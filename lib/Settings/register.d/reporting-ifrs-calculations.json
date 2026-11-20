@@ -1,0 +1,37 @@
+{
+  "info": {
+    "version": "0.1.0-reporting-ifrs-calculations"
+  },
+  "components": {
+    "schemas": {
+      "GLTransaction": {
+        "version": "0.7.0",
+        "properties": {
+          "reportingFramework": {
+            "type": "string",
+            "enum": ["NL-GAAP-RJ", "IFRS-EU"],
+            "nullable": true,
+            "description": "The framework this entry is booked under. Absent means Dutch GAAP (reporting-ifrs-calculations REQ-DGAAP-011).",
+            "example": "NL-GAAP-RJ",
+            "title": "Reporting framework"
+          },
+          "divergenceReasonCode": {
+            "type": "string",
+            "enum": ["LEASE_IFRS16", "PENSION_IAS19", "ECL_IFRS9", "REVENUE_IFRS15", "IMPAIRMENT_IAS36", "BORROWING_COST_IAS23", "DEFERRED_TAX_IAS12", "BUSINESS_COMBINATION_IFRS3", "NONE"],
+            "nullable": true,
+            "description": "Marks the entry as measured differently under the other framework. With an adjustment calculation, posting derives the other framework's entry and the reconciling difference (REQ-DGAAP-011).",
+            "example": "ECL_IFRS9",
+            "title": "Divergence reason"
+          },
+          "adjustmentCalculationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The StandardSpecificCalculation whose outputs carry the amount under the other framework: `ifrsAmount` for an entry booked under Dutch GAAP, `rjAmount` for one booked under IFRS.",
+            "example": "calc-ecl-2026",
+            "title": "Adjustment calculation"
+          }
+        }
+      }
+    }
+  }
+}
