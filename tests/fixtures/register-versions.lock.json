@@ -180,6 +180,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120102100",
             "versionsSha256": "c92eba6afb234aa4f6c51f99347ba3254b8cb1519ac09044abd9fb20bb4a2e4d"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102200",
+            "versionsSha256": "b34f737c12f6f960742c917b895f250fabc1168031fd0ccc6b67c1baf7dd6438"
         }
     ],
     "versions": {
@@ -625,6 +629,7 @@
         "schema:SchatkistPosition": "0.1.0",
         "schema:SchatkistbankierenSaldo": "0.1.0",
         "schema:SegregatedLedger": "0.1.0",
+        "schema:SelfBilledInvoiceRefusal": "0.1.0",
         "schema:SepaMandate": "0.1.0",
         "schema:Service": "0.3.0",
         "schema:ServiceCategoryOverride": "0.1.0",

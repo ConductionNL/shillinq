@@ -372,6 +372,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // ARInvoice: pre-send validation, NLCIUS UBL 2.1 + PDF/A-3 hybrid, Peppol
         // submit via the generalised transmission port, delivery-status queued.
             ['name' => 'aRInvoiceEInvoice#send', 'url' => '/api/ar-invoices/{invoiceNumber}/send-einvoice', 'verb' => 'POST'],
+            // Sales-einvoice-exchange REQ-SEIX-007: reject a received self-billed draft with a reason.
+            ['name' => 'selfBilledInvoice#reject', 'url' => '/api/ar-invoices/{invoiceNumber}/reject-self-billed', 'verb' => 'POST'],
             // Sales-invoice-sending (REQ-SIS-001, REQ-SIS-002): send one issued invoice by the customer's delivery method.
             ['name' => 'invoiceSending#send', 'url' => '/api/ar-invoices/{id}/send', 'verb' => 'POST'],
             // Sales-invoice-sending (REQ-SIS-003): send the selected invoices in a queued batch.

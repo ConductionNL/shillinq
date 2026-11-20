@@ -85,6 +85,8 @@ use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceIntakeInterface;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceReviewInterface;
 use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
 use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
@@ -281,6 +283,8 @@ use OCA\Shillinq\Service\Dunning\DunningTickRunner;
 use OCA\Shillinq\Service\Dunning\IncassoDossierComposer;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
+use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceIntake;
+use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceReview;
 use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
@@ -426,6 +430,8 @@ final class ContractRegistrar {
 		RecurringInvoiceGeneratorInterface::class => RecurringInvoiceGenerator::class,
 		RetentionDueServiceInterface::class => RetentionDueService::class,
 		SbrFilingFileStoreInterface::class => SbrFilingFileStore::class,
+		SelfBilledInvoiceIntakeInterface::class => SelfBilledInvoiceIntake::class,
+		SelfBilledInvoiceReviewInterface::class => SelfBilledInvoiceReview::class,
 		SubscriptionCancellationServiceInterface::class => SubscriptionCancellationService::class,
 		ContributionRaiseServiceInterface::class => ContributionRaiseService::class,
 		CrossSubsidyScanInterface::class => CrossSubsidyScan::class,
