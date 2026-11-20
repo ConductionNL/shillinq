@@ -11,7 +11,7 @@
       "ENSIAJaarcyclus": {
         "slug": "ENSIAJaarcyclus",
         "icon": "ShieldCheckOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "ENSIA Jaarcyclus",
         "description": "Annual ENSIA self-evaluation cycle for a Dutch public-sector organisation. One record per (organisatie, jaar). Carries the six-state lifecycle gating cycle intake → answering → peer-review → college-akkoord → portal submission → closure. The vraagSetVersion stamp records which BIO question set version was loaded at cycle initialisation so external auditors can trace the source (second scenario). procesEigenaar owns the assignment + transitions; per-question beantwoorder and peerReviewer are recorded on Evaluatievraag children.",
         "x-spec": "openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md",
@@ -145,6 +145,20 @@
             "example": "docudesk://files/12345",
             "title": "Verklaring File"
           },
+          "declarationDocx": {
+            "type": "string",
+            "nullable": true,
+            "description": "The college statement DOCX rendered when the cycle moves to college approval, base64-encoded (REQ-ENSIA-011). Downloaded from /api/v1/public-sector/ensia/{id}/statement.",
+            "example": null,
+            "title": "Statement Document"
+          },
+          "submissionXml": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ENSIA submission XML produced when the cycle is submitted (REQ-ENSIA-012). Downloaded from /api/v1/public-sector/ensia/{id}/xml.",
+            "example": null,
+            "title": "Submission XML"
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time",
@@ -238,6 +252,13 @@
               "description": "Alle vragen zijn beantwoord; peer-reviewers krijgen toegang.",
               "roles": [
                 "proces-eigenaar"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\CreateEnsiaFindingsAction",
+                  "description": "Create a Bevinding for every question answered nee or scored below its norm that has none yet (REQ-ENSIA-011)."
+                }
               ]
             },
             "naarCollegeAkkoord": {
@@ -250,6 +271,13 @@
               ],
               "preconditions": [
                 "OCA\\Shillinq\\Lifecycle\\ENSIAValidationGuard::collegeAkkoordAllowed"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RenderEnsiaStatementAction",
+                  "description": "Render the college statement into declarationDocx and name it in declarationFile when no file is named yet (REQ-ENSIA-011)."
+                }
               ]
             },
             "indienen": {
@@ -268,6 +296,11 @@
                   "actionParameters": {
                     "submittedAt": "@now"
                   }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ExportEnsiaSubmissionAction",
+                  "description": "Produce the submission XML into submissionXml; a cycle without its college statement is refused (REQ-ENSIA-012)."
                 }
               ]
             },
@@ -282,41 +315,25 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "functionaris-informatiebeveiliging": {
-              "permissions": [
-                "read",
-                "create",
-                "update"
-              ]
-            },
-            "proces-eigenaar": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "respondent": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "peer-reviewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "ENSIAJaarcyclus state transitions (in-voorbereiding → in-uitvoering → peer-review → college-akkoord → ingediend → afgerond) MUST be audit-trail-immutable / ADR-022 /: each transition + actor + timestamp + reason is the canonical evidence external IT auditors consume."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_functionaris_informatiebeveiliging"
+          ],
+          "read": [
+            "shillinq_functionaris_informatiebeveiliging",
+            "shillinq_proces_eigenaar",
+            "shillinq_respondent",
+            "shillinq_peer_reviewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_functionaris_informatiebeveiliging",
+            "shillinq_proces_eigenaar"
+          ]
         }
       },
       "Evaluatievraag": {
@@ -594,40 +611,6 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "functionaris-informatiebeveiliging": {
-              "permissions": [
-                "read",
-                "create",
-                "update"
-              ]
-            },
-            "proces-eigenaar": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "respondent": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "peer-reviewer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-preconditions": {
           "persist": [
             "OCA\\Shillinq\\Lifecycle\\ENSIAValidationGuard::maturityEvidenceSatisfied",
@@ -637,6 +620,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Evaluatievraag mutations (antwoord, volwassenheidsScore, toelichting, bewijsstukken, peerReviewStatus) MUST be audit-trail-immutable / ADR-022 /: pre-peer-review edits record actor + timestamp + before/after; post-peer-review edits additionally require reden (enforced by ENSIAValidationGuard)."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_functionaris_informatiebeveiliging"
+          ],
+          "read": [
+            "shillinq_functionaris_informatiebeveiliging",
+            "shillinq_proces_eigenaar",
+            "shillinq_respondent",
+            "shillinq_peer_reviewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_functionaris_informatiebeveiliging",
+            "shillinq_proces_eigenaar",
+            "shillinq_respondent",
+            "shillinq_peer_reviewer"
+          ]
         }
       },
       "Bevinding": {
@@ -810,38 +811,26 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "functionaris-informatiebeveiliging": {
-              "permissions": [
-                "read",
-                "create",
-                "update"
-              ]
-            },
-            "proces-eigenaar": {
-              "permissions": [
-                "read",
-                "create",
-                "update"
-              ]
-            },
-            "responsible": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Bevinding mutations (status transitions, mitigatieActie, verantwoordelijke, streefDatum, redenAcceptatie) MUST be audit-trail-immutable / ADR-022 /: the auto-generated tekortkoming + every subsequent mitigation step is the canonical evidence the external IT auditor reviews."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_functionaris_informatiebeveiliging",
+            "shillinq_proces_eigenaar"
+          ],
+          "read": [
+            "shillinq_functionaris_informatiebeveiliging",
+            "shillinq_proces_eigenaar",
+            "shillinq_responsible",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_functionaris_informatiebeveiliging",
+            "shillinq_proces_eigenaar",
+            "shillinq_responsible"
+          ]
         }
       }
     }

@@ -144,6 +144,28 @@ final class SetupControllerTest extends TestCase {
 	}//end testStatusCarriesTheOptionListTheChoiceStepReads()
 
 	/**
+	 * The status document carries the chart templates the template step offers,
+	 * office templates included.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testStatusCarriesTheChartTemplateOptions(): void {
+		$this->stubConfig([]);
+		$this->demoDataService->method('listChoices')->willReturn([]);
+		$choices = [
+			['value' => 'mkb', 'label' => 'MKB'],
+			['value' => 'office:tpl-1', 'label' => 'Kantoor De Boer MKB', 'office' => true],
+		];
+		$this->settingsService->expects($this->once())->method('chartTemplateChoices')->willReturn($choices);
+
+		$data = $this->controller->status()->getData();
+
+		$this->assertSame($choices, $data['chartTemplates']);
+	}//end testStatusCarriesTheChartTemplateOptions()
+
+	/**
 	 * Choosing none closes both steps without running anything.
 	 *
 	 * 🔴 THE DEFECT THIS FIXES. This app implemented `skip-demo-data` and no
@@ -550,6 +572,64 @@ final class SetupControllerTest extends TestCase {
 	}//end testRunActionSeedRunsWhenRequiredStepsAreSet()
 
 	/**
+	 * runAction('seed') with a legislation pack template seeds that country's
+	 * pack instead of the Dutch RGS, BTW and BBV data (ledger-foreign-legislation REQ-LFL-001).
+	 *
+	 * @return void
+	 */
+	public function testRunActionSeedWithALegislationPackSeedsThePack(): void {
+		$this->stubConfig(
+			[
+				'legal_region' => 'bv',
+				'rgs_template' => 'legislation-be',
+				'administration_id' => 'VDS',
+			]
+		);
+
+		$this->settingsService->expects($this->once())
+			->method('seedLegislationPack')
+			->with(country: 'BE', administrationId: 'VDS')
+			->willReturn(['success' => true, 'country' => 'BE']);
+		$this->settingsService->expects($this->never())->method('seedRgsTemplate');
+		$this->settingsService->expects($this->never())->method('seedBtwTariffs');
+		$this->settingsService->expects($this->never())->method('seedBbvTaakvelden');
+
+		$this->appConfig->expects($this->once())
+			->method('setValueString')
+			->with('shillinq', 'setup_seed_done', '1');
+
+		$response = $this->controller->runAction('seed');
+
+		self::assertTrue($response->getData()['success']);
+		self::assertSame('Chart of accounts and VAT rates seeded from the BE legislation pack.', $response->getData()['message']);
+
+	}//end testRunActionSeedWithALegislationPackSeedsThePack()
+
+	/**
+	 * A pack that cannot be seeded leaves the seed step open and says why.
+	 *
+	 * @return void
+	 */
+	public function testRunActionSeedWithAFailingPackLeavesTheStepOpen(): void {
+		$this->stubConfig(
+			[
+				'legal_region' => 'bv',
+				'rgs_template' => 'legislation-be',
+				'administration_id' => 'VDS',
+			]
+		);
+
+		$this->settingsService->method('seedLegislationPack')->willReturn(['success' => false, 'message' => 'No legislation pack for BE.']);
+		$this->appConfig->expects($this->never())->method('setValueString');
+
+		$response = $this->controller->runAction('seed');
+
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		self::assertSame('No legislation pack for BE.', $response->getData()['message']);
+
+	}//end testRunActionSeedWithAFailingPackLeavesTheStepOpen()
+
+	/**
 	 * runAction() returns 404 for an unrecognised action id.
 	 *
 	 * @return void
@@ -695,4 +775,108 @@ final class SetupControllerTest extends TestCase {
 		self::assertSame([], $written->getArrayCopy());
 
 	}//end testAFailedCardLoadStoresNothing()
+	/**
+	 * The runAction answers' bodies and the order of the seeding calls.
+	 *
+	 * @return void
+	 */
+	public function testRunActionBodiesAndSeedOrder(): void {
+		$this->settingsService->method('seedDefaultAdministration')->willReturnOnConsecutiveCalls(
+			['success' => false, 'message' => 'OpenRegister down'],
+			['success' => false],
+			['success' => true],
+			['success' => true, 'administrationCode' => 'ADM-7']
+		);
+		$written = $this->recordWrites();
+		$this->stubConfig(['legal_region' => 'mkb', 'rgs_template' => 'mkb-basis', 'administration_id' => 'ADM-7']);
+		$calls = [];
+		foreach (['loadConfigurationForced', 'seedBtwTariffs', 'seedBbvTaakvelden', 'seedSelectielijst'] as $method) {
+			$this->settingsService->method($method)->willReturnCallback(
+				static function () use (&$calls, $method): array {
+					$calls[] = $method;
+					return [];
+				}
+			);
+		}
+
+		$this->settingsService->method('seedRgsTemplate')->willReturnCallback(
+			static function (string $templateVariant, string $administrationId) use (&$calls): array {
+				$calls[] = 'seedRgsTemplate:' . $templateVariant . ':' . $administrationId;
+				return [];
+			}
+		);
+
+		self::assertSame(['success' => false, 'message' => 'OpenRegister down'], $this->controller->runAction('init-administration')->getData());
+		self::assertSame(
+			['success' => false, 'message' => 'Failed to create default administration.'],
+			$this->controller->runAction('init-administration')->getData()
+		);
+		self::assertSame(
+			['success' => false, 'message' => 'Default administration seed did not report an administrationCode.'],
+			$this->controller->runAction('init-administration')->getData()
+		);
+		self::assertSame(
+			['success' => true, 'message' => 'Default administration created.', 'detail' => ['success' => true, 'administrationCode' => 'ADM-7']],
+			$this->controller->runAction('init-administration')->getData()
+		);
+
+		$calls = [];
+		$seed = $this->controller->runAction('seed');
+		self::assertSame(['success' => true, 'message' => 'Chart of accounts and reference data seeded.'], $seed->getData());
+		self::assertSame(['seedRgsTemplate:mkb-basis:ADM-7', 'seedBtwTariffs', 'seedBbvTaakvelden', 'seedSelectielijst'], $calls);
+		self::assertSame(['administration_id' => 'ADM-7', 'setup_seed_done' => '1'], $written->getArrayCopy());
+
+		$unknown = $this->controller->runAction('bogus');
+		self::assertSame(['success' => false, 'message' => 'Unknown setup action: bogus'], $unknown->getData());
+
+	}//end testRunActionBodiesAndSeedOrder()
+
+	/**
+	 * The seed refusal body, and the status document's step order.
+	 *
+	 * @return void
+	 */
+	public function testSeedRefusalBodyAndStatusShape(): void {
+		$this->stubConfig(['legal_country' => 'NL', 'demo_dataset' => 'demo']);
+		$this->demoDataService->method('listChoices')->willReturn([['id' => 'demo']]);
+
+		self::assertSame(
+			['success' => false, 'message' => 'Choose region, RGS template and administration before seeding.'],
+			$this->controller->runAction('seed')->getData()
+		);
+
+		$this->appConfig->expects($this->never())->method('setValueString');
+		$data = $this->controller->status()->getData();
+		self::assertSame(['version', 'completed', 'datasets', 'chartTemplates', 'steps'], array_keys($data));
+		self::assertSame(
+			[
+				'welcome' => ['done' => true],
+				'demo-data' => ['done' => true],
+				'country' => ['done' => true],
+				'organisation' => ['done' => false],
+				'rgs-template' => ['done' => false],
+				'administration' => ['done' => false],
+				'seed' => ['done' => false],
+				'done' => ['done' => false],
+			],
+			$data['steps']
+		);
+		self::assertSame([['id' => 'demo']], $data['datasets']);
+
+	}//end testSeedRefusalBodyAndStatusShape()
+
+	/**
+	 * saveConfig refuses a non-scalar dataset by the name "that" and stores nothing.
+	 *
+	 * @return void
+	 */
+	public function testSaveConfigRefusesANonScalarDataset(): void {
+		$this->demoDataService->method('listChoices')->willReturn([['id' => 'demo']]);
+		$this->appConfig->expects($this->never())->method('setValueString');
+
+		$data = $this->controllerPosting(['demo_dataset' => ['x']])->saveConfig()->getData();
+
+		self::assertSame(['success' => false, 'message' => 'No dataset is called "that".'], $data);
+
+	}//end testSaveConfigRefusesANonScalarDataset()
 }//end class

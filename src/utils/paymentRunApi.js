@@ -1,24 +1,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// banking-payment-run: the requests behind "Propose payment run" and the
-// "Block payment" / "Release payment" actions. The proposal goes to
-// PaymentRunController::propose; a block is a PATCH of two fields on the
-// APTransaction or Payee through OpenRegister, so the object's audit trail
-// records who set it and when.
+// banking-payment-run: the request behind "Propose payment run", which goes
+// to PaymentRunController::propose, and the sentences for its answer.
 
 import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-
-const REGISTER_SLUG = 'shillinq'
-
-/**
- * The schemas a payment block can be set on.
- *
- * @type {Array<string>}
- */
-export const BLOCKABLE_SCHEMAS = ['APTransaction', 'Payee']
 
 /**
  * The body PaymentRunController::propose reads.
@@ -62,53 +50,6 @@ export async function proposePaymentRun(form) {
 		}
 		throw error
 	}
-}
-
-/**
- * The patch that blocks payment, refusing an empty reason.
- *
- * @param {string} reason Why payment is blocked.
- * @return {object} The fields to patch.
- * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
- */
-export function blockPayload(reason) {
-	const trimmed = String(reason || '').trim()
-	if (trimmed === '') {
-		throw new Error(t('shillinq', 'Give a reason for the payment block.'))
-	}
-	return { paymentBlocked: true, paymentBlockReason: trimmed }
-}
-
-/**
- * The patch that releases a payment block.
- *
- * @return {object} The fields to patch.
- * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
- */
-export function releasePayload() {
-	return { paymentBlocked: false, paymentBlockReason: null }
-}
-
-/**
- * Patch the block fields of an invoice or a supplier.
- *
- * @param {string} schema APTransaction or Payee.
- * @param {string} id The object's id.
- * @param {object} payload The fields to patch.
- * @return {Promise<object>} The patched object.
- * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
- */
-export async function setPaymentBlock(schema, id, payload) {
-	if (!BLOCKABLE_SCHEMAS.includes(schema) || !id) {
-		throw new Error(t('shillinq', 'This record cannot be blocked from payment.'))
-	}
-	const response = await axios.patch(
-		generateUrl(
-			`/apps/openregister/api/objects/${REGISTER_SLUG}/${schema}/${encodeURIComponent(id)}`,
-		),
-		payload,
-	)
-	return response.data
 }
 
 /**

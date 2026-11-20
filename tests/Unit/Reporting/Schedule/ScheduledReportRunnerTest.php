@@ -20,19 +20,25 @@ namespace OCA\Shillinq\Tests\Unit\Reporting\Schedule;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Reporting\ReportGenerationService;
+use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
 use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
+use OCP\IGroup;
+use OCP\IGroupManager;
+use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+
 
 class ScheduledReportRunnerTest extends TestCase {
 
@@ -90,7 +96,7 @@ class ScheduledReportRunnerTest extends TestCase {
 			true
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($this->store);
@@ -100,7 +106,8 @@ class ScheduledReportRunnerTest extends TestCase {
 			$container,
 			$this->createMock(IUserSession::class),
 			$appConfig,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			$this->createMock(\OCP\IConfig::class)
 		);
 
 		$this->reports  = $this->createMock(ReportGenerationService::class);
@@ -113,10 +120,50 @@ class ScheduledReportRunnerTest extends TestCase {
 			$this->delivery,
 			new ReportScheduleCalendar(),
 			$administrations,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			new ReportRecipientPolicy($administrations, $this->controllersGroup())
 		);
 
 	}//end runner()
+
+	/**
+	 * A group manager holding `controllers`, whose one member is the owner.
+	 *
+	 * @return IGroupManager
+	 */
+	private function controllersGroup(): IGroupManager {
+		$anna = $this->createMock(IUser::class);
+		$anna->method('getUID')->willReturn('controller-anna');
+		$group = $this->createMock(IGroup::class);
+		$group->method('getGID')->willReturn('controllers');
+		$group->method('getUsers')->willReturn([$anna]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('get')->willReturnCallback(fn (string $gid): ?IGroup => $gid === 'controllers' ? $group : null);
+		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $gid): bool => $uid === 'controller-anna' && $gid === 'controllers');
+		return $groups;
+
+	}//end controllersGroup()
+
+	/**
+	 * A recipient without access to the administration is left out of the delivery.
+	 *
+	 * @return void
+	 */
+	public function testARecipientWithoutAccessIsLeftOut(): void {
+		$schedule = self::schedule();
+		$schedule['recipients'] = ['group:controllers', 'user:outsider'];
+		$runner = $this->runner($schedule);
+		$this->reports->method('generate')->willReturn(['id' => 'gen-1', 'fileId' => 42, 'status' => 'ready']);
+		$this->delivery->expects(self::once())->method('file')
+			->with('controller-anna', 42, '/Rapportages/Maand', ['group:controllers'])
+			->willReturn(['fileId' => 77, 'path' => '/Rapportages/Maand/x.pdf']);
+		$this->delivery->expects(self::once())->method('notifyReady')
+			->with(['group:controllers'], self::anything(), '2026-09', 77)
+			->willReturn(1);
+
+		self::assertSame(['ran' => 1, 'failed' => 0], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+
+	}//end testARecipientWithoutAccessIsLeftOut()
 
 	/**
 	 * The schedule as it is stored now.
@@ -124,7 +171,7 @@ class ScheduledReportRunnerTest extends TestCase {
 	 * @return array<string, mixed> The stored schedule.
 	 */
 	private function stored(): array {
-		$found = $this->store->find(id: 'sched-1', schema: 'ReportSchedule');
+		$found = $this->store->find(id: 'sched-1', options: new ObjectFindOptions(schema: 'ReportSchedule'));
 		self::assertNotNull($found);
 		$row = $found->getObject();
 		unset($row['id'], $row['owner']);
@@ -212,4 +259,58 @@ class ScheduledReportRunnerTest extends TestCase {
 		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
 
 	}//end testAnOwnerWithoutAccessProducesNothing()
+	/**
+	 * A report produced without a stored file is a failed run, and nothing is filed.
+	 *
+	 * @return void
+	 */
+	public function testAReportWithoutAStoredFileFails(): void {
+		$runner = $this->runner(self::schedule());
+		$this->reports->method('generate')->willReturn(['fileId' => null, 'path' => null]);
+		$this->delivery->expects(self::never())->method('file');
+		$this->delivery->expects(self::never())->method('notifyReady');
+		$this->delivery->expects(self::once())->method('notifyFailed')
+			->with('controller-anna', self::anything(), 'The report was produced but its file could not be stored.');
+
+		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+		self::assertSame('The report was produced but its file could not be stored.', $this->stored()['lastError']);
+
+	}//end testAReportWithoutAStoredFileFails()
+
+	/**
+	 * A generator that throws is a failed run carrying its message; the
+	 * schedule still moves on to its next run.
+	 *
+	 * @return void
+	 */
+	public function testAGeneratorThatThrowsFailsTheRunWithItsMessage(): void {
+		$runner = $this->runner(self::schedule());
+		$this->reports->method('generate')->willThrowException(new \RuntimeException('Ledger is locked.'));
+		$this->delivery->expects(self::once())->method('notifyFailed')
+			->with('controller-anna', self::anything(), 'Ledger is locked.');
+
+		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+		$stored = $this->stored();
+		self::assertSame('Ledger is locked.', $stored['lastError']);
+		self::assertSame('2026-11-05T00:00:00+00:00', $stored['nextRunAt']);
+		self::assertArrayNotHasKey('lastFilePath', $stored);
+
+	}//end testAGeneratorThatThrowsFailsTheRunWithItsMessage()
+
+	/**
+	 * Filing that fails is a failed run, and no recipient is told the report is ready.
+	 *
+	 * @return void
+	 */
+	public function testFilingThatFailsTellsNoRecipient(): void {
+		$runner = $this->runner(self::schedule());
+		$this->reports->method('generate')->willReturn(['fileId' => 42]);
+		$this->delivery->method('file')->willThrowException(new \RuntimeException('The report folder path runs into a file: Rapportages'));
+		$this->delivery->expects(self::never())->method('notifyReady');
+		$this->delivery->expects(self::once())->method('notifyFailed')
+			->with('controller-anna', self::anything(), 'The report folder path runs into a file: Rapportages');
+
+		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+
+	}//end testFilingThatFailsTellsNoRecipient()
 }//end class

@@ -3,9 +3,11 @@
 /**
  * Minimal AuditTrailMapper stub for unit tests that write audit rows through
  * OpenRegister without the OpenRegister app being autoloaded. Mirrors the
- * signature of the real `OCA\OpenRegister\Db\AuditTrailMapper::createAuditTrailEntry()`
- * on openregister development (lib/Db/AuditTrailMapper.php): the one entry
- * point for a non-CRUD action recorded on an object's hash-chained trail.
+ * signatures of the real `OCA\OpenRegister\Db\AuditTrailMapper` on openregister
+ * main (lib/Db/AuditTrailMapper.php): `recordObjectEvent()` is the one entry
+ * point for a non-CRUD action recorded on an object's hash-chained trail, and
+ * `recordRegisterEvent()` (openregister #9714) the one for an event about a
+ * register as a whole.
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -19,6 +21,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenRegister\Db;
 
+use OCA\OpenRegister\Db\AuditTrail\ObjectAuditEvent;
+use OCA\OpenRegister\Db\AuditTrail\RegisterAuditEvent;
 use RuntimeException;
 
 /**
@@ -26,27 +30,41 @@ use RuntimeException;
  */
 class AuditTrailMapper {
 	/**
-	 * Create a custom audit trail entry on an object (real signature).
+	 * Record a non-CRUD action on one object (real signature).
 	 *
-	 * @param ObjectEntity $object The object the entry relates to.
-	 * @param string $action The action, e.g. `NexusCalculation.calculated`.
-	 * @param array<string,mixed> $context Additional context data, stored as the row's `changed`.
-	 * @param string|null $actorId Explicit actor id; null uses the session.
-	 * @param string|null $actorName Explicit actor display name.
-	 * @param string|null $ipAddress The calling address.
+	 * @param ObjectAuditEvent $event The object, action, context, and the explicit actor and address.
 	 *
 	 * @return object The created audit trail entry (an AuditTrail entity in OpenRegister).
 	 *
 	 * @throws RuntimeException Always in the stub: a test overrides this method.
 	 */
-	public function createAuditTrailEntry(
-		ObjectEntity $object,
-		string $action,
-		array $context = [],
-		?string $actorId = null,
-		?string $actorName = null,
-		?string $ipAddress = null,
-	): object {
-		throw new RuntimeException('AuditTrailMapper stub: override createAuditTrailEntry() in the test.');
-	}//end createAuditTrailEntry()
+	public function recordObjectEvent(ObjectAuditEvent $event): object {
+		throw new RuntimeException('AuditTrailMapper stub: override recordObjectEvent() in the test.');
+	}//end recordObjectEvent()
+
+	/**
+	 * Record an event about a register as a whole (signature from openregister #9714).
+	 *
+	 * @param RegisterAuditEvent $event The register id, the namespaced action, the details and the actor.
+	 *
+	 * @return object The created audit trail entry (an AuditTrail entity in OpenRegister).
+	 *
+	 * @throws RuntimeException Always in the stub: a test overrides this method.
+	 */
+	public function recordRegisterEvent(RegisterAuditEvent $event): object {
+		throw new RuntimeException('AuditTrailMapper stub: override recordRegisterEvent() in the test.');
+	}//end recordRegisterEvent()
+
+	/**
+	 * Every audit trail matching a listing's filters and sort (real signature).
+	 *
+	 * @param ListQuery $query The offset, filters, sort and search.
+	 *
+	 * @return array<int, object> The matching entries (AuditTrail entities in OpenRegister).
+	 *
+	 * @throws RuntimeException Always in the stub: a test overrides this method.
+	 */
+	public function findEvery(ListQuery $query): array {
+		throw new RuntimeException('AuditTrailMapper stub: override findEvery() in the test.');
+	}//end findEvery()
 }//end class

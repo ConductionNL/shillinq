@@ -1,0 +1,123 @@
+{
+    "inScope": {
+        "claim": {
+            "administrationId": "adm-1",
+            "claimQuarter": "2026-Q1",
+            "totalCompensableAmount": 170.01,
+            "breakdown": [
+                {
+                    "accountNumber": "3610",
+                    "amount": 150.01,
+                    "compensablePercentage": 100,
+                    "compensableAmount": 150.01
+                },
+                {
+                    "accountNumber": "4100",
+                    "amount": 40.0,
+                    "compensablePercentage": 50,
+                    "compensableAmount": 20.0
+                }
+            ]
+        },
+        "calls": [
+            "register:shillinq",
+            "schema:GLTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2026-Q1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:GLLine",
+            {
+                "findAll": {
+                    "filters": {
+                        "periodId": "2026-Q1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:BbvAccountMapping",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ],
+        "registerReads": 2
+    },
+    "noTransactions": {
+        "claim": {
+            "administrationId": "adm-1",
+            "claimQuarter": "2026-Q1",
+            "totalCompensableAmount": 0.0,
+            "breakdown": []
+        },
+        "calls": [
+            "register:shillinq",
+            "schema:GLTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2026-Q1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:BbvAccountMapping",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ],
+        "registerReads": 2
+    },
+    "noMappings": {
+        "claim": {
+            "administrationId": "adm-1",
+            "claimQuarter": "2026-Q1",
+            "totalCompensableAmount": 0.0,
+            "breakdown": []
+        },
+        "calls": [
+            "register:shillinq",
+            "schema:GLTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2026-Q1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:GLLine",
+            {
+                "findAll": {
+                    "filters": {
+                        "periodId": "2026-Q1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:BbvAccountMapping",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ],
+        "registerReads": 2
+    }
+}

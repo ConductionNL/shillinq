@@ -3,8 +3,8 @@
 /**
  * Administration Results Controller
  *
- * GET /api/budget-line-commitments, /api/budget-line-commitments/lines and
- * /api/segment-results: commitment and segment figures for one
+ * GET /api/v1/budget-line-commitments, /api/v1/budget-line-commitments/lines and
+ * /api/v1/segment-results: commitment and segment figures for one
  * administration the caller belongs to.
  *
  * @category Controller
@@ -72,7 +72,7 @@ class AdministrationResultsController extends Controller {
 	}//end __construct()
 
 	/**
-	 * GET /api/budget-line-commitments?administrationId=
+	 * GET /api/v1/budget-line-commitments?administrationId=
 	 *
 	 * @return JSONResponse The aggregation envelope, 400, 401, a masked 404 or 500.
 	 *
@@ -87,7 +87,7 @@ class AdministrationResultsController extends Controller {
 	}//end commitments()
 
 	/**
-	 * GET /api/budget-line-commitments/lines?programme=&costCentre=&financialYear=&generalLedgerAccount=
+	 * GET /api/v1/budget-line-commitments/lines?programme=&costCentre=&financialYear=&generalLedgerAccount=
 	 *
 	 * @return JSONResponse `{results, total}`, 400, 401, a masked 404 or 500.
 	 *
@@ -110,7 +110,7 @@ class AdministrationResultsController extends Controller {
 	}//end commitmentLines()
 
 	/**
-	 * GET /api/segment-results?segment=&periodId=&administrationId=
+	 * GET /api/v1/segment-results?segment=&periodId=&administrationId=
 	 *
 	 * @return JSONResponse The aggregation envelope plus `periods`, 400, 401, a masked 404 or 500.
 	 *

@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use DateTimeZone;
 use OCA\Shillinq\Controller\TimelineDeadLetterController;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
@@ -42,6 +42,7 @@ use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Verifies the dead-letter dashboard endpoints.
@@ -131,7 +132,9 @@ final class TimelineDeadLetterControllerTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$effectiveSchema = ($schema ?? (string)$this->schema);
 				$id = (string)($object['id'] ?? ('row-' . count($this->store[$effectiveSchema] ?? [])));
 				$object['id'] = $id;
@@ -190,10 +193,10 @@ final class TimelineDeadLetterControllerTest extends TestCase {
 	/**
 	 * Settings stub with OR available.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 

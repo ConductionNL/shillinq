@@ -3,6 +3,9 @@
 /**
  * In-memory ObjectService stub for procurement-governance service tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Honours equality filters on findAll and stamps / updates ids on saveObject,
  * mirroring the fluent OpenRegister ObjectService surface the services consume
  * (setRegister -> setSchema -> findAll / saveObject / find).
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/procurement-governance/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -50,6 +50,14 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCP\IUser;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\LockRequest;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
 
 /**
  * Minimal in-memory ObjectService test double.
@@ -282,29 +290,103 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
-		$target = $this->schema;
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$_render = $options?->render ?? true;
+		$_audit = $options?->audit ?? true;
+		$target = null;
 		if ($schema !== null) {
-			$target = (string)$schema;
+			$target = is_object($schema) === true ? (string)$schema->getSlug() : (string)$schema;
 		}
 
-		foreach (($this->data[$target] ?? []) as $row) {
-			if ((string)($row['id'] ?? '') === (string)$id || (string)($row['uuid'] ?? '') === (string)$id) {
-				return new ObjectEntityStub(payload: $row, register: $this->register, schema: $target);
+		$hit = $this->lookup(id: $id, schema: $target);
+		if ($hit === null && $target !== null && preg_match('/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i', (string)$id) === 1) {
+			$hit = $this->lookup(id: $id, schema: null);
+		}
+
+		return $hit;
+
+	}//end find()
+
+	/**
+	 * The row with this id or uuid in one schema, or in any schema when none is given.
+	 *
+	 * @param int|string  $id     Object id or UUID.
+	 * @param string|null $schema Schema slug, or null for every schema.
+	 *
+	 * @return ObjectEntityInterface|null
+	 */
+	private function lookup(int|string $id, ?string $schema): ?ObjectEntityInterface {
+		foreach ($this->data as $slug => $rows) {
+			if ($schema !== null && (string)$slug !== $schema) {
+				continue;
+			}
+
+			foreach ($rows as $row) {
+				if ((string)($row['id'] ?? '') === (string)$id || (string)($row['uuid'] ?? '') === (string)$id) {
+					return new ObjectEntityStub(payload: $row, register: $this->register, schema: (string)$slug);
+				}
 			}
 		}
 
 		return null;
 
-	}//end find()
+	}//end lookup()
+
+	/**
+	 * The active register, as OpenRegister answers it: an entity whose accessors are magic.
+	 *
+	 * @return object|null
+	 */
+	public function getCurrentRegisterEntity(): ?object {
+		return $this->register === '' ? null : self::magicEntity(slug: $this->register);
+
+	}//end getCurrentRegisterEntity()
+
+	/**
+	 * The active schema, as OpenRegister answers it: an entity whose accessors are magic.
+	 *
+	 * @return object|null
+	 */
+	public function getCurrentSchemaEntity(): ?object {
+		return $this->schema === '' ? null : self::magicEntity(slug: $this->schema);
+
+	}//end getCurrentSchemaEntity()
+
+	/**
+	 * An entity like OpenRegister's Register or Schema over Nextcloud's Entity:
+	 * public $id and every getter through __call, so method_exists() is false.
+	 *
+	 * @param string $slug The slug.
+	 *
+	 * @return object
+	 */
+	private static function magicEntity(string $slug): object {
+		return new class($slug) implements \OCA\OpenRegister\Kernel\Contracts\RegisterInterface, \OCA\OpenRegister\Kernel\Contracts\SchemaInterface {
+			public $id;
+			protected $slug;
+			protected $uuid;
+			public function __construct(string $slug) {
+				$this->id = 1000 + (crc32(strtolower($slug)) % 100000);
+				$this->slug = $slug;
+				$this->uuid = 'uuid-' . strtolower($slug);
+			}
+			public function __call(string $name, array $args): mixed {
+				if (str_starts_with($name, 'get') === true) {
+					$property = lcfirst(substr($name, 3));
+					return $this->$property;
+				}
+				throw new \BadFunctionCallException($name);
+			}
+		};
+
+	}//end magicEntity()
 
 	/**
 	 * Capture a saved object; stamp an id when absent, update in place otherwise.
@@ -326,18 +408,19 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$silent = $options->policy->silent ?? false;
+		$_validation = $options->policy->validation ?? true;
+		$uploadedFiles = $options->uploadedFiles;
+		$currentUser = $options->actor->currentUser;
+		$failIfExists = $options->policy->failIfExists ?? false;
 		$target = $this->schema;
 		if ($schema !== null) {
 			$target = (string)$schema;
@@ -438,15 +521,16 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @return bool
 	 */
 	public function deleteObject(
-		string $uuid,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_retentionSweep = false,
-		?IUser $currentUser = null,
-		bool $permanent = false
+		bool $_retentionSweep = false
 	): bool {
+		$uuid = $deletion->uuid;
+		$register = $deletion->target->register;
+		$schema = $deletion->target->schema;
+		$currentUser = $deletion->currentUser;
+		$permanent = $deletion->permanent ?? false;
 		$target = $this->schema;
 		if ($schema !== null) {
 			$target = (string)$schema;
@@ -552,16 +636,17 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		BulkSaveOptions $options = new BulkSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): array {
+		$register = $options->defaults->register;
+		$schema = $options->defaults->schema;
+		$validation = $options->validation ?? false;
+		$events = $options->events ?? false;
+		$deduplicateIds = true;
+		$enrich = true;
+		$_audit = $options->audit ?? true;
 		$this->unsupported(method: 'saveObjects');
 
 	}//end saveObjects()
@@ -669,10 +754,14 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 *
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool       $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(UnlockRequest $request): bool {
+		$identifier = $request->identifier;
+		$advisory = $request->advisory ?? false;
+		$runUuid = $request->runUuid;
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -684,15 +773,20 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param ?string $process    A label for the holding process.
 	 * @param ?int    $duration   Lock duration in seconds.
 	 * @param bool    $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
 	public function lockObject(
-		string $identifier,
-		?string $process = null,
-		?int $duration = null,
+		LockRequest $request,
 		bool $advisory = false
 	): array {
+		$identifier = $request->identifier;
+		$process = $request->process;
+		$duration = $request->duration;
+		$runUuid = $request->runUuid;
+		$nodeId = $request->nodeId;
 		$this->unsupported(method: 'lockObject');
 
 	}//end lockObject()
@@ -780,17 +874,18 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$register = $patch->target->register;
+		$schema = $patch->target->schema;
+		$currentUser = $patch->currentUser;
 		// The schema argument is honoured as OpenRegister honours it: a patch
 		// made while another schema is active must land on the named one.
-		$existing = $this->find(id: $objectId, schema: $schema);
+		$existing = $this->find(id: $objectId, options: new ObjectFindOptions(schema: $schema));
 		$merged   = $data;
 		if ($existing !== null) {
 			$merged = array_merge($existing->getObject(), $data);
@@ -798,7 +893,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 
 		$merged['id'] = $objectId;
 
-		return $this->saveObject(object: $merged, schema: $schema);
+		return $this->saveObject(object: $merged, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: $schema)));
 
 	}//end patchObject()
 
@@ -870,14 +965,15 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function findSilent(
 		string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		$found = $this->find(id: $id, schema: $schema);
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$found = $this->find(id: $id, options: new ObjectFindOptions(schema: $schema));
 		if ($found === null) {
 			throw new RuntimeException('InMemoryObjectServiceStub: no object ' . $id);
 		}
@@ -917,4 +1013,11 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		return null;
 
 	}//end getObject()
+	/**
+	 * Not used by this double.
+	 */
+	public function validateObject(array $object, string|int $register, string|int $schema, ?string $id=null): \OCA\OpenRegister\Kernel\Contracts\Value\ObjectValidationVerdict {
+		throw new \LogicException('validateObject() is not modelled by this double');
+	}
+
 }//end class

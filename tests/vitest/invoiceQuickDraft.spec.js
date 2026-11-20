@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
 	buildQuickDraftRequest,
 	computeTotals,
+	customerTerms,
 	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
@@ -72,6 +73,26 @@ describe('invoiceQuickDraft — payment terms + due date', () => {
 	})
 })
 
+// sales-invoice-sending REQ-SIS-005: the quick draft takes the customer's own payment term.
+describe('invoiceQuickDraft — the customer\'s payment term', () => {
+	it('dates a 14-day customer\'s draft 14 days on', () => {
+		const customer = { legalName: 'Bakkerij De Korenaar B.V.', paymentTermDays: 14 }
+		expect(customerTerms(customer)).toBe('net14')
+		expect(dueDateFromTerms('2026-10-01', customerTerms(customer))).toBe('2026-10-15')
+	})
+
+	it('keeps a term of zero days as due on the invoice date', () => {
+		expect(dueDateFromTerms('2026-10-01', customerTerms({ paymentTermDays: 0 }))).toBe('2026-10-01')
+	})
+
+	it('falls back to 30 days without a usable term', () => {
+		for (const customer of [null, undefined, {}, { paymentTermDays: null }, { paymentTermDays: '' }, { paymentTermDays: 400 }, { paymentTermDays: -1 }, { paymentTermDays: 7.5 }, { paymentTerms: 'net14' }]) {
+			expect(customerTerms(customer)).toBe('net30')
+		}
+		expect(customerTerms({ paymentTermDays: '21' })).toBe('net21')
+	})
+})
+
 describe('invoiceQuickDraft — request', () => {
 	it('sends the customer, dates, reference and filled lines only', () => {
 		const body = buildQuickDraftRequest({
@@ -81,8 +102,19 @@ describe('invoiceQuickDraft — request', () => {
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{ description: ' Consulting ', quantity: '2', unitPrice: '100', vatRate: 21 },
-				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
+				{
+					description: ' Consulting ',
+					quantity: '2',
+					unitPrice: '100',
+					vatRate: 21,
+				},
+				{
+					description: 'Hosting',
+					quantity: 1,
+					unitPrice: 10,
+					vatRate: 9,
+					glAccount: '8100',
+				},
 				{ description: '', quantity: 1, unitPrice: 0, vatRate: 21 },
 			],
 		})
@@ -93,8 +125,19 @@ describe('invoiceQuickDraft — request', () => {
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{ description: 'Consulting', quantity: 2, unitPrice: 100, vatRate: 21 },
-				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
+				{
+					description: 'Consulting',
+					quantity: 2,
+					unitPrice: 100,
+					vatRate: 21,
+				},
+				{
+					description: 'Hosting',
+					quantity: 1,
+					unitPrice: 10,
+					vatRate: 9,
+					glAccount: '8100',
+				},
 			],
 		})
 	})
@@ -105,7 +148,15 @@ describe('invoiceQuickDraft — request', () => {
 			invoiceDate: '2026-02-01',
 			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
-		for (const key of ['netAmount', 'vatAmount', 'grossAmount', 'invoiceNumber', 'lifecycleState', 'administrationId', 'periodId']) {
+		for (const key of [
+			'netAmount',
+			'vatAmount',
+			'grossAmount',
+			'invoiceNumber',
+			'lifecycleState',
+			'administrationId',
+			'periodId',
+		]) {
 			expect(body).not.toHaveProperty(key)
 		}
 	})

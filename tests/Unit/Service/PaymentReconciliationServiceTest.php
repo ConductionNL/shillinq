@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -28,6 +31,8 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests the shared idempotent reconciliation across PaymentRequest +
@@ -82,6 +87,30 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			}
 
 			/**
+			 * Every find(): the id and its RBAC, multitenancy and audit flags, in call order.
+			 *
+			 * @var array<int, array{0: string, 1: bool, 2: bool, 3: bool}>
+			 */
+			public array $findCalls = [];
+
+			/**
+			 * OpenRegister's find() throws on a miss; this double answers every
+			 * id that way, so lookups fall through to their property match.
+			 *
+			 * @param string $id            The id.
+			 * @param bool   $_rbac         Whether OpenRegister RBAC applies.
+			 * @param bool   $_multitenancy Whether the organisation scope applies.
+			 * @param bool   $_audit        Whether the read is audited.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$_audit = $options?->audit ?? true;
+				$this->findCalls[] = [$id, $_rbac, $_multitenancy, $_audit];
+				throw new \RuntimeException('DoesNotExist');
+			}
+
+			/**
 			 * @param array<string, mixed> $params Query params.
 			 * @param bool                 $_rbac  Whether OpenRegister RBAC applies.
 			 *
@@ -105,7 +134,9 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->rbacFlags[] = $_rbac;
 				// The subject reaches this double through the ADR-084 contract,
 				// which carries the target schema as a named argument and applies
@@ -182,6 +213,27 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		// Gateway webhooks hold no Nextcloud session, so no call may ask OpenRegister for a group grant.
 		self::assertNotContains(needle: true, haystack: $stub->rbacFlags);
 	}//end testCaptureSettlesLinkedInvoice()
+
+	/**
+	 * The webhook looks the invoice up by uuid without RBAC and nothing else:
+	 * the organisation scope stays on.
+	 *
+	 * @return void
+	 */
+	public function testWebhookInvoiceLookupPassesOnlyTheRbacFlag(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [['paymentIntentId' => 'tr_1', 'state' => 'pending', 'invoiceReference' => 'inv-1']],
+				'ARInvoice' => [['id' => 'inv-1', 'state' => 'issued']],
+			],
+			$saved
+		);
+
+		$this->makeService($stub)->reconcile('mollie', ['paymentIntentId' => 'tr_1', 'outcome' => 'captured']);
+
+		self::assertSame([['inv-1', false, true, true]], $stub->findCalls);
+	}//end testWebhookInvoiceLookupPassesOnlyTheRbacFlag()
 
 	/**
 	 * A capture against an already-settled invoice becomes captured_unapplied,
@@ -694,7 +746,16 @@ final class PaymentReconciliationServiceTest extends TestCase {
 
 		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
 		self::assertSame([], $this->savedIn($saved, 'GLTransaction'));
-		self::assertSame([], $this->savedIn($saved, 'JournalEntry'));
+		// The only journal entry is the capture booking, clearing to debtors
+		// (receivables-provider-payouts REQ-RPPO-003): no revenue is booked.
+		$journals = $this->savedIn($saved, 'JournalEntry');
+		self::assertCount(1, $journals);
+		self::assertSame('CA-tr_obj', $journals[0]['journalNumber']);
+		self::assertSame(
+			[['1100', 'debit', 250.0], ['1100', 'credit', 250.0]],
+			array_map(static fn (array $line): array => [$line['accountNumber'], $line['side'], $line['amount']], $journals[0]['lines'])
+		);
+		self::assertNotContains('8050', array_column($journals[0]['lines'], 'accountNumber'));
 		self::assertSame('paid', $this->savedIn($saved, 'ARInvoice')[0]['lifecycleState']);
 		self::assertSame('captured', $this->savedIn($saved, 'PaymentRequest')[0]['state']);
 	}//end testCaptureSettlesTheInvoiceAndBooksNoObjectReceipt()
@@ -843,4 +904,62 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		self::assertSame('captured_unapplied', $request['state']);
 		self::assertStringContainsString('period 2026-10 is closed', (string)($request['failureReason'] ?? ''));
 	}//end testARefusedPostingLeavesTheCaptureUnapplied()
+
+	/**
+	 * A captured deposit stores the gateway, the settlement reference and the
+	 * gateway fee as a number, and settles no invoice.
+	 *
+	 * @return void
+	 */
+	public function testACapturedDepositRecordsGatewayReferenceAndFee(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(['DepositPayment' => [['paymentIntentId' => 'tr_dep', 'state' => 'pending']]], $saved);
+		$service = $this->makeService($stub);
+
+		$out = $service->reconcile('stripe', ['paymentIntentId' => 'tr_dep', 'outcome' => 'captured', 'settlementReference' => 'po_9', 'gatewayFeeAmount' => '0.29']);
+
+		self::assertSame(['result' => PaymentReconciliationService::RESULT_APPLIED, 'schema' => 'DepositPayment'], $out);
+		self::assertSame(['DepositPayment'], array_map(static fn (array $s): string => $s['schema'], $saved));
+		$deposit = $saved[0]['object'];
+		self::assertSame(['captured', 'stripe', 'po_9', 0.29], [$deposit['state'], $deposit['paymentGateway'], $deposit['settlementReference'], $deposit['gatewayFeeAmount']]);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $deposit['capturedAt']);
+		self::assertArrayNotHasKey('failureReason', $deposit);
+	}//end testACapturedDepositRecordsGatewayReferenceAndFee()
+
+	/**
+	 * Polling scans every pending record, skips one without an intent id or
+	 * without a reported outcome, and reconciles the rest with the record's
+	 * gateway (mollie when none is stored).
+	 *
+	 * @return void
+	 */
+	public function testPollPendingSkipsRecordsWithoutIntentOrOutcome(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [
+					['state' => 'pending'],
+					['paymentIntentId' => 'tr_null', 'state' => 'pending'],
+					['paymentIntentId' => 'tr_empty', 'state' => 'pending'],
+				],
+				'DepositPayment' => [['paymentIntentId' => 'tr_dep', 'state' => 'pending']],
+			],
+			$saved
+		);
+		$service = $this->makeService($stub);
+		$asked = [];
+		$provider = static function (string $intentId) use (&$asked): ?string {
+			$asked[] = $intentId;
+			return ['tr_null' => null, 'tr_empty' => '', 'tr_dep' => 'failed'][$intentId];
+		};
+
+		$counters = $service->pollPending($provider);
+
+		self::assertSame(['scanned' => 4, 'reconciled' => 1], $counters);
+		self::assertSame(['tr_null', 'tr_empty', 'tr_dep'], $asked);
+		// The double answers every findAll with all rows of the schema, so the one
+		// reconcile writes is counted, not located.
+		self::assertCount(1, $saved);
+		self::assertSame(['failed', 'mollie', 'Payment failed at gateway.'], [$saved[0]['object']['state'], $saved[0]['object']['paymentGateway'], $saved[0]['object']['failureReason']]);
+	}//end testPollPendingSkipsRecordsWithoutIntentOrOutcome()
 }//end class

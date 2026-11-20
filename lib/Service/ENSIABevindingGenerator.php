@@ -68,54 +68,146 @@ class ENSIABevindingGenerator {
 	 *
 	 * @return array<int,array<string,mixed>> Concept Bevinding records ready
 	 *                                        for ObjectService::saveObject.
+	 *
+	 * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function generate(array $cyclus, array $vragen): array {
-		$cyclusId = (string)($cyclus['id'] ?? $cyclus['uuid'] ?? '');
-		$administrationId = (string)($cyclus['administrationId'] ?? '');
-
 		$findings = [];
-		foreach ($vragen as $v) {
-			$status = (string)($v['peerReviewStatus'] ?? 'nog-niet-beoordeeld');
-			if ($status !== 'akkoord') {
-				continue;
+		foreach ($vragen as $vraag) {
+			if ($this->isShortfall(vraag: $vraag) === true) {
+				$findings[] = $this->finding(cyclus: $cyclus, vraag: $vraag);
 			}
-
-			$score = $v['maturityScore'] ?? null;
-			$normniveau = $v['normniveau'] ?? null;
-			if (is_int($score) === false || is_int($normniveau) === false) {
-				continue;
-			}
-
-			if ($score >= $normniveau) {
-				continue;
-			}
-
-			$questionCode = (string)($v['questionCode'] ?? '');
-			$questionTxt = (string)($v['questionText'] ?? '');
-			$questionId = (string)($v['id'] ?? $v['uuid'] ?? '');
-
-			if ($questionTxt !== '') {
-				$questionLabel = $questionTxt;
-			} else {
-				$questionLabel = 'evaluatievraag';
-			}
-
-			$findings[] = [
-				'cyclusId' => $cyclusId,
-				'administrationId' => $administrationId,
-				'questionId' => $questionId,
-				'type' => 'tekortkoming',
-				'description' => sprintf(
-					'%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
-					$questionCode,
-					$questionLabel,
-					$score,
-					$normniveau
-				),
-				'status' => 'open',
-			];
-		}//end foreach
+		}
 
 		return $findings;
 	}//end generate()
+
+	/**
+	 * Generate Bevinding records from the answers alone, for a cyclus that
+	 * moves to peer review (REQ-ENSIA-011): a ja-nee-nvt question answered
+	 * `nee`, and a maturity score strictly below its normniveau, each give
+	 * one finding whatever the question's peer review status is.
+	 *
+	 * @param array<string, mixed>       $cyclus The ENSIAJaarcyclus.
+	 * @param list<array<string, mixed>> $vragen The cyclus's Evaluatievraag records.
+	 *
+	 * @return list<array<string, mixed>> Bevinding payloads (status open, type tekortkoming).
+	 *
+	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 */
+	public function fromAnswers(array $cyclus, array $vragen): array {
+		$findings = [];
+		foreach ($vragen as $vraag) {
+			if ($this->answeredNo(vraag: $vraag) === true || $this->isBelowNorm(vraag: $vraag) === true) {
+				$findings[] = $this->finding(cyclus: $cyclus, vraag: $vraag);
+			}
+		}
+
+		return $findings;
+	}//end fromAnswers()
+
+	/**
+	 * Whether a ja-nee-nvt question is answered `nee`.
+	 *
+	 * @param array<string, mixed> $vraag The Evaluatievraag.
+	 *
+	 * @return bool
+	 */
+	private function answeredNo(array $vraag): bool {
+		return (string)($vraag['answerType'] ?? '') === 'ja-nee-nvt'
+			&& strtolower(trim((string)($vraag['answer'] ?? ''))) === 'nee';
+	}//end answeredNo()
+
+	/**
+	 * Whether a question's maturity score lies strictly below its normniveau.
+	 *
+	 * @param array<string, mixed> $vraag The Evaluatievraag.
+	 *
+	 * @return bool
+	 */
+	private function isBelowNorm(array $vraag): bool {
+		$score = $vraag['maturityScore'] ?? null;
+		$normniveau = $vraag['normniveau'] ?? null;
+
+		return is_int($score) === true && is_int($normniveau) === true && $score < $normniveau;
+	}//end isBelowNorm()
+
+	/**
+	 * The description of a finding for a question answered `nee`.
+	 *
+	 * @param array<string, mixed> $vraag The Evaluatievraag.
+	 *
+	 * @return string
+	 */
+	private function noDescription(array $vraag): string {
+		$questionLabel = (string)($vraag['questionText'] ?? '');
+		if ($questionLabel === '') {
+			$questionLabel = 'evaluatievraag';
+		}
+
+		return sprintf('%s — %s: beantwoord met nee.', (string)($vraag['questionCode'] ?? ''), $questionLabel);
+	}//end noDescription()
+
+	/**
+	 * Whether a peer-reviewed question scores strictly below its normniveau.
+	 *
+	 * @param array<string,mixed> $vraag One Evaluatievraag.
+	 *
+	 * @return boolean
+	 */
+	private function isShortfall(array $vraag): bool {
+		$score = $vraag['maturityScore'] ?? null;
+		$normniveau = $vraag['normniveau'] ?? null;
+
+		return (string)($vraag['peerReviewStatus'] ?? 'nog-niet-beoordeeld') === 'akkoord'
+			&& is_int($score) === true
+			&& is_int($normniveau) === true
+			&& $score < $normniveau;
+	}//end isShortfall()
+
+	/**
+	 * The concept Bevinding for a shortfall question.
+	 *
+	 * @param array<string,mixed> $cyclus The parent ENSIAJaarcyclus.
+	 * @param array<string,mixed> $vraag  The shortfall Evaluatievraag.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function finding(array $cyclus, array $vraag): array {
+		return [
+			'cyclusId' => (string)($cyclus['id'] ?? $cyclus['uuid'] ?? ''),
+			'administrationId' => (string)($cyclus['administrationId'] ?? ''),
+			'questionId' => (string)($vraag['id'] ?? $vraag['uuid'] ?? ''),
+			'type' => 'tekortkoming',
+			'description' => $this->description(vraag: $vraag),
+			'status' => 'open',
+		];
+	}//end finding()
+
+	/**
+	 * The auto-populated description: question code, label and score gap,
+	 * or that the question was answered `nee` when it carries no score.
+	 *
+	 * @param array<string,mixed> $vraag The shortfall Evaluatievraag.
+	 *
+	 * @return string
+	 */
+	private function description(array $vraag): string {
+		if (is_int($vraag['maturityScore'] ?? null) === false || is_int($vraag['normniveau'] ?? null) === false) {
+			return $this->noDescription(vraag: $vraag);
+		}
+
+		$questionLabel = (string)($vraag['questionText'] ?? '');
+		if ($questionLabel === '') {
+			$questionLabel = 'evaluatievraag';
+		}
+
+		return sprintf(
+			'%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
+			(string)($vraag['questionCode'] ?? ''),
+			$questionLabel,
+			$vraag['maturityScore'],
+			$vraag['normniveau']
+		);
+	}//end description()
 }//end class

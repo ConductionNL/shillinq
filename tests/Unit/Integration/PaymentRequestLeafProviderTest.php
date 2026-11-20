@@ -25,6 +25,11 @@ namespace OCA\Shillinq\Tests\Unit\Integration;
 use InvalidArgumentException;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\DebtorCreditService;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
+use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
+use OCA\Shillinq\Service\Payment\PaymentSessionResult;
+use OCP\IURLGenerator;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
@@ -44,6 +49,8 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 
 /**
@@ -120,7 +127,9 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->saved[]         = $object;
 				$this->savedWithRbac[] = $_rbac;
 				return $object;
@@ -151,6 +160,8 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		?object $inner = null,
 		array $appGrants = [],
 		array $enabledApps = [],
+		?MolliePaymentAdapterInterface $paymentAdapter = null,
+		?PaymentLinkCreator $linkCreator = null,
 	): PaymentRequestLeafProvider {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -205,6 +216,8 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			),
 			settlements: new PaymentSettlementService(),
 			appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $appManager),
+			paymentAdapter: $paymentAdapter,
+			linkCreator: $linkCreator,
 		);
 	}//end makeProvider()
 
@@ -254,7 +267,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			[$this->storedRequest('pr-1', 'zaak-7'), $this->storedRequest('pr-2', 'zaak-9')]
 		);
 
-		$listed = $provider->list('dossiq', 'Zaak', 'zaak-7');
+		$listed = $provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'));
 
 		self::assertCount(1, $listed['items']);
 		self::assertSame(1, $listed['total']);
@@ -262,6 +275,93 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame('https://pay.example/pr-1', $listed['items'][0]['paymentLink']);
 		self::assertArrayHasKey('fee', $listed);
 	}//end testListIsScopedToTheHostObject()
+
+	/**
+	 * The list says whether online payment is live: a live adapter yes, a
+	 * dormant or absent one no, with the reason the panel shows
+	 * (receivables-payment-links task 3.3, REQ-RPL-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+	 */
+	public function testListSaysWhetherOnlinePaymentIsLive(): void {
+		$stored = [$this->storedRequest('pr-1', 'zaak-7')];
+		foreach ([[false, ['live' => true, 'reason' => '']], [true, ['live' => false, 'reason' => 'not-set-up']]] as [$dormant, $expected]) {
+			$adapter = $this->createMock(MolliePaymentAdapterInterface::class);
+			$adapter->method('isDormant')->willReturn($dormant);
+			$listed = $this->makeProvider(stored: $stored, paymentAdapter: $adapter)->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'));
+			self::assertSame($expected, $listed['onlinePayment']);
+		}
+
+		self::assertSame(['live' => false, 'reason' => 'not-set-up'], $this->makeProvider(stored: $stored)->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['onlinePayment']);
+	}//end testListSaysWhetherOnlinePaymentIsLive()
+
+	/**
+	 * A request raised on a case gets its checkout link from a live provider,
+	 * stored with the provider payment id and the expiry (task 1.3); with a
+	 * dormant provider it is saved once, without a link.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
+	 */
+	public function testARaisedRequestStoresItsCheckoutLink(): void {
+		foreach ([false, true] as $dormant) {
+			$provider    = $this->createMock(PaymentProviderInterface::class);
+			$provider->method('createSession')->willReturn(new PaymentSessionResult(dormant: $dormant, checkoutUrl: $dormant ? '' : 'https://www.mollie.com/checkout/tr_case7', paymentIntentId: $dormant ? '' : 'tr_case7'));
+			$urls = $this->createMock(IURLGenerator::class);
+			$urls->method('linkToRouteAbsolute')->willReturn('https://instance.example/webhook');
+			$urls->method('getAbsoluteURL')->willReturn('https://instance.example/');
+			$creator = new PaymentLinkCreator(provider: $provider, urlGenerator: $urls, appConfig: $this->createMock(IAppConfig::class), logger: $this->createMock(LoggerInterface::class));
+
+			$inner = new class {
+				/**
+				 * Every save, with the uuid it updated.
+				 *
+				 * @var list<array{object: array<string, mixed>, uuid: string|null}>
+				 */
+				public array $saves = [];
+
+				public function setRegister(string $register): static {
+					return $this;
+				}
+
+				public function setSchema(string $schema): static {
+					return $this;
+				}
+
+				public function findAll(array $params = [], bool $_rbac = true): array {
+					return [];
+				}
+
+				public function saveObject(array $object, string $register = '', string $schema = '', ?string $uuid = null, bool $_rbac = true): array {
+					$this->saves[] = ['object' => $object, 'uuid' => $uuid];
+					return $object + ['id' => ($uuid ?? 'pr-new')];
+				}
+			};
+
+			$leaf    = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance'], inner: $inner, linkCreator: $creator);
+			$created = $leaf->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'leges', 'amount' => 97.5, 'description' => 'Omgevingsvergunning kappen, 1 boom']);
+
+			if ($dormant === true) {
+				self::assertCount(1, $inner->saves);
+				self::assertArrayNotHasKey('providerPaymentId', $created);
+				continue;
+			}
+
+			self::assertCount(2, $inner->saves);
+			$update = $inner->saves[1];
+			self::assertSame('pr-new', $update['uuid']);
+			self::assertArrayNotHasKey('id', $update['object']);
+			self::assertSame('https://www.mollie.com/checkout/tr_case7', $update['object']['paymentLink']);
+			self::assertSame('tr_case7', $update['object']['providerPaymentId']);
+			self::assertSame('tr_case7', $update['object']['paymentIntentId']);
+			self::assertSame('leges', $update['object']['requestType']);
+			self::assertSame('https://www.mollie.com/checkout/tr_case7', $created['paymentLink']);
+			self::assertIsString($created['checkoutExpiresAt']);
+		}
+	}//end testARaisedRequestStoresItsCheckoutLink()
 
 	/**
 	 * A caller whose groups do not carry `payment.request` is refused, and NOTHING
@@ -274,7 +374,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['staff']);
 
 		try {
-			$provider->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'dwangsom', 'amount' => 250.0]);
+			$provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'dwangsom', 'amount' => 250.0]);
 			self::fail('The provider accepted a caller without the payment.request action.');
 		} catch (RuntimeException $e) {
 			self::assertStringContainsString('403', $e->getMessage());
@@ -293,7 +393,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 
 		$this->expectException(RuntimeException::class);
 
-		$provider->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'dwangsom', 'amount' => 250.0]);
+		$provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'dwangsom', 'amount' => 250.0]);
 	}//end testAnonymousCallerIsRefused()
 
 	/**
@@ -305,12 +405,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	public function testMappedCallerAppendsAPendingRequestOnTheHostObject(): void {
 		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
 
-		$created = $provider->create(
-			'dossiq',
-			'Zaak',
-			'zaak-7',
-			['requestType' => 'dwangsom', 'amount' => 250.0, 'subjectType' => 'case', 'description' => 'Dwangsom zaak 7']
-		);
+		$created = $provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'dwangsom', 'amount' => 250.0, 'subjectType' => 'case', 'description' => 'Dwangsom zaak 7']);
 
 		self::assertSame('pending', $created['state']);
 		self::assertSame('object', $created['subjectKind']);
@@ -318,6 +413,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			['type' => 'case', 'register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-7'],
 			$created['subject']
 		);
+		self::assertSame([$created['subject']], $created['linkedObjects'], 'the host object is the request\'s one linked object (REQ-FDO-001)');
 		self::assertSame('handler', $created['requestedBy']);
 		self::assertCount(1, $this->saved);
 	}//end testMappedCallerAppendsAPendingRequestOnTheHostObject()
@@ -334,12 +430,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	public function testEveryWrittenKeyIsADeclaredPaymentRequestProperty(): void {
 		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
 
-		$created = $provider->create(
-			'dossiq',
-			'Zaak',
-			'zaak-7',
-			['requestType' => 'dwangsom', 'amount' => 250.0, 'subjectType' => 'case', 'description' => 'Dwangsom zaak 7']
-		);
+		$created = $provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'dwangsom', 'amount' => 250.0, 'subjectType' => 'case', 'description' => 'Dwangsom zaak 7']);
 
 		$declared = EffectiveRegisterFixture::properties(schema: 'PaymentRequest');
 		self::assertSame([], array_values(array_diff(array_keys($created), $declared, ['id'])), 'Undeclared PaymentRequest keys');
@@ -358,11 +449,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	public function testCreateKeepsReferenceAndInvoiceFlag(): void {
 		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
 
-		$created = $provider->create(
-			'larpinq',
-			'Registration',
-			'reg-42',
-			[
+		$created = $provider->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), [
 				'requestType' => 'event-fee',
 				'amount' => 85.0,
 				'subjectType' => 'registration',
@@ -370,8 +457,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 				'paymentReference' => ' WC26-0042 ',
 				'invoiceRequested' => false,
 				'debtor' => ['name' => 'Anna Jansen', 'email' => 'anna@example.nl'],
-			]
-		);
+			]);
 
 		self::assertSame('WC26-0042', $created['paymentReference']);
 		self::assertFalse($created['invoiceRequested']);
@@ -384,12 +470,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage('already on an open request');
 		try {
-			$this->makeProvider(stored: [$held], actionGroups: ['payment.request' => ['finance']], groups: ['finance'])->create(
-				'larpinq',
-				'Registration',
-				'reg-43',
-				['requestType' => 'event-fee', 'amount' => 85.0, 'paymentReference' => 'WC26-0042']
-			);
+			$this->makeProvider(stored: [$held], actionGroups: ['payment.request' => ['finance']], groups: ['finance'])->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-43'), ['requestType' => 'event-fee', 'amount' => 85.0, 'paymentReference' => 'WC26-0042']);
 		} finally {
 			self::assertSame([], $this->saved, 'A refused reference wrote a request');
 		}
@@ -407,20 +488,10 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	public function testARequestForACustomerCarriesItsPortalScope(): void {
 		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
 
-		$created = $provider->create(
-			'dossiq',
-			'Zaak',
-			'zaak-8',
-			['requestType' => 'leges', 'amount' => 125.0, 'debtor' => ['customerMasterId' => '20000000-0000-4000-8000-000000000002']]
-		);
+		$created = $provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-8'), ['requestType' => 'leges', 'amount' => 125.0, 'debtor' => ['customerMasterId' => '20000000-0000-4000-8000-000000000002']]);
 		self::assertSame('20000000-0000-4000-8000-000000000002', $created['customerId']);
 
-		$byMail = $provider->create(
-			'dossiq',
-			'Zaak',
-			'zaak-9',
-			['requestType' => 'leges', 'amount' => 125.0, 'debtor' => ['name' => 'J. Jansen', 'email' => 'j.jansen@example.nl']]
-		);
+		$byMail = $provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-9'), ['requestType' => 'leges', 'amount' => 125.0, 'debtor' => ['name' => 'J. Jansen', 'email' => 'j.jansen@example.nl']]);
 		self::assertArrayNotHasKey('customerId', $byMail);
 	}//end testARequestForACustomerCarriesItsPortalScope()
 
@@ -433,7 +504,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	public function testAdministratorMayRaiseARequestWithoutAMapping(): void {
 		$provider = $this->makeProvider(isAdmin: true);
 
-		$provider->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'leges', 'amount' => 45.0]);
+		$provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'leges', 'amount' => 45.0]);
 
 		self::assertCount(1, $this->saved);
 	}//end testAdministratorMayRaiseARequestWithoutAMapping()
@@ -448,7 +519,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		$provider = $this->makeProvider([$this->storedRequest('pr-1', 'zaak-7')], isAdmin: true);
 
 		try {
-			$provider->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'dwangsom', 'amount' => 250.0]);
+			$provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'dwangsom', 'amount' => 250.0]);
 			self::fail('The provider appended a second pending dwangsom on the same case.');
 		} catch (InvalidArgumentException $e) {
 			self::assertStringContainsString('pr-1', $e->getMessage());
@@ -468,7 +539,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 
 		$this->expectException(RuntimeException::class);
 
-		$provider->update('dossiq', 'Zaak', 'zaak-7', 'pr-1', ['state' => 'captured']);
+		$provider->update(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), 'pr-1', ['state' => 'captured']);
 	}//end testTheLeafRefusesToUpdateOrDelete()
 
 	/**
@@ -481,7 +552,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 
 		$this->expectException(RuntimeException::class);
 
-		$provider->get('dossiq', 'Zaak', 'zaak-7', 'pr-2');
+		$provider->get(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), 'pr-2');
 	}//end testGetCannotReachARequestOnAnotherObject()
 
 	/**
@@ -540,7 +611,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			}
 		};
 
-		$listed = $this->makeProvider(inner: $paging)->list('learniq', 'FeeItem', 'fee-1');
+		$listed = $this->makeProvider(inner: $paging)->list(new ObjectRef(register: 'learniq', schema: 'FeeItem', id: 'fee-1'));
 
 		self::assertSame(250, $listed['total']);
 		self::assertCount(250, $listed['items']);
@@ -693,7 +764,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 
 		$anonymous = $this->makeAppProvider(appGrants: ['payment.request' => ['larpinq']], enabledApps: ['larpinq']);
 		try {
-			$anonymous->create('larpinq', 'Registration', 'reg-42', $claim);
+			$anonymous->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $claim);
 			self::fail('An anonymous create naming a granted app was accepted.');
 		} catch (RuntimeException $e) {
 			self::assertStringContainsString('403', $e->getMessage());
@@ -707,7 +778,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			appGrants: ['payment.request' => ['larpinq']],
 			enabledApps: ['larpinq'],
 		);
-		$created = $clerk->create('larpinq', 'Registration', 'reg-42', $claim);
+		$created = $clerk->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $claim);
 		self::assertSame('handler', $created['requestedBy']);
 		self::assertSame([true], $this->savedWithRbac, 'A user request is written under the user\'s own rights.');
 	}//end testAPayloadCannotClaimAnApp()
@@ -872,7 +943,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		$runs = [];
 		[$leaf, $store] = $this->leafWithCredit(credits: [$this->openCredit(id: 'dc-1', remaining: 85.0, created: '2026-09-01T10:00:00Z')], runs: $runs);
 
-		$created = $leaf->create('larpinq', 'Registration', 'reg-77', $this->jorisRequest(amount: 60.0));
+		$created = $leaf->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-77'), $this->jorisRequest(amount: 60.0));
 
 		self::assertSame('credit', $created['settledVia'] ?? null);
 		self::assertNotSame('', (string)($created['settledAt'] ?? ''));
@@ -914,7 +985,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			runs: $runs
 		);
 
-		$created = $leaf->create('larpinq', 'Registration', 'reg-78', $this->jorisRequest(amount: 100.0));
+		$created = $leaf->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-78'), $this->jorisRequest(amount: 100.0));
 
 		$credits = $this->lastSaved(store: $store, schema: 'DebtorCredit');
 		self::assertSame(0.0, $credits['dc-old']['remaining']);
@@ -944,7 +1015,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		$used = array_merge($this->openCredit(id: 'dc-4', remaining: 0.0, created: '2026-08-01T10:00:00Z'), ['state' => 'used']);
 		[$leaf, $store] = $this->leafWithCredit(credits: [$other, $elsewhere, $used], runs: $runs);
 
-		$created = $leaf->create('larpinq', 'Registration', 'reg-79', $this->jorisRequest(amount: 60.0));
+		$created = $leaf->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-79'), $this->jorisRequest(amount: 60.0));
 
 		self::assertArrayNotHasKey('settlements', $created);
 		self::assertSame([], $this->lastSaved(store: $store, schema: 'DebtorCredit'));
@@ -962,10 +1033,145 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		$runs = [];
 		[$leaf, $store] = $this->leafWithCredit(credits: [$this->openCredit(id: 'dc-1', remaining: 85.0, created: '2026-09-01T10:00:00Z')], runs: $runs, creditAccount: '');
 
-		$created = $leaf->create('larpinq', 'Registration', 'reg-80', $this->jorisRequest(amount: 60.0));
+		$created = $leaf->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-80'), $this->jorisRequest(amount: 60.0));
 
 		self::assertArrayNotHasKey('settlements', $created);
 		self::assertSame([], $this->lastSaved(store: $store, schema: 'DebtorCredit'));
 		self::assertSame([], $runs);
 	}//end testCreditStaysOpenWhenItCannotBeBooked()
+	/**
+	 * `get` returns the request with that id on this object, as `list` projects it.
+	 *
+	 * @return void
+	 */
+	public function testGetReturnsTheRequestOnThisObject(): void {
+		$provider = $this->makeProvider([$this->storedRequest('pr-1', 'zaak-7'), $this->storedRequest('pr-2', 'zaak-7', 'paid')]);
+
+		$request = $provider->get(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), 'pr-2');
+
+		self::assertSame('pr-2', $request['id']);
+		self::assertSame('paid', $request['state']);
+		self::assertSame('https://pay.example/pr-2', $request['paymentLink']);
+	}//end testGetReturnsTheRequestOnThisObject()
+
+	/**
+	 * `list` carries a request's counter payments, and reads a settlements
+	 * value that is not a list as none.
+	 *
+	 * @return void
+	 */
+	public function testListCarriesSettlementsOnlyWhenTheyAreAList(): void {
+		$settled  = array_merge(
+			$this->storedRequest('pr-1', 'zaak-7'),
+			['settlements' => [['amount' => 250.0, 'at' => '2026-10-01T10:00:00Z', 'via' => 'counter']]]
+		);
+		$garbled  = array_merge($this->storedRequest('pr-2', 'zaak-7'), ['settlements' => 'cash']);
+		$provider = $this->makeProvider([$settled, $garbled]);
+
+		$items = $provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['items'];
+
+		self::assertSame($settled['settlements'], $items[0]['settlements']);
+		self::assertSame([], $items[1]['settlements']);
+	}//end testListCarriesSettlementsOnlyWhenTheyAreAList()
+
+	/**
+	 * With no row for the host object there is no fee to offer.
+	 *
+	 * @return void
+	 */
+	public function testNoFeeIsOfferedWithoutTheHostObject(): void {
+		self::assertNull($this->makeProvider([])->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['fee']);
+	}//end testNoFeeIsOfferedWithoutTheHostObject()
+
+	/**
+	 * A fee lookup that fails offers no fee, and the requests are still listed.
+	 *
+	 * @return void
+	 */
+	public function testAFailingFeeLookupOffersNoFee(): void {
+		$rows  = [$this->storedRequest('pr-1', 'zaak-7')];
+		$inner = new class($rows) {
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int, array<string, mixed>> $rows The stored requests.
+			 */
+			public function __construct(private array $rows) {
+			}
+
+			/**
+			 * Select a register.
+			 *
+			 * @param string $register The register.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			/**
+			 * Select a schema.
+			 *
+			 * @param string $schema The schema.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * The requests; the host-object lookup by id fails.
+			 *
+			 * @param array<string, mixed> $params The query.
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				if (isset($params['filters']['id']) === true) {
+					throw new RuntimeException('register unavailable');
+				}
+
+				return $this->rows;
+			}
+		};
+
+		$listed = $this->makeProvider(inner: $inner)->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'));
+
+		self::assertNull($listed['fee']);
+		self::assertSame(['pr-1'], array_column($listed['items'], 'id'));
+	}//end testAFailingFeeLookupOffersNoFee()
+
+	/**
+	 * A due date given at create is kept on the request.
+	 *
+	 * @return void
+	 */
+	public function testCreateKeepsTheDueDate(): void {
+		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
+
+		$created = $provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'leges', 'amount' => 41.5, 'dueAt' => '2026-12-31']);
+
+		self::assertSame('2026-12-31', $created['dueAt']);
+		self::assertSame('2026-12-31', $this->saved[0]['dueAt']);
+	}//end testCreateKeepsTheDueDate()
+
+	/**
+	 * An invoice asked for without an invoice service is refused, and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceWithoutAnInvoiceServiceIsRefused(): void {
+		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
+
+		try {
+			$provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['requestType' => 'leges', 'amount' => 41.5, 'invoiceRequested' => true]);
+			self::fail('An invoice without an invoice service must be refused.');
+		} catch (RuntimeException $exception) {
+			self::assertSame('An invoice was requested, but no invoice service is available.', $exception->getMessage());
+		}
+
+		self::assertSame([], $this->saved);
+	}//end testAnInvoiceWithoutAnInvoiceServiceIsRefused()
 }//end class

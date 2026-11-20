@@ -1,0 +1,594 @@
+{
+    "conflict adjacentOnly": {
+        "conflicts": [
+            {
+                "bookingId": "b-2",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T08:15:00Z",
+                "endTime": "2026-05-21T10:45:00Z",
+                "status": ""
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-8\",\"reason\":\"existing.startTime is not a valid ISO 8601 timestamp\"}",
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-10\",\"reason\":\"existing.endTime is not a valid ISO 8601 timestamp\"}"
+        ]
+    },
+    "conflict badEnd": {
+        "exception": "InvalidArgumentException: endTime is not a valid ISO 8601 timestamp",
+        "reads": [],
+        "log": []
+    },
+    "conflict emptyResource": {
+        "exception": "InvalidArgumentException: resourceId is required for conflict detection",
+        "reads": [],
+        "log": []
+    },
+    "conflict emptyStart": {
+        "exception": "InvalidArgumentException: startTime is required",
+        "reads": [],
+        "log": []
+    },
+    "conflict endBeforeStart": {
+        "exception": "InvalidArgumentException: endTime must be strictly after startTime",
+        "reads": [],
+        "log": []
+    },
+    "conflict excludeEdited": {
+        "conflicts": [
+            {
+                "bookingId": "b-2",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T08:15:00Z",
+                "endTime": "2026-05-21T10:45:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "",
+                "calendar": "",
+                "resource": "room-9",
+                "title": "",
+                "startTime": "2026-05-21T10:20:00Z",
+                "endTime": "2026-05-21T10:40:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "b-11",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T10:50:00Z",
+                "endTime": "2026-05-21T11:10:00Z",
+                "status": ""
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-8\",\"reason\":\"existing.startTime is not a valid ISO 8601 timestamp\"}",
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-10\",\"reason\":\"existing.endTime is not a valid ISO 8601 timestamp\"}"
+        ]
+    },
+    "conflict excludeEmpty": {
+        "conflicts": [
+            {
+                "bookingId": "b-1",
+                "calendar": "cal",
+                "resource": "room-1",
+                "title": "Intake",
+                "startTime": "2026-05-21T09:30:00Z",
+                "endTime": "2026-05-21T10:30:00Z",
+                "status": "confirmed"
+            },
+            {
+                "bookingId": "b-2",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T08:15:00Z",
+                "endTime": "2026-05-21T10:45:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "",
+                "calendar": "",
+                "resource": "room-9",
+                "title": "",
+                "startTime": "2026-05-21T10:20:00Z",
+                "endTime": "2026-05-21T10:40:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "b-11",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T10:50:00Z",
+                "endTime": "2026-05-21T11:10:00Z",
+                "status": ""
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-8\",\"reason\":\"existing.startTime is not a valid ISO 8601 timestamp\"}",
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-10\",\"reason\":\"existing.endTime is not a valid ISO 8601 timestamp\"}"
+        ]
+    },
+    "conflict lookupFails": {
+        "exception": "RuntimeException: Conflict detection lookup failed",
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "log": [
+            "error: Shillinq: conflict detection lookup failed {\"exception\":\"database gone\"}"
+        ]
+    },
+    "conflict noOpenRegister": {
+        "conflicts": [],
+        "reads": [],
+        "log": [
+            "warning: Shillinq: conflict detection skipped, OpenRegister unavailable []"
+        ]
+    },
+    "conflict noOverlap": {
+        "conflicts": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-8\",\"reason\":\"existing.startTime is not a valid ISO 8601 timestamp\"}",
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-10\",\"reason\":\"existing.endTime is not a valid ISO 8601 timestamp\"}"
+        ]
+    },
+    "conflict offsetInput": {
+        "conflicts": [
+            {
+                "bookingId": "b-2",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T08:15:00Z",
+                "endTime": "2026-05-21T10:45:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "b-5",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T11:00:00Z",
+                "endTime": "2026-05-21T12:00:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "",
+                "calendar": "",
+                "resource": "room-9",
+                "title": "",
+                "startTime": "2026-05-21T10:20:00Z",
+                "endTime": "2026-05-21T10:40:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "b-11",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T10:50:00Z",
+                "endTime": "2026-05-21T11:10:00Z",
+                "status": ""
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-8\",\"reason\":\"existing.startTime is not a valid ISO 8601 timestamp\"}",
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-10\",\"reason\":\"existing.endTime is not a valid ISO 8601 timestamp\"}"
+        ]
+    },
+    "conflict overlapping": {
+        "conflicts": [
+            {
+                "bookingId": "b-1",
+                "calendar": "cal",
+                "resource": "room-1",
+                "title": "Intake",
+                "startTime": "2026-05-21T09:30:00Z",
+                "endTime": "2026-05-21T10:30:00Z",
+                "status": "confirmed"
+            },
+            {
+                "bookingId": "b-2",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T08:15:00Z",
+                "endTime": "2026-05-21T10:45:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "",
+                "calendar": "",
+                "resource": "room-9",
+                "title": "",
+                "startTime": "2026-05-21T10:20:00Z",
+                "endTime": "2026-05-21T10:40:00Z",
+                "status": ""
+            },
+            {
+                "bookingId": "b-11",
+                "calendar": "",
+                "resource": "room-1",
+                "title": "",
+                "startTime": "2026-05-21T10:50:00Z",
+                "endTime": "2026-05-21T11:10:00Z",
+                "status": ""
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "resource": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-8\",\"reason\":\"existing.startTime is not a valid ISO 8601 timestamp\"}",
+            "warning: Shillinq: skipping booking with malformed time during conflict check {\"bookingId\":\"b-10\",\"reason\":\"existing.endTime is not a valid ISO 8601 timestamp\"}"
+        ]
+    },
+    "conflict zeroLength": {
+        "exception": "InvalidArgumentException: endTime must be strictly after startTime",
+        "reads": [],
+        "log": []
+    },
+    "ics appointmentTimezone": {
+        "lines": [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Conduction//Shillinq Bookings//EN",
+            "METHOD:REQUEST",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VTIMEZONE",
+            "TZID:America/New_York",
+            "BEGIN:STANDARD",
+            "TZNAME:EST",
+            "DTSTART:20260101T000000",
+            "TZOFFSETFROM:-0500",
+            "TZOFFSETTO:-0500",
+            "END:STANDARD",
+            "BEGIN:DAYLIGHT",
+            "TZNAME:EDT",
+            "DTSTART:20260308T070000",
+            "TZOFFSETFROM:-0400",
+            "TZOFFSETTO:-0400",
+            "END:DAYLIGHT",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            "UID:apt-1@HOST",
+            "DTSTAMP:NOW",
+            "DTSTART;TZID=America/New_York:20260328T203000",
+            "DTEND;TZID=America/New_York:20260328T213000",
+            "SUMMARY:Intake",
+            "LOCATION:Desk 4",
+            "DESCRIPTION:Bring ID\\; parking\\, row 2\\nthanks",
+            "ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN=Jan\\, de Vries:mailto:jan@example.org",
+            "STATUS:TENTATIVE",
+            "TRANSP:OPAQUE",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ],
+        "lookups": [],
+        "log": []
+    },
+    "ics badStart": {
+        "lines": [
+            ""
+        ],
+        "lookups": [
+            "ams/core/timezone"
+        ],
+        "log": [
+            "warning: IcsService: appointment apt-2 has unparseable startTime/endTime — emitting empty ICS. []"
+        ]
+    },
+    "ics brokenConfig": {
+        "lines": [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Conduction//Shillinq Bookings//EN",
+            "METHOD:REQUEST",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VTIMEZONE",
+            "TZID:UTC",
+            "BEGIN:STANDARD",
+            "TZNAME:UTC",
+            "DTSTART:20260101T000000",
+            "TZOFFSETFROM:+0000",
+            "TZOFFSETTO:+0000",
+            "END:STANDARD",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            "UID:apt-1@HOST",
+            "DTSTAMP:NOW",
+            "DTSTART;TZID=UTC:20260329T003000",
+            "DTEND;TZID=UTC:20260329T013000",
+            "SUMMARY:Appointment",
+            "LOCATION:Desk 4",
+            "DESCRIPTION:Bring ID\\; parking\\, row 2\\nthanks",
+            "ATTACH;FMTTYPE=text/calendar:x",
+            "URL:x",
+            "STATUS:TENTATIVE",
+            "TRANSP:OPAQUE",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ],
+        "lookups": [
+            "broken/core/timezone"
+        ],
+        "log": [
+            "debug: TimezoneResolver: unable to read core/timezone for user broken: config down []"
+        ]
+    },
+    "ics emptyUser": {
+        "lines": [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Conduction//Shillinq Bookings//EN",
+            "METHOD:REQUEST",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VTIMEZONE",
+            "TZID:UTC",
+            "BEGIN:STANDARD",
+            "TZNAME:UTC",
+            "DTSTART:20260101T000000",
+            "TZOFFSETFROM:+0000",
+            "TZOFFSETTO:+0000",
+            "END:STANDARD",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            "UID:apt-1@HOST",
+            "DTSTAMP:NOW",
+            "DTSTART;TZID=UTC:20260329T003000",
+            "DTEND;TZID=UTC:20260329T013000",
+            "SUMMARY:Appointment",
+            "LOCATION:Desk 4",
+            "DESCRIPTION:Bring ID\\; parking\\, row 2\\nthanks",
+            "ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN=:mailto:a@b.c",
+            "STATUS:TENTATIVE",
+            "TRANSP:OPAQUE",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ],
+        "lookups": [],
+        "log": []
+    },
+    "ics full": {
+        "lines": [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Conduction//Shillinq Bookings//EN",
+            "METHOD:REQUEST",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VTIMEZONE",
+            "TZID:Europe/Amsterdam",
+            "BEGIN:STANDARD",
+            "TZNAME:CET",
+            "DTSTART:20260101T000000",
+            "TZOFFSETFROM:+0100",
+            "TZOFFSETTO:+0100",
+            "END:STANDARD",
+            "BEGIN:DAYLIGHT",
+            "TZNAME:CEST",
+            "DTSTART:20260329T010000",
+            "TZOFFSETFROM:+0200",
+            "TZOFFSETTO:+0200",
+            "END:DAYLIGHT",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            "UID:apt-1@HOST",
+            "DTSTAMP:NOW",
+            "DTSTART;TZID=Europe/Amsterdam:20260329T013000",
+            "DTEND;TZID=Europe/Amsterdam:20260329T033000",
+            "SUMMARY:Paspoort\\; aanvraag",
+            "LOCATION:Stadhuis",
+            "DESCRIPTION:Bring ID\\; parking\\, row 2\\nthanks",
+            "ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN=Jan\\, de Vries:mailto:jan@example.org",
+            "ORGANIZER:mailto:balie@example.org",
+            "ATTACH;FMTTYPE=text/calendar:https://example.org/confirm?t=1\\,2",
+            "URL:https://example.org/confirm?t=1\\,2",
+            "STATUS:TENTATIVE",
+            "TRANSP:OPAQUE",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ],
+        "lookups": [
+            "ams/core/timezone"
+        ],
+        "log": []
+    },
+    "ics invalidAppointmentTimezone": {
+        "lines": [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Conduction//Shillinq Bookings//EN",
+            "METHOD:REQUEST",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VTIMEZONE",
+            "TZID:UTC",
+            "BEGIN:STANDARD",
+            "TZNAME:UTC",
+            "DTSTART:20260101T000000",
+            "TZOFFSETFROM:+0000",
+            "TZOFFSETTO:+0000",
+            "END:STANDARD",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            "UID:apt-1@HOST",
+            "DTSTAMP:NOW",
+            "DTSTART;TZID=UTC:20260329T003000",
+            "DTEND;TZID=UTC:20260329T013000",
+            "SUMMARY:Appointment",
+            "LOCATION:Desk 4",
+            "DESCRIPTION:Bring ID\\; parking\\, row 2\\nthanks",
+            "STATUS:TENTATIVE",
+            "TRANSP:OPAQUE",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ],
+        "lookups": [
+            "bad/core/timezone"
+        ],
+        "log": []
+    },
+    "ics minimal": {
+        "lines": [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Conduction//Shillinq Bookings//EN",
+            "METHOD:REQUEST",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VTIMEZONE",
+            "TZID:UTC",
+            "BEGIN:STANDARD",
+            "TZNAME:UTC",
+            "DTSTART:20260101T000000",
+            "TZOFFSETFROM:+0000",
+            "TZOFFSETTO:+0000",
+            "END:STANDARD",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            "UID:unknown@HOST",
+            "DTSTAMP:NOW",
+            "DTSTART;TZID=UTC:20260701T080000",
+            "DTEND;TZID=UTC:20260701T081500",
+            "SUMMARY:Appointment",
+            "STATUS:TENTATIVE",
+            "TRANSP:OPAQUE",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ],
+        "lookups": [],
+        "log": []
+    },
+    "ics missingEnd": {
+        "lines": [
+            ""
+        ],
+        "lookups": [
+            "ams/core/timezone"
+        ],
+        "log": [
+            "warning: IcsService: appointment ? has unparseable startTime/endTime — emitting empty ICS. []"
+        ]
+    },
+    "ics noLocationFallback": {
+        "lines": [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Conduction//Shillinq Bookings//EN",
+            "METHOD:REQUEST",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VTIMEZONE",
+            "TZID:UTC",
+            "BEGIN:STANDARD",
+            "TZNAME:UTC",
+            "DTSTART:20260101T000000",
+            "TZOFFSETFROM:+0000",
+            "TZOFFSETTO:+0000",
+            "END:STANDARD",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            "UID:apt-3@HOST",
+            "DTSTAMP:NOW",
+            "DTSTART;TZID=UTC:20261101T090000",
+            "DTEND;TZID=UTC:20261101T100000",
+            "SUMMARY:Appointment",
+            "LOCATION:Balie 2",
+            "ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN=:mailto:x@y.z",
+            "STATUS:TENTATIVE",
+            "TRANSP:OPAQUE",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ],
+        "lookups": [],
+        "log": []
+    }
+}

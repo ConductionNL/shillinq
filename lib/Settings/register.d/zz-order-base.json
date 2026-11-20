@@ -90,6 +90,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Payment is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "OrderLine": {
@@ -114,7 +133,7 @@
             "shillinq_controller"
           ]
         },
-        "version": "0.1.0",
+        "version": "0.2.0",
         "slug": "OrderLine",
         "title": "Order Line",
         "type": "object",
@@ -187,6 +206,14 @@
             "nullable": true,
             "title": "Line Amount",
             "description": "The line amount as a numeric value."
+          },
+          "invoicedQuantity": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "nullable": true,
+            "title": "Invoiced quantity",
+            "description": "How much of the quantity is already invoiced; the next invoice takes only the rest."
           }
         },
         "x-openregister-audit-trail": {

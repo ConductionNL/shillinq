@@ -10,6 +10,9 @@
  * request is quoted for the amount still open, a candidate for the bookkeeper
  * otherwise. On the `confirm` transition of a `payment-request` match, by
  * either route, it settles the request through ObjectRequestBankSettlement.
+ * A new line that brought in a booked provider payout is matched to that
+ * payout first, through PayoutBankMatcher, and is then no request's
+ * (receivables-provider-payouts D4, REQ-RPPO-004).
  * Fail-soft: a problem is logged and never undoes the bank line.
  *
  * @category Listener
@@ -34,10 +37,11 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Bank\ManualMatchService;
-use OCA\Shillinq\Service\Bank\ObjectRequestBankMatcher;
-use OCA\Shillinq\Service\Bank\ObjectRequestBankSettlement;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankMatcherInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
+use OCA\Shillinq\Service\Payout\PayoutBankMatcher;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -54,18 +58,20 @@ class BankLineObjectRequestListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ObjectRequestBankMatcher $matcher Decides what a line is to the requests.
-	 * @param ManualMatchService $manualMatch Writes the match.
-	 * @param ObjectRequestBankSettlement $settlement Settles a request on a confirmed match.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema slug.
+	 * @param ObjectRequestBankMatcherInterface $matcher Decides what a line is to the requests.
+	 * @param ManualMatchServiceInterface $manualMatch Writes the match.
+	 * @param ObjectRequestBankSettlementInterface $settlement Settles a request on a confirmed match.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema slug.
 	 * @param LoggerInterface $logger Fail-soft log.
+	 * @param PayoutBankMatcher $payouts Matches a line to the booked provider payout it brought in.
 	 */
 	public function __construct(
-		private readonly ObjectRequestBankMatcher $matcher,
-		private readonly ManualMatchService $manualMatch,
-		private readonly ObjectRequestBankSettlement $settlement,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ObjectRequestBankMatcherInterface $matcher,
+		private readonly ManualMatchServiceInterface $manualMatch,
+		private readonly ObjectRequestBankSettlementInterface $settlement,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
+		private readonly PayoutBankMatcher $payouts,
 	) {
 	}//end __construct()
 
@@ -111,13 +117,18 @@ class BankLineObjectRequestListener implements IEventListener {
 			return;
 		}
 
-		$found = $this->matcher->match(line: $line);
-		if ($found['decision'] === ObjectRequestBankMatcher::DECISION_CONFIRM) {
-			$this->manualMatch->matchPaymentRequest(line: $line, request: $found['requests'][0], actor: ObjectRequestBankSettlement::ACTOR);
+		// A provider payout's line is reconciled to the payout and is no request's (REQ-RPPO-004).
+		if ($this->payouts->reconcile(line: $line) !== null) {
 			return;
 		}
 
-		if ($found['decision'] === ObjectRequestBankMatcher::DECISION_CANDIDATE) {
+		$found = $this->matcher->match(line: $line);
+		if ($found['decision'] === ObjectRequestBankMatcherInterface::DECISION_CONFIRM) {
+			$this->manualMatch->matchPaymentRequest(line: $line, request: $found['requests'][0], actor: ObjectRequestBankSettlementInterface::ACTOR);
+			return;
+		}
+
+		if ($found['decision'] === ObjectRequestBankMatcherInterface::DECISION_CANDIDATE) {
 			foreach ($found['requests'] as $request) {
 				$this->manualMatch->proposePaymentRequest(line: $line, request: $request);
 			}

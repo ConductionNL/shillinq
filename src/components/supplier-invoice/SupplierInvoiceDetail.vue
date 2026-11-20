@@ -17,7 +17,7 @@
  slice 05; the matching engine in slice 06 owns the move out of
  `received`.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 -->
 <template>
 	<div class="si-detail">
@@ -134,6 +134,7 @@
 							<th scope="col">{{ t('shillinq', 'Unit price') }}</th>
 							<th scope="col">{{ t('shillinq', 'VAT rate') }}</th>
 							<th scope="col">{{ t('shillinq', 'Line total') }}</th>
+							<th scope="col">{{ t('shillinq', 'Actions') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -148,6 +149,15 @@
 							<td>{{ formatMoney(line.unitPrice) }}</td>
 							<td>{{ formatPct(line.vatRate) }}</td>
 							<td>{{ formatMoney(line.lineExtension) }}</td>
+							<td>
+								<NcButton
+									variant="tertiary"
+									:aria-label="t('shillinq', 'Spread line {line} over periods', { line: line.lineNumber })"
+									:data-testid="`si-detail-spread-${line.lineNumber}`"
+									@click="openSpread(line)">
+									{{ t('shillinq', 'Spread over periods') }}
+								</NcButton>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -221,6 +231,7 @@ import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 import { spawnDialog } from '@nextcloud/vue/functions/dialog'
 import LastInvoiceModal from '../../modals/LastInvoiceModal.vue'
+import SpreadOverPeriodsModal from '../../modals/SpreadOverPeriodsModal.vue'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -352,7 +363,24 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
+		/**
+		 * Spread a line's prepaid cost over its service period (REQ-LPE-004).
+		 *
+		 * @param {object} line The invoice line.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+		 */
+		async openSpread(line) {
+			await spawnDialog(SpreadOverPeriodsModal, {
+				open: true,
+				side: 'ap',
+				objectId: this.id,
+				invoice: this.invoice,
+				lineKey: String(line.lineNumber),
+			})
+		},
+
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice */
 		async loadInvoice() {
 			this.loading = true
 			try {
@@ -374,7 +402,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice */
 		async loadMatches() {
 			// ThreeWayMatch records are populated by slice 06; gracefully fall
 			// through to the empty state when the lookup isn't available yet.

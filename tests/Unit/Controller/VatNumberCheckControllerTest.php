@@ -26,7 +26,7 @@ use OCA\Shillinq\Controller\VatNumberCheckController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCA\Shillinq\Service\ViesService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -38,6 +38,7 @@ use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * REQ-TVNC-001 through the route.
@@ -80,7 +81,7 @@ class VatNumberCheckControllerTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame('valid', $response->getData()['status']);
-		$this->assertSame('valid', $this->store->find(id: self::MULLER, schema: 'CustomerMaster')->getObject()['vatIdValidationStatus']);
+		$this->assertSame('valid', $this->store->find(id: self::MULLER, options: new ObjectFindOptions(schema: 'CustomerMaster'))->getObject()['vatIdValidationStatus']);
 
 	}//end testAMemberChecksACustomer()
 
@@ -95,7 +96,7 @@ class VatNumberCheckControllerTest extends TestCase {
 		$this->assertSame(404, $this->controller(user: 'bookkeeper', access: true)->check('employee', self::MULLER)->getStatus());
 		$this->assertSame(404, $this->controller(user: 'bookkeeper', access: true)->check('supplier', self::MULLER)->getStatus());
 		$this->assertSame(422, $this->controller(user: 'bookkeeper', access: true)->check('customer', self::NO_NUMBER)->getStatus());
-		$this->assertArrayNotHasKey('vatIdValidationStatus', $this->store->find(id: self::MULLER, schema: 'CustomerMaster')->getObject());
+		$this->assertArrayNotHasKey('vatIdValidationStatus', $this->store->find(id: self::MULLER, options: new ObjectFindOptions(schema: 'CustomerMaster'))->getObject());
 
 	}//end testOtherAdministrationsAndBadRequestsAreRefused()
 
@@ -111,7 +112,7 @@ class VatNumberCheckControllerTest extends TestCase {
 		$context = $this->createMock(AdministrationContextService::class);
 		$context->method('currentUserId')->willReturn($user);
 		$context->method('canAccess')->willReturn($access);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$records = new AssetRecords($this->store, new ObjectTransitionRunner(container: $this->createMock(ContainerInterface::class)), $settings);
 

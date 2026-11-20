@@ -4,7 +4,7 @@
  * Scheduled Report Job
  *
  * Hourly pass over the report schedules (reporting-data-delivery
- * REQ-RDD-002): ScheduledReportRunner produces and delivers every schedule
+ * REQ-RDD-002): ScheduledReportRunnerInterface produces and delivers every schedule
  * whose next run has passed.
  *
  * @category BackgroundJob
@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
+use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -45,12 +45,12 @@ class ScheduledReportJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory          $time   Time factory.
-	 * @param ScheduledReportRunner $runner Runs the due schedules.
+	 * @param ScheduledReportRunnerInterface $runner Runs the due schedules.
 	 * @param LoggerInterface       $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly ScheduledReportRunner $runner,
+		private readonly ScheduledReportRunnerInterface $runner,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

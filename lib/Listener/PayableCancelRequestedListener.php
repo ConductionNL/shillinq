@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\Shillinq\Event\PayableCancelRequestedEvent;
-use OCA\Shillinq\Service\InboundPayableService;
+use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -39,12 +39,12 @@ class PayableCancelRequestedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param InboundPayableService $payables Withdraws the payable.
+	 * @param InboundPayableServiceInterface $payables Withdraws the payable.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly InboundPayableService $payables,
+		private readonly InboundPayableServiceInterface $payables,
 	) {
 	}//end __construct()
 

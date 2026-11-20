@@ -192,6 +192,36 @@
             "example": null,
             "title": "Peppol Fallback Reason"
           },
+          "dispatchChannel": {
+            "type": "string",
+            "enum": [
+              "peppol",
+              "email"
+            ],
+            "description": "How the order was last sent to the supplier: through integriq's Peppol connector or by PDF and email (REQ-PODR-001/002).",
+            "nullable": true,
+            "example": "peppol",
+            "title": "Dispatch Channel"
+          },
+          "dispatchStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "sent",
+              "failed"
+            ],
+            "description": "Whether the last dispatch reached the supplier: pending until integriq reports the Peppol delivery, sent once it did or the mail channel accepted it, failed with dispatchError otherwise.",
+            "nullable": true,
+            "example": "pending",
+            "title": "Dispatch Status"
+          },
+          "dispatchError": {
+            "type": "string",
+            "description": "Why the last dispatch did not reach the supplier, as integriq or the mail channel reported it.",
+            "nullable": true,
+            "example": null,
+            "title": "Dispatch Error"
+          },
           "statusCode": {
             "type": "string",
             "enum": [
@@ -256,7 +286,8 @@
             "approve": {
               "from": "draft",
               "to": "approved",
-              "label": "Goedkeuren"
+              "label": "Goedkeuren",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PurchaseOrderApprovalGuard"
             },
             "send": {
               "from": "approved",
@@ -304,6 +335,29 @@
               "label": "Annuleren"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PurchaseOrderLine": {
@@ -453,6 +507,29 @@
             "expression": "round(lineTotal * vatRate / 10000)",
             "target": "vatAmount"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GoodsReceiptNote": {
@@ -664,6 +741,29 @@
               "label": "Afkeuren"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GoodsReceiptLine": {
@@ -748,6 +848,29 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "SupplierInvoice": {
@@ -994,12 +1117,14 @@
             "approveException": {
               "from": "exception",
               "to": "approved",
-              "label": "Handmatig goedkeuren"
+              "label": "Handmatig goedkeuren",
+              "requires": "OCA\\Shillinq\\Lifecycle\\SupplierInvoiceExceptionApprovalGuard"
             },
             "pay": {
               "from": "approved",
               "to": "paid",
-              "label": "Betalen"
+              "label": "Betalen",
+              "requires": "OCA\\Shillinq\\Lifecycle\\SupplierInvoicePayGuard"
             },
             "rejectReceived": {
               "from": "received",
@@ -1026,14 +1151,37 @@
               "label": "Afwijzen"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ThreeWayMatch": {
         "slug": "ThreeWayMatch",
         "icon": "VectorIntersection",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "3-way Match",
-        "description": "Result of a 3-way match between SupplierInvoice, PurchaseOrder(s), and GoodsReceiptNote(s). matchStatus enumerates auto-approval, within-tolerance success, the four exception types and a fraud alert. divergenceDetails capture per-field price / quantity / date deltas for the exception workflow in member 08.",
+        "description": "Result of a 3-way match between SupplierInvoice, PurchaseOrder(s), and GoodsReceiptNote(s). matchStatus enumerates auto-approval, within-tolerance success, the five exception types and a fraud alert. divergenceDetails capture per-field price / quantity / date deltas for the exception workflow in member 08.",
         "x-schema-org": "schema:AssessAction",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -1087,6 +1235,7 @@
               "within_tolerance",
               "exception_price",
               "exception_quantity",
+              "exception_date",
               "exception_missing_grn",
               "exception_missing_po",
               "fraud_alert"
@@ -1230,6 +1379,10 @@
               "label": "Hoeveelheidsuitzondering",
               "description": "Quantity diverged beyond tolerance."
             },
+            "exception_date": {
+              "label": "Leveringsdatumuitzondering",
+              "description": "Delivery date outside the date tolerance, early or late."
+            },
             "exception_missing_grn": {
               "label": "GRN ontbreekt",
               "description": "Invoice has no matching GRN (services or pre-receipt invoice)."
@@ -1260,6 +1413,29 @@
               "label": "Fraude melden"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ToleranceProfile": {
@@ -1365,6 +1541,29 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "VendorPerformance": {
@@ -1470,6 +1669,29 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }

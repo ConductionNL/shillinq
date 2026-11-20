@@ -28,7 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Purchasing;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Throwable;
 
@@ -37,7 +38,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md
  */
-class SupplierInvoiceChecks {
+class SupplierInvoiceChecks implements SupplierInvoiceChecksInterface {
 
 	/**
 	 * The duplicate marker when the lookup itself failed: a possible duplicate.
@@ -54,14 +55,24 @@ class SupplierInvoiceChecks {
 	private const READ_LIMIT = 5000;
 
 	/**
+	 * The schemas a duplicate is looked for in, in order, with their supplier field.
+	 *
+	 * @var array<string, string>
+	 */
+	private const DUPLICATE_SOURCES = [
+		'SupplierInvoice' => 'supplierId',
+		'APTransaction' => 'vendorId',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      The register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 	) {
 
 	}//end __construct()
@@ -135,30 +146,37 @@ class SupplierInvoiceChecks {
 			return null;
 		}
 
-		$sources = [
-			'SupplierInvoice' => 'supplierId',
-			'APTransaction' => 'vendorId',
-		];
+		$candidate = new DuplicateCandidate(supplierId: $supplierId, ignoreIds: $ignoreIds);
 		try {
-			foreach ($sources as $schema => $supplierField) {
-				$rows = $this->scoped(schema: $schema)->findAll(
-					['filters' => ['administrationId' => $administrationId, 'invoiceNumber' => $number], 'limit' => self::READ_LIMIT]
-				);
-				foreach ($rows as $row) {
-					$record = ObjectIdentifier::recordWithId(candidate: $row);
-					$id = (string)($record['id'] ?? '');
-					if ($record !== null && (string)($record[$supplierField] ?? '') === $supplierId && in_array($id, $ignoreIds, true) === false) {
-						return $id;
-					}
-				}
-			}
+			return $this->firstDuplicate(filters: ['administrationId' => $administrationId, 'invoiceNumber' => $number], candidate: $candidate);
 		} catch (Throwable $e) {
 			return self::DUPLICATE_UNKNOWN;
 		}
 
+	}//end duplicateOf()
+
+	/**
+	 * The id of the first duplicate in the supplier invoices, then the AP transactions.
+	 *
+	 * @param array<string, string> $filters     The administration and invoice number filters.
+	 * @param DuplicateCandidate    $candidate   The payee and ids to compare records against.
+	 *
+	 * @return string|null The duplicate's id, null when none.
+	 */
+	private function firstDuplicate(array $filters, DuplicateCandidate $candidate): ?string {
+		foreach (self::DUPLICATE_SOURCES as $schema => $supplierField) {
+			$rows = $this->scoped(schema: $schema)->findAll(['filters' => $filters, 'limit' => self::READ_LIMIT]);
+			foreach ($rows as $row) {
+				$record = (ObjectIdentifier::recordWithId(candidate: $row) ?? []);
+				if ($candidate->matches(record: $record, supplierField: $supplierField) === true) {
+					return (string)($record['id'] ?? '');
+				}
+			}
+		}
+
 		return null;
 
-	}//end duplicateOf()
+	}//end firstDuplicate()
 
 	/**
 	 * The duplicate rule for an invoice whose supplier is not a known payee:
@@ -318,7 +336,7 @@ class SupplierInvoiceChecks {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

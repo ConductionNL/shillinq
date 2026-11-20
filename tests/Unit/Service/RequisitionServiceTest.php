@@ -525,4 +525,87 @@ final class RequisitionServiceTest extends TestCase {
 		self::assertSame('Not urgent this quarter', $updated['rejectionReason']);
 
 	}//end testRejectRequisitionSetsRejected()
+	/**
+	 * Every createRequisition refusal, in check order, with its message; none
+	 * of them saves. Then the exact stored requisition and lines.
+	 *
+	 * @return void
+	 */
+	public function testCreateRefusalsInOrderAndTheStoredRecords(): void {
+		$line  = ['description' => 'Laptop', 'quantity' => 1, 'unitPrice' => 10.0, 'glAccountSuggestion' => '4400'];
+		$base  = ['programme' => '5.1', 'financialYear' => 2026, 'neededByDate' => '2026-08-15', 'justification' => 'J', 'kind' => 'inkoop', 'lines' => [$line]];
+		$cases = [
+			['', 'employee-1', $base],
+			['adm-OTHER', 'employee-1', $base],
+			['adm-1', '', $base],
+			['adm-1', 'employee-1', ['programme' => ' '] + $base],
+			['adm-1', 'employee-1', ['financialYear' => 0] + $base],
+			['adm-1', 'employee-1', ['neededByDate' => ''] + $base],
+			['adm-1', 'employee-1', ['justification' => ''] + $base],
+			['adm-1', 'employee-1', ['kind' => ''] + $base],
+			['adm-1', 'employee-1', ['lines' => []] + $base],
+			['adm-1', 'employee-1', ['lines' => [7]] + $base],
+			['adm-1', 'employee-1', ['lines' => [['description' => ''] + $line]] + $base],
+			['adm-1', 'employee-1', ['lines' => [$line, ['glAccountSuggestion' => ''] + $line]] + $base],
+			['adm-1', 'employee-1', ['lines' => [['quantity' => -1] + $line]] + $base],
+			['adm-1', 'employee-1', ['lines' => [['unitPrice' => -0.01] + $line]] + $base],
+			['adm-1', 'employee-1', ['lines' => [['unitPrice' => 0] + $line]] + $base],
+		];
+
+		$messages = [];
+		foreach ($cases as [$administrationId, $userId, $payload]) {
+			$saved   = [];
+			$service = $this->buildService(data: [], saved: $saved, userId: $userId, accessibleAdministrations: ['adm-1']);
+			try {
+				$service->createRequisition($administrationId, $payload);
+				$messages[] = 'accepted';
+			} catch (\RuntimeException $e) {
+				$messages[] = $e->getMessage();
+			}
+
+			self::assertSame([], $saved);
+		}
+
+		self::assertSame(
+			[
+				'administrationId is required',
+				'Administration not found',
+				'Authenticated requester is required',
+				'programma is required',
+				'boekjaar is required',
+				'neededByDate is required',
+				'justification is required',
+				'soort is required',
+				'Requisition must have at least one line',
+				'Line item must be an object',
+				'Line 1 is missing description',
+				'Line 2 is missing glAccountSuggestion',
+				'Line 1 must have positive quantity',
+				'Line 1 must have non-negative unitPrice',
+				'Requisition total must be positive',
+			],
+			$messages
+		);
+
+		$saved   = [];
+		$service = $this->buildService(data: [], saved: $saved, userId: 'employee-1', accessibleAdministrations: ['adm-1']);
+		$service->createRequisition(
+			'adm-1',
+			['preferredSupplierId' => ' sup-9 ', 'lines' => [['lineNumber' => 4, 'description' => ' Desk ', 'quantity' => '1.5', 'unitPrice' => '3.335', 'glAccountSuggestion' => ' 4410 ']]] + $base
+		);
+
+		self::assertSame(['Requisition', 'RequisitionLine'], array_column($saved, 'schema'));
+		$requisition = $saved[0]['object'];
+		self::assertSame(
+			['adm-1', 'employee-1', '5.1', 2026, '2026-08-15', 'J', 'inkoop', 'sup-9', 501, 'draft'],
+			[$requisition['administrationId'], $requisition['requester'], $requisition['programme'], $requisition['financialYear'], $requisition['neededByDate'], $requisition['justification'], $requisition['kind'], $requisition['preferredSupplierId'], $requisition['total_amount_excl_vat'], $requisition['statusCode']]
+		);
+		$stored = $saved[1]['object'];
+		unset($stored['id']);
+		self::assertSame(
+			['lineNumber' => 4, 'description' => 'Desk', 'quantity' => 1.5, 'unitPrice' => 334, 'lineTotal' => 501, 'glAccountSuggestion' => '4410', 'requisitionId' => $requisition['id'], 'administrationId' => 'adm-1'],
+			$stored
+		);
+
+	}//end testCreateRefusalsInOrderAndTheStoredRecords()
 }//end class

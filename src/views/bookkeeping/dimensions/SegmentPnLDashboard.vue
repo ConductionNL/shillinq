@@ -316,32 +316,41 @@ export default {
 
 			try {
 				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/segment-results'),
+					generateUrl('/apps/shillinq/api/v1/segment-results'),
 					{ params: segmentQuery(segment, this.periodId) },
 				)
 				this.periods = periodOptions(data?.periods)
 				this.rows = this.normaliseRows(data, segment)
 			} catch (error) {
-				const status = error?.response?.status
-				if (status === 400) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'No active administration, so the segment P&L cannot be scoped.',
-					)
-				} else if (status === 401 || status === 403 || status === 404) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Permission required to read segment P&L data.',
-					)
-				} else {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Failed to load segment P&L.',
-					)
-				}
+				this.errorMessage = this.segmentLoadError(error)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The message of a failed segment load, by HTTP status: 400 when the
+		 * caller has no active administration, 401/403/404 when the
+		 * administration may not be read.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 */
+		segmentLoadError(error) {
+			const status = error?.response?.status
+			if (status === 400) {
+				return this.t(
+					'shillinq',
+					'No active administration, so the segment P&L cannot be scoped.',
+				)
+			}
+			if (status === 401 || status === 403 || status === 404) {
+				return this.t(
+					'shillinq',
+					'Permission required to read segment P&L data.',
+				)
+			}
+			return this.t('shillinq', 'Failed to load segment P&L.')
 		},
 
 		/**
@@ -428,6 +437,15 @@ export default {
 			if (!this.rows.length) {
 				return
 			}
+			this.downloadCsv(this.segmentCsv())
+		},
+
+		/**
+		 * The rows as CSV: a header, then one line per segment.
+		 *
+		 * @return {string}
+		 */
+		segmentCsv() {
 			const header = [
 				'segment',
 				'name',
@@ -448,7 +466,16 @@ export default {
 				]
 				lines.push(cells.join(','))
 			}
-			const blob = new Blob([lines.join('\n') + '\n'], {
+			return lines.join('\n') + '\n'
+		},
+
+		/**
+		 * Download CSV text as `segment-pnl-<segment>-<date>.csv`.
+		 *
+		 * @param {string} text The CSV text.
+		 */
+		downloadCsv(text) {
+			const blob = new Blob([text], {
 				type: 'text/csv;charset=utf-8',
 			})
 			const url = URL.createObjectURL(blob)

@@ -27,7 +27,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
+use OCA\Shillinq\Service\Vat\VatFiscalUnityMemberException;
 use OCA\Shillinq\Service\VATReturnService;
 use OCA\Shillinq\Tests\Unit\Lifecycle\Action\InMemoryObjectStore;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -37,6 +39,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Tests VATReturnService against an inline ObjectService fake.
@@ -248,7 +251,8 @@ final class VATReturnServiceTest extends TestCase {
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
+				$id = $deletion->uuid;
 				foreach (($this->data[$this->schema] ?? []) as $idx => $row) {
 					if (((string)($row['id'] ?? '')) === $id) {
 						unset($this->data[$this->schema][$idx]);
@@ -291,7 +295,14 @@ final class VATReturnServiceTest extends TestCase {
 		);
 		$action = new MaterialiseGlTransactionAction($store->mock($this), $appConfig, $this->createMock(LoggerInterface::class));
 		foreach ($documents as [$document, $sourceSchema]) {
-			$action->execute($document, [], ['sourceSchema' => $sourceSchema], MaterialiseGlTransactionAction::class);
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $document,
+					previousData: [],
+					parameters: ['sourceSchema' => $sourceSchema],
+					actionName: MaterialiseGlTransactionAction::class
+				)
+			);
 		}
 
 		return [
@@ -425,6 +436,98 @@ final class VATReturnServiceTest extends TestCase {
 	}//end testTheKorenbloemQuarterSumsTheBookedLinesPerBox()
 
 	/**
+	 * Pins the declaration rows, the stamped lines and the return totals a
+	 * derivation writes, field for field, so the split of the persistence
+	 * helpers keeps every record as it was.
+	 *
+	 * @return void
+	 */
+	public function testTheDerivationWritesDeclarationLineAndTotalsRecordsFieldForField(): void {
+		$stub = $this->fakeObjectService($this->postedByTheMapper($this->korenbloemQ3()));
+		$created = $this->buildService($stub)->createReturn(
+			administrationId: 'adm-kb',
+			period: 'quarter',
+			periodYear: 2026,
+			periodNumber: 3,
+			regime: 'standard'
+		);
+
+		$returnId = (string)$created['id'];
+		$declarations = $stub->dump('VATDeclaration');
+		self::assertSame(
+			[
+				[
+					'declarationNumber' => 'VAT-' . $returnId . '-1B',
+					'returnId' => $returnId,
+					'returnBox' => '1b',
+					'type' => 'collected',
+					'taxRate' => 9.0,
+					'totalVATAmount' => 900.0,
+					'totalTaxableAmount' => 10000.0,
+					'lineCount' => 2,
+					'administrationId' => 'adm-kb',
+					'id' => $declarations[0]['id'],
+				],
+				[
+					'declarationNumber' => 'VAT-' . $returnId . '-5B',
+					'returnId' => $returnId,
+					'returnBox' => '5b',
+					'type' => 'paid',
+					'taxRate' => 0.0,
+					'totalVATAmount' => 1020.0,
+					'totalTaxableAmount' => 0.0,
+					'lineCount' => 2,
+					'administrationId' => 'adm-kb',
+					'id' => $declarations[1]['id'],
+				],
+			],
+			$declarations
+		);
+
+		$lines = $stub->dump('VATLine');
+		self::assertSame(
+			[$declarations[0]['id'], $declarations[0]['id'], $declarations[1]['id'], $declarations[1]['id']],
+			array_map(static fn (array $l): string => (string)$l['declarationId'], $lines)
+		);
+		foreach ($lines as $line) {
+			self::assertSame($returnId, $line['returnId']);
+			self::assertSame('adm-kb', $line['administrationId']);
+		}
+
+		self::assertSame(
+			[900.0, 1020.0, 120.0, 10000.0],
+			[$created['totalVATCollected'], $created['totalVATPaid'], $created['vatBalance'], $created['totalTaxableAmount']]
+		);
+	}//end testTheDerivationWritesDeclarationLineAndTotalsRecordsFieldForField()
+
+	/**
+	 * Pins the zero totals a KOR derivation writes onto the return and returns.
+	 *
+	 * @return void
+	 */
+	public function testAKorDerivationWritesZeroTotalsOntoTheReturn(): void {
+		$stub = $this->fakeObjectService();
+		$stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-kor', 'statusCode' => 'draft']);
+
+		$totals = $this->buildService($stub)->deriveVATLines(
+			returnId: 'ret-kor',
+			administrationId: 'adm-1',
+			startDate: '2026-01-01',
+			endDate: '2026-03-31',
+			regime: 'kor'
+		);
+
+		self::assertSame(
+			['lineCount' => 0, 'totalVATCollected' => 0.0, 'totalVATPaid' => 0.0, 'vatBalance' => 0.0, 'totalTaxableAmount' => 0.0],
+			$totals
+		);
+		self::assertSame(
+			['id' => 'ret-kor', 'statusCode' => 'draft', 'totalVATCollected' => 0.0, 'totalVATPaid' => 0.0, 'vatBalance' => 0.0, 'totalTaxableAmount' => 0.0],
+			$stub->dump('BtwAangifte')[0]
+		);
+	}//end testAKorDerivationWritesZeroTotalsOntoTheReturn()
+
+	/**
 	 * The VAT is taken as booked, not recalculated: an invoice that charged
 	 * EUR 7.01 on EUR 33.33 at 21 percent (the stray cent of its breakdown)
 	 * declares EUR 7.01 in box 1a, where base times rate gives EUR 7.00.
@@ -473,8 +576,9 @@ final class VATReturnServiceTest extends TestCase {
 	}//end testTheVatIsTakenAsBookedAndNotRecalculatedFromARate()
 
 	/**
-	 * A reverse-charged purchase declares its base in the box of its tariff
-	 * (2a domestic, 4b from the EU), and its VAT lines say reverse charge.
+	 * A reverse-charged purchase declares its base and its VAT in the box of
+	 * its tariff (2a domestic, 4b from the EU) and the same VAT in 5b, and its
+	 * VAT lines say reverse charge.
 	 *
 	 * @return void
 	 *
@@ -511,14 +615,20 @@ final class VATReturnServiceTest extends TestCase {
 		);
 
 		$byBox = $this->declarationsByBox($stub);
-		self::assertSame(['2a', '4b'], array_keys($byBox));
+		ksort($byBox);
+		self::assertSame(['2a', '4b', '5b'], array_keys($byBox));
 		self::assertSame(2000.0, $byBox['2a']['totalTaxableAmount']);
 		self::assertSame(1000.0, $byBox['4b']['totalTaxableAmount']);
 		self::assertSame('reverse-charge', $byBox['2a']['type']);
+		// Task 1.2: the VAT is owed next to the base and deducted in 5b, so the net is nil.
+		self::assertSame(420.0, $byBox['2a']['totalVATAmount']);
+		self::assertSame(210.0, $byBox['4b']['totalVATAmount']);
+		self::assertSame(630.0, $byBox['5b']['totalVATAmount']);
+		self::assertSame(630.0, $totals['totalVATCollected']);
+		self::assertSame(630.0, $totals['totalVATPaid']);
 		self::assertSame(3000.0, $totals['totalTaxableAmount']);
 		foreach ($stub->dump('VATLine') as $line) {
 			self::assertTrue($line['reverseChargeApplicable']);
-			self::assertSame('7', substr((string)$line['glAccountNumber'], 0, 1));
 		}
 	}//end testAReverseChargedPurchaseDeclaresItsBaseInTheBoxOfItsTariff()
 
@@ -676,4 +786,172 @@ final class VATReturnServiceTest extends TestCase {
 		self::assertCount(0, $stub->dump('VATLine'));
 
 	}//end testRebaseReturnClearsAndRederives()
+	/**
+	 * The design's fiscal unity: Holding Voorbeeld B.V. represents Voorbeeld
+	 * Bouw B.V. and Voorbeeld Installatie B.V. from 2026-01-01.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function holdingUnity(): array {
+		return [
+			'id' => 'vfu-1', 'name' => 'Fiscale eenheid Holding Voorbeeld', 'administrationId' => 'adm-holding',
+			'memberAdministrationIds' => ['adm-bouw', 'adm-installatie'], 'vatNumber' => 'NL001234567B01',
+			'startDate' => '2026-01-01', 'endDate' => null,
+		];
+	}//end holdingUnity()
+
+	/**
+	 * Q3 2026 postings of the holding and its two members: a sale of the
+	 * holding, a sale of Bouw and a purchase of Installatie, all at 21 percent.
+	 *
+	 * @return array<string,list<array<string,mixed>>>
+	 */
+	private function unityQ3(): array {
+		$sale = static fn (string $id, string $administration, float $net): array => [
+			[
+				'id' => $id, 'invoiceNumber' => $id, 'invoiceDate' => '2026-08-14', 'administrationId' => $administration,
+				'currency' => 'EUR', 'grossAmount' => ($net * 1.21), 'netAmount' => $net, 'vatAmount' => ($net * 0.21),
+				'invoiceLines' => [['itemName' => 'Werk', 'netAmount' => $net, 'vatCategory' => 'S', 'vatRate' => 21]],
+				'lifecycleState' => 'issued',
+			],
+			'ARInvoice',
+		];
+		$rows = $this->postedByTheMapper(
+			[
+				$sale('ar-h-1', 'adm-holding', 1000.0),
+				$sale('ar-b-1', 'adm-bouw', 2000.0),
+				[
+					[
+						'id' => 'ap-i-1', 'invoiceNumber' => 'INK-I-1', 'invoiceDate' => '2026-08-20', 'administrationId' => 'adm-installatie',
+						'totalAmount' => 1210.0, 'taxAmount' => 210.0,
+						'lines' => [['accountNumber' => '7000', 'amount' => 1000.0, 'description' => 'Materiaal', 'taxCode' => 'high']],
+						'state' => 'posted',
+					],
+					'APInvoice',
+				],
+			]
+		);
+		$rows['VatFiscalUnity'] = [self::holdingUnity()];
+
+		return $rows;
+	}//end unityQ3()
+
+	/**
+	 * REQ-TVRB-003 "A holding files for two subsidiaries": the holding's
+	 * return reads the lines of both members, every VAT line names the
+	 * administration it came from, and the return carries the unity, its VAT
+	 * number and a subtotal per administration that add up to the total.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
+	 */
+	public function testTheRepresentativesReturnIncludesEveryMemberWithASubtotalEach(): void {
+		$stub = $this->fakeObjectService($this->unityQ3());
+
+		$created = $this->buildService($stub)->createReturn(
+			administrationId: 'adm-holding',
+			period: 'quarter',
+			periodYear: 2026,
+			periodNumber: 3,
+			regime: 'standard'
+		);
+
+		self::assertSame('vfu-1', $created['fiscalUnityId']);
+		self::assertSame('NL001234567B01', $created['vatNumber']);
+		self::assertSame(630.0, (float)$created['totalVATCollected']);
+		self::assertSame(210.0, (float)$created['totalVATPaid']);
+		self::assertSame(
+			[
+				[
+					'administrationId' => 'adm-holding',
+					'totalVATCollected' => 210.0,
+					'totalVATPaid' => 0.0,
+					'vatBalance' => -210.0,
+					'totalTaxableAmount' => 1000.0,
+				],
+				[
+					'administrationId' => 'adm-bouw',
+					'totalVATCollected' => 420.0,
+					'totalVATPaid' => 0.0,
+					'vatBalance' => -420.0,
+					'totalTaxableAmount' => 2000.0,
+				],
+				[
+					'administrationId' => 'adm-installatie',
+					'totalVATCollected' => 0.0,
+					'totalVATPaid' => 210.0,
+					'vatBalance' => 210.0,
+					'totalTaxableAmount' => 0.0,
+				],
+			],
+			$created['memberSubtotals']
+		);
+
+		$sources = array_map(static fn (array $l): string => $l['sourceAdministrationId'], $stub->dump('VATLine'));
+		self::assertSame(['adm-holding', 'adm-holding', 'adm-bouw', 'adm-bouw', 'adm-installatie'], $sources);
+		foreach ($stub->dump('VATLine') as $line) {
+			self::assertSame('adm-holding', $line['administrationId']);
+			self::assertSame([], RegisterSchema::errors(slug: 'VATLine', object: $line));
+		}
+
+		self::assertSame([], RegisterSchema::errors(slug: 'BtwAangifte', object: $stub->dump('BtwAangifte')[0]));
+		self::assertSame([], RegisterSchema::errors(slug: 'VatFiscalUnity', object: self::holdingUnity()));
+	}//end testTheRepresentativesReturnIncludesEveryMemberWithASubtotalEach()
+
+	/**
+	 * Preparing a return for a member in a period the unity covers is refused
+	 * and names the unity; nothing is written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
+	 */
+	public function testAMemberCannotPrepareItsOwnReturnWhileTheUnityRuns(): void {
+		$stub = $this->fakeObjectService($this->unityQ3());
+
+		try {
+			$this->buildService($stub)->createReturn(
+				administrationId: 'adm-bouw',
+				period: 'quarter',
+				periodYear: 2026,
+				periodNumber: 3,
+				regime: 'standard'
+			);
+			self::fail('A member prepared its own return.');
+		} catch (VatFiscalUnityMemberException $e) {
+			self::assertSame('Fiscale eenheid Holding Voorbeeld', $e->unityName);
+			self::assertStringContainsString('Fiscale eenheid Holding Voorbeeld', $e->getMessage());
+		}
+
+		self::assertSame([], $stub->dump('BtwAangifte'));
+		self::assertSame([], $stub->dump('VATLine'));
+	}//end testAMemberCannotPrepareItsOwnReturnWhileTheUnityRuns()
+
+	/**
+	 * Before the unity starts, a member files its own return of its own
+	 * lines, and the holding's return reads only the holding.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
+	 */
+	public function testAPeriodOutsideTheUnityIsPreparedPerAdministration(): void {
+		$rows = $this->unityQ3();
+		$rows['VatFiscalUnity'][0]['startDate'] = '2026-10-01';
+		$stub = $this->fakeObjectService($rows);
+
+		$member = $this->buildService($stub)->createReturn(
+			administrationId: 'adm-bouw',
+			period: 'quarter',
+			periodYear: 2026,
+			periodNumber: 3,
+			regime: 'standard'
+		);
+
+		self::assertArrayNotHasKey('fiscalUnityId', $member);
+		self::assertArrayNotHasKey('memberSubtotals', $member);
+		self::assertSame(420.0, (float)$member['totalVATCollected']);
+		self::assertSame(['adm-bouw', 'adm-bouw'], array_map(static fn (array $l): string => $l['sourceAdministrationId'], $stub->dump('VATLine')));
+	}//end testAPeriodOutsideTheUnityIsPreparedPerAdministration()
 }//end class

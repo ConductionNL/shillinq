@@ -28,6 +28,7 @@ use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCP\Mail\IMailer;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 
 /**
  * The channel adapter the app binds (REQ-RAD-003, REQ-RAD-006, design D6).

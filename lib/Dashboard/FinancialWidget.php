@@ -31,9 +31,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Dashboard;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\FinancialDashboardService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDashboardServiceInterface;
 use OCP\Dashboard\IAPIWidgetV2;
 use OCP\Dashboard\Model\WidgetItem;
 use OCP\Dashboard\Model\WidgetItems;
@@ -52,14 +52,14 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @param IL10N                        $l10n      Translations.
 	 * @param IURLGenerator                $urls      Links into shillinq.
-	 * @param AdministrationContextService $context   The user's administrations.
-	 * @param FinancialDashboardService    $dashboard The figures.
+	 * @param AdministrationContextServiceInterface $context   The user's administrations.
+	 * @param FinancialDashboardServiceInterface    $dashboard The figures.
 	 */
 	public function __construct(
 		protected readonly IL10N $l10n,
 		protected readonly IURLGenerator $urls,
-		private readonly AdministrationContextService $context,
-		private readonly FinancialDashboardService $dashboard,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly FinancialDashboardServiceInterface $dashboard,
 	) {
 
 	}//end __construct()
@@ -105,7 +105,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getUrl(): ?string {
-		return $this->urls->linkToRouteAbsolute(Application::APP_ID . '.dashboard.page');
+		return $this->urls->linkToRouteAbsolute(AppIdentity::APP_ID . '.dashboard.page');
 
 	}//end getUrl()
 
@@ -188,7 +188,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 			$title,
 			$subtitle,
 			(string)$this->getUrl(),
-			$this->urls->getAbsoluteURL($this->urls->imagePath(Application::APP_ID, 'app-dark.svg')),
+			$this->urls->getAbsoluteURL($this->urls->imagePath(AppIdentity::APP_ID, 'app-dark.svg')),
 			$sinceId
 		);
 

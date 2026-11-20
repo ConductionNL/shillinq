@@ -222,30 +222,39 @@ export default {
 
 			try {
 				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/budget-line-commitments'),
+					generateUrl('/apps/shillinq/api/v1/budget-line-commitments'),
 				)
 				this.rows = normaliseBudgetLineRows(data)
 			} catch (error) {
-				const status = error?.response?.status
-				if (status === 400) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'No active administration, so the budget lines cannot be shown.',
-					)
-				} else if (status === 401 || status === 403 || status === 404) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Permission required to read budget-line data.',
-					)
-				} else {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Failed to load budget lines.',
-					)
-				}
+				this.errorMessage = this.rowsLoadError(error)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The message of a failed budget-line load, by HTTP status: 400 when
+		 * the caller has no active administration, 401/403/404 when the
+		 * administration may not be read.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 */
+		rowsLoadError(error) {
+			const status = error?.response?.status
+			if (status === 400) {
+				return this.t(
+					'shillinq',
+					'No active administration, so the budget lines cannot be shown.',
+				)
+			}
+			if (status === 401 || status === 403 || status === 404) {
+				return this.t(
+					'shillinq',
+					'Permission required to read budget-line data.',
+				)
+			}
+			return this.t('shillinq', 'Failed to load budget lines.')
 		},
 
 		/**
@@ -267,7 +276,7 @@ export default {
 
 			try {
 				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/budget-line-commitments/lines'),
+					generateUrl('/apps/shillinq/api/v1/budget-line-commitments/lines'),
 					{ params: drilldownFilters(row) },
 				)
 				this.drilldownItems = Array.isArray(data?.results) ? data.results : []

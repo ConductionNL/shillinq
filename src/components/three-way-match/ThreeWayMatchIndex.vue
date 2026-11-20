@@ -22,7 +22,7 @@
  in-memory filter is well-sized; downstream slice 11's audit-trail
  export takes the back-end pagination route).
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 -->
 <template>
 	<div class="twm-index">
@@ -217,6 +217,7 @@ export default {
 			]
 		},
 
+		/** @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md */
 		statusOptions() {
 			return [
 				{
@@ -234,6 +235,10 @@ export default {
 				{
 					value: 'exception_quantity',
 					label: this.t('shillinq', 'Quantity exception'),
+				},
+				{
+					value: 'exception_date',
+					label: this.t('shillinq', 'Delivery date exception'),
 				},
 				{
 					value: 'exception_missing_grn',
@@ -262,7 +267,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md */
+		/** @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md */
 		async loadMatches() {
 			this.loading = true
 			this.error = ''
@@ -275,30 +280,36 @@ export default {
 				const rows = response.data?.results || response.data || []
 				this.matches = Array.isArray(rows) ? rows : []
 
-				// Pre-fetch invoice headers for the supplier + amount columns.
-				// One bulk call when the OR API supports an `id IN (..)` filter;
-				// otherwise we fall back to silent best-effort.
-				const invoiceIds = [
-					...new Set(this.matches.map((m) => m.invoiceId).filter(Boolean)),
-				]
-				for (const id of invoiceIds) {
-					try {
-						const inv = await axios.get(
-							generateUrl(
-								`/apps/openregister/api/objects/${REGISTER_SLUG}/SupplierInvoice/${id}`,
-							),
-						)
-						this.invoices[id] = inv.data || null
-					} catch (e) {
-						this.invoices[id] = null
-					}
-				}
+				await this.prefetchInvoices()
 			} catch (e) {
 				this.error =
 					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load three-way matches')
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Pre-fetch the invoice headers for the supplier + amount columns, one
+		 * per distinct invoice; an unreadable invoice is kept as null
+		 * (silent best-effort).
+		 */
+		async prefetchInvoices() {
+			const invoiceIds = [
+				...new Set(this.matches.map((m) => m.invoiceId).filter(Boolean)),
+			]
+			for (const id of invoiceIds) {
+				try {
+					const inv = await axios.get(
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/SupplierInvoice/${id}`,
+						),
+					)
+					this.invoices[id] = inv.data || null
+				} catch (e) {
+					this.invoices[id] = null
+				}
 			}
 		},
 
@@ -320,14 +331,7 @@ export default {
 				// record; otherwise reload the whole list as a safety net.
 				const updated = response.data
 				if (updated && updated.id) {
-					const i = this.matches.findIndex(
-						(m) => m.id === match.id || m.id === updated.id,
-					)
-					if (i >= 0) {
-						this.matches.splice(i, 1, updated)
-					} else {
-						this.matches.unshift(updated)
-					}
+					this.replaceMatch(match, updated)
 				} else {
 					await this.loadMatches()
 				}
@@ -337,6 +341,23 @@ export default {
 					|| this.t('shillinq', 'Re-evaluation failed')
 			} finally {
 				this.reevaluating = ''
+			}
+		},
+
+		/**
+		 * Put a re-evaluated record in place of its row, or first when it is new.
+		 *
+		 * @param {object} match The row that was re-evaluated.
+		 * @param {object} updated The record the engine returned.
+		 */
+		replaceMatch(match, updated) {
+			const i = this.matches.findIndex(
+				(m) => m.id === match.id || m.id === updated.id,
+			)
+			if (i >= 0) {
+				this.matches.splice(i, 1, updated)
+			} else {
+				this.matches.unshift(updated)
 			}
 		},
 
@@ -366,12 +387,20 @@ export default {
 			return `${currency} ${(Number(invoice.totalInclVat) / 100).toFixed(2)}`
 		},
 
+		/**
+		 * The label of a match status.
+		 *
+		 * @param {string} statusCode The match status.
+		 * @return {string} The translated label.
+		 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md
+		 */
 		statusLabel(statusCode) {
 			const labels = {
 				auto_approved: this.t('shillinq', 'Auto-approved'),
 				within_tolerance: this.t('shillinq', 'Within tolerance'),
 				exception_price: this.t('shillinq', 'Price exception'),
 				exception_quantity: this.t('shillinq', 'Quantity exception'),
+				exception_date: this.t('shillinq', 'Delivery date exception'),
 				exception_missing_grn: this.t('shillinq', 'Missing GRN'),
 				exception_missing_po: this.t('shillinq', 'Missing PO'),
 				fraud_alert: this.t('shillinq', 'Fraud alert'),
@@ -459,6 +488,7 @@ export default {
 
 .twm-index__pill--exception_price,
 .twm-index__pill--exception_quantity,
+.twm-index__pill--exception_date,
 .twm-index__pill--exception_missing_grn,
 .twm-index__pill--exception_missing_po {
 	background: var(--color-warning);
