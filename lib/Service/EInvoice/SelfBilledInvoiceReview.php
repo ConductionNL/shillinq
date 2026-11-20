@@ -75,6 +75,8 @@ class SelfBilledInvoiceReview implements SelfBilledInvoiceReviewInterface {
 	 * @throws RuntimeException With the reason, when it may not be issued.
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SelfBilledInvoiceIntake::agreementGap() is a pure check of the customer record.
 	 */
 	public function requireSelfBillingAgreement(array $invoice): void {
 		if (($invoice['selfBilled'] ?? false) !== true) {

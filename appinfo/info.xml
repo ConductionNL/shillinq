@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261117220000</version>
+    <version>0.5.8-unstable.20261120102200</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -205,6 +205,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
              due date move to overdue and each overdue invoice gets the ladder
              stage that is due. Ships off for every administration. -->
         <job>OCA\Shillinq\BackgroundJob\DunningTickJob</job>
+        <!-- purchasing-call-offs-and-reorder-proposals REQ-IRA-011: daily
+             TimedJob comparing every active reorder rule with its stock; low
+             stock raises a ReorderProposal (the alert) and a draft purchase
+             order, one open proposal per rule. The work is
+             ReorderProposalService, run as the system inside each rule's
+             administration. -->
+        <job>OCA\Shillinq\BackgroundJob\ReorderProposalJob</job>
     </background-jobs>
 
     <repair-steps>
@@ -270,6 +277,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  imports PaymentRequest 0.5.0. Idempotent; a fresh install has
                  no such requests, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
+            <!-- purchasing-order-dispatch-and-receipt (REQ-PODR-003). An order
+                 marked sent under the undeclared lifecycleState field gets
+                 statusCode sent where it is still approved. Idempotent. -->
+            <step>OCA\Shillinq\Repair\AlignPurchaseOrderStatusCode</step>
             <step>OCA\Shillinq\Repair\BackfillLinkedObjects</step>
             <!-- reporting-segment-results (REQ-RSR-002, design Migration Plan).
                  Stamps accountClass and countsInResult on the lines of
@@ -371,6 +382,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  InitializeSettings, which imports the fields. Idempotent;
                  a fresh install has no older group entities, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillGroupEntityCbcFields</step>
+            <!-- expenses-category-mapping tasks 1.1 and 2.2: seeds the expense
+                 categories and the mileage, per diem and expense payable
+                 accounts for every administration on the RGS template, then
+                 maps the free text in Receipt.category onto a category code
+                 (exact code, Dutch or English name, known alias). Text that
+                 matches nothing becomes `uncategorised` and is listed for a
+                 bookkeeper. After InitializeSettings, which imports the
+                 ExpenseCategory schema. Idempotent, fail-soft. -->
+            <step>OCA\Shillinq\Repair\MapExpenseCategories</step>
             <!-- platform-help-agent task 2.2 (REQ-PHA-001): upserts one HelpArticle
                  per user-guide page; after InitializeSettings, which imports the
                  HelpArticle schema. Unchanged pages are skipped by hash. -->

@@ -18,6 +18,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Upgrade step**: invoices the old send path left at queued were never sent.
   Run `occ shillinq:einvoice:requeue` to list them and, once you confirm, send
   them again.
+- Time and expense billing by ticking (`sales-time-and-expense-billing`). The
+  Generate invoice page lists the unbilled hours of the chosen project and
+  the customer's unbilled pass-through receipts, mileage and per diem items
+  to tick, instead of id fields. A recharged item is billed at cost plus the
+  markup locked when its claim was submitted, at the VAT rate of the
+  invoice's main supply, or outside the VAT base when ticked as a
+  disbursement. A pass-through claim moves to invoiced once all its items
+  are on posted invoices. `BillableInvoice` (0.2.0) gains `expenseItemRefs`,
+  `BillableInvoiceLine` (0.2.0) gains `recharge`.
+  **Known limit:** `PassThroughMarkupRule.markupValue` has two decimals
+  (`multipleOf 0.01` of a fraction), so a 12.5 percent markup cannot be
+  stored. See `docs/invoice-from-time-and-expense.md`.
+- Purchase orders reach the supplier (`purchasing-order-dispatch-and-receipt`).
+  **Orders marked sent before this change were not delivered**: the send only
+  logged the Peppol message or the email and then marked the order sent. Peppol
+  now goes through integriq's Peppol connector (pending until integriq reports
+  the delivery) and email through integriq's mail channel (sent only when it
+  accepts the message); without integriq both send buttons are disabled with
+  the reason. Re-send any order that must reach its supplier. The order's state
+  now lives in `statusCode` only; a repair step aligns orders still marked sent
+  in the old `lifecycleState` field. Service receipts get their own pages under
+  Purchasing, and Confirm service on an order with service lines.
 - Sending sales invoices (`sales-invoice-sending`). A customer carries a
   payment term, a delivery method (email, Peppol, post or none) and an invoice
   email; new invoices take their due date from the term. An issued invoice is
