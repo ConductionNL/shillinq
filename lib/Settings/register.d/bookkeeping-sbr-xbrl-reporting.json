@@ -718,6 +718,7 @@
       "accountNumber": "1000",
       "name": "Vlottende activa",
       "accountType": "assets",
+      "cashFlowCategory": "working-capital",
       "currency": "EUR",
       "administrationId": "adm-consultancy-nl",
       "lifecycleState": "active",

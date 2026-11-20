@@ -32,6 +32,7 @@ use DateTimeZone;
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InvoiceSendingServiceInterface;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
 use OCA\Shillinq\Service\Payment\PayLinkService;
@@ -53,7 +54,7 @@ use Throwable;
  *
  * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.1
  */
-class InvoiceSendingService {
+class InvoiceSendingService implements InvoiceSendingServiceInterface {
 
 	/**
 	 * The lifecycle states an invoice can be sent in.

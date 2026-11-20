@@ -71,6 +71,7 @@
     "marked": "^18.0.13",
     "path-browserify": "^1.0.1",
     "pinia": "^4.1.0",
+    "qrcode": "^1.5.4",
     "terser-webpack-plugin": "^5.6.1",
     "vue": "^3.5.43",
     "vue-material-design-icons": "^5.3.1",

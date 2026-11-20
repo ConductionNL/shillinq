@@ -32,9 +32,9 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Integriq\Event\ConnectionStatusReportedEvent;
 use OCA\Shillinq\Service\ConnectionReportService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
-use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
@@ -175,7 +175,7 @@ class ConnectionReportServiceTest extends TestCase {
 		);
 		$this->assertCount(expectedCount: 3, haystack: $this->sent);
 		$this->assertSame(
-			expected: 'A log-only adapter answers here. No VAT return, supplementary return or annual accounts reach Digipoort; Submit is refused and a supplementary return is downloaded to file by hand.',
+			expected: 'A log-only adapter answers here. No VAT return, supplementary return, ICP statement or annual accounts reach Digipoort; Submit is refused, a supplementary return is downloaded to file by hand and an ICP statement is downloaded as XML instead.',
 			actual: $this->sentByKey()['digipoort-sbr']->message
 		);
 

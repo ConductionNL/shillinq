@@ -98,6 +98,46 @@ describe('tax-vat-position-and-suppletie', () => {
 		expect(dialogs.showError).toHaveBeenCalledWith('VATReturn q3 is draft; only a filed (submitted or later) return can be checked for drift.')
 	})
 
+	it('checks a broken fiscal year and says what its corrections total', async () => {
+		const { checkVatFiscalYearCorrections } = await import('../../src/utils/vatSuppletieActions.js')
+		axiosMock.post.mockResolvedValueOnce({
+			data: { data: { fiscalYear: '2025/2026', total: 1250, thresholdExceeded: true, returns: [{ drift: true }, { drift: false }] } },
+		})
+
+		const answer = await checkVatFiscalYearCorrections({ item: { id: 'fy-1' } })
+
+		expect(axiosMock.post).toHaveBeenCalledWith('/index.php/apps/shillinq/api/fiscal-years/fy-1/vat-corrections/check')
+		expect(answer.total).toBe(1250)
+		expect(dialogs.showWarning).toHaveBeenCalledWith(
+			'Fiscal year 2025/2026: the corrections total EUR 1250.00, above EUR 1,000. File a supplementary return; the corrections are on the corrections page.',
+		)
+		expect(bus.emit).toHaveBeenCalledWith('cn:page:refresh', {})
+
+		axiosMock.post.mockResolvedValueOnce({ data: { data: { fiscalYear: '2025/2026', total: 105, thresholdExceeded: false, returns: [{ drift: true }] } } })
+		await checkVatFiscalYearCorrections({ item: { id: 'fy-1' } })
+		expect(dialogs.showWarning).toHaveBeenCalledWith(
+			'Fiscal year 2025/2026: the corrections total EUR 105.00, EUR 1,000 or less, so they can go into the next return. The corrections are on the corrections page.',
+		)
+
+		axiosMock.post.mockResolvedValueOnce({ data: { data: { fiscalYear: '2025/2026', total: 0, thresholdExceeded: false, returns: [{ drift: false }] } } })
+		await checkVatFiscalYearCorrections({ item: { id: 'fy-1' } })
+		expect(dialogs.showSuccess).toHaveBeenCalledWith('Fiscal year 2025/2026: the books still match its returns.')
+
+		axiosMock.post.mockRejectedValueOnce(failure(409, { error: 'The fiscal year of this administration is the calendar year; check its returns one by one.' }))
+		expect(await checkVatFiscalYearCorrections({ item: { id: 'fy-26' } })).toBeNull()
+		expect(dialogs.showError).toHaveBeenCalledWith('The fiscal year of this administration is the calendar year; check its returns one by one.')
+	})
+
+	it('puts Check fiscal year on the fiscal year page and groups corrections by fiscal year', () => {
+		const actions = page('FiscalYearDetail').config.actions
+		expect(actions.find((a) => a.id === 'check-fiscal-year-vat').handler).toBe('checkVatFiscalYearCorrections')
+		expect(actionsJs).toContain('checkVatFiscalYearCorrections')
+		expect(routes).toContain("'url' => '/api/fiscal-years/{fiscalYearId}/vat-corrections/check', 'verb' => 'POST'")
+		const corrections = page('BtwCorrecties').config
+		expect(corrections.folderSidebar.field).toBe('fiscalYearLabel')
+		expect(corrections.columns.map((c) => c.key)).toContain('fiscalYearCorrectionTotal')
+	})
+
 	it('prepares a correction and names the deadline above the threshold', async () => {
 		const { prepareSupplementaryReturn } = await import('../../src/utils/vatSuppletieActions.js')
 		axiosMock.post.mockResolvedValue({ data: { data: { id: 'corr-q2', thresholdExceeded: true, filingDeadline: '2026-12-28' } } })

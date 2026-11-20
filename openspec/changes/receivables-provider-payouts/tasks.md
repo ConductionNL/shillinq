@@ -19,7 +19,9 @@
 ## 3. On the spot
 
 - [ ] 3.1 Add Take payment now on `ARInvoiceDetail` through the payment command with the point-of-sale method and the user's device, with the QR fallback (REQ-RPPO-005). Verify: PHPUnit for the device path, the fallback and no device registered; a live check on integriq's test source recorded in the PR body.
-- [ ] 3.2 Add `CounterSaleService` and the phone-sized `CounterSale` page, issuing on capture and cancelling on failure (REQ-RPPO-006). Verify: PHPUnit for capture and abandonment; Playwright at a 390 px viewport.
+  - Done: `PointOfSalePaymentService` and `POST /api/financial-documents/invoices/{id}/take-payment` (server); the Take payment now header action on `ARInvoiceDetail` (open states) opening `src/modals/TakePaymentModal.vue`, which shows the QR code of the checkout fallback (`qrcode`), pinned by `tests/vitest/takePaymentModal.spec.js`. Left: the live check on integriq's test source.
+- [x] 3.2 Add `CounterSaleService` and the phone-sized `CounterSale` page, issuing on capture and cancelling on failure (REQ-RPPO-006). Verify: PHPUnit for capture and abandonment; Playwright at a 390 px viewport.
+  - Done: `CounterSaleService` (draft simplified ARInvoice on the named customer or the administration's `COUNTER-SALES` debtor, payment through `PointOfSalePaymentService::payInvoice`, draft cancelled when the payment cannot start, `abandon()`), `CounterSaleSettlement` hooked into `PaymentReconciliationService` (capture runs `issue`, then settles paid; failed or voided cancels), `POST /api/financial-documents/counter-sales` and `/counter-sales/{id}/cancel`, ARInvoice `simplifiedInvoice`, `counterSale`, state `cancelled` and transition `cancel` (`register.d/receivables-counter-sale.json`, ARInvoice 0.19.0), and `src/views/CounterSalePage.vue` under Sales. PHPUnit: `CounterSaleServiceTest`, `CounterSaleSettlementTest`, `CounterSaleControllerTest`, `PaymentReconciliationCounterSaleTest`; Vitest `tests/vitest/counterSalePage.spec.js`. Written, not run here: `tests/e2e/counter-sale.spec.ts` at 390 px (needs an instance; the payment half also a registered device and a connected provider).
 
 ## 4. Docs
 
