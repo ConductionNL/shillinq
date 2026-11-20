@@ -434,10 +434,6 @@ class ExtractionRequestController extends Controller {
 			return false;
 		}
 
-		if ($this->ownerOf(schema: ExtractionPrefillServiceInterface::SCHEMA_RECEIPT, id: $id) === $userId) {
-			return true;
-		}
-
 		foreach (($this->administrationContext->buildContext()['administrations'] ?? []) as $membership) {
 			if ((string)($membership['administrationId'] ?? '') === $administrationId
 				&& in_array((string)($membership['role'] ?? ''), self::RECEIPT_APPROVER_ROLES, true) === true
@@ -446,7 +442,7 @@ class ExtractionRequestController extends Controller {
 			}
 		}
 
-		return false;
+		return $this->ownerOf(schema: ExtractionPrefillServiceInterface::SCHEMA_RECEIPT, id: $id) === $userId;
 
 	}//end mayEditReceipt()
 
@@ -460,10 +456,11 @@ class ExtractionRequestController extends Controller {
 	 */
 	private function ownerOf(string $schema, string $id): string {
 		try {
-			$found = $this->container->get('OCA\OpenRegister\Service\ObjectService')
-				->setRegister(self::REGISTER_SLUG)
-				->setSchema($schema)
-				->find($id);
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$found         = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister(self::REGISTER_SLUG)->setSchema($schema),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			return '';
 		}
