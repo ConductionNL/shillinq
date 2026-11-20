@@ -16309,7 +16309,7 @@
                         {
                             "id": "approval",
                             "label": "Approval",
-                            "icon": "CheckDecagram",
+                            "icon": "CheckDecagramOutline",
                             "order": 10,
                             "_note": "purchasing-approval-delegation REQ-PAD-001: the order's approval steps are OpenRegister flow tasks provisioned from the purchase-order-approval chain. Each row shows the role, state, handler and deadline; Complete is offered to the user who may decide the step, and the server refuses the requester (separation of duties) and anyone outside the step's group.",
                             "widgets": [
@@ -16828,7 +16828,7 @@
                         {
                             "id": "approval",
                             "label": "Approval",
-                            "icon": "CheckDecagram",
+                            "icon": "CheckDecagramOutline",
                             "order": 10,
                             "_note": "purchasing-approval-delegation REQ-PAD-004: a matched invoice from EUR 10.000 waits for a controller step (OpenRegister flow task) before approveMatched.",
                             "widgets": [
