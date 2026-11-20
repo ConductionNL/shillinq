@@ -20,15 +20,18 @@ start with that customer selected.
 - WHEN they choose Create invoice and save a draft for Bakkerij De Korenaar B.V.
 - THEN a draft sales invoice for Bakkerij De Korenaar B.V. exists
 - AND the bookkeeper is still on the purchase invoices page
+- @e2e tests/e2e/sales-quick-draft-from-any-page.spec.ts
 
 #### Scenario: The customer page starts the draft for its customer
 
 - GIVEN a bookkeeper on the detail page of customer Gemeente Voorbeeld
 - WHEN they choose Create invoice
 - THEN the quick-draft modal opens with Gemeente Voorbeeld selected as the customer
+- @e2e tests/e2e/sales-quick-draft-from-any-page.spec.ts
 
 #### Scenario: Cancelling keeps the page
 
 - GIVEN a bookkeeper on the bank reconciliation page who opened Create invoice
 - WHEN they cancel the modal
 - THEN no invoice is saved and the bank reconciliation page is shown as before
+- @e2e tests/e2e/sales-quick-draft-from-any-page.spec.ts

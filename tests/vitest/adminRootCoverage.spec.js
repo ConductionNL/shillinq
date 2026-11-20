@@ -105,6 +105,16 @@ describe('AdminRoot render', () => {
 		expect(Object.keys(shell.slots)).toEqual(['tab-exchange-rates', 'default', 'tab-required-fields', 'tab-custom-record-types', 'tab-connections', 'tab-appointments'])
 	})
 
+	it('maps every kind of payment request and the clearing account to a revenue account (REQ-SOPR-002)', async () => {
+		await render({ storesReady: false })
+		const [accounts] = named('CnSettingsFieldsSection').filter((node) => node.attrs['data-testid'] === 'admin-section-revenue-accounts')
+		expect(accounts.attrs).toMatchObject({ appId: 'shillinq', name: 'Revenue accounts for payment requests', url: '/index.php/apps/shillinq/api/settings/payment-revenue-accounts' })
+		expect(accounts.attrs.fields.map((field) => field.key)).toEqual(['leges', 'dwangsom', 'deposit', 'contribution', 'event-fee', 'other', 'clearing'])
+		const pattern = new RegExp(accounts.attrs.fields[0].pattern)
+		expect(['8400', '1100.10', 'AR-01'].every((value) => pattern.test(value))).toBe(true)
+		expect(['84 00', '', 'x'.repeat(33), '<b>'].some((value) => pattern.test(value))).toBe(false)
+	})
+
 	it('shows the configuration and Pipelinq sections at once, each reading its own settings', async () => {
 		await render({ storesReady: false })
 		const sections = named('CnSettingsFieldsSection')
@@ -114,9 +124,9 @@ describe('AdminRoot render', () => {
 		expect(sections.filter((node) => node.attrs['data-testid'] === 'admin-section-pipelinq')).toHaveLength(1)
 
 		const ready = await render({ storesReady: true })
-		expect(ready.html).toMatch(/<!--slot:default--><!--\[--><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-configuration"><\/section><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-pipelinq"><\/section>/)
+		expect(ready.html).toMatch(/<!--slot:default--><!--\[--><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-configuration"><\/section><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-revenue-accounts"><\/section><section data-stub="CnSettingsFieldsSection" data-testid="admin-section-pipelinq"><\/section>/)
 		const [shell] = named('CnAdminSettingsShell').slice(-1)
-		expect(shell.slots.default.map((node) => node.type.name)).toEqual(['CnSettingsFieldsSection', 'CnSettingsFieldsSection'])
+		expect(shell.slots.default.map((node) => node.type.name)).toEqual(['CnSettingsFieldsSection', 'CnSettingsFieldsSection', 'CnSettingsFieldsSection'])
 		const [pipelinq] = named('CnSettingsFieldsSection').filter((node) => node.attrs['data-testid'] === 'admin-section-pipelinq').slice(-1)
 		// saveAll: the settings POST replaces the endpoint, so a token-only save must still carry it.
 		expect(pipelinq.attrs).toMatchObject({ appId: 'shillinq', url: '/index.php/apps/shillinq/api/pipelinq/settings', saveMethod: 'POST', saveAll: true })
