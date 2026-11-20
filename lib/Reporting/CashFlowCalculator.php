@@ -363,7 +363,8 @@ class CashFlowCalculator {
 				}
 
 				$offset += self::PAGE_SIZE;
-			} while (count($page) >= self::PAGE_SIZE);
+				$fetched = count($page);
+			} while ($fetched >= self::PAGE_SIZE);
 		} catch (Throwable $e) {
 			return [];
 		}
@@ -387,6 +388,9 @@ class CashFlowCalculator {
 	 * @throws InvalidArgumentException When the key is malformed or its range is.
 	 *
 	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StatementPeriods is pure period arithmetic; it holds no state.
+	 * @SuppressWarnings(PHPMD.ElseExpression) Three scopes, three reads; the chain names each one.
 	 */
 	public function lines(string $administrationId, string $key): array {
 		if (preg_match(self::LINES_KEY, $key, $match) !== 1) {

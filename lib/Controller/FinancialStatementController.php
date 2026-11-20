@@ -127,6 +127,8 @@ class FinancialStatementController extends Controller {
 	 * @return JSONResponse The statement, or an error.
 	 *
 	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.2
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StatementPeriods is pure period arithmetic; it holds no state.
 	 */
 	#[NoAdminRequired]
 	public function cashFlow(): JSONResponse {

@@ -1,0 +1,385 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "ledger-period-end",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Period end: the DeferralSchedule schema that spreads a prepaid cost or deferred revenue from an invoice line over its periods, released by the nightly soft close (REQ-LPE-004, REQ-LPE-005). Seeds the licence schedule, the Energie accrual rule and the Maandafsluiting close checklist template of design.md."
+  },
+  "components": {
+    "schemas": {
+      "DeferralSchedule": {
+        "slug": "DeferralSchedule",
+        "icon": "CalendarClock",
+        "version": "0.1.0",
+        "title": "Deferral Schedule",
+        "description": "A prepaid cost or deferred revenue from one invoice line, spread over the fiscal periods of its service period (ledger-period-end REQ-LPE-004). On creation one journal entry moves the total from the result account to the balance account; the nightly soft close posts the release of each ended period, straight line by day count with the rounding remainder on the last release, and completes the schedule when the last release posts (REQ-LPE-005).",
+        "x-schema-org": "schema:Schedule",
+        "x-spec": "openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "sourceReference",
+          "kind",
+          "resultAccount",
+          "balanceAccount",
+          "totalCents",
+          "periodFrom",
+          "periodTo",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration the schedule books in."
+          },
+          "sourceReference": {
+            "type": "string",
+            "title": "Source",
+            "description": "Semantic reference to the invoice line the schedule spreads (ADR-048), such as ap-invoice:INK-2026-001#line-1.",
+            "example": "ap-invoice:INK-2026-001#line-1"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "What is spread, as shown on the journal entries."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "prepaid-cost",
+              "deferred-revenue"
+            ],
+            "title": "Kind",
+            "description": "Whether a prepaid cost or deferred revenue is spread."
+          },
+          "resultAccount": {
+            "type": "string",
+            "title": "Result account",
+            "description": "The cost or revenue account the invoice line was booked on, which each release books back to."
+          },
+          "balanceAccount": {
+            "type": "string",
+            "title": "Balance account",
+            "description": "The balance sheet account the total waits on until it is released."
+          },
+          "totalCents": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Total (cents)",
+            "description": "The amount spread, in cents."
+          },
+          "periodFrom": {
+            "type": "string",
+            "format": "date",
+            "title": "Service period from",
+            "description": "The first day of the service period."
+          },
+          "periodTo": {
+            "type": "string",
+            "format": "date",
+            "title": "Service period to",
+            "description": "The last day of the service period."
+          },
+          "openingJournalEntryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "title": "Opening entry",
+            "description": "The posted journal entry that moved the total to the balance account."
+          },
+          "releases": {
+            "type": "array",
+            "title": "Releases",
+            "description": "One share per fiscal period of the service period. The shares add up to the total exactly.",
+            "items": {
+              "type": "object",
+              "required": [
+                "periodId",
+                "amountCents"
+              ],
+              "properties": {
+                "periodId": {
+                  "type": "string",
+                  "title": "Period",
+                  "description": "The yyyy-mm fiscal period this share belongs to.",
+                  "example": "2026-01"
+                },
+                "periodStart": {
+                  "type": "string",
+                  "format": "date",
+                  "title": "Period start",
+                  "description": "The first day of the service period that falls in this fiscal period."
+                },
+                "periodEnd": {
+                  "type": "string",
+                  "format": "date",
+                  "title": "Period end",
+                  "description": "The last day of the service period that falls in this fiscal period."
+                },
+                "days": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "title": "Days",
+                  "description": "The days of the service period that fall in this fiscal period."
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "title": "Amount (cents)",
+                  "description": "The share of the total released in this period, in cents."
+                },
+                "journalEntryId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "title": "Journal entry",
+                  "description": "The posted journal entry that released this share; empty until the period has ended and the nightly close posted it."
+                },
+                "releasedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "title": "Released at",
+                  "description": "When the release was posted."
+                }
+              }
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed",
+              "cancelled"
+            ],
+            "default": "active",
+            "title": "State",
+            "description": "Lifecycle state."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Shares are released as their periods end."
+            },
+            "completed": {
+              "label": "Completed",
+              "description": "Every share is released; the balance account holds nothing of this schedule."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Stopped before the last release, for example because the invoice was cancelled. No further shares are released."
+            }
+          },
+          "transitions": {
+            "complete": {
+              "from": "active",
+              "to": "completed",
+              "label": "Complete",
+              "description": "Set by the nightly close when the last release posts."
+            },
+            "cancel": {
+              "from": "active",
+              "to": "cancelled",
+              "label": "Cancel",
+              "description": "Stop releasing. The unreleased balance has to be returned to the result account by a journal entry.",
+              "roles": [
+                "shillinq_controller"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "A deferral schedule names the journal entries it posted; changes are audit-trailed (ADR-022)."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DeferralSchedule",
+          "slug": "deferral-software-licence-2026"
+        },
+        "administrationId": "adm-consultancy-nl",
+        "sourceReference": "ap-invoice:INK-2026-0007#line-1",
+        "description": "Jaarlicentie software Leverancier Softwarehuis B.V. 2026",
+        "kind": "prepaid-cost",
+        "resultAccount": "4300",
+        "balanceAccount": "1900",
+        "totalCents": 120000,
+        "periodFrom": "2026-01-01",
+        "periodTo": "2026-12-31",
+        "openingJournalEntryId": null,
+        "releases": [
+          {
+            "periodId": "2026-01",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-02",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-03",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-04",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-05",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-06",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-07",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-08",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-09",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-10",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-11",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          },
+          {
+            "periodId": "2026-12",
+            "amountCents": 10000,
+            "journalEntryId": null,
+            "releasedAt": null
+          }
+        ],
+        "state": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AutoAccrualRule",
+          "slug": "rule-energie-accrual"
+        },
+        "ruleName": "Energie",
+        "targetGLAccount": "4010",
+        "contraGLAccount": "1920",
+        "calculationMethod": "fixed-amount",
+        "calculationParameters": {
+          "amountCents": 35000
+        },
+        "reversalPattern": "first-of-next-month",
+        "frequency": "monthly",
+        "administrationId": "adm-consultancy-nl",
+        "lifecycleState": "active",
+        "ruleVersion": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CloseChecklistTemplate",
+          "slug": "close-template-maandafsluiting-bv"
+        },
+        "templateName": "Maandafsluiting",
+        "administrationTypeId": "BV",
+        "tasks": [
+          {
+            "taskId": "bank",
+            "taskName": "Bankmutaties volledig verwerkt",
+            "taskOwner": "boekhouder",
+            "dueBefore": "end-of-period+3",
+            "category": "bank"
+          },
+          {
+            "taskId": "ar",
+            "taskName": "Openstaande debiteuren gecontroleerd",
+            "taskOwner": "boekhouder",
+            "dueBefore": "end-of-period+3",
+            "category": "ar"
+          },
+          {
+            "taskId": "ap",
+            "taskName": "Inkoopfacturen van de maand geboekt",
+            "taskOwner": "boekhouder",
+            "dueBefore": "end-of-period+3",
+            "category": "ap"
+          },
+          {
+            "taskId": "vat",
+            "taskName": "Btw-rekening aangesloten",
+            "taskOwner": "controller",
+            "dueBefore": "end-of-period+5",
+            "category": "vat"
+          },
+          {
+            "taskId": "accruals",
+            "taskName": "Vaste lasten nog niet gefactureerd toegerekend",
+            "taskOwner": "controller",
+            "dueBefore": "end-of-period+5",
+            "category": "accruals"
+          }
+        ]
+      }
+    ]
+  }
+}

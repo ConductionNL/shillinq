@@ -36,6 +36,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\EInvoice;
 
+use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use RuntimeException;
 
 /**
@@ -109,6 +110,13 @@ final class ArInvoiceUblMapper {
 			name: 'cbc:InvoiceTypeCode',
 			value: (string)($arInvoice['invoiceTypeCode'] ?? '380')
 		);
+		// BT-22 Invoice note: a reverse-charged invoice says so, in UBL order
+		// before the currency (tax-icp-and-reverse-charge REQ-ICR-001).
+		$reverseCharge = (new ReverseChargeNotice())->forInvoice(invoice: $arInvoice);
+		if ($reverseCharge !== null) {
+			$xml .= $this->element(name: 'cbc:Note', value: $reverseCharge['noticeNl']);
+		}
+
 		$xml .= $this->element(name: 'cbc:DocumentCurrencyCode', value: $currency);
 
 		// BT-10 Buyer reference: the reference the customer gave the invoice,
@@ -310,6 +318,14 @@ final class ArInvoiceUblMapper {
 			$xml .= $this->element(name: 'cbc:ID', value: $category);
 			if ($rate !== null) {
 				$xml .= $this->element(name: 'cbc:Percent', value: $this->number(value: (float)$rate));
+			}
+
+			// A reverse-charge group names its exemption reason (EN 16931
+			// BR-IC-10, BR-AE-10; tax-icp-and-reverse-charge REQ-ICR-001).
+			$exemption = (ReverseChargeNotice::CATEGORIES[strtoupper($category)] ?? null);
+			if ($exemption !== null) {
+				$xml .= $this->element(name: 'cbc:TaxExemptionReasonCode', value: $exemption['code']);
+				$xml .= $this->element(name: 'cbc:TaxExemptionReason', value: $exemption['reason']);
 			}
 
 			$xml .= '<cac:TaxScheme>' . $this->element(name: 'cbc:ID', value: 'VAT') . '</cac:TaxScheme>';

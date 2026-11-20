@@ -15,6 +15,7 @@
 ## 3. End to end and strings
 
 - [ ] 3.1 Playwright `tests/e2e/platform-custom-record-types.spec.ts`: define a schema, show it, add a record. Verify: passes locally.
+      (2026-11-17: written, lint-clean and listed by Playwright (4 tests); not run: needs the live instance.)
 - [x] 3.2 Dutch and English strings. Verify: `npm run test:l10n`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

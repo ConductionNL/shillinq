@@ -45,6 +45,8 @@ use Throwable;
  * comparison column or a second statement does not read the ledger again.
  *
  * @spec openspec/changes/reporting-financial-statements
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Profit and loss, balance sheet and cash flow movements share one ledger read.
  */
 class StatementCalculator {
 
@@ -301,6 +303,8 @@ class StatementCalculator {
 	 * @return array{result: float, accounts: array<string, array{net: float, credit: float, debit: float}>}
 	 *
 	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.ElseExpression) Each branch is one kind of movement.
 	 */
 	public function cashFlowMovements(string $administrationId, string $from, string $to): array {
 		$result = 0.0;
