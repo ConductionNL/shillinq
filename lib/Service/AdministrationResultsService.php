@@ -233,8 +233,9 @@ class AdministrationResultsService {
 		do {
 			$page = $this->page(schema: $schema, filters: $filters, offset: $offset);
 			array_push($rows, ...self::payloads(page: $page));
-			$offset += self::PAGE_SIZE;
-		} while (count($page) >= self::PAGE_SIZE);
+			$offset  += self::PAGE_SIZE;
+			$fullPage = (count($page) >= self::PAGE_SIZE);
+		} while ($fullPage === true);
 
 		return $rows;
 
