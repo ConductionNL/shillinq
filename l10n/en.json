@@ -5566,7 +5566,16 @@
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.",
         "Get one help article by id, with its markdown body and documentation link.": "Get one help article by id, with its markdown body and documentation link.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.",
+        "Revenue accounts for payment requests": "Revenue accounts for payment requests",
+        "The ledger account a paid request books against, per kind of request. A paid request whose kind has no account waits until one is set.": "The ledger account a paid request books against, per kind of request. A paid request whose kind has no account waits until one is set.",
+        "Fees (leges)": "Fees (leges)",
+        "Penalty payments (dwangsom)": "Penalty payments (dwangsom)",
+        "Contributions": "Contributions",
+        "Event fees": "Event fees",
+        "Other requests": "Other requests",
+        "Use an account number of letters, digits, dots or dashes": "Use an account number of letters, digits, dots or dashes",
+        "The account the money arrives through before it is booked to revenue.": "The account the money arrives through before it is booked to revenue."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
