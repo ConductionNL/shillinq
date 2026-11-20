@@ -18,6 +18,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;

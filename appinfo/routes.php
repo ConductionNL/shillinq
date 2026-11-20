@@ -953,7 +953,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // pay receiver above. Static URL, before the SPA catch-all (ADR-016).
             ['name' => 'portalContributionDecline#decline', 'url' => '/api/portal/contributions/decline', 'verb' => 'POST'],
             ['name' => 'portalSubscriptionCancel#cancel', 'url' => '/api/portal/subscriptions/cancel', 'verb' => 'POST'],
-            // sales-cancellation REQ-SCX-004: portaliq forwards the withdraw action (a signed-in
+            // Sales-cancellation REQ-SCX-004: portaliq forwards the withdraw action (a signed-in
             // customer's assertion, or a guest's signed link).
             ['name' => 'portalWithdrawal#withdraw', 'url' => '/api/portal/withdrawals', 'verb' => 'POST'],
 
