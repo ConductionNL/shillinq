@@ -239,6 +239,7 @@ export default {
 		 *
 		 * @param {object} error The request error.
 		 * @return {string}
+		 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 		 */
 		rowsLoadError(error) {
 			const status = error?.response?.status

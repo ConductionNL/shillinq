@@ -335,6 +335,7 @@ export default {
 		 *
 		 * @param {object} error The request error.
 		 * @return {string}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 		 */
 		segmentLoadError(error) {
 			const status = error?.response?.status

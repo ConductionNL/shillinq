@@ -36,6 +36,8 @@ use Psr\Log\LoggerInterface;
 /**
  * Commitments and segment results answer only for an administration the
  * caller belongs to, and always narrow the aggregation to it.
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 class AdministrationResultsControllerTest extends TestCase {
 

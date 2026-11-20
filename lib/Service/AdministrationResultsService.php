@@ -231,25 +231,52 @@ class AdministrationResultsService {
 		$rows   = [];
 		$offset = 0;
 		do {
-			$page = $this->objectService
-				->setRegister($this->settings->getRegisterSlug())
-				->setSchema($schema)
-				->findAll(['limit' => self::PAGE_SIZE, 'offset' => $offset, 'filters' => $filters]);
-			foreach ($page as $row) {
-				if ($row instanceof JsonSerializable) {
-					$row = $row->jsonSerialize();
-				}
-
-				if (is_array($row) === true) {
-					$rows[] = $row;
-				}
-			}
-
-			$offset  += self::PAGE_SIZE;
-			$fullPage = (count($page) >= self::PAGE_SIZE);
-		} while ($fullPage === true);
+			$page = $this->page(schema: $schema, filters: $filters, offset: $offset);
+			array_push($rows, ...self::payloads(page: $page));
+			$offset += self::PAGE_SIZE;
+		} while (count($page) >= self::PAGE_SIZE);
 
 		return $rows;
 
 	}//end rows()
+
+	/**
+	 * One page of a schema's rows matching the filters.
+	 *
+	 * @param string               $schema  The schema slug.
+	 * @param array<string, mixed> $filters Equality filters.
+	 * @param int                  $offset  The first row of the page.
+	 *
+	 * @return array<int, mixed> The rows as the object service returns them.
+	 */
+	private function page(string $schema, array $filters, int $offset): array {
+		return $this->objectService
+			->setRegister($this->settings->getRegisterSlug())
+			->setSchema($schema)
+			->findAll(['limit' => self::PAGE_SIZE, 'offset' => $offset, 'filters' => $filters]);
+
+	}//end page()
+
+	/**
+	 * The rows of a page as payload arrays; anything else is dropped.
+	 *
+	 * @param array<int, mixed> $page The rows as the object service returns them.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private static function payloads(array $page): array {
+		$payloads = [];
+		foreach ($page as $row) {
+			if ($row instanceof JsonSerializable) {
+				$row = $row->jsonSerialize();
+			}
+
+			if (is_array($row) === true) {
+				$payloads[] = $row;
+			}
+		}
+
+		return $payloads;
+
+	}//end payloads()
 }//end class
