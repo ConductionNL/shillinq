@@ -401,6 +401,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  per user-guide page; after InitializeSettings, which imports the
                  HelpArticle schema. Unchanged pages are skipped by hash. -->
             <step>OCA\Shillinq\Repair\SeedHelpArticles</step>
+            <!-- ledger-foreign-legislation task 1.1: an administration that names no
+                 jurisdiction gets NL, the rules it was kept under before jurisdictions
+                 existed. After InitializeSettings (the register must exist);
+                 idempotent, never overwrites a jurisdiction that is set. -->
+            <step>OCA\Shillinq\Repair\BackfillAdministrationJurisdiction</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first

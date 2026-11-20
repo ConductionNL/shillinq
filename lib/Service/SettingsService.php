@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
@@ -344,7 +345,13 @@ class SettingsService implements SettingsServiceInterface {
 				return;
 			}
 
-			$objectService->patchObject(objectId: $id, data: ['jurisdiction' => $country], register: $registerSlug, schema: 'Administration');
+			$objectService->patchObject(
+				new ObjectPatch(
+					objectId: $id,
+					data: ['jurisdiction' => $country],
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'Administration')
+				)
+			);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: could not set the administration\'s jurisdiction after seeding its legislation pack',
@@ -432,6 +439,7 @@ class SettingsService implements SettingsServiceInterface {
 			['value' => 'mkb', 'label' => 'MKB'],
 			['value' => 'zzp', 'label' => 'ZZP'],
 			['value' => 'bbv', 'label' => 'BBV (government)'],
+			['value' => LegislationPackSeeder::TEMPLATE_PREFIX.'be', 'label' => 'Belgian minimum chart (MAR/PCMN)'],
 		];
 		if ($this->isOpenRegisterAvailable() === false) {
 			return $choices;
