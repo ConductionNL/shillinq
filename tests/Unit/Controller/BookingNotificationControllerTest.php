@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -22,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\BookingNotificationController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BookingNotificationService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http\JSONResponse;
@@ -33,6 +37,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for BookingNotificationController.
@@ -142,7 +148,7 @@ class BookingNotificationControllerTest extends TestCase {
 	private function buildController(object $store): BookingNotificationController {
 		return new BookingNotificationController(
 			request: $this->request,
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			groupManager: $this->groupManager,
 			userSession: $this->userSession,
 			logger: $this->logger,
@@ -268,7 +274,11 @@ class BookingNotificationControllerTest extends TestCase {
 
 		// phpcs:disable
 		$objectService = new class {
-			public function find(string|int $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null): object {
+			public function find(string|int $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): object {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
 				return new class {
 					public function jsonSerialize(): array {
 						return ['bookingId' => 'booking-123', 'administrationId' => 'adm-1'];
@@ -314,7 +324,11 @@ class BookingNotificationControllerTest extends TestCase {
 
 		// phpcs:disable
 		$objectService = new class {
-			public function find(string|int $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null): object {
+			public function find(string|int $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): object {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
 				return new class {
 					public function jsonSerialize(): array {
 						return ['bookingId' => 'booking-123', 'administrationId' => 'adm-other'];
@@ -350,7 +364,11 @@ class BookingNotificationControllerTest extends TestCase {
 
 		// phpcs:disable
 		$objectService = new class {
-			public function find(string|int $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null): object {
+			public function find(string|int $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): object {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
 				return new class {
 					public function jsonSerialize(): array {
 						return ['bookingId' => 'booking-123'];
@@ -415,7 +433,9 @@ class BookingNotificationControllerTest extends TestCase {
 				$this->filters[] = ($config['filters'] ?? []);
 				return [['id' => 'trig-1', 'bookingId' => 'booking-123', 'eventType' => 'created', 'active' => true]];
 			}
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->saved[] = $object;
 				return $object;
 			}
@@ -550,7 +570,9 @@ class BookingNotificationControllerTest extends TestCase {
 				return [['id' => 'trig-1', 'active' => true], ['id' => 'trig-2', 'active' => true]];
 			}
 
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				return $object;
 			}
 		};

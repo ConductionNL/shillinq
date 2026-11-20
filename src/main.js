@@ -21,6 +21,7 @@ import { generateUrl } from '@nextcloud/router'
 import { createApp, h, reactive } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
+import AdministrationScopedIndex from './views/AdministrationScopedIndex.vue'
 import appIcons from './icons.js'
 import { registerContractLeaf } from './integrations/registerContractLeaf.js'
 import { registerFinancialDocumentsLeaf } from './integrations/registerFinancialDocumentsLeaf.js'
@@ -31,6 +32,7 @@ import { attachManifestActions, manifestActions } from './manifestActions.js'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import { customRecordGuard } from './utils/customRecordTypes.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
@@ -285,6 +287,11 @@ router.beforeEach((to, from, next) => {
 	loadFragment(fragmentStem).then(() => next())
 })
 
+// platform-custom-record-types (REQ-CRT-003): the generic /records/:schema
+// pages open only record types an administrator chose to show; any other
+// slug goes to the own records page, which says it is not available.
+router.beforeEach(customRecordGuard())
+
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib exports
@@ -292,7 +299,10 @@ tryLoadTranslations()
 // shapes, and Vue caches resolved component metadata on the object it is
 // handed — which throws against a frozen source map. Cloning yields
 // extensible objects without changing the resolved values.
-const pageTypesProp = { ...defaultPageTypes }
+// ledger-multi-administration REQ-LMA-002: `index` pages over schemas that
+// carry `administrationId` list the active administration only; every other
+// index page renders as the library's.
+const pageTypesProp = { ...defaultPageTypes, index: AdministrationScopedIndex }
 const registryProp = { ...registry }
 
 // Flat `{ name: component }` map of every registry component, derived from

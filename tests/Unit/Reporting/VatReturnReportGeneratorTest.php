@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Reporting;
 
 use DOMDocument;
 use DOMXPath;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Reporting\Generator\VatReturnReportGenerator;
 use OCA\Shillinq\Service\VATReturnService;
@@ -89,8 +90,22 @@ final class VatReturnReportGeneratorTest extends TestCase {
 		$posting->rows['VatTariff'] = $tariffs;
 
 		$action = new MaterialiseGlTransactionAction($posting->mock($this), $this->defaultsConfig(), $this->createMock(LoggerInterface::class));
-		$action->execute($sale, [], ['sourceSchema' => 'ARInvoice'], MaterialiseGlTransactionAction::class);
-		$action->execute($purchase, [], ['sourceSchema' => 'APInvoice'], MaterialiseGlTransactionAction::class);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: $sale,
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: $purchase,
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		return [
 			'GLTransaction' => $posting->savedOf('GLTransaction'),
@@ -271,4 +286,78 @@ final class VatReturnReportGeneratorTest extends TestCase {
 		self::assertSame(['0.00', '0.00'], $this->rubriek($file->content, '1b'));
 		self::assertSame([null, '210.00'], $this->rubriek($file->content, '5g'));
 	}//end testTheFiledReturnWinsAndABoxlessDeclarationIsLeftOut()
+
+	/**
+	 * Characterisation: a format other than XML is refused before any read.
+	 *
+	 * @return void
+	 */
+	public function testANonXmlFormatIsRefused(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('The VAT return file is XML only, not csv.');
+
+		$this->generator()->generate(['period' => '2026-Q3', 'administrationId' => 'adm-kb'], 'csv');
+	}//end testANonXmlFormatIsRefused()
+
+	/**
+	 * Characterisation: a box not on the form keeps its own code, is written
+	 * after the form boxes and before 5a, and counts towards the owed total.
+	 *
+	 * @return void
+	 */
+	public function testABoxOffTheFormKeepsItsCodeAndCountsAsOwed(): void {
+		$rows = $this->korenbloemBooks();
+		$rows['BtwAangifte'] = [
+			[
+				'id' => 'filed-q3', 'returnNumber' => 'NL-2026-Q3', 'period' => 'quarter', 'periodYear' => 2026, 'periodNumber' => 3,
+				'administrationId' => 'adm-kb', 'statusCode' => 'filed',
+			],
+		];
+		$rows['VATDeclaration'] = [
+			[
+				'id' => 'filed-1a', 'declarationNumber' => 'VAT-filed-1A', 'returnId' => 'filed-q3', 'returnBox' => '1a',
+				'type' => 'collected', 'taxRate' => 21.0, 'totalVATAmount' => 210.0, 'totalTaxableAmount' => 1000.0, 'lineCount' => 2,
+			],
+			[
+				'id' => 'filed-9z', 'declarationNumber' => 'VAT-filed-9Z', 'returnId' => 'filed-q3', 'returnBox' => '9z',
+				'type' => 'collected', 'taxRate' => 3.0, 'totalVATAmount' => 15.0, 'totalTaxableAmount' => 500.0, 'lineCount' => 1,
+			],
+		];
+		$this->prepare($rows);
+
+		$content = $this->generator()->generate(['period' => '2026-Q3', 'administrationId' => 'adm-kb'], 'xml')->content;
+
+		self::assertSame(['500.00', '15.00'], $this->rubriek($content, '9z'));
+		self::assertSame([null, '225.00'], $this->rubriek($content, '5a'));
+		self::assertSame([null, '225.00'], $this->rubriek($content, '5g'));
+		preg_match_all('/<Rubriek code="([^"]+)"/', $content, $codes);
+		self::assertSame(['9z', '5a', '5b', '5g'], array_slice($codes[1], -4));
+		self::assertStringContainsString('Rubriek 9z', $content);
+	}//end testABoxOffTheFormKeepsItsCodeAndCountsAsOwed()
+	/**
+	 * REQ-TVRB-003: a VAT fiscal unity's return carries the unity's VAT
+	 * number; a return of one administration has none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
+	 */
+	public function testAFiscalUnitysFileCarriesTheUnitysVatNumber(): void {
+		$rows = $this->korenbloemBooks();
+		$this->prepare($rows);
+		$alone = $this->generator()->generate(['period' => '2026-Q3', 'administrationId' => 'adm-kb'], 'xml')->content;
+		self::assertStringNotContainsString('btwNummer', $alone);
+
+		$rows['VatFiscalUnity'] = [
+			[
+				'id' => 'vfu-kb', 'name' => 'Fiscale eenheid Korenbloem', 'administrationId' => 'adm-kb', 'memberAdministrationIds' => [],
+				'vatNumber' => 'NL001234567B01', 'startDate' => '2026-01-01',
+			],
+		];
+		$this->prepare($rows);
+		$unity = $this->generator()->generate(['period' => '2026-Q3', 'administrationId' => 'adm-kb'], 'xml')->content;
+
+		self::assertStringContainsString(' btwNummer="NL001234567B01"', $unity);
+		self::assertSame(['10000.00', '900.00'], $this->rubriek($unity, '1b'));
+	}//end testAFiscalUnitysFileCarriesTheUnitysVatNumber()
 }//end class

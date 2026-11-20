@@ -18,12 +18,13 @@ use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
 use OCA\Shillinq\Listener\PurchaseOrderDecisionLockListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ServerWriteAuthority;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Purchase order and supplier invoice approvals only happen through their services.
@@ -95,6 +96,7 @@ final class PurchasingGuardsTest extends TestCase {
 				return $this;
 			}
 			public function find(string $id, ...$named): ObjectEntity {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				foreach ($this->rows as $row) {
 					if ($row['id'] === $id) {
 						$entity = new ObjectEntity();
@@ -109,7 +111,7 @@ final class PurchasingGuardsTest extends TestCase {
 		};
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$schemas = $this->createMock(ListenerSchemaResolver::class);
 		$schemas->method('matchesRegisterAndSchema')->willReturn(true);

@@ -30,13 +30,14 @@ use OCA\Shillinq\Controller\BookingDepthController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Forged-parameter cases for the recurring series create.
@@ -113,7 +114,7 @@ final class BookingSeriesForgedParametersTest extends TestCase {
 			static fn (string $administrationId): bool => $user === 'alice' && $administrationId === 'adm-1'
 		);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('books');
 
@@ -203,7 +204,9 @@ final class ForgedSeriesObjects {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = $object;
 		return $object;
 	}//end saveObject()

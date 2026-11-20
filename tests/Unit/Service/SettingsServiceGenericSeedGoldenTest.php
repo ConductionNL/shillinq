@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -37,6 +38,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use RuntimeException;
 use Stringable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Single-schema seed golden tests.
@@ -45,6 +47,7 @@ use Stringable;
  * @covers \OCA\Shillinq\Service\Seed\SeedImporter
  * @uses   \OCA\Shillinq\Service\Seed\SeedImport
  * @uses   \OCA\Shillinq\Service\Seed\SeedMessages
+ * @uses   \OCA\Shillinq\Service\RegisterLocation
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -157,7 +160,7 @@ final class SettingsServiceGenericSeedGoldenTest extends TestCase {
 
 		$service = new SettingsService(
 			appConfig: $appConfig,
-			appManager: $appManager,
+			registerLocation: new RegisterLocation(appConfig: $appConfig, appManager: $appManager),
 			container: $container,
 			groupManager: $this->createStub(IGroupManager::class),
 			userSession: $this->createStub(IUserSession::class),
@@ -174,6 +177,26 @@ final class SettingsServiceGenericSeedGoldenTest extends TestCase {
 		return ['result' => $result, 'calls' => $objects->calls, 'log' => $logger->lines];
 
 	}//end runScenario()
+
+	/**
+	 * Every generic seed names a file that exists and holds its items key.
+	 *
+	 * The golden records whatever the seed did, so a misnamed file would be
+	 * recorded as an expected "Seed file not found".
+	 *
+	 * @return void
+	 */
+	public function testEveryGenericSeedFileExists(): void {
+		$seeds = (new \ReflectionClassConstant(class: SettingsService::class, constant: 'GENERIC_SEEDS'))->getValue();
+		self::assertNotEmpty(actual: $seeds);
+		foreach ($seeds as $name => [$fileName, $itemsKey]) {
+			$path = __DIR__ . '/../../../lib/Settings/seeds/' . $fileName;
+			self::assertFileExists(filename: $path, message: "Seed $name names a missing file.");
+			$data = json_decode(json: (string) file_get_contents(filename: $path), associative: true);
+			self::assertIsArray(actual: $data[$itemsKey] ?? null, message: "Seed $name has no '$itemsKey' list.");
+		}
+
+	}//end testEveryGenericSeedFileExists()
 }//end class
 
 /**
@@ -255,7 +278,9 @@ class RecordingGenericSeedObjectService {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(mixed $object, mixed $register, mixed $schema): array {
+	public function saveObject(mixed $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->calls[] = ['saveObject' => ['object' => $object, 'register' => $register, 'schema' => $schema]];
 		$this->saves++;
 		if ($this->mode === 'saveFails' && $this->saves === 2) {

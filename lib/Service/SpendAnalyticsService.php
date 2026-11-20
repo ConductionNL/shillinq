@@ -3,6 +3,9 @@
 /**
  * Spend Analytics Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Single-dimension spend analysis over the Accounts-Payable sub-ledger,
  * built by CONSUMING OpenRegister's aggregation-api primitive (ADR-022) —
  * it does NOT re-implement grouping or summing in the leaf. Every view is
@@ -83,9 +86,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/spend-analytics/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -93,8 +93,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SpendAnalyticsServiceInterface;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -105,7 +107,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/spend-analytics/spec.md
  */
-class SpendAnalyticsService {
+class SpendAnalyticsService implements SpendAnalyticsServiceInterface {
 	/**
 	 * FQCN of OpenRegister's aggregation runner (fetched lazily from the DI
 	 * container so the leaf does not hard-link the class at boot).
@@ -143,6 +145,17 @@ class SpendAnalyticsService {
 	];
 
 	/**
+	 * The GLLine field each GL-backed spend view groups by.
+	 *
+	 * @var array<string,string>
+	 */
+	private const GL_GROUP_FIELDS = [
+		'category' => 'accountNumber',
+		'costCentre' => 'costCenterCode',
+		'period' => 'periodId',
+	];
+
+	/**
 	 * Constructor with lazy DI of OR's aggregation runner.
 	 *
 	 * @param ContainerInterface $container DI container — OR's AggregationRunner is fetched lazily.
@@ -176,16 +189,15 @@ class SpendAnalyticsService {
 	 * @spec openspec/specs/spend-analytics/spec.md
 	 */
 	public function spendBySupplier(string $administrationId): array {
-		return $this->aggregate(
-			dimension: 'supplier',
-			schema: self::SCHEMA_AP_TRANSACTION,
-			metricField: 'totalAmount',
-			filter: [
-				'administrationId' => $administrationId,
-				'state' => ['in' => self::AP_SPEND_STATES],
-			],
-			groupField: 'vendorId'
-		);
+		$aggregation = new SpendAggregation(dimension: 'supplier', schema: self::SCHEMA_AP_TRANSACTION);
+		$aggregation->metricField = 'totalAmount';
+		$aggregation->filter      = [
+			'administrationId' => $administrationId,
+			'state' => ['in' => self::AP_SPEND_STATES],
+		];
+		$aggregation->groupField  = 'vendorId';
+
+		return $this->aggregate(aggregation: $aggregation);
 
 	}//end spendBySupplier()
 
@@ -207,13 +219,7 @@ class SpendAnalyticsService {
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function spendByCategory(string $administrationId): array {
-		return $this->aggregate(
-			dimension: 'category',
-			schema: self::SCHEMA_GL_LINE,
-			metricField: 'amount',
-			filter: $this->apExpenseDebitFilter(administrationId: $administrationId),
-			groupField: 'accountNumber'
-		);
+		return $this->aggregate(aggregation: $this->apExpenseAggregation(dimension: 'category', administrationId: $administrationId));
 
 	}//end spendByCategory()
 
@@ -231,13 +237,7 @@ class SpendAnalyticsService {
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function spendByCostCentre(string $administrationId): array {
-		return $this->aggregate(
-			dimension: 'costCentre',
-			schema: self::SCHEMA_GL_LINE,
-			metricField: 'amount',
-			filter: $this->apExpenseDebitFilter(administrationId: $administrationId),
-			groupField: 'costCenterCode'
-		);
+		return $this->aggregate(aggregation: $this->apExpenseAggregation(dimension: 'costCentre', administrationId: $administrationId));
 
 	}//end spendByCostCentre()
 
@@ -255,15 +255,30 @@ class SpendAnalyticsService {
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function spendByPeriod(string $administrationId): array {
-		return $this->aggregate(
-			dimension: 'period',
-			schema: self::SCHEMA_GL_LINE,
-			metricField: 'amount',
-			filter: $this->apExpenseDebitFilter(administrationId: $administrationId),
-			groupField: 'periodId'
-		);
+		return $this->aggregate(aggregation: $this->apExpenseAggregation(dimension: 'period', administrationId: $administrationId));
 
 	}//end spendByPeriod()
+
+	/**
+	 * The GLLine debit-AP-expense aggregation of one dimension, scoped to one
+	 * administration (the backfill gate is asserted while building the filter).
+	 *
+	 * @param string $dimension        'category', 'costCentre' or 'period'.
+	 * @param string $administrationId The administration to scope to.
+	 *
+	 * @return SpendAggregation
+	 *
+	 * @throws RuntimeException When the backfill is not proven complete, or the scope is empty.
+	 */
+	private function apExpenseAggregation(string $dimension, string $administrationId): SpendAggregation {
+		$aggregation = new SpendAggregation(dimension: $dimension, schema: self::SCHEMA_GL_LINE);
+		$aggregation->metricField = 'amount';
+		$aggregation->filter      = $this->apExpenseDebitFilter(administrationId: $administrationId);
+		$aggregation->groupField  = self::GL_GROUP_FIELDS[$dimension];
+
+		return $aggregation;
+
+	}//end apExpenseAggregation()
 
 	/**
 	 * The posting slice that constitutes AP expense spend, scoped to one
@@ -358,11 +373,7 @@ class SpendAnalyticsService {
 	 * Build and dispatch one single-field aggregation through OR's
 	 * aggregation-api, then shape the envelope for the client.
 	 *
-	 * @param string $dimension Stable dimension identifier (supplier/category/costCentre/period).
-	 * @param string $schema Source schema slug.
-	 * @param string $metricField Numeric field to sum.
-	 * @param array<string,mixed> $filter OR aggregation filter map (operator-aware).
-	 * @param string $groupField Single top-level scalar field to GROUP BY.
+	 * @param SpendAggregation $aggregation The dimension, schema, summed field, filter and group field.
 	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
@@ -370,13 +381,7 @@ class SpendAnalyticsService {
 	 *
 	 * @spec openspec/specs/spend-analytics/spec.md
 	 */
-	private function aggregate(
-		string $dimension,
-		string $schema,
-		string $metricField,
-		array $filter,
-		string $groupField,
-	): array {
+	private function aggregate(SpendAggregation $aggregation): array {
 		$runner = $this->getAggregationRunner();
 		if ($runner === null) {
 			throw new RuntimeException('OpenRegister aggregation runner is unavailable');
@@ -385,18 +390,18 @@ class SpendAnalyticsService {
 		// Single-field groupBy — the ONLY grouping shape OR honours today.
 		$query = AggregationQuery::create(
 			metric: 'sum',
-			field: $metricField,
-			filter: $filter,
-			groupBy: ['field' => $groupField]
+			field: $aggregation->metricField,
+			filter: $aggregation->filter,
+			groupBy: ['field' => $aggregation->groupField]
 		);
 
 		$envelope = $runner->runAdhocByRef(
 			registerRef: $this->getRegisterSlug(),
-			schemaRef: $schema,
+			schemaRef: $aggregation->schema,
 			query: $query
 		);
 
-		return $this->shape(dimension: $dimension, envelope: $envelope);
+		return $this->shape(dimension: $aggregation->dimension, envelope: $envelope);
 	}//end aggregate()
 
 	/**
@@ -409,42 +414,76 @@ class SpendAnalyticsService {
 	 * @return array<string,mixed> The shaped client payload.
 	 */
 	private function shape(string $dimension, array $envelope): array {
-		$groups = [];
-		$total = 0.0;
+		$groups = $this->envelopeGroups(envelope: $envelope);
 
+		return [
+			'dimension' => $dimension,
+			'groups' => $groups,
+			'total' => $this->groupsTotal(groups: $groups),
+			'backend' => $this->envelopeBackend(envelope: $envelope),
+		];
+
+	}//end shape()
+
+	/**
+	 * The envelope's array groups as `{key, amount}`.
+	 *
+	 * @param array<string,mixed> $envelope OR's AggregationResult envelope.
+	 *
+	 * @return array<int,array{key:mixed,amount:float}>
+	 */
+	private function envelopeGroups(array $envelope): array {
 		$rawGroups = [];
 		if (isset($envelope['groups']) === true && is_array($envelope['groups']) === true) {
 			$rawGroups = $envelope['groups'];
 		}
 
+		$groups = [];
 		foreach ($rawGroups as $group) {
-			if (is_array($group) === false) {
-				continue;
+			if (is_array($group) === true) {
+				$groups[] = [
+					'key' => ($group['key'] ?? null),
+					'amount' => (float)($group['value'] ?? 0),
+				];
 			}
-
-			$key = ($group['key'] ?? null);
-			$amount = (float)($group['value'] ?? 0);
-			$total += $amount;
-
-			$groups[] = [
-				'key' => $key,
-				'amount' => $amount,
-			];
 		}
 
-		$backend = 'unknown';
+		return $groups;
+
+	}//end envelopeGroups()
+
+	/**
+	 * The sum of the groups' amounts, in their order.
+	 *
+	 * @param array<int,array{key:mixed,amount:float}> $groups The shaped groups.
+	 *
+	 * @return float
+	 */
+	private function groupsTotal(array $groups): float {
+		$total = 0.0;
+		foreach ($groups as $group) {
+			$total += $group['amount'];
+		}
+
+		return $total;
+
+	}//end groupsTotal()
+
+	/**
+	 * The backend the envelope names, 'unknown' when it names none.
+	 *
+	 * @param array<string,mixed> $envelope OR's AggregationResult envelope.
+	 *
+	 * @return string
+	 */
+	private function envelopeBackend(array $envelope): string {
 		if (isset($envelope['backend']) === true && is_string($envelope['backend']) === true) {
-			$backend = $envelope['backend'];
+			return $envelope['backend'];
 		}
 
-		return [
-			'dimension' => $dimension,
-			'groups' => $groups,
-			'total' => $total,
-			'backend' => $backend,
-		];
+		return 'unknown';
 
-	}//end shape()
+	}//end envelopeBackend()
 
 	/**
 	 * Resolve OR's AggregationRunner from the container, or null when
@@ -477,11 +516,6 @@ class SpendAnalyticsService {
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 }//end class

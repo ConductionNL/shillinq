@@ -12,11 +12,12 @@ namespace OCA\Shillinq\Tests\Unit\Security;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * The pay guard accepts only the invoice's own paid AP transaction: the
@@ -61,6 +62,7 @@ final class SupplierInvoicePayGuardLookupTest extends TestCase {
 			public function __construct(private ?ObjectEntity $entity) {
 			}
 			public function find(string $id, ...$named): ObjectEntity {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				if ($this->entity === null) {
 					throw new RuntimeException('DoesNotExist');
 				}
@@ -73,7 +75,7 @@ final class SupplierInvoicePayGuardLookupTest extends TestCase {
 		} else {
 			$container->method('get')->willReturn($objectService);
 		}
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		if ($failing === 'settings') {
 			$settings->method('getRegisterSlug')->willThrowException(new \LogicException('config down'));
 		} else {

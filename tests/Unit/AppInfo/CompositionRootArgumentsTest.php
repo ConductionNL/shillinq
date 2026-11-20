@@ -3,6 +3,9 @@
 /**
  * Composition-root argument tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `lib/AppInfo/Application.php` registers a number of services with a
  * hand-written factory closure — `return new Foo(bar: $c->get(...))` —
  * instead of letting Nextcloud autowire them. That is a deliberate choice
@@ -80,12 +83,18 @@ class CompositionRootArgumentsTest extends TestCase {
 		$this->applicationPhp = dirname(__DIR__, 3) . '/lib/AppInfo/Application.php';
 		self::assertFileExists($this->applicationPhp, 'the composition root must exist');
 
-		$source = file_get_contents($this->applicationPhp);
-		$this->callSites = $this->parseNewCalls(
-			$source,
-			$this->buildUseMap($source),
-			$this->currentNamespace($source)
-		);
+		$this->callSites = [];
+		foreach ([$this->applicationPhp, ...glob(dirname(__DIR__, 3) . '/lib/*/*Registrar.php')] as $file) {
+			$source = file_get_contents($file);
+			$this->callSites = array_merge(
+				$this->callSites,
+				$this->parseNewCalls(
+					$source,
+					$this->buildUseMap($source),
+					$this->currentNamespace($source)
+				)
+			);
+		}
 
 	}//end setUp()
 

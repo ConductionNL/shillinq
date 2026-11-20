@@ -3,6 +3,9 @@
 /**
  * Compliance Deadline Calendar Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Publishes Shillinq's compliance and operational deadlines as RFC 5545
  * VEVENTs into a Nextcloud calendar per REQ-CDC-001..004 and REQ-CDC-006,
  * and raises NC Notifications ahead of each deadline per REQ-CDC-007.
@@ -66,9 +69,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -78,7 +78,10 @@ namespace OCA\Shillinq\Service;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;
@@ -87,7 +90,6 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Publishes compliance deadlines as calendar VEVENTs + NC notifications.
@@ -109,55 +111,12 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain's regulatory surface; splitting is out of scope for a mechanical
  * phpcs/phpmd cleanup. Deferred to a follow-up.
  */
-class ComplianceDeadlineCalendarService {
-
-	/**
-	 * The RFC 5545 line-ending sequence (CRLF, §3.1) — same convention as
-	 * {@see IcsService}.
-	 */
-	private const CRLF = "\r\n";
-
-	/**
-	 * PRODID for VEVENTs published by this service.
-	 */
-	private const PRODID = '-//Conduction//Shillinq Deadlines//EN';
+class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarServiceInterface {
 
 	/**
 	 * The dedicated app-calendar URI looked up on the user's principal.
 	 */
 	public const CALENDAR_URI = 'shillinq-deadlines';
-
-	/**
-	 * Deadline category: BTW / ICP / VPB filing deadlines (REQ-CDC-002).
-	 */
-	public const CATEGORY_FILING = 'filing';
-
-	/**
-	 * Deadline category: payment-run execution dates (REQ-CDC-003).
-	 */
-	public const CATEGORY_PAYMENT_RUN = 'payment-run';
-
-	/**
-	 * Deadline category: AR invoice due dates — per-user opt-in (REQ-CDC-004).
-	 */
-	public const CATEGORY_AR_DUE = 'ar-due';
-
-	/**
-	 * Deadline category: contract renewal / opzegtermijn (REQ-CDC-005).
-	 */
-	public const CATEGORY_CONTRACT = 'contract';
-
-	/**
-	 * All known categories in publication order.
-	 *
-	 * @var array<int,string>
-	 */
-	public const CATEGORIES = [
-		self::CATEGORY_FILING,
-		self::CATEGORY_PAYMENT_RUN,
-		self::CATEGORY_AR_DUE,
-		self::CATEGORY_CONTRACT,
-	];
 
 	/**
 	 * Per-user preference defaults: filing / payment-run / contract ON,
@@ -187,22 +146,6 @@ class ComplianceDeadlineCalendarService {
 	];
 
 	/**
-	 * UID source prefixes owned by this service — used to recognise
-	 * app-published VEVENTs when computing the stale set. The contract
-	 * prefix is shared with {@see ObligationTaskBridge} (one home).
-	 *
-	 * @var array<int,string>
-	 */
-	private const UID_PREFIXES = [
-		'btw-filing:',
-		'icp-filing:',
-		'vpb-filing:',
-		'payment-run:',
-		'ar-invoice:',
-		'contract:',
-	];
-
-	/**
 	 * User-preference key prefix for the category toggles.
 	 */
 	private const PREF_CATEGORY_PREFIX = 'deadline_calendar_';
@@ -213,11 +156,15 @@ class ComplianceDeadlineCalendarService {
 	private const PREF_LEAD_PREFIX = 'deadline_lead_days_';
 
 	/**
-	 * User-preference key holding the JSON map of already-sent reminders
-	 * (uid => dueDate) so a daily run raises exactly ONE notification per
-	 * deadline per user (REQ-CDC-007).
+	 * What publishForUser() answers when it cannot publish.
+	 *
+	 * @var array{status: string, published: int, removed: int}
 	 */
-	private const PREF_SENT = 'deadline_reminders_sent';
+	private const PUBLICATION_FAILED = [
+		'status' => 'failed',
+		'published' => 0,
+		'removed' => 0,
+	];
 
 	/**
 	 * Construct the service.
@@ -572,56 +519,15 @@ class ComplianceDeadlineCalendarService {
 					'ComplianceDeadlineCalendarService: no writable calendar backend for user — degrading fail-soft',
 					['userId' => $userId]
 				);
-				return [
-					'status' => 'failed',
-					'published' => 0,
-					'removed' => 0,
-				];
+				return self::PUBLICATION_FAILED;
 			}
 
-			$desired = [];
-			foreach ($this->collectDeadlines() as $deadline) {
-				if ($this->isCategoryEnabled(userId: $userId, category: $deadline['category']) === false) {
-					continue;
-				}
-
-				$desired[$deadline['uid']] = $deadline;
-			}
-
-			$published = 0;
-			foreach ($desired as $deadline) {
-				$vevent = $this->buildVevent(deadline: $deadline, cancelled: false);
-				$calendar->createFromString($this->uidToFilename(uid: $deadline['uid']), $vevent);
-				$published++;
-			}
-
-			// Cancel app-owned VEVENTs that are no longer desired
-			// (category toggled off / source reached a closed state).
-			$removed = 0;
-			foreach ($this->existingAppUids(calendar: $calendar) as $uid) {
-				if (isset($desired[$uid]) === true) {
-					continue;
-				}
-
-				$cancelled = $this->buildVevent(
-					deadline: [
-						'uid' => $uid,
-						'category' => $this->categoryForUid(uid: $uid),
-						'summary' => 'Cancelled',
-						'dueDate' => (new DateTimeImmutable('today'))->format('Y-m-d'),
-						'source' => '',
-						'objectId' => '',
-					],
-					cancelled: true
-				);
-				$calendar->createFromString($this->uidToFilename(uid: $uid), $cancelled);
-				$removed++;
-			}//end foreach
-
+			$desired = $this->desiredDeadlines(userId: $userId);
+			$events  = new DeadlineCalendarEvents($this->logger);
 			return [
 				'status' => 'ok',
-				'published' => $published,
-				'removed' => $removed,
+				'published' => $events->publish(calendar: $calendar, desired: $desired),
+				'removed' => $events->cancelUndesired(calendar: $calendar, desired: $desired),
 			];
 		} catch (Throwable $e) {
 			// Never throw into a CRUD path or cron: log and degrade.
@@ -629,14 +535,28 @@ class ComplianceDeadlineCalendarService {
 				'ComplianceDeadlineCalendarService: publication failed — degrading fail-soft',
 				['userId' => $userId, 'exception' => $e->getMessage()]
 			);
-			return [
-				'status' => 'failed',
-				'published' => 0,
-				'removed' => 0,
-			];
+			return self::PUBLICATION_FAILED;
 		}//end try
 
 	}//end publishForUser()
+
+	/**
+	 * The open deadlines in the categories the user enabled, keyed by uid.
+	 *
+	 * @param string $userId The NC user id.
+	 *
+	 * @return array<string,array<string,string>>
+	 */
+	private function desiredDeadlines(string $userId): array {
+		$desired = [];
+		foreach ($this->collectDeadlines() as $deadline) {
+			if ($this->isCategoryEnabled(userId: $userId, category: $deadline['category']) === true) {
+				$desired[$deadline['uid']] = $deadline;
+			}
+		}
+
+		return $desired;
+	}//end desiredDeadlines()
 
 	/**
 	 * Publish deadline VEVENTs for every seen user (bulk, daily job).
@@ -697,11 +617,10 @@ class ComplianceDeadlineCalendarService {
 		try {
 			$this->userManager->callForSeenUsers(
 				function (IUser $user) use ($deadlines, $today, &$dispatched): ?bool {
-					$dispatched += $this->remindUser(
-						userId: $user->getUID(),
-						deadlines: $deadlines,
-						today: $today
-					);
+					$round = new DeadlineReminderRound($this->config, $this->logger);
+					$round->userId = $user->getUID();
+					$round->today  = $today;
+					$dispatched   += $this->remindUser(round: $round, deadlines: $deadlines);
 					return null;
 				}
 			);
@@ -716,65 +635,73 @@ class ComplianceDeadlineCalendarService {
 	}//end dispatchDueReminders()
 
 	/**
-	 * Raise the due reminders for one user (REQ-CDC-007).
+	 * Raise the due reminders for one user (REQ-CDC-007), then prune the
+	 * sent map and persist it when it changed.
 	 *
-	 * @param string $userId The NC user id.
+	 * @param DeadlineReminderRound           $round     The user's round.
 	 * @param array<int,array<string,string>> $deadlines The open deadlines.
-	 * @param DateTimeInterface $today Reference date.
 	 *
 	 * @return int Number of notifications raised for this user.
 	 */
-	private function remindUser(string $userId, array $deadlines, DateTimeInterface $today): int {
-		$sent = $this->readSentMap(userId: $userId);
-		$openIds = [];
-		$raised = 0;
-		$dirty = false;
-
+	private function remindUser(DeadlineReminderRound $round, array $deadlines): int {
+		$round->loadSentMap();
 		foreach ($deadlines as $deadline) {
-			$uid = $deadline['uid'];
-			$openIds[$uid] = true;
-
-			if ($this->isCategoryEnabled(userId: $userId, category: $deadline['category']) === false) {
-				continue;
-			}
-
-			$daysUntil = $this->daysUntil(dueDate: $deadline['dueDate'], today: $today);
-			if ($daysUntil === null || $daysUntil < 0) {
-				continue;
-			}
-
-			$lead = $this->leadTimeDays(userId: $userId, category: $deadline['category']);
-			if ($daysUntil > $lead) {
-				continue;
-			}
-
-			// Exactly-one guard: skip when already sent for this dueDate;
-			// a moved deadline (different dueDate) re-arms the reminder.
-			if (($sent[$uid] ?? null) === $deadline['dueDate']) {
-				continue;
-			}
-
-			if ($this->notifyUser(userId: $userId, deadline: $deadline, daysUntil: $daysUntil) === true) {
-				$sent[$uid] = $deadline['dueDate'];
-				$dirty = true;
-				$raised++;
-			}
-		}//end foreach
-
-		// Prune entries for deadlines that left the open set.
-		foreach (array_keys($sent) as $uid) {
-			if (isset($openIds[$uid]) === false) {
-				unset($sent[$uid]);
-				$dirty = true;
-			}
+			$round->openIds[$deadline['uid']] = true;
+			$this->remindOf(round: $round, deadline: $deadline);
 		}
 
-		if ($dirty === true) {
-			$this->writeSentMap(userId: $userId, sent: $sent);
-		}
-
-		return $raised;
+		$round->pruneAndSave();
+		return $round->raised;
 	}//end remindUser()
+
+	/**
+	 * Raise the reminder for one deadline when it is due within the lead time
+	 * and not already sent for this dueDate; a moved deadline (different
+	 * dueDate) re-arms it.
+	 *
+	 * @param DeadlineReminderRound $round    The user's round.
+	 * @param array<string,string>  $deadline The deadline entry.
+	 *
+	 * @return void
+	 */
+	private function remindOf(DeadlineReminderRound $round, array $deadline): void {
+		$daysUntil = $this->daysUntilWithinLead(round: $round, deadline: $deadline);
+		if ($daysUntil === null || ($round->sent[$deadline['uid']] ?? null) === $deadline['dueDate']) {
+			return;
+		}
+
+		if ($this->notifyUser(userId: $round->userId, deadline: $deadline, daysUntil: $daysUntil) === true) {
+			$round->sent[$deadline['uid']] = $deadline['dueDate'];
+			$round->dirty = true;
+			$round->raised++;
+		}
+	}//end remindOf()
+
+	/**
+	 * Days until a deadline whose category the user enabled, when it is not
+	 * past and falls inside the category's lead time; else null.
+	 *
+	 * @param DeadlineReminderRound $round    The user's round.
+	 * @param array<string,string>  $deadline The deadline entry.
+	 *
+	 * @return int|null
+	 */
+	private function daysUntilWithinLead(DeadlineReminderRound $round, array $deadline): ?int {
+		if ($this->isCategoryEnabled(userId: $round->userId, category: $deadline['category']) === false) {
+			return null;
+		}
+
+		$daysUntil = $round->daysUntil(dueDate: $deadline['dueDate']);
+		if ($daysUntil === null || $daysUntil < 0) {
+			return null;
+		}
+
+		if ($daysUntil > $this->leadTimeDays(userId: $round->userId, category: $deadline['category'])) {
+			return null;
+		}
+
+		return $daysUntil;
+	}//end daysUntilWithinLead()
 
 	/**
 	 * Emit one NC Notification for a deadline (REQ-CDC-007).
@@ -909,204 +836,6 @@ class ComplianceDeadlineCalendarService {
 	}//end isDeadlineCalendar()
 
 	/**
-	 * List the app-owned VEVENT UIDs already present on a calendar.
-	 *
-	 * Uses ICalendar::search() when available; only UIDs carrying one of
-	 * the app's source prefixes are returned so user-owned events are
-	 * never touched. Cancelled events are skipped (already removed).
-	 *
-	 * @param object $calendar The resolved calendar.
-	 *
-	 * @return array<int,string> App-owned, non-cancelled VEVENT UIDs.
-	 */
-	private function existingAppUids(object $calendar): array {
-		if (method_exists($calendar, 'search') === false) {
-			return [];
-		}
-
-		try {
-			$results = $calendar->search('', ['UID'], ['types' => ['VEVENT']]);
-		} catch (Throwable $e) {
-			$this->logger->debug(
-				'ComplianceDeadlineCalendarService: calendar search unavailable — skipping stale sweep',
-				['exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		if (is_array($results) === false) {
-			return [];
-		}
-
-		$uids = [];
-		foreach ($results as $result) {
-			if (is_array($result) === false) {
-				continue;
-			}
-
-			$uid = (string)($result['uid'] ?? '');
-			if ($uid === '') {
-				continue;
-			}
-
-			if ($this->isAppUid(uid: $uid) === false) {
-				continue;
-			}
-
-			if ($this->resultIsCancelled(result: $result) === true) {
-				continue;
-			}
-
-			$uids[] = $uid;
-		}//end foreach
-
-		return array_values(array_unique($uids));
-	}//end existingAppUids()
-
-	/**
-	 * Whether a UID carries one of the app's source prefixes.
-	 *
-	 * @param string $uid The VEVENT UID.
-	 *
-	 * @return bool True when the UID is app-owned.
-	 */
-	private function isAppUid(string $uid): bool {
-		foreach (self::UID_PREFIXES as $prefix) {
-			if (str_starts_with($uid, $prefix) === true) {
-				return true;
-			}
-		}
-
-		return false;
-	}//end isAppUid()
-
-	/**
-	 * Whether a calendar search result row represents a cancelled event.
-	 *
-	 * @param array<string,mixed> $result One ICalendar::search() result.
-	 *
-	 * @return bool True when every contained object is STATUS:CANCELLED.
-	 */
-	private function resultIsCancelled(array $result): bool {
-		$objects = ($result['objects'] ?? null);
-		if (is_array($objects) === false || $objects === []) {
-			return false;
-		}
-
-		foreach ($objects as $object) {
-			if (is_array($object) === false) {
-				return false;
-			}
-
-			$status = ($object['STATUS'][0] ?? null);
-			if (is_string($status) === false || strtoupper($status) !== 'CANCELLED') {
-				return false;
-			}
-		}
-
-		return true;
-	}//end resultIsCancelled()
-
-	/**
-	 * The category a UID belongs to (derived from its source prefix).
-	 *
-	 * @param string $uid The VEVENT UID.
-	 *
-	 * @return string One of the CATEGORY_* constants (best-effort).
-	 */
-	private function categoryForUid(string $uid): string {
-		if (str_starts_with($uid, 'payment-run:') === true) {
-			return self::CATEGORY_PAYMENT_RUN;
-		}
-
-		if (str_starts_with($uid, 'ar-invoice:') === true) {
-			return self::CATEGORY_AR_DUE;
-		}
-
-		if (str_starts_with($uid, 'contract:') === true) {
-			return self::CATEGORY_CONTRACT;
-		}
-
-		return self::CATEGORY_FILING;
-	}//end categoryForUid()
-
-	/**
-	 * Build the all-day VEVENT payload for one deadline (RFC 5545, CRLF).
-	 *
-	 * The UID is the stable {source}:{objectId} key (REQ-CDC-001) so the
-	 * same deadline always maps to the same calendar object (idempotent
-	 * upsert via a UID-derived filename). Cancellation is expressed as
-	 * STATUS:CANCELLED + SEQUENCE:1 (see class docblock).
-	 *
-	 * @param array<string,string> $deadline The deadline entry.
-	 * @param bool $cancelled Whether to emit a cancelled VEVENT.
-	 *
-	 * @return string The VCALENDAR payload.
-	 *
-	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
-	 */
-	private function buildVevent(array $deadline, bool $cancelled): string {
-		$date = str_replace('-', '', $deadline['dueDate']);
-
-		$lines = [];
-		$lines[] = 'BEGIN:VCALENDAR';
-		$lines[] = 'VERSION:2.0';
-		$lines[] = 'PRODID:' . self::PRODID;
-		$lines[] = 'CALSCALE:GREGORIAN';
-		$lines[] = 'BEGIN:VEVENT';
-		$lines[] = 'UID:' . $this->escapeIcal(value: $deadline['uid']);
-		$lines[] = 'DTSTAMP:' . gmdate('Ymd\THis\Z');
-		$lines[] = 'DTSTART;VALUE=DATE:' . $date;
-		$lines[] = 'SUMMARY:' . $this->escapeIcal(value: $deadline['summary']);
-		if ($deadline['category'] !== '') {
-			$lines[] = 'CATEGORIES:' . $this->escapeIcal(value: $deadline['category']);
-		}
-
-		if ($cancelled === true) {
-			$lines[] = 'STATUS:CANCELLED';
-			$lines[] = 'SEQUENCE:1';
-		} else {
-			$lines[] = 'STATUS:CONFIRMED';
-			$lines[] = 'SEQUENCE:0';
-		}
-
-		$lines[] = 'TRANSP:TRANSPARENT';
-		$lines[] = 'END:VEVENT';
-		$lines[] = 'END:VCALENDAR';
-
-		return implode(self::CRLF, $lines) . self::CRLF;
-	}//end buildVevent()
-
-	/**
-	 * Derive the calendar-object filename for a UID (stable, filesystem-safe).
-	 *
-	 * @param string $uid The VEVENT UID ({source}:{objectId}).
-	 *
-	 * @return string The .ics object name.
-	 */
-	private function uidToFilename(string $uid): string {
-		$safe = strtolower((string)preg_replace('/[^A-Za-z0-9\\-]+/', '-', $uid));
-		return 'shillinq-' . trim($safe, '-') . '.ics';
-	}//end uidToFilename()
-
-	/**
-	 * Escape a string for inclusion as an iCalendar text value (RFC 5545)
-	 * — same convention as {@see IcsService::escape()}.
-	 *
-	 * @param string $value The raw text value.
-	 *
-	 * @return string The escaped value.
-	 */
-	private function escapeIcal(string $value): string {
-		return str_replace(
-			['\\', "\r\n", "\n", ',', ';'],
-			['\\\\', '\\n', '\\n', '\\,', '\\;'],
-			$value
-		);
-
-	}//end escapeIcal()
-
-	/**
 	 * Derive the NL filing due date from a period end date: the last day
 	 * of the month FOLLOWING the period end (standard BTW-aangifte / ICP
 	 * rule). Pure derivation from existing period data — no parallel
@@ -1225,25 +954,6 @@ class ComplianceDeadlineCalendarService {
 	}//end normaliseDate()
 
 	/**
-	 * Whole days from today until a due date (negative = past).
-	 *
-	 * @param string $dueDate The due date (Y-m-d).
-	 * @param DateTimeInterface $today Reference date.
-	 *
-	 * @return int|null Day count, or null when unparseable.
-	 */
-	private function daysUntil(string $dueDate, DateTimeInterface $today): ?int {
-		try {
-			$due = (new DateTimeImmutable($dueDate))->setTime(0, 0);
-			$todayDay = DateTimeImmutable::createFromInterface($today)->setTime(0, 0);
-			return (int)$todayDay->diff($due)->format('%r%a');
-		} catch (Throwable $e) {
-			return null;
-		}
-
-	}//end daysUntil()
-
-	/**
 	 * The stable object id of an OR record (slug preferred, then ids) —
 	 * same resolution order as {@see TaxNotificationService}.
 	 *
@@ -1287,38 +997,7 @@ class ComplianceDeadlineCalendarService {
 			//
 			// Same defect and same normalisation as the VAT fix in this branch;
 			// house idiom is jsonSerialize() then getObject().
-			$rows = [];
-			foreach (array_values($result) as $row) {
-				if (is_array($row) === true) {
-					$rows[] = $row;
-					continue;
-				}
-
-				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-					$out = $row->jsonSerialize();
-					if (is_array($out) === true) {
-						$rows[] = $out;
-						continue;
-					}
-				}
-
-				if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-					$out = $row->getObject();
-					if (is_array($out) === true) {
-						$rows[] = $out;
-						continue;
-					}
-				}
-
-				// Skip loudly rather than appending something the callers will
-				// fatal on — a dropped row is recoverable, a fatal is not.
-				$this->logger->warning(
-					'ComplianceDeadlineCalendarService: unsupported row type from ObjectService::findAll',
-					['schema' => $schema, 'type' => get_debug_type($row)]
-				);
-			}//end foreach
-
-			return $rows;
+			return $this->normaliseRows(result: $result, schema: $schema);
 		} catch (Throwable $e) {
 			$this->logger->debug(
 				'ComplianceDeadlineCalendarService: schema read unavailable — treating as empty',
@@ -1330,75 +1009,95 @@ class ComplianceDeadlineCalendarService {
 	}//end fetchRows()
 
 	/**
+	 * The findAll() rows as arrays; a row of an unsupported type is logged and dropped.
+	 *
+	 * @param array<mixed> $result The findAll() result.
+	 * @param string       $schema The schema name.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function normaliseRows(array $result, string $schema): array {
+		$rows = [];
+		foreach (array_values($result) as $row) {
+			$arr = $this->rowArray(row: $row);
+			if ($arr !== null) {
+				$rows[] = $arr;
+				continue;
+			}
+
+			// Skip loudly rather than appending something the callers will
+			// fatal on — a dropped row is recoverable, a fatal is not.
+			$this->logger->warning(
+				'ComplianceDeadlineCalendarService: unsupported row type from ObjectService::findAll',
+				['schema' => $schema, 'type' => get_debug_type($row)]
+			);
+		}//end foreach
+
+		return $rows;
+	}//end normaliseRows()
+
+	/**
+	 * One row as an array: as is, serialised, or its getObject(); null when none applies.
+	 *
+	 * @param mixed $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function rowArray(mixed $row): array|null {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === false) {
+			return null;
+		}
+
+		return $this->serialisedRow(row: $row) ?? $this->innerRow(row: $row);
+	}//end rowArray()
+
+	/**
+	 * An object row's jsonSerialize() array, or null.
+	 *
+	 * @param object $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function serialisedRow(object $row): array|null {
+		if (method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return null;
+	}//end serialisedRow()
+
+	/**
+	 * An object row's getObject() array, or null.
+	 *
+	 * @param object $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function innerRow(object $row): array|null {
+		if (method_exists($row, 'getObject') === true) {
+			$out = $row->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return null;
+	}//end innerRow()
+
+	/**
 	 * Resolve the configured OpenRegister register slug (default 'shillinq').
 	 *
 	 * @return string The register slug.
 	 */
 	private function registerSlug(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end registerSlug()
 
-	/**
-	 * Read the per-user sent-reminders map (uid => dueDate).
-	 *
-	 * @param string $userId The NC user id.
-	 *
-	 * @return array<string,string> The sent map.
-	 */
-	private function readSentMap(string $userId): array {
-		$raw = $this->config->getUserValue(
-			userId: $userId,
-			appName: AppIdentity::APP_ID,
-			key: self::PREF_SENT,
-			default: ''
-		);
-
-		if ($raw === '') {
-			return [];
-		}
-
-		$decoded = json_decode($raw, true);
-		if (is_array($decoded) === false) {
-			return [];
-		}
-
-		$map = [];
-		foreach ($decoded as $uid => $dueDate) {
-			if (is_string($uid) === true && is_string($dueDate) === true) {
-				$map[$uid] = $dueDate;
-			}
-		}
-
-		return $map;
-	}//end readSentMap()
-
-	/**
-	 * Persist the per-user sent-reminders map.
-	 *
-	 * @param string $userId The NC user id.
-	 * @param array<string,string> $sent The sent map.
-	 *
-	 * @return void
-	 */
-	private function writeSentMap(string $userId, array $sent): void {
-		try {
-			$this->config->setUserValue(
-				userId: $userId,
-				appName: AppIdentity::APP_ID,
-				key: self::PREF_SENT,
-				value: (string)json_encode($sent)
-			);
-		} catch (Throwable $e) {
-			$this->logger->debug(
-				'ComplianceDeadlineCalendarService: failed to persist sent-reminder map',
-				['userId' => $userId, 'exception' => $e->getMessage()]
-			);
-		}
-
-	}//end writeSentMap()
 }//end class

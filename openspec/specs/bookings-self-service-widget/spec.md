@@ -18,7 +18,7 @@ This specification defines the requirements for bookings self service widget in 
 @e2e exclude unbuilt UI: self-service booking widget not yet implemented
 
 
-### REQ-WSW-001: Widget API SHALL expose public endpoints for service list, slot availability, and appointment creation
+### Requirement: REQ-WSW-001: Widget API SHALL expose public endpoints for service list, slot availability, and appointment creation
 
 The widget backend MUST provide the following HTTP endpoints under `/ocs/v2.php/apps/bookings/api/v1/public/widget/`:
 
@@ -46,7 +46,7 @@ All endpoints MUST require authentication via `Authorization: Bearer {api_key}` 
 - **WHEN** the 101st request arrives
 - **THEN** the response MUST be HTTP 429 Too Many Requests with header `Retry-After: 60`
 
-### REQ-WSW-002: Widget SHALL list available appointment slots with conflict detection
+### Requirement: REQ-WSW-002: Widget SHALL list available appointment slots with conflict detection
 
 The `GET /slots` endpoint MUST return all available time slots for a given service and date range. Slots MUST exclude:
 - Times outside resource operational hours
@@ -74,7 +74,7 @@ The `GET /slots` endpoint MUST return all available time slots for a given servi
 - **THEN** the cache MUST be invalidated
 - **AND** the next `GET /slots` request MUST re-compute and return updated availability
 
-### REQ-WSW-003: Widget frontend component SHALL support service and resource selection with time slot picker
+### Requirement: REQ-WSW-003: Widget frontend component SHALL support service and resource selection with time slot picker
 
 The Vue component `SelfServiceWidget.vue` MUST render:
 
@@ -112,7 +112,7 @@ All fields MUST use i18n strings (English and Dutch). The component MUST be acce
 - **AND** the widget MUST display error: "This slot was just booked. Please select another time."
 - **AND** the widget MUST refresh available slots and allow re-selection
 
-### REQ-WSW-004: Widget SHALL support 4 embed methods with equivalent UX
+### Requirement: REQ-WSW-004: Widget SHALL support 4 embed methods with equivalent UX
 
 The widget MUST be deployable via:
 
@@ -144,7 +144,7 @@ All 4 methods MUST render identical UX and accept identical configuration option
 - **THEN** the widget MUST render with React prop binding
 - **AND** prop changes (e.g., businessId) MUST re-render widget (standard React behavior)
 
-### REQ-WSW-005: Widget CSS SHALL be customizable via CSS variables
+### Requirement: REQ-WSW-005: Widget CSS SHALL be customizable via CSS variables
 
 The widget MUST expose the following CSS custom properties (defaults shown):
 
@@ -171,7 +171,7 @@ Partners MAY override variables via `<style>` or inline styles before loading th
 - **WHEN** partner adds: `<style>:root { --wsw-primary-color: #ff6b6b; --wsw-secondary-color: #ffa94d; }</style>` before the widget script
 - **THEN** the widget MUST load and apply the custom colors to buttons, links, and accents
 
-### REQ-WSW-006: Widget SHALL validate customer email and phone with user-friendly error messages
+### Requirement: REQ-WSW-006: Widget SHALL validate customer email and phone with user-friendly error messages
 
 The customer details form MUST:
 
@@ -196,7 +196,7 @@ Validation errors MUST be shown inline with user-friendly messages (e.g., "Pleas
 - **THEN** the widget MUST validate successfully
 - **AND** the appointment MUST be created with phone: "+31612345678"
 
-### REQ-WSW-007: Widget SHALL display timezone in local time and convert to UTC for storage
+### Requirement: REQ-WSW-007: Widget SHALL display timezone in local time and convert to UTC for storage
 
 The widget MUST:
 
@@ -211,7 +211,7 @@ The widget MUST:
 - **THEN** the widget MUST display: "10:00 AM (CEST)"
 - **AND** on POST, startTime MUST be converted to UTC: "2026-05-22T08:00:00Z" (10:00 CEST = 08:00 UTC)
 
-### REQ-WSW-008: Widget error states SHALL be user-friendly and provide recovery paths
+### Requirement: REQ-WSW-008: Widget error states SHALL be user-friendly and provide recovery paths
 
 The widget MUST handle these error conditions gracefully:
 
@@ -231,7 +231,7 @@ All errors MUST be user-friendly (no stack traces or technical jargon). The widg
 - **AND** the widget MUST reload available slots
 - **AND** customer MUST be returned to the slot picker (not the form)
 
-### REQ-WSW-009: Widget SHALL generate and store a business API key with secure rotation policy
+### Requirement: REQ-WSW-009: Widget SHALL generate and store a business API key with secure rotation policy
 
 The system MUST:
 
@@ -256,7 +256,7 @@ The system MUST:
 - **AND** the old key MUST remain active for 7 more days (until 2026-05-28)
 - **AND** after 2026-05-28, the old key MUST be revoked (new key only)
 
-### REQ-WSW-010: Widget SHALL support internationalization (i18n) for English and Dutch
+### Requirement: REQ-WSW-010: Widget SHALL support internationalization (i18n) for English and Dutch
 
 The widget MUST display all user-facing strings in the customer's selected language. Supported languages:
 

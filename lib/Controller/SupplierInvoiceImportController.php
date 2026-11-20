@@ -3,6 +3,9 @@
 /**
  * Supplier Invoice Import Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Dashboard-launched supplier-invoice import endpoint for the
  * shillinq-bill-import-modal change. Backs the BillImportModal's Upload
  * step (REQ-BIM-001) by accepting a UBL/e-invoice XML or CSV file (or a
@@ -37,18 +40,21 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/shillinq-bill-import-modal/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
+use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,8 +63,6 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 
 /**
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
@@ -88,23 +92,23 @@ class SupplierInvoiceImportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param SupplierInvoiceService $supplierInvoiceService Deterministic UBL ingestion + parser.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param SupplierInvoiceServiceInterface $supplierInvoiceService Deterministic UBL ingestion + parser.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param SupplierInvoiceChecks  $checks The one duplicate rule every channel uses (purchasing-supplier-invoice-intake REQ-PSII-003).
+	 * @param SupplierInvoiceChecksInterface  $checks The one duplicate rule every channel uses (purchasing-supplier-invoice-intake REQ-PSII-003).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SupplierInvoiceService $supplierInvoiceService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly SupplierInvoiceServiceInterface $supplierInvoiceService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SupplierInvoiceChecks $checks,
+		private readonly SupplierInvoiceChecksInterface $checks,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -138,42 +142,117 @@ class SupplierInvoiceImportController extends Controller {
 		}
 
 		try {
-			$admin = $this->resolveAdministrationId();
-			[$contents, $format] = $this->readUpload();
-
-			if ($contents === '') {
-				return new JSONResponse(
-					['error' => 'No file contents were uploaded'],
-					Http::STATUS_UNPROCESSABLE_ENTITY
-				);
-			}
-
-			switch ($format) {
-				case 'ubl':
-					return $this->importUbl(administrationId: $admin, ublXml: $contents);
-				case 'csv':
-					return $this->importCsv(administrationId: $admin, csv: $contents);
-				case 'pdf':
-					// Honest deferral — no OCR engine is bundled (REQ-BIM-002).
-					return new JSONResponse(
-						[
-							'error' => 'PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.',
-							'deferred' => 'pdf-ocr',
-						],
-						Http::STATUS_UNPROCESSABLE_ENTITY
-					);
-				default:
-					return new JSONResponse(
-						['error' => 'Unsupported import format. Use ubl, csv or pdf.'],
-						Http::STATUS_UNPROCESSABLE_ENTITY
-					);
-			}//end switch
+			return $this->importedUpload(administrationId: $this->resolveAdministrationId());
 		} catch (\Throwable $e) {
 			$this->logger->error('SupplierInvoiceImportController.import failed: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
-
+		}
 	}//end import()
+
+	/**
+	 * Discard an imported invoice that is still a review draft.
+	 *
+	 * Only the person who imported it may, and only before it is confirmed.
+	 *
+	 * @param string $id The SupplierInvoice id.
+	 *
+	 * @return JSONResponse 204, or the refusal.
+	 *
+	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+	 */
+	#[NoAdminRequired]
+	public function discard(string $id): JSONResponse {
+		$user = $this->session->getUser();
+		if ($user === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$entity = ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService->setRegister(self::REGISTER_SLUG)->setSchema(self::SUPPLIER_INVOICE_SCHEMA),
+				id: $id
+			);
+		} catch (\Throwable $e) {
+			$entity = null;
+		}
+
+		$invoice = $entity?->getObject() ?? [];
+		if ($invoice === []
+			|| $this->administrationContext->canAccess(administrationId: (string)($invoice['administrationId'] ?? '')) === false
+		) {
+			return new JSONResponse(['error' => 'Invoice not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		$owner = (string)($entity->getOwner() ?? '');
+		if (($invoice['extractionStatus'] ?? '') !== ExtractionPrefillService::STATUS_PENDING_REVIEW
+			|| $owner === ''
+			|| $owner !== $user->getUID()
+		) {
+			return new JSONResponse(['error' => 'Only your own unconfirmed import can be discarded.'], Http::STATUS_CONFLICT);
+		}
+
+		try {
+			$this->objectService->deleteObject(
+				deletion: new ObjectDeletion(
+					uuid: $id,
+					target: new ObjectFindTarget(register: self::REGISTER_SLUG, schema: self::SUPPLIER_INVOICE_SCHEMA)
+				)
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error('SupplierInvoiceImportController.discard failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'The import could not be discarded.'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse([], Http::STATUS_NO_CONTENT);
+
+	}//end discard()
+
+	/**
+	 * Read the upload and import it by its format; empty contents are a 422.
+	 *
+	 * @param string $administrationId Server-resolved tenant scope.
+	 *
+	 * @return JSONResponse
+	 */
+	private function importedUpload(string $administrationId): JSONResponse {
+		[$contents, $format] = $this->readUpload();
+		if ($contents === '') {
+			return new JSONResponse(['error' => 'No file contents were uploaded'], Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
+
+		$review = filter_var($this->request->getParam('review', false), FILTER_VALIDATE_BOOLEAN);
+
+		return match ($format) {
+			'ubl' => $this->importUbl(administrationId: $administrationId, ublXml: $contents, review: $review),
+			'csv' => $this->importCsv(administrationId: $administrationId, csv: $contents, review: $review),
+			'pdf' => self::pdfDeferred(),
+			default => new JSONResponse(['error' => 'Unsupported import format. Use ubl, csv or pdf.'], Http::STATUS_UNPROCESSABLE_ENTITY),
+		};
+	}//end importedUpload()
+
+	/**
+	 * Honest deferral — no OCR engine is bundled (REQ-BIM-002).
+	 *
+	 * @return JSONResponse
+	 */
+	private static function pdfDeferred(): JSONResponse {
+		return new JSONResponse(
+			[
+				'error' => 'PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.',
+				'deferred' => 'pdf-ocr',
+			],
+			Http::STATUS_UNPROCESSABLE_ENTITY
+		);
+	}//end pdfDeferred()
+
+	/**
+	 * The 409 for an invoice number the supplier already used (REQ-BIM-005).
+	 *
+	 * @return JSONResponse
+	 */
+	private static function duplicateInvoice(): JSONResponse {
+		return new JSONResponse(['error' => 'This invoice number already exists for this supplier'], Http::STATUS_CONFLICT);
+	}//end duplicateInvoice()
 
 	/**
 	 * Import a single UBL/e-invoice XML document.
@@ -184,38 +263,32 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string $administrationId Server-resolved tenant scope.
 	 * @param string $ublXml UBL Invoice XML.
+	 * @param bool $review True to keep the invoice a draft until it is confirmed.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
-	private function importUbl(string $administrationId, string $ublXml): JSONResponse {
+	private function importUbl(string $administrationId, string $ublXml, bool $review): JSONResponse {
 		try {
 			$parsed = $this->supplierInvoiceService->resolveSupplier(
 				administrationId: $administrationId,
 				parsed: $this->supplierInvoiceService->parseUblInvoice(ublXml: $ublXml)
 			);
-
 			if ($this->duplicateOf(administrationId: $administrationId, invoice: $parsed) !== null) {
-				return new JSONResponse(
-					['error' => 'This invoice number already exists for this supplier'],
-					Http::STATUS_CONFLICT
-				);
+				return self::duplicateInvoice();
 			}
 
 			$record = $this->supplierInvoiceService->ingestUBLInvoice(
 				administrationId: $administrationId,
-				ublXml: $ublXml
+				ublXml: $ublXml,
+				context: ['reviewDraft' => $review]
 			);
 
-			return new JSONResponse(
-				['imported' => 1, 'record' => $record],
-				Http::STATUS_OK
-			);
+			return new JSONResponse(['imported' => 1, 'record' => $record], Http::STATUS_OK);
 		} catch (RuntimeException $e) {
 			return $this->mapServiceException($e);
-		}//end try
-
+		}
 	}//end importUbl()
 
 	/**
@@ -229,70 +302,101 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string $administrationId Server-resolved tenant scope.
 	 * @param string $csv Raw CSV text.
+	 * @param bool $review True to keep the invoice a draft until it is confirmed.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
-	private function importCsv(string $administrationId, string $csv): JSONResponse {
+	private function importCsv(string $administrationId, string $csv, bool $review): JSONResponse {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_FORBIDDEN);
 		}
 
 		$rows = $this->parseCsv($csv);
 		if ($rows === []) {
-			return new JSONResponse(
-				['error' => 'CSV did not contain any data rows'],
-				Http::STATUS_UNPROCESSABLE_ENTITY
-			);
+			return new JSONResponse(['error' => 'CSV did not contain any data rows'], Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
-		$imported = 0;
+		return new JSONResponse($this->csvOutcome(administrationId: $administrationId, rows: $rows, review: $review), Http::STATUS_OK);
+	}//end importCsv()
+
+	/**
+	 * Import every row; skipped rows are listed with their reason.
+	 *
+	 * @param string                           $administrationId Server-resolved tenant scope.
+	 * @param array<int,array<string,string>> $rows             The parsed data rows.
+	 * @param bool                             $review           True to keep each invoice a draft until it is confirmed.
+	 *
+	 * @return array{imported:int,skipped:int,skippedRows:array<int,array<string,string>>,records:array<int,array<string,mixed>>}
+	 */
+	private function csvOutcome(string $administrationId, array $rows, bool $review): array {
 		$skippedRows = [];
 		$records = [];
 		foreach ($rows as $row) {
-			$invoiceNumber = trim((string)($row['invoiceNumber'] ?? ''));
-			$supplier = $this->csvSupplier(administrationId: $administrationId, value: trim((string)($row['supplier'] ?? '')));
-
-			if ($invoiceNumber === '' || $supplier === []) {
-				$skippedRows[] = ['invoiceNumber' => $invoiceNumber, 'reason' => 'incomplete'];
+			$outcome = $this->importCsvRow(administrationId: $administrationId, row: $row, review: $review);
+			if (isset($outcome['skipped']) === true) {
+				$skippedRows[] = $outcome['skipped'];
 				continue;
 			}
 
-			$duplicate = $this->duplicateOf(administrationId: $administrationId, invoice: $supplier + ['invoiceNumber' => $invoiceNumber]);
-			if ($duplicate !== null) {
-				$skippedRows[] = ['invoiceNumber' => $invoiceNumber, 'reason' => 'duplicate', 'duplicateOfId' => $duplicate];
-				continue;
-			}
+			$records[] = $outcome['record'];
+		}
 
-			$record = $supplier + [
-				'administrationId' => $administrationId,
-				'invoiceNumber' => $invoiceNumber,
-				'invoiceDate' => trim((string)($row['invoiceDate'] ?? '')),
-				'totalInclVat' => $this->toCents($row['amount'] ?? null),
-				'totalVat' => $this->toCents($row['vatAmount'] ?? null),
-				'currency' => 'EUR',
-				'sourceFormat' => 'csv',
-				'statusCode' => SupplierInvoiceService::STATUS_RECEIVED,
-				'createdAt' => date('c'),
-			];
+		return ['imported' => count($records), 'skipped' => count($skippedRows), 'skippedRows' => $skippedRows, 'records' => $records];
+	}//end csvOutcome()
 
-			$saved = $this->saveSupplierInvoice($record);
-			$records[] = $saved;
-			$imported++;
-		}//end foreach
+	/**
+	 * Import one CSV row: skipped when its number or supplier is missing, or it repeats an earlier invoice.
+	 *
+	 * @param string               $administrationId Server-resolved tenant scope.
+	 * @param array<string,string> $row              The row by header column.
+	 * @param bool                 $review           True to keep the invoice a draft until it is confirmed.
+	 *
+	 * @return array{skipped?:array<string,string>,record?:array<string,mixed>} The skip entry, or the saved record.
+	 */
+	private function importCsvRow(string $administrationId, array $row, bool $review): array {
+		$invoiceNumber = trim((string)($row['invoiceNumber'] ?? ''));
+		$supplier = $this->csvSupplier(administrationId: $administrationId, value: trim((string)($row['supplier'] ?? '')));
+		if ($invoiceNumber === '' || $supplier === []) {
+			return ['skipped' => ['invoiceNumber' => $invoiceNumber, 'reason' => 'incomplete']];
+		}
 
-		return new JSONResponse(
-			[
-				'imported' => $imported,
-				'skipped' => count($skippedRows),
-				'skippedRows' => $skippedRows,
-				'records' => $records,
-			],
-			Http::STATUS_OK
-		);
+		$duplicate = $this->duplicateOf(administrationId: $administrationId, invoice: $supplier + ['invoiceNumber' => $invoiceNumber]);
+		if ($duplicate !== null) {
+			return ['skipped' => ['invoiceNumber' => $invoiceNumber, 'reason' => 'duplicate', 'duplicateOfId' => $duplicate]];
+		}
 
-	}//end importCsv()
+		$base = $supplier + ['administrationId' => $administrationId, 'invoiceNumber' => $invoiceNumber];
+
+		return ['record' => $this->saveSupplierInvoice(self::csvRecord(base: $base, row: $row, review: $review))];
+	}//end importCsvRow()
+
+	/**
+	 * The SupplierInvoice payload of a CSV row: received, EUR, amounts in cents.
+	 *
+	 * @param array<string,string> $base The supplier, administration and invoice number.
+	 * @param array<string,string> $row  The row by header column.
+	 * @param bool                 $review True to mark it a review draft.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function csvRecord(array $base, array $row, bool $review): array {
+		$record = $base + [
+			'invoiceDate' => trim((string)($row['invoiceDate'] ?? '')),
+			'totalInclVat' => self::toCents($row['amount'] ?? null),
+			'totalVat' => self::toCents($row['vatAmount'] ?? null),
+			'currency' => 'EUR',
+			'sourceFormat' => 'csv',
+			'statusCode' => SupplierInvoiceServiceInterface::STATUS_RECEIVED,
+			'createdAt' => date('c'),
+		];
+		if ($review === true) {
+			$record['extractionStatus'] = ExtractionPrefillService::STATUS_PENDING_REVIEW;
+		}
+
+		return $record;
+	}//end csvRecord()
 
 	/**
 	 * The earlier invoice this one repeats, by the one rule every channel uses.
@@ -387,10 +491,7 @@ class SupplierInvoiceImportController extends Controller {
 		$message = $e->getMessage();
 
 		if (stripos($message, 'already exists') !== false) {
-			return new JSONResponse(
-				['error' => 'This invoice number already exists for this supplier'],
-				Http::STATUS_CONFLICT
-			);
+			return self::duplicateInvoice();
 		}
 
 		if (stripos($message, 'Administration not found') !== false) {
@@ -414,18 +515,49 @@ class SupplierInvoiceImportController extends Controller {
 	private function readUpload(): array {
 		$explicitFormat = strtolower(trim((string)$this->request->getParam('format', '')));
 
-		$file = $this->request->getUploadedFile('file');
-		if (is_array($file) === true && isset($file['tmp_name']) === true && $file['tmp_name'] !== '') {
-			$contents = (string)file_get_contents($file['tmp_name']);
-			if ($explicitFormat !== '') {
-				$format = $explicitFormat;
-			} else {
-				$format = $this->inferFormat((string)($file['name'] ?? ''), $contents);
-			}
+		return $this->fileUpload(explicitFormat: $explicitFormat) ?? $this->bodyUpload(explicitFormat: $explicitFormat);
+	}//end readUpload()
 
-			return [$contents, $format];
+	/**
+	 * The multipart `file` upload and its format, or null when there is none.
+	 *
+	 * @param string $explicitFormat The lower-cased `format` parameter, or ''.
+	 *
+	 * @return array{0:string,1:string}|null [contents, format]
+	 */
+	private function fileUpload(string $explicitFormat): ?array {
+		$file = $this->request->getUploadedFile('file');
+		if (self::hasTmpFile(file: $file) === false) {
+			return null;
 		}
 
+		$contents = (string)file_get_contents($file['tmp_name']);
+		if ($explicitFormat !== '') {
+			return [$contents, $explicitFormat];
+		}
+
+		return [$contents, $this->inferFormat((string)($file['name'] ?? ''), $contents)];
+	}//end fileUpload()
+
+	/**
+	 * Whether an uploaded-file entry points at a temp file.
+	 *
+	 * @param mixed $file What getUploadedFile() answered.
+	 *
+	 * @return bool
+	 */
+	private static function hasTmpFile(mixed $file): bool {
+		return is_array($file) === true && isset($file['tmp_name']) === true && $file['tmp_name'] !== '';
+	}//end hasTmpFile()
+
+	/**
+	 * The body's `contents` and its format: the parameter, else the body's `format`, else inferred.
+	 *
+	 * @param string $explicitFormat The lower-cased `format` parameter, or ''.
+	 *
+	 * @return array{0:string,1:string} [contents, format]
+	 */
+	private function bodyUpload(string $explicitFormat): array {
 		$body = $this->decodeBody();
 		$contents = (string)($body['contents'] ?? '');
 		$format = $explicitFormat;
@@ -438,7 +570,7 @@ class SupplierInvoiceImportController extends Controller {
 		}
 
 		return [$contents, $format];
-	}//end readUpload()
+	}//end bodyUpload()
 
 	/**
 	 * Infer the import format from a file name extension, falling back to a
@@ -452,19 +584,27 @@ class SupplierInvoiceImportController extends Controller {
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
 	private function inferFormat(string $fileName, string $contents): string {
-		$extension = strtolower((string)pathinfo($fileName, PATHINFO_EXTENSION));
-		if ($extension === 'xml' || $extension === 'ubl') {
-			return 'ubl';
+		$byExtension = match (strtolower((string)pathinfo($fileName, PATHINFO_EXTENSION))) {
+			'xml', 'ubl' => 'ubl',
+			'csv' => 'csv',
+			'pdf' => 'pdf',
+			default => '',
+		};
+		if ($byExtension !== '') {
+			return $byExtension;
 		}
 
-		if ($extension === 'csv') {
-			return 'csv';
-		}
+		return self::sniffFormat(contents: $contents);
+	}//end inferFormat()
 
-		if ($extension === 'pdf') {
-			return 'pdf';
-		}
-
+	/**
+	 * The format a file's contents suggest: `%PDF` → pdf, a leading `<` → ubl, a comma → csv.
+	 *
+	 * @param string $contents Raw contents.
+	 *
+	 * @return string One of ubl|csv|pdf|'' (unknown).
+	 */
+	private static function sniffFormat(string $contents): string {
 		$trimmed = ltrim($contents);
 		if (str_starts_with($trimmed, '%PDF') === true) {
 			return 'pdf';
@@ -479,7 +619,7 @@ class SupplierInvoiceImportController extends Controller {
 		}
 
 		return '';
-	}//end inferFormat()
+	}//end sniffFormat()
 
 	/**
 	 * Parse the documented CSV (header
@@ -498,34 +638,36 @@ class SupplierInvoiceImportController extends Controller {
 			return [];
 		}
 
-		$header = str_getcsv((string)array_shift($lines), escape: '\\');
-		$header = array_map(static fn ($h): string => trim((string)$h), $header);
-
+		$header = array_map(static fn ($h): string => trim((string)$h), str_getcsv((string)array_shift($lines), escape: '\\'));
 		$rows = [];
 		foreach ($lines as $line) {
-			if (trim((string)$line) === '') {
-				continue;
+			if (trim((string)$line) !== '') {
+				$rows[] = self::csvRow(header: $header, line: (string)$line);
 			}
-
-			$cells = str_getcsv((string)$line, escape: '\\');
-			$row = [];
-			foreach ($header as $index => $key) {
-				if ($key === '') {
-					continue;
-				}
-
-				if (isset($cells[$index]) === true) {
-					$row[$key] = trim((string)$cells[$index]);
-				} else {
-					$row[$key] = '';
-				}
-			}
-
-			$rows[] = $row;
-		}//end foreach
+		}
 
 		return $rows;
 	}//end parseCsv()
+
+	/**
+	 * One data line keyed by the header; blank header columns are dropped, missing cells are ''.
+	 *
+	 * @param array<int,string> $header The trimmed header columns.
+	 * @param string            $line   The data line.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function csvRow(array $header, string $line): array {
+		$cells = str_getcsv($line, escape: '\\');
+		$row = [];
+		foreach ($header as $index => $key) {
+			if ($key !== '') {
+				$row[$key] = trim((string)($cells[$index] ?? ''));
+			}
+		}
+
+		return $row;
+	}//end csvRow()
 
 	/**
 	 * Convert a decimal amount string to integer euro cents (half-up).
@@ -536,7 +678,7 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
-	private function toCents(mixed $value): ?int {
+	private static function toCents(mixed $value): ?int {
 		if ($value === null || $value === '') {
 			return null;
 		}
@@ -557,12 +699,9 @@ class SupplierInvoiceImportController extends Controller {
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
 	private function decodeBody(): array {
-		$raw = file_get_contents('php://input');
-		if ($raw !== false && $raw !== '') {
-			$decoded = json_decode($raw, true);
-			if (is_array($decoded) === true) {
-				return $decoded;
-			}
+		$decoded = self::jsonInput();
+		if ($decoded !== null) {
+			return $decoded;
 		}
 
 		$params = $this->request->getParams();
@@ -572,6 +711,25 @@ class SupplierInvoiceImportController extends Controller {
 
 		return [];
 	}//end decodeBody()
+
+	/**
+	 * The raw request body when it is a JSON object or array.
+	 *
+	 * @return array<string,mixed>|null Null for an empty, unreadable or non-array body.
+	 */
+	private static function jsonInput(): ?array {
+		$raw = file_get_contents('php://input');
+		if ($raw === false || $raw === '') {
+			return null;
+		}
+
+		$decoded = json_decode($raw, true);
+		if (is_array($decoded) === true) {
+			return $decoded;
+		}
+
+		return null;
+	}//end jsonInput()
 
 	/**
 	 * Resolve the administration id server-side (never client-supplied).

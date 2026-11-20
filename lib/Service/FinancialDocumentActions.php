@@ -29,21 +29,19 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 
 /**
  * Issues an invoice on an object and requests payment of an invoice.
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  */
-class FinancialDocumentActions {
-	/**
-	 * The action that issues an invoice.
-	 *
-	 * @var string
-	 */
-	public const ACTION_ISSUE_INVOICE = 'invoice.issue';
+class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 
 	/**
 	 * Invoice states a payment can be asked for.
@@ -87,18 +85,36 @@ class FinancialDocumentActions {
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $payload The invoice.
+	 * @param string $appId The app acting with nobody signed in (`createAsApp`), or '' for the signed-in caller.
 	 *
 	 * @return array{id: string} The issued invoice.
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	public function issueInvoice(string $register, string $schema, string $objectId, array $payload): array {
-		$this->guard->assertMay(action: self::ACTION_ISSUE_INVOICE);
-		$administrationId = $this->guard->administrationOr(given: (string)($payload['administrationId'] ?? ''));
+	public function issueInvoice(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
+		return $this->issueOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
+	}//end issueInvoice()
 
-		$this->guard->assertAdministration(administrationId: $administrationId);
+	/**
+	 * The body of issueInvoice(), on the host object.
+	 *
+	 * @param array{register: string, schema: string, objectId: string} $host The host object.
+	 * @param array<string, mixed> $payload The act's fields.
+	 * @param string $appId The app acting with nobody signed in, or '' for the signed-in caller.
+	 *
+	 * @return array{id: string} The issued invoice.
+	 *
+	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 */
+	private function issueOn(array $host, array $payload, string $appId): array {
+		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
+		$this->guard->assertActorMay(action: self::ACTION_ISSUE_INVOICE, appId: $appId);
+		$administrationId = $this->guard->administrationFor(given: (string)($payload['administrationId'] ?? ''), appId: $appId);
 
 		$amount = round((float)($payload['amount'] ?? 0), 2);
 		if ($amount <= 0.0) {
@@ -106,9 +122,7 @@ class FinancialDocumentActions {
 		}
 
 		$debtor = $payload['debtor'] ?? null;
-		if (is_array($debtor) === false || ((string)($debtor['customerMasterId'] ?? '') === '' && (string)($debtor['email'] ?? '') === '')) {
-			throw new FinancialDocumentActionRefusedException(message: 'An invoice needs a debtor: a customer, or a name and an email.', status: 400);
-		}
+		$this->assertInvoiceDebtor(debtor: $debtor);
 
 		$link = ['register' => $register, 'schema' => $schema, 'id' => $objectId];
 		$type = trim((string)($payload['objectType'] ?? ''));
@@ -129,7 +143,24 @@ class FinancialDocumentActions {
 		);
 
 		return ['id' => $id];
-	}//end issueInvoice()
+	}//end issueOn()
+
+	/**
+	 * Require a debtor: a customer, or a name and an email.
+	 *
+	 * @param mixed $debtor The payload's debtor.
+	 *
+	 * @return void
+	 *
+	 * @throws FinancialDocumentActionRefusedException When there is no usable debtor.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 */
+	private function assertInvoiceDebtor(mixed $debtor): void {
+		if (is_array($debtor) === false || ((string)($debtor['customerMasterId'] ?? '') === '' && (string)($debtor['email'] ?? '') === '')) {
+			throw new FinancialDocumentActionRefusedException(message: 'An invoice needs a debtor: a customer, or a name and an email.', status: 400);
+		}
+	}//end assertInvoiceDebtor()
 
 	/**
 	 * Ask for payment of an outstanding invoice through shillinq.
@@ -138,18 +169,19 @@ class FinancialDocumentActions {
 	 * it appears on the same objects as the invoice and settles it on capture.
 	 *
 	 * @param string $invoiceId The invoice.
+	 * @param string $appId The app acting with nobody signed in (`createAsApp`), or '' for the signed-in caller.
 	 *
 	 * @return array<string, mixed> The payment request.
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the invoice or an open request refuses it.
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	public function requestPayment(string $invoiceId): array {
-		$this->guard->assertMay(action: PaymentActionAuthorizer::ACTION_REQUEST);
+	public function requestPayment(string $invoiceId, string $appId = ''): array {
+		$this->guard->assertActorMay(action: PaymentActionAuthorizer::ACTION_REQUEST, appId: $appId);
 
-		$invoice = $this->guard->readableInvoice(invoiceId: $invoiceId);
-		$this->guard->assertAdministration(administrationId: (string)($invoice['administrationId'] ?? ''));
+		$invoice = $this->guard->invoiceFor(invoiceId: $invoiceId, appId: $appId);
 		$this->assertPayable(invoice: $invoice);
 
 		$request = [
@@ -161,14 +193,13 @@ class FinancialDocumentActions {
 			'state' => 'pending',
 			'administrationId' => (string)($invoice['administrationId'] ?? ''),
 			'linkedObjects' => array_values((array)($invoice['linkedObjects'] ?? [])),
-			'requestedBy' => $this->guard->callerId(),
+			'requestedBy' => $this->guard->actorId(appId: $appId),
 		];
 
 		$saved = $this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: 'PaymentRequest',
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'PaymentRequest')),
+			_rbac: false
 		);
 
 		return ['id' => ObjectIdentifier::resolve(saved: $saved)] + $request;

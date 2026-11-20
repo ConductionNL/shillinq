@@ -13,6 +13,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * findScoped() answers with the entity of the service's register and schema,
@@ -51,6 +52,7 @@ final class ObjectIdentifierFindScopedTest extends TestCase {
 		$service = new class() {
 			public array $calls = [];
 			public function find(string $id, mixed ...$named): array {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				$this->calls[] = [$id, $named];
 				return ['id' => $id];
 			}
@@ -68,6 +70,7 @@ final class ObjectIdentifierFindScopedTest extends TestCase {
 	public function testStrictLookupTreatsOnlyAMissAsAbsent(): void {
 		$missing = new class() {
 			public function find(string $id, mixed ...$named): never {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				throw new \OCP\AppFramework\Db\DoesNotExistException('missing');
 			}
 		};
@@ -75,6 +78,7 @@ final class ObjectIdentifierFindScopedTest extends TestCase {
 
 		$down = new class() {
 			public function find(string $id, mixed ...$named): never {
+				$named = LegacyObjectArgs::flatten(args: $named);
 				throw new RuntimeException('OpenRegister is down');
 			}
 		};

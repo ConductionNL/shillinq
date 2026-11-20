@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Dunning;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Service\Dunning\ConsumerCostHold;
+use OCA\Shillinq\Service\Dunning\CostHoldRequest;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -72,14 +73,14 @@ final class ConsumerCostHoldTest extends TestCase {
 	 * @return mixed The collection costs left on the stage.
 	 */
 	private static function costsAfter(array $runs): mixed {
-		$params = (new ConsumerCostHold())->apply(
-			params: ['collectionCostAmount' => 181.5],
-			customer: ['legalName' => 'J. de Vries'],
-			invoice: [],
-			stages: self::stages(),
-			runs: $runs,
-			now: new DateTimeImmutable('2026-06-01T09:00:00+00:00')
-		);
+		$request = new CostHoldRequest();
+		$request->params   = ['collectionCostAmount' => 181.5];
+		$request->customer = ['legalName' => 'J. de Vries'];
+		$request->stages   = self::stages();
+		$request->runs     = $runs;
+		$request->now      = new DateTimeImmutable('2026-06-01T09:00:00+00:00');
+
+		$params = (new ConsumerCostHold())->apply(request: $request);
 
 		return $params['collectionCostAmount'];
 	}//end costsAfter()

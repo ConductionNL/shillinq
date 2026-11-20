@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\PeriodCloseBackfill;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for PeriodCloseBackfill.
@@ -97,7 +99,7 @@ class PeriodCloseBackfillTest extends TestCase {
 	 */
 	public function testNameIsHumanReadable(): void {
 		$step = new PeriodCloseBackfill(
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
@@ -126,7 +128,7 @@ class PeriodCloseBackfillTest extends TestCase {
 			->method('info');
 
 		$step = new PeriodCloseBackfill(
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($objectService),
 		);
@@ -152,7 +154,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		);
 
 		$step = new PeriodCloseBackfill(
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($objectService),
 		);
@@ -205,7 +207,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		);
 
 		$step = new PeriodCloseBackfill(
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($objectService),
 		);
@@ -239,7 +241,7 @@ class PeriodCloseBackfillTest extends TestCase {
 			->method('warning');
 
 		$step = new PeriodCloseBackfill(
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->logger,
 			objectService: $objectService,
 		);
@@ -270,7 +272,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		);
 
 		$step = new PeriodCloseBackfill(
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($objectService),
 		);
@@ -430,11 +432,12 @@ class PeriodCloseBackfillTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register = '',
-				string $schema = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_multitenancy = true,
+				bool $_multitenancy = true
 			): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->saved[] = $object;
 				$this->savedCount++;
 				return $object;

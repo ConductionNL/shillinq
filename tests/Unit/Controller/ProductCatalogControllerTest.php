@@ -37,6 +37,7 @@ use OCA\Shillinq\Service\ProductCatalogService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IL10N;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -100,9 +101,22 @@ final class ProductCatalogControllerTest extends TestCase {
 			$this->catalogService,
 			$this->userSession,
 			new NullLogger(),
+			$this->l10n(),
 		);
 
 	}//end controller()
+
+	/**
+	 * Translations that return the source text.
+	 *
+	 * @return IL10N
+	 */
+	private function l10n(): IL10N {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		return $l10n;
+
+	}//end l10n()
 
 	/**
 	 * The catalog envelope reaches the caller intact, provenance included.
@@ -129,7 +143,11 @@ final class ProductCatalogControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 		self::assertSame('local-cache', $response->getData()['source']);
 		self::assertFalse($response->getData()['authoritative']);
+		self::assertStringContainsString('product master is unavailable', $response->getData()['sourceNote']);
 		self::assertSame(1, $this->catalogService->productCalls);
+
+		$this->catalogService->products['authoritative'] = true;
+		self::assertSame('These products come from the product master.', $this->controller()->products()->getData()['sourceNote']);
 
 	}//end testProductsReturnsTheCatalogEnvelope()
 
@@ -153,6 +171,7 @@ final class ProductCatalogControllerTest extends TestCase {
 		self::assertInstanceOf(JSONResponse::class, $response);
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 		self::assertSame('sku', $response->getData()['attributes'][0]['name']);
+		self::assertStringContainsString('integration contract', $response->getData()['sourceNote']);
 		self::assertSame(1, $this->catalogService->attributeCalls);
 
 	}//end testProductAttributesReturnsTheAttributeEnvelope()
@@ -193,9 +212,10 @@ final class ProductCatalogControllerTest extends TestCase {
 		$attributes = $this->controller()->productAttributes();
 
 		self::assertSame(Http::STATUS_FORBIDDEN, $products->getStatus());
-		self::assertSame(['error' => 'no_accessible_administration'], $products->getData());
+		self::assertSame('no_accessible_administration', $products->getData()['error']);
+		self::assertStringContainsString('no administration yet', $products->getData()['message']);
 		self::assertSame(Http::STATUS_FORBIDDEN, $attributes->getStatus());
-		self::assertSame(['error' => 'no_accessible_administration'], $attributes->getData());
+		self::assertSame('no_accessible_administration', $attributes->getData()['error']);
 
 	}//end testBothEndpointsAnswer403WhenTheCallerHoldsNoAdministration()
 

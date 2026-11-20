@@ -172,6 +172,9 @@
 							<th scope="col">{{ t('shillinq', 'Status') }}</th>
 							<th scope="col">{{ t('shillinq', 'Resolved at') }}</th>
 							<th scope="col">{{ t('shillinq', 'Resolved by') }}</th>
+							<th v-if="checklistEditable" scope="col">
+								{{ t('shillinq', 'Actions') }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -199,6 +202,26 @@
 								}}
 							</td>
 							<td>{{ item.resolvedBy || '—' }}</td>
+							<td v-if="checklistEditable">
+								<NcButton
+									v-if="!item.resolved"
+									variant="secondary"
+									:disabled="checklistBusy"
+									:aria-label="t('shillinq', 'Resolve {item}', { item: item.description })"
+									:data-testid="`period-close-detail-checklist-resolve-${item.id}`"
+									@click="resolveItem(item)">
+									{{ t('shillinq', 'Resolve') }}
+								</NcButton>
+								<NcButton
+									v-else
+									variant="tertiary"
+									:disabled="checklistBusy"
+									:aria-label="t('shillinq', 'Reopen {item}', { item: item.description })"
+									:data-testid="`period-close-detail-checklist-reopen-${item.id}`"
+									@click="reopenItem(item)">
+									{{ t('shillinq', 'Reopen') }}
+								</NcButton>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -207,6 +230,37 @@
 					class="period-close-detail__empty"
 					data-testid="period-close-detail-checklist-empty">
 					{{ t('shillinq', 'No checklist items yet.') }}
+				</p>
+				<form
+					v-if="checklistEditable"
+					class="period-close-detail__add-item"
+					data-testid="period-close-detail-checklist-add"
+					@submit.prevent="addItem">
+					<NcSelect
+						v-model="newItemCategory"
+						class="period-close-detail__add-category"
+						:options="categoryOptions"
+						:inputLabel="t('shillinq', 'Category')"
+						:clearable="false"
+						data-testid="period-close-detail-checklist-add-category" />
+					<NcTextField
+						v-model="newItemDescription"
+						class="period-close-detail__add-description"
+						:label="t('shillinq', 'Description')"
+						data-testid="period-close-detail-checklist-add-description" />
+					<NcButton
+						type="submit"
+						variant="secondary"
+						:disabled="checklistBusy || newItemDescription.trim() === ''"
+						data-testid="period-close-detail-checklist-add-submit">
+						{{ t('shillinq', 'Add item') }}
+					</NcButton>
+				</form>
+				<p
+					v-if="checklistError"
+					class="period-close-detail__error"
+					data-testid="period-close-detail-checklist-error">
+					{{ checklistError }}
 				</p>
 			</section>
 
@@ -303,18 +357,21 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton } from '@nextcloud/vue'
+import { NcButton, NcSelect, NcTextField } from '@nextcloud/vue'
 import ReopenPeriodDialog from '../../modals/ReopenPeriodDialog.vue'
 
 const STATE_OPEN = 'open'
 const STATE_CLOSING = 'closing'
 const STATE_CLOSED = 'closed'
 const STATE_AUDIT_LOCKED = 'audit-locked'
+const CHECKLIST_CATEGORIES = ['ap', 'ar', 'bank', 'expense-claims', 'vat', 'accruals', 'other']
 
 export default {
 	name: 'PeriodCloseDetail',
 	components: {
 		NcButton,
+		NcSelect,
+		NcTextField,
 		ReopenPeriodDialog,
 	},
 
@@ -343,6 +400,10 @@ export default {
 			reopenDialogOpen: false,
 			reopenSubmitting: false,
 			reopenError: '',
+			checklistBusy: false,
+			checklistError: '',
+			newItemCategory: null,
+			newItemDescription: '',
 		}
 	},
 
@@ -385,6 +446,25 @@ export default {
 
 		canLockAudit() {
 			return this.period && this.period.state === STATE_CLOSED
+		},
+
+		/**
+		 * Items can change while the period is open or closing, never once it
+		 * is closed or locked for audit (REQ-LPE-002).
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
+		 * @return {boolean}
+		 */
+		checklistEditable() {
+			return !!this.period && [STATE_OPEN, STATE_CLOSING].includes(this.period.state || STATE_OPEN)
+		},
+
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 */
+		categoryOptions() {
+			return CHECKLIST_CATEGORIES.map((value) => ({ value, label: this.categoryLabel(value) }))
 		},
 
 		checklistItems() {
@@ -430,32 +510,67 @@ export default {
 
 	methods: {
 		async load() {
-			if (!this.recordId) {
-				this.loading = false
-				this.loadError = t('shillinq', 'No period id supplied.')
-				return
-			}
+			if (this.refuseWithoutRecord()) return
 			this.loading = true
 			this.loadError = ''
 			try {
-				const url = generateUrl(
-					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}`,
-				)
-				const response = await axios.get(url)
-				const data = response?.data?.data
-				if (!data || typeof data !== 'object') {
-					this.loadError = t('shillinq', 'Period not found.')
-					this.period = null
-				} else {
-					this.period = data
-				}
+				this.applyLoaded((await axios.get(this.periodUrl('')))?.data?.data)
 			} catch (err) {
-				this.loadError = this.extractErrorMessage(
-					err,
-					t('shillinq', 'Failed to load period.'),
-				)
+				this.loadError = this.extractErrorMessage(err, t('shillinq', 'Failed to load period.'))
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Report a missing period id.
+		 *
+		 * @return {boolean} True when there is no id and loading stops.
+		 */
+		refuseWithoutRecord() {
+			if (this.recordId) {
+				return false
+			}
+			this.loading = false
+			this.loadError = t('shillinq', 'No period id supplied.')
+			return true
+		},
+
+		/**
+		 * Take the loaded period, or report it missing.
+		 *
+		 * @param {object|string|null} data The response's data.
+		 */
+		applyLoaded(data) {
+			if (!data || typeof data !== 'object') {
+				this.loadError = t('shillinq', 'Period not found.')
+				this.period = null
+			} else {
+				this.period = data
+			}
+		},
+
+		/**
+		 * The period's endpoint, with an optional action path.
+		 *
+		 * @param {string} suffix The action path, such as `/close`, or empty.
+		 * @return {string} The URL.
+		 */
+		periodUrl(suffix) {
+			return generateUrl(`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}${suffix}`)
+		},
+
+		/**
+		 * Merge the period the server returned, or reload it when none came back.
+		 *
+		 * @param {object|string|null} next The returned period.
+		 * @return {Promise<void>}
+		 */
+		async takePeriod(next) {
+			if (next && typeof next === 'object') {
+				this.period = { ...this.period, ...next }
+			} else {
+				await this.load()
 			}
 		},
 
@@ -489,6 +604,12 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
+		 * @param {string} category The checklist item category.
+		 * @return {string} Its label.
+		 */
 		categoryLabel(category) {
 			switch (category) {
 				case 'ap':
@@ -498,7 +619,14 @@ export default {
 				case 'bank':
 					return t('shillinq', 'Bank reconciliation')
 				case 'expense':
+				case 'expense-claims':
 					return t('shillinq', 'Expense claims')
+				case 'vat':
+					return t('shillinq', 'VAT')
+				case 'accruals':
+					return t('shillinq', 'Accruals')
+				case 'other':
+					return t('shillinq', 'Other')
 				default:
 					return category || t('shillinq', 'Other')
 			}
@@ -522,32 +650,97 @@ export default {
 			)
 		},
 
+		/**
+		 * Run a period state transition and report its outcome.
+		 *
+		 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-9
+		 *
+		 * @param {string} action The transition endpoint suffix.
+		 * @param {string} successMessage The message shown when it succeeds.
+		 * @param {object} body The request body.
+		 * @return {Promise<void>}
+		 */
 		async transition(action, successMessage, body = {}) {
-			if (!this.recordId) {
-				return
-			}
+			if (!this.recordId) return
 			this.transitioning = true
 			this.transitionError = ''
 			this.transitionNotice = ''
 			try {
-				const url = generateUrl(
-					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/${action}`,
-				)
-				const response = await axios.post(url, body || {})
-				const next = response?.data?.data
-				if (next && typeof next === 'object') {
-					this.period = { ...this.period, ...next }
-				} else {
-					await this.load()
-				}
+				const response = await axios.post(this.periodUrl(`/${action}`), body || {})
+				await this.takePeriod(response?.data?.data)
 				this.transitionNotice = successMessage
 			} catch (err) {
-				this.transitionError = this.extractErrorMessage(
-					err,
-					t('shillinq', 'Transition failed.'),
-				)
+				this.transitionError = this.extractErrorMessage(err, t('shillinq', 'Transition failed.'))
 			} finally {
 				this.transitioning = false
+			}
+		},
+
+		/**
+		 * Resolve one item; the server records who and when.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
+		 * @param {object} item The checklist item.
+		 * @return {Promise<void>}
+		 */
+		async resolveItem(item) {
+			await this.changeChecklist(`/checklist/${encodeURIComponent(item.id)}/resolve`, {})
+		},
+
+		/**
+		 * Reopen one resolved item.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
+		 * @param {object} item The checklist item.
+		 * @return {Promise<void>}
+		 */
+		async reopenItem(item) {
+			await this.changeChecklist(`/checklist/${encodeURIComponent(item.id)}/reopen`, {})
+		},
+
+		/**
+		 * Add the typed item, then clear the form.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
+		 * @return {Promise<void>}
+		 */
+		async addItem() {
+			const description = this.newItemDescription.trim()
+			if (description === '') {
+				return
+			}
+			const category = this.newItemCategory?.value || 'other'
+			if (await this.changeChecklist('/checklist', { category, description })) {
+				this.newItemDescription = ''
+				this.newItemCategory = null
+			}
+		},
+
+		/**
+		 * Post a checklist change and take the period the server returns.
+		 *
+		 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+		 *
+		 * @param {string} suffix The checklist path.
+		 * @param {object} body The request body.
+		 * @return {Promise<boolean>} Whether the change was stored.
+		 */
+		async changeChecklist(suffix, body) {
+			if (!this.recordId) return false
+			this.checklistBusy = true
+			this.checklistError = ''
+			try {
+				const response = await axios.post(this.periodUrl(suffix), body)
+				await this.takePeriod(response?.data?.data)
+				return true
+			} catch (err) {
+				this.checklistError = this.extractErrorMessage(err, t('shillinq', 'The checklist could not be changed.'))
+				return false
+			} finally {
+				this.checklistBusy = false
 			}
 		},
 
@@ -565,37 +758,46 @@ export default {
 		},
 
 		async onReopenConfirmed(closeReason) {
-			if (!this.recordId) {
-				return
-			}
-			const trimmed = (closeReason || '').trim()
-			if (trimmed === '') {
-				this.reopenError = t('shillinq', 'Close reason is required.')
-				return
-			}
+			if (!this.recordId) return
+			const trimmed = this.reopenReason(closeReason)
+			if (trimmed === null) return
 			this.reopenSubmitting = true
 			this.reopenError = ''
 			try {
-				const url = generateUrl(
-					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/reopen`,
-				)
-				const response = await axios.post(url, { closeReason: trimmed })
-				const next = response?.data?.data
-				if (next && typeof next === 'object') {
-					this.period = { ...this.period, ...next }
-				} else {
-					await this.load()
-				}
-				this.reopenDialogOpen = false
-				this.transitionNotice = t('shillinq', 'Period reopened.')
+				await this.postReopen(trimmed)
 			} catch (err) {
-				this.reopenError = this.extractErrorMessage(
-					err,
-					t('shillinq', 'Reopen failed.'),
-				)
+				this.reopenError = this.extractErrorMessage(err, t('shillinq', 'Reopen failed.'))
 			} finally {
 				this.reopenSubmitting = false
 			}
+		},
+
+		/**
+		 * The trimmed close reason, or null with an error when it is empty.
+		 *
+		 * @param {string|null} closeReason The reason typed in the dialog.
+		 * @return {string|null} The reason.
+		 */
+		reopenReason(closeReason) {
+			const trimmed = (closeReason || '').trim()
+			if (trimmed === '') {
+				this.reopenError = t('shillinq', 'Close reason is required.')
+				return null
+			}
+			return trimmed
+		},
+
+		/**
+		 * Reopen the period, close the dialog and announce it.
+		 *
+		 * @param {string} closeReason The trimmed reason.
+		 * @return {Promise<void>}
+		 */
+		async postReopen(closeReason) {
+			const response = await axios.post(this.periodUrl('/reopen'), { closeReason })
+			await this.takePeriod(response?.data?.data)
+			this.reopenDialogOpen = false
+			this.transitionNotice = t('shillinq', 'Period reopened.')
 		},
 
 		extractErrorMessage(err, fallback) {
@@ -694,6 +896,22 @@ export default {
 	padding: 6px 8px;
 	border-bottom: 1px solid var(--color-border);
 	text-align: left;
+}
+
+.period-close-detail__add-item {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: flex-end;
+	margin-top: 12px;
+}
+
+.period-close-detail__add-category {
+	min-width: 200px;
+}
+
+.period-close-detail__add-description {
+	flex: 1 1 240px;
 }
 
 .period-close-detail__flag-list {

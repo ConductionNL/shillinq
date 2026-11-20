@@ -34,7 +34,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
 use OCP\IL10N;
@@ -42,6 +42,7 @@ use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Forged-parameter cases for the calendar booking endpoints.
@@ -120,7 +121,7 @@ final class CalendarForgedParametersTest extends TestCase {
 		$groups = $this->createStub(IGroupManager::class);
 		$groups->method('isAdmin')->willReturnCallback(static fn (string $uid): bool => $uid === 'alice');
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('books');
 
@@ -215,7 +216,9 @@ final class ForgedCalendarObjects {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = $object;
 		return $object;
 	}//end saveObject()

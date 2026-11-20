@@ -3,6 +3,9 @@
 /**
  * ICP Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 intra-community supplies (ICP) computation (REQ-ICP-002, REQ-ICP-003,
  * REQ-ICP-004). Reads IcpSupply / IcpOpgaaf / VatReturn / ViesValidation data for
  * one administration from OpenRegister via the real ObjectService API
@@ -26,18 +29,19 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
+use OCA\Shillinq\Service\Icp\IcpInvoiceSupplies;
+use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
+use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCP\IAppConfig;
 
 /**
  * Computes the ICP ledger, periodicity decision, and reconciliation for a period.
@@ -49,18 +53,22 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class IcpService {
+class IcpService implements IcpServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IcpCalculator $calculator Pure-logic ICP helper.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param AdministrationJurisdiction|null $jurisdiction The administration's jurisdiction; built from the object service when absent.
+	 * @param IcpInvoiceSupplies|null $invoiceSupplies The reading of posted invoices as ICP supplies.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly IcpCalculator $calculator,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?AdministrationJurisdiction $jurisdiction=null,
+		private readonly ?IcpInvoiceSupplies $invoiceSupplies=null,
 	) {
 	}//end __construct()
 
@@ -173,12 +181,19 @@ class IcpService {
 	 * @param string $period Filing period (YYYY-Qn or YYYY-MM).
 	 *
 	 * @return array<int,array<string,mixed>> In-period IcpSupply records.
+	 *
+	 * @throws JurisdictionRefusedException When the administration is not under Dutch rules.
 	 */
 	private function suppliesForPeriod(string $administrationId, string $period): array {
+		// The ICP return is a Dutch filing: refuse an administration kept under other rules (REQ-LFL-004).
+		$this->jurisdiction()->assertIs(administrationId: $administrationId, output: 'Dutch ICP return');
 		$supplies = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IcpSupply')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
+
+		$supplies = $this->rows(rows: $supplies);
+		$supplies = array_merge($supplies, $this->invoiceSuppliesNotRecorded(administrationId: $administrationId, recorded: $supplies));
 
 		$inPeriod = [];
 		foreach ($supplies as $supply) {
@@ -189,6 +204,72 @@ class IcpService {
 
 		return $inPeriod;
 	}//end suppliesForPeriod()
+
+	/**
+	 * The ICP supplies of the administration's posted invoices that no
+	 * IcpSupply record already names (REQ-ICR-002): the statement is
+	 * prepared from the books, and a supply recorded by hand for an invoice
+	 * is not counted twice.
+	 *
+	 * @param string                         $administrationId Administration scope.
+	 * @param array<int,array<string,mixed>> $recorded         The IcpSupply records.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 */
+	private function invoiceSuppliesNotRecorded(string $administrationId, array $recorded): array {
+		$named = [];
+		foreach ($recorded as $supply) {
+			$invoiceId = trim((string)($supply['invoiceId'] ?? ''));
+			if ($invoiceId !== '') {
+				$named[$invoiceId] = true;
+			}
+		}
+
+		$reader = ($this->invoiceSupplies ?? new IcpInvoiceSupplies());
+		$invoices = [];
+		foreach ($this->rows(rows: $this->objectService
+			->setRegister($this->register())
+			->setSchema('ARInvoice')
+			->findAll(['filters' => ['administrationId' => $administrationId]])) as $invoice) {
+			if (array_intersect_key($named, array_flip($reader->keysOf(invoice: $invoice))) === []) {
+				$invoices[] = $invoice;
+			}
+		}
+
+		return $reader->fromInvoices(invoices: $invoices, administrationId: $administrationId);
+	}//end invoiceSuppliesNotRecorded()
+
+	/**
+	 * ObjectService rows as plain arrays.
+	 *
+	 * @param mixed $rows The rows from findAll().
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function rows(mixed $rows): array {
+		$out = [];
+		if (is_iterable($rows) === false) {
+			return $out;
+		}
+
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$out[] = $row;
+				continue;
+			}
+
+			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+				$serialised = $row->jsonSerialize();
+				if (is_array($serialised) === true) {
+					$out[] = $serialised;
+				}
+			}
+		}
+
+		return $out;
+	}//end rows()
 
 	/**
 	 * Read the BTW-aangifte rubriek 3b value for a period (REQ-ICP-004).
@@ -211,23 +292,106 @@ class IcpService {
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
 		foreach ($returns as $return) {
-			if ($this->vatReturnPeriod(return: $return) !== $period) {
+			if ($this->vatReturnPeriod(return: $return) === $period) {
+				return $this->rubriek3bOf(return: $return);
+			}
+		}
+
+		return $this->box3bFromBooks(administrationId: $administrationId, period: $period);
+	}//end rubriek3bForPeriod()
+
+	/**
+	 * Box 3b of the VAT return prepared from the books for the period: the
+	 * taxable amount of its declarations in box 3b. A filed return wins over
+	 * a draft. Null when no such return exists.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $period           Filing period (YYYY-Qn or YYYY-MM).
+	 *
+	 * @return float|null
+	 *
+	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 */
+	private function box3bFromBooks(string $administrationId, string $period): ?float {
+		$wanted = $this->bookPeriod(period: $period);
+		if ($wanted === null) {
+			return null;
+		}
+
+		$chosen = null;
+		foreach ($this->rows(rows: $this->objectService
+			->setRegister($this->register())
+			->setSchema('BtwAangifte')
+			->findAll(['filters' => ['administrationId' => $administrationId]])) as $return) {
+			if ((string)($return['period'] ?? '') !== $wanted['period']
+				|| (int)($return['periodYear'] ?? 0) !== $wanted['year']
+				|| (int)($return['periodNumber'] ?? 0) !== $wanted['number']
+			) {
 				continue;
 			}
 
-			if (array_key_exists('rubriek3b', $return) === true && $return['rubriek3b'] !== null) {
-				return (float)$return['rubriek3b'];
+			if ((string)($return['statusCode'] ?? 'draft') !== 'draft') {
+				$chosen = $return;
+				break;
 			}
 
-			if (array_key_exists('amount', $return) === true && $return['amount'] !== null) {
-				return (float)$return['amount'];
-			}
+			$chosen = ($chosen ?? $return);
+		}
 
-			return 0.0;
-		}//end foreach
+		if ($chosen === null) {
+			return null;
+		}
+
+		$returnId = (string)($chosen['@self']['id'] ?? ($chosen['id'] ?? ''));
+		$cents = 0;
+		foreach ($this->rows(rows: $this->objectService
+			->setRegister($this->register())
+			->setSchema('VATDeclaration')
+			->findAll(['filters' => ['returnId' => $returnId]])) as $declaration) {
+			if ((string)($declaration['returnBox'] ?? '') === '3b') {
+				$cents += $this->calculator->toCents(amount: ($declaration['totalTaxableAmount'] ?? 0));
+			}
+		}
+
+		return $this->calculator->fromCents(cents: $cents);
+	}//end box3bFromBooks()
+
+	/**
+	 * A filing period as the book return's period kind, year and number.
+	 *
+	 * @param string $period YYYY-Qn or YYYY-MM.
+	 *
+	 * @return array{period:string,year:int,number:int}|null
+	 */
+	private function bookPeriod(string $period): ?array {
+		if (preg_match('/^(\d{4})-Q([1-4])$/', $period, $match) === 1) {
+			return ['period' => 'quarter', 'year' => (int)$match[1], 'number' => (int)$match[2]];
+		}
+
+		if (preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $period, $match) === 1) {
+			return ['period' => 'month', 'year' => (int)$match[1], 'number' => (int)$match[2]];
+		}
 
 		return null;
-	}//end rubriek3bForPeriod()
+	}//end bookPeriod()
+
+	/**
+	 * A VatReturn's rubriek 3b: the explicit field, else the `amount` proxy,
+	 * else 0.
+	 *
+	 * @param array<string,mixed> $return The VatReturn record.
+	 *
+	 * @return float
+	 */
+	private function rubriek3bOf(array $return): float {
+		foreach (['rubriek3b', 'amount'] as $field) {
+			if (isset($return[$field]) === true) {
+				return (float)$return[$field];
+			}
+		}
+
+		return 0.0;
+	}//end rubriek3bOf()
 
 	/**
 	 * Derive a VatReturn's period string from its period fields.
@@ -238,27 +402,41 @@ class IcpService {
 	 */
 	private function vatReturnPeriod(array $return): string {
 		$year = (string)($return['periodYear'] ?? '');
-		if ($year === '') {
-			return (string)($return['period'] ?? '');
+		$typed = '';
+		if ($year !== '') {
+			$typed = $this->typedPeriod(return: $return, year: $year);
 		}
 
-		$type = (string)($return['periodType'] ?? '');
-		if ($type === 'quarter' || $type === 'quarterly') {
-			$quarter = (string)($return['periodQuarter'] ?? '');
-			if ($quarter !== '') {
-				return $year . '-Q' . ltrim($quarter, 'Q');
-			}
-		}
-
-		if ($type === 'month' || $type === 'monthly') {
-			$month = (string)($return['periodMonth'] ?? '');
-			if ($month !== '') {
-				return $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
-			}
+		if ($typed !== '') {
+			return $typed;
 		}
 
 		return (string)($return['period'] ?? '');
 	}//end vatReturnPeriod()
+
+	/**
+	 * The period string from a return's quarter or month fields, or '' when
+	 * its type or index is missing.
+	 *
+	 * @param array<string,mixed> $return The VatReturn record.
+	 * @param string              $year   Its periodYear.
+	 *
+	 * @return string
+	 */
+	private function typedPeriod(array $return, string $year): string {
+		$type = (string)($return['periodType'] ?? '');
+		$quarter = (string)($return['periodQuarter'] ?? '');
+		if (in_array($type, ['quarter', 'quarterly'], true) === true && $quarter !== '') {
+			return $year . '-Q' . ltrim($quarter, 'Q');
+		}
+
+		$month = (string)($return['periodMonth'] ?? '');
+		if (in_array($type, ['month', 'monthly'], true) === true && $month !== '') {
+			return $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+		}
+
+		return '';
+	}//end typedPeriod()
 
 	/**
 	 * Decide whether a supply date falls within a filing period (YYYY-Qn or YYYY-MM).
@@ -273,25 +451,36 @@ class IcpService {
 			return false;
 		}
 
-		$year = $dateParts[1];
-		$month = (int)$dateParts[2];
-
-		if (preg_match('/^(\d{4})-Q([1-4])$/', $period, $periodParts) === 1) {
-			if ($periodParts[1] !== $year) {
-				return false;
-			}
-
-			$quarter = (int)$periodParts[2];
-
-			return ((int)ceil($month / 3)) === $quarter;
-		}
-
-		if (preg_match('/^(\d{4})-(\d{2})$/', $period, $periodParts) === 1) {
-			return ($periodParts[1] === $year && (int)$periodParts[2] === $month);
-		}
-
-		return false;
+		return in_array($period, $this->periodLabels(year: $dateParts[1], month: (int)$dateParts[2]), true);
 	}//end supplyDateInPeriod()
+
+	/**
+	 * The filing periods a supply month belongs to: its month (YYYY-MM) and,
+	 * for months 1-12, its quarter (YYYY-Qn).
+	 *
+	 * @param string  $year  Four-digit year.
+	 * @param integer $month Two-digit month as read from the date.
+	 *
+	 * @return array<int,string>
+	 */
+	private function periodLabels(string $year, int $month): array {
+		$labels = [sprintf('%s-%02d', $year, $month)];
+		$quarter = (int)ceil($month / 3);
+		if ($quarter >= 1 && $quarter <= 4) {
+			$labels[] = $year . '-Q' . $quarter;
+		}
+
+		return $labels;
+	}//end periodLabels()
+
+	/**
+	 * The administration jurisdiction lookup.
+	 *
+	 * @return AdministrationJurisdiction
+	 */
+	private function jurisdiction(): AdministrationJurisdiction {
+		return ($this->jurisdiction ?? new AdministrationJurisdiction(objectService: $this->objectService, appConfig: $this->appConfig));
+	}//end jurisdiction()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
@@ -299,11 +488,6 @@ class IcpService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

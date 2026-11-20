@@ -27,7 +27,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -52,6 +51,18 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 * Interval between job runs: 30 days in seconds.
 	 */
 	private const INTERVAL_SECONDS = 2592000;
+
+	/**
+	 * The concentration of a portfolio without revenue.
+	 *
+	 * @var array{largestCustomer: null, revenueShare12m: float, thresholdHigh: float, status: string}
+	 */
+	private const NO_CONCENTRATION = [
+		'largestCustomer' => null,
+		'revenueShare12m' => 0.0,
+		'thresholdHigh' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
+		'status' => 'VEILIG',
+	];
 
 	/**
 	 * Constructor.
@@ -83,50 +94,19 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function computeConcentratie(array $assignments): array {
-		$revenuePerCustomer = [];
-		$total = 0;
-		foreach ($assignments as $assignment) {
-			$customerId = (string)($assignment['customerId'] ?? '');
-			$amount = (int)($assignment['realisedRevenue'] ?? 0);
-			if ($customerId === '' || $amount <= 0) {
-				continue;
-			}
-
-			$revenuePerCustomer[$customerId] = ($revenuePerCustomer[$customerId] ?? 0) + $amount;
-			$total += $amount;
+		$revenue = new DBACustomerRevenue(assignments: $assignments);
+		if ($revenue->isEmpty() === true) {
+			return self::NO_CONCENTRATION;
 		}
 
-		if ($total <= 0 || count($revenuePerCustomer) === 0) {
-			return [
-				'largestCustomer' => null,
-				'revenueShare12m' => 0.0,
-				'thresholdHigh' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
-				'status' => 'VEILIG',
-			];
-		}
-
-		$largestCustomer = null;
-		$largestAmount = 0;
-		foreach ($revenuePerCustomer as $customerId => $amount) {
-			if ($amount > $largestAmount) {
-				$largestAmount = $amount;
-				$largestCustomer = (string)$customerId;
-			}
-		}
-
-		$share = $largestAmount / $total;
-		$status = 'VEILIG';
-		if ($share >= DBAConstants::CONCENTRATIE_DREMPEL_KRITIEK) {
-			$status = 'CRITICAL';
-		} elseif ($share >= DBAConstants::CONCENTRATIE_DREMPEL_HOOG) {
-			$status = 'WARNING';
-		}
+		[$largestCustomer, $largestAmount] = $revenue->largest();
+		$share = $largestAmount / $revenue->total;
 
 		return [
 			'largestCustomer' => $largestCustomer,
 			'revenueShare12m' => round($share, 4),
 			'thresholdHigh' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
-			'status' => $status,
+			'status' => $this->concentrationStatus(share: $share),
 		];
 	}//end computeConcentratie()
 
@@ -143,56 +123,17 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function computeLangjarigeRelaties(array $assignments, DateTimeImmutable $now): array {
-		$result = [];
-		$total = 0;
-		foreach ($assignments as $assignment) {
-			$total += (int)($assignment['realisedRevenue'] ?? 0);
-		}
-
+		$total = $this->totalRevenue(assignments: $assignments);
 		if ($total <= 0) {
-			return $result;
+			return [];
 		}
 
-		// Group oldest startDatum + total omzet per klant.
-		$perCustomer = [];
-		foreach ($assignments as $assignment) {
-			$customerId = (string)($assignment['customerId'] ?? '');
-			$startStr = (string)($assignment['startDate'] ?? '');
-			$amount = (int)($assignment['realisedRevenue'] ?? 0);
-			if ($customerId === '' || $startStr === '') {
-				continue;
-			}
-
-			try {
-				$start = new DateTimeImmutable($startStr);
-			} catch (Throwable) {
-				continue;
-			}
-
-			if (isset($perCustomer[$customerId]) === false || $perCustomer[$customerId]['start'] > $start) {
-				$perCustomer[$customerId] = ['start' => $start, 'revenue' => $amount];
-			} else {
-				$perCustomer[$customerId]['revenue'] += $amount;
-			}
-		}
-
-		foreach ($perCustomer as $customerId => $row) {
-			$durationYears = (float)($row['start']->diff($now)->days / 365.0);
-			if ($row['revenue'] > 0) {
-				$share = ($row['revenue'] / $total);
-			} else {
-				$share = 0.0;
-			}
-
-			if ($durationYears >= DBAConstants::LANGJARIG_DREMPEL_JAREN
-				&& $share >= DBAConstants::LANGJARIG_DREMPEL_OMZET
-			) {
-				$result[] = [
-					'customerId' => (string)$customerId,
-					'startDate' => $row['start']->format('Y-m-d'),
-					'durationYears' => round($durationYears, 2),
-					'revenueShare' => round($share, 4),
-				];
+		$relationships = new DBAMultiYearRelationship(now: $now, total: $total);
+		$result = [];
+		foreach ($this->oldestStartPerCustomer(assignments: $assignments) as $customerId => $row) {
+			$relationship = $relationships->describe(customerId: (string)$customerId, row: $row);
+			if ($relationship !== null) {
+				$result[] = $relationship;
 			}
 		}
 
@@ -251,77 +192,12 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	private function runAsJob(mixed $argument): void {
 		$this->logger->info('Shillinq: DBAPortfolioAggregationJob started');
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		} catch (Throwable $e) {
-			$this->logger->warning(
-				'Shillinq DBAPortfolioAggregationJob: OpenRegister not available, skipping.',
-				['exception' => $e->getMessage()]
-			);
+		$objectService = $this->openRegister();
+		if ($objectService === null) {
 			return;
 		}
 
-		$register = $this->resolveRegister();
-		$now = new DateTimeImmutable();
-		$written = 0;
-
-		try {
-			$rows = $objectService->setRegister($register)->setSchema('DBAOpdracht')->findAll(['limit' => 5000]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'Shillinq DBAPortfolioAggregationJob: failed to fetch opdrachten',
-				['exception' => $e->getMessage()]
-			);
-			return;
-		}
-
-		$perOnderneming = [];
-		foreach ($rows as $row) {
-			$assignment = $this->toArray(entity: $row);
-			if ($assignment === null) {
-				continue;
-			}
-
-			$ondernemingId = (string)($assignment['enterpriseId'] ?? '');
-			if ($ondernemingId === '') {
-				continue;
-			}
-
-			$perOnderneming[$ondernemingId] ??= [];
-			$perOnderneming[$ondernemingId][] = $assignment;
-		}
-
-		foreach ($perOnderneming as $ondernemingId => $assignments) {
-			$concentration = $this->computeConcentratie(assignments: $assignments);
-			$langjarig = $this->computeLangjarigeRelaties(assignments: $assignments, now: $now);
-			$overall = $this->computeOverallRisico(concentration: $concentration, multiYearRelationships: $langjarig);
-			$administrationId = (string)($assignments[0]['administrationId'] ?? '');
-
-			try {
-				$objectService->setRegister($register)->setSchema('DBAPortfolioRisico')->saveObject(
-					[
-						'administrationId' => $administrationId,
-						'enterpriseId' => (string)$ondernemingId,
-						'levelDate' => $now->format('Y-m-d'),
-						'activeAssignments' => count($assignments),
-						'concentration' => $concentration,
-						'multiYearRelationships' => $langjarig,
-						'exclusiveRelationships' => $this->countExclusief(assignments: $assignments),
-						'overallRisk' => $overall,
-					]
-				);
-				$written++;
-			} catch (Throwable $e) {
-				$this->logger->error(
-					'Shillinq DBAPortfolioAggregationJob: failed to write portfolio',
-					['enterpriseId' => (string)$ondernemingId, 'exception' => $e->getMessage()]
-				);
-			}
-		}//end foreach
-
-		$this->logger->info(
-			sprintf('Shillinq DBAPortfolioAggregationJob: wrote %d portfolio records', $written)
-		);
+		$this->aggregate(run: new DBAJobRun(objectService: $objectService, appConfig: $this->appConfig));
 	}//end runAsJob()
 
 	/**
@@ -332,74 +208,262 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 * @return int The count of exclusive relations.
 	 */
 	private function countExclusief(array $assignments): int {
-		$revenuePerCustomer = [];
-		$total = 0;
-		foreach ($assignments as $assignment) {
-			$customerId = (string)($assignment['customerId'] ?? '');
-			$amount = (int)($assignment['realisedRevenue'] ?? 0);
-			if ($customerId === '' || $amount <= 0) {
-				continue;
-			}
-
-			$revenuePerCustomer[$customerId] = ($revenuePerCustomer[$customerId] ?? 0) + $amount;
-			$total += $amount;
-		}
-
-		if ($total <= 0 || count($revenuePerCustomer) === 0) {
+		$revenue = new DBACustomerRevenue(assignments: $assignments);
+		if ($revenue->isEmpty() === true) {
 			return 0;
 		}
 
-		$count = 0;
-		foreach ($revenuePerCustomer as $amount) {
-			if (((float)$amount / (float)$total) >= 0.99) {
-				$count++;
-			}
-		}
-
-		return $count;
+		return $revenue->exclusiveCount();
 	}//end countExclusief()
 
 	/**
-	 * Coerce an entity to an array.
+	 * The concentration status of the largest customer's share.
 	 *
-	 * @param mixed $entity Entity from ObjectService.
+	 * @param float|int $share The share of the largest customer.
 	 *
-	 * @return array<string,mixed>|null Plain array, or null when not coercible.
+	 * @return string
 	 */
-	private function toArray(mixed $entity): ?array {
-		if (is_array($entity) === true) {
-			/*
-			 * @var array<string,mixed> $entity
-			 */
-
-			return $entity;
+	private function concentrationStatus(float|int $share): string {
+		if ($share >= DBAConstants::CONCENTRATIE_DREMPEL_KRITIEK) {
+			return 'CRITICAL';
 		}
 
-		if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
-			$data = $entity->getObject();
-			if (is_array($data) === true) {
-				/*
-				 * @var array<string,mixed> $data
-				 */
-
-				return $data;
-			}
+		if ($share >= DBAConstants::CONCENTRATIE_DREMPEL_HOOG) {
+			return 'WARNING';
 		}
 
-		return null;
-	}//end toArray()
+		return 'VEILIG';
+
+	}//end concentrationStatus()
 
 	/**
-	 * Resolve the register slug from app-config.
+	 * Per customer, the oldest start date and the revenue counted from it.
 	 *
-	 * @return string The register slug.
+	 * An older start replaces the customer's row (and its revenue); a later
+	 * one adds its revenue.
+	 *
+	 * @param array<int,array<string,mixed>> $assignments The assignments.
+	 *
+	 * @return array<string|int,array{start: DateTimeImmutable, revenue: int}>
 	 */
-	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
+	private function oldestStartPerCustomer(array $assignments): array {
+		$perCustomer = [];
+		foreach ($assignments as $assignment) {
+			$start = $this->startDate(assignment: $assignment);
+			if ($start === null) {
+				continue;
+			}
+
+			$customerId = (string)$assignment['customerId'];
+			$perCustomer[$customerId] = self::keepOldest(
+				current: ($perCustomer[$customerId] ?? null),
+				candidate: ['start' => $start, 'revenue' => (int)($assignment['realisedRevenue'] ?? 0)],
+			);
 		}
 
-		return $register;
-	}//end resolveRegister()
+		return $perCustomer;
+
+	}//end oldestStartPerCustomer()
+
+	/**
+	 * Keep the row with the older start; a later start adds its revenue to the
+	 * current row.
+	 *
+	 * @param array{start: DateTimeImmutable, revenue: int}|null $current The customer's row so far.
+	 * @param array{start: DateTimeImmutable, revenue: int} $candidate The assignment's start and revenue.
+	 *
+	 * @return array{start: DateTimeImmutable, revenue: int}
+	 */
+	private static function keepOldest(?array $current, array $candidate): array {
+		if ($current === null || $current['start'] > $candidate['start']) {
+			return $candidate;
+		}
+
+		$current['revenue'] += $candidate['revenue'];
+		return $current;
+
+	}//end keepOldest()
+
+	/**
+	 * The total realised revenue of the assignments.
+	 *
+	 * @param array<int,array<string,mixed>> $assignments The assignments.
+	 *
+	 * @return int
+	 */
+	private function totalRevenue(array $assignments): int {
+		$total = 0;
+		foreach ($assignments as $assignment) {
+			$total += (int)($assignment['realisedRevenue'] ?? 0);
+		}
+
+		return $total;
+
+	}//end totalRevenue()
+
+	/**
+	 * The start of an assignment with a customer, null without either or when
+	 * the date cannot be parsed.
+	 *
+	 * @param array<string,mixed> $assignment The assignment.
+	 *
+	 * @return DateTimeImmutable|null
+	 */
+	private function startDate(array $assignment): ?DateTimeImmutable {
+		$startStr = (string)($assignment['startDate'] ?? '');
+		if ((string)($assignment['customerId'] ?? '') === '' || $startStr === '') {
+			return null;
+		}
+
+		try {
+			return new DateTimeImmutable($startStr);
+		} catch (Throwable) {
+			return null;
+		}
+
+	}//end startDate()
+
+	/**
+	 * OpenRegister's object service, null (logged) when it is not installed.
+	 *
+	 * @return object|null
+	 */
+	private function openRegister(): ?object {
+		try {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'Shillinq DBAPortfolioAggregationJob: OpenRegister not available, skipping.',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+	}//end openRegister()
+
+	/**
+	 * Write one portfolio per enterprise and log how many were written.
+	 *
+	 * @param DBAJobRun $run The run.
+	 *
+	 * @return void
+	 */
+	private function aggregate(DBAJobRun $run): void {
+		$rows = $this->assignments(run: $run);
+		if ($rows === null) {
+			return;
+		}
+
+		foreach ($this->perEnterprise(run: $run, rows: $rows) as $assignments) {
+			$this->writePortfolio(run: $run, assignments: $assignments);
+		}
+
+		$this->logger->info(
+			sprintf('Shillinq DBAPortfolioAggregationJob: wrote %d portfolio records', $run->written)
+		);
+
+	}//end aggregate()
+
+	/**
+	 * Write the DBAPortfolioRisico of one enterprise; a failing write is logged.
+	 *
+	 * @param DBAJobRun $run The run.
+	 * @param array<int,array<string,mixed>> $assignments The enterprise's assignments.
+	 *
+	 * @return void
+	 */
+	private function writePortfolio(DBAJobRun $run, array $assignments): void {
+		try {
+			$run->scoped(schema: 'DBAPortfolioRisico')->saveObject($this->portfolio(run: $run, assignments: $assignments));
+			$run->written++;
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'Shillinq DBAPortfolioAggregationJob: failed to write portfolio',
+				['enterpriseId' => self::enterpriseOf(assignments: $assignments), 'exception' => $e->getMessage()]
+			);
+		}
+
+	}//end writePortfolio()
+
+	/**
+	 * The DBAPortfolioRisico object of one enterprise.
+	 *
+	 * @param DBAJobRun $run The run.
+	 * @param array<int,array<string,mixed>> $assignments The enterprise's assignments.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function portfolio(DBAJobRun $run, array $assignments): array {
+		$concentration = $this->computeConcentratie(assignments: $assignments);
+		$langjarig = $this->computeLangjarigeRelaties(assignments: $assignments, now: $run->now);
+		return [
+			'administrationId' => (string)($assignments[0]['administrationId'] ?? ''),
+			'enterpriseId' => self::enterpriseOf(assignments: $assignments),
+			'levelDate' => $run->now->format('Y-m-d'),
+			'activeAssignments' => count($assignments),
+			'concentration' => $concentration,
+			'multiYearRelationships' => $langjarig,
+			'exclusiveRelationships' => $this->countExclusief(assignments: $assignments),
+			'overallRisk' => $this->computeOverallRisico(concentration: $concentration, multiYearRelationships: $langjarig),
+		];
+
+	}//end portfolio()
+
+	/**
+	 * The enterprise a group of assignments belongs to.
+	 *
+	 * @param array<int,array<string,mixed>> $assignments The group, never empty.
+	 *
+	 * @return string
+	 */
+	private static function enterpriseOf(array $assignments): string {
+		return (string)$assignments[0]['enterpriseId'];
+
+	}//end enterpriseOf()
+
+	/**
+	 * Every assignment, null (logged) when they cannot be read.
+	 *
+	 * @param DBAJobRun $run The run.
+	 *
+	 * @return iterable<mixed>|null
+	 */
+	private function assignments(DBAJobRun $run): ?iterable {
+		try {
+			return $run->scoped(schema: 'DBAOpdracht')->findAll(['limit' => 5000]);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'Shillinq DBAPortfolioAggregationJob: failed to fetch opdrachten',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+	}//end assignments()
+
+	/**
+	 * The assignments grouped by enterprise; rows without one are skipped.
+	 *
+	 * @param DBAJobRun $run The run.
+	 * @param iterable<mixed> $rows The assignments as the service returned them.
+	 *
+	 * @return array<string|int,array<int,array<string,mixed>>>
+	 */
+	private function perEnterprise(DBAJobRun $run, iterable $rows): array {
+		$perOnderneming = [];
+		foreach ($rows as $row) {
+			$assignment = $run->record(entity: $row);
+			$ondernemingId = (string)($assignment['enterpriseId'] ?? '');
+			if ($assignment === null || $ondernemingId === '') {
+				continue;
+			}
+
+			$perOnderneming[$ondernemingId] ??= [];
+			$perOnderneming[$ondernemingId][] = $assignment;
+		}
+
+		return $perOnderneming;
+
+	}//end perEnterprise()
+
 }//end class

@@ -3,6 +3,9 @@
 /**
  * Subsidie Verantwoording Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path service for the bookkeeping-subsidie-verantwoording
  * capability (T3 governance). Holds the two auto-generation rules that OR's
  * declarative lifecycle-action engine cannot yet express because they require
@@ -35,9 +38,6 @@
  *
  * @link https://conduction.nl
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
  */
 
@@ -46,7 +46,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Throwable;
 

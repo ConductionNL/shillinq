@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\AppInfo;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\AppInfo\SigningDelegationRegistration;
+use OCA\Shillinq\Listener\Registration\SigningDelegationRegistration;
 use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
 use OCA\Shillinq\Listener\AnnualReportSignoffRequestListener;
 use OCA\Shillinq\Listener\SigningConcludedListener;

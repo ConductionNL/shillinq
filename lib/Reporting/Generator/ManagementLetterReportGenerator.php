@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Management letter (bevindingenrapport) report generator
  *
  * Produces a management letter / findings report, rendered as editable DOCX/ODT
@@ -45,8 +50,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Reporting\ReportSection;
-use OCA\Shillinq\Service\RuleAuditService;
 use Throwable;
 
 /**
@@ -308,8 +313,8 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	 */
 	private function runAudit(array $context): array {
 		try {
-			$service = $this->container->get(RuleAuditService::class);
-			if ($service instanceof RuleAuditService) {
+			$service = $this->container->get(RuleAuditServiceInterface::class);
+			if ($service instanceof RuleAuditServiceInterface) {
 				$auditContext = [];
 				$administrationId = $this->str($context, 'administrationId');
 				if ($administrationId !== '') {

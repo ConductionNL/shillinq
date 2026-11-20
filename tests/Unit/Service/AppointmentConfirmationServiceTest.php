@@ -18,6 +18,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-11
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -31,6 +34,8 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Behavioural tests for the appointment confirmation workflow.
@@ -168,7 +173,9 @@ final class AppointmentConfirmationServiceTest extends TestCase {
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$schema = ($schema !== '' ? $schema : $this->schema);
 				$key = (string)($object['id'] ?? ($object['tokenId'] ?? ($object['appointmentNumber'] ?? uniqid())));
 				if (isset($object['id']) === false) {
@@ -236,7 +243,7 @@ final class AppointmentConfirmationServiceTest extends TestCase {
 			],
 			$overrides
 		);
-		$this->store->saveObject($appt, 'shillinq', 'Appointment');
+		$this->store->saveObject($appt, new ObjectSaveOptions(target: new ObjectFindTarget(register: 'shillinq', schema: 'Appointment')));
 		return $appt;
 	}//end seedAppointment()
 

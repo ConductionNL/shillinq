@@ -38,7 +38,7 @@ use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -48,6 +48,7 @@ use OCP\Mail\IMailer;
 use OCP\Mail\IMessage;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * Builds the services over one store.
@@ -158,10 +159,10 @@ trait PaymentPlanFixture {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return $settings;
 
@@ -243,7 +244,7 @@ trait PaymentPlanFixture {
 	 * @return PaymentPlanAllocator
 	 */
 	private function allocator(): PaymentPlanAllocator {
-		return new PaymentPlanAllocator($this->store, $this->settings(), $this->runner(), $this->createMock(LoggerInterface::class));
+		return new PaymentPlanAllocator($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->runner(), $this->createMock(LoggerInterface::class));
 
 	}//end allocator()
 
@@ -255,7 +256,7 @@ trait PaymentPlanFixture {
 	private function service(): PaymentPlanService {
 		return new PaymentPlanService(
 			$this->store,
-			$this->settings(),
+			$this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			new PaymentPlanSchedule(),
 			$this->allocator(),
 			$this->dunning(),
@@ -273,7 +274,7 @@ trait PaymentPlanFixture {
 	 * @return PaymentPlanBankMatcher
 	 */
 	private function matcher(): PaymentPlanBankMatcher {
-		$matches = new ManualMatchService($this->store, $this->runner(), $this->settings(), $this->createMock(LoggerInterface::class));
+		$matches = new ManualMatchService($this->store, $this->runner(), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(LoggerInterface::class));
 		return new PaymentPlanBankMatcher($this->store, $this->settings(), $matches, $this->service(), $this->createMock(LoggerInterface::class));
 
 	}//end matcher()
@@ -311,7 +312,7 @@ trait PaymentPlanFixture {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find($id, schema: $schema)->getObject();
+		return $this->store->find($id, new ObjectFindOptions(schema: $schema))->getObject();
 
 	}//end stored()
 
