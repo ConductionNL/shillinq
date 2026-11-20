@@ -49,6 +49,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'pipelinqSettings#index', 'url' => '/api/pipelinq/settings', 'verb' => 'GET'],
             ['name' => 'pipelinqSettings#create', 'url' => '/api/pipelinq/settings', 'verb' => 'POST'],
             ['name' => 'pipelinqSettings#test', 'url' => '/api/pipelinq/settings/test', 'verb' => 'POST'],
+        // Request type to revenue account mapping, admin only (case-payment-requests REQ-SOPR-002).
+            ['name' => 'paymentRevenueAccounts#index', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'GET'],
+            ['name' => 'paymentRevenueAccounts#update', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'PUT'],
         // First-time setup wizard (ADR-042).
             ['name' => 'setup#status',     'url' => '/api/setup/status',            'verb' => 'GET'],
             ['name' => 'setup#saveConfig', 'url' => '/api/setup/config',            'verb' => 'POST'],
@@ -335,6 +338,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // approval-chain preview + send-block guard. Static segments precede the
         // {id} wildcard so they are matched first (Symfony route ordering).
             ['name' => 'purchaseOrder#previewApprovalChain', 'url' => '/api/purchase-orders/approval-chain', 'verb' => 'GET'],
+            ['name' => 'purchaseOrder#dispatchChannels', 'url' => '/api/purchase-orders/dispatch-channels', 'verb' => 'GET'],
             ['name' => 'purchaseOrder#create', 'url' => '/api/purchase-orders', 'verb' => 'POST'],
             ['name' => 'purchaseOrder#send', 'url' => '/api/purchase-orders/{id}/send', 'verb' => 'POST'],
 
@@ -583,6 +587,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
             ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
             ['name' => 'icp#renderInvoicePdf', 'url' => '/api/icp/invoice-pdf', 'verb' => 'GET'],
+            // The tax-icp-and-reverse-charge statement: prepare, download and file the statement (REQ-ICR-002, REQ-ICR-003).
+            ['name' => 'icpStatement#prepare', 'url' => '/api/icp/statements/prepare', 'verb' => 'POST'],
+            ['name' => 'icpStatement#xml', 'url' => '/api/icp/statements/xml', 'verb' => 'GET'],
+            ['name' => 'icpStatement#filing', 'url' => '/api/icp/statements/filing', 'verb' => 'GET'],
+            ['name' => 'icpStatement#file', 'url' => '/api/icp/statements/file', 'verb' => 'POST'],
 
             // Aansluiting (tie-out) framework (bookkeeping-aansluitingen,
             // REQ-AANS-004, REQ-AANS-006). compute() resolves source A / source B
@@ -659,8 +668,17 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'periodClose#startClose', 'url' => '/api/period-close/{periodId}/start-close', 'verb' => 'POST'],
             ['name' => 'periodClose#close', 'url' => '/api/period-close/{periodId}/close', 'verb' => 'POST'],
             ['name' => 'periodClose#reopen', 'url' => '/api/period-close/{periodId}/reopen', 'verb' => 'POST'],
+            ['name' => 'periodClose#addItem', 'url' => '/api/period-close/{periodId}/checklist', 'verb' => 'POST'],
+            ['name' => 'periodClose#resolveItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/resolve', 'verb' => 'POST'],
+            ['name' => 'periodClose#reopenItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/reopen', 'verb' => 'POST'],
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
+
+            // Deferral schedules (ledger-period-end, REQ-LPE-004): "Spread over
+            // periods" on an AP or AR invoice line. preview precedes the bare
+            // collection route only for readability; the verbs and paths differ.
+            ['name' => 'deferralSchedule#preview', 'url' => '/api/deferral-schedules/preview', 'verb' => 'POST'],
+            ['name' => 'deferralSchedule#create', 'url' => '/api/deferral-schedules', 'verb' => 'POST'],
 
             // Budget scenarios (budget-scenarios, REQ-BSC-002). isDefault is set
             // exclusively via this endpoint (a service call, atomic demotion of
@@ -745,6 +763,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // column set pre-computed (design.md §1c: expand/collapse must
             // cost zero further requests).
             ['name' => 'budgetGrid#index', 'url' => '/api/budget-grid', 'verb' => 'GET'],
+            // The operator-triggered run of KnownCostBudgetWriter
+            // (budget-known-costs design.md §12). Access is checked in the controller body.
+            ['name' => 'knownCost#regenerate', 'url' => '/api/v1/budgets/known-costs/regenerate', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],
