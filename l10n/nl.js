@@ -8299,7 +8299,27 @@ OC.L10N.register(
         "Deductible percentage": "Aftrekbaar percentage",
         "Private-share account": "Rekening privédeel",
         "No active administration, so the budget lines cannot be shown.": "Geen actieve administratie, dus de budgetregels kunnen niet worden getoond.",
-        "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted.": "Nog geen goedkeuringsstappen. Een order van nul heeft er geen nodig; elke andere order krijgt zijn stappen van OpenRegister zodra hij is ingediend."
+        "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted.": "Nog geen goedkeuringsstappen. Een order van nul heeft er geen nodig; elke andere order krijgt zijn stappen van OpenRegister zodra hij is ingediend.",
+        "Assets on the end date": "Activa op de einddatum",
+        "Assets, liabilities and equity on any date, with the running result.": "Activa, passiva en eigen vermogen op elke datum, met het lopende resultaat.",
+        "Balances of the posted lines up to the end date of the chosen range, with the result of the open fiscal year in equity.": "Saldi van de geboekte regels tot en met de einddatum van de gekozen periode, met het resultaat van het open boekjaar in het eigen vermogen.",
+        "Difference with last year": "Verschil met vorig jaar",
+        "Difference with previous period": "Verschil met vorige periode",
+        "Expenses in the period": "Kosten in de periode",
+        "Liabilities and equity": "Passiva en eigen vermogen",
+        "Liabilities plus equity on the end date": "Vreemd plus eigen vermogen op de einddatum",
+        "No asset balances on this date.": "Geen saldi op activa op deze datum.",
+        "No equity balances on this date.": "Geen saldi in het eigen vermogen op deze datum.",
+        "No expenses are posted in this period.": "Er zijn in deze periode geen kosten geboekt.",
+        "No liability balances on this date.": "Geen saldi op passiva op deze datum.",
+        "No revenue is posted in this period.": "Er is in deze periode geen omzet geboekt.",
+        "Result in the period": "Resultaat in de periode",
+        "Result in the same period last year": "Resultaat in dezelfde periode vorig jaar",
+        "Result last year": "Resultaat vorig jaar",
+        "Revenue in the period": "Omzet in de periode",
+        "Same period last year": "Dezelfde periode vorig jaar",
+        "The result per account for the chosen period, compared with the previous period and the same period last year.": "Het resultaat per rekening over de gekozen periode, vergeleken met de vorige periode en dezelfde periode vorig jaar.",
+        "The result per account, compared with the previous period and last year.": "Het resultaat per rekening, vergeleken met de vorige periode en vorig jaar."
     },
     "nplurals=2; plural=(n != 1);"
 )

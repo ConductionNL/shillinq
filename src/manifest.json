@@ -2938,6 +2938,22 @@
                         "route": "FinancialStatementCashFlow"
                     },
                     {
+                        "id": "FinancialStatementProfitLoss",
+                        "label": "Profit and loss",
+                        "description": "The result per account, compared with the previous period and last year.",
+                        "icon": "ChartLine",
+                        "category": "financial",
+                        "route": "FinancialStatementProfitLoss"
+                    },
+                    {
+                        "id": "FinancialStatementBalanceSheet",
+                        "label": "Balance sheet",
+                        "description": "Assets, liabilities and equity on any date, with the running result.",
+                        "icon": "ScaleBalance",
+                        "category": "financial",
+                        "route": "FinancialStatementBalanceSheet"
+                    },
+                    {
                         "id": "RelationsBothWays",
                         "label": "Relations both ways",
                         "description": "Customers that are also suppliers, and who owes whom.",
