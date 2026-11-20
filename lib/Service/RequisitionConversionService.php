@@ -14,7 +14,7 @@
  * Requisition — which is exactly the category of behaviour ADR-031 reserves
  * for an imperative service rather than a declarative lifecycle transition
  * (the same exception already documented for AansluitingService::compute()
- * and for PurchaseOrderService::blockSendUntilApproved() itself, which
+ * and for PurchaseOrderService::markSent() itself, which
  * likewise mutates lifecycleState outside the generic OR transition engine).
  *
  * This service does NOT reimplement purchase-order creation: it builds a

@@ -8321,7 +8321,8 @@
         "All rates": "Alle tarieven",
         "Deductible percentage": "Aftrekbaar percentage",
         "Private-share account": "Rekening privédeel",
-        "No active administration, so the budget lines cannot be shown.": "Geen actieve administratie, dus de budgetregels kunnen niet worden getoond."
+        "No active administration, so the budget lines cannot be shown.": "Geen actieve administratie, dus de budgetregels kunnen niet worden getoond.",
+        "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted.": "Nog geen goedkeuringsstappen. Een order van nul heeft er geen nodig; elke andere order krijgt zijn stappen van OpenRegister zodra hij is ingediend."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

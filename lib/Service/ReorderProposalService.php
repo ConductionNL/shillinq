@@ -272,7 +272,7 @@ class ReorderProposalService {
 	 *
 	 * The pass acts as the system, so no requester, cost center, GL account or
 	 * approval chain is known yet. The order stays `draft` with an empty
-	 * approval chain, which PurchaseOrderService::blockSendUntilApproved()
+	 * approval chain, which PurchaseOrderService::markSent()
 	 * refuses to send, so nothing leaves the administration until a buyer has
 	 * completed it. The number comes from the same sequence as every other
 	 * order of the administration.

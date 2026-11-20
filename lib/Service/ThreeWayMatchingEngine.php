@@ -108,6 +108,14 @@ use RuntimeException;
 class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 
 	/**
+	 * The error code OpenRegister refuses a transition with while its
+	 * approval chain has not decided yet (REQ-PAD-004).
+	 *
+	 * @var string
+	 */
+	private const APPROVAL_CHAIN_PENDING = 'approval-chain-pending';
+
+	/**
 	 * Match outcome — exact 3-way match, zero divergence.
 	 *
 	 * @var string
@@ -487,8 +495,84 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 		}
 
 		$this->safeTransition(administrationId: $run->administrationId, invoiceId: $run->invoiceId, toStatus: $toStatus);
+		if ($toStatus === 'matched') {
+			$this->handToApproval(administrationId: $run->administrationId, invoiceId: $run->invoiceId);
+		}
+
 		return $saved;
 	}//end recordLineMatch()
+
+	/**
+	 * Hand a matched invoice to its `approveMatched` transition (REQ-PAD-004).
+	 *
+	 * The engine never decides the approval itself: it asks for matched ->
+	 * approved and OpenRegister's `supplier-invoice-approval` chain gates the
+	 * write. Below the lowest tier the chain has no steps and the invoice is
+	 * approved by the match; from the controller tier on OpenRegister
+	 * provisions the controller step, refuses the write with
+	 * `approval-chain-pending`, and the invoice stays matched (so a payment
+	 * run leaves it out) until the controller approves and the chain advances
+	 * the transition. Any other refusal leaves the invoice matched as well and
+	 * is logged; the persisted ThreeWayMatch stays the canonical record.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $invoiceId        SupplierInvoice id.
+	 *
+	 * @return string `approved`, `pending_approval` or `not_approved`.
+	 *
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.4
+	 */
+	private function handToApproval(string $administrationId, string $invoiceId): string {
+		try {
+			$this->invoiceService->setStatus(
+				administrationId: $administrationId,
+				invoiceId:        $invoiceId,
+				toStatus:         'approved'
+			);
+			return 'approved';
+		} catch (\Throwable $e) {
+			if (self::isPendingApproval(error: $e) === true) {
+				$this->logger->info(
+					'ThreeWayMatchingEngine: matched invoice waits for its approval chain',
+					['invoiceId' => $invoiceId]
+				);
+				return 'pending_approval';
+			}
+
+			$this->logger->warning(
+				'ThreeWayMatchingEngine: matched invoice not approved',
+				['invoiceId' => $invoiceId, 'exception' => $e->getMessage()]
+			);
+			return 'not_approved';
+		}
+
+	}//end handToApproval()
+
+	/**
+	 * Whether an error, or one of its causes, is OpenRegister's refusal of a
+	 * transition whose approval chain has not decided yet.
+	 *
+	 * @param \Throwable $error The error the write threw.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.4
+	 */
+	private static function isPendingApproval(\Throwable $error): bool {
+		for ($cause = $error; $cause !== null; $cause = $cause->getPrevious()) {
+			if (method_exists($cause, 'getErrors') === false) {
+				continue;
+			}
+
+			$errors = $cause->getErrors();
+			if (is_array($errors) === true && ($errors['code'] ?? null) === self::APPROVAL_CHAIN_PENDING) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end isPendingApproval()
 
 	/**
 	 * Find the third-leg receipts that reference the PO, per receipt schema.

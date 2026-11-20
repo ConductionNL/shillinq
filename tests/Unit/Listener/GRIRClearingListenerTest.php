@@ -482,7 +482,10 @@ class GRIRClearingListenerTest extends TestCase {
 		}
 
 		self::assertNotNull($matchedInvoice);
-		self::assertSame('matched', $matchedInvoice['statusCode'], 'evaluateMatch transitioned the invoice to matched');
+		// Below the supplier-invoice-approval tier the match approves the
+		// invoice right after matched (REQ-PAD-004); the in-memory store has
+		// no approval gate, so the invoice ends approved.
+		self::assertSame('approved', $matchedInvoice['statusCode'], 'evaluateMatch handed the matched invoice to approveMatched');
 
 		// Step 3: feed the invoice's matching -> matched transition into the
 		// SAME listener -> settleGRIRForMatchedInvoice() (REQ-003).

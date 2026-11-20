@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.8-unstable.20261120110000</version>
+    <version>0.5.8-unstable.20261120220000</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -277,6 +277,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  imports PaymentRequest 0.5.0. Idempotent; a fresh install has
                  no such requests, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
+            <!-- purchasing-approval-delegation (REQ-PAD-001): orders the old
+                 in-object approval chain left in the undeclared
+                 lifecycleState pending_approval lose it and start in draft,
+                 so OpenRegister's approval chain takes them on their next
+                 submit. Idempotent; post-migration only. -->
+            <step>OCA\Shillinq\Repair\ResetPendingApprovalPurchaseOrders</step>
             <!-- purchasing-order-dispatch-and-receipt (REQ-PODR-003). An order
                  marked sent under the undeclared lifecycleState field gets
                  statusCode sent where it is still approved. Idempotent. -->

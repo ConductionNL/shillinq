@@ -356,117 +356,9 @@ final class PurchaseOrderServiceTest extends TestCase {
 	}//end buildService()
 
 	/**
-	 * A 5k PO needs only one approver (Teamleider).
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainFiveThousand(): void {
-		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 5000.00);
-
-		self::assertSame(
-			[
-				['role' => 'teamleider', 'order' => 1],
-			],
-			$chain
-		);
-
-	}//end testDetermineApprovalChainFiveThousand()
-
-	/**
-	 * A 10k PO needs Teamleider + Facility Manager.
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainTenThousand(): void {
-		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 10000.00);
-
-		self::assertSame(
-			[
-				['role' => 'teamleider', 'order' => 1],
-				['role' => 'facility_manager', 'order' => 2],
-			],
-			$chain
-		);
-
-	}//end testDetermineApprovalChainTenThousand()
-
-	/**
-	 * The €18,500 fraud-prevention scenario falls into the double-approver tier
-	 * (Teamleider + Facility Manager).
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainEighteenThousandFiveHundred(): void {
-		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 18500.00);
-
-		self::assertCount(2, $chain);
-		self::assertSame('teamleider', $chain[0]['role']);
-		self::assertSame('facility_manager', $chain[1]['role']);
-
-	}//end testDetermineApprovalChainEighteenThousandFiveHundred()
-
-	/**
-	 * A 50k PO escalates to the procurement manager (three-approver tier).
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainFiftyThousand(): void {
-		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 50000.00);
-
-		self::assertSame(
-			[
-				['role' => 'teamleider', 'order' => 1],
-				['role' => 'facility_manager', 'order' => 2],
-				['role' => 'procurement_manager', 'order' => 3],
-			],
-			$chain
-		);
-
-	}//end testDetermineApprovalChainFiftyThousand()
-
-	/**
-	 * Exercises createPurchaseOrder: materialises the chain, persists tasks and
-	 * dispatches notifications (integration of service surfaces).
+	 * Exercises createPurchaseOrder: writes no in-object chain, stores the
+	 * amount OpenRegister's approval chain routes on, persists a task and a
+	 * notification per role the declared tiers ask for.
 	 *
 	 * @return void
 	 */
@@ -512,7 +404,8 @@ final class PurchaseOrderServiceTest extends TestCase {
 
 		self::assertSame(18500.00, $po['totalAmount']);
 		self::assertSame('draft', $po['statusCode']);
-		self::assertCount(2, $po['approvalChain']);
+		self::assertArrayNotHasKey('approvalChain', $po, 'the approval steps are OpenRegister\'s');
+		self::assertSame(1850000, $po['totalExclVat']);
 		self::assertSame('inkoper-1', $po['requesterId']);
 		self::assertNotEmpty($po['poNumber']);
 
@@ -520,6 +413,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		// (one per approver).
 		$tasks = array_values(array_filter($saved, static fn (array $row): bool => $row['schema'] === 'ApprovalTask'));
 		self::assertCount(2, $tasks);
+		self::assertSame(['teamleider', 'facility_manager'], array_map(static fn (array $row): string => $row['object']['role'] ?? ($row['role'] ?? ''), $tasks));
 
 		self::assertCount(2, $notifications);
 		$users = array_map(static fn (array $n): string => $n['user'], $notifications);
@@ -561,12 +455,13 @@ final class PurchaseOrderServiceTest extends TestCase {
 	}//end testCreatePurchaseOrderRejectsCrossTenant()
 
 	/**
-	 * Exercises blockSendUntilApproved: refuses to advance while any approver is
-	 * pending, succeeds once every approver has signed with a timestamp.
+	 * Exercises markSent: refuses to advance while OpenRegister's approval chain
+	 * has not approved the order, whatever its old in-object chain says, and
+	 * succeeds once the order's statusCode is approved.
 	 *
 	 * @return void
 	 */
-	public function testBlockSendUntilApprovedGuard(): void {
+	public function testMarkSentWaitsForTheApprovedState(): void {
 		$saved = [];
 		$notifications = [];
 
@@ -588,9 +483,9 @@ final class PurchaseOrderServiceTest extends TestCase {
 						[
 							'role' => 'facility_manager',
 							'order' => 2,
-							'decision' => 'pending',
-							'decidedAt' => '',
-							'userId' => '',
+							'decision' => 'approved',
+							'decidedAt' => '2026-06-02T09:00:00+00:00',
+							'userId' => 'facility-1',
 						],
 					],
 				],
@@ -605,18 +500,16 @@ final class PurchaseOrderServiceTest extends TestCase {
 			notifications: $notifications
 		);
 
-		// First attempt: only one of two approvals signed.
+		// First attempt: a fully signed old chain does not approve a draft order.
 		try {
-			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: 'po-1');
-			self::fail('Expected blockSendUntilApproved to refuse incomplete chain');
+			$service->markSent(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+			self::fail('Expected markSent to refuse a draft order');
 		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
+			self::assertSame('Purchase order cannot be sent: it is not approved', $e->getMessage());
 		}
 
-		// Second attempt: both signed.
-		$data['PurchaseOrder'][0]['approvalChain'][1]['decision'] = 'approved';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['decidedAt'] = '2026-06-02T09:00:00+00:00';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['userId'] = 'facility-1';
+		// Second attempt: OpenRegister's chain approved it.
+		$data['PurchaseOrder'][0]['statusCode'] = 'approved';
 
 		$service2 = $this->buildService(
 			data: $data,
@@ -626,11 +519,11 @@ final class PurchaseOrderServiceTest extends TestCase {
 			notifications: $notifications
 		);
 
-		$po = $service2->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+		$po = $service2->markSent(administrationId: 'adm-1', purchaseOrderId: 'po-1');
 		self::assertSame('sent', $po['statusCode']);
 		self::assertNotEmpty($po['sentAt']);
 
-	}//end testBlockSendUntilApprovedGuard()
+	}//end testMarkSentWaitsForTheApprovedState()
 	/**
 	 * Every createPurchaseOrder refusal, in check order, with its message;
 	 * none of them saves.
@@ -885,7 +778,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		$data   = [
 			'PurchaseOrder' => [
 				['id' => 'po-empty', 'administrationId' => 'adm-1', 'approvalChain' => []],
-				['id' => 'po-open', 'administrationId' => 'adm-1', 'approvalChain' => [$signed, ['decision' => 'pending']]],
+				['id' => 'po-open', 'administrationId' => 'adm-1', 'statusCode' => 'draft', 'approvalChain' => [$signed, $signed]],
 				['id' => 'po-other', 'administrationId' => 'adm-2', 'approvalChain' => [$signed]],
 				['id' => 'po-ok', 'administrationId' => 'adm-1', 'statusCode' => 'approved', 'approvalChain' => [$signed]],
 			],
@@ -897,7 +790,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 			$notifications = [];
 			$service       = $this->buildService(data: $data, saved: $saved, userId: 'u', accessibleAdministrations: ['adm-1'], notifications: $notifications);
 			try {
-				$service->blockSendUntilApproved($administrationId, $poId);
+				$service->markSent($administrationId, $poId);
 				$messages[] = 'accepted';
 			} catch (\RuntimeException $e) {
 				$messages[] = $e->getMessage();
@@ -911,8 +804,8 @@ final class PurchaseOrderServiceTest extends TestCase {
 				'Purchase order not found',
 				'Purchase order not found',
 				'Purchase order not found',
-				'Purchase order has no approval chain',
-				'Purchase order cannot be sent: approval chain incomplete',
+				'Purchase order cannot be sent: it is not approved',
+				'Purchase order cannot be sent: it is not approved',
 			],
 			$messages
 		);
@@ -920,7 +813,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		$saved         = [];
 		$notifications = [];
 		$service       = $this->buildService(data: $data, saved: $saved, userId: 'u', accessibleAdministrations: ['adm-1'], notifications: $notifications);
-		$sent          = $service->blockSendUntilApproved('adm-1', 'po-ok');
+		$sent          = $service->markSent('adm-1', 'po-ok');
 
 		self::assertSame('sent', $sent['statusCode']);
 		self::assertNotSame('', (string)$sent['sentAt']);

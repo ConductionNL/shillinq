@@ -28,7 +28,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\PurchaseOrderApprovalEntry;
 use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -38,7 +37,6 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Activity\IEvent;
@@ -60,8 +58,6 @@ use RuntimeException;
 #[UsesClass(PeppolBisOrderMapper::class)]
 #[UsesClass(SupplierQualificationGuard::class)]
 #[UsesClass(FrameworkAgreementDrawdownGuard::class)]
-#[UsesClass(PurchaseOrderApprovalService::class)]
-#[UsesClass(PurchaseOrderApprovalEntry::class)]
 #[UsesClass(ApprovalActivityEmitter::class)]
 #[UsesClass(ApprovalActivity::class)]
 final class PurchaseOrderServiceEdgesTest extends TestCase {
@@ -142,7 +138,7 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 			'supplierId' => 'sup-1',
 			'currency' => 'EUR',
 			'totalAmount' => 100.0,
-			'statusCode' => 'draft',
+			'statusCode' => 'approved',
 			'lines' => [
 				[
 					'lineNumber' => 1,
@@ -188,20 +184,6 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 		);
 
 	}//end payload()
-
-	/**
-	 * A zero or negative amount needs no approvers.
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainIsEmptyForNonPositiveAmounts(): void {
-		$service = $this->buildService(objectService: new InMemoryObjectServiceStub());
-
-		self::assertSame([], $service->determineApprovalChain(amount: 0.0));
-		self::assertSame([], $service->determineApprovalChain(amount: -12.5));
-		self::assertSame([['role' => 'teamleider', 'order' => 1]], $service->determineApprovalChain(amount: 0.01));
-
-	}//end testDetermineApprovalChainIsEmptyForNonPositiveAmounts()
 
 	/**
 	 * When the Access Point throws, the PO falls back to PDF+email with reason

@@ -16,11 +16,11 @@
  * AdministrationContextService (ADR-005, ADR-031 IDOR-safe).
  *
  * Monetary arithmetic is integer-cent only (multipleOf 0.01 on the schema fields
- * declared by slice 01); see toCents/fromCents helpers. Approval-chain routing is
- * threshold-based: below €10,000 a single Teamleider approves; €10,000–€49,999.99
- * adds Facility Manager; €50,000 or above adds Procurement Manager. The PO cannot
- * transition to lifecycle state "sent" until every assigned ApprovalTask is signed
- * with a timestamp.
+ * declared by slice 01); see toCents/fromCents helpers. Approval runs on
+ * OpenRegister's `purchase-order-approval` chain declared on the PurchaseOrder
+ * schema: a Teamleider for any amount, a Facility Manager from €10,000 and a
+ * Procurement Manager from €50,000 (REQ-PAD-001). The PO cannot transition to
+ * lifecycle state "sent" until that chain has approved it.
  *
  * Approver notifications are dispatched via NC's standard notification manager
  * (OCP\Notification\IManager); the manager's app id is "shillinq" and the object
@@ -68,15 +68,14 @@ use RuntimeException;
  *
  * Public methods:
  * - createPurchaseOrder(): validates requester + cost-center budget, generates a
- *   CBS-conform po_number server-side, materialises the approval chain and the
- *   ApprovalTask records, dispatches notifications, persists the PurchaseOrder
- *   with statusCode "draft"; the approval chain carries the pending decisions.
- * - determineApprovalChain(): pure-logic threshold evaluation; returns an ordered
- *   list of approver-role descriptors. Used by createPurchaseOrder and by the
- *   service-layer guards. Independent of storage so it is trivially unit-tested.
- * - blockSendUntilApproved(): refuses the transition to "sent" unless every
- *   required approver in the chain has approved with a timestamp; on success it
- *   persists the lifecycle change and returns the updated record.
+ *   CBS-conform po_number server-side, raises the ApprovalTask records and
+ *   notifications for the roles the amount needs, and persists the PurchaseOrder
+ *   with statusCode "draft". The approval itself runs on OpenRegister's declared
+ *   `purchase-order-approval` chain (REQ-PAD-001), which gates the `approve`
+ *   transition; shillinq writes no approval chain of its own.
+ * - markSent(): refuses the transition to "sent" unless the order's statusCode
+ *   is approved; on success it persists the lifecycle change and returns the
+ *   updated record.
  *
  * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  *
@@ -89,22 +88,6 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The order lifecycle reaches the register, the engine and the approval chain.
  */
 class PurchaseOrderService implements PurchaseOrderServiceInterface {
-	/**
-	 * Approval-chain threshold for the single-approver tier (Teamleider only).
-	 * A PO with a total strictly below this amount needs ONE approver.
-	 *
-	 * @var int Cents.
-	 */
-	private const THRESHOLD_DOUBLE_APPROVER_CENTS = 1000000;
-
-	/**
-	 * Approval-chain threshold for the procurement-manager tier.
-	 * A PO with a total at or above this amount also needs the procurement manager.
-	 *
-	 * @var int Cents.
-	 */
-	private const THRESHOLD_PROCUREMENT_MANAGER_CENTS = 5000000;
-
 	/**
 	 * Notification "object type" for ApprovalTask deep links.
 	 *
@@ -222,6 +205,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *                                                      REQ-RAP-006 `approval_requested`
 	 *                                                      event; nullable so unit tests need
 	 *                                                      not wire IActivityManager.
+	 * @param PurchaseOrderApprovalTiers   $approvalTiers   The approver tiers the PurchaseOrder schema declares.
 	 * @param ObjectTransitionRunner|null $transitionRunner Runs the declared `send` transition (REQ-PODR-003).
 	 *
 	 * @return void
@@ -238,6 +222,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		?SupplierQualificationGuard $supplierQualificationGuard = null,
 		?FrameworkAgreementDrawdownGuard $frameworkAgreementDrawdownGuard = null,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
+		private readonly PurchaseOrderApprovalTiers $approvalTiers = new PurchaseOrderApprovalTiers(),
 		private readonly ?ObjectTransitionRunner $transitionRunner = null,
 	) {
 		// ADR-084: these three collaborators used to be handed the DI container so
@@ -270,7 +255,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	}//end __construct()
 
 	/**
-	 * Create a purchase order with a materialised approval chain (REQ-PO3W-001).
+	 * Create a purchase order in draft, routed to its approvers (REQ-PO3W-001).
 	 *
 	 * Server-authoritative:
 	 *  - the requesterId is derived from the validated administration membership;
@@ -278,8 +263,10 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *  - the po_number is generated server-side using a CBS-conform sequence
 	 *    (PO-{year}-{administrationCode}-{6-digit-sequence});
 	 *  - cost-center budget is checked against the CostCenter record;
-	 *  - the approval chain is computed from determineApprovalChain() and an
-	 *    ApprovalTask record is created for each required approver;
+	 *  - the roles the amount needs are read from the PurchaseOrder schema's
+	 *    declared approval chain (PurchaseOrderApprovalTiers) and an
+	 *    ApprovalTask record is created for each of them; the approval steps
+	 *    themselves are OpenRegister's;
 	 *  - every approver is notified via the notification manager;
 	 *  - statusCode starts at "draft", the schema's initial state, also while the approval chain is pending
 	 *    or "draft" (no chain — defensive fallback that should not occur for
@@ -455,7 +442,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	}//end assertCreationPolicies()
 
 	/**
-	 * Save the new order with its approval chain and raise an ApprovalTask
+	 * Save the new order and raise an ApprovalTask
 	 * per required approver.
 	 *
 	 * @param array<string,mixed> $order The checked, policy-cleared order.
@@ -463,7 +450,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @return array<string,mixed> The persisted PurchaseOrder payload.
 	 */
 	private function persistNewPurchaseOrder(array $order): array {
-		$order['approvalChain'] = $this->determineApprovalChain(amount: $this->fromCents(cents: $order['totalCents']));
+		$order['approverRoles'] = $this->approvalTiers->rolesFor(cents: $order['totalCents']);
 		$order['poNumber']      = $this->generatePoNumber(administrationId: $order['administrationId']);
 
 		$persisted = $this->saveObject(schema: 'PurchaseOrder', object: $this->purchaseOrderRecord(order: $order));
@@ -471,7 +458,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			administrationId: $order['administrationId'],
 			purchaseOrderId: (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $order['poNumber'])),
 			poNumber: $order['poNumber'],
-			chain: $order['approvalChain']
+			chain: $order['approverRoles']
 		);
 
 		return $persisted;
@@ -480,7 +467,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	/**
 	 * The new PurchaseOrder record.
 	 *
-	 * @param array<string,mixed> $order The order with its number and approval chain.
+	 * @param array<string,mixed> $order The order with its number and approver roles.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -499,10 +486,10 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			'lines' => $order['lines'],
 			'totalAmount' => $this->fromCents(cents: $order['totalCents']),
 			'currency' => (string)($payload['currency'] ?? 'EUR'),
-			'approvalChain' => $this->initialiseApprovalChainEntries(chain: $order['approvalChain']),
-			// The schema's lifecycle field (#1753). A PO waiting for its approval
-			// chain stays in `draft` (the lifecycle's initial state); the chain
-			// entries carry the pending decisions.
+			// The amount OpenRegister's approval chain routes on (integer cents).
+			'totalExclVat' => $order['totalCents'],
+			// The schema's lifecycle field (#1753). A PO starts in `draft`; its
+			// approval steps are OpenRegister's (REQ-PAD-001), not an in-object chain.
 			'statusCode' => 'draft',
 			'createdAt' => $this->nowIso(),
 			'notes' => trim((string)($payload['notes'] ?? '')),
@@ -510,62 +497,26 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	}//end purchaseOrderRecord()
 
 	/**
-	 * Determine the ordered list of required approvers for a PO total.
+	 * Refuse to advance a PO to lifecycle "sent" until it is approved.
 	 *
-	 * Threshold table (REQ-PO3W-001):
-	 *  - amount < €10,000          → [Teamleider]
-	 *  - €10,000 ≤ amount < €50,000 → [Teamleider, Facility Manager]
-	 *  - amount ≥ €50,000           → [Teamleider, Facility Manager, Procurement Manager]
-	 *
-	 * Comparison is done in integer cents to avoid float drift.
-	 *
-	 * @param float $amount The PO total in euro (multipleOf 0.01).
-	 *
-	 * @return array<int,array{role:string,order:int}> Ordered approver descriptors.
-	 *
-	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
-	 */
-	public function determineApprovalChain(float $amount): array {
-		$cents = $this->toCents(amount: $amount);
-		if ($cents <= 0) {
-			return [];
-		}
-
-		$chain = [['role' => 'teamleider', 'order' => 1]];
-
-		if ($cents >= self::THRESHOLD_DOUBLE_APPROVER_CENTS) {
-			$chain[] = ['role' => 'facility_manager', 'order' => 2];
-		}
-
-		if ($cents >= self::THRESHOLD_PROCUREMENT_MANAGER_CENTS) {
-			$chain[] = ['role' => 'procurement_manager', 'order' => 3];
-		}
-
-		return $chain;
-	}//end determineApprovalChain()
-
-	/**
-	 * Refuse to advance a PO to lifecycle "sent" until the chain is fully signed.
-	 *
-	 * Server-authoritative: the Vue layer never grants the transition. The method
-	 * inspects the persisted PurchaseOrder, asserts every approval_chain entry has
-	 * decision=approved + a non-empty decidedAt timestamp, and on success stamps
-	 * sentAt and moves the order to "sent" through the declared `send` transition. On failure the PO is left in its
-	 * current state and a RuntimeException is raised so the controller maps it to
-	 * a 409 Conflict (ADR-005, REQ-PO3W-001 send-block).
+	 * Server-authoritative: the Vue layer never grants the transition. The order
+	 * must carry statusCode approved, which only OpenRegister's approval chain
+	 * sets once every step is decided (REQ-PAD-001). On success it stamps
+	 * sentAt and moves the order to "sent" through the declared `send`
+	 * transition (REQ-PODR-003); otherwise the PO is left as it was
+	 * and a RuntimeException is raised so the controller maps it to a 409.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $purchaseOrderId PO id (id of the persisted record).
 	 *
 	 * @return array<string,mixed> The PurchaseOrder after transition to "sent".
 	 *
-	 * @throws \RuntimeException When the PO is missing, not approved, or the chain
-	 *                           is incomplete.
+	 * @throws \RuntimeException When the PO is missing or not approved.
 	 *
-	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
-	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array {
+	public function markSent(string $administrationId, string $purchaseOrderId): array {
 		$po = $this->loadPurchaseOrderForTransmission(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId);
 
 		// The state moves only through the declared `send` transition
@@ -573,7 +524,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		$po['sentAt'] = $this->nowIso();
 
 		return $this->transitionToSent(purchaseOrder: $this->saveObject(schema: 'PurchaseOrder', object: $po));
-	}//end blockSendUntilApproved()
+	}//end markSent()
 
 	/**
 	 * Which dispatch channels can take an order, and why one cannot (REQ-PODR-001, REQ-PODR-002).
@@ -619,8 +570,8 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @return array<string,mixed> The PurchaseOrder with its dispatch recorded.
 	 *
-	 * @throws \RuntimeException When the PO is missing, the approval chain is
-	 *                           incomplete or a dispatch is already pending
+	 * @throws \RuntimeException When the PO is missing, not approved or a
+	 *                           dispatch is already pending
 	 *                           (mapped to 404 / 409 by the controller).
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
@@ -925,29 +876,19 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	}//end loadPurchaseOrderForTransmission()
 
 	/**
-	 * Refuse an order without an approval chain, or with an entry that is not
-	 * approved and stamped.
+	 * Refuse an order that OpenRegister's approval chain has not approved.
 	 *
 	 * @param array<string,mixed> $purchaseOrder The persisted PurchaseOrder record.
 	 *
 	 * @return void
 	 *
-	 * @throws \RuntimeException When the chain is empty or incomplete.
+	 * @throws \RuntimeException When the order's statusCode is not approved.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
-	 *  is a pure check on one chain entry, shared with the approval service so the
-	 *  send check and the signing read one shape (#1716).
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
 	 */
 	private function assertFullyApproved(array $purchaseOrder): void {
-		$chain = (array)($purchaseOrder['approvalChain'] ?? []);
-		if ($chain === []) {
-			throw new RuntimeException('Purchase order has no approval chain');
-		}
-
-		foreach ($chain as $entry) {
-			if (PurchaseOrderApprovalService::isApprovedEntry(entry: $entry) === false) {
-				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
-			}
+		if ((string)($purchaseOrder['statusCode'] ?? '') !== 'approved') {
+			throw new RuntimeException('Purchase order cannot be sent: it is not approved');
 		}
 	}//end assertFullyApproved()
 
@@ -1023,7 +964,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		// Emitted ONCE per purchase order (not once per role) so the Activity
 		// feed carries a single entry per approval round, matching the
 		// already-live `approval_approved` / `approval_rejected` rows in
-		// PurchaseOrderApprovalService::recordApprovalDecision(). The emitter
+		// OpenRegister's approval chain. The emitter
 		// is nullable for the same reason it is there: unit tests need not
 		// wire IActivityManager, and publishing is best-effort (the OR audit
 		// trail remains the authoritative record).
@@ -1162,33 +1103,6 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 
 		return $userIds;
 	}//end findApproverIds()
-
-	/**
-	 * Project the approval-chain descriptor into the persisted PurchaseOrder shape.
-	 *
-	 * Each entry is written in the shape `PurchaseOrder.approvalChain` declares
-	 * and PurchaseOrderApprovalService::recordApprovalDecision() signs:
-	 * `decision: pending`, an empty `decidedAt` and `userId` (#1716).
-	 *
-	 * @param array<int,array{role:string,order:int}> $chain Chain returned by determineApprovalChain.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function initialiseApprovalChainEntries(array $chain): array {
-		$entries = [];
-		foreach ($chain as $entry) {
-			$entries[] = [
-				'role' => $entry['role'],
-				'order' => $entry['order'],
-				'userId' => '',
-				'decision' => PurchaseOrderApprovalService::DECISION_PENDING,
-				// No `decidedAt` until a decision: the schema declares it a
-				// date-time and OpenRegister refuses an empty string (#1753).
-			];
-		}
-
-		return $entries;
-	}//end initialiseApprovalChainEntries()
 
 	/**
 	 * Normalise + validate the line items in the request payload.

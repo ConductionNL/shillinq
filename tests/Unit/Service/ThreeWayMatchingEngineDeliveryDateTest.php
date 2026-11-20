@@ -220,7 +220,7 @@ final class ThreeWayMatchingEngineDeliveryDateTest extends TestCase {
 		$match = $this->evaluate(self::rows(poLine: ['expectedDeliveryDate' => '2026-06-01'], receipt: ['receivedAt' => '2026-06-04']));
 
 		$this->assertSame('auto_approved', $match['matchStatus']);
-		$this->assertSame(['matching', 'matched'], $this->transitions);
+		$this->assertSame(['matching', 'matched', 'approved'], $this->transitions);
 
 	}//end testADeliveryWithinTheToleranceKeepsItsStatus()
 

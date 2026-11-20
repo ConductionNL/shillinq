@@ -65,7 +65,6 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpArgumentValidator  $validator      Checks arguments before anything runs.
 	 * @param McpAdministrationGate $gate           Names the principal for the audit record.
 	 * @param McpInvocationAudit    $audit          Records every invocation.
-	 * @param McpPurchaseOrderTools $purchaseOrders The purchase-order handlers.
 	 * @param McpPeriodCloseTools   $periodClose    The period-close handlers.
 	 * @param McpVatReturnTools     $vatReturns     The VAT-return handlers.
 	 * @param McpDunningTools       $dunning        The dunning handlers.
@@ -80,7 +79,6 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		private readonly McpArgumentValidator $validator,
 		private readonly McpAdministrationGate $gate,
 		private readonly McpInvocationAudit $audit,
-		private readonly McpPurchaseOrderTools $purchaseOrders,
 		private readonly McpPeriodCloseTools $periodClose,
 		private readonly McpVatReturnTools $vatReturns,
 		private readonly McpDunningTools $dunning,
@@ -177,7 +175,6 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		}
 
 		return match ($toolId) {
-			'shillinq.purchase_order.decide' => $this->purchaseOrders->decide(args: $arguments),
 			'shillinq.period_close.status' => $this->periodClose->status(args: $arguments),
 			'shillinq.period_close.start' => $this->periodClose->start(args: $arguments),
 			'shillinq.period_close.close' => $this->periodClose->close(args: $arguments),

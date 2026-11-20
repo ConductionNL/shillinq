@@ -6153,7 +6153,9 @@ OC.L10N.register(
         "All rates": "All rates",
         "Deductible percentage": "Deductible percentage",
         "Private-share account": "Private-share account",
-        "No active administration, so the budget lines cannot be shown.": "No active administration, so the budget lines cannot be shown."
+        "No active administration, so the budget lines cannot be shown.": "No active administration, so the budget lines cannot be shown.",
+        "Approval": "Approval",
+        "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted.": "No approval steps yet. An order of zero needs none; any other order gets its steps from OpenRegister when it is submitted."
     },
     "nplurals=2; plural=(n != 1);"
 )

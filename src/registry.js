@@ -167,7 +167,7 @@ import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail
 // and POSTs the normalised payload to /api/purchase-orders; the detail
 // view renders the materialised approval chain with per-approver
 // signature timestamps and gates the 'Send to supplier' action on the
-// server-authoritative blockSendUntilApproved guard. Neither view fits a
+// server-authoritative markSent guard. Neither view fits a
 // built-in `index` / `detail` page type, so both are kind:"page" custom
 // components.
 import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
