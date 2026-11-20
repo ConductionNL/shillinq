@@ -8324,7 +8324,10 @@ OC.L10N.register(
         "We received your withdrawal from this booking on %1$s at %2$s.": "We hebben je herroeping van deze boeking ontvangen op %1$s om %2$s.",
         "Service: %s": "Dienst: %s",
         "Appointment: %s": "Afspraak: %s",
-        "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days.": "De boeking is geannuleerd zonder annuleringskosten. Wat je ervoor hebt betaald, krijg je binnen 14 dagen volledig terug."
+        "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days.": "De boeking is geannuleerd zonder annuleringskosten. Wat je ervoor hebt betaald, krijg je binnen 14 dagen volledig terug.",
+        "Total excluding VAT": "Totaal exclusief btw",
+        "Pay online": "Betaal online",
+        "Scan to pay": "Scan om te betalen"
     },
     "nplurals=2; plural=(n != 1);"
 )

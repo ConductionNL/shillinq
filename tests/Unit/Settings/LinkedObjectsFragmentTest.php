@@ -73,7 +73,8 @@ final class LinkedObjectsFragmentTest extends TestCase {
 	private static function highestOtherVersion(string $schema): string {
 		$highest = '0.0.0';
 		foreach (glob(self::FRAGMENT_DIR . '/*.json') as $file) {
-			if (basename($file) === self::FRAGMENT) {
+			// A later fragment that moves the version further up is checked by the test below.
+			if (strcmp(basename($file), self::FRAGMENT) >= 0) {
 				continue;
 			}
 
@@ -111,17 +112,22 @@ final class LinkedObjectsFragmentTest extends TestCase {
 	}//end testEveryDocumentDeclaresTheContractListShape()
 
 	/**
-	 * The fragment sorts after every other fragment that sets a version for these schemas,
-	 * because the last fragment in name order wins the version.
+	 * The last fragment in name order wins the version, so a fragment that sorts after this one
+	 * and sets a version for one of these schemas must move it further up, or the import would
+	 * read a lower version and skip the list.
 	 *
 	 * @return void
 	 */
 	public function testTheFragmentHasTheLastWordOnTheVersions(): void {
+		$own = self::fragment(self::FRAGMENT)['components']['schemas'];
 		foreach (glob(self::FRAGMENT_DIR . '/*.json') as $file) {
 			$schemas = (json_decode((string)file_get_contents($file), true)['components']['schemas'] ?? []);
 			foreach (self::DOCUMENTS as $name) {
-				if (isset($schemas[$name]['version']) === true && basename($file) !== self::FRAGMENT) {
-					self::assertLessThan(0, strcmp(basename($file), self::FRAGMENT), basename($file) . ' sets ' . $name . ' after this fragment');
+				if (isset($schemas[$name]['version']) === true && strcmp(basename($file), self::FRAGMENT) > 0) {
+					self::assertTrue(
+						version_compare((string)$schemas[$name]['version'], (string)$own[$name]['version'], '>'),
+						basename($file) . ' sets ' . $name . ' after this fragment without moving its version up'
+					);
 				}
 			}
 		}

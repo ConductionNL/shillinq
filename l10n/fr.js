@@ -1573,7 +1573,17 @@ OC.L10N.register(
         "Everything Reporting & Compliance has already produced.": "Tout ce que Reporting & conformité a déjà produit.",
         "What retention destroyed, and when.": "Ce que la conservation a détruit, et quand.",
         "Marketplace": "Boutique",
-        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installez des registres, schémas et flux publiés par d'autres organisations."
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installez des registres, schémas et flux publiés par d'autres organisations.",
+        "Quantity": "Quantité",
+        "Total excluding VAT": "Total hors TVA",
+        "Amount due": "Montant dû",
+        "Payment terms": "Conditions de paiement",
+        "IBAN": "IBAN",
+        "VAT number": "Numéro de TVA",
+        "Pay online": "Payer en ligne",
+        "Scan to pay": "Scanner pour payer",
+        "VAT rate": "Taux de TVA",
+        "Invoice number": "Numéro de facture"
     },
     "nplurals=2; plural=(n != 1);"
 )
