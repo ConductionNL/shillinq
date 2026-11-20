@@ -37,6 +37,7 @@ use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
+use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\Shillinq\Service\ServiceRegistrar;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -100,7 +101,7 @@ final class ServiceRegistrarTest extends TestCase {
 	 */
 	public function testContractBindingsAreIncluded(): void {
 		self::assertSame(AansluitingService::class, $this->aliases[AansluitingServiceInterface::class]);
-		self::assertCount(231 + 25, $this->aliases);
+		self::assertCount(232 + 26, $this->aliases);
 
 	}//end testContractBindingsAreIncluded()
 
@@ -122,18 +123,24 @@ final class ServiceRegistrarTest extends TestCase {
 	}//end testPortsResolveToDefaultAdapters()
 
 	/**
-	 * Exactly three services are built by a factory; the Digipoort port is
-	 * one, because its binding picks the configured adapter at runtime.
+	 * Exactly four services are built by a factory: the Digipoort port, because
+	 * its binding picks the configured adapter at runtime, and the purchase
+	 * order Peppol adapter, which takes the party directory and the container.
 	 *
 	 * @return void
 	 */
-	public function testOnlyTheThreeFactoriesAreRegistered(): void {
+	public function testOnlyTheFourFactoriesAreRegistered(): void {
 		self::assertSame(
-			[DoorsnijdingsVerbodValidator::class, DigipoortSbrAdapterInterface::class, PaymentProviderInterface::class],
+			[
+				DoorsnijdingsVerbodValidator::class,
+				PeppolTransmissionAdapterInterface::class,
+				DigipoortSbrAdapterInterface::class,
+				PaymentProviderInterface::class,
+			],
 			array_keys($this->factories)
 		);
 
-	}//end testOnlyTheThreeFactoriesAreRegistered()
+	}//end testOnlyTheFourFactoriesAreRegistered()
 
 	/**
 	 * The validator factory wires the config, object service and audit logger.

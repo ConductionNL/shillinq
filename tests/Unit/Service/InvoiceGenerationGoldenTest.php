@@ -34,6 +34,7 @@ use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -346,6 +347,7 @@ final class InvoiceGenerationGoldenTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
 			billedReadings: $this->createMock(BilledReadings::class),
+			passThrough: $this->createMock(PassThroughBilling::class),
 			billableRates: new BillableRateService(new DuckObjectServiceAdapter($this->objectService), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 	}//end setUp()

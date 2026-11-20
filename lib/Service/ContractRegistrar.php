@@ -46,6 +46,7 @@ use OCA\Shillinq\Kernel\Contracts\BcfCompensationCalculatorInterface;
 use OCA\Shillinq\Kernel\Contracts\BegrotingswijzigingStackerInterface;
 use OCA\Shillinq\Kernel\Contracts\BIKStaffelCalculatorInterface;
 use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BillableWorkServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BillablePeriodInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetChartSeriesServiceInterface;
@@ -263,6 +264,7 @@ use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Bank\ObjectRequestBankMatcher;
 use OCA\Shillinq\Service\Bank\ObjectRequestBankSettlement;
 use OCA\Shillinq\Service\Bank\StatementIntakeService;
+use OCA\Shillinq\Service\Billing\BillableWorkService;
 use OCA\Shillinq\Service\Booking\CalendarRows;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
@@ -381,6 +383,7 @@ final class ContractRegistrar {
 		BcfCompensationCalculatorInterface::class => BcfCompensationCalculator::class,
 		BegrotingswijzigingStackerInterface::class => BegrotingswijzigingStacker::class,
 		BillableLinesServiceInterface::class => BillableLinesService::class,
+		BillableWorkServiceInterface::class => BillableWorkService::class,
 		BillablePeriodInvoiceServiceInterface::class => BillablePeriodInvoiceService::class,
 		BookingNotificationServiceInterface::class => BookingNotificationService::class,
 		BudgetChartSeriesServiceInterface::class => BudgetChartSeriesService::class,

@@ -20,8 +20,8 @@ REST API under `/apps/shillinq/api/v1/invoices/`.
 
 | Schema | Purpose |
 |---|---|
-| `BillableInvoice` | Invoice materialised from time + expense; carries `billingModel`, `timeEntryIds`, `expenseIds`, `rateCardId`, `retainerScheduleId`, `lineItemsByModel`, `summary`. |
-| `BillableInvoiceLine` | Per-line `sourceType` (time_entry, expense, retainer_charge, fixed_fee, manual), `rateApplied` snapshot, `billableUnits`, `costAmount`, `vatRate`. |
+| `BillableInvoice` | Invoice materialised from time + expense; carries `billingModel`, `timeEntryIds`, `expenseIds`, `expenseItemRefs` (pass-through items billed one by one), `rateCardId`, `retainerScheduleId`, `lineItemsByModel`, `summary`. |
+| `BillableInvoiceLine` | Per-line `sourceType` (time_entry, expense, retainer_charge, fixed_fee, manual), `rateApplied` snapshot, `billableUnits`, `costAmount`, `vatRate`; a recharged item's line adds `recharge` (cost, markup rule, rate and amount, VAT treatment). |
 | `RetainerSchedule` | Monthly recurring fee + optional T&M overage threshold; effective-dated. |
 | existing `RateCard` / `RateRecord` | Re-used for rate look-ups; `rateApplied` is **snapshot'd** at generation time (D2). |
 
@@ -33,9 +33,21 @@ REST API under `/apps/shillinq/api/v1/invoices/`.
 3. For T&M and Mixed, pick a `Rate card`; for Retainer and Mixed pick a
    `Retainer schedule`; for Fixed-fee enter the flat `Fixed fee (€)`; for
    Milestone enter the `Milestone ID`.
-4. Paste comma-separated `Time entry IDs` and `Expense IDs`. The server
-   refuses sets that overlap with an existing draft or posted invoice
-   (HTTP 409 Conflict, D9).
+4. Tick what to bill. **Hours to bill** lists the approved hours on the
+   chosen project in the period that no draft or posted invoice holds yet,
+   each with person, date, hours, the rate the chosen rate card gives and
+   the amount, plus the total of the ticked hours. Without a project the
+   list asks for one; when no hours app is connected it says that hours are
+   not available rather than showing a total of zero.
+   **Pass-through expenses to bill** lists the customer's pass-through
+   receipts, mileage and per diem items of approved or posted claims that
+   are not on an invoice yet, each with its cost, the markup locked when the
+   claim was submitted, and the amount. Items of one claim may go on
+   different invoices. Tick **Disbursement, outside the VAT base** for a
+   cost paid in the client's name and for the client's account (court fees,
+   a land registry extract). The server refuses an hour or item already on
+   a draft or posted invoice, and an item whose whole claim an older
+   invoice billed (HTTP 409 Conflict, D9).
 5. **Save as Draft** to persist. The totals block fills in with `Net`,
    `VAT/BTW`, and `Gross`.
 6. **Preview PDF** opens the invoice document in a new tab (Dutch BTW
@@ -43,7 +55,25 @@ REST API under `/apps/shillinq/api/v1/invoices/`.
 7. **Post to AR** transitions the invoice to `posted`, creates an
    Obligation, and posts the GL entries — Debit `1130` (AR), Credit the
    revenue account (4100 T&M / 4200 fixed/milestone / 4300 retainer /
-   4400 mixed), Credit `1150` (VAT Payable).
+   4400 mixed), Credit `1150` (VAT Payable). A pass-through claim whose
+   items now all sit on posted invoices moves to `invoiced`.
+
+### Recharged expenses: markup and VAT
+
+- The markup comes from the **Pass-through markup rules** page: the rule for
+  the customer and category wins over the customer's rule, which wins over
+  a category rule, which wins over the global rule. It is locked on each
+  item when the claim is submitted; changing a rule later does not reprice
+  submitted claims. An item without a matching rule is billed at cost.
+- A recharged cost is part of the price of the service, so its line takes
+  the VAT rate of the invoice's main supply (the rate of the hour lines),
+  not the rate on the receipt: a train ticket of EUR 42.80 bought at 9
+  percent with a 10 percent travel rule is billed at EUR 47.08 at 21
+  percent.
+- A disbursement is billed at cost outside the VAT base (0 percent) with
+  the mention "Verschotten, buiten de btw-grondslag".
+- `markupValue` is stored with two decimals of a fraction, so a rule can say
+  10 or 12 percent but not 12.5 percent.
 
 ## Accountant workflow
 
@@ -71,9 +101,25 @@ Drafts a new `BillableInvoice`.
   "toDate": "2026-05-31",
   "rateCardId": "rate-card-consulting",
   "timeEntryIds": ["uren-001", "uren-002"],
-  "expenseIds": ["exp-001"]
+  "expenseIds": [],
+  "expenseItemRefs": [
+    { "schema": "Receipt", "id": "rcpt-001" },
+    { "schema": "Receipt", "id": "rcpt-002", "disbursement": true }
+  ]
 }
 ```
+
+`expenseIds` bills whole expense claims at their own VAT rate;
+`expenseItemRefs` bills single pass-through items (`Receipt`,
+`MileageEntry` or `PerDiem`) at cost plus their locked markup.
+
+### `GET /api/v1/invoices/billable-work`
+
+`?customerId=…&projectId=…&from=…&to=…&rateCardId=…` returns
+`{ hours: { available, reason, entries }, expenses }`: the unbilled hours of
+the customer's project in the period, priced on the rate card, and the
+customer's unbilled pass-through items. `available: false` means no hours
+source is connected.
 
 Returns `200 OK` with the persisted invoice, or:
 

@@ -229,6 +229,13 @@
             "title": "Revenue Account",
             "description": "The general-ledger account the receipt books against, overriding the requestType mapping for this type when set."
           },
+          "revenueTaskField": {
+            "type": "string",
+            "nullable": true,
+            "title": "Revenue Task Field",
+            "description": "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.",
+            "example": "8.3"
+          },
           "payAtIntake": {
             "type": "string",
             "enum": [
