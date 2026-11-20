@@ -8290,7 +8290,8 @@ OC.L10N.register(
         "Stock value": "Voorraadwaarde",
         "Choose a date": "Kies een datum",
         "Value per product and location": "Waarde per product en locatie",
-        "No stock on this date.": "Geen voorraad op deze datum."
+        "No stock on this date.": "Geen voorraad op deze datum.",
+        "No active administration, so the budget lines cannot be shown.": "Geen actieve administratie, dus de budgetregels kunnen niet worden getoond."
     },
     "nplurals=2; plural=(n != 1);"
 )

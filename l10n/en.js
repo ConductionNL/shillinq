@@ -6145,7 +6145,8 @@ OC.L10N.register(
         "Value per product and location": "Value per product and location",
         "No stock on this date.": "No stock on this date.",
         "Valuation Method": "Valuation Method",
-        "Total Value": "Total Value"
+        "Total Value": "Total Value",
+        "No active administration, so the budget lines cannot be shown.": "No active administration, so the budget lines cannot be shown."
     },
     "nplurals=2; plural=(n != 1);"
 )

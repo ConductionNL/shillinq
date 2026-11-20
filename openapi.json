@@ -60,6 +60,10 @@
             "description": "The owner's path for adding members to an administration."
         },
         {
+            "name": "administration-results",
+            "description": "Commitment and segment figures of one administration, scoped on the server."
+        },
+        {
             "name": "import-batch",
             "description": "Server actions on an import batch (confirm suggested mappings)."
         },
@@ -16442,6 +16446,204 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/budget-line-commitments": {
+            "get": {
+                "operationId": "administration-results-commitments",
+                "summary": "Committed and realised amounts per budget line of one administration",
+                "description": "Committed and realised amounts per budget line of one administration. The administration is the caller's active one, or the administrationId asked for when the caller belongs to it; another administration answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-results"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration; the caller's active one when empty.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/budget-line-commitments/lines": {
+            "get": {
+                "operationId": "administration-results-commitment-lines",
+                "summary": "The commitment lines behind one budget line of one administration",
+                "description": "The commitment lines behind one budget line of one administration. The administration is the caller's active one, or the administrationId asked for when the caller belongs to it; another administration answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-results"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration; the caller's active one when empty.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "programme",
+                        "in": "query",
+                        "required": false,
+                        "description": "The budget line's programme.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "costCentre",
+                        "in": "query",
+                        "required": false,
+                        "description": "The budget line's cost centre.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "financialYear",
+                        "in": "query",
+                        "required": false,
+                        "description": "The budget line's financial year.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "generalLedgerAccount",
+                        "in": "query",
+                        "required": false,
+                        "description": "The budget line's general ledger account.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/segment-results": {
+            "get": {
+                "operationId": "administration-results-segments",
+                "summary": "Revenue, costs and result per segment of one administration",
+                "description": "Revenue, costs and result per segment of one administration. The administration is the caller's active one, or the administrationId asked for when the caller belongs to it; another administration answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-results"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration; the caller's active one when empty.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "segment",
+                        "in": "query",
+                        "required": false,
+                        "description": "costCenter, costCenterHierarchy, costObject, project or analyticalDimension; costCenter when empty.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "periodId",
+                        "in": "query",
+                        "required": false,
+                        "description": "A FiscalPeriod periodId (2026-M09, 2026-Q3); the whole history when empty.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
                     }
                 }
             }
