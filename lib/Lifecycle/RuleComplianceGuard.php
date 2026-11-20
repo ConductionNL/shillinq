@@ -40,6 +40,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Lifecycle\Action\AssignInvoiceNumberAction;
+use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -51,6 +53,13 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  */
 class RuleComplianceGuard {
 	/**
+	 * The number an invoice is judged by when the issue assigns it.
+	 *
+	 * @var string
+	 */
+	public const NUMBER_ASSIGNED_AT_ISSUE = 'assigned-at-issue';
+
+	/**
 	 * Construct the rule compliance lifecycle guard.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -58,6 +67,7 @@ class RuleComplianceGuard {
 	 * @param BalanceGuard $balanceGuard Existing double-entry balance guard (reused).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
+	 * @param SalesInvoiceApprovalGuard|null $approvals The approval threshold of an issue (REQ-SIIC-003).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -65,6 +75,7 @@ class RuleComplianceGuard {
 		private readonly BalanceGuard $balanceGuard,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly PostingRestrictionGuard $restrictions,
+		private readonly ?SalesInvoiceApprovalGuard $approvals = null,
 	) {
 
 	}//end __construct()
@@ -81,7 +92,10 @@ class RuleComplianceGuard {
 	 *
 	 * @return bool True to allow the transition.
 	 *
+	 * @throws PostingRefusedException When the invoice needs approval before it is issued.
+	 *
 	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
+	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-2.2
 	 */
 	public function validateInvoice(string|array $invoiceOrId): bool {
 		$id = $this->idOf(objectOrId: $invoiceOrId);
@@ -95,9 +109,19 @@ class RuleComplianceGuard {
 				return false;
 			}
 
-			$violations = RuleEngine::evaluate('ARInvoice', $invoice, $this->context($invoice));
+			// Above the administration's threshold a draft is approved first
+			// (sales-invoice-issue-controls REQ-SIIC-003): issue takes one
+			// `requires`, so the approval check is delegated from here.
+			if ($this->approvals !== null && $this->approvals->canIssue(invoice: $invoice) === false) {
+				return false;
+			}
+
+			$violations = RuleEngine::evaluate('ARInvoice', $this->asNumbered(invoice: $invoice), $this->context($invoice));
 			$this->logViolations('ARInvoice', $id, $violations);
 			return RuleEngine::hasMandatory($violations) === false;
+		} catch (PostingRefusedException $e) {
+			// A refusal that names what to do (request approval): passed on as is.
+			throw $e;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RuleComplianceGuard: invoice validation failed — denying issue (fail-closed)',
@@ -249,18 +273,58 @@ class RuleComplianceGuard {
 	}//end idOf()
 
 	/**
-	 * Build the evaluation context. Jurisdiction drives which rules apply; it
-	 * defaults to NL (the home jurisdiction — EU + global rules then apply) and
-	 * is the seam for per-administration jurisdiction resolution later.
+	 * The invoice as it is issued: with its number.
+	 *
+	 * This guard runs before the transition's actions, and the first of them,
+	 * AssignInvoiceNumberAction, gives a draft its number (REQ-SIIC-001). An
+	 * invoice that takes its number there is judged as numbered, so the
+	 * number-present rules hold it to the number it is about to get.
+	 *
+	 * @param array<string, mixed> $invoice The invoice being issued.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AssignInvoiceNumberAction::takesNumber() is the one reading of who numbers an invoice.
+	 *
+	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+	 */
+	private function asNumbered(array $invoice): array {
+		if (AssignInvoiceNumberAction::takesNumber(invoice: $invoice) === true) {
+			$invoice['invoiceNumber'] = self::NUMBER_ASSIGNED_AT_ISSUE;
+		}
+
+		return $invoice;
+	}//end asNumbered()
+
+	/**
+	 * Build the evaluation context. Jurisdiction drives which rules apply: the
+	 * administration's own jurisdiction, NL when it names none (EU and global
+	 * rules then apply as well). A failed lookup keeps NL, the home jurisdiction.
 	 *
 	 * @param array<string, mixed> $object The object under evaluation.
 	 *
 	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	private function context(array $object): array {
+		$administrationId = ($object['administrationId'] ?? null);
+		$jurisdiction = AdministrationJurisdiction::DEFAULT;
+		if (is_string($administrationId) === true && trim($administrationId) !== '') {
+			try {
+				$jurisdiction = (new AdministrationJurisdiction(objectService: $this->objectService, appConfig: $this->appConfig))
+					->of(administrationId: $administrationId);
+			} catch (\Throwable $e) {
+				$this->logger->warning(
+					'RuleComplianceGuard: the administration\'s jurisdiction could not be read; checking under NL rules',
+					['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+				);
+			}
+		}
+
 		return [
-			'jurisdiction' => 'NL',
-			'administrationId' => ($object['administrationId'] ?? null),
+			'jurisdiction' => $jurisdiction,
+			'administrationId' => $administrationId,
 		];
 
 	}//end context()

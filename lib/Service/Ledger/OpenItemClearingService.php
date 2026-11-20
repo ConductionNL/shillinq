@@ -51,6 +51,8 @@ use OutOfBoundsException;
  * Clears, undoes, lists and suggests open items on a balance account.
  *
  * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Suggesting, clearing and undoing a clearing share one open-item read.
  */
 class OpenItemClearingService {
 	use ReadsSourceRowsInBatches;

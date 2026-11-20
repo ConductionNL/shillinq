@@ -397,6 +397,7 @@
                     "RecurringInvoiceProfile",
                     "ReimbursementPolicy",
                     "RenteRisicoNorm",
+                    "ReorderProposal",
                     "RepaymentInstallment",
                     "Requisition",
                     "RequisitionLine",
