@@ -119,14 +119,14 @@ final class LinkedObjectsFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheFragmentHasTheLastWordOnTheVersions(): void {
-		$own = self::fragment(self::FRAGMENT)['components']['schemas'];
+		$own = self::fragment(name: self::FRAGMENT)['components']['schemas'];
 		foreach (glob(self::FRAGMENT_DIR . '/*.json') as $file) {
 			$schemas = (json_decode((string)file_get_contents($file), true)['components']['schemas'] ?? []);
 			foreach (self::DOCUMENTS as $name) {
 				if (isset($schemas[$name]['version']) === true && strcmp(basename($file), self::FRAGMENT) > 0) {
 					self::assertTrue(
-						version_compare((string)$schemas[$name]['version'], (string)$own[$name]['version'], '>'),
-						basename($file) . ' sets ' . $name . ' after this fragment without moving its version up'
+						condition: version_compare((string)$schemas[$name]['version'], (string)$own[$name]['version'], '>'),
+						message: basename($file) . ' sets ' . $name . ' after this fragment without moving its version up'
 					);
 				}
 			}

@@ -41,7 +41,8 @@ final class EpcQrPayloadTest extends TestCase {
 	 * @return void
 	 */
 	public function testThePayloadFollowsTheEpcFieldOrder(): void {
-		$payload = (new EpcQrPayload())->forTransfer('EUR', 24200, 'Adviesbureau Van Dijk B.V.', 'NL91 ABNA 0417 1643 00', 'abnanl2a', '2026-0042');
+		$creditor = ['legalName' => 'Adviesbureau Van Dijk B.V.', 'iban' => 'NL91 ABNA 0417 1643 00', 'bic' => 'abnanl2a'];
+		$payload = (new EpcQrPayload())->forTransfer($creditor, 'EUR', 24200, '2026-0042');
 
 		$this->assertSame(
 			[
@@ -68,7 +69,8 @@ final class EpcQrPayloadTest extends TestCase {
 	 * @return void
 	 */
 	public function testOptionalBicAndFieldLengths(): void {
-		$payload = (new EpcQrPayload())->forTransfer('eur', 12.3, str_repeat('N', 80), 'NL91ABNA0417164300', '', str_repeat('R', 150) . "\nx");
+		$creditor = ['legalName' => str_repeat('N', 80), 'iban' => 'NL91ABNA0417164300'];
+		$payload = (new EpcQrPayload())->forTransfer($creditor, 'eur', 12.3, str_repeat('R', 150) . "\nx");
 		$lines = explode("\n", (string)$payload);
 
 		$this->assertSame('', $lines[4]);
@@ -86,11 +88,11 @@ final class EpcQrPayloadTest extends TestCase {
 	public function testAnInvoiceThatCannotBePaidByTransferGetsNoPayload(): void {
 		$epc = new EpcQrPayload();
 
-		$this->assertNull($epc->forTransfer('GBP', 4800, 'Van Dijk', 'NL91ABNA0417164300', '', '2026-0043'));
-		$this->assertNull($epc->forTransfer('EUR', 100, 'Van Dijk', '', '', '2026-0043'));
-		$this->assertNull($epc->forTransfer('EUR', 100, 'Van Dijk', 'not-an-iban', '', '2026-0043'));
-		$this->assertNull($epc->forTransfer('EUR', 100, ' ', 'NL91ABNA0417164300', '', '2026-0043'));
-		$this->assertNull($epc->forTransfer('EUR', 0.004, 'Van Dijk', 'NL91ABNA0417164300', '', '2026-0043'));
-		$this->assertNull($epc->forTransfer('EUR', 1000000000, 'Van Dijk', 'NL91ABNA0417164300', '', '2026-0043'));
+		$this->assertNull($epc->forTransfer(['legalName' => 'Van Dijk', 'iban' => 'NL91ABNA0417164300', 'bic' => ''], 'GBP', 4800, '2026-0043'));
+		$this->assertNull($epc->forTransfer(['legalName' => 'Van Dijk', 'iban' => '', 'bic' => ''], 'EUR', 100, '2026-0043'));
+		$this->assertNull($epc->forTransfer(['legalName' => 'Van Dijk', 'iban' => 'not-an-iban', 'bic' => ''], 'EUR', 100, '2026-0043'));
+		$this->assertNull($epc->forTransfer(['legalName' => ' ', 'iban' => 'NL91ABNA0417164300', 'bic' => ''], 'EUR', 100, '2026-0043'));
+		$this->assertNull($epc->forTransfer(['legalName' => 'Van Dijk', 'iban' => 'NL91ABNA0417164300', 'bic' => ''], 'EUR', 0.004, '2026-0043'));
+		$this->assertNull($epc->forTransfer(['legalName' => 'Van Dijk', 'iban' => 'NL91ABNA0417164300', 'bic' => ''], 'EUR', 1000000000, '2026-0043'));
 	}//end testAnInvoiceThatCannotBePaidByTransferGetsNoPayload()
 }//end class

@@ -201,11 +201,9 @@ class InvoiceDocumentData {
 
 		return [
 			'epc' => $this->epc->forTransfer(
+				creditor: $creditor,
 				currency: $currency,
 				amount: self::openAmount(invoice: $invoice),
-				name: (string)($creditor['legalName'] ?? ''),
-				iban: (string)($creditor['iban'] ?? ''),
-				bic: (string)($creditor['bic'] ?? ''),
 				reference: (string)($invoice['invoiceNumber'] ?? '')
 			),
 			'payLink' => $payLink,

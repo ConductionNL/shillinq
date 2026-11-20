@@ -58,20 +58,19 @@ class EpcQrPayload {
 	 * beneficiary name, IBAN, `EUR` and the amount with two decimals, purpose
 	 * (empty), structured reference (empty), unstructured remittance.
 	 *
-	 * @param string $currency  The invoice currency; only EUR qualifies.
-	 * @param float  $amount    The open amount.
-	 * @param string $name      The creditor's name.
-	 * @param string $iban      The creditor's IBAN.
-	 * @param string $bic       The creditor's BIC, or ''.
-	 * @param string $reference The invoice number.
+	 * @param array<string, mixed> $creditor  The creditor: `legalName`, `iban` and optionally `bic`.
+	 * @param string               $currency  The invoice currency; only EUR qualifies.
+	 * @param float                $amount    The open amount.
+	 * @param string               $reference The invoice number.
 	 *
 	 * @return string|null
 	 *
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.4
 	 */
-	public function forTransfer(string $currency, float $amount, string $name, string $iban, string $bic, string $reference): ?string {
-		$iban = strtoupper(str_replace(' ', '', $iban));
-		$name = self::clip(value: $name, length: self::MAX_NAME);
+	public function forTransfer(array $creditor, string $currency, float $amount, string $reference): ?string {
+		$iban = strtoupper(str_replace(' ', '', (string)($creditor['iban'] ?? '')));
+		$bic = (string)($creditor['bic'] ?? '');
+		$name = self::clip(value: (string)($creditor['legalName'] ?? ''), length: self::MAX_NAME);
 		$cents = (int)round($amount * 100);
 		$qualifies = (strtoupper(trim($currency)) === 'EUR' && preg_match('/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/', $iban) === 1
 			&& $name !== '' && $cents > 0 && $amount <= self::MAX_AMOUNT);
