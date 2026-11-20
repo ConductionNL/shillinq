@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Kernel\Exception\UnratedHoursException;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -158,6 +159,7 @@ final class InvoiceGenerationBillableRateTest extends TestCase {
 				$this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 				$this->createMock(ITimeFactory::class)
 			),
+			passThrough: $this->createMock(PassThroughBilling::class),
 		);
 	}//end service()
 

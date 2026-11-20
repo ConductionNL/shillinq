@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
@@ -101,6 +102,7 @@ final class InvoiceGenerationNumberSeriesTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: $store,
 			billedReadings: $this->createMock(BilledReadings::class),
+			passThrough: $this->createMock(PassThroughBilling::class),
 			billableRates: new BillableRateService($store, $location, $this->createMock(ITimeFactory::class)),
 			sequences: new InvoiceNumberSequenceService(objectService: $store, registerLocation: $location, locks: $this->createMock(ILockingProvider::class), lockPause: 0),
 		);

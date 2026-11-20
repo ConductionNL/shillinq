@@ -86,6 +86,7 @@ final class ReportCatalogue {
 		return [
 			// --- Tax filings ---
 			['id' => 'vat-return', 'label' => 'BTW-aangifte', 'category' => 'tax', 'kind' => 'data', 'formats' => ['xml', 'pdf'], 'templateId' => null, 'description' => 'Periodieke btw-aangifte (Digipoort/XBRL).'],
+			['id' => 'ib47', 'label' => 'IB47-opgaaf', 'category' => 'tax', 'kind' => 'data', 'formats' => ['csv'], 'templateId' => null, 'description' => 'Jaarlijkse opgaaf van betalingen aan derden (IB47), uit de voorbereide IB47-batch.'],
 			['id' => 'icp-opgaaf', 'label' => 'ICP-opgaaf', 'category' => 'tax', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Opgaaf intracommunautaire prestaties.'],
 			['id' => 'ib-aangifte', 'label' => 'IB-aangifte (winst)', 'category' => 'tax', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-ib-aangifte', 'description' => 'Inkomstenbelasting winstaangifte ZZP.'],
 			['id' => 'vpb-aangifte', 'label' => 'Vpb-aangifte', 'category' => 'tax', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-vpb-aangifte', 'description' => 'Vennootschapsbelasting aangifte met fiscale balans.'],

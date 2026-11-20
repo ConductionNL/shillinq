@@ -31,6 +31,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Exception\UnratedHoursException;
 use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCA\Shillinq\Service\Sales\InvoiceNumberSequenceService;
 use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Support\RegisterSlug;
@@ -67,6 +68,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @param UsageRatingCalculator $usageRating Meter-quantity rating (usage model).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param BilledReadings $billedReadings Refuses an unbillable reading and marks billed ones invoiced.
+	 * @param PassThroughBilling $passThrough Ticked pass-through items as lines; closes fully billed claims.
 	 * @param BillableRateService $billableRates Prices each hour from the assignment's rate card.
 	 * @param InvoiceNumberSequenceService|null $sequences The invoice number series (REQ-SIIC-001).
 	 */
@@ -81,6 +83,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 		private readonly UsageRatingCalculator $usageRating,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly BilledReadings $billedReadings,
+		private readonly PassThroughBilling $passThrough,
 		private readonly BillableRateService $billableRates,
 		private readonly ?InvoiceNumberSequenceService $sequences = null,
 	) {
@@ -163,8 +166,54 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 		$dedup = $this->deduper->deduplicateSourceIds(
 			administrationId: $request->administrationId,
 			timeEntryIds: $request->timeEntryIds,
-			expenseIds: $request->expenseIds
+			expenseIds: array_values(array_unique(array_merge($request->expenseIds, array_column($request->expenseItemRefs, 'id'))))
 		);
+		$this->refuseConflicts(dedup: $dedup);
+	}//end assertNoInvoicedSources()
+
+	/**
+	 * Refuse ticked items whose whole claim an earlier invoice already billed.
+	 *
+	 * @param InvoiceDraft $draft The draft with its expenses loaded.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When an item's claim is already invoiced.
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	private function assertClaimsNotInvoiced(InvoiceDraft $draft): void {
+		$claimIds = [];
+		foreach ($draft->expenses as $expense) {
+			$claimId = (string)($expense['recharge']['claimId'] ?? '');
+			if ($claimId !== '') {
+				$claimIds[$claimId] = $claimId;
+			}
+		}
+
+		if ($claimIds === []) {
+			return;
+		}
+
+		$this->refuseConflicts(
+			dedup: $this->deduper->deduplicateSourceIds(
+				administrationId: $draft->request->administrationId,
+				timeEntryIds: [],
+				expenseIds: array_values($claimIds)
+			)
+		);
+	}//end assertClaimsNotInvoiced()
+
+	/**
+	 * Throw the conflict a dedup scan found, if any.
+	 *
+	 * @param array{hasConflicts:bool,conflicts:array<int,array<string,mixed>>} $dedup The scan.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the scan found a conflict.
+	 */
+	private function refuseConflicts(array $dedup): void {
 		if ($dedup['hasConflicts'] === true) {
 			throw new RuntimeException(
 				sprintf(
@@ -198,7 +247,13 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			currency: $draft->currency,
 			customerId: $request->customerId
 		);
-		$draft->expenses    = $this->loadExpenses(ids: $request->expenseIds, administrationId: $request->administrationId);
+		$draft->expenses    = $this->loadExpenses(
+			ids: $request->expenseIds,
+			administrationId: $request->administrationId,
+			itemRefs: $request->expenseItemRefs,
+			customerId: $request->customerId
+		);
+		$this->assertClaimsNotInvoiced(draft: $draft);
 		$draft->hoursLogged = array_sum(array_column($draft->timeEntries, 'hours'));
 
 		return $this->driveModel(draft: $draft);
@@ -353,6 +408,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 		);
 
 		$persisted = $this->saveObject(schema: 'BillableInvoice', data: $update);
+		$this->passThrough->markBilledClaims(invoice: $update);
 		$this->logger->info(
 			sprintf(
 				'BillableInvoice %s posted (gross €%.2f, obligation %s)',
@@ -788,16 +844,28 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * cross-tenant expenseId can never resolve — it is silently skipped, the
 	 * same as an unknown id (REQ-001).
 	 *
+	 * Ticked pass-through items (`$itemRefs`) follow the claims, one row per
+	 * item with its cost and locked markup, read in the same administration
+	 * and for the invoiced customer only (REQ-STEB-003).
+	 *
 	 * @param array<int,string> $ids ExpenseClaimEntry ids.
 	 * @param string $administrationId Caller's server-resolved administration scope.
+	 * @param array<int,array{schema:string,id:string,disbursement:bool}> $itemRefs Ticked pass-through items.
+	 * @param string $customerId The invoiced customer.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
-	private function loadExpenses(array $ids, string $administrationId): array {
+	private function loadExpenses(array $ids, string $administrationId, array $itemRefs = [], string $customerId = ''): array {
+		$items = [];
+		if ($itemRefs !== []) {
+			$items = $this->passThrough->expenseRows(refs: $itemRefs, administrationId: $administrationId, customerId: $customerId);
+		}
+
 		if (count($ids) === 0) {
-			return [];
+			return $items;
 		}
 
 		$rows = [];
@@ -815,7 +883,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			];
 		}//end foreach
 
-		return $rows;
+		return array_merge($rows, $items);
 	}//end loadExpenses()
 
 	/**

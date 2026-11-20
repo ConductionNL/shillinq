@@ -39,6 +39,7 @@ use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -90,6 +91,7 @@ final class InvoiceGenerationCurrencyTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: $store,
 			billedReadings: $this->createMock(BilledReadings::class),
+			passThrough: $this->createMock(PassThroughBilling::class),
 			billableRates: new BillableRateService($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 

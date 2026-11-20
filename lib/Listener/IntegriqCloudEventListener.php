@@ -20,6 +20,13 @@
  * so a payment taken through integriq settles the request and its invoice
  * (issue #1681, receivables-payment-links design D3, REQ-RPL-003).
  *
+ * And `nl.conduction.peppol.inbound.received`, which integriq emits for every
+ * document its Peppol access point received (integriq
+ * `PeppolTransmissionService`), with `data` {senderPeppolId, documentType,
+ * payloadReference}. It goes to {@see SelfBilledInvoiceIntakeInterface::receive()}: a
+ * self-billed invoice becomes a draft sales invoice or a refusal, any other
+ * invoice goes to the supplier invoice intake (sales-einvoice-exchange
+ * design D3, REQ-SEIX-006).
  * And `nl.conduction.payment.settlement`, one per payout of a payment provider
  * (receivables-provider-payouts design D1, REQ-RPPO-001): its `data` becomes
  * one `ProviderPayout`, kept once per settlement reference, through
@@ -37,6 +44,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
+ * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
  */
 
 declare(strict_types=1);
@@ -46,6 +54,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceIntakeInterface;
 use OCA\Shillinq\Service\Payout\PayoutIntakeService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -87,6 +96,14 @@ class IntegriqCloudEventListener implements IEventListener {
 	public const TYPE_PAYMENT_STATUS = 'nl.conduction.payment.status';
 
 	/**
+	 * CloudEvent type integriq emits for a document its Peppol access point
+	 * received (integriq `PeppolTransmissionService::EVENT_TYPE_INBOUND_RECEIVED`).
+	 *
+	 * @var string
+	 */
+	public const TYPE_PEPPOL_INBOUND = 'nl.conduction.peppol.inbound.received';
+
+	/**
 	 * CloudEvent type integriq emits once per payout of a payment provider
 	 * (receivables-provider-payouts design D1).
 	 *
@@ -99,7 +116,7 @@ class IntegriqCloudEventListener implements IEventListener {
 	 *
 	 * @var list<string>
 	 */
-	private const HANDLED_TYPES = [self::TYPE_PAYMENT_STATUS, self::TYPE_PAYMENT_SETTLEMENT];
+	private const HANDLED_TYPES = [self::TYPE_PAYMENT_STATUS, self::TYPE_PAYMENT_SETTLEMENT, self::TYPE_PEPPOL_INBOUND];
 
 	/**
 	 * Gateway recorded on the reconciled request (design D3). integriq's
@@ -115,12 +132,14 @@ class IntegriqCloudEventListener implements IEventListener {
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
 	 * @param PaymentReconciliationServiceInterface $reconciliation Applies a payment outcome to its request.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param SelfBilledInvoiceIntakeInterface $inboundInvoices Takes a received Peppol invoice.
 	 * @param PayoutIntakeService $payoutIntake Records a reported settlement as a ProviderPayout.
 	 */
 	public function __construct(
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly PaymentReconciliationServiceInterface $reconciliation,
 		private readonly LoggerInterface $logger,
+		private readonly SelfBilledInvoiceIntakeInterface $inboundInvoices,
 		private readonly PayoutIntakeService $payoutIntake,
 	) {
 	}//end __construct()
@@ -145,6 +164,11 @@ class IntegriqCloudEventListener implements IEventListener {
 				return;
 			}
 
+			if ($cloudEvent['type'] === self::TYPE_PEPPOL_INBOUND) {
+				$this->receiveInbound(data: $cloudEvent['data'] ?? null);
+				return;
+			}
+
 			if ($cloudEvent['type'] === self::TYPE_PAYMENT_SETTLEMENT) {
 				$this->recordSettlement(data: $cloudEvent['data'] ?? null);
 				return;
@@ -158,7 +182,7 @@ class IntegriqCloudEventListener implements IEventListener {
 
 	/**
 	 * The created object's CloudEvent when it is an integriq payment status or
-	 * settlement in the CloudEvent schema, else null.
+	 * settlement or inbound Peppol document in the CloudEvent schema, else null.
 	 *
 	 * @param mixed $entity The created ObjectEntity, or null.
 	 *
@@ -206,6 +230,28 @@ class IntegriqCloudEventListener implements IEventListener {
 			['outcome' => ($data['outcome'] ?? null), 'result' => $outcome['result'], 'schema' => $outcome['schema']]
 		);
 	}//end reconcilePaymentStatus()
+
+	/**
+	 * Hand a received Peppol document to the inbound invoice intake.
+	 *
+	 * @param mixed $data The CloudEvent `data`: {senderPeppolId, documentType, payloadReference}.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+	 */
+	private function receiveInbound(mixed $data): void {
+		if (is_array($data) === false) {
+			$this->logger->info('IntegriqCloudEventListener: inbound Peppol CloudEvent without data; skipped');
+			return;
+		}
+
+		$outcome = $this->inboundInvoices->receive(data: $data);
+		$this->logger->info(
+			'IntegriqCloudEventListener: inbound Peppol document taken in',
+			['result' => $outcome['result'], 'reason' => ($outcome['reason'] ?? null)]
+		);
+	}//end receiveInbound()
 
 	/**
 	 * Keep a reported settlement as one ProviderPayout.

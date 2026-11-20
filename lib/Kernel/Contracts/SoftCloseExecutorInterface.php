@@ -52,6 +52,7 @@ interface SoftCloseExecutorInterface {
 	 *   periodId: string,
 	 *   postingCount: int,
 	 *   accrualPostings: int,
+	 *   deferralReleases: int,
 	 *   fxPostings: int,
 	 *   revenuePostings: int,
 	 *   leasePostings: int,
