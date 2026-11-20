@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Shillinq",
-        "version": "0.5.7-unstable.20261111150000",
+        "version": "0.5.8-unstable.20261119134858",
         "description": "The JSON API of Shillinq, the finance app for Nextcloud: administrations and their ledgers, invoices, payables and dunning, bank statements and reconciliation, budgets, VAT and other tax returns, assets, inventory and the settings behind them. The financial records themselves are stored in OpenRegister and read and written through its API; this document covers the endpoints Shillinq adds on top.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Errors are RFC 9457 problem details (`application/problem+json`), and every response carries an `API-Version` header. Paths that implement an external standard keep the formats of that standard and are not described here.",
         "contact": {
             "name": "Conduction B.V.",
@@ -528,8 +528,16 @@
             "description": "A customer ends their own subscription from the portal."
         },
         {
+            "name": "deferral-schedules",
+            "description": "Spread a prepaid cost or deferred revenue over its periods (ledger-period-end)."
+        },
+        {
             "name": "project-billable-hours",
             "description": "A project's rated hours of one month (sales-billable-rate-per-hour)."
+        },
+        {
+            "name": "payment-revenue-accounts",
+            "description": "Which ledger account a paid payment request books against, per kind of request."
         }
     ],
     "paths": {
@@ -7173,6 +7181,185 @@
                 }
             }
         },
+        "/icp/statements/prepare": {
+            "post": {
+                "operationId": "icp-statement-prepare",
+                "summary": "Prepare the period's ICP statement from the books (REQ-ICR-002)",
+                "description": "Prepare the period's ICP statement from the books and write its draft: one line per buyer VAT number and supply type, with its reconciliation against box 3b of the VAT return. A statement past draft is never replaced (409). Body parameters: - period (required) YYYY-Qn or YYYY-MM. - administration_id (required) administration scope (REQ-ICP-001). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "description": "The period."
+                                    },
+                                    "administration_id": {
+                                        "description": "The administration id."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/xml": {
+            "get": {
+                "operationId": "icp-statement-xml",
+                "summary": "Download the XBRL instance of the period's ICP statement (REQ-ICR-002)",
+                "description": "Download the XBRL instance of the period's prepared ICP statement. Query parameters: - period (required). - administration_id (required). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "description": "The period (YYYY-Qn or YYYY-MM).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "administration_id",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/xml": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/filing": {
+            "get": {
+                "operationId": "icp-statement-filing",
+                "summary": "Whether the ICP statement can be filed through Digipoort (REQ-ICR-003)",
+                "description": "Answers { available }: false while no Digipoort connection is bound, and the page then hides File. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/file": {
+            "post": {
+                "operationId": "icp-statement-file",
+                "summary": "File the period's finalised ICP statement through Digipoort (REQ-ICR-003)",
+                "description": "File the period's finalised ICP statement as its XBRL instance through the Digipoort hand-off. The status follows only Digipoort's answer: submitted, rejected, or unchanged when deferred. Refused (409) when filing is unavailable or the statement is not finalised or does not reconcile. Body parameters: - period (required). - administration_id (required). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "description": "The period."
+                                    },
+                                    "administration_id": {
+                                        "description": "The administration id."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/icp/ledger": {
             "get": {
                 "operationId": "icp-ledger",
@@ -10439,6 +10626,34 @@
                 }
             }
         },
+        "/purchase-orders/dispatch-channels": {
+            "get": {
+                "operationId": "purchase-order-dispatch-channels",
+                "summary": "Which dispatch channels can take an order, and why one cannot",
+                "description": "Which dispatch channels can take an order, and why one cannot. GET /api/purchase-orders/dispatch-channels The detail page disables a channel that is not there and shows the reason, instead of offering a send that would only be logged. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "purchase-order"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/purchase-orders/{id}/approval-decision": {
             "post": {
                 "operationId": "purchase-order-approval-decide",
@@ -11935,6 +12150,113 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/settings/payment-revenue-accounts": {
+            "get": {
+                "operationId": "payment-revenue-accounts-index",
+                "summary": "GET the mapping, one key per request type, empty where unmapped",
+                "description": "GET the mapping from payment request type to the ledger account its receipt books against, one key per request type plus `clearing`, empty where unmapped. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "payment-revenue-accounts-update",
+                "summary": "PUT the submitted types' accounts; an empty value removes a mapping",
+                "description": "PUT the submitted types' accounts; an empty value removes a mapping, a type not submitted keeps its account. A value that is not an account number answers 400 and stores nothing. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "leges": {
+                                        "description": "The account for leges."
+                                    },
+                                    "dwangsom": {
+                                        "description": "The account for dwangsom."
+                                    },
+                                    "deposit": {
+                                        "description": "The account for deposit."
+                                    },
+                                    "other": {
+                                        "description": "The account for other."
+                                    },
+                                    "contribution": {
+                                        "description": "The account for contribution."
+                                    },
+                                    "event-fee": {
+                                        "description": "The account for event-fee."
+                                    },
+                                    "clearing": {
+                                        "description": "The account for clearing."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "400": {
+                        "description": "A value is not an account number; nothing was stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
                     }
                 }
             }
@@ -14870,6 +15192,298 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist": {
+            "post": {
+                "operationId": "period-close-add-item",
+                "summary": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002)",
+                "description": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "category": {
+                                        "description": "The category."
+                                    },
+                                    "description": {
+                                        "description": "The description."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/resolve": {
+            "post": {
+                "operationId": "period-close-resolve-item",
+                "summary": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002)",
+                "description": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/reopen": {
+            "post": {
+                "operationId": "period-close-reopen-item",
+                "summary": "POST reopen one resolved checklist item (REQ-LPE-002)",
+                "description": "POST reopen one resolved checklist item (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/deferral-schedules": {
+            "post": {
+                "operationId": "deferral-schedules-create",
+                "summary": "POST create the schedule and post its opening entry",
+                "description": "POST create the schedule and post its opening entry. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "deferral-schedules"
+                ],
+                "parameters": [],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration."
+                                    },
+                                    "sourceReference": {
+                                        "description": "The invoice line reference."
+                                    },
+                                    "description": {
+                                        "description": "What is spread."
+                                    },
+                                    "kind": {
+                                        "description": "prepaid-cost or deferred-revenue."
+                                    },
+                                    "resultAccount": {
+                                        "description": "The cost or revenue account."
+                                    },
+                                    "balanceAccount": {
+                                        "description": "The balance sheet account."
+                                    },
+                                    "totalCents": {
+                                        "description": "The amount in cents."
+                                    },
+                                    "periodFrom": {
+                                        "description": "The first day of the service period."
+                                    },
+                                    "periodTo": {
+                                        "description": "The last day of the service period."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/deferral-schedules/preview": {
+            "post": {
+                "operationId": "deferral-schedules-preview",
+                "summary": "POST the releases a request would create, without writing anything",
+                "description": "POST the releases a request would create, without writing anything. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "deferral-schedules"
+                ],
+                "parameters": [],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration."
+                                    },
+                                    "sourceReference": {
+                                        "description": "The invoice line reference."
+                                    },
+                                    "description": {
+                                        "description": "What is spread."
+                                    },
+                                    "kind": {
+                                        "description": "prepaid-cost or deferred-revenue."
+                                    },
+                                    "resultAccount": {
+                                        "description": "The cost or revenue account."
+                                    },
+                                    "balanceAccount": {
+                                        "description": "The balance sheet account."
+                                    },
+                                    "totalCents": {
+                                        "description": "The amount in cents."
+                                    },
+                                    "periodFrom": {
+                                        "description": "The first day of the service period."
+                                    },
+                                    "periodTo": {
+                                        "description": "The last day of the service period."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }
