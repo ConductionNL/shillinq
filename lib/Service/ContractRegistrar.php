@@ -46,6 +46,7 @@ use OCA\Shillinq\Kernel\Contracts\BcfCompensationCalculatorInterface;
 use OCA\Shillinq\Kernel\Contracts\BegrotingswijzigingStackerInterface;
 use OCA\Shillinq\Kernel\Contracts\BIKStaffelCalculatorInterface;
 use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BillableWorkServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BillablePeriodInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetChartSeriesServiceInterface;
@@ -76,12 +77,15 @@ use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DirectDebitBatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\EuDeclarationBuilderInterface;
 use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
 use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
+use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
 use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
+use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
 use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CrossSubsidyScanInterface;
@@ -123,6 +127,7 @@ use OCA\Shillinq\Kernel\Contracts\GoodsReceiptNoteServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
 use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\Ib47BatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ImportBatchStepsInterface;
 use OCA\Shillinq\Kernel\Contracts\ImportPeriodInterface;
@@ -262,6 +267,7 @@ use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Bank\ObjectRequestBankMatcher;
 use OCA\Shillinq\Service\Bank\ObjectRequestBankSettlement;
 use OCA\Shillinq\Service\Bank\StatementIntakeService;
+use OCA\Shillinq\Service\Billing\BillableWorkService;
 use OCA\Shillinq\Service\Booking\CalendarRows;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
@@ -279,6 +285,7 @@ use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
+use OCA\Shillinq\Service\Ib47\Ib47BatchService;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
 use OCA\Shillinq\Service\Import\ImportPeriod;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
@@ -297,10 +304,13 @@ use OCA\Shillinq\Service\Platform\SchemaDefinitions;
 use OCA\Shillinq\Service\Project\AssignmentHours;
 use OCA\Shillinq\Service\PublicSector\ActivityCostPriceCalculation;
 use OCA\Shillinq\Service\PublicSector\CrossSubsidyScan;
+use OCA\Shillinq\Service\PublicSector\EuDeclarationBuilder;
 use OCA\Shillinq\Service\PublicSector\FidoQuarter;
+use OCA\Shillinq\Service\PublicSector\GrantSettlement;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 use OCA\Shillinq\Service\PublicSector\JointArrangementAllocation;
 use OCA\Shillinq\Service\PublicSector\ReserveBalances;
+use OCA\Shillinq\Service\PublicSector\SisaAppendix;
 use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\Receivables\DirectDebitBatchService;
@@ -379,6 +389,7 @@ final class ContractRegistrar {
 		BcfCompensationCalculatorInterface::class => BcfCompensationCalculator::class,
 		BegrotingswijzigingStackerInterface::class => BegrotingswijzigingStacker::class,
 		BillableLinesServiceInterface::class => BillableLinesService::class,
+		BillableWorkServiceInterface::class => BillableWorkService::class,
 		BillablePeriodInvoiceServiceInterface::class => BillablePeriodInvoiceService::class,
 		BookingNotificationServiceInterface::class => BookingNotificationService::class,
 		BudgetChartSeriesServiceInterface::class => BudgetChartSeriesService::class,
@@ -434,6 +445,7 @@ final class ContractRegistrar {
 		EInvoiceServiceInterface::class => EInvoiceService::class,
 		EmuReportingServiceInterface::class => EmuReportingService::class,
 		EnsiaCycleStepsInterface::class => EnsiaCycleSteps::class,
+		EuDeclarationBuilderInterface::class => EuDeclarationBuilder::class,
 		ExceptionResolutionServiceInterface::class => ExceptionResolutionService::class,
 		ExtractionPrefillServiceInterface::class => ExtractionPrefillService::class,
 		FeeScheduleServiceInterface::class => FeeScheduleService::class,
@@ -455,8 +467,10 @@ final class ContractRegistrar {
 		GlLineFiscalYearBackfillMigratorInterface::class => GlLineFiscalYearBackfillMigrator::class,
 		GlLineResultStampsInterface::class => GlLineResultStamps::class,
 		GoodsReceiptNoteServiceInterface::class => GoodsReceiptNoteService::class,
+		GrantSettlementInterface::class => GrantSettlement::class,
 		HrmqCostRateAdapterInterface::class => HrmqCostRateAdapter::class,
 		IcpFilingServiceInterface::class => IcpFilingService::class,
+		Ib47BatchServiceInterface::class => Ib47BatchService::class,
 		IcpServiceInterface::class => IcpService::class,
 		ImportBatchStepsInterface::class => ImportBatchSteps::class,
 		ImportPeriodInterface::class => ImportPeriod::class,
@@ -545,6 +559,7 @@ final class ContractRegistrar {
 		SettingsServiceInterface::class => SettingsService::class,
 		SigningDelegationServiceInterface::class => SigningDelegationService::class,
 		SignoffDecisionServiceInterface::class => SignoffDecisionService::class,
+		SisaAppendixInterface::class => SisaAppendix::class,
 		SlotServiceInterface::class => SlotService::class,
 		SoftCloseExecutorInterface::class => SoftCloseExecutor::class,
 		SpendAnalyticsServiceInterface::class => SpendAnalyticsService::class,

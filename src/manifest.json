@@ -15,7 +15,7 @@
 			{ "id": "demo-data", "type": "choice", "display": "cards", "optionsSource": "datasets", "configKey": "demo_dataset", "loadAction": "load-demo-data", "title": "Load example data?", "required": false, "body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install." },
 			{ "id": "country", "type": "choice", "title": "Legal region (country)", "body": "In which country is this organisation legally established? This determines the available organisation types and standards.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Netherlands" }, { "value": "be", "label": "Belgium" }, { "value": "de", "label": "Germany" } ] },
 			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
-			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "optionsSource": "chartTemplates", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
+			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "optionsSource": "chartTemplates", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "legislation-be", "bv": "legislation-be", "eenmanszaak": "legislation-be", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" }, { "value": "legislation-be", "label": "Belgian minimum chart (MAR/PCMN)" } ] },
 			{ "id": "administration", "type": "run-action", "title": "Create administration", "body": "Create the default administration. This registers your organisation as an administration in OpenRegister, so bookings, invoices and reports can be linked to it. Click \"Run\" to create the administration.", "action": "init-administration", "required": true },
 			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration. This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
 			{ "id": "done", "type": "summary", "title": "Done", "body": "Review your choices below and complete the installation.", "healthCheck": true }
@@ -2699,6 +2699,14 @@
 						"route": "VarianceReport"
 					},
 					{
+						"id": "FinancialStatementCashFlow",
+						"label": "Cash flow statement",
+						"description": "Cash from operations, investments and financing, reconciled to the change in cash.",
+						"icon": "CashMultiple",
+						"category": "financial",
+						"route": "FinancialStatementCashFlow"
+					},
+					{
 						"id": "RelationsBothWays",
 						"label": "Relations both ways",
 						"description": "Customers that are also suppliers, and who owes whom.",
@@ -5276,7 +5284,8 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts",
-				"sidebarProps": {
+				"sidebar": {
+					"enabled": true,
 					"tabs": [
 						{
 							"id": "trend",
@@ -11233,6 +11242,9 @@
 			"id": "ExpenseClaimDetail",
 			"route": "/inkoop/expense-claims/:id",
 			"type": "detail",
+			"slots": {
+				"widget-claim-receipt-accounts": "ClaimReceiptAccounts"
+			},
 			"title": "Expense Claim",
 			"config": {
 				"register": "shillinq",
@@ -11262,6 +11274,13 @@
 						"integrationId": "files",
 						"title": "Receipt evidence",
 						"icon": "Receipt"
+					},
+					{
+						"id": "claim-receipt-accounts",
+						"type": "custom",
+						"title": "Accounts per receipt",
+						"icon": "Receipt",
+						"_note": "expenses-category-mapping REQ-ECM-003: the account each receipt posts to (the confirmed account, else its category's account) next to the docudesk suggestion, which never replaces it. Rendered through the page slot widget-claim-receipt-accounts -> ClaimReceiptAccounts."
 					}
 				],
 				"layout": [
@@ -11290,6 +11309,14 @@
 						"gridY": 11,
 						"gridWidth": 12,
 						"gridHeight": 3
+					},
+					{
+						"id": "4",
+						"widgetId": "claim-receipt-accounts",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"_note": "Expense Claim detail — an employee reimbursement claim aggregating receipts, per-diems and mileage into one approvable total. Related receipts and mileage entries list the underlying evidence; source receipt images live under Files. Audit trail evidences the approval workflow.",
@@ -20517,6 +20544,11 @@
 						"type": "number"
 					},
 					{
+						"key": "sisaRegulationCode",
+						"label": "SiSa regulation code",
+						"type": "string"
+					},
+					{
 						"key": "state",
 						"label": "Status",
 						"type": "string"
@@ -20542,8 +20574,9 @@
 						"type": "string"
 					}
 				],
+				"actions": [{"id": "generate-accountability-report", "label": "Generate accountability report", "icon": "FileDocumentCheckOutline", "type": "api-call", "url": "/apps/shillinq/api/v1/public-sector/grants/@objectId/report", "method": "POST", "visibleWhen": {"field": "state", "in": ["granted", "determined", "disbursed", "reclaimed"]}, "successMessage": "Accountability report stored.", "errorMessage": "The accountability report could not be stored.", "description": "Store the grant's accountability report, with a pending auditor statement when the grant's amount requires one (REQ-SUBV-012)."}, {"id": "download-sisa-appendix", "label": "Download SiSa appendix", "icon": "DownloadOutline", "type": "api-call", "method": "GET", "url": "/apps/shillinq/api/v1/public-sector/sisa?administrationId=@object.administrationId&year=@object.budgetYear&format=csv", "download": true, "filename": "sisa-appendix.csv", "visibleWhen": {"field": "direction", "in": ["incoming"]}, "successMessage": "SiSa appendix downloaded.", "errorMessage": "The SiSa appendix could not be downloaded.", "description": "Download the SiSa appendix of the grant's administration for its budget year: one row per indicator in the column order of the BZK template (REQ-SISA-013)."}],
 				"lifecycleActions": true,
-				"relatedLists": [
+				"relatedLists": [{"id": "sisa-indicators", "title": "SiSa indicators", "schema": "SisaIndicator", "filter": {"grantId": "@self.id"}, "columns": [{"key": "fiscalYear", "label": "Year"}, {"key": "indicatorCode", "label": "Indicator"}, {"key": "description", "label": "Description"}, {"key": "kind", "label": "Kind"}, {"key": "value", "label": "Value"}, {"key": "unit", "label": "Unit"}]}, 
 					{
 						"id": "repayment-instalments",
 						"title": "Terugbetalingstermijnen",

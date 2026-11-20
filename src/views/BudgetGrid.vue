@@ -87,7 +87,37 @@
 							</option>
 						</select>
 					</div>
+					<div class="budget-grid__control">
+						<label for="budget-grid-scenario">{{
+							t('shillinq', 'Scenario')
+						}}</label>
+						<select
+							id="budget-grid-scenario"
+							v-model="scenarioId"
+							data-testid="budget-grid-scenario"
+							@change="loadGrid">
+							<option value="">
+								{{ t('shillinq', 'Base budget') }}
+							</option>
+							<option
+								v-for="scenario in scenarios"
+								:key="scenario.id"
+								:value="scenario.id">
+								{{ scenario.name }}
+							</option>
+						</select>
+					</div>
 				</div>
+				<p
+					v-if="activeScenario"
+					class="budget-grid__scenario-label"
+					data-testid="budget-grid-scenario-label">
+					{{
+						t('shillinq', 'Scenario: {name}', {
+							name: activeScenario.name,
+						})
+					}}
+				</p>
 			</header>
 
 			<section class="budget-grid__body">
@@ -256,6 +286,7 @@ import { fetchAdministrationContext } from '../api/administrationApi.js'
 import {
 	defaultRange,
 	flattenVisibleRows,
+	gridRequestParams,
 	nextOpenChartRow,
 	trendChartProps,
 } from './budgetGridHelpers.js'
@@ -290,6 +321,9 @@ export default {
 			computedRows: [],
 			expandedIds: new Set(),
 			openChartRowId: null,
+			scenarios: [],
+			scenarioId: '',
+			activeScenario: null,
 		}
 	},
 
@@ -312,7 +346,7 @@ export default {
 	 */
 	async mounted() {
 		await this.resolveAdministration()
-		await this.loadGrid()
+		await Promise.all([this.loadScenarios(), this.loadGrid()])
 	},
 
 	methods: {
@@ -358,12 +392,13 @@ export default {
 			try {
 				const url = generateUrl('/apps/shillinq/api/budget-grid')
 				const { data } = await axios.get(url, {
-					params: {
+					params: gridRequestParams({
 						administrationId: this.administrationId,
 						startPeriod: this.startPeriod,
 						endPeriod: this.endPeriod,
 						granularity: this.granularity,
-					},
+						scenarioId: this.scenarioId,
+					}),
 				})
 				this.applyGrid(data)
 			} catch (error) {
@@ -375,11 +410,43 @@ export default {
 		},
 
 		/**
+		 * Load the administration's budget scenarios for the selector. A
+		 * failure leaves only "Basis"; the grid itself still loads.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+		 */
+		async loadScenarios() {
+			if (!this.administrationId) {
+				return
+			}
+			try {
+				const { data } = await axios.get(
+					generateUrl(
+						'/apps/openregister/api/objects/shillinq/BudgetScenario',
+					),
+					{
+						params: {
+							administrationId: this.administrationId,
+							limit: 500,
+						},
+					},
+				)
+				const rows = data?.results ?? data?.objects ?? data ?? []
+				this.scenarios = Array.isArray(rows) ? rows : []
+			} catch {
+				this.scenarios = []
+			}
+		},
+
+		/**
 		 * Show a loaded grid: its columns and rows, every row collapsed and no chart open.
 		 *
 		 * @param {object} data The budget-grid response body.
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		applyGrid(data) {
+			this.activeScenario = data?.scenario || null
 			this.columns = Array.isArray(data?.columns) ? data.columns : []
 			this.rows = Array.isArray(data?.rows) ? data.rows : []
 			this.computedRows = Array.isArray(data?.computedRows)
@@ -394,9 +461,13 @@ export default {
 		 *
 		 * @param {object} error The request error.
 		 * @return {string}
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		gridLoadError(error) {
 			const status = error?.response?.status
+			if (status === 404 && this.scenarioId) {
+				return this.t('shillinq', 'Scenario not found.')
+			}
 			if (status === 404) {
 				return this.t('shillinq', 'Administration not found.')
 			}
@@ -406,11 +477,16 @@ export default {
 			return this.t('shillinq', 'Failed to load the budget grid.')
 		},
 
-		/** Empty the grid after a failed load. */
+		/**
+		 * Empty the grid after a failed load.
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+		 */
 		clearGrid() {
 			this.columns = []
 			this.rows = []
 			this.computedRows = []
+			this.activeScenario = null
 		},
 
 		/**
@@ -485,6 +561,11 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
+}
+
+.budget-grid__scenario-label {
+	margin-block-start: 8px;
+	font-weight: bold;
 }
 
 .budget-grid__table-wrapper {

@@ -34,6 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use InvalidArgumentException;
 use OCP\IAppConfig;
 
 /**
@@ -48,6 +49,22 @@ final class PaymentRevenueAccountResolver {
 	 * @var string
 	 */
 	public const CONFIG_KEY = 'paymentRevenueAccounts';
+
+	/**
+	 * The keys an administrator can map: every `PaymentRequest.requestType`
+	 * plus `clearing`, the account the money arrives through.
+	 *
+	 * @var array<int, string>
+	 */
+	public const TYPES = ['leges', 'dwangsom', 'deposit', 'other', 'contribution', 'event-fee', 'clearing'];
+
+	/**
+	 * What an account number may look like: digits, letters, dots, dashes and
+	 * underscores, at most 32 characters.
+	 *
+	 * @var string
+	 */
+	private const ACCOUNT_PATTERN = '/^[A-Za-z0-9._-]{1,32}$/';
 
 	/**
 	 * Constructor.
@@ -85,6 +102,8 @@ final class PaymentRevenueAccountResolver {
 	 * wants to say which types ARE mapped.
 	 *
 	 * @return array<string, string> Request type to account number.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
 	 */
 	public function all(): array {
 		$raw = $this->appConfig->getValueString('shillinq', self::CONFIG_KEY, '');
@@ -111,4 +130,69 @@ final class PaymentRevenueAccountResolver {
 
 		return $map;
 	}//end all()
+
+	/**
+	 * Store the submitted part of the mapping, as the administration screen
+	 * sends it: one value per type. A submitted empty value removes that
+	 * type's mapping, a type not submitted keeps what it had, and a key that
+	 * is not a request type is ignored. Every value is checked before
+	 * anything is written, so a refused save stores nothing.
+	 *
+	 * @param array<string, mixed> $submitted Request type to account number.
+	 *
+	 * @return array<string, string> The mapping as stored afterwards.
+	 *
+	 * @throws InvalidArgumentException When a value is not an account number.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	public function save(array $submitted): array {
+		$map = $this->all();
+
+		foreach (self::TYPES as $type) {
+			if (array_key_exists($type, $submitted) === false || $submitted[$type] === null) {
+				continue;
+			}
+
+			if (is_scalar($submitted[$type]) === false) {
+				throw new InvalidArgumentException(sprintf('The account for "%s" must be an account number.', $type));
+			}
+
+			$account = trim((string)$submitted[$type]);
+			if ($account === '') {
+				unset($map[$type]);
+				continue;
+			}
+
+			if (preg_match(self::ACCOUNT_PATTERN, $account) !== 1) {
+				throw new InvalidArgumentException(
+					sprintf('The account for "%s" must be an account number of letters, digits, dots or dashes.', $type)
+				);
+			}
+
+			$map[$type] = $account;
+		}
+
+		$this->appConfig->setValueString('shillinq', self::CONFIG_KEY, json_encode($map, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES));
+
+		return $map;
+	}//end save()
+
+	/**
+	 * The mapping with every type present, empty where nothing is mapped, so
+	 * the administration screen can show one field per type.
+	 *
+	 * @return array<string, string> Request type to account number or ''.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	public function form(): array {
+		$map = $this->all();
+		$form = [];
+		foreach (self::TYPES as $type) {
+			$form[$type] = ($map[$type] ?? '');
+		}
+
+		return $form;
+	}//end form()
 }//end class

@@ -21,6 +21,13 @@
 					"order": 20
 				},
 				{
+					"id": "EuBetaalaanvragen",
+					"label": "Declarations",
+					"icon": "CashCheck",
+					"route": "EuBetaalaanvragen",
+					"order": 25
+				},
+				{
 					"id": "EuBewijsstukken",
 					"label": "Supporting documents",
 					"icon": "FileDocumentMultipleOutline",
@@ -89,7 +96,34 @@
 				],
 				"_note": "MASTER + REPORT record — a co-funded EU project. Body leads with programme identity, co-funding rate and eligible budget, then the two lists an auditor actually opens: the claimed expenditure booked against it and any irregularities detected. Eligible-budget and total-claimed KPIs plus the retained supporting documents and immutable audit portal sit in the sidebar. No comms leaves on a funds ledger.",
 				"indexRoute": "EuProjecten",
+				"actions": [
+					{
+						"id": "propose-eu-declaration",
+						"label": "Propose declaration for this quarter",
+						"icon": "CashCheck",
+						"type": "api-call",
+						"method": "POST",
+						"url": "/apps/shillinq/api/v1/public-sector/eu-projects/@objectId/declarations",
+						"visibleWhen": { "field": "state", "in": ["uitvoering", "afgerond_in_audit"] },
+						"successMessage": "Draft declaration proposed.",
+						"errorMessage": "The declaration could not be proposed.",
+						"description": "Bundle this quarter's declared expenditure that carries certified, complete evidence into a draft declaration with its EU share; the rest is listed as left out with the reason (REQ-EUF-012). Refused while an irregularity on the project is open (REQ-EUF-007)."
+					}
+				],
 				"relatedObjects": [
+					{
+						"id": "declarations",
+						"label": "Declarations",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "EuDeclaration",
+							"filterField": "euProjectId",
+							"columns": ["periodFrom", "periodTo", "eligibleTotal", "euShare", "state"],
+							"detailRoute": "EuBetaalaanvraagDetail",
+							"defaultSort": "-periodFrom"
+						}
+					},
 					{
 						"id": "expenditures",
 						"label": "Claimed expenditure",
@@ -483,6 +517,51 @@
 						}
 					]
 				}
+			}
+		},
+		{
+			"id": "EuBetaalaanvragen",
+			"route": "/eu-fondsen/betaalaanvragen",
+			"type": "index",
+			"title": "Declarations",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuDeclaration",
+				"columns": [
+					{ "key": "euProjectId", "label": "Project", "sortable": true },
+					{ "key": "periodFrom", "label": "From", "sortable": true },
+					{ "key": "periodTo", "label": "To", "sortable": true },
+					{ "key": "eligibleTotal", "label": "Eligible total", "sortable": true },
+					{ "key": "euShare", "label": "EU share", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-periodFrom",
+				"detailRoute": "EuBetaalaanvraagDetail"
+			}
+		},
+		{
+			"id": "EuBetaalaanvraagDetail",
+			"route": "/eu-fondsen/betaalaanvragen/:id",
+			"type": "detail",
+			"title": "Declaration",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuDeclaration",
+				"fields": [
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "periodFrom", "label": "From", "type": "date" },
+					{ "key": "periodTo", "label": "To", "type": "date" },
+					{ "key": "eligibleTotal", "label": "Eligible total (EUR)", "type": "number" },
+					{ "key": "euShare", "label": "EU share (EUR)", "type": "number" },
+					{ "key": "expenditureIds", "label": "Expenditure", "type": "array" },
+					{ "key": "leftOut", "label": "Left out", "type": "array" },
+					{ "key": "submittedAt", "label": "Submitted at", "type": "date" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"_note": "A declaration (betaalaanvraag) of one EU project for a quarter: the expenditure it holds with the eligible total and EU share, and what was left out with the reason. Submit runs each expenditure's submit transition, all or none (REQ-EUF-013).",
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"indexRoute": "EuBetaalaanvragen"
 			}
 		}
 	]
