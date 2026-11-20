@@ -8272,7 +8272,18 @@ OC.L10N.register(
         "Owned by says which application authors each value.": "Eigenaar zegt welke applicatie elke waarde beheert.",
         "Products this administration holds inventory or barcodes for. The product master owns the definitions; shillinq owns unit cost, quantities and valuation.": "Producten waarvoor deze administratie voorraad of barcodes heeft. De productmaster beheert de definities; shillinq beheert kostprijs, aantallen en waardering.",
         "No products yet.": "Nog geen producten.",
-        "On hand": "Op voorraad"
+        "On hand": "Op voorraad",
+        "Check ledger seal": "Grootboekzegel controleren",
+        "Checking the ledger seal…": "Het grootboekzegel wordt gecontroleerd…",
+        "Check again": "Opnieuw controleren",
+        "Its content changed after it was posted.": "De inhoud is na het boeken veranderd.",
+        "Its link to the entry before it no longer matches.": "De koppeling met de boeking ervoor klopt niet meer.",
+        "An entry is missing before it.": "Er ontbreekt een boeking ervoor.",
+        "The ledger seal could not be checked.": "Het grootboekzegel kon niet worden gecontroleerd.",
+        "Prove that no posted transaction changed since posting, or see the first one that did.": "Toon aan dat geen geboekte transactie sinds het boeken is veranderd, of zie de eerste die dat wel is.",
+        "The ledger seal chain is intact over %1$d entries.": "De zegelketen van het grootboek is intact over %1$d boekingen.",
+        "Transaction %1$s is the first entry that no longer matches its seal.": "Transactie %1$s is de eerste boeking die niet meer bij haar zegel past.",
+        "Only a controller can check the ledger seal.": "Alleen een controller kan het grootboekzegel controleren."
     },
     "nplurals=2; plural=(n != 1);"
 )

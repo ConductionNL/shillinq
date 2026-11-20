@@ -44,6 +44,7 @@ import { openRecalculateInvestmentDeductions } from './utils/investmentDeduction
 import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openRegenerateKnownCosts } from './utils/knownCostActions.js'
+import { openLedgerSealCheck } from './utils/ledgerSealApi.js'
 import {
 	clearOpenItemSuggestion,
 	clearSelectedOpenItems,
@@ -115,6 +116,8 @@ export const manifestActions = Object.freeze({
 	// planning-commitment-year-end: the "Carry open commitments to next year"
 	// header action on Commitments.
 	openCarryOverCommitments,
+	// ledger-sealed-entries: Check ledger seal on the general ledger page.
+	openLedgerSealCheck,
 	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
 	openMissedDepreciation,
 	// tax-vat-number-check: Check VAT number on the customer and supplier pages.

@@ -200,6 +200,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120102800",
             "versionsSha256": "e5cb68574ada1f0be8a29d1b1ff2704595bd78f35a074901d3294ff39f85abb0"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120103200",
+            "versionsSha256": "538c0f1b9f0520ea7b605d7e17e75c953e0cc15145aa045f9e8fe99a650b3bcb"
         }
     ],
     "versions": {
@@ -419,7 +423,7 @@
         "schema:FxRate": "0.1.0",
         "schema:FxRevaluationPosting": "0.1.0",
         "schema:GLLine": "0.3.0",
-        "schema:GLTransaction": "0.3.0",
+        "schema:GLTransaction": "0.6.0",
         "schema:GRAllocationRun": "0.1.0",
         "schema:GRDeelnemer": "0.1.0",
         "schema:GRVerdeelsleutel": "0.1.0",

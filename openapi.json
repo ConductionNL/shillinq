@@ -562,6 +562,10 @@
         {
             "name": "open-item-clearing",
             "description": "Clearing the posted lines of an open-item balance account against each other, and undoing a clearing."
+        },
+        {
+            "name": "ledger-seal",
+            "description": "The seal chain of the general ledger: check that no posted transaction changed since posting."
         }
     ],
     "paths": {
@@ -14338,11 +14342,11 @@
         },
         "/vat-returns/{returnId}/checks": {
             "get": {
-                "operationId": "v-at-return-checks",
+                "operationId": "vat-return-checks-index",
                 "summary": "Run the checks of a VAT return (REQ-TVRB-001)",
-                "description": "Run the checks of a VAT return (REQ-TVRB-001): each with whether it passed, whether it blocks submitting and what makes it fail. Needs a signed-in Nextcloud user.",
+                "description": "Runs the checks on a VAT return's period and answers per check its name, whether it blocks filing, passed or failed and the message naming what failed, and whether a blocking check fails. Needs a signed-in Nextcloud user who is a member of the return's administration.",
                 "tags": [
-                    "v-at-return"
+                    "vat-return-checks"
                 ],
                 "parameters": [
                     {
@@ -14936,54 +14940,6 @@
                     },
                     "409": {
                         "$ref": "#/components/responses/Problem409"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/Problem500"
-                    }
-                }
-            }
-        },
-        "/vat-returns/{returnId}/checks": {
-            "get": {
-                "operationId": "vat-return-checks-index",
-                "summary": "Run the checks of a VAT return (REQ-TVRB-001)",
-                "description": "Runs the checks on a VAT return's period and answers per check its name, whether it blocks filing, passed or failed and the message naming what failed, and whether a blocking check fails. Needs a signed-in Nextcloud user who is a member of the return's administration.",
-                "tags": [
-                    "vat-return-checks"
-                ],
-                "parameters": [
-                    {
-                        "name": "returnId",
-                        "in": "path",
-                        "required": true,
-                        "description": "The VATReturn id.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The request succeeded.",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/Problem400"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Problem401"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/Problem404"
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
@@ -16426,6 +16382,45 @@
                         "in": "path",
                         "required": true,
                         "description": "The ClearingGroup uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/ledger/seal-check": {
+            "get": {
+                "operationId": "ledger-seal-verify",
+                "summary": "Check the seal chain of an administration's general ledger",
+                "description": "Recompute every seal of the posted transactions of one administration and report the chain intact, or the first transaction whose content or link no longer matches. Needs a signed-in Nextcloud admin or a controller of that administration.",
+                "tags": [
+                    "ledger-seal"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The administration whose ledger is checked.",
                         "schema": {
                             "type": "string"
                         }

@@ -6125,7 +6125,18 @@ OC.L10N.register(
         "Products this administration holds inventory or barcodes for. The product master owns the definitions; shillinq owns unit cost, quantities and valuation.": "Products this administration holds inventory or barcodes for. The product master owns the definitions; shillinq owns unit cost, quantities and valuation.",
         "No products yet.": "No products yet.",
         "Unit cost": "Unit cost",
-        "On hand": "On hand"
+        "On hand": "On hand",
+        "Check ledger seal": "Check ledger seal",
+        "Checking the ledger seal…": "Checking the ledger seal…",
+        "Check again": "Check again",
+        "Its content changed after it was posted.": "Its content changed after it was posted.",
+        "Its link to the entry before it no longer matches.": "Its link to the entry before it no longer matches.",
+        "An entry is missing before it.": "An entry is missing before it.",
+        "The ledger seal could not be checked.": "The ledger seal could not be checked.",
+        "Prove that no posted transaction changed since posting, or see the first one that did.": "Prove that no posted transaction changed since posting, or see the first one that did.",
+        "The ledger seal chain is intact over %1$d entries.": "The ledger seal chain is intact over %1$d entries.",
+        "Transaction %1$s is the first entry that no longer matches its seal.": "Transaction %1$s is the first entry that no longer matches its seal.",
+        "Only a controller can check the ledger seal.": "Only a controller can check the ledger seal."
     },
     "nplurals=2; plural=(n != 1);"
 )

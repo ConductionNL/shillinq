@@ -4775,51 +4775,6 @@
             }
         },
         {
-            "id": "GeneralLedger",
-            "route": "/general-ledger",
-            "type": "index",
-            "title": "General Ledger",
-            "config": {
-                "register": "shillinq",
-                "schema": "GLTransaction",
-                "columns": [
-                    {
-                        "key": "transactionNumber",
-                        "label": "Number",
-                        "sortable": true
-                    },
-                    {
-                        "key": "postingDate",
-                        "label": "Posting Date",
-                        "sortable": true
-                    },
-                    {
-                        "key": "description",
-                        "label": "Description",
-                        "sortable": true
-                    },
-                    {
-                        "key": "periodId",
-                        "label": "Period",
-                        "sortable": true
-                    },
-                    {
-                        "key": "currency",
-                        "label": "Currency",
-                        "sortable": true
-                    },
-                    {
-                        "key": "state",
-                        "label": "State",
-                        "sortable": true
-                    }
-                ],
-                "defaultSort": "-postingDate",
-                "detailRoute": "GeneralLedgerDetail",
-                "documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/general-ledger"
-            }
-        },
-        {
             "id": "GeneralLedgerDetail",
             "route": "/general-ledger/:id",
             "type": "detail",
@@ -21945,6 +21900,61 @@
             },
             "sidebarComponent": "FlowDetailSidebar",
             "_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
+        },
+        {
+            "id": "GeneralLedger",
+            "route": "/general-ledger",
+            "type": "index",
+            "title": "General Ledger",
+            "config": {
+                "register": "shillinq",
+                "schema": "GLTransaction",
+                "columns": [
+                    {
+                        "key": "transactionNumber",
+                        "label": "Number",
+                        "sortable": true
+                    },
+                    {
+                        "key": "postingDate",
+                        "label": "Posting Date",
+                        "sortable": true
+                    },
+                    {
+                        "key": "description",
+                        "label": "Description",
+                        "sortable": true
+                    },
+                    {
+                        "key": "periodId",
+                        "label": "Period",
+                        "sortable": true
+                    },
+                    {
+                        "key": "currency",
+                        "label": "Currency",
+                        "sortable": true
+                    },
+                    {
+                        "key": "state",
+                        "label": "State",
+                        "sortable": true
+                    }
+                ],
+                "defaultSort": "-postingDate",
+                "detailRoute": "GeneralLedgerDetail",
+                "headerActions": [
+                    {
+                        "id": "check-ledger-seal",
+                        "label": "Check ledger seal",
+                        "type": "handler",
+                        "handler": "openLedgerSealCheck",
+                        "icon": "ShieldCheckOutline",
+                        "description": "Prove that no posted transaction changed since posting, or see the first one that did."
+                    }
+                ],
+                "documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/general-ledger"
+            }
         }
     ]
 }
