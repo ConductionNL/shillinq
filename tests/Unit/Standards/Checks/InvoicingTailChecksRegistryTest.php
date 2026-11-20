@@ -165,11 +165,11 @@ final class InvoicingTailChecksRegistryTest extends TestCase {
 		$actual = [];
 		foreach (InvoicingTailChecks::checks() as $type => $rules) {
 			foreach ($rules as $ruleId => $check) {
-				$actual[$type][$ruleId] = self::verdicts($check, self::samples($type));
+				$actual[$type][$ruleId] = self::verdicts(check: $check, samples: self::samples(type: $type));
 			}
 		}
 
-		$this->assertSame(self::VERDICTS, $actual);
+		$this->assertSame(expected: self::VERDICTS, actual: $actual);
 
 	}//end testRegistryMatchesThePinnedVerdicts()
 
@@ -180,7 +180,7 @@ final class InvoicingTailChecksRegistryTest extends TestCase {
 	 */
 	public function testSeedDataIsUnchanged(): void {
 		$seed = [InvoicingTailChecks::seedSpec()];
-		$this->assertSame('f9b81d65d33b585a415f7cbbe12b7025', md5(serialize($seed)));
+		$this->assertSame(expected: 'f9b81d65d33b585a415f7cbbe12b7025', actual: md5(serialize($seed)));
 
 	}//end testSeedDataIsUnchanged()
 
@@ -193,7 +193,12 @@ final class InvoicingTailChecksRegistryTest extends TestCase {
 	public static function breakdowns(): array {
 		$invoice = [
 			'vatBreakdown' => [['category' => 'S', 'taxableAmount' => 95.0], ['category' => 'AE', 'taxableAmount' => 7.0], 'x'],
-			'invoiceLines' => [['vatCategory' => 'S', 'netAmount' => 60.0], ['vatCategory' => 'S', 'netAmount' => 40.0], ['vatCategory' => 'AE', 'netAmount' => 10.0], 'x'],
+			'invoiceLines' => [
+				['vatCategory' => 'S', 'netAmount' => 60.0],
+				['vatCategory' => 'S', 'netAmount' => 40.0],
+				['vatCategory' => 'AE', 'netAmount' => 10.0],
+				'x',
+			],
 			'allowances'   => [['vatCategory' => 'S', 'amount' => 10.0], ['vatCategory' => 'AE', 'amount' => 3.0]],
 			'charges'      => [['vatCategory' => 'S', 'amount' => 5.0]],
 		];
@@ -220,7 +225,7 @@ final class InvoicingTailChecksRegistryTest extends TestCase {
 	#[DataProvider('breakdowns')]
 	public function testBreakdownReconciles(string $ruleId, array $invoice, bool $expected): void {
 		$check = InvoicingTailChecks::checks()['ARInvoice'][$ruleId];
-		$this->assertSame($expected, $check($invoice, ['jurisdiction' => 'NL']));
+		$this->assertSame(expected: $expected, actual: $check($invoice, ['jurisdiction' => 'NL']));
 
 	}//end testBreakdownReconciles()
 
@@ -254,7 +259,12 @@ final class InvoicingTailChecksRegistryTest extends TestCase {
 		$out = '';
 		foreach ($samples as $object) {
 			try {
-				$out .= $check($object, ['jurisdiction' => 'NL']) === true ? 'T' : 'F';
+				$verdict = 'F';
+				if ($check($object, ['jurisdiction' => 'NL']) === true) {
+					$verdict = 'T';
+				}
+
+				$out .= $verdict;
 			} catch (\Throwable $e) {
 				$out .= 'E';
 			}
