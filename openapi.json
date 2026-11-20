@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Shillinq",
-        "version": "0.5.7-unstable.20261111150000",
+        "version": "0.5.8-unstable.20261119134858",
         "description": "The JSON API of Shillinq, the finance app for Nextcloud: administrations and their ledgers, invoices, payables and dunning, bank statements and reconciliation, budgets, VAT and other tax returns, assets, inventory and the settings behind them. The financial records themselves are stored in OpenRegister and read and written through its API; this document covers the endpoints Shillinq adds on top.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Errors are RFC 9457 problem details (`application/problem+json`), and every response carries an `API-Version` header. Paths that implement an external standard keep the formats of that standard and are not described here.",
         "contact": {
             "name": "Conduction B.V.",
@@ -140,6 +140,10 @@
             "description": "PDF export endpoint for the 13-week cashflow forecast (REQ-CF-016)."
         },
         {
+            "name": "cbcr",
+            "description": "CbC and minimum tax page actions."
+        },
+        {
             "name": "commitment-year-end",
             "description": "Year-end carry-over and last-invoice endpoints."
         },
@@ -154,6 +158,10 @@
         {
             "name": "contribution",
             "description": "Raises school contributions in bulk."
+        },
+        {
+            "name": "custom-record-types",
+            "description": "Own record types: schemas an administrator added to the shillinq register."
         },
         {
             "name": "d-ba",
@@ -220,6 +228,10 @@
             "description": "Goods-receipt-note REST endpoints (create / add line / quality-check / accept / upload photos)."
         },
         {
+            "name": "ib47",
+            "description": "The annual IB47 statement of payments to third parties."
+        },
+        {
             "name": "icp",
             "description": "GET ICP ledger / reconciliation / periodicity endpoints."
         },
@@ -254,6 +266,10 @@
         {
             "name": "invoice-api",
             "description": "HTTP API for BillableInvoice drafting + posting."
+        },
+        {
+            "name": "known-cost",
+            "description": "Operator-triggered regeneration of known-cost budget lines (budget-known-costs)."
         },
         {
             "name": "kor",
@@ -384,6 +400,10 @@
             "description": "GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period."
         },
         {
+            "name": "sales-order",
+            "description": "Quote-to-order and order-to-invoice endpoints."
+        },
+        {
             "name": "sbr-filing",
             "description": "HTTP API for downloading the XBRL file of an SBR filing."
         },
@@ -480,6 +500,10 @@
             "description": "Check a filed VAT return for corrections and prepare its supplementary return (REQ-VPS-002)."
         },
         {
+            "name": "vat-return-checks",
+            "description": "The checks of a VAT return before it is filed (REQ-TVRB-001)."
+        },
+        {
             "name": "wbso-account-api",
             "description": "Account REST API (REQ-WBSO-001 / REQ-WBSO-005 / REQ-WBSO-006)."
         },
@@ -514,6 +538,34 @@
         {
             "name": "portal-subscription-cancel",
             "description": "A customer ends their own subscription from the portal."
+        },
+        {
+            "name": "deferral-schedules",
+            "description": "Spread a prepaid cost or deferred revenue over its periods (ledger-period-end)."
+        },
+        {
+            "name": "project-billable-hours",
+            "description": "A project's rated hours of one month (sales-billable-rate-per-hour)."
+        },
+        {
+            "name": "payment-revenue-accounts",
+            "description": "Which ledger account a paid payment request books against, per kind of request."
+        },
+        {
+            "name": "self-billed-invoice",
+            "description": "Rejects a received self-billed invoice (REQ-SEIX-007)."
+        },
+        {
+            "name": "invoice-number-check",
+            "description": "GET /api/sales/invoice-number-check: missing and duplicate numbers in a year of issued sales invoices."
+        },
+        {
+            "name": "open-item-clearing",
+            "description": "Clearing the posted lines of an open-item balance account against each other, and undoing a clearing."
+        },
+        {
+            "name": "ledger-seal",
+            "description": "The seal chain of the general ledger: check that no posted transaction changed since posting."
         }
     ],
     "paths": {
@@ -3654,6 +3706,76 @@
                 }
             }
         },
+        "/budgets/known-costs/regenerate": {
+            "post": {
+                "operationId": "known-cost-regenerate",
+                "summary": "Regenerate the known-cost budget lines of an administration",
+                "description": "Write the recurring and contract costs of an administration into the default budget of every fiscal year they touch. Lines changed by hand are left alone; a fiscal year without a default budget is reported, not created. Needs a signed-in Nextcloud user who may post in the administration.",
+                "tags": [
+                    "known-cost"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "type": "string",
+                                        "description": "The administration; the caller's active one when omitted."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The run summary: created, updated and overridden counts and the skipped fiscal years.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "created": {
+                                            "type": "integer"
+                                        },
+                                        "updated": {
+                                            "type": "integer"
+                                        },
+                                        "overridden": {
+                                            "type": "integer"
+                                        },
+                                        "skippedFiscalYears": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/cash-position": {
             "get": {
                 "operationId": "financial-dashboard-cash-position",
@@ -3715,6 +3837,715 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/cbcr/computations/{computationId}/qdmtt": {
+            "post": {
+                "operationId": "cbcr-qdmtt",
+                "summary": "Apply the Dutch QDMTT",
+                "description": "Apply the Dutch QDMTT to an NL jurisdiction computation below the minimum rate and update the QDMTT return. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "computationId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The Pillar2JurisdictionComputation id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/assess-scope": {
+            "post": {
+                "operationId": "cbcr-assess-scope",
+                "summary": "Assess the group's scope for a fiscal year",
+                "description": "Assess whether the group of this ultimate parent is in scope for the country-by-country report and the minimum tax in the fiscal year, and store the assessment. Body: fiscalYear, and enteredRevenue (year to EUR) for years without consolidated statements. Needs a member of the parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/prepare": {
+            "post": {
+                "operationId": "cbcr-prepare",
+                "summary": "Prepare the CbC figures of the group",
+                "description": "Read the figures of every group entity that keeps its books here and sum them per jurisdiction. Body: fiscalYear. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/read-figures": {
+            "post": {
+                "operationId": "cbcr-read-figures",
+                "summary": "Read an entity's figures from the books",
+                "description": "Read the country-by-country figures of the entity for the fiscal year from its administration's ledger and store them. Body: fiscalYear. Needs a member of the entity's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/figures": {
+            "post": {
+                "operationId": "cbcr-enter-figures",
+                "summary": "Enter an entity's figures",
+                "description": "Store the country-by-country figures of an entity whose books are not kept here, for the fiscal year, as entered. Replaces the figures stored for that year. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    },
+                                    "currency": {
+                                        "description": "Three-letter currency of the figures; EUR when empty."
+                                    },
+                                    "unrelatedPartyRevenue": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "relatedPartyRevenue": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "profitBeforeTax": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "incomeTaxPaidCash": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "incomeTaxAccrued": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "statedCapital": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "accumulatedEarnings": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "numberOfEmployees": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "tangibleAssetsOtherThanCash": {
+                                        "description": "A figure of the country-by-country table. Required."
+                                    },
+                                    "deferredTaxExpense": {
+                                        "description": "A figure of the country-by-country table. Optional."
+                                    },
+                                    "eligiblePayroll": {
+                                        "description": "A figure of the country-by-country table. Optional."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/import-figures": {
+            "post": {
+                "operationId": "cbcr-import-figures",
+                "summary": "Import an entity's figures",
+                "description": "Store the country-by-country figures of an entity whose books are not kept here, for the fiscal year, from CSV text with one figure per line (name and amount). Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    },
+                                    "figures": {
+                                        "description": "The CSV text: one figure per line, its name and amount separated by a comma, semicolon or tab."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/safe-harbour": {
+            "post": {
+                "operationId": "cbcr-safe-harbour",
+                "summary": "Run the safe harbour tests",
+                "description": "Run the transitional CbCR safe harbour tests per jurisdiction for the fiscal year and draft a computation where none passes. Body: fiscalYear. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/minimum-tax-returns/{returnId}/checks": {
+            "get": {
+                "operationId": "cbcr-gir-checks",
+                "summary": "The checks of a GloBE information return",
+                "description": "Every check of the GloBE information return with pass or fail, and the blocking failures. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GlobeInformationReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/cbcr/minimum-tax-returns/{returnId}/safe-harbour": {
+            "post": {
+                "operationId": "cbcr-safe-harbour-return",
+                "summary": "Run the safe harbour tests of a minimum tax return",
+                "description": "Run the transitional CbCR safe harbour tests for the return's group and year. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GlobeInformationReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/returns/{returnId}/checks": {
+            "get": {
+                "operationId": "cbcr-cbc-checks",
+                "summary": "The checks of a CbC report",
+                "description": "Every check of the country-by-country report with pass or fail, and the blocking failures. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The CbcrReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/cbcr/returns/{returnId}/prepare": {
+            "post": {
+                "operationId": "cbcr-prepare-return",
+                "summary": "Prepare a CbC report from the books",
+                "description": "Read the figures of every entity of the report's group that keeps its books here and sum them per jurisdiction, for the report's year. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The CbcrReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/returns/{returnId}/correction": {
+            "post": {
+                "operationId": "cbcr-create-correction",
+                "summary": "Create the correction of a submitted CbC report",
+                "description": "Start a new draft CbC report for the same reporting entity and year that corrects a submitted (or locked) one, or answer with the correction still open for it. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The submitted CbcrReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The correction already open for the report.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The correction was created.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
                     }
                 }
             }
@@ -4119,6 +4950,170 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/custom-record-types": {
+            "get": {
+                "operationId": "custom-record-types-index",
+                "summary": "GET the own record types shown in shillinq",
+                "description": "GET the own record types an administrator chose to show: `types`, each with slug, title, description and icon. Own record types are schemas of the shillinq register that the app did not ship. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "custom-record-types-update",
+                "summary": "PUT the list of shown own record types",
+                "description": "PUT the complete list of shown own record types as `shown` (a list of schema slugs). Refuses a slug that ships with shillinq or does not exist in the register. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "shown": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "The schema slugs to show."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "custom-record-types-toggle",
+                "summary": "PATCH one own record type on or off",
+                "description": "PATCH one own record type on or off: `slug` and `shown` (boolean). Other shown types stay as they are. Refuses a slug that ships with shillinq or does not exist in the register. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "description": "The schema slug."
+                                    },
+                                    "shown": {
+                                        "type": "boolean",
+                                        "description": "Whether to show it."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/custom-record-types/available": {
+            "get": {
+                "operationId": "custom-record-types-available",
+                "summary": "GET every own record type with its switch",
+                "description": "GET every own record type of the shillinq register as `types` (with `shown`), and `shown` as a map of slug to boolean. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
                     }
                 }
             }
@@ -5591,6 +6586,130 @@
                 }
             }
         },
+        "/financial-documents/counter-sales": {
+            "post": {
+                "operationId": "counter-sale-create",
+                "summary": "Record a counter sale and take its payment",
+                "description": "Record a counter sale as a draft simplified invoice and take its payment on the caller's registered phone, or as a QR checkout. The invoice is issued when the payment is captured and cancelled when it fails. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-document-action"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "administrationId",
+                                    "lines"
+                                ],
+                                "properties": {
+                                    "administrationId": {
+                                        "type": "string",
+                                        "description": "The administration that sells."
+                                    },
+                                    "customerId": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "A CustomerMaster of the administration; absent for its counter-sales debtor."
+                                    },
+                                    "lines": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "maxItems": 50,
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "description",
+                                                "unitPrice",
+                                                "vatRate"
+                                            ],
+                                            "properties": {
+                                                "description": {
+                                                    "type": "string",
+                                                    "maxLength": 200
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "default": 1
+                                                },
+                                                "unitPrice": {
+                                                    "type": "number",
+                                                    "description": "Price per unit including VAT."
+                                                },
+                                                "vatRate": {
+                                                    "type": "number",
+                                                    "minimum": 0,
+                                                    "maximum": 100
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/financial-documents/counter-sales/{id}/cancel": {
+            "post": {
+                "operationId": "counter-sale-cancel",
+                "summary": "Cancel a counter sale",
+                "description": "Cancel a counter sale that is not paid yet, when the customer walks away. Nothing was booked. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-document-action"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The draft invoice of the sale.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/financial-documents/payouts": {
             "post": {
                 "operationId": "financial-document-action-raise-payout",
@@ -6076,6 +7195,62 @@
                 }
             }
         },
+        "/ib47/batches/prepare": {
+            "post": {
+                "operationId": "ib47-prepare",
+                "summary": "Prepare the IB47 batch of a tax year",
+                "description": "Sum the year's confirmed payment runs per payee marked as an IB47 recipient into one IB47 record each; preparing again updates those records (REQ-DPA-021). Body: taxYear (four digits, default last year) and administration_id (default the active administration). Needs an instance administrator or a member of shillinq_payroll_officer with a membership of the administration.",
+                "tags": [
+                    "ib47"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "taxYear": {
+                                        "description": "The tax year, four digits. Last year when left out."
+                                    },
+                                    "administration_id": {
+                                        "description": "The administration that made the payments. The active administration when left out."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
         "/icp/audit-export": {
             "get": {
                 "operationId": "icp-audit-export",
@@ -6207,6 +7382,185 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/prepare": {
+            "post": {
+                "operationId": "icp-statement-prepare",
+                "summary": "Prepare the period's ICP statement from the books (REQ-ICR-002)",
+                "description": "Prepare the period's ICP statement from the books and write its draft: one line per buyer VAT number and supply type, with its reconciliation against box 3b of the VAT return. A statement past draft is never replaced (409). Body parameters: - period (required) YYYY-Qn or YYYY-MM. - administration_id (required) administration scope (REQ-ICP-001). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "description": "The period."
+                                    },
+                                    "administration_id": {
+                                        "description": "The administration id."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/xml": {
+            "get": {
+                "operationId": "icp-statement-xml",
+                "summary": "Download the XBRL instance of the period's ICP statement (REQ-ICR-002)",
+                "description": "Download the XBRL instance of the period's prepared ICP statement. Query parameters: - period (required). - administration_id (required). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "description": "The period (YYYY-Qn or YYYY-MM).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "administration_id",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/xml": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/filing": {
+            "get": {
+                "operationId": "icp-statement-filing",
+                "summary": "Whether the ICP statement can be filed through Digipoort (REQ-ICR-003)",
+                "description": "Answers { available }: false while no Digipoort connection is bound, and the page then hides File. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/file": {
+            "post": {
+                "operationId": "icp-statement-file",
+                "summary": "File the period's finalised ICP statement through Digipoort (REQ-ICR-003)",
+                "description": "File the period's finalised ICP statement as its XBRL instance through the Digipoort hand-off. The status follows only Digipoort's answer: submitted, rejected, or unchanged when deferred. Refused (409) when filing is unavailable or the statement is not finalised or does not reconcile. Body parameters: - period (required). - administration_id (required). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "description": "The period."
+                                    },
+                                    "administration_id": {
+                                        "description": "The administration id."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"
@@ -7060,6 +8414,37 @@
                 }
             }
         },
+        "/invoices/billable-work": {
+            "get": {
+                "operationId": "billable-work-index",
+                "summary": "The unbilled hours and pass-through expenses one customer can be invoiced for (GET /api/v1/invoices/billable-work)",
+                "description": "The unbilled hours and pass-through expenses one customer can be invoiced for (GET /api/v1/invoices/billable-work). Query: customerId, projectId (hours come from one of the customer's projects), from, to, rateCardId (optional, prices the hours), administrationId (optional; refused with 404 unless the caller may access it, else the caller's active administration). `hours.available` false means the hours could not be read, with `hours.reason`. Hours and items a draft or posted invoice already references are left out. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-api"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
         "/invoices/generate": {
             "post": {
                 "operationId": "invoice-api-generate",
@@ -7598,6 +8983,45 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/orders/{id}/invoice": {
+            "post": {
+                "operationId": "sales-order-invoice",
+                "summary": "Write a draft sales invoice for what a confirmed sales order has not invoiced yet (REQ-QTI-003)",
+                "description": "Write a draft sales invoice for what a confirmed sales order has not invoiced yet (REQ-QTI-003). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "sales-order"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order uuid or number.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }
@@ -8344,6 +9768,85 @@
                         }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/payment-blocks/{schema}/{id}": {
+            "post": {
+                "operationId": "payment-block-update",
+                "summary": "Block or release payment of an APTransaction or a Payee (POST /api/v1/payment-blocks/{schema}/{id})",
+                "description": "Block or release payment of an APTransaction or a Payee (POST /api/v1/payment-blocks/{schema}/{id}). Needs the payment.block payment action, access to the record's administration and a reason both ways; the person who set a block cannot release it. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "payment-run"
+                ],
+                "parameters": [
+                    {
+                        "name": "schema",
+                        "in": "path",
+                        "required": true,
+                        "description": "APTransaction or Payee.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "APTransaction",
+                                "Payee"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The object id / uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "blocked",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "blocked": {
+                                        "type": "boolean",
+                                        "description": "True blocks payment, false releases the block."
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Why payment is blocked or released."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "The request succeeded.",
@@ -9480,6 +10983,34 @@
                 }
             }
         },
+        "/purchase-orders/dispatch-channels": {
+            "get": {
+                "operationId": "purchase-order-dispatch-channels",
+                "summary": "Which dispatch channels can take an order, and why one cannot",
+                "description": "Which dispatch channels can take an order, and why one cannot. GET /api/purchase-orders/dispatch-channels The detail page disables a channel that is not there and shows the reason, instead of offering a send that would only be logged. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "purchase-order"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/purchase-orders/{id}/approval-decision": {
             "post": {
                 "operationId": "purchase-order-approval-decide",
@@ -9652,6 +11183,45 @@
                 }
             }
         },
+        "/quotes/{id}/order": {
+            "post": {
+                "operationId": "sales-order-from-quote",
+                "summary": "Turn an accepted quote into a draft sales order (REQ-QTI-001)",
+                "description": "Turn an accepted quote into a draft sales order (REQ-QTI-001). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "sales-order"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote uuid or number.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/recognition/recurring-revenue": {
             "get": {
                 "operationId": "recognition-recurring-revenue",
@@ -9698,6 +11268,53 @@
                             "type": "string"
                         }
                     }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "matchIds": {
+                                        "description": "The match ids."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/reconciliation-matches/bulk-resolve": {
+            "post": {
+                "operationId": "reconciliation-resolution-bulk-resolve-matches",
+                "summary": "Bulk-resolve matches by id alone, across reconciliations. The reconciliation is read from each match, and its administration must be one ...",
+                "description": "Bulk-resolve matches by id alone, across reconciliations. The reconciliation is read from each match, and its administration must be one the caller may use; a match without a reconciliation fails. Body parameters: - matchIds (required) — non-empty array of ReconciliationMatch ids - resolutionStatus (required) — see resolve() - resolutionReason (required) — see resolve(). Returns HTTP 200 with { applied: int, failed: array<string,string> }; per-id failures carry a generic message and do not stop the batch. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "reconciliation-resolution"
                 ],
                 "requestBody": {
                     "required": false,
@@ -10933,6 +12550,113 @@
                 }
             }
         },
+        "/settings/payment-revenue-accounts": {
+            "get": {
+                "operationId": "payment-revenue-accounts-index",
+                "summary": "GET the mapping, one key per request type, empty where unmapped",
+                "description": "GET the mapping from payment request type to the ledger account its receipt books against, one key per request type plus `clearing`, empty where unmapped. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "payment-revenue-accounts-update",
+                "summary": "PUT the submitted types' accounts; an empty value removes a mapping",
+                "description": "PUT the submitted types' accounts; an empty value removes a mapping, a type not submitted keeps its account. A value that is not an account number answers 400 and stores nothing. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "leges": {
+                                        "description": "The account for leges."
+                                    },
+                                    "dwangsom": {
+                                        "description": "The account for dwangsom."
+                                    },
+                                    "deposit": {
+                                        "description": "The account for deposit."
+                                    },
+                                    "other": {
+                                        "description": "The account for other."
+                                    },
+                                    "contribution": {
+                                        "description": "The account for contribution."
+                                    },
+                                    "event-fee": {
+                                        "description": "The account for event-fee."
+                                    },
+                                    "clearing": {
+                                        "description": "The account for clearing."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "400": {
+                        "description": "A value is not an account number; nothing was stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/setup/action/{actionId}": {
             "post": {
                 "operationId": "setup-run-action",
@@ -11265,6 +12989,49 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/supplier-invoices/{id}/draft": {
+            "delete": {
+                "operationId": "supplier-invoice-import-discard",
+                "summary": "Discard your own imported invoice while it is still a review draft",
+                "description": "Discard your own imported invoice while it is still a review draft. Only the user who imported it may, and only before it is confirmed; any other invoice answers 409. An invoice outside your administrations answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "supplier-invoice-import"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The supplier invoice id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The draft was discarded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
@@ -12172,6 +13939,9 @@
                     "401": {
                         "$ref": "#/components/responses/Problem401"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
                     }
@@ -12572,11 +14342,11 @@
         },
         "/vat-returns/{returnId}/checks": {
             "get": {
-                "operationId": "v-at-return-checks",
+                "operationId": "vat-return-checks-index",
                 "summary": "Run the checks of a VAT return (REQ-TVRB-001)",
-                "description": "Run the checks of a VAT return (REQ-TVRB-001): each with whether it passed, whether it blocks submitting and what makes it fail. Needs a signed-in Nextcloud user.",
+                "description": "Runs the checks on a VAT return's period and answers per check its name, whether it blocks filing, passed or failed and the message naming what failed, and whether a blocking check fails. Needs a signed-in Nextcloud user who is a member of the return's administration.",
                 "tags": [
-                    "v-at-return"
+                    "vat-return-checks"
                 ],
                 "parameters": [
                     {
@@ -13177,6 +14947,57 @@
                 }
             }
         },
+        "/fiscal-years/{fiscalYearId}/vat-corrections/check": {
+            "post": {
+                "operationId": "vat-fiscal-year-correction-check",
+                "summary": "Check a broken fiscal year's VAT returns for corrections (REQ-TVRB-002)",
+                "description": "For an administration whose fiscal year is not the calendar year, compares every accepted VAT return of the fiscal year with the books, writes a draft correction for each one that drifted, and answers the corrections, their total and whether the total exceeds the EUR 1,000 threshold. Needs a signed-in Nextcloud user who is a member of the fiscal year's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "fiscalYearId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The FiscalYear id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/vat-corrections/{correctionId}/prepare": {
             "post": {
                 "operationId": "vat-suppletie-prepare",
@@ -13434,6 +15255,53 @@
                 }
             }
         },
+        "/projects/{id}/billable-hours": {
+            "get": {
+                "operationId": "project-billable-hours-index",
+                "summary": "One month of a project's rated hours (GET /api/v1/projects/{id}/billable-hours)",
+                "description": "One month of a project's hours with their rate, tier, value and billed state, and the unbilled totals (sales-billable-rate-per-hour REQ-BRPH-003). Query: month (YYYY-MM, defaults to the current month). The project must belong to the caller's active administration, resolved on the server; another administration's project answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "project-billable-hours"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/sbr-filings/{id}/xbrl": {
             "get": {
                 "operationId": "sbr-filing-download",
@@ -13539,6 +15407,177 @@
                 }
             }
         },
+        "/report-schedules": {
+            "post": {
+                "operationId": "report-schedule-create",
+                "summary": "POST /api/report-schedules — create a report schedule",
+                "description": "POST /api/report-schedules — create a report schedule owned by the caller. The server sets `status` and `nextRunAt`; recipients are limited to users and groups the owner may share the administration's reports with. Needs a signed-in Nextcloud user who is a member of the administration.",
+                "tags": [
+                    "reporting"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration the schedule reports on (create only)."
+                                    },
+                                    "reportType": {
+                                        "description": "The report type (create only)."
+                                    },
+                                    "name": {
+                                        "description": "The schedule name."
+                                    },
+                                    "format": {
+                                        "description": "The output format; one the report offers."
+                                    },
+                                    "frequency": {
+                                        "description": "How often the report runs."
+                                    },
+                                    "runDay": {
+                                        "description": "The day of the period it runs on."
+                                    },
+                                    "periodRule": {
+                                        "description": "Which period each run reports on."
+                                    },
+                                    "recipients": {
+                                        "description": "Users or groups (`group:<gid>`) the owner may share the administration's reports with."
+                                    },
+                                    "folderPath": {
+                                        "description": "The folder the report is stored in."
+                                    },
+                                    "status": {
+                                        "description": "active or paused (update only)."
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The schedule was created.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/report-schedules/{id}": {
+            "put": {
+                "operationId": "report-schedule-update",
+                "summary": "PUT /api/report-schedules/{id} — change a report schedule",
+                "description": "PUT /api/report-schedules/{id} — change a schedule the caller owns. Only name, format, frequency, runDay, periodRule, recipients, folderPath and status change; the next run is recomputed when frequency or runDay changes. Needs a signed-in Nextcloud user who owns the schedule.",
+                "tags": [
+                    "reporting"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The schedule id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration the schedule reports on (create only)."
+                                    },
+                                    "reportType": {
+                                        "description": "The report type (create only)."
+                                    },
+                                    "name": {
+                                        "description": "The schedule name."
+                                    },
+                                    "format": {
+                                        "description": "The output format; one the report offers."
+                                    },
+                                    "frequency": {
+                                        "description": "How often the report runs."
+                                    },
+                                    "runDay": {
+                                        "description": "The day of the period it runs on."
+                                    },
+                                    "periodRule": {
+                                        "description": "Which period each run reports on."
+                                    },
+                                    "recipients": {
+                                        "description": "Users or groups (`group:<gid>`) the owner may share the administration's reports with."
+                                    },
+                                    "folderPath": {
+                                        "description": "The folder the report is stored in."
+                                    },
+                                    "status": {
+                                        "description": "active or paused (update only)."
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The schedule was changed.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/statements/profit-and-loss": {
             "get": {
                 "operationId": "financial-statement-profit-and-loss",
@@ -13603,6 +15642,806 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist": {
+            "post": {
+                "operationId": "period-close-add-item",
+                "summary": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002)",
+                "description": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "category": {
+                                        "description": "The category."
+                                    },
+                                    "description": {
+                                        "description": "The description."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/resolve": {
+            "post": {
+                "operationId": "period-close-resolve-item",
+                "summary": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002)",
+                "description": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/reopen": {
+            "post": {
+                "operationId": "period-close-reopen-item",
+                "summary": "POST reopen one resolved checklist item (REQ-LPE-002)",
+                "description": "POST reopen one resolved checklist item (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/deferral-schedules": {
+            "post": {
+                "operationId": "deferral-schedules-create",
+                "summary": "POST create the schedule and post its opening entry",
+                "description": "POST create the schedule and post its opening entry. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "deferral-schedules"
+                ],
+                "parameters": [],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration."
+                                    },
+                                    "sourceReference": {
+                                        "description": "The invoice line reference."
+                                    },
+                                    "description": {
+                                        "description": "What is spread."
+                                    },
+                                    "kind": {
+                                        "description": "prepaid-cost or deferred-revenue."
+                                    },
+                                    "resultAccount": {
+                                        "description": "The cost or revenue account."
+                                    },
+                                    "balanceAccount": {
+                                        "description": "The balance sheet account."
+                                    },
+                                    "totalCents": {
+                                        "description": "The amount in cents."
+                                    },
+                                    "periodFrom": {
+                                        "description": "The first day of the service period."
+                                    },
+                                    "periodTo": {
+                                        "description": "The last day of the service period."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/deferral-schedules/preview": {
+            "post": {
+                "operationId": "deferral-schedules-preview",
+                "summary": "POST the releases a request would create, without writing anything",
+                "description": "POST the releases a request would create, without writing anything. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "deferral-schedules"
+                ],
+                "parameters": [],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration."
+                                    },
+                                    "sourceReference": {
+                                        "description": "The invoice line reference."
+                                    },
+                                    "description": {
+                                        "description": "What is spread."
+                                    },
+                                    "kind": {
+                                        "description": "prepaid-cost or deferred-revenue."
+                                    },
+                                    "resultAccount": {
+                                        "description": "The cost or revenue account."
+                                    },
+                                    "balanceAccount": {
+                                        "description": "The balance sheet account."
+                                    },
+                                    "totalCents": {
+                                        "description": "The amount in cents."
+                                    },
+                                    "periodFrom": {
+                                        "description": "The first day of the service period."
+                                    },
+                                    "periodTo": {
+                                        "description": "The last day of the service period."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/statements/cash-flow": {
+            "get": {
+                "operationId": "financial-statement-cash-flow",
+                "summary": "GET /api/statements/cash-flow?from=&to=&administrationId=",
+                "description": "GET /api/statements/cash-flow?from=&to=&administrationId=. The cash flow statement of a period by the indirect method: the result, depreciation and working capital as operating, fixed assets as investing, financing and equity as financing, and the change of the cash accounts, from posted ledger lines without year-closing entries. Balance accounts without a cash flow category show as unclassified, so the statement still reconciles. The administration defaults to the one the caller is working in. One the caller is not a member of is masked as absent (ADR-005). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-statement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/statements/cash-flow/lines": {
+            "get": {
+                "operationId": "financial-statement-cash-flow-lines",
+                "summary": "GET /api/statements/cash-flow/lines?key=&administrationId=",
+                "description": "GET /api/statements/cash-flow/lines?key=&administrationId=. The posted ledger lines behind one cash flow figure, named by that figure's linesKey (scope~from~to: an account number, result or depreciation, and the range). The lines add up to the figure and each names its transaction. A malformed key or range is a bad request. The administration defaults to the one the caller is working in. One the caller is not a member of is masked as absent (ADR-005). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-statement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/public-sector/grants/{id}/report": {
+            "post": {
+                "operationId": "grant-accountability-report",
+                "summary": "Store a grant's accountability report",
+                "description": "Store the grant's accountability report (SubsidieVerantwoording) once and, when the grant's amount reaches the auditor threshold, a pending auditor statement; answer `{verantwoordingId, auditorStatementRequired, auditorStatementId}`. A missing grant or one of another administration answers a masked 404; a grant that cannot be reported on answers 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "grant-accountability"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The Subsidie id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The report is stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/public-sector/sisa": {
+            "get": {
+                "operationId": "grant-accountability-sisa",
+                "summary": "The SiSa appendix of a year",
+                "description": "The SiSa appendix of an administration's specific grants for a year: spending and income summed from the posted ledger lines tagged with each grant, and the entered output indicators, an empty one marked missing. Query: `administrationId` (default the active administration), `year` and `format` (`csv` for the export in the column order of the BZK template). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "grant-accountability"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration; default the active one.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "required": true,
+                        "description": "The year, for example 2026.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "required": false,
+                        "description": "`csv` for the export.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The appendix rows, or the CSV.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/public-sector/eu-projects/{id}/declarations": {
+            "post": {
+                "operationId": "grant-accountability-propose-eu-declaration",
+                "summary": "Propose an EU project's declaration for a quarter",
+                "description": "Store the draft declaration of the project for a quarter: the declared expenditure with certified, complete evidence, the eligible total and EU share, and the rest listed as left out with the reason. Body: `period` (a quarter such as `2026-Q3`, default the current one) or `periodFrom` and `periodTo`. A missing project or one of another administration answers a masked 404; an open irregularity on the project answers 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "grant-accountability"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The EuProject id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The draft declaration.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/ar-invoices/{invoiceNumber}/reject-self-billed": {
+            "post": {
+                "operationId": "self-billed-invoice-reject",
+                "summary": "Reject a draft self-billed invoice with a reason",
+                "description": "Reject a draft self-billed invoice with a reason; it stays unbooked. POST /api/ar-invoices/{invoiceNumber}/reject-self-billed?administrationId=... Body: { reason }. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "self-billed-invoice"
+                ],
+                "parameters": [
+                    {
+                        "name": "invoiceNumber",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ARInvoice.invoiceNumber (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The administration the invoice belongs to.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "description": "Why the self-billed invoice is not accepted."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/sales/invoice-number-check": {
+            "get": {
+                "operationId": "invoice-number-check-check",
+                "summary": "The missing and duplicate numbers of a year of issued sales invoices of one administration.",
+                "description": "The missing and duplicate numbers of a year of issued sales invoices of one administration. Query parameters: - administrationId (optional) the administration; defaults to the caller's active administration. - year (optional) four digits; defaults to this year. Returns HTTP 200 with { year, checked, first, last, missing, duplicates, outsideSeries, administrationId, missingCount, duplicateCount, rows }; HTTP 400 without an administration or with a malformed year; HTTP 404 for an administration the caller is not a member of; HTTP 500 without a stack trace on an unexpected failure. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-number-check"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/open-items/accounts/{accountId}": {
+            "get": {
+                "operationId": "open-item-clearing-overview",
+                "summary": "What is open on an account kept by open item",
+                "description": "The uncleared posted lines of the account, its groups that do not net to zero or were reopened, and the suggested exact pairs (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004). An account outside the caller's administrations answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "open-item-clearing"
+                ],
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The Account uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/open-items/clear": {
+            "post": {
+                "operationId": "open-item-clearing-clear",
+                "summary": "Clear selected lines into one group",
+                "description": "Clear posted lines of one open-item balance account against each other (REQ-LOIC-002). Lines outside the caller's administrations answer 404; a member without posting rights gets 403; unposted lines, lines on different accounts or administrations and lines already in a group answer 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "open-item-clearing"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "lineIds"
+                                ],
+                                "properties": {
+                                    "lineIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "The ledger lines to clear, at least two, of one account kept by open item."
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Why the lines are cleared together."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/open-items/groups/{groupId}/undo": {
+            "post": {
+                "operationId": "open-item-clearing-undo",
+                "summary": "Undo a clearing",
+                "description": "Open the lines of a clearing group again and remove the group (REQ-LOIC-002). A group outside the caller's administrations answers 404; a member without posting rights gets 403. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "open-item-clearing"
+                ],
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ClearingGroup uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/ledger/seal-check": {
+            "get": {
+                "operationId": "ledger-seal-verify",
+                "summary": "Check the seal chain of an administration's general ledger",
+                "description": "Recompute every seal of the posted transactions of one administration and report the chain intact, or the first transaction whose content or link no longer matches. Needs a signed-in Nextcloud admin or a controller of that administration.",
+                "tags": [
+                    "ledger-seal"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The administration whose ledger is checked.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }

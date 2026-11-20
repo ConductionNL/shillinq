@@ -75,6 +75,8 @@ class JurisdictionLockListener implements IEventListener {
 	 * @return void
 	 *
 	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AdministrationJurisdiction reads the jurisdiction field; it holds no state.
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {

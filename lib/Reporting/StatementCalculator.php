@@ -45,6 +45,8 @@ use Throwable;
  * comparison column or a second statement does not read the ledger again.
  *
  * @spec openspec/changes/reporting-financial-statements
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Profit and loss, balance sheet and cash flow movements share one ledger read.
  */
 class StatementCalculator {
 
@@ -93,11 +95,19 @@ class StatementCalculator {
 	];
 
 	/**
-	 * Counting lines per administration: accountNumber, class, date, amount.
+	 * Counting lines per administration: accountNumber, class, date, amount,
+	 * and whether the line belongs to a year-closing entry.
 	 *
-	 * @var array<string, array<int, array{account: string, class: string, date: string, amount: float}>>
+	 * @var array<string, array<int, array<string, mixed>>> Each: account, class, date, amount, closing, id, transactionId, description.
 	 */
 	private array $lines = [];
+
+	/**
+	 * Ids of the posted year-closing transactions per administration.
+	 *
+	 * @var array<string, array<string, true>>
+	 */
+	private array $closing = [];
 
 	/**
 	 * Accounts per administration: accountNumber => row.
@@ -276,6 +286,133 @@ class StatementCalculator {
 	}//end fiscalYearStart()
 
 	/**
+	 * The movements behind a cash flow statement over a date range, both
+	 * dates inclusive, without year-closing entries.
+	 *
+	 * A closing entry only moves the result from the profit and loss accounts
+	 * to equity, so it is no cash flow; leaving it out on both sides keeps the
+	 * period result and the equity movement as they were before the close.
+	 * Each balance account carries its net movement (credit positive) and its
+	 * credit and debit totals, which the cash flow needs to tell depreciation
+	 * from investment on the same account.
+	 *
+	 * @param string $administrationId The administration, already checked for access.
+	 * @param string $from             First posting date, YYYY-MM-DD; empty for no lower bound.
+	 * @param string $to               Last posting date, YYYY-MM-DD.
+	 *
+	 * @return array{result: float, accounts: array<string, array{net: float, credit: float, debit: float}>}
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.ElseExpression) Each branch is one kind of movement.
+	 */
+	public function cashFlowMovements(string $administrationId, string $from, string $to): array {
+		$result = 0.0;
+		$accounts = [];
+		foreach ($this->countingLines(administrationId: $administrationId) as $line) {
+			if ($line['closing'] === true || $line['date'] > $to || ($from !== '' && $line['date'] < $from)) {
+				continue;
+			}
+
+			if ($line['class'] === 'pnl') {
+				$result += $line['amount'];
+				continue;
+			}
+
+			$movement = ($accounts[$line['account']] ?? ['net' => 0.0, 'credit' => 0.0, 'debit' => 0.0]);
+			$movement['net'] += $line['amount'];
+			if ($line['amount'] >= 0.0) {
+				$movement['credit'] += $line['amount'];
+			} else {
+				$movement['debit'] -= $line['amount'];
+			}
+
+			$accounts[$line['account']] = $movement;
+		}
+
+		ksort($accounts, SORT_STRING);
+		$rounded = [];
+		foreach ($accounts as $number => $movement) {
+			$rounded[(string)$number] = [
+				'net' => self::round(value: $movement['net']),
+				'credit' => self::round(value: $movement['credit']),
+				'debit' => self::round(value: $movement['debit']),
+			];
+		}
+
+		return ['result' => self::round(value: $result), 'accounts' => $rounded];
+	}//end cashFlowMovements()
+
+	/**
+	 * The posted ledger lines behind one statement figure.
+	 *
+	 * The same lines the figures are summed from: posted, counting, not part
+	 * of a year-closing entry, dated by their transaction. A figure names its
+	 * accounts, or a line class (`pnl` for the result) when it has no single
+	 * account. Each line carries its transaction, so it opens its posting.
+	 *
+	 * @param string       $administrationId The administration, already checked for access.
+	 * @param list<string> $accounts         Account numbers; empty for every account of the class.
+	 * @param string       $class            `pnl`, `balance`, or empty for both.
+	 * @param string       $from             First posting date, YYYY-MM-DD; empty for no lower bound.
+	 * @param string       $to               Last posting date, YYYY-MM-DD.
+	 *
+	 * @return array{lines: list<array<string, mixed>>, total: float} Lines in date and account order, and their credit-positive sum.
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 */
+	public function linesBetween(string $administrationId, array $accounts, string $class, string $from, string $to): array {
+		$wanted = array_fill_keys(array_map('strval', $accounts), true);
+		$names = $this->accountRows(administrationId: $administrationId);
+		$lines = [];
+		$total = 0.0;
+		foreach ($this->countingLines(administrationId: $administrationId) as $line) {
+			if ($line['closing'] === true || $line['date'] > $to || ($from !== '' && $line['date'] < $from)) {
+				continue;
+			}
+
+			if (($wanted !== [] && isset($wanted[$line['account']]) === false)
+				|| ($class !== '' && $line['class'] !== $class)
+			) {
+				continue;
+			}
+
+			$total += $line['amount'];
+			$lines[] = [
+				'id' => $line['id'],
+				'transactionId' => $line['transactionId'],
+				'date' => $line['date'],
+				'accountNumber' => $line['account'],
+				'account' => trim($line['account'].' '.trim((string)($names[$line['account']]['name'] ?? ''))),
+				'description' => $line['description'],
+				'amount' => self::round(value: $line['amount']),
+			];
+		}
+
+		usort(
+			$lines,
+			static function (array $left, array $right): int {
+				return [$left['date'], $left['accountNumber'], $left['id']] <=> [$right['date'], $right['accountNumber'], $right['id']];
+			}
+		);
+
+		return ['lines' => $lines, 'total' => self::round(value: $total)];
+	}//end linesBetween()
+
+	/**
+	 * The administration's account records by account number.
+	 *
+	 * @param string $administrationId The administration, already checked for access.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
+	 */
+	public function accountsByNumber(string $administrationId): array {
+		return $this->accountRows(administrationId: $administrationId);
+	}//end accountsByNumber()
+
+	/**
 	 * The signed sum per account of one class within a range.
 	 *
 	 * @param string $administrationId The administration.
@@ -338,7 +475,7 @@ class StatementCalculator {
 	 *
 	 * @param string $administrationId The administration.
 	 *
-	 * @return array<int, array{account: string, class: string, date: string, amount: float}>
+	 * @return array<int, array<string, mixed>> Each: account, class, date, amount, closing, id, transactionId, description.
 	 */
 	private function countingLines(string $administrationId): array {
 		if (isset($this->lines[$administrationId]) === true) {
@@ -359,6 +496,10 @@ class StatementCalculator {
 				'class' => $this->lineClass(administrationId: $administrationId, line: $line, account: $account),
 				'date' => $date,
 				'amount' => self::signedAmount(line: $line),
+				'closing' => isset($this->closing[$administrationId][(string)($line['transactionId'] ?? '')]),
+				'id' => (string)($line['@self']['id'] ?? $line['id'] ?? ''),
+				'transactionId' => (string)($line['transactionId'] ?? ''),
+				'description' => trim((string)($line['description'] ?? '')),
 			];
 		}
 
@@ -368,7 +509,8 @@ class StatementCalculator {
 	}//end countingLines()
 
 	/**
-	 * Posting date per posted transaction of the administration.
+	 * Posting date per posted transaction of the administration; notes the
+	 * year-closing ones (`journalType` closing) on the way.
 	 *
 	 * @param string $administrationId The administration.
 	 *
@@ -376,11 +518,15 @@ class StatementCalculator {
 	 */
 	private function postingDates(string $administrationId): array {
 		$dates = [];
+		$this->closing[$administrationId] = [];
 		foreach ($this->read(schema: 'GLTransaction', filters: ['administrationId' => $administrationId, 'state' => 'posted']) as $transaction) {
 			$id = (string)($transaction['@self']['id'] ?? $transaction['id'] ?? '');
 			$date = substr((string)($transaction['postingDate'] ?? ''), 0, 10);
 			if ($id !== '' && $date !== '') {
 				$dates[$id] = $date;
+				if (($transaction['journalType'] ?? '') === 'closing') {
+					$this->closing[$administrationId][$id] = true;
+				}
 			}
 		}
 

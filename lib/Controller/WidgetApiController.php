@@ -35,8 +35,8 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\SlotServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetCorsPolicyInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
-use OCA\Shillinq\Service\WidgetCorsPolicy;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -108,7 +108,7 @@ class WidgetApiController extends Controller {
 	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-	 * @param WidgetCorsPolicy|null $corsPolicy The browser origins a widget key allows (REQ-WSW-011); without it no CORS headers are sent.
+	 * @param WidgetCorsPolicyInterface|null $corsPolicy The browser origins a widget key allows (REQ-WSW-011); without it no CORS headers are sent.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -118,7 +118,7 @@ class WidgetApiController extends Controller {
 		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
-		private readonly ?WidgetCorsPolicy $corsPolicy = null,
+		private readonly ?WidgetCorsPolicyInterface $corsPolicy = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

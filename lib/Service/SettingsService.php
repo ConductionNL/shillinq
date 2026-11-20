@@ -59,6 +59,8 @@ use Psr\Log\LoggerInterface;
  * getter/setter/seed operation the app exposes, so its size scales with
  * the app's configuration surface; splitting is out of scope for a
  * mechanical phpcs/phpmd cleanup. Deferred to a follow-up.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Settings seeds every register the app ships, so it reaches each seeder.
  */
 class SettingsService implements SettingsServiceInterface {
 
@@ -326,6 +328,8 @@ class SettingsService implements SettingsServiceInterface {
 	 * @param string $country          ISO 3166 alpha-2.
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AdministrationJurisdiction reads the jurisdiction field; it holds no state.
 	 */
 	private function stampJurisdiction(string $administrationId, string $country): void {
 		try {

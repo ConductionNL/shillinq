@@ -196,6 +196,7 @@ import FileReplaceOutline from 'vue-material-design-icons/FileReplaceOutline.vue
 import FileSendOutline from 'vue-material-design-icons/FileSendOutline.vue'
 import FileSign from 'vue-material-design-icons/FileSign.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
+import FileUploadOutline from 'vue-material-design-icons/FileUploadOutline.vue'
 import FileXmlBox from 'vue-material-design-icons/FileXmlBox.vue'
 import FilterCogOutline from 'vue-material-design-icons/FilterCogOutline.vue'
 import Finance from 'vue-material-design-icons/Finance.vue'
@@ -231,6 +232,7 @@ import Lightbulb from 'vue-material-design-icons/Lightbulb.vue'
 import LightbulbOnOutline from 'vue-material-design-icons/LightbulbOnOutline.vue'
 import LightbulbOutline from 'vue-material-design-icons/LightbulbOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
+import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import MapMarkerOutline from 'vue-material-design-icons/MapMarkerOutline.vue'
@@ -246,6 +248,7 @@ import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutli
 import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
 import PauseCircleOutline from 'vue-material-design-icons/PauseCircleOutline.vue'
+import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
 import Percent from 'vue-material-design-icons/Percent.vue'
 import PercentOutline from 'vue-material-design-icons/PercentOutline.vue'
 import PiggyBankOutline from 'vue-material-design-icons/PiggyBankOutline.vue'
@@ -521,6 +524,7 @@ export default {
 	FileSendOutline,
 	FileSign,
 	FileTreeOutline,
+	FileUploadOutline,
 	FileXmlBox,
 	FilterCogOutline,
 	Finance,
@@ -556,6 +560,7 @@ export default {
 	LightbulbOnOutline,
 	LightbulbOutline,
 	LinkVariant,
+	LinkVariantOff,
 	Lock,
 	LockOutline,
 	MapMarkerOutline,
@@ -571,6 +576,7 @@ export default {
 	PackageVariant,
 	PackageVariantClosed,
 	PauseCircleOutline,
+	PencilOutline,
 	Percent,
 	PercentOutline,
 	PiggyBankOutline,

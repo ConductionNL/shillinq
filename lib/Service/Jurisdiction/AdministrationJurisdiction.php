@@ -95,6 +95,8 @@ class AdministrationJurisdiction {
 	 * @return string ISO 3166 alpha-2.
 	 *
 	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.ShortMethodName) of() reads as AdministrationJurisdiction::of($administration).
 	 */
 	public function of(string $administrationId): string {
 		$administrationId = trim($administrationId);
