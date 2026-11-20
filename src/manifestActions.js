@@ -44,6 +44,11 @@ import { openRecalculateInvestmentDeductions } from './utils/investmentDeduction
 import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openRegenerateKnownCosts } from './utils/knownCostActions.js'
+import {
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+} from './utils/openItemClearingActions.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -137,6 +142,11 @@ export const manifestActions = Object.freeze({
 	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// ledger-open-item-clearing 3.1: Clear on a suggested pair, Clear
+	// selected on Lines to clear, Undo clearing on a group.
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
 	// tax-icp-and-reverse-charge: Prepare statement on the ICP page, and
 	// Reconcile, Download XML and File on a statement.
 	openPrepareIcpStatement,

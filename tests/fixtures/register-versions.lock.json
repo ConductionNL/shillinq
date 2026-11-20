@@ -188,6 +188,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120102500",
             "versionsSha256": "3ab98b0be74412361e0a7c966a4677368e683faa56c8a23a3524a697c83f33ff"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102600",
+            "versionsSha256": "0450d0dd94ac92a31b01dffb00832f9825aebb4aee07a6f6c21fa3ef7a082e59"
         }
     ],
     "versions": {
@@ -300,6 +304,7 @@
         "schema:CddRecord": "0.1.0",
         "schema:ChartOfAccountsMapping": "0.1.0",
         "schema:ClaimsVoorzieningDetail": "0.1.0",
+        "schema:ClearingGroup": "0.1.0",
         "schema:CloseChecklistInstance": "0.2.0",
         "schema:CloseChecklistTemplate": "0.2.0",
         "schema:CloseMetrics": "0.1.0",
@@ -405,7 +410,7 @@
         "schema:FundsTransfer": "0.1.0",
         "schema:FxRate": "0.1.0",
         "schema:FxRevaluationPosting": "0.1.0",
-        "schema:GLLine": "0.2.0",
+        "schema:GLLine": "0.3.0",
         "schema:GLTransaction": "0.3.0",
         "schema:GRAllocationRun": "0.1.0",
         "schema:GRDeelnemer": "0.1.0",
