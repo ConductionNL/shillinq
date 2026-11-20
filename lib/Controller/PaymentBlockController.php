@@ -1,0 +1,150 @@
+<?php
+
+/**
+ * Payment Block Controller
+ *
+ * The one endpoint behind "Block payment" and "Release payment" on a supplier
+ * invoice or a supplier. #[NoAdminRequired]; the caller's OpenRegister write
+ * access, the administration and the reason are checked in PaymentBlockService.
+ *
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/specs/payment-control-guards/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Controller;
+
+use OCA\OpenRegister\Exception\HookStoppedException;
+use OCA\OpenRegister\Exception\NotAuthorizedException;
+use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Listener\PaymentBlockReleaseListener;
+use OCA\Shillinq\PaymentRun\PaymentBlockService;
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
+use OCP\IRequest;
+use Psr\Log\LoggerInterface;
+use Throwable;
+
+/**
+ * Blocks and releases payment of one invoice or supplier.
+ *
+ * @spec openspec/specs/payment-control-guards/spec.md
+ */
+class PaymentBlockController extends Controller {
+
+	/**
+	 * Construct the controller.
+	 *
+	 * @param IRequest            $request The request.
+	 * @param PaymentBlockService $blocks  Sets and releases blocks.
+	 * @param IL10N               $l10n    Translations.
+	 * @param LoggerInterface     $logger  Logger.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly PaymentBlockService $blocks,
+		private readonly IL10N $l10n,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+
+	}//end __construct()
+
+	/**
+	 * Block or release payment.
+	 *
+	 * The body carries `blocked` (true to block, false to release) and `reason`.
+	 *
+	 * @param string $schema APTransaction or Payee.
+	 * @param string $id     The record's id.
+	 * @param string $reason Why; required both ways.
+	 *
+	 * @return JSONResponse The saved record, or the refusal with a message.
+	 *
+	 * @spec openspec/specs/payment-control-guards/spec.md
+	 */
+	#[NoAdminRequired]
+	public function update(string $schema, string $id, string $reason=''): JSONResponse {
+		$blocked = filter_var($this->request->getParam('blocked', true), FILTER_VALIDATE_BOOLEAN);
+		try {
+			$result = $this->blocks->setBlock(schema: $schema, id: $id, blocked: $blocked, reason: $reason);
+		} catch (NotAuthorizedException $e) {
+			return new JSONResponse(
+				['error' => 'not-allowed', 'message' => $this->message(code: 'not-allowed')],
+				403
+			);
+		} catch (HookStoppedException $e) {
+			// A save-path rule refused the write, such as a release by someone
+			// who is neither a controller nor a treasurer: a refusal, not a fault.
+			return new JSONResponse(
+				['error' => 'refused', 'message' => $this->refusal(hook: $e)],
+				403
+			);
+		} catch (Throwable $e) {
+			$this->logger->error('Shillinq: the payment block could not be saved', ['exception' => $e->getMessage()]);
+			return new JSONResponse(
+				['error' => 'save-failed', 'message' => $this->l10n->t('The payment block could not be saved.')],
+				500
+			);
+		}
+
+		if (isset($result['error']) === true) {
+			return new JSONResponse(
+				['error' => $result['error'], 'message' => $this->message(code: $result['error'])],
+				$result['status']
+			);
+		}
+
+		return new JSONResponse($result['object'] ?? []);
+
+	}//end update()
+
+	/**
+	 * The sentence for a refusal by a save-path rule.
+	 *
+	 * @param HookStoppedException $hook The refusal.
+	 *
+	 * @return string
+	 */
+	private function refusal(HookStoppedException $hook): string {
+		if ($hook->getMessage() === PaymentBlockReleaseListener::MESSAGE_ROLE) {
+			return $this->l10n->t('Only a controller or a treasurer can release a payment block.');
+		}
+
+		return $this->l10n->t('This change to the payment block is not allowed.');
+
+	}//end refusal()
+
+	/**
+	 * The sentence for a refusal.
+	 *
+	 * @param string $code The refusal code.
+	 *
+	 * @return string
+	 */
+	private function message(string $code): string {
+		return match ($code) {
+			'not-logged-in' => $this->l10n->t('Sign in to change a payment block.'),
+			'not-allowed' => $this->l10n->t('You are not allowed to block or release payments.'),
+			'reason-required' => $this->l10n->t('Give a reason.'),
+			'already-blocked' => $this->l10n->t('Payment is already blocked.'),
+			'not-blocked' => $this->l10n->t('Payment is not blocked.'),
+			default => $this->l10n->t('This record cannot be found.'),
+		};
+
+	}//end message()
+}//end class

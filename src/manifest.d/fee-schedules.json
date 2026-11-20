@@ -24,6 +24,7 @@
 					{ "key": "legalBasis.article", "label": "Article" },
 					{ "key": "legalBasis.effectiveDate", "label": "Basis in force from" },
 					{ "key": "revenueAccount", "label": "Revenue account", "sortable": true },
+					{ "key": "revenueTaskField", "label": "Task field", "sortable": true },
 					{ "key": "payAtIntake", "label": "Pay at intake", "sortable": true },
 					{ "key": "validFrom", "label": "Valid from", "sortable": true },
 					{ "key": "validTo", "label": "Valid until", "sortable": true }

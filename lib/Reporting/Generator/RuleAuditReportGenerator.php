@@ -49,9 +49,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
-use OCA\Shillinq\Service\RuleAuditService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -226,7 +226,7 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 	 */
 	private function runAudit(array $context): array {
 		try {
-			$service = $this->container->get(RuleAuditService::class);
+			$service = $this->container->get(RuleAuditServiceInterface::class);
 			return $service->audit($context);
 		} catch (\Throwable $e) {
 			$this->logger->warning('RuleAuditReportGenerator: audit failed: ' . $e->getMessage());

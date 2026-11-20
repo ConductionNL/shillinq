@@ -168,7 +168,7 @@
 					{"key": "runTimestamp", "label": "Run at", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true}
 				],
-				"defaultSort": "runTimestamp",
+				"defaultSort": "-runTimestamp",
 				"detailRoute": "FluxRunDetail"
 			}
 		},
@@ -180,7 +180,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "FluxRun",
-				"_note": "REPORT/ANALYSIS archetype — a flux run compares budget vs actual per GL account and ranks the material variances. Native shillinq detail contract: config.fields[] renders the run parameters (scope, comparison basis, materiality thresholds, result summary); the ranked variance items (FluxItem, FK fluxRunId) are currently ABSENT from this page — see _relatedListsExclude below: the run record does not store its own run id, so no filter token can reach the value FluxItem holds, and a converted section would render empty while looking fixed; the immutable audit trail lives in the sidebar; and the three narrative export links (Markdown/PDF/JSON) are preserved verbatim as config.links[]. NO comms/files/aggregation — a flux run is derived analysis, not correspondence.",
+				"_note": "REPORT/ANALYSIS archetype — a flux run compares budget vs actual per GL account and ranks the material variances. Native shillinq detail contract: config.fields[] renders the run parameters (scope, comparison basis, materiality thresholds, result summary); the variance items of the run (FluxItem, FK fluxRunId) are listed under relatedCollections by the run id the FluxRun row stores; the immutable audit trail lives in the sidebar; and the three narrative export links (Markdown/PDF/JSON) are preserved verbatim as config.links[]. NO comms/files/aggregation — a flux run is derived analysis, not correspondence.",
 				"fields": [
 					{"key": "administrationId", "label": "Administration", "type": "string"},
 					{"key": "periodId", "label": "Period", "type": "string"},
@@ -193,7 +193,17 @@
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "resultSummary", "label": "Result summary", "type": "object"}
 				],
-				"_relatedListsExclude": "'Variance items' NOT converted — removed rather than faked, because NO filter token can produce the stored value. It was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered) with `@self.id`, which is not a token resolveFilterTokens.js knows either. Converting the key cannot fix it: OCA\\Shillinq\\Service\\FluxService::persistRun() saves the FluxRun object WITHOUT any fluxRunId field, while every FluxItem stores `fluxRunId` = generateRunId() = sprintf('flux-%s-%s-%s', administrationId, periodId, His) — a synthetic run id the parent record does not carry in ANY flat payload field (FluxRun's properties are administrationId/periodId/scope/comparisonBasis/materiality*/runTimestamp/status/resultSummary). So `@object.<field>` has nothing to read and `@objectId` yields a UUID that no FluxItem stores. Restoring this needs persistRun() to persist fluxRunId onto the FluxRun row (then the token becomes `@object.fluxRunId`) — see the relatedLists sweep report.",
+				"relatedCollections": [
+					{"title": "Variance items", "register": "shillinq", "schema": "FluxItem", "filter": {"fluxRunId": "@object.fluxRunId"}, "columns": [
+						{"key": "glAccountNumber", "label": "Account"},
+						{"key": "actualCents", "label": "Actual (cents)"},
+						{"key": "budgetCents", "label": "Basis (cents)"},
+						{"key": "varianceCents", "label": "Variance (cents)"},
+						{"key": "materialityClassification", "label": "Materiality"},
+						{"key": "status", "label": "Status"}
+					]}
+				],
+				"_relatedCollectionsNote": "TOKEN: `@object.fluxRunId`. FluxService::persistRun() stores the run's generated id on the FluxRun row (FluxRun 0.2.0, ledger-group-close) and every FluxItem of the run stores the same value in fluxRunId, so the items of this run are exactly the rows whose fluxRunId matches. A run saved before FluxRun 0.2.0 has no fluxRunId and lists no items.",
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [

@@ -37,6 +37,7 @@ use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InvoiceBatchServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -51,7 +52,7 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) One call validated whole, then written per customer.
  */
-class InvoiceBatchService {
+class InvoiceBatchService implements InvoiceBatchServiceInterface {
 
 	/**
 	 * The most customers one batch bills.
