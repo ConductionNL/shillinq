@@ -42,8 +42,8 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\VendorPerformanceAggregation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -103,8 +103,8 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for scheduling and current-time reads.
-	 * @param SettingsService $settings Resolves the active OR register slug.
-	 * @param VendorPerformanceAggregation $aggregation Aggregation service (server-authoritative scoring).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param VendorPerformanceAggregationInterface $aggregation Aggregation service (server-authoritative scoring).
 	 * @param ContainerInterface $container DI container for OR ObjectService lookup.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 *
@@ -112,8 +112,8 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
-		private readonly VendorPerformanceAggregation $aggregation,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly VendorPerformanceAggregationInterface $aggregation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -154,7 +154,7 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
 	private function runAsJob($argument): void {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('VendorPerformanceAggregationJob: OR unavailable, skipping.');
 			return;
 		}
@@ -316,7 +316,7 @@ class VendorPerformanceAggregationJob extends TimedJob {
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
 		return $objectService
-			->setRegister($this->settings->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema(self::SCHEMA_SUPPLIER_INVOICE)
 			->findAll(['filters' => []]);
 	}//end supplierInvoiceRows()

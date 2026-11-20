@@ -39,7 +39,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\ComplianceService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -66,9 +66,9 @@ final class ComplianceServiceTest extends TestCase {
 	/**
 	 * Settings stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Cache factory stub.
@@ -113,7 +113,7 @@ final class ComplianceServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->cacheFactory = $this->createMock(ICacheFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 
@@ -147,7 +147,7 @@ final class ComplianceServiceTest extends TestCase {
 
 		$this->service = new ComplianceService(
 			container: $this->container,
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			cacheFactory: $this->cacheFactory,
 			logger: $this->logger,
 		);

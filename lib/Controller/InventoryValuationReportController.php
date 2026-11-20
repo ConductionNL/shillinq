@@ -32,9 +32,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\InventoryValuationReportService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InventoryValuationReportServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,14 +53,14 @@ class InventoryValuationReportController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param InventoryValuationReportService $report The valuation reporting service.
-	 * @param AdministrationContextService $context Admin-membership / IDOR context.
+	 * @param InventoryValuationReportServiceInterface $report The valuation reporting service.
+	 * @param AdministrationContextServiceInterface $context Admin-membership / IDOR context.
 	 * @param LoggerInterface $logger Logger; never leaks stack traces.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly InventoryValuationReportService $report,
-		private readonly AdministrationContextService $context,
+		private readonly InventoryValuationReportServiceInterface $report,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -97,7 +97,7 @@ class InventoryValuationReportController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$query = new InventoryValuationQuery(request: $this->request);
+		$query = new InventoryValuationQuery(request: $this->request, activeAdministrationId: $this->activeAdministrationId());
 		$refusal = $this->queryRefusal(query: $query);
 		if ($refusal !== null) {
 			return $refusal;
@@ -163,6 +163,30 @@ class InventoryValuationReportController extends Controller {
 		return new JSONResponse($payload, Http::STATUS_OK);
 
 	}//end valuationReport()
+
+	/**
+	 * The caller's active administration, for a request that names none.
+	 *
+	 * `buildContext()` derives it from the session user's own memberships, so
+	 * no client value reaches it; the report still asks canAccess() for it
+	 * like for a named one. '' when there is none.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
+	 */
+	private function activeAdministrationId(): string {
+		if (trim((string)$this->request->getParam('administration_id', '')) !== '') {
+			return '';
+		}
+
+		try {
+			return (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
+		} catch (\Throwable $e) {
+			return '';
+		}
+
+	}//end activeAdministrationId()
 
 	/**
 	 * Log a failed report and answer a 500 without the failure's details.

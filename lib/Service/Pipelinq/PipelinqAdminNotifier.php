@@ -36,6 +36,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+
 /**
  * Port that surfaces a "pipelinq token invalid" alert to administrators.
  *

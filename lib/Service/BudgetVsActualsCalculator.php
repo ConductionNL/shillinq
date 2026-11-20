@@ -59,26 +59,6 @@ namespace OCA\Shillinq\Service;
  */
 class BudgetVsActualsCalculator {
 	/**
-	 * The 12 monthly amount field names, in calendar order.
-	 *
-	 * @var list<string>
-	 */
-	private const MONTH_FIELDS = [
-		'month01Amount',
-		'month02Amount',
-		'month03Amount',
-		'month04Amount',
-		'month05Amount',
-		'month06Amount',
-		'month07Amount',
-		'month08Amount',
-		'month09Amount',
-		'month10Amount',
-		'month11Amount',
-		'month12Amount',
-	];
-
-	/**
 	 * Resolve a `LedgerGroup`'s budgeted amount for one calendar month: its
 	 * own `BudgetLine`'s amount for that month if one exists against it,
 	 * otherwise the recursive sum of its children's own resolved budgeted
@@ -196,22 +176,7 @@ class BudgetVsActualsCalculator {
 	 * @return string|null The entry's id or slug, or null when neither is set.
 	 */
 	private function keyForIndex(int $index, array $context): ?string {
-		$entry = ($context['ledgerGroupEntries'][$index] ?? null);
-		if ($entry === null) {
-			return null;
-		}
-
-		$id = (string)($entry['id'] ?? '');
-		if ($id !== '') {
-			return $id;
-		}
-
-		$slug = (string)($entry['slug'] ?? '');
-		if ($slug !== '') {
-			return $slug;
-		}
-
-		return null;
+		return LedgerGroupEntryKey::of(entry: ($context['ledgerGroupEntries'][$index] ?? null));
 
 	}//end keyForIndex()
 
@@ -223,12 +188,7 @@ class BudgetVsActualsCalculator {
 	 * @return string The field name; `month01Amount` for any out-of-range input.
 	 */
 	private function monthField(int $monthNumber): string {
-		$index = ($monthNumber - 1);
-		if ($index < 0 || $index > 11) {
-			return self::MONTH_FIELDS[0];
-		}
-
-		return self::MONTH_FIELDS[$index];
+		return BudgetMonthFields::of(monthNumber: $monthNumber);
 
 	}//end monthField()
 }//end class

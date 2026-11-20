@@ -78,9 +78,54 @@ describe('arEInvoiceActions — mapSendResult', () => {
 			t,
 		)
 		expect(mapped.deliveryStatus).toBe('not-sent')
+		// The notice no longer sends the user away: the page offers Send by email beside it (sales-invoice-sending REQ-SIS-002).
 		expect(mapped.fallbackNotice).toBe(
-			'No Peppol participant found for this debtor — use PDF + email instead.',
+			'No Peppol participant was found for this customer. Send the invoice by email instead.',
 		)
+	})
+
+	it('says Peppol is unavailable when integriq cannot take the invoice', () => {
+		const mapped = mapSendResult(
+			{
+				deliveryStatus: 'not-sent',
+				fallback: true,
+				warnings: [
+					{ field: 'buyerVatId', code: 'vies_outage' },
+					{ field: 'transmission', code: 'peppol_unavailable' },
+				],
+			},
+			t,
+		)
+		expect(mapped.deliveryStatus).toBe('not-sent')
+		expect(mapped.fallbackNotice).toBe(
+			'Peppol sending is not available on this instance — send the invoice by email instead.',
+		)
+	})
+
+	it('says the file was not stored when there is no payload to hand over', () => {
+		const mapped = mapSendResult(
+			{
+				deliveryStatus: 'not-sent',
+				fallback: true,
+				warnings: [{ code: 'peppol_payload_not_stored' }],
+			},
+			t,
+		)
+		expect(mapped.fallbackNotice).toBe(
+			'The e-invoice file could not be stored — send the invoice by email instead.',
+		)
+	})
+
+	it('ignores warnings when the invoice was queued', () => {
+		const mapped = mapSendResult(
+			{
+				deliveryStatus: 'queued',
+				fallback: false,
+				warnings: [{ code: 'peppol_unavailable' }],
+			},
+			t,
+		)
+		expect(mapped.fallbackNotice).toBe('')
 	})
 
 	it('defaults the status to queued on a shapeless success body', () => {

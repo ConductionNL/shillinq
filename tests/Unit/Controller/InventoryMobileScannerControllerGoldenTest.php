@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\InventoryMobileScannerController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InventoryMobileScannerService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -95,7 +95,7 @@ class InventoryMobileScannerControllerGoldenTest extends TestCase {
 				return ($setup['groups'] ?? []);
 			}
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(($setup['or'] ?? true));
 		$settings->method('getRegisterSlug')->willReturn('reg-f');
 		$admin = $this->createMock(AdministrationContextService::class);

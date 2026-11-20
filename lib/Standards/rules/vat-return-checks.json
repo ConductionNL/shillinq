@@ -1,0 +1,78 @@
+{
+  "domain": "vat",
+  "version": "2026-10",
+  "rules": [
+    {
+      "id": "nl-vat-return-line-box",
+      "domain": "vat",
+      "jurisdiction": "NL",
+      "framework": "shillinq-vat-return-checks",
+      "source": "Shillinq VAT return check: every VAT line has a box (REQ-TVRB-001)",
+      "statement": "Every posted ledger line of the period on a VAT account, or carrying VAT, has a VAT return box.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+    },
+    {
+      "id": "nl-vat-return-rate-per-line",
+      "domain": "vat",
+      "jurisdiction": "NL",
+      "framework": "shillinq-vat-return-checks",
+      "source": "Shillinq VAT return check: posted VAT equals base times rate (REQ-TVRB-001)",
+      "statement": "The VAT posted for each tariff of a transaction equals its base times the tariff's rate, within one cent.",
+      "severity": "recommended",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+    },
+    {
+      "id": "nl-vat-return-account-movement",
+      "domain": "vat",
+      "jurisdiction": "NL",
+      "framework": "shillinq-vat-return-checks",
+      "source": "Shillinq VAT return check: VAT accounts agree with the return (REQ-TVRB-001)",
+      "statement": "The period movement of the output VAT account equals the VAT the return declares as owed, and that of the input VAT account equals its input tax.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+    },
+    {
+      "id": "nl-vat-return-no-drafts",
+      "domain": "vat",
+      "jurisdiction": "NL",
+      "framework": "shillinq-vat-return-checks",
+      "source": "Shillinq VAT return check: nothing unposted in the period (REQ-TVRB-001)",
+      "statement": "No draft or unposted invoice or journal entry is dated in the period of the return.",
+      "severity": "recommended",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+    },
+    {
+      "id": "nl-vat-return-previous-filed",
+      "domain": "vat",
+      "jurisdiction": "NL",
+      "framework": "shillinq-vat-return-checks",
+      "source": "Shillinq VAT return check: the previous return is filed (REQ-TVRB-001)",
+      "statement": "The return of the previous period is submitted before this one, unless this is the administration's first return.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+    },
+    {
+      "id": "nl-vat-return-reverse-charge-pair",
+      "domain": "vat",
+      "jurisdiction": "NL",
+      "framework": "shillinq-vat-return-checks",
+      "source": "Shillinq VAT return check: reverse-charge VAT owed and deducted (REQ-TVRB-001)",
+      "statement": "A reverse-charged purchase declares its VAT both as owed in the box of its tariff and as deductible in 5b, for the same amount.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+    }
+  ]
+}

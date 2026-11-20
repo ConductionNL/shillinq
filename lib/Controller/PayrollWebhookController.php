@@ -33,7 +33,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -50,6 +51,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Receives signed external-payroll CloudEvents and reflects deductions onto Payroll.
  *
  * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PayrollWebhookController extends Controller {
 	/**
@@ -428,11 +430,6 @@ class PayrollWebhookController extends Controller {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

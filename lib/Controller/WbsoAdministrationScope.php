@@ -25,7 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\IRequest;
 
 /**
@@ -38,11 +38,11 @@ final class WbsoAdministrationScope {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request naming the administration.
-	 * @param AdministrationContextService $administrationContext The caller's memberships.
+	 * @param AdministrationContextServiceInterface $administrationContext The caller's memberships.
 	 */
 	public function __construct(
 		private readonly IRequest $request,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 	}//end __construct()
 

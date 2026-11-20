@@ -26,7 +26,8 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
 use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
-use OCA\Shillinq\AppInfo\CommitmentGuardServices;
+use OCA\Shillinq\Lifecycle\CommitmentGuardServices;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -36,12 +37,14 @@ use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * Entering, invoicing, closing and carrying commitments (REQ-PCYE-001 to REQ-PCYE-004).
@@ -96,6 +99,7 @@ final class CommitmentYearEndTest extends TestCase {
 			 * @return object
 			 */
 			public function find(mixed $id, mixed ...$rest): object {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				$slug = ['900' => 'SupplierInvoice', '901' => 'PurchaseOrder', '7' => 'shillinq'][(string)$id] ?? '';
 				return new class($slug) {
 					/**
@@ -120,11 +124,11 @@ final class CommitmentYearEndTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturn(true);
 		$container->method('get')->willReturn($mapper);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$contract = $this->createMock(ListenerSlugContract::class);
 		$contract->method('isEnabled')->willReturn(true);
-		$resolver = new ListenerSchemaResolver(container: $container, settingsService: $settings, contract: $contract, logger: $this->createMock(LoggerInterface::class));
+		$resolver = new ListenerSchemaResolver(container: $container, registerLocation: $settings, contract: $contract, logger: $this->createMock(LoggerInterface::class));
 
 		return new InvoiceCommitmentListener($this->invoicing(), $resolver, $this->createMock(LoggerInterface::class));
 	}//end listener()
@@ -175,7 +179,7 @@ final class CommitmentYearEndTest extends TestCase {
 		$commitment = $this->get('Commitment', $this->ids['v0114']);
 		$this->assertTrue($this->guard('canCommit')->check($commitment, 'aangaan', 'm.jansen')->isAllowed());
 
-		$this->store->setSchema('CommitmentLine')->patchObject($this->ids['line0114'], ['amount_excl_vat' => 8000000]);
+		$this->store->setSchema('CommitmentLine')->patchObject(new ObjectPatch(objectId: $this->ids['line0114'], data: ['amount_excl_vat' => 8000000]));
 		$refused = $this->guard('canCommit')->check($commitment, 'aangaan', 'm.jansen');
 		$this->assertFalse($refused->isAllowed());
 		$this->assertSame('The 2026 budget for programme 0.4 is EUR 20,000.00 short.', $refused->getMessage());
@@ -239,7 +243,7 @@ final class CommitmentYearEndTest extends TestCase {
 	 */
 	public function testAnInvoiceApprovedAsTheLastOneCloses(): void {
 		$this->engine->transition($this->ids['v0114'], 'aangaan');
-		$this->store->setSchema('SupplierInvoice')->patchObject($this->ids['invoice'], ['isLastInvoice' => true]);
+		$this->store->setSchema('SupplierInvoice')->patchObject(new ObjectPatch(objectId: $this->ids['invoice'], data: ['isLastInvoice' => true]));
 		$this->listener()->handle($this->approval());
 
 		$this->assertSame('closed', $this->get('Commitment', $this->ids['v0114'])['status']);
@@ -315,6 +319,7 @@ final class CommitmentYearEndTest extends TestCase {
 			CommitmentLedger::class => $this->ledger(),
 			LoggerInterface::class => $logger,
 		];
+		$services[CommitmentLedgerInterface::class] = $services[CommitmentLedger::class];
 		$inner = $this->createMock(ContainerInterface::class);
 		$inner->method('get')->willReturn($store);
 		$services[MandateEnforcer::class] = new MandateEnforcer($inner, $config, $logger);

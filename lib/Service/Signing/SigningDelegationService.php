@@ -33,8 +33,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\SigningDelegationServiceInterface;
 use OCA\Shillinq\Service\ApprovalActivityEmitter;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -53,7 +54,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
  */
-class SigningDelegationService {
+class SigningDelegationService implements SigningDelegationServiceInterface {
 
 	/**
 	 * Terminal signing statuses; a repeated callback is a no-op.
@@ -65,7 +66,7 @@ class SigningDelegationService {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IEventDispatcher $eventDispatcher Event dispatcher for the docudesk contract.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ApprovalActivityEmitter|null $activityEmitter Optional Activity emitter for the
@@ -74,7 +75,7 @@ class SigningDelegationService {
 	 *                                                      IActivityManager.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly IEventDispatcher $eventDispatcher,
 		private readonly LoggerInterface $logger,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
@@ -250,7 +251,7 @@ class SigningDelegationService {
 	private function buildProvenance(string $provenanceClass, SignatureRequest $request): object {
 		return new $provenanceClass(
 			sourceApp: 'shillinq',
-			subjectRegister: $this->settingsService->getRegisterSlug(),
+			subjectRegister: $this->registerLocation->getRegisterSlug(),
 			subjectSchema: $request->subjectSchema,
 			subjectId: $request->subjectId,
 			externalReference: $request->subjectId,

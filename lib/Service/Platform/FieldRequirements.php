@@ -21,23 +21,19 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Platform;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
-use OCP\IL10N;
+use OCA\Shillinq\Kernel\Contracts\FieldRequirementsInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCP\IL10N;
 
 /**
  * Reads the active FieldRequirement records of an administration and checks objects and requirements against them.
  *
  * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
  */
-class FieldRequirements {
+class FieldRequirements implements FieldRequirementsInterface {
 	use ReadsSourceRowsInBatches;
-
-	/**
-	 * The schema holding one requirement.
-	 */
-	public const SCHEMA = 'FieldRequirement';
 
 	/**
 	 * Active requirements read in this request, by administration.
@@ -50,13 +46,13 @@ class FieldRequirements {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister object service.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param SchemaDefinitions      $schemas       The schemas' properties and shipped required lists.
 	 * @param IL10N                  $l10n          Translator.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly SchemaDefinitions $schemas,
 		private readonly IL10N $l10n,
 	) {
@@ -222,7 +218,7 @@ class FieldRequirements {
 	 */
 	public function find(string $id): ?array {
 		$found = ObjectIdentifier::findScoped(
-			scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema(self::SCHEMA),
+			scoped: $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema(self::SCHEMA),
 			id: $id,
 			named: ['_rbac' => false, '_multitenancy' => false]
 		);
@@ -252,7 +248,7 @@ class FieldRequirements {
 
 			$rows = $this->readAllRows(
 				objectService: $this->objectService,
-				registerSlug: $this->settings->getRegisterSlug(),
+				registerSlug: $this->registerLocation->getRegisterSlug(),
 				schema: self::SCHEMA,
 				filters: ['administrationId' => $administrationId, 'lifecycleState' => 'active']
 			);
@@ -310,7 +306,7 @@ class FieldRequirements {
 		if (isset($this->cache[$administrationId]) === false) {
 			$rows = $this->readAllRows(
 				objectService: $this->objectService,
-				registerSlug: $this->settings->getRegisterSlug(),
+				registerSlug: $this->registerLocation->getRegisterSlug(),
 				schema: self::SCHEMA,
 				filters: ['administrationId' => $administrationId, 'lifecycleState' => 'active']
 			);

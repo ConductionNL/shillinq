@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Purchasing;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -68,7 +68,7 @@ class SupplierInvoiceDuplicateGoldenTest extends TestCase {
 				return $answer;
 			}
 		);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new SupplierInvoiceChecks($store, $settings);

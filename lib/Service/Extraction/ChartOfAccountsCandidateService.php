@@ -31,7 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ChartOfAccountsCandidateServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -42,7 +43,7 @@ use Throwable;
  *
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  */
-class ChartOfAccountsCandidateService {
+class ChartOfAccountsCandidateService implements ChartOfAccountsCandidateServiceInterface {
 	/**
 	 * The `Account` OR schema slug (bookkeeping-chart-of-accounts, REQ-CoA-001).
 	 *
@@ -173,11 +174,6 @@ class ChartOfAccountsCandidateService {
 	 * @return string
 	 */
 	private function registerSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end registerSlug()
 }//end class

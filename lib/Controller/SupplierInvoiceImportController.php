@@ -46,9 +46,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
+use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,8 +63,6 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 
 /**
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
@@ -88,23 +92,23 @@ class SupplierInvoiceImportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param SupplierInvoiceService $supplierInvoiceService Deterministic UBL ingestion + parser.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param SupplierInvoiceServiceInterface $supplierInvoiceService Deterministic UBL ingestion + parser.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param SupplierInvoiceChecks  $checks The one duplicate rule every channel uses (purchasing-supplier-invoice-intake REQ-PSII-003).
+	 * @param SupplierInvoiceChecksInterface  $checks The one duplicate rule every channel uses (purchasing-supplier-invoice-intake REQ-PSII-003).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SupplierInvoiceService $supplierInvoiceService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly SupplierInvoiceServiceInterface $supplierInvoiceService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SupplierInvoiceChecks $checks,
+		private readonly SupplierInvoiceChecksInterface $checks,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -146,6 +150,64 @@ class SupplierInvoiceImportController extends Controller {
 	}//end import()
 
 	/**
+	 * Discard an imported invoice that is still a review draft.
+	 *
+	 * Only the person who imported it may, and only before it is confirmed.
+	 *
+	 * @param string $id The SupplierInvoice id.
+	 *
+	 * @return JSONResponse 204, or the refusal.
+	 *
+	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+	 */
+	#[NoAdminRequired]
+	public function discard(string $id): JSONResponse {
+		$user = $this->session->getUser();
+		if ($user === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$entity = ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService->setRegister(self::REGISTER_SLUG)->setSchema(self::SUPPLIER_INVOICE_SCHEMA),
+				id: $id
+			);
+		} catch (\Throwable $e) {
+			$entity = null;
+		}
+
+		$invoice = $entity?->getObject() ?? [];
+		if ($invoice === []
+			|| $this->administrationContext->canAccess(administrationId: (string)($invoice['administrationId'] ?? '')) === false
+		) {
+			return new JSONResponse(['error' => 'Invoice not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		$owner = (string)($entity->getOwner() ?? '');
+		if (($invoice['extractionStatus'] ?? '') !== ExtractionPrefillService::STATUS_PENDING_REVIEW
+			|| $owner === ''
+			|| $owner !== $user->getUID()
+		) {
+			return new JSONResponse(['error' => 'Only your own unconfirmed import can be discarded.'], Http::STATUS_CONFLICT);
+		}
+
+		try {
+			$this->objectService->deleteObject(
+				deletion: new ObjectDeletion(
+					uuid: $id,
+					target: new ObjectFindTarget(register: self::REGISTER_SLUG, schema: self::SUPPLIER_INVOICE_SCHEMA)
+				)
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error('SupplierInvoiceImportController.discard failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'The import could not be discarded.'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse([], Http::STATUS_NO_CONTENT);
+
+	}//end discard()
+
+	/**
 	 * Read the upload and import it by its format; empty contents are a 422.
 	 *
 	 * @param string $administrationId Server-resolved tenant scope.
@@ -158,9 +220,11 @@ class SupplierInvoiceImportController extends Controller {
 			return new JSONResponse(['error' => 'No file contents were uploaded'], Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
+		$review = filter_var($this->request->getParam('review', false), FILTER_VALIDATE_BOOLEAN);
+
 		return match ($format) {
-			'ubl' => $this->importUbl(administrationId: $administrationId, ublXml: $contents),
-			'csv' => $this->importCsv(administrationId: $administrationId, csv: $contents),
+			'ubl' => $this->importUbl(administrationId: $administrationId, ublXml: $contents, review: $review),
+			'csv' => $this->importCsv(administrationId: $administrationId, csv: $contents, review: $review),
 			'pdf' => self::pdfDeferred(),
 			default => new JSONResponse(['error' => 'Unsupported import format. Use ubl, csv or pdf.'], Http::STATUS_UNPROCESSABLE_ENTITY),
 		};
@@ -199,12 +263,13 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string $administrationId Server-resolved tenant scope.
 	 * @param string $ublXml UBL Invoice XML.
+	 * @param bool $review True to keep the invoice a draft until it is confirmed.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
-	private function importUbl(string $administrationId, string $ublXml): JSONResponse {
+	private function importUbl(string $administrationId, string $ublXml, bool $review): JSONResponse {
 		try {
 			$parsed = $this->supplierInvoiceService->resolveSupplier(
 				administrationId: $administrationId,
@@ -214,7 +279,11 @@ class SupplierInvoiceImportController extends Controller {
 				return self::duplicateInvoice();
 			}
 
-			$record = $this->supplierInvoiceService->ingestUBLInvoice(administrationId: $administrationId, ublXml: $ublXml);
+			$record = $this->supplierInvoiceService->ingestUBLInvoice(
+				administrationId: $administrationId,
+				ublXml: $ublXml,
+				context: ['reviewDraft' => $review]
+			);
 
 			return new JSONResponse(['imported' => 1, 'record' => $record], Http::STATUS_OK);
 		} catch (RuntimeException $e) {
@@ -233,12 +302,13 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string $administrationId Server-resolved tenant scope.
 	 * @param string $csv Raw CSV text.
+	 * @param bool $review True to keep the invoice a draft until it is confirmed.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
-	private function importCsv(string $administrationId, string $csv): JSONResponse {
+	private function importCsv(string $administrationId, string $csv, bool $review): JSONResponse {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_FORBIDDEN);
 		}
@@ -248,7 +318,7 @@ class SupplierInvoiceImportController extends Controller {
 			return new JSONResponse(['error' => 'CSV did not contain any data rows'], Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
-		return new JSONResponse($this->csvOutcome(administrationId: $administrationId, rows: $rows), Http::STATUS_OK);
+		return new JSONResponse($this->csvOutcome(administrationId: $administrationId, rows: $rows, review: $review), Http::STATUS_OK);
 	}//end importCsv()
 
 	/**
@@ -256,14 +326,15 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string                           $administrationId Server-resolved tenant scope.
 	 * @param array<int,array<string,string>> $rows             The parsed data rows.
+	 * @param bool                             $review           True to keep each invoice a draft until it is confirmed.
 	 *
 	 * @return array{imported:int,skipped:int,skippedRows:array<int,array<string,string>>,records:array<int,array<string,mixed>>}
 	 */
-	private function csvOutcome(string $administrationId, array $rows): array {
+	private function csvOutcome(string $administrationId, array $rows, bool $review): array {
 		$skippedRows = [];
 		$records = [];
 		foreach ($rows as $row) {
-			$outcome = $this->importCsvRow(administrationId: $administrationId, row: $row);
+			$outcome = $this->importCsvRow(administrationId: $administrationId, row: $row, review: $review);
 			if (isset($outcome['skipped']) === true) {
 				$skippedRows[] = $outcome['skipped'];
 				continue;
@@ -280,10 +351,11 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string               $administrationId Server-resolved tenant scope.
 	 * @param array<string,string> $row              The row by header column.
+	 * @param bool                 $review           True to keep the invoice a draft until it is confirmed.
 	 *
 	 * @return array{skipped?:array<string,string>,record?:array<string,mixed>} The skip entry, or the saved record.
 	 */
-	private function importCsvRow(string $administrationId, array $row): array {
+	private function importCsvRow(string $administrationId, array $row, bool $review): array {
 		$invoiceNumber = trim((string)($row['invoiceNumber'] ?? ''));
 		$supplier = $this->csvSupplier(administrationId: $administrationId, value: trim((string)($row['supplier'] ?? '')));
 		if ($invoiceNumber === '' || $supplier === []) {
@@ -297,7 +369,7 @@ class SupplierInvoiceImportController extends Controller {
 
 		$base = $supplier + ['administrationId' => $administrationId, 'invoiceNumber' => $invoiceNumber];
 
-		return ['record' => $this->saveSupplierInvoice(self::csvRecord(base: $base, row: $row))];
+		return ['record' => $this->saveSupplierInvoice(self::csvRecord(base: $base, row: $row, review: $review))];
 	}//end importCsvRow()
 
 	/**
@@ -305,19 +377,25 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param array<string,string> $base The supplier, administration and invoice number.
 	 * @param array<string,string> $row  The row by header column.
+	 * @param bool                 $review True to mark it a review draft.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private static function csvRecord(array $base, array $row): array {
-		return $base + [
+	private static function csvRecord(array $base, array $row, bool $review): array {
+		$record = $base + [
 			'invoiceDate' => trim((string)($row['invoiceDate'] ?? '')),
 			'totalInclVat' => self::toCents($row['amount'] ?? null),
 			'totalVat' => self::toCents($row['vatAmount'] ?? null),
 			'currency' => 'EUR',
 			'sourceFormat' => 'csv',
-			'statusCode' => SupplierInvoiceService::STATUS_RECEIVED,
+			'statusCode' => SupplierInvoiceServiceInterface::STATUS_RECEIVED,
 			'createdAt' => date('c'),
 		];
+		if ($review === true) {
+			$record['extractionStatus'] = ExtractionPrefillService::STATUS_PENDING_REVIEW;
+		}
+
+		return $record;
 	}//end csvRecord()
 
 	/**

@@ -63,7 +63,8 @@ class EuFondsenGuardsTest extends TestCase {
 	}//end container()
 
 	/**
-	 * An irregularity >= €10k with an IMS-reference may escalate (REQ-EUF-007).
+	 * An irregularity >= €10k with an IMS-reference and a recovery amount may
+	 * escalate; without the recovery amount it may not (REQ-EUF-007).
 	 *
 	 * @return void
 	 */
@@ -74,6 +75,10 @@ class EuFondsenGuardsTest extends TestCase {
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue(
+			$guard->canEscalate('irr-1', ['amountConcerned' => 15400.0, 'imsReference' => 'IMS-2026-0001', 'recoveryAmount' => 15400.0])
+		);
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse(
 			$guard->canEscalate('irr-1', ['amountConcerned' => 15400.0, 'imsReference' => 'IMS-2026-0001'])
 		);
 	}//end testIrregularityAtThresholdWithImsReferenceCanEscalate()

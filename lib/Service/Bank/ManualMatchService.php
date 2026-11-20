@@ -40,11 +40,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 
 /**
  * Manual bank line matching (REQ-BMM-001, REQ-BMM-002).
@@ -53,7 +56,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One service writes the match, the journal and the line.
  */
-class ManualMatchService {
+class ManualMatchService implements ManualMatchServiceInterface {
 	/**
 	 * Amounts closer than this are equal (half a cent).
 	 *
@@ -83,13 +86,13 @@ class ManualMatchService {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param ObjectTransitionRunner $transitions   Runs the declared transitions.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -140,6 +143,35 @@ class ManualMatchService {
 
 		$amount = (float)($line['amount'] ?? 0);
 		$lineAmount = abs($amount);
+		[$schema, $type] = $this->invoiceSide(amount: $amount);
+
+		$invoices = $this->readInvoices(schema: $schema, ids: $targetIds, administrationId: (string)($line['administrationId'] ?? ''));
+		$total = array_sum(array_map(fn (array $invoice): float => $this->invoiceAmount(schema: $schema, invoice: $invoice), $invoices));
+
+		[$partial, $remainder] = $this->invoiceRemainder(invoiceCount: count($invoices), total: $total, lineAmount: $lineAmount);
+
+		$extra = $this->invoiceMatchExtra(partial: $partial, remainder: $remainder, reason: $reason);
+
+		// The T4 shortcut field that names the first invoice.
+		$shortcut = ['ARInvoice' => 'arInvoiceId', 'APTransaction' => 'apTransactionId'][$schema];
+		$extra[$shortcut] = $targetIds[0];
+
+		$match = $this->writeConfirmedMatch(line: $line, type: $type, targetIds: $targetIds, matchedAmount: $lineAmount, actor: $actor, extra: $extra);
+		$match['remainder'] = $remainder;
+		return $match;
+
+	}//end matchInvoices()
+
+	/**
+	 * The invoice schema and match type for a line: receivables for money in, payables for money out.
+	 *
+	 * @param float $amount The signed line amount.
+	 *
+	 * @return array{0: string, 1: string} The schema and match type.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	private function invoiceSide(float $amount): array {
 		$schema = 'APTransaction';
 		$type = 'ap-invoice';
 		if ($amount >= 0) {
@@ -147,13 +179,27 @@ class ManualMatchService {
 			$type = 'ar-invoice';
 		}
 
-		$invoices = $this->readInvoices(schema: $schema, ids: $targetIds, administrationId: (string)($line['administrationId'] ?? ''));
-		$total = array_sum(array_map(fn (array $invoice): float => $this->invoiceAmount(schema: $schema, invoice: $invoice), $invoices));
+		return [$schema, $type];
+	}//end invoiceSide()
 
+	/**
+	 * Check the selection total against the line and return the part-payment remainder.
+	 *
+	 * @param int $invoiceCount The number of selected invoices.
+	 * @param float $total The selection total.
+	 * @param float $lineAmount The absolute line amount.
+	 *
+	 * @return array{0: bool, 1: float} Whether the match is partial, and the remainder.
+	 *
+	 * @throws ManualMatchRefusedException When the selection and the line do not fit.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	private function invoiceRemainder(int $invoiceCount, float $total, float $lineAmount): array {
 		$partial = false;
 		$remainder = 0.0;
 		if ($total - $lineAmount > self::TOLERANCE) {
-			if (count($invoices) > 1) {
+			if ($invoiceCount > 1) {
 				throw new ManualMatchRefusedException(
 					template: 'The selection exceeds the bank line by %1$s.',
 					parameters: [self::money(amount: $total - $lineAmount)]
@@ -171,6 +217,21 @@ class ManualMatchService {
 			);
 		}
 
+		return [$partial, $remainder];
+	}//end invoiceRemainder()
+
+	/**
+	 * The partial flags and resolution reason of an invoice match.
+	 *
+	 * @param bool $partial Whether the match is a part payment.
+	 * @param float $remainder The part-payment remainder.
+	 * @param string $reason Why the match was made; '' for a match by hand.
+	 *
+	 * @return array<string,mixed> The extra match fields.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	private function invoiceMatchExtra(bool $partial, float $remainder, string $reason): array {
 		$extra = [
 			'isPartial' => $partial,
 			'partial' => $partial,
@@ -184,15 +245,8 @@ class ManualMatchService {
 			$extra['resolutionReason'] = $reason;
 		}
 
-		// The T4 shortcut field that names the first invoice.
-		$shortcut = ['ARInvoice' => 'arInvoiceId', 'APTransaction' => 'apTransactionId'][$schema];
-		$extra[$shortcut] = $targetIds[0];
-
-		$match = $this->writeConfirmedMatch(line: $line, type: $type, targetIds: $targetIds, matchedAmount: $lineAmount, actor: $actor, extra: $extra);
-		$match['remainder'] = $remainder;
-		return $match;
-
-	}//end matchInvoices()
+		return $extra;
+	}//end invoiceMatchExtra()
 
 	/**
 	 * Match a line to a payment plan (receivables-payment-plans REQ-RPPL-003).
@@ -268,6 +322,41 @@ class ManualMatchService {
 		);
 
 	}//end matchPaymentRequest()
+
+	/**
+	 * Match a line to the booked provider payout it brought in and confirm it
+	 * (REQ-RPPO-004). An automatic match on the payout's net amount and
+	 * settlement reference; the payout's own posting booked the line, and no
+	 * settlement listener acts on a `provider-payout` match, so this match
+	 * books nothing further.
+	 *
+	 * @param array<string,mixed> $line   The line, with its id.
+	 * @param array<string,mixed> $payout The booked ProviderPayout, with its id.
+	 * @param string              $actor  The confirming user id, or `system:bank-match`.
+	 *
+	 * @return array<string,mixed> The confirmed match, as stored.
+	 *
+	 * @throws ManualMatchRefusedException When the line cannot be matched.
+	 *
+	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+	 */
+	public function matchProviderPayout(array $line, array $payout, string $actor): array {
+		$this->assertMatchable(line: $line);
+
+		return $this->writeConfirmedMatch(
+			line: $line,
+			type: 'provider-payout',
+			targetIds: [(string)$payout['id']],
+			matchedAmount: abs((float)($line['amount'] ?? 0)),
+			actor: $actor,
+			extra: [
+				'confidence' => 'auto',
+				'matchAlgorithm' => 'exact',
+				'manualOverride' => false,
+			]
+		);
+
+	}//end matchProviderPayout()
 
 	/**
 	 * Propose a line as a candidate for an object payment request, for the
@@ -421,26 +510,11 @@ class ManualMatchService {
 			throw new ManualMatchRefusedException(template: 'Choose the VAT account for the VAT amount.');
 		}
 
-		$net = $gross;
-		$vat = 0.0;
-		if ($vatRate > 0) {
-			$net = round($gross / (1 + ($vatRate / 100)), 2);
-			$vat = round($gross - $net, 2);
-		}
+		[$net, $vat] = $this->vatSplit(gross: $gross, vatRate: $vatRate);
 
-		$description = trim((string)($ledger['description'] ?? ''));
-		if ($description === '') {
-			$description = trim((string)($line['remittanceInfo'] ?? ($line['reference'] ?? ($line['narrative'] ?? 'Bank line'))));
-		}
+		$description = $this->journalDescription(line: $line, ledger: $ledger);
 
-		// Money out (debit line): the cost is debited, the bank credited.
-		// Money in (credit line): the bank is debited, the account credited.
-		$counterSide = 'credit';
-		$bankSide = 'debit';
-		if ($amount < 0) {
-			$counterSide = 'debit';
-			$bankSide = 'credit';
-		}
+		[$counterSide, $bankSide] = $this->journalSides(amount: $amount);
 
 		$lines = [
 			['accountNumber' => $account, 'side' => $counterSide, 'amount' => $net, 'description' => $description],
@@ -467,6 +541,69 @@ class ManualMatchService {
 		];
 
 	}//end buildJournalEntry()
+
+	/**
+	 * Split a gross amount into net and VAT at the given rate.
+	 *
+	 * @param float $gross The gross amount.
+	 * @param float $vatRate The VAT rate in percent (0 for none).
+	 *
+	 * @return array{0: float, 1: float} The net and VAT amounts.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	private function vatSplit(float $gross, float $vatRate): array {
+		$net = $gross;
+		$vat = 0.0;
+		if ($vatRate > 0) {
+			$net = round($gross / (1 + ($vatRate / 100)), 2);
+			$vat = round($gross - $net, 2);
+		}
+
+		return [$net, $vat];
+	}//end vatSplit()
+
+	/**
+	 * The journal description: the chosen one, else the line's remittance info.
+	 *
+	 * @param array<string,mixed> $line The bank line.
+	 * @param array<string,mixed> $ledger The chosen account and VAT.
+	 *
+	 * @return string The description.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	private function journalDescription(array $line, array $ledger): string {
+		$description = trim((string)($ledger['description'] ?? ''));
+		if ($description === '') {
+			$description = trim((string)($line['remittanceInfo'] ?? ($line['reference'] ?? ($line['narrative'] ?? 'Bank line'))));
+		}
+
+		return $description;
+	}//end journalDescription()
+
+	/**
+	 * The counter and bank sides of a booking.
+	 *
+	 * Money out (debit line): the cost is debited, the bank credited.
+	 * Money in (credit line): the bank is debited, the account credited.
+	 *
+	 * @param float $amount The signed line amount.
+	 *
+	 * @return array{0: string, 1: string} The counter side and the bank side.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	private function journalSides(float $amount): array {
+		$counterSide = 'credit';
+		$bankSide = 'debit';
+		if ($amount < 0) {
+			$counterSide = 'debit';
+			$bankSide = 'credit';
+		}
+
+		return [$counterSide, $bankSide];
+	}//end journalSides()
 
 	/**
 	 * The confirmed match payload before it is written.
@@ -539,15 +676,19 @@ class ManualMatchService {
 		// ReconciliationMatchSettlementListener settles the invoices on.
 		$this->transitions->run(objectId: $matchId, action: 'confirm');
 		$this->scoped(schema: 'ReconciliationMatch')->patchObject(
-			$matchId,
-			['state' => 'confirmed', 'confirmedBy' => $actor, 'confirmedAt' => gmdate('Y-m-d\TH:i:s\Z')]
+			new ObjectPatch(
+				objectId: $matchId,
+				data: ['state' => 'confirmed', 'confirmedBy' => $actor, 'confirmedAt' => gmdate('Y-m-d\TH:i:s\Z')]
+			)
 		);
 
 		$lineUuid = (string)($line['id'] ?? '');
 		$this->transitions->run(objectId: $lineUuid, action: 'mark-matched');
 		$this->scoped(schema: 'BankStatementLine')->patchObject(
-			$lineUuid,
-			['matchState' => 'confirmed', 'reconciliationMatchId' => $matchId]
+			new ObjectPatch(
+				objectId: $lineUuid,
+				data: ['matchState' => 'confirmed', 'reconciliationMatchId' => $matchId]
+			)
 		);
 
 		$this->logger->info(
@@ -689,7 +830,7 @@ class ManualMatchService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 

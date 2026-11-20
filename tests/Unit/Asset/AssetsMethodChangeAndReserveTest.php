@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Tests\Unit\Asset;
 
 use DateTimeImmutable;
 use DomainException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\ApplyReinvestmentReserveAction;
 use OCA\Shillinq\Lifecycle\Action\ExtraDepreciationAction;
 use OCA\Shillinq\Lifecycle\Action\ReviseDepreciationAction;
@@ -43,7 +44,7 @@ use OCA\Shillinq\Service\Asset\DepreciationScheduleService;
 use OCA\Shillinq\Service\Asset\FixedAssetDepreciation;
 use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -96,7 +97,14 @@ class AssetsMethodChangeAndReserveTest extends TestCase {
 				$declared = RegisterSchema::schema($record['schema'])['x-openregister-lifecycle']['transitions'][$record['action']];
 				foreach (($declared['actions'] ?? []) as $step) {
 					if (isset($executors[$step['action']]) === true) {
-						$object = $executors[$step['action']]->execute($object, [], ($step['actionParameters'] ?? []), $step['action']);
+						$object = $executors[$step['action']]->execute(
+							new LifecycleActionContext(
+								objectData: $object,
+								previousData: [],
+								parameters: ($step['actionParameters'] ?? []),
+								actionName: $step['action']
+							)
+						);
 						$store->setSchema($record['schema'])->saveObject($object);
 					}
 				}
@@ -405,7 +413,7 @@ class AssetsMethodChangeAndReserveTest extends TestCase {
 	}//end lineFor()
 
 	private function records(): AssetRecords {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturn(true);

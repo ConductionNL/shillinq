@@ -41,6 +41,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BankRulePreviewServiceInterface;
+
 /**
  * Read-only evaluator of MatchingRule predicates against BankStatementLine
  * rows (REQ-BR-011). No state, no OR round-trips, no side effects.
@@ -54,7 +56,7 @@ namespace OCA\Shillinq\Service;
  * Pre-existing debt (issue #506): the `@` suppresses a PHP warning on an externally-supplied, possibly-malformed
  * regex pattern, and the return value is explicitly checked (fail-closed).
  */
-class BankRulePreviewService {
+class BankRulePreviewService implements BankRulePreviewServiceInterface {
 	/**
 	 * Dry-run a draft rule against a window of candidate bank lines.
 	 *

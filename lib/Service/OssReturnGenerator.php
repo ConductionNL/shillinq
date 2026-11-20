@@ -31,9 +31,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\OssReturnGeneratorInterface;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCP\IAppConfig;
 
 /**
  * Generates draft OssReturn line items by aggregating OSS-eligible documents.
@@ -43,7 +44,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-class OssReturnGenerator {
+class OssReturnGenerator implements OssReturnGeneratorInterface {
 	/**
 	 * Construct the generator with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -292,11 +293,6 @@ class OssReturnGenerator {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

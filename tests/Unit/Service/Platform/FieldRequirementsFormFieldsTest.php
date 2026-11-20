@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Platform;
 
 use OCA\Shillinq\Service\Platform\FieldRequirements;
 use OCA\Shillinq\Service\Platform\SchemaDefinitions;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
@@ -42,7 +42,7 @@ class FieldRequirementsFormFieldsTest extends TestCase {
 	 * @return FieldRequirements
 	 */
 	private function service(array $rows): FieldRequirements {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		$schemas = $this->createStub(SchemaDefinitions::class);

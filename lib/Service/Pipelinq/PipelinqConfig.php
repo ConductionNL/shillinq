@@ -30,7 +30,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqConfigInterface;
+use OCA\Shillinq\Service\StoredSecret;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
@@ -48,7 +50,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
  */
-class PipelinqConfig {
+class PipelinqConfig implements PipelinqConfigInterface {
 
 	/**
 	 * IAppConfig key for the pipelinq API endpoint URL.
@@ -163,15 +165,7 @@ class PipelinqConfig {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
 	public function getPipelinqToken(): string {
-		$secret = $this->credentialsManager->retrieve(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_API
-		);
-		if (is_string($secret) === false || $secret === '') {
-			return '';
-		}
-
-		return $secret;
+		return $this->token()->read();
 	}//end getPipelinqToken()
 
 	/**
@@ -189,23 +183,18 @@ class PipelinqConfig {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
 	public function setPipelinqToken(string $token): void {
-		$trimmed = trim($token);
-		if ($trimmed === '') {
-			$this->credentialsManager->delete(
-				userId: '',
-				identifier: self::CREDENTIAL_ID_API
-			);
-
-			return;
-		}
-
-		$this->credentialsManager->store(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_API,
-			credentials: $trimmed
-		);
+		$this->token()->write(value: $token);
 
 	}//end setPipelinqToken()
+
+	/**
+	 * The token in the secrets store.
+	 *
+	 * @return StoredSecret
+	 */
+	private function token(): StoredSecret {
+		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_API);
+	}//end token()
 
 	/**
 	 * Indicates whether a non-empty token is stored.

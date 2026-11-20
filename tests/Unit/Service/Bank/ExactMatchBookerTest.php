@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
 use OCA\Shillinq\Service\Bank\ExactMatchBooker;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -85,9 +85,9 @@ final class ExactMatchBookerTest extends TestCase {
 				],
 			]
 		);
-		$settings = $this->createConfiguredMock(SettingsService::class, ['getRegisterSlug' => 'shillinq']);
+		$settings = $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']);
 
-		return new ExactMatchBooker(objectService: $store, matches: $this->matches, settings: $settings, logger: $this->logger, plans: $plans);
+		return new ExactMatchBooker(objectService: $store, matches: $this->matches, registerLocation: $settings, logger: $this->logger, plans: $plans);
 
 	}//end booker()
 

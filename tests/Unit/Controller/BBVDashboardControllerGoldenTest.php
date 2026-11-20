@@ -27,7 +27,7 @@ use OCA\Shillinq\Dashboard\BBVComplianceWidget;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ComplianceService;
 use OCA\Shillinq\Service\FiscalYearContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\ICacheFactory;
 use OCP\IL10N;
@@ -96,7 +96,7 @@ class BBVDashboardControllerGoldenTest extends TestCase {
 				return ($setup['window'] ?? null);
 			}
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(false);
 		$cacheFactory = $this->createMock(ICacheFactory::class);
 		$cacheFactory->method('isLocalCacheAvailable')->willReturn(false);

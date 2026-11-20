@@ -46,6 +46,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use Psr\Container\ContainerInterface;
@@ -71,7 +72,7 @@ use Throwable;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-final class ComplianceService {
+final class ComplianceService implements ComplianceServiceInterface {
 	/**
 	 * Cache TTL in seconds (REQ-BBVW-006: 1 hour).
 	 */
@@ -86,13 +87,13 @@ final class ComplianceService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ICacheFactory $cacheFactory Distributed cache factory (compliance cache).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ICacheFactory $cacheFactory,
 		private readonly LoggerInterface $logger,
 	) {
@@ -326,7 +327,7 @@ final class ComplianceService {
 	 * @return array<string,mixed>|null Record or null when unavailable.
 	 */
 	private function loadProgrammeRecord(string $programmeCode, ?int $fiscalYear = null): ?array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return null;
 		}
 
@@ -356,7 +357,7 @@ final class ComplianceService {
 		}
 
 		$query = ['filters' => $filters, 'limit' => 1];
-		$records = $objectService->setRegister($this->settings->getRegisterSlug())->setSchema('BBVProgramme')->findAll($query);
+		$records = $objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('BBVProgramme')->findAll($query);
 		foreach ($records as $candidate) {
 			return $this->toArray(object: $candidate);
 		}

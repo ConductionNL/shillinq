@@ -23,12 +23,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillArInvoiceProvenance;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * An OpenRegister double over two schemas, with JSON-property filters, paging and audit logs.
@@ -139,13 +140,14 @@ final class BackfillInvoiceStore {
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		mixed $register = null,
-		mixed $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$target = (string)($schema ?? $this->schema);
 		$this->saved[] = ['object' => $object, 'uuid' => $uuid, 'schema' => $target];
 		$this->rows[$target][(string)$uuid] = $object;
@@ -200,7 +202,7 @@ final class BackfillArInvoiceProvenanceTest extends TestCase {
 	 * @return BackfillArInvoiceProvenance
 	 */
 	private function step(BackfillInvoiceStore $store): BackfillArInvoiceProvenance {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new BackfillArInvoiceProvenance(
@@ -509,7 +511,7 @@ final class BackfillArInvoiceProvenanceTest extends TestCase {
 			}
 		};
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$output = $this->createMock(IOutput::class);
 		$output->expects($this->once())->method('warning');

@@ -28,9 +28,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\PublicSector\ReserveBalances;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ReserveBalancesInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,15 +51,15 @@ class ReserveOverviewController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request  The request.
-	 * @param ReserveBalances              $balances The reserve balances.
-	 * @param AdministrationContextService $context  Administration access.
+	 * @param ReserveBalancesInterface              $balances The reserve balances.
+	 * @param AdministrationContextServiceInterface $context  Administration access.
 	 * @param IL10N                        $l10n     Translations.
 	 * @param LoggerInterface              $logger   Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ReserveBalances $balances,
-		private readonly AdministrationContextService $context,
+		private readonly ReserveBalancesInterface $balances,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {

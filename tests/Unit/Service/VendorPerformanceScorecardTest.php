@@ -28,6 +28,9 @@ require_once __DIR__ . '/InMemoryObjectService.php';
  *
  * @covers \OCA\Shillinq\Service\VendorPerformanceAggregation
  * @uses   \OCA\Shillinq\Service\VendorScorecardRun
+ * @uses   \OCA\Shillinq\Service\RecordStoreLog
+ * @uses   \OCA\Shillinq\Service\RegisterBinding
+ * @uses   \OCA\Shillinq\Service\SchemaRecordStore
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

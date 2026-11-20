@@ -22,10 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\HandToAccountsPayableAction;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -60,14 +61,14 @@ class HandToAccountsPayableActionTest extends TestCase {
 	private function action(): HandToAccountsPayableAction {
 		$this->saved = [];
 		$store = new InMemoryObjectServiceStub(SupplierInvoiceChecksTest::records(), $this->saved);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$this->engine = new LifecycleFaithfulTransitionEngine(store: $store, schemas: ['APTransaction']);
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('has')->willReturnCallback(static fn (string $id): bool => $id === ObjectTransitionRunner::ENGINE_CLASS);
 		$container->method('get')->willReturn($this->engine);
 
-		return new HandToAccountsPayableAction($store, $settings, new SupplierInvoiceChecks($store, $settings), new ObjectTransitionRunner(container: $container));
+		return new HandToAccountsPayableAction($store, $settings, new SupplierInvoiceChecks($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])), new ObjectTransitionRunner(container: $container));
 
 	}//end action()
 
@@ -93,7 +94,14 @@ class HandToAccountsPayableActionTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheInvoiceBecomesAnIssuedApTransaction(): void {
-		$result = $this->action()->execute($this->invoice(), [], [], 'hand-to-accounts-payable');
+		$result = $this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $this->invoice(),
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-accounts-payable'
+			)
+		);
 
 		$written = array_values(array_filter($this->saved, static fn (array $s): bool => $s['schema'] === 'APTransaction'));
 		$first = $written[0]['object'];
@@ -122,7 +130,14 @@ class HandToAccountsPayableActionTest extends TestCase {
 		$invoice = $this->invoice();
 		$invoice['ibanMismatch'] = 'NL02ABNA0123456789 / NL20INGB0001234567';
 
-		$this->action()->execute($invoice, [], [], 'hand-to-accounts-payable');
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $invoice,
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-accounts-payable'
+			)
+		);
 
 		$ap = array_values(array_filter($this->saved, static fn (array $s): bool => $s['schema'] === 'APTransaction'))[0]['object'];
 		$this->assertTrue($ap['paymentBlocked']);
@@ -139,7 +154,14 @@ class HandToAccountsPayableActionTest extends TestCase {
 		$invoice = $this->invoice();
 		$invoice['apTransactionId'] = 'ap-existing';
 
-		$this->assertSame('ap-existing', $this->action()->execute($invoice, [], [], 'hand-to-accounts-payable')['apTransactionId']);
+		$this->assertSame('ap-existing', $this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $invoice,
+				previousData: [],
+				parameters: [],
+				actionName: 'hand-to-accounts-payable'
+			)
+		)['apTransactionId']);
 		$this->assertSame([], $this->saved);
 
 	}//end testItHandsOverOnce()

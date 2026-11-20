@@ -34,9 +34,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\DemoDataService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DemoDataServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
+use OCA\Shillinq\Service\Jurisdiction\LegislationPackSeeder;
 use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -86,15 +87,15 @@ class SetupController extends Controller {
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $appConfig App-config reader/writer.
-	 * @param DemoDataService $demoDataService Demo dataset import (ADR-111 rule 4).
-	 * @param SettingsService $settingsService OR availability + config import + seeders.
+	 * @param DemoDataServiceInterface $demoDataService Demo dataset import (ADR-111 rule 4).
+	 * @param SettingsServiceInterface $settingsService OR availability + config import + seeders.
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
 		private readonly IAppConfig $appConfig,
-		private readonly DemoDataService $demoDataService,
-		private readonly SettingsService $settingsService,
+		private readonly DemoDataServiceInterface $demoDataService,
+		private readonly SettingsServiceInterface $settingsService,
 	) {
 		parent::__construct($appName, $request);
 	}//end __construct()
@@ -106,6 +107,7 @@ class SetupController extends Controller {
 	 *
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
 	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function status(): DataResponse {
@@ -124,6 +126,9 @@ class SetupController extends Controller {
 				// `optionsSource: datasets` and no options of its own, so a
 				// dataset missing from this list is a dataset nobody can pick.
 				'datasets' => $this->demoDataService->listChoices(),
+				// The chart-of-accounts step reads its options from here: the
+				// shipped RGS variants and the office's own templates.
+				'chartTemplates' => $this->settingsService->chartTemplateChoices(),
 				'steps' => $this->stepReport(done: $done, requiredDone: $requiredDone),
 			]
 		);
@@ -299,7 +304,7 @@ class SetupController extends Controller {
 		// an older manifest, a runbook or a script that posts it keeps working.
 		return match ($actionId) {
 			'load-demo-data' => $this->loadDataset(),
-			'install-demo-data' => $this->installDemoData(dataset: DemoDataService::DEMO_DATASET),
+			'install-demo-data' => $this->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET),
 			'skip-demo-data' => $this->skipDemoData(),
 			'init-administration' => $this->initAdministration(),
 			'seed' => $this->seedReferenceData(),
@@ -382,7 +387,8 @@ class SetupController extends Controller {
 
 	/**
 	 * Seed the RGS template for the administration, then the BTW tariffs, BBV
-	 * taakvelden and selectielijst, and mark the seed step done.
+	 * taakvelden and selectielijst, and mark the seed step done; or, for a
+	 * legislation pack template, the pack's chart and VAT rates.
 	 *
 	 * @param string $template The RGS template variant.
 	 * @param string $adminId  The administration.
@@ -390,8 +396,26 @@ class SetupController extends Controller {
 	 * @return DataResponse
 	 *
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) LegislationPackSeeder::countryOfTemplate() is a pure lookup of a template's country.
 	 */
 	private function seedFor(string $template, string $adminId): DataResponse {
+		// A legislation pack template (`legislation-be`) seeds another country's
+		// chart and VAT rates instead of the Dutch RGS, BTW and BBV data.
+		$country = LegislationPackSeeder::countryOfTemplate(template: $template);
+		if ($country !== null) {
+			$result = $this->settingsService->seedLegislationPack(country: $country, administrationId: $adminId);
+			if (($result['success'] ?? false) !== true) {
+				return new DataResponse(
+					['success' => false, 'message' => (string)($result['message'] ?? 'Seeding the legislation pack failed.')],
+					Http::STATUS_UNPROCESSABLE_ENTITY,
+				);
+			}
+
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'setup_seed_done', '1');
+			return new DataResponse(['success' => true, 'message' => 'Chart of accounts and VAT rates seeded from the ' . $country . ' legislation pack.']);
+		}
+
 		$this->settingsService->seedRgsTemplate(templateVariant: $template, administrationId: $adminId);
 		$this->settingsService->seedBtwTariffs();
 		$this->settingsService->seedBbvTaakvelden();
@@ -423,8 +447,8 @@ class SetupController extends Controller {
 			return new DataResponse(['success' => false, 'message' => 'Pick a dataset first.']);
 		}
 
-		if ($picked === DemoDataService::NONE_DATASET) {
-			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		if ($picked === DemoDataServiceInterface::NONE_DATASET) {
+			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new DataResponse(['success' => true, 'message' => 'No example data was loaded.']);
@@ -544,7 +568,7 @@ class SetupController extends Controller {
 	private function skipDemoData(): DataResponse {
 		// Skipping IS choosing "None", so both keys are written: an older
 		// runbook may read either one.
-		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 		return new DataResponse(['success' => true, 'message' => 'Demo data skipped.']);

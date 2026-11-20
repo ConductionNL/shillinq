@@ -53,6 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -96,34 +97,13 @@ class CbcrPillar2Guard {
 	 * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
 	 */
 	public function canReconcileSummary(string $summaryId, ?array $object = null): bool {
-		try {
-			$summary = $this->resolveObject(schema: 'CbcrJurisdictionSummary', id: $summaryId, object: $object);
-			if ($summary === null) {
-				return false;
-			}
-
-			if ((string)($summary['period'] ?? '') === '' || (string)($summary['jurisdiction'] ?? '') === '') {
-				return false;
-			}
-
-			$unrelated = (float)($summary['unrelatedPartyRevenue'] ?? 0);
-			$related = (float)($summary['relatedPartyRevenue'] ?? 0);
-			$total = (float)($summary['totalRevenue'] ?? 0);
-
-			// Total revenue must tie out to the two revenue components (1 cent tolerance).
-			if (abs(($unrelated + $related) - $total) > 0.01) {
-				return false;
-			}
-
-			return true;
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'CbcrPillar2Guard: summary reconcile check failed — denying transition (fail-closed)',
-				['summaryId' => $summaryId, 'exception' => $e->getMessage()]
-			);
-			return false;
-		}//end try
-
+		return $this->failClosed(
+			check: fn (): bool => self::summaryReconciles(
+				summary: $this->resolveObject(schema: 'CbcrJurisdictionSummary', id: $summaryId, object: $object)
+			),
+			message: 'CbcrPillar2Guard: summary reconcile check failed — denying transition (fail-closed)',
+			context: ['summaryId' => $summaryId]
+		);
 	}//end canReconcileSummary()
 
 	/**
@@ -148,20 +128,7 @@ class CbcrPillar2Guard {
 				return false;
 			}
 
-			$jurisdiction = strtoupper((string)($computation['jurisdiction'] ?? ''));
-			$etr = (float)($computation['etrJurisdiction'] ?? 0);
-			$minimumRate = (float)($computation['minimumRate'] ?? 0.15);
-			$topUpAmount = (float)($computation['topUpTaxAmount'] ?? 0);
-			$qdmttAmount = (float)($computation['qdmttAmount'] ?? 0);
-
-			// QDMTT priority only bites for NL-resident low-taxed income with a top-up.
-			if ($jurisdiction === 'NL' && $etr < $minimumRate && $topUpAmount > 0) {
-				if ($qdmttAmount <= 0) {
-					return false;
-				}
-			}
-
-			return true;
+			return self::qdmttPriorityMet(computation: $computation);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CbcrPillar2Guard: computation approve check failed — denying transition (fail-closed)',
@@ -171,6 +138,29 @@ class CbcrPillar2Guard {
 		}//end try
 
 	}//end canApproveComputation()
+
+	/**
+	 * QDMTT priority only bites for NL-resident low-taxed income with a top-up: then a QDMTT amount is required.
+	 *
+	 * @param array<string, mixed> $computation The Pillar2JurisdictionComputation.
+	 *
+	 * @return bool
+	 */
+	private static function qdmttPriorityMet(array $computation): bool {
+		$jurisdiction = strtoupper((string)($computation['jurisdiction'] ?? ''));
+		$etr          = (float)($computation['etrJurisdiction'] ?? 0);
+		$minimumRate  = (float)($computation['minimumRate'] ?? 0.15);
+		$topUpAmount  = (float)($computation['topUpTaxAmount'] ?? 0);
+		$qdmttAmount  = (float)($computation['qdmttAmount'] ?? 0);
+
+		if ($jurisdiction === 'NL' && $etr < $minimumRate && $topUpAmount > 0) {
+			if ($qdmttAmount <= 0) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end qdmttPriorityMet()
 
 	/**
 	 * Returns true iff the QdmttReturn may be submitted.
@@ -186,29 +176,11 @@ class CbcrPillar2Guard {
 	 * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
 	 */
 	public function canSubmitQdmtt(string $returnId, ?array $object = null): bool {
-		try {
-			$return = $this->resolveObject(schema: 'QdmttReturn', id: $returnId, object: $object);
-			if ($return === null) {
-				return false;
-			}
-
-			if ((string)($return['period'] ?? '') === '' || (string)($return['entity'] ?? '') === '') {
-				return false;
-			}
-
-			if ((float)($return['qdmttPayable'] ?? -1) < 0) {
-				return false;
-			}
-
-			return true;
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'CbcrPillar2Guard: QDMTT submit check failed — denying transition (fail-closed)',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
-			return false;
-		}//end try
-
+		return $this->failClosed(
+			check: fn (): bool => self::qdmttSubmittable(return: $this->resolveObject(schema: 'QdmttReturn', id: $returnId, object: $object)),
+			message: 'CbcrPillar2Guard: QDMTT submit check failed — denying transition (fail-closed)',
+			context: ['returnId' => $returnId]
+		);
 	}//end canSubmitQdmtt()
 
 	/**
@@ -226,30 +198,174 @@ class CbcrPillar2Guard {
 	 * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
 	 */
 	public function canReconcileCbcrReturn(string $returnId, ?array $object = null): bool {
-		try {
-			$return = $this->resolveObject(schema: 'CbcrReturn', id: $returnId, object: $object);
-			if ($return === null) {
-				return false;
-			}
-
-			$residual = abs((float)($return['reconciliationResidual'] ?? 0));
-			$items = $return['reconciliationItems'] ?? [];
-
-			// A residual over EUR 1M must be explained by at least one item.
-			if ($residual > 1000000.0 && (is_array($items) === false || count($items) < 1)) {
-				return false;
-			}
-
-			return true;
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'CbcrPillar2Guard: CbCR return reconcile check failed — denying transition (fail-closed)',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
-			return false;
-		}//end try
-
+		return $this->failClosed(
+			check: fn (): bool => self::cbcrReturnReconciles(return: $this->resolveObject(schema: 'CbcrReturn', id: $returnId, object: $object)),
+			message: 'CbcrPillar2Guard: CbCR return reconcile check failed — denying transition (fail-closed)',
+			context: ['returnId' => $returnId]
+		);
 	}//end canReconcileCbcrReturn()
+
+	/**
+	 * Returns true iff the CbcrReturn may be marked submitted.
+	 *
+	 * REQ-CBC-012: only a return with a stored, schema-valid file made from
+	 * the records as they are now, and no failing mandatory check, may be
+	 * submitted. A file whose fingerprint differs from the current records is
+	 * stale and denies, as does any error (fail-closed).
+	 *
+	 * @param string                   $returnId The CbcrReturn id.
+	 * @param array<string,mixed>|null $object   The return being transitioned.
+	 *
+	 * @return bool True when the return may be submitted.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.2
+	 */
+	public function canSubmitCbcrReturn(string $returnId, ?array $object = null): bool {
+		return $this->failClosed(
+			check: fn (): bool => $this->fileIsCurrent(
+				return: $this->resolveObject(schema: 'CbcrReturn', id: $returnId, object: $object),
+				kind: 'cbc'
+			),
+			message: 'CbcrPillar2Guard: CbCR return submit check failed — denying transition (fail-closed)',
+			context: ['returnId' => $returnId]
+		);
+	}//end canSubmitCbcrReturn()
+
+	/**
+	 * Returns true iff the GlobeInformationReturn may be approved.
+	 *
+	 * REQ-CBC-012: only a return with a stored, schema-valid file made from
+	 * the safe harbour records and computations as they are now, no missing
+	 * element and no failing mandatory check, may be approved (fail-closed).
+	 *
+	 * @param string                   $returnId The GlobeInformationReturn id.
+	 * @param array<string,mixed>|null $object   The return being transitioned.
+	 *
+	 * @return bool True when the return may be approved.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.2
+	 */
+	public function canApproveGir(string $returnId, ?array $object = null): bool {
+		return $this->failClosed(
+			check: fn (): bool => $this->fileIsCurrent(
+				return: $this->resolveObject(schema: 'GlobeInformationReturn', id: $returnId, object: $object),
+				kind: 'gir'
+			),
+			message: 'CbcrPillar2Guard: GIR approve check failed — denying transition (fail-closed)',
+			context: ['returnId' => $returnId]
+		);
+	}//end canApproveGir()
+
+	/**
+	 * Run a check, denying (false) and logging when it throws: every guard fails closed.
+	 *
+	 * @param callable(): bool    $check   The check.
+	 * @param string              $message The error to log when it throws.
+	 * @param array<string,mixed> $context The log context; the exception message is added.
+	 *
+	 * @return bool
+	 */
+	private function failClosed(callable $check, string $message, array $context): bool {
+		try {
+			return $check();
+		} catch (\Throwable $e) {
+			$this->logger->error($message, $context + ['exception' => $e->getMessage()]);
+			return false;
+		}
+	}//end failClosed()
+
+	/**
+	 * REQ-CBC-002: a summary with a period and jurisdiction whose total revenue ties out
+	 * to unrelated + related party revenue (1 cent tolerance).
+	 *
+	 * @param array<string,mixed>|null $summary The summary, or null when not found.
+	 *
+	 * @return bool
+	 */
+	private static function summaryReconciles(?array $summary): bool {
+		if ($summary === null || (string)($summary['period'] ?? '') === '' || (string)($summary['jurisdiction'] ?? '') === '') {
+			return false;
+		}
+
+		$unrelated = (float)($summary['unrelatedPartyRevenue'] ?? 0);
+		$related   = (float)($summary['relatedPartyRevenue'] ?? 0);
+		$total     = (float)($summary['totalRevenue'] ?? 0);
+
+		return (abs(($unrelated + $related) - $total) > 0.01) === false;
+	}//end summaryReconciles()
+
+	/**
+	 * REQ-CBC-006: a QDMTT return with a period, an entity and a non-negative QDMTT payable.
+	 *
+	 * @param array<string,mixed>|null $return The return, or null when not found.
+	 *
+	 * @return bool
+	 */
+	private static function qdmttSubmittable(?array $return): bool {
+		if ($return === null || (string)($return['period'] ?? '') === '' || (string)($return['entity'] ?? '') === '') {
+			return false;
+		}
+
+		return ((float)($return['qdmttPayable'] ?? -1) < 0) === false;
+	}//end qdmttSubmittable()
+
+	/**
+	 * REQ-CBC-010: a residual over EUR 1M must be explained by at least one reconciliation item.
+	 *
+	 * @param array<string,mixed>|null $return The CbcrReturn, or null when not found.
+	 *
+	 * @return bool
+	 */
+	private static function cbcrReturnReconciles(?array $return): bool {
+		if ($return === null) {
+			return false;
+		}
+
+		$residual = abs((float)($return['reconciliationResidual'] ?? 0));
+		$items    = $return['reconciliationItems'] ?? [];
+
+		return ($residual > 1000000.0 && (is_array($items) === false || count($items) < 1)) === false;
+	}//end cbcrReturnReconciles()
+
+	/**
+	 * REQ-CBC-012: a return with a stored file that was valid and made from the records as they
+	 * are now, and no failing mandatory check.
+	 *
+	 * @param array<string,mixed>|null $return The CbcrReturn (kind cbc) or GlobeInformationReturn (kind gir).
+	 * @param string                   $kind   cbc or gir.
+	 *
+	 * @return bool
+	 */
+	private function fileIsCurrent(?array $return, string $kind): bool {
+		$field = ['cbc' => 'cbcrXmlSubmission', 'gir' => 'globeXmlSubmission'][$kind];
+		if ($return === null || trim((string)($return[$field] ?? '')) === '') {
+			return false;
+		}
+
+		$runner = new CbcrCheckRunner(objectService: $this->objectService, appConfig: $this->appConfig);
+		if ($kind === 'cbc') {
+			return self::fileMatches(validation: $return['lastValidation'] ?? null, fingerprint: $runner->cbcFingerprint(return: $return))
+				&& CbcrCheckRunner::blockingFailures(results: $runner->runCbc(return: $return)) === [];
+		}
+
+		return self::fileMatches(validation: $return['lastValidation'] ?? null, fingerprint: $runner->girFingerprint(return: $return))
+			&& CbcrCheckRunner::blockingFailures(results: $runner->runGir(return: $return)) === [];
+	}//end fileIsCurrent()
+
+	/**
+	 * Whether the last validation says the file was valid and made from these records.
+	 *
+	 * @param mixed  $validation  The return's lastValidation.
+	 * @param string $fingerprint The fingerprint of the records now.
+	 *
+	 * @return bool
+	 */
+	private static function fileMatches(mixed $validation, string $fingerprint): bool {
+		return is_array($validation) === true
+			&& ($validation['valid'] ?? null) === true
+			&& is_string($validation['fingerprint'] ?? null) === true
+			&& hash_equals($validation['fingerprint'], $fingerprint) === true;
+	}//end fileMatches()
 
 	/**
 	 * Resolve a register object, preferring the in-flight object payload and

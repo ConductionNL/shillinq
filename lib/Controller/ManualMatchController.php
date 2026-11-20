@@ -27,10 +27,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
-use OCA\Shillinq\Service\Bank\ManualMatchService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,16 +53,16 @@ class ManualMatchController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request     The request.
-	 * @param ManualMatchService           $service     The matching service.
-	 * @param AdministrationContextService $context     Administration access check.
+	 * @param ManualMatchServiceInterface           $service     The matching service.
+	 * @param AdministrationContextServiceInterface $context     Administration access check.
 	 * @param IUserSession                 $userSession The signed-in user.
 	 * @param IL10N                        $l10n        Translations for refusals.
 	 * @param LoggerInterface              $logger      Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ManualMatchService $service,
-		private readonly AdministrationContextService $context,
+		private readonly ManualMatchServiceInterface $service,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

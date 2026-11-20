@@ -55,19 +55,20 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioDefaultPromoterInterface;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Atomically-demoting default-scenario promoter (REQ-BSC-002).
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
-class BudgetScenarioDefaultPromoter {
+class BudgetScenarioDefaultPromoter implements BudgetScenarioDefaultPromoterInterface {
 	/**
 	 * The BudgetScenario schema slug.
 	 *
@@ -341,11 +342,6 @@ class BudgetScenarioDefaultPromoter {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

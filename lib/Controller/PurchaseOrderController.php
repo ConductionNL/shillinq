@@ -33,9 +33,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\PurchaseOrderService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,8 +62,8 @@ class PurchaseOrderController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param PurchaseOrderService $purchaseOrderService The PO service (server-authoritative).
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param PurchaseOrderServiceInterface $purchaseOrderService The PO service (server-authoritative).
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
@@ -72,8 +72,8 @@ class PurchaseOrderController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PurchaseOrderService $purchaseOrderService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly PurchaseOrderServiceInterface $purchaseOrderService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
@@ -238,6 +238,31 @@ class PurchaseOrderController extends Controller {
 
 		return new JSONResponse(['chain' => $chain], Http::STATUS_OK);
 	}//end previewApprovalChain()
+
+	/**
+	 * Which dispatch channels can take an order, and why one cannot.
+	 *
+	 * GET /api/purchase-orders/dispatch-channels
+	 * The detail page disables a channel that is not there and shows the
+	 * reason, instead of offering a send that would only be logged.
+	 *
+	 * @return JSONResponse 200 with {peppol: {available, reason}, email: {available, reason}}; 401 anonymous.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 *
+	 * @no-admin-idor-exempt Instance-wide capability read — takes no object reference
+	 *     and reads no storage: it reports whether a Peppol adapter and a mail channel
+	 *     are bound (PurchaseOrderService::dispatchChannels()), which is the same for
+	 *     every tenant. Verify by reading that method.
+	 */
+	#[NoAdminRequired]
+	public function dispatchChannels(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse($this->purchaseOrderService->dispatchChannels(), Http::STATUS_OK);
+	}//end dispatchChannels()
 
 	/**
 	 * Attempt to advance a purchase order's lifecycle to "sent".

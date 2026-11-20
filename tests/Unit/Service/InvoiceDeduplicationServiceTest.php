@@ -201,6 +201,35 @@ final class InvoiceDeduplicationServiceTest extends TestCase {
 	}//end testExpenseOverlapWithPostedInvoiceIsReported()
 
 	/**
+	 * A pass-through item billed one by one (expenseItemRefs) blocks the same
+	 * item again, but not a sibling item of the same claim.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	public function testItemBilledOneByOneIsReportedButItsSiblingIsNot(): void {
+		$this->arrangeFindAll([
+			[
+				'id' => 'inv-3',
+				'invoiceNumber' => 'INV-2026-003',
+				'status' => 'draft',
+				'timeEntryIds' => [],
+				'expenseIds' => [],
+				'expenseItemRefs' => [['schema' => 'Receipt', 'id' => 'r-train', 'claimId' => 'c-1', 'disbursement' => false]],
+			],
+		]);
+
+		$again = $this->svc()->deduplicateSourceIds('admin-1', [], ['r-train']);
+		$sibling = $this->svc()->deduplicateSourceIds('admin-1', [], ['r-parking', 'c-1']);
+
+		self::assertTrue($again['hasConflicts']);
+		self::assertSame(['r-train'], $again['conflicts'][0]['expenseIds']);
+		self::assertFalse($sibling['hasConflicts']);
+
+	}//end testItemBilledOneByOneIsReportedButItsSiblingIsNot()
+
+	/**
 	 * Cancelled / paid / void invoices are NOT considered conflicting.
 	 *
 	 * Only draft + posted block.

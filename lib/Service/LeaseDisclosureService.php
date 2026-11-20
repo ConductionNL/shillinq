@@ -32,10 +32,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\LeaseDisclosureServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes the period-end IFRS 16 disclosure table for one administration.
@@ -51,7 +54,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class LeaseDisclosureService {
+class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 	/**
 	 * Asset classes disclosed, in stable order (REQ-LD-001).
 	 *
@@ -133,6 +136,11 @@ class LeaseDisclosureService {
 	];
 
 	/**
+	 * The schema a stored disclosure table lives in.
+	 */
+	private const TABLE_SCHEMA = 'LeaseDisclosureTable';
+
+	/**
 	 * Construct the service.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -193,6 +201,74 @@ class LeaseDisclosureService {
 
 		return $table;
 	}//end generateForPeriod()
+
+	/**
+	 * Generate the disclosure table for a closed period and store it as the
+	 * period's LeaseDisclosureTable row (REQ-LD-008), so the disclosures page
+	 * lists it. Closing the same period again (after a reopen) replaces that
+	 * row rather than adding a second one.
+	 *
+	 * @param string $administrationId The administration whose period closed.
+	 * @param string $fiscalPeriod     The closed period's label (its periodId).
+	 *
+	 * @return array<string,mixed> The stored table.
+	 *
+	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures/spec.md
+	 */
+	public function materialiseForPeriod(string $administrationId, string $fiscalPeriod): array {
+		$table = $this->generateForPeriod(administrationId: $administrationId, fiscalPeriod: $fiscalPeriod);
+		$table['generatedAt'] = (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM);
+
+		$uuid = $this->storedTableId(administrationId: $administrationId, fiscalPeriod: $fiscalPeriod);
+		if ($uuid !== null) {
+			$table['id'] = $uuid;
+		}
+
+		$this->objectService()->saveObject(
+			object: $table,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register(), schema: self::TABLE_SCHEMA),
+				uuid: $uuid
+			)
+		);
+
+		return $table;
+	}//end materialiseForPeriod()
+
+	/**
+	 * The id of the table already stored for an administration and period, or null.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $fiscalPeriod     The period label.
+	 *
+	 * @return string|null
+	 */
+	private function storedTableId(string $administrationId, string $fiscalPeriod): ?string {
+		$rows = $this->objectService()
+			->setRegister($this->register())
+			->setSchema(self::TABLE_SCHEMA)
+			->findAll(['filters' => ['administrationId' => $administrationId, 'fiscalPeriod' => $fiscalPeriod]]);
+
+		foreach ($rows as $row) {
+			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+				$row = $row->jsonSerialize();
+			}
+
+			if (is_array($row) === false
+				|| (string)($row['administrationId'] ?? '') !== $administrationId
+				|| (string)($row['fiscalPeriod'] ?? '') !== $fiscalPeriod
+			) {
+				continue;
+			}
+
+			$id = (string)($row['@self']['id'] ?? ($row['id'] ?? ''));
+			if ($id !== '') {
+				return $id;
+			}
+		}
+
+		return null;
+	}//end storedTableId()
 
 	/**
 	 * Aggregate the quantitative disclosure figures from a set of leases (REQ-LD-001..005).
@@ -813,11 +889,6 @@ class LeaseDisclosureService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

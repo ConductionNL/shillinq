@@ -42,7 +42,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
 use OCP\IL10N;
 
 /**
@@ -55,14 +57,7 @@ use OCP\IL10N;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class ArInvoiceIcpPdfRenderer {
-	/**
-	 * Error code raised when a treatAsIcp invoice lacks a buyer VAT-ID
-	 * (REQ-ICP-007, REQ-ICP-001).
-	 *
-	 * @var string
-	 */
-	public const ERROR_VATID_MISSING = 'icp.invoice.vatid.missing';
+class ArInvoiceIcpPdfRenderer implements ArInvoiceIcpPdfRendererInterface {
 
 	/**
 	 * Translation provider for the buyer-language label set.
@@ -388,7 +383,8 @@ class ArInvoiceIcpPdfRenderer {
 	 * @return string The translated notice (UTF-8).
 	 */
 	private function reverseChargeNotice(): string {
-		return $this->l10n->t('VAT reverse-charged');
+		// The one notice every reverse-charged output prints (design D1).
+		return $this->l10n->t(ReverseChargeNotice::NOTICE);
 	}//end reverseChargeNotice()
 
 	/**

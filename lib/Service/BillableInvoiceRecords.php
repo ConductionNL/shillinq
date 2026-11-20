@@ -64,17 +64,19 @@ final class BillableInvoiceRecords {
 
 
 	/**
-	 * The draft BillableInvoice record, due 30 days after the invoice date.
+	 * The draft BillableInvoice record, due the customer's payment term after
+	 * the invoice date (sales-invoice-sending REQ-SIS-005).
 	 *
 	 * @param InvoiceDraft $draft The totalled draft.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
 	 */
 	public function invoicePayload(InvoiceDraft $draft): array {
 		$request = $draft->request;
-		$amounts = $this->amountsInEuros(totals: $draft->totals);
+		$amounts = $this->amountsInEuros(totals: $draft->totals, currency: $draft->currency);
 
 		return [
 			'administrationId' => $request->administrationId,
@@ -83,7 +85,7 @@ final class BillableInvoiceRecords {
 			'customerId' => $request->customerId,
 			'projectId' => $request->projectId,
 			'invoiceDate' => $request->toDate,
-			'dueDate' => $this->addDays(isoDate: $request->toDate, days: 30),
+			'dueDate' => $this->addDays(isoDate: $request->toDate, days: $draft->paymentTermDays),
 			'timeEntryIds' => $request->timeEntryIds,
 			'expenseIds' => $request->expenseIds,
 			'meterReadingIds' => $request->meterReadingIds,
@@ -94,14 +96,47 @@ final class BillableInvoiceRecords {
 			'netAmount' => $amounts['netAmount'],
 			'vatAmount' => $amounts['vatAmount'],
 			'grossAmount' => $amounts['grossAmount'],
-			'currency' => 'EUR',
-			'paymentTerms' => 'net 30',
+			'currency' => $draft->currency,
+			'paymentTerms' => 'net ' . $draft->paymentTermDays,
 			'status' => 'draft',
 			'posted' => false,
 			'obligationId' => null,
 			'notes' => $request->notes,
-		];
+		] + $this->itemRefsOf(lineDrafts: $draft->lineDrafts);
 	}//end invoicePayload()
+
+	/**
+	 * `expenseItemRefs` of the invoice: the pass-through items billed on it,
+	 * each with its schema, id, claim and disbursement flag; nothing when it
+	 * bills none.
+	 *
+	 * @param array<int,array<string,mixed>> $lineDrafts The line drafts.
+	 *
+	 * @return array<string,list<array{schema:string,id:string,claimId:string,disbursement:bool}>>
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	private function itemRefsOf(array $lineDrafts): array {
+		$refs = [];
+		foreach ($lineDrafts as $line) {
+			if (isset($line['recharge']) === false || is_array($line['recharge']) === false) {
+				continue;
+			}
+
+			$refs[] = [
+				'schema' => (string)($line['recharge']['schema'] ?? ''),
+				'id' => (string)($line['sourceId'] ?? ''),
+				'claimId' => (string)($line['recharge']['claimId'] ?? ''),
+				'disbursement' => ($line['recharge']['vatTreatment'] ?? '') === BillingModelEngine::VAT_DISBURSEMENT,
+			];
+		}
+
+		if ($refs === []) {
+			return [];
+		}
+
+		return ['expenseItemRefs' => $refs];
+	}//end itemRefsOf()
 
 
 	/**
@@ -136,8 +171,35 @@ final class BillableInvoiceRecords {
 			'vatRate' => (float)$line['vatRate'],
 			'vatAmount' => round($vatCents / 100, 2),
 			'modelSpecificFields' => $line['modelSpecificFields'] ?? null,
-		];
+		] + $this->rechargeOf(line: $line);
 	}//end linePayload()
+
+	/**
+	 * `recharge` of a recharged item's line, without the engine's own keys;
+	 * nothing for any other line.
+	 *
+	 * @param array<string,mixed> $line One line draft.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	private function rechargeOf(array $line): array {
+		if (isset($line['recharge']) === false || is_array($line['recharge']) === false) {
+			return [];
+		}
+
+		return [
+			'recharge' => [
+				'costAmount' => $line['recharge']['costAmount'] ?? null,
+				'markupRuleId' => $line['recharge']['markupRuleId'] ?? null,
+				'markupRate' => $line['recharge']['markupRate'] ?? null,
+				'markupAmount' => $line['recharge']['markupAmount'] ?? null,
+				'vatTreatment' => $line['recharge']['vatTreatment'] ?? null,
+				'vatMention' => $line['recharge']['vatMention'] ?? null,
+			],
+		];
+	}//end rechargeOf()
 
 
 	/**
@@ -186,18 +248,21 @@ final class BillableInvoiceRecords {
 
 
 	/**
-	 * Net, VAT and gross in euros, and the currency.
+	 * Net, VAT and gross in the invoice currency's units, and the currency.
 	 *
-	 * @param array<string,mixed> $totals The VAT totals in cents.
+	 * @param array<string,mixed> $totals   The VAT totals in cents.
+	 * @param string              $currency The invoice currency.
 	 *
 	 * @return array{netAmount: float, vatAmount: float, grossAmount: float, currency: string}
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
 	 */
-	private function amountsInEuros(array $totals): array {
+	private function amountsInEuros(array $totals, string $currency = 'EUR'): array {
 		return [
 			'netAmount' => round($totals['netCents'] / 100, 2),
 			'vatAmount' => round($totals['vatCents'] / 100, 2),
 			'grossAmount' => round($totals['grossCents'] / 100, 2),
-			'currency' => 'EUR',
+			'currency' => $currency,
 		];
 	}//end amountsInEuros()
 

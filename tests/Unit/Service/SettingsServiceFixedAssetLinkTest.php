@@ -52,6 +52,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -60,6 +61,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests that every seeded DepreciationSchedule carries its asset's UUID.
@@ -95,9 +97,11 @@ class SettingsServiceFixedAssetLinkTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($this->objectService);
 
+		$appConfig = $this->createMock(IAppConfig::class);
+
 		return new SettingsService(
-			$this->createMock(IAppConfig::class),
-			$appManager,
+			$appConfig,
+			new RegisterLocation($appConfig, $appManager),
 			$container,
 			$this->createMock(IGroupManager::class),
 			$this->createMock(IUserSession::class),
@@ -145,7 +149,9 @@ class SettingsServiceFixedAssetLinkTest extends TestCase {
 				return [];
 			}
 
-			public function saveObject(array $object, string $register, string $schema): object {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): object {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				if ($schema === 'DepreciationSchedule') {
 					$this->savedSchedules[] = $object;
 					return $this->entity(uuid: 'schedule-' . count($this->savedSchedules));

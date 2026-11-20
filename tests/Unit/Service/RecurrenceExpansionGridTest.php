@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SlotService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICacheFactory;
@@ -67,7 +67,7 @@ final class RecurrenceExpansionGridTest extends TestCase {
 		$service = new RecurringSeriesService(
 			new SlotService(
 				$this->createMock(ContainerInterface::class),
-				$this->createMock(SettingsService::class),
+				$this->createMock(RegisterLocation::class),
 				$cacheFactory,
 				$this->createMock(ITimeFactory::class),
 				$logger

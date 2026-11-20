@@ -137,6 +137,99 @@ class PortalContributionProvider {
 	];
 
 	/**
+	 * The RecurringInvoiceProfile fields a customer reads (sales-cancellation REQ-SCX-003).
+	 *
+	 * @var array<int, string>
+	 */
+	private const SUBSCRIPTION_FIELDS = [
+		'name',
+		'status',
+		'frequency',
+		'startDate',
+		'nextRunDate',
+		'currency',
+	];
+
+	/**
+	 * The ARInvoice fields a customer reads, in the list and on the detail card.
+	 *
+	 * @var array<int, string>
+	 */
+	private const SALES_INVOICE_FIELDS = [
+		'invoiceNumber',
+		'invoiceType',
+		'invoiceDate',
+		'dueDate',
+		'currency',
+		'grossAmount',
+		'vatAmount',
+		'invoiceLines',
+		'lifecycleState',
+		'sourceDocumentUri',
+		'ublRef',
+		'dunning',
+	];
+
+	/**
+	 * The PaymentRequest fields a customer reads on an invoice's payment request, in the list and on the detail card.
+	 *
+	 * @var array<int, string>
+	 */
+	private const PAYMENT_REQUEST_FIELDS = [
+		'invoiceReference',
+		'amount',
+		'currency',
+		'paymentGateway',
+		'state',
+		'paymentLink',
+		'expiresAt',
+		'capturedAt',
+		'failureReason',
+		'confirmationSummary',
+	];
+
+	/**
+	 * The PaymentRequest fields a customer reads on a request without an invoice, in the list and on the detail card.
+	 *
+	 * @var array<int, string>
+	 */
+	private const REQUEST_PAYMENT_FIELDS = [
+		'description',
+		'requestType',
+		'amount',
+		'currency',
+		'state',
+		'dueAt',
+		'legalBasis',
+		'paymentLink',
+		'capturedAt',
+		'failureReason',
+		'confirmationSummary',
+	];
+
+	/**
+	 * The amount column of a payment request list.
+	 *
+	 * @var array<string, string>
+	 */
+	private const AMOUNT_COLUMN = [
+		'field' => 'amount',
+		'label' => 'Bedrag',
+		'render' => 'currency',
+	];
+
+	/**
+	 * The status column of a payment request list.
+	 *
+	 * @var array<string, string>
+	 */
+	private const STATE_COLUMN = [
+		'field' => 'state',
+		'label' => 'Status',
+		'render' => 'badge',
+	];
+
+	/**
 	 * The customer (AR-side) manifest; customerManifest() documents every collection and the pay action.
 	 *
 	 * @var array<string, mixed>
@@ -201,20 +294,7 @@ class PortalContributionProvider {
 				// ARInvoice's declared names: the amounts, lines, status and UBL
 				// reference were listed as totalAmount, taxAmount, lines, state and
 				// ublXml, which carry nothing (REQ-SPPI-007).
-				'fields' => [
-					'invoiceNumber',
-					'invoiceType',
-					'invoiceDate',
-					'dueDate',
-					'currency',
-					'grossAmount',
-					'vatAmount',
-					'invoiceLines',
-					'lifecycleState',
-					'sourceDocumentUri',
-					'ublRef',
-					'dunning',
-				],
+				'fields' => self::SALES_INVOICE_FIELDS,
 				'columns' => [
 					[
 						'field' => 'invoiceNumber',
@@ -244,20 +324,7 @@ class PortalContributionProvider {
 				],
 				'detail' => [
 					'layout' => 'card',
-					'fields' => [
-						'invoiceNumber',
-						'invoiceType',
-						'invoiceDate',
-						'dueDate',
-						'currency',
-						'grossAmount',
-						'vatAmount',
-						'invoiceLines',
-						'lifecycleState',
-						'sourceDocumentUri',
-						'ublRef',
-						'dunning',
-					],
+					'fields' => self::SALES_INVOICE_FIELDS,
 				],
 				'defaultSort' => [
 					'field' => 'invoiceDate',
@@ -282,34 +349,15 @@ class PortalContributionProvider {
 				// No row action: pay forwards the row id as invoiceId, and a
 				// row here is a payment request. Its invoice is paid from
 				// salesInvoices (REQ-SPPI-009).
-				'fields' => [
-					'invoiceReference',
-					'amount',
-					'currency',
-					'paymentGateway',
-					'state',
-					'paymentLink',
-					'expiresAt',
-					'capturedAt',
-					'failureReason',
-					'confirmationSummary',
-				],
+				'fields' => self::PAYMENT_REQUEST_FIELDS,
 				'columns' => [
 					[
 						'field' => 'invoiceReference',
 						'label' => 'Factuur',
 						'render' => 'text',
 					],
-					[
-						'field' => 'amount',
-						'label' => 'Bedrag',
-						'render' => 'currency',
-					],
-					[
-						'field' => 'state',
-						'label' => 'Status',
-						'render' => 'badge',
-					],
+					self::AMOUNT_COLUMN,
+					self::STATE_COLUMN,
 					[
 						'field' => 'paymentLink',
 						'label' => 'Nu betalen',
@@ -318,18 +366,7 @@ class PortalContributionProvider {
 				],
 				'detail' => [
 					'layout' => 'card',
-					'fields' => [
-						'invoiceReference',
-						'amount',
-						'currency',
-						'paymentGateway',
-						'state',
-						'paymentLink',
-						'expiresAt',
-						'capturedAt',
-						'failureReason',
-						'confirmationSummary',
-					],
+					'fields' => self::PAYMENT_REQUEST_FIELDS,
 				],
 				'defaultSort' => [
 					'field' => 'expiresAt',
@@ -350,60 +387,63 @@ class PortalContributionProvider {
 				'label' => 'Mijn betaalverzoeken',
 				'listable' => true,
 				'rowAction' => 'pay-request',
-				'fields' => [
-					'description',
-					'requestType',
-					'amount',
-					'currency',
-					'state',
-					'dueAt',
-					'legalBasis',
-					'paymentLink',
-					'capturedAt',
-					'failureReason',
-					'confirmationSummary',
-				],
+				'fields' => self::REQUEST_PAYMENT_FIELDS,
 				'columns' => [
 					[
 						'field' => 'description',
 						'label' => 'Waarvoor',
 						'render' => 'text',
 					],
-					[
-						'field' => 'amount',
-						'label' => 'Bedrag',
-						'render' => 'currency',
-					],
+					self::AMOUNT_COLUMN,
 					[
 						'field' => 'dueAt',
 						'label' => 'Vervaldatum',
 						'render' => 'date',
 					],
+					self::STATE_COLUMN,
+				],
+				'detail' => [
+					'layout' => 'card',
+					'fields' => self::REQUEST_PAYMENT_FIELDS,
+				],
+				'defaultSort' => [
+					'field' => 'dueAt',
+					'direction' => 'desc',
+				],
+			],
+			// The customer's own subscriptions (sales-cancellation REQ-SCX-003),
+			// scoped on the CustomerMaster the profile bills. An active or
+			// paused one can be ended from its row with cancel-subscription.
+			[
+				'id' => 'subscriptions',
+				'register' => 'shillinq',
+				'schema' => 'RecurringInvoiceProfile',
+				'scopeField' => 'customerMasterId',
+				'scopeClaim' => 'customerMasterId',
+				'label' => 'Mijn abonnementen',
+				'listable' => true,
+				'rowAction' => 'cancel-subscription',
+				'fields' => self::SUBSCRIPTION_FIELDS,
+				'columns' => [
 					[
-						'field' => 'state',
+						'field' => 'name',
+						'label' => 'Abonnement',
+						'render' => 'text',
+					],
+					[
+						'field' => 'nextRunDate',
+						'label' => 'Volgende factuur',
+						'render' => 'date',
+					],
+					[
+						'field' => 'status',
 						'label' => 'Status',
 						'render' => 'badge',
 					],
 				],
 				'detail' => [
 					'layout' => 'card',
-					'fields' => [
-						'description',
-						'requestType',
-						'amount',
-						'currency',
-						'state',
-						'dueAt',
-						'legalBasis',
-						'paymentLink',
-						'capturedAt',
-						'failureReason',
-						'confirmationSummary',
-					],
-				],
-				'defaultSort' => [
-					'field' => 'dueAt',
-					'direction' => 'desc',
+					'fields' => self::SUBSCRIPTION_FIELDS,
 				],
 			],
 		],
@@ -449,6 +489,23 @@ class PortalContributionProvider {
 					'field' => 'state',
 					'in' => ['pending'],
 				],
+			],
+			// The row action of subscriptions (sales-cancellation REQ-SCX-003):
+			// portaliq forwards the proven row id as profileId, only while the
+			// profile runs, with the reason the customer may give.
+			[
+				'id' => 'cancel-subscription',
+				'label' => 'Abonnement opzeggen',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/subscriptions/cancel',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'profileId',
+				'rowWhen' => [
+					'field' => 'status',
+					'in' => ['active', 'paused'],
+				],
+				'fields' => ['reasonCode', 'reasonText'],
 			],
 		],
 		'notifications' => [],

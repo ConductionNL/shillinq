@@ -26,7 +26,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\NotificationController;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -220,7 +220,7 @@ final class NotificationControllerCharacterisationTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturnCallback(fn (): bool => $this->bound);
 		$container->method('get')->willReturnCallback(fn (): object => $this->objects);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('books');
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturnCallback(fn (): ?IUser => ($this->loggedIn === true ? $this->createMock(IUser::class) : null));

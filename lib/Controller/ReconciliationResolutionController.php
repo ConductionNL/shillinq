@@ -36,8 +36,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ReconciliationResolutionService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -65,7 +65,7 @@ class ReconciliationResolutionController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Inbound request.
-	 * @param ReconciliationResolutionService $service Encapsulates the
+	 * @param ReconciliationResolutionServiceInterface $service Encapsulates the
 	 *                                                 write logic + audit
 	 *                                                 trail.
 	 * @param IUserSession $userSession Current Nextcloud
@@ -82,7 +82,7 @@ class ReconciliationResolutionController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ReconciliationResolutionService $service,
+		private readonly ReconciliationResolutionServiceInterface $service,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
@@ -371,6 +371,53 @@ class ReconciliationResolutionController extends Controller {
 			actor: $run->actor,
 		);
 	}//end applyTo()
+
+	/**
+	 * Classify selected matches in one call, across reconciliations.
+	 *
+	 * Takes `matchIds`, `resolutionStatus` and `resolutionReason`; the
+	 * reconciliation of each match is read on the server.
+	 *
+	 * @return JSONResponse `{applied, failed: {matchId: message}}`.
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+	 */
+	#[NoAdminRequired]
+	public function bulkResolveMatches(): JSONResponse {
+		$matchIdsParam = $this->request->getParam('matchIds');
+		$refusal = $this->matchIdsRefusal(matchIds: $matchIdsParam);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$decision = new ResolutionDecision(request: $this->request);
+		$validation = $this->validatePayload(decision: $decision);
+		if ($validation !== null) {
+			return $validation;
+		}
+
+		$this->requireAuthenticatedSession();
+
+		$matchIds = array_values(array_unique(array_filter(array_map(static fn ($id): string => trim((string)$id), $matchIdsParam))));
+		$result   = $this->service->resolveMatches(
+			matchIds: $matchIds,
+			resolutionStatus: $decision->status,
+			resolutionReason: $decision->reason,
+			actor: $this->resolveActor(),
+		);
+
+		$failed = [];
+		foreach ($result['failed'] as $matchId => $exception) {
+			$this->logger->error(
+				'ReconciliationResolutionController: bulk resolve failed for one match',
+				['matchId' => $matchId, 'exception' => $exception->getMessage()]
+			);
+			$failed[$matchId] = $this->safeFailureMessage(exception: $exception);
+		}
+
+		return new JSONResponse(['applied' => $result['applied'], 'failed' => $failed], Http::STATUS_OK);
+
+	}//end bulkResolveMatches()
 
 	/**
 	 * Map a per-id bulk failure onto a message that is safe to return to the

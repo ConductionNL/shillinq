@@ -30,8 +30,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\PublicSector;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -46,12 +47,12 @@ class PublicSectorRecords {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param ObjectTransitionRunner $transitions   Runs the declared transitions.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 	) {
 	}//end __construct()
 
@@ -122,6 +123,23 @@ class PublicSectorRecords {
 	}//end create()
 
 	/**
+	 * Replace an existing object and answer its id.
+	 *
+	 * @param string              $schema The schema slug.
+	 * @param string              $id     The object's id.
+	 * @param array<string,mixed> $object The object.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 */
+	public function update(string $schema, string $id, array $object): string {
+		$object['id'] = $id;
+		return ObjectIdentifier::resolve(saved: $this->scoped(schema: $schema)->saveObject(object: $object, options: new ObjectSaveOptions(uuid: $id)));
+
+	}//end update()
+
+	/**
 	 * Save a draft journal entry, post it through its declared transition and
 	 * answer its id.
 	 *
@@ -146,7 +164,7 @@ class PublicSectorRecords {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

@@ -1,47 +1,47 @@
 {
     "total": {
         "lines": {
-            "total": 79928,
-            "covered": 68206,
+            "total": 79730,
+            "covered": 68089,
             "skipped": 0,
-            "pct": 85.33
+            "pct": 85.4
         },
         "statements": {
-            "total": 79928,
-            "covered": 68206,
+            "total": 79730,
+            "covered": 68089,
             "skipped": 0,
-            "pct": 85.33
+            "pct": 85.4
         },
         "functions": {
-            "total": 10011,
-            "covered": 7461,
+            "total": 10192,
+            "covered": 7558,
             "skipped": 0,
-            "pct": 74.53
+            "pct": 74.16
         }
     },
     "suites": {
         "phpunit": {
             "statements": {
-                "total": 79928,
-                "covered": 68206,
+                "total": 79730,
+                "covered": 68089,
                 "skipped": 0,
-                "pct": 85.33
+                "pct": 85.4
             },
             "functions": {
-                "total": 10011,
-                "covered": 7461,
+                "total": 10192,
+                "covered": 7558,
                 "skipped": 0,
-                "pct": 74.53
+                "pct": 74.16
             },
             "lines": {
-                "total": 79928,
-                "covered": 68206,
+                "total": 79730,
+                "covered": 68089,
                 "skipped": 0,
-                "pct": 85.33
+                "pct": 85.4
             }
         }
     },
-    "measuredAt": "2026-11-12",
-    "commit": "64ea0a7c3",
+    "measuredAt": "2026-11-13",
+    "commit": "a6e00c519",
     "generator": "scripts/coverage-publish.php"
 }

@@ -34,9 +34,11 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Service\ListenerSlugContract;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
@@ -113,13 +115,55 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	private ?LoggerInterface $listenerLogger = null;
 
 	/**
+	 * When true, every notify() call throws.
+	 *
+	 * @var bool
+	 */
+	private bool $notifyFails = false;
+
+	/**
+	 * The purchase order service handed to the listener.
+	 *
+	 * @var PurchaseOrderServiceInterface|null
+	 */
+	private ?PurchaseOrderServiceInterface $purchaseOrders = null;
+
+	/**
 	 * Fresh store per test.
 	 *
 	 * @return void
 	 */
 	protected function setUp(): void {
 		$this->store = new OpenRegisterFaithfulObjectService();
+		$this->purchaseOrders = $this->createMock(PurchaseOrderServiceInterface::class);
 	}//end setUp()
+
+	/**
+	 * A status naming a purchase order goes to the purchase order service, not to an invoice.
+	 *
+	 * @return void
+	 */
+	public function testAPurchaseOrderStatusGoesToThePurchaseOrderService(): void {
+		$this->seedInvoice(deliveryStatus: 'sent');
+		$this->purchaseOrders->expects(self::once())->method('applyPeppolDeliveryStatus')
+			->with('po-9', 'failed', 'receiver unreachable')
+			->willReturn(true);
+
+		$this->listener()->handle(
+			$this->deliveryStatus(
+				data: [
+					'objectUri' => 'openregister://shillinq/PurchaseOrder/po-9',
+					'transmissionId' => 'urn:uuid:po',
+					'status' => 'failed',
+					'timestamp' => '2026-06-20T10:00:00+00:00',
+					'detail' => 'receiver unreachable',
+				]
+			)
+		);
+
+		self::assertSame('sent', $this->invoice()['deliveryStatus'], 'no invoice is touched');
+
+	}//end testAPurchaseOrderStatusGoesToThePurchaseOrderService()
 
 	/**
 	 * REQ-AR-011 scenario: sent -> delivered advances the sub-lifecycle and
@@ -148,6 +192,38 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 		self::assertCount(1, $this->store->dump(schema: 'ARInvoice'), 'the invoice is updated, not copied');
 
 	}//end testSentToDeliveredAdvancesAndPersistsDetail()
+
+	/**
+	 * REQ-SEIX-003 scenario: an invoice integriq accepted for transmission moves
+	 * from queued to sent on the id-stamped CloudEvent object integriq saves, and
+	 * takes the transmission id integriq assigned.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 */
+	public function testQueuedToSentTakesIntegriqsTransmissionId(): void {
+		$this->seedInvoice(deliveryStatus: 'queued');
+
+		$this->listener()->handle(
+			$this->deliveryStatus(
+				data: [
+					'objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID,
+					'transmissionId' => 'urn:uuid:5f0c1e2a-9b7d-4c3e-8a10-2b6f4d9e7c11',
+					'status' => 'sent',
+					'timestamp' => '2026-09-27T09:00:00+00:00',
+					'detail' => 'Handed to the access point',
+				]
+			)
+		);
+
+		$invoice = $this->invoice();
+		self::assertSame('sent', $invoice['deliveryStatus']);
+		self::assertSame('urn:uuid:5f0c1e2a-9b7d-4c3e-8a10-2b6f4d9e7c11', $invoice['transmissionId']);
+		self::assertSame('Handed to the access point', $invoice['deliveryDetail']);
+		self::assertSame([], $this->notifications, 'only a rejection notifies');
+
+	}//end testQueuedToSentTakesIntegriqsTransmissionId()
 
 	/**
 	 * REQ-AR-011 / REQ-EINV-005 scenario: an in-flight invoice rejected;
@@ -503,7 +579,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 		$appConfig = $this->createStub(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$contract = $this->createStub(ListenerSlugContract::class);
 		$contract->method('isEnabled')->willReturn(false);
@@ -513,13 +589,16 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 			IAppConfig::class => $appConfig,
 			INotificationManager::class => $this->notificationManager(),
 			LoggerInterface::class => ($this->listenerLogger ?? new NullLogger()),
+			PurchaseOrderServiceInterface::class => $this->purchaseOrders,
 			ListenerSchemaResolver::class => new ListenerSchemaResolver(
 				container: $container,
-				settingsService: $settings,
+				registerLocation: $settings,
 				contract: $contract,
 				logger: new NullLogger(),
 			),
 		];
+
+		$byType[ListenerSchemaResolverInterface::class] = $byType[ListenerSchemaResolver::class];
 
 		$arguments = [];
 		foreach ((new ReflectionClass(PeppolDeliveryStatusListener::class))->getConstructor()->getParameters() as $parameter) {
@@ -568,6 +647,10 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 		);
 		$manager->method('notify')->willReturnCallback(
 			function (INotification $notification): void {
+				if ($this->notifyFails === true) {
+					throw new \RuntimeException('push gateway down');
+				}
+
 				$state = ($this->notificationState[spl_object_id($notification)] ?? null);
 				if ($state !== null) {
 					$this->notifications[] = ['user' => $state->user, 'subject' => $state->subject, 'parameters' => $state->parameters];
@@ -676,4 +759,138 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 		];
 
 	}//end goldenOutcome()
+	/**
+	 * A logger that keeps [level, message] of every record.
+	 *
+	 * @return LoggerInterface&object{records: array<int,array{0:string,1:string}>}
+	 */
+	private function recordingLogger(): LoggerInterface {
+		return new class extends \Psr\Log\AbstractLogger {
+			/**
+			 * The records.
+			 *
+			 * @var array<int,array{0:string,1:string}>
+			 */
+			public array $records = [];
+
+			/**
+			 * Record a log call.
+			 *
+			 * @param mixed $level Level.
+			 * @param \Stringable|string $message Message.
+			 * @param array<string,mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, \Stringable|string $message, array $context = []): void {
+				$this->records[] = [(string)$level, (string)$message];
+			}
+		};
+	}//end recordingLogger()
+
+	/**
+	 * The store's object service with the named methods throwing.
+	 *
+	 * @param array<int,string> $failing Method names that throw.
+	 *
+	 * @return object
+	 */
+	private function failing(array $failing): object {
+		return new class(new DuckObjectServiceAdapter($this->store), $failing) {
+			/**
+			 * Wrap the store.
+			 *
+			 * @param object $inner The working object service.
+			 * @param array<int,string> $failing Method names that throw.
+			 */
+			public function __construct(private object $inner, private array $failing) {
+			}
+
+			/**
+			 * Delegate, or throw for a failing method; fluent setters return the wrapper.
+			 *
+			 * @param string $name Method.
+			 * @param array<int|string,mixed> $arguments Arguments.
+			 *
+			 * @return mixed
+			 */
+			public function __call(string $name, array $arguments): mixed {
+				if (in_array($name, $this->failing, true) === true) {
+					throw new \RuntimeException($name . ' failed');
+				}
+
+				$result = $this->inner->$name(...$arguments);
+				return $result === $this->inner ? $this : $result;
+			}
+		};
+	}//end failing()
+
+	/**
+	 * Without a reachable object service the event is skipped: nothing is written or sent.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreachableObjectServiceSkipsTheEvent(): void {
+		$this->seedInvoice(deliveryStatus: 'sent');
+		$logger = $this->recordingLogger();
+		$this->listenerLogger = $logger;
+
+		$this->listener(objectService: $this->failing(['setRegister']))->handle(
+			$this->deliveryStatus(data: ['objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID, 'status' => 'rejected'])
+		);
+
+		self::assertSame('sent', $this->invoice()['deliveryStatus']);
+		self::assertSame([], $this->notifications);
+		self::assertContains(['info', 'PeppolDeliveryStatusListener: OR query unavailable — skipping'], $logger->records);
+
+	}//end testAnUnreachableObjectServiceSkipsTheEvent()
+
+	/**
+	 * A failing save is logged; a failing role lookup sends no notification;
+	 * a failing notification is logged and does not stop the listener.
+	 *
+	 * @return void
+	 */
+	public function testWriteLookupAndNotifyFailuresAreLogged(): void {
+		$this->seedInvoice(deliveryStatus: 'queued');
+		$this->seedMemberships(rows: [['id' => 'm-1', 'administrationId' => 'adm-1', 'role' => 'debiteurenadmin', 'userId' => 'controller-1']]);
+		$logger = $this->recordingLogger();
+		$this->listenerLogger = $logger;
+		$rejected = ['objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID, 'status' => 'rejected', 'detail' => 'No AP'];
+
+		$this->listener(objectService: $this->failing(['saveObject', 'findAll']))->handle($this->deliveryStatus(data: $rejected));
+
+		self::assertSame('queued', $this->invoice()['deliveryStatus']);
+		self::assertSame([], $this->notifications);
+		self::assertContains(['error', 'PeppolDeliveryStatusListener: failed to persist ARInvoice delivery-status update'], $logger->records);
+
+		$this->notifyFails = true;
+		$this->listener()->handle($this->deliveryStatus(data: $rejected));
+
+		self::assertSame('rejected', $this->invoice()['deliveryStatus']);
+		self::assertSame([], $this->notifications);
+		self::assertContains(['warning', 'PeppolDeliveryStatusListener: failed to dispatch rejected-e-invoice notification'], $logger->records);
+
+	}//end testWriteLookupAndNotifyFailuresAreLogged()
+
+	/**
+	 * An event whose object cannot be read is logged and swallowed (fail-soft).
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableEventIsSwallowed(): void {
+		$logger = $this->recordingLogger();
+		$this->listenerLogger = $logger;
+		$event = $this->createStub(ObjectCreatedEvent::class);
+		$event->method('getObject')->willThrowException(new \RuntimeException('gone'));
+
+		$this->listener()->handle($event);
+
+		self::assertSame(
+			[['warning', 'PeppolDeliveryStatusListener: failed to apply delivery-status event — fail-soft']],
+			$logger->records
+		);
+		self::assertSame([], $this->notifications);
+
+	}//end testAnUnreadableEventIsSwallowed()
 }//end class

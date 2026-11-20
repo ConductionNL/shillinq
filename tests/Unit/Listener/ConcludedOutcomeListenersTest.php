@@ -121,7 +121,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
 use OCA\Shillinq\Listener\SigningConcludedListener;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCP\EventDispatcher\Event;
@@ -240,10 +240,10 @@ final class ConcludedOutcomeListenersTest extends TestCase {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService The settings mock.
+	 * @return RegisterLocation The register-location mock.
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('books');
 
 		return $settings;

@@ -31,7 +31,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\Shillinq\Kernel\Contracts\BankfeedIntakeServiceInterface;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 
@@ -40,7 +42,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
-class BankfeedIntakeService {
+class BankfeedIntakeService implements BankfeedIntakeServiceInterface {
 	/**
 	 * integriq's register.
 	 *
@@ -61,14 +63,14 @@ class BankfeedIntakeService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param StatementIntakeService $intake        Writes the statement and lines.
 	 * @param ExactMatchBooker       $booker        Books exact matches on arrival.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly StatementIntakeService $intake,
 		private readonly ExactMatchBooker $booker,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -106,6 +108,25 @@ class BankfeedIntakeService {
 			return ['result' => 'batch-not-found'] + $empty;
 		}
 
+		return $this->ingestBatch(data: $data, account: $account, iban: $iban, batch: $batch);
+
+	}//end ingestSynced()
+
+	/**
+	 * Ingest a found batch into the bank account's statement and book its exact matches.
+	 *
+	 * @param array<string,mixed> $data The CloudEvent `data`.
+	 * @param array<string,mixed> $account The shillinq BankAccount.
+	 * @param string $iban The normalised IBAN.
+	 * @param array<string,mixed> $batch The integriq transaction batch.
+	 *
+	 * @return array{result:string,statementId:string,lines:int,booked:int}
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
+	 */
+	private function ingestBatch(array $data, array $account, string $iban, array $batch): array {
+		$batchUri = trim((string)($data['batchUri'] ?? ''));
+		$empty = ['statementId' => '', 'lines' => 0, 'booked' => 0];
 		$lines = array_map(
 			static fn (array $row): array => self::normaliseTransaction(row: $row),
 			array_values(array_filter((array)($batch['transactions'] ?? []), 'is_array'))
@@ -127,21 +148,37 @@ class BankfeedIntakeService {
 			return ['result' => 'duplicate-batch'] + $empty;
 		}
 
+		$booked = $this->bookWrittenLines(written: $result['written']);
+
+		$this->scoped(schema: 'BankAccount')->patchObject(
+			new ObjectPatch(
+				objectId: (string)$account['id'],
+				data: ['lastSyncAt' => (string)($data['until'] ?? gmdate('Y-m-d\TH:i:s\Z'))]
+			)
+		);
+
+		return ['result' => 'written', 'statementId' => $result['statementId'], 'lines' => count($result['written']), 'booked' => $booked];
+	}//end ingestBatch()
+
+	/**
+	 * Book each written statement line that has an exact match.
+	 *
+	 * @param array<int,array<string,mixed>> $written The written statement lines.
+	 *
+	 * @return int The number of lines booked.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
+	 */
+	private function bookWrittenLines(array $written): int {
 		$booked = 0;
-		foreach ($result['written'] as $line) {
+		foreach ($written as $line) {
 			if ($this->booker->book(line: $line) !== null) {
 				$booked++;
 			}
 		}
 
-		$this->scoped(schema: 'BankAccount')->patchObject(
-			(string)$account['id'],
-			['lastSyncAt' => (string)($data['until'] ?? gmdate('Y-m-d\TH:i:s\Z'))]
-		);
-
-		return ['result' => 'written', 'statementId' => $result['statementId'], 'lines' => count($result['written']), 'booked' => $booked];
-
-	}//end ingestSynced()
+		return $booked;
+	}//end bookWrittenLines()
 
 	/**
 	 * One aggregator row as a normalised statement line.
@@ -215,7 +252,7 @@ class BankfeedIntakeService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

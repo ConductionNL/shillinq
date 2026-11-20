@@ -10,7 +10,7 @@
 ## 2. Leaf
 
 - [x] 2.1 `FinancialDocumentLeafProvider` + finder: the five kinds in one row shape, administration check before the read (REQ-FDO-002). Verify: PHPUnit, a caller outside the administration gets no amounts.
-- [ ] 2.2 Acts through the leaf `create` and `createAsApp` with the new actions (REQ-FDO-003, REQ-FDO-005). Verify: PHPUnit refusals per action; route-auth and IDOR gates.
+- [x] 2.2 Acts through the leaf `create` and `createAsApp` with the new actions (REQ-FDO-003, REQ-FDO-005). Verify: PHPUnit refusals per action; route-auth and IDOR gates.
 
 ## 3. Panel and payment
 
@@ -24,4 +24,4 @@
 
 ## 4. End to end
 
-- [ ] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally.
+- [ ] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally. Strings pass `test:l10n` and parity; the spec is written (catalogue, issue-then-read scoped to the object, six routes registered, anonymous refused) and not yet run against an instance.

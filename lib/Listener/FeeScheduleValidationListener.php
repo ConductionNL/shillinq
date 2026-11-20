@@ -38,8 +38,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\FeeScheduleService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Service\RevenueTaskFieldLookup;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -63,14 +64,16 @@ class FeeScheduleValidationListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param FeeScheduleService $feeSchedules The rules, called rather than copied.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema to its slug.
+	 * @param FeeScheduleServiceInterface $feeSchedules The rules, called rather than copied.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema to its slug.
 	 * @param LoggerInterface $logger Logger for refusals.
+	 * @param RevenueTaskFieldLookup $taskFields Reads the revenue account's task field (REQ-SOPR-011).
 	 */
 	public function __construct(
-		private readonly FeeScheduleService $feeSchedules,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly FeeScheduleServiceInterface $feeSchedules,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
+		private readonly RevenueTaskFieldLookup $taskFields,
 	) {
 	}//end __construct()
 
@@ -83,6 +86,7 @@ class FeeScheduleValidationListener implements IEventListener {
 	 * @return void
 	 *
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
+	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md#req-sopr-011
 	 */
 	public function handle(Event $event): void {
 		$write = new PreSaveWrite();
@@ -91,7 +95,18 @@ class FeeScheduleValidationListener implements IEventListener {
 			return;
 		}
 
-		$reason = $this->ruleViolation(schedule: $write->payload(entity: $entity));
+		$schedule = $write->payload(entity: $entity);
+
+		// Q-shillinq-2: carry the revenue account's task field on the
+		// schedule so the fee schedule page can show it as a column.
+		$schedule['revenueTaskField'] = $this->taskFields->forAccount(
+			accountNumber: (string)($schedule['revenueAccount'] ?? '')
+		);
+		if (method_exists($entity, 'setObject') === true) {
+			$entity->setObject($schedule);
+		}
+
+		$reason = $this->ruleViolation(schedule: $schedule);
 		if ($reason === null) {
 			return;
 		}

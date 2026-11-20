@@ -36,9 +36,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -63,16 +66,16 @@ class BackfillPaymentRequestCustomer implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The register slug.
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param PaymentRequestPortalScope $portalScope The stamping rule the writers share.
+	 * @param PaymentRequestPortalScopeInterface $portalScope The stamping rule the writers share.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
+		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
 	) {
 	}//end __construct()
 
@@ -116,11 +119,12 @@ class BackfillPaymentRequestCustomer implements IRepairStep {
 
 				$this->objectService->saveObject(
 					object: $this->portalScope->stamp(request: $this->withoutMetadata(row: $request)),
-					register: $registerSlug,
-					schema: self::SCHEMA,
-					uuid: $uuid,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: self::SCHEMA),
+						uuid: $uuid
+					),
 					_rbac: false,
-					_multitenancy: false,
+					_multitenancy: false
 				);
 				$stamped++;
 			}

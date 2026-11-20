@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\SupplierInvoiceBookingGuard;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -53,7 +53,7 @@ class SupplierInvoiceBookingGuardTest extends TestCase {
 	 * @return SupplierInvoiceBookingGuard
 	 */
 	private function guardOver(array $records): SupplierInvoiceBookingGuard {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new SupplierInvoiceBookingGuard(new SupplierInvoiceChecks(new InMemoryObjectServiceStub($records), $settings));

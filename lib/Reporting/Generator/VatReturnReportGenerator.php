@@ -35,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -172,6 +172,12 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 		$writer->writeAttribute('period', $this->contextString($context, 'period'));
 		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
 		$writer->writeAttribute('aangifte', (string)($vatReturn['returnNumber'] ?? ''));
+		// REQ-TVRB-003: a VAT fiscal unity's return is filed under the unity's number.
+		$vatNumber = trim((string)($vatReturn['vatNumber'] ?? ''));
+		if ($vatNumber !== '') {
+			$writer->writeAttribute('btwNummer', $vatNumber);
+		}
+
 		$writer->writeAttribute('status', (string)($vatReturn['statusCode'] ?? ''));
 		$writer->writeAttribute('valuta', 'EUR');
 		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));

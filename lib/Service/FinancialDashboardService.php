@@ -39,7 +39,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FinancialDashboardServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,7 +50,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
-class FinancialDashboardService {
+class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	/**
 	 * Trailing months used when no explicit from/to range is given
 	 * (mirrors the client widgets' FALLBACK_MONTHS).
@@ -607,11 +608,6 @@ class FinancialDashboardService {
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 }//end class

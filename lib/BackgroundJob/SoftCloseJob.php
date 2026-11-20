@@ -28,9 +28,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\SoftCloseExecutor;
+use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
+use OCA\Shillinq\Service\SoftCloseSwingCheck;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -59,17 +60,19 @@ class SoftCloseJob extends TimedJob {
 	 * Construct the cron job.
 	 *
 	 * @param ITimeFactory $time NC clock.
-	 * @param SoftCloseExecutor $executor Soft-close orchestration service.
+	 * @param SoftCloseExecutorInterface $executor Soft-close orchestration service.
 	 * @param ContainerInterface $container DI container for ObjectService lookup.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger.
+	 * @param SoftCloseSwingCheck $swingCheck The swing check run after a completed soft close (REQ-CLS-011).
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SoftCloseExecutor $executor,
+		private readonly SoftCloseExecutorInterface $executor,
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly SoftCloseSwingCheck $swingCheck,
 	) {
 		parent::__construct(time: $time);
 		$this->setInterval(seconds: self::INTERVAL_SECONDS);
@@ -135,8 +138,36 @@ class SoftCloseJob extends TimedJob {
 			);
 		} catch (Throwable $e) {
 			$this->logger->error('SoftCloseJob: soft-close run failed', $scope + ['exception' => $e->getMessage()]);
+			return;
+		}
+
+		if (($report['status'] ?? '') === 'completed') {
+			$this->checkSwings(administrationId: $administrationId, periodId: $periodId);
 		}
 	}//end closeOne()
+
+	/**
+	 * Run the swing check for a soft-closed period; a failure is logged and does not stop the run.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $periodId         The yyyy-mm period.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
+	 */
+	private function checkSwings(string $administrationId, string $periodId): void {
+		$scope = ['administrationId' => $administrationId, 'periodId' => $periodId];
+		try {
+			$summary = $this->swingCheck->run(administrationId: $administrationId, periodId: $periodId, asOf: new DateTimeImmutable());
+			$this->logger->info(
+				'SoftCloseJob: swing check completed',
+				$scope + ['materialCount' => ($summary['materialCount'] ?? 0)]
+			);
+		} catch (Throwable $e) {
+			$this->logger->error('SoftCloseJob: swing check failed', $scope + ['exception' => $e->getMessage()]);
+		}
+	}//end checkSwings()
 
 	/**
 	 * Find every active Administration via OpenRegister.
@@ -177,11 +208,6 @@ class SoftCloseJob extends TimedJob {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

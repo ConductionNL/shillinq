@@ -32,7 +32,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\ObjectRequestSettledListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ObjectRequestReceiptMailer;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IL10N;
 use OCP\L10N\IFactory;
@@ -42,6 +42,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * One receipt mail per settled object request, on every settlement path.
@@ -103,7 +104,11 @@ class ObjectRequestSettledListenerTest extends TestCase {
 		);
 		$this->objectService = $this->createMock(ObjectServiceInterface::class);
 		$this->objectService->method('patchObject')->willReturnCallback(
-			function (string $objectId, array $data, $register = null, $schema = null): ObjectEntity {
+			function (ObjectPatch $patch): ObjectEntity {
+				$objectId = $patch->objectId;
+				$data = $patch->data;
+				$register = $patch->target->register;
+				$schema = $patch->target->schema;
 				$this->patches[] = ['id' => $objectId, 'data' => $data, 'register' => $register, 'schema' => $schema];
 				return new ObjectEntity();
 			}
@@ -129,7 +134,7 @@ class ObjectRequestSettledListenerTest extends TestCase {
 
 		$resolver = $this->createStub(ListenerSchemaResolver::class);
 		$resolver->method('schemaSlug')->willReturnCallback(static fn (?object $entity): string => (string)$entity?->getSchema());
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new ObjectRequestSettledListener(
@@ -329,9 +334,9 @@ class ObjectRequestSettledListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListener(): void {
 		$root = __DIR__ . '/../../..';
-		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php');
-		$reporting = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ObjectRequestSettlementRegistration.php');
+		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php') . (string)file_get_contents($root . '/lib/Listener/Registration/ListenerRegistrar.php');
+		$reporting = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ObjectRequestSettlementRegistration.php');
 
 		self::assertStringContainsString('(new ReportingRegistration())->register(context: $context);', $application);
 		self::assertStringContainsString('(new ObjectRequestSettlementRegistration())->register(context: $context);', $reporting);

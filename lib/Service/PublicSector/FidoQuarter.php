@@ -34,7 +34,10 @@ namespace OCA\Shillinq\Service\PublicSector;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\FidoQuarterInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 
 /**
@@ -42,7 +45,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
  */
-class FidoQuarter {
+class FidoQuarter implements FidoQuarterInterface {
 
 	/**
 	 * Loan states that count as outstanding debt.
@@ -479,7 +482,10 @@ class FidoQuarter {
 			$uuid = null;
 		}
 
-		$this->objectService->saveObject(object: $object, register: $this->register(), schema: $schema, uuid: $uuid);
+		$this->objectService->saveObject(
+			object: $object,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: $schema), uuid: $uuid)
+		);
 
 	}//end save()
 
@@ -513,12 +519,7 @@ class FidoQuarter {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 
 	}//end register()
 }//end class

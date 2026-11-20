@@ -28,7 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\StatementManifestServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -37,7 +38,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  */
-class StatementManifestService {
+class StatementManifestService implements StatementManifestServiceInterface {
 
 	/**
 	 * Statement-manifest files shipped under lib/Settings/statements/.

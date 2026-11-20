@@ -36,11 +36,14 @@ use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * REQ-BMM-003.
@@ -96,13 +99,13 @@ final class InvoiceSettlementServiceTest extends TestCase {
 		$container->method('has')->willReturnCallback(static fn (string $id): bool => $id === ObjectTransitionRunner::ENGINE_CLASS);
 		$container->method('get')->willReturnCallback(static fn (string $id): object => $engine);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new InvoiceSettlementService(
 			objectService: $this->store,
 			transitions: new ObjectTransitionRunner(container: $container),
-			settings: $settings,
+			registerLocation: $settings,
 			logger: ($logger ?? $this->createMock(LoggerInterface::class)),
 		);
 
@@ -118,7 +121,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 	 * @return string
 	 */
 	private function stateOf(string $schema, string $id, string $field): string {
-		return (string)$this->store->find($id, schema: $schema)->getObject()[$field];
+		return (string)$this->store->find($id, new ObjectFindOptions(schema: $schema))->getObject()[$field];
 
 	}//end stateOf()
 
@@ -177,12 +180,12 @@ final class InvoiceSettlementServiceTest extends TestCase {
 				$seen[] = InvoiceSettlementService::isSettling(invoiceId: $objectId);
 			}
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$service = new InvoiceSettlementService(
 			objectService: $this->store,
 			transitions: $runner,
-			settings: $settings,
+			registerLocation: $settings,
 			logger: $this->createMock(LoggerInterface::class),
 		);
 
@@ -326,6 +329,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 			 * @return object
 			 */
 			public function find(mixed $id, mixed ...$rest): object {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				$slug = ['812' => 'ReconciliationMatch', '900' => 'SupplierInvoice', '7' => 'shillinq'][(string)$id] ?? '';
 				return new class($slug) {
 					/**
@@ -357,7 +361,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 
 		return new ListenerSchemaResolver(
 			container: $container,
-			settingsService: $settings,
+			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			contract: $contract,
 			logger: $this->createMock(LoggerInterface::class),
 		);

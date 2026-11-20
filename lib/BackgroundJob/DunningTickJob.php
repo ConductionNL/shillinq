@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Service\Dunning\DunningTickRunner;
+use OCA\Shillinq\Kernel\Contracts\DunningTickRunnerInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -53,12 +53,12 @@ class DunningTickJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory      $time   Time factory for the TimedJob base and the run's date.
-	 * @param DunningTickRunner $runner The daily pass.
+	 * @param DunningTickRunnerInterface $runner The daily pass.
 	 * @param LoggerInterface   $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly DunningTickRunner $runner,
+		private readonly DunningTickRunnerInterface $runner,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

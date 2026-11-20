@@ -44,11 +44,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -70,6 +70,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class ConfirmationApiController extends Controller {
 
@@ -111,17 +112,17 @@ class ConfirmationApiController extends Controller {
 	 * @param IRequest $request Inbound request object.
 	 * @param ContainerInterface $container DI container for lazy
 	 *                                      OR resolution.
-	 * @param SettingsService $settings Shillinq settings
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 *                                  (register slug, OR
 	 *                                  availability).
-	 * @param AdministrationContextService $context Per-administration
+	 * @param AdministrationContextServiceInterface $context Per-administration
 	 *                                              IDOR guard (ADR-005).
-	 * @param ConfirmationTokenService $tokens Token lifecycle +
+	 * @param ConfirmationTokenServiceInterface $tokens Token lifecycle +
 	 *                                         email dispatcher.
 	 * @param ITimeFactory $time Server clock.
 	 * @param IThrottler $throttler Brute-force throttler for
 	 *                              failed token attempts.
-	 * @param ObjectTransitionRunner $transitions Runs the declared
+	 * @param ObjectTransitionRunnerInterface $transitions Runs the declared
 	 *                                            confirm transition.
 	 * @param LoggerInterface $logger Logger for fail-closed
 	 *                                diagnostics.
@@ -129,12 +130,12 @@ class ConfirmationApiController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
-		private readonly AdministrationContextService $context,
-		private readonly ConfirmationTokenService $tokens,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly ConfirmationTokenServiceInterface $tokens,
 		private readonly ITimeFactory $time,
 		private readonly IThrottler $throttler,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -191,7 +192,7 @@ class ConfirmationApiController extends Controller {
 	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
 	 */
 	private function confirmValidated(TokenConfirmation $confirmation): JSONResponse {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->errorResponse(error: 'OpenRegister unavailable', status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
@@ -362,7 +363,7 @@ class ConfirmationApiController extends Controller {
 			return $this->errorResponse(error: 'appointmentId is required', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->errorResponse(error: 'OpenRegister unavailable', status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
@@ -503,7 +504,7 @@ class ConfirmationApiController extends Controller {
 			return $this->lookupAnswer(reason: 'invalid_input', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->lookupAnswer(reason: 'or_unavailable', status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
@@ -608,7 +609,7 @@ class ConfirmationApiController extends Controller {
 	private function appointmentRecords(string $appointmentId): iterable {
 		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 		return $objectService
-			->setRegister($this->settings->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema('Appointment')
 			->findAll(
 				config: [

@@ -1,0 +1,76 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "sales-invoice-sending",
+		"description": "Invoice batches (REQ-SIS-003, REQ-SIS-004): the list of create and send batches with their outcome per customer or invoice, reached from Sales invoices and from the menu. New invoice batch bills one set of lines to every selected customer."
+	},
+	"menu": [
+		{
+			"id": "InvoiceBatches",
+			"label": "Invoice batches",
+			"icon": "EmailFastOutline",
+			"route": "InvoiceBatches",
+			"order": 47
+		}
+	],
+	"pages": [
+		{
+			"id": "InvoiceBatches",
+			"route": "/bookkeeping/invoice-batches",
+			"type": "index",
+			"title": "Invoice batches",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvoiceBatch",
+				"columns": [
+					{ "key": "batchId", "label": "Batch", "sortable": true },
+					{ "key": "kind", "label": "Kind", "sortable": true },
+					{ "key": "state", "label": "State", "sortable": true },
+					{ "key": "requestedBy", "label": "Requested by", "sortable": true }
+				],
+				"defaultSort": "batchId",
+				"detailRoute": "InvoiceBatchDetail",
+				"showAdd": false,
+				"description": "One invoice per customer from one set of lines, or a send of selected invoices; each batch lists how every invoice went.",
+				"headerActions": [
+					{
+						"id": "new-invoice-batch",
+						"label": "New invoice batch",
+						"icon": "FileDocumentMultipleOutline",
+						"handler": "openInvoiceBatchCreate",
+						"description": "Bill the same lines to several customers at once, each due by their own payment term."
+					}
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/guides/send-invoices"
+			}
+		},
+		{
+			"id": "InvoiceBatchDetail",
+			"route": "/bookkeeping/invoice-batches/:id",
+			"type": "detail",
+			"title": "Invoice batch",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvoiceBatch",
+				"indexRoute": "InvoiceBatches",
+				"auditTrail": true,
+				"fields": [
+					{ "key": "batchId", "label": "Batch", "type": "string" },
+					{ "key": "kind", "label": "Kind", "type": "string" },
+					{ "key": "state", "label": "State", "type": "string" },
+					{ "key": "requestedBy", "label": "Requested by", "type": "string" },
+					{ "key": "issue", "label": "Issue", "type": "boolean" },
+					{ "key": "send", "label": "Send", "type": "boolean" },
+					{ "key": "resend", "label": "Resend", "type": "boolean" },
+					{ "key": "sendBatchId", "label": "Send batch", "type": "string" },
+					{ "key": "charge", "label": "Charge", "type": "json" },
+					{ "key": "customerIds", "label": "Customers", "type": "array" },
+					{ "key": "invoiceIds", "label": "Invoices", "type": "array" },
+					{ "key": "outcomes", "label": "Outcomes", "type": "json" }
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/guides/send-invoices"
+			}
+		}
+	]
+}

@@ -47,8 +47,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningLetterComposer;
 use OCA\Shillinq\Service\Dunning\DunningStageChoice;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
@@ -57,12 +59,12 @@ use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates DunningRun execution, pause/resume, write-off, and
@@ -81,7 +83,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * ladder/pause/channel-dispatch surface; early-return refactor and
  * variable renames deferred pending a dedicated pass.
  */
-class DunningRunService {
+class DunningRunService implements DunningRunServiceInterface {
 	/**
 	 * App-config key for the dispute pause hard deadline (days).
 	 */
@@ -1372,11 +1374,6 @@ class DunningRunService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

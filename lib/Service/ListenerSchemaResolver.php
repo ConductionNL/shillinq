@@ -55,6 +55,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -65,7 +66,7 @@ use Throwable;
  *
  * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
-class ListenerSchemaResolver {
+class ListenerSchemaResolver implements ListenerSchemaResolverInterface {
 
 	/**
 	 * FQCN of OpenRegister's schema mapper.
@@ -87,7 +88,7 @@ class ListenerSchemaResolver {
 	 * @param ContainerInterface $container DI container — OpenRegister mappers
 	 *                                      are resolved lazily so shillinq boots
 	 *                                      without it.
-	 * @param SettingsService $settingsService Supplies shillinq's configured register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ListenerSlugContract $contract Default-off gate for the corrected matching.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 *
@@ -95,7 +96,7 @@ class ListenerSchemaResolver {
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ListenerSlugContract $contract,
 		private readonly LoggerInterface $logger,
 	) {
@@ -298,7 +299,7 @@ class ListenerSchemaResolver {
 			return false;
 		}
 
-		$expected = $this->settingsService->getRegisterSlug();
+		$expected = $this->registerLocation->getRegisterSlug();
 
 		// Tolerate an entity that already carries a slug (a hand-built entity in
 		// a test, or a future OpenRegister that stops stamping ids).

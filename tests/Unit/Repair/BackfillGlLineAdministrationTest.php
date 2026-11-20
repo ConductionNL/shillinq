@@ -43,12 +43,13 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillGlLineAdministration;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests the gate contract of BackfillGlLineAdministration.
@@ -305,12 +306,13 @@ final class BackfillGlLineAdministrationTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register = '',
-				string $schema = '',
-				?string $uuid = null,
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_multitenancy = true,
+				bool $_multitenancy = true
 			): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
+				$uuid = $options->uuid;
 				$slug = ($schema !== '' ? $schema : $this->schema);
 				$objectId = ($uuid ?? (string)($object['id'] ?? ''));
 
@@ -346,7 +348,7 @@ final class BackfillGlLineAdministrationTest extends TestCase {
 
 		$store = $this->store;
 
-		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService = $this->createMock(RegisterLocation::class);
 		$settingsService->method('getRegisterSlug')->willReturn('shillinq');
 
 		$appConfig = $this->createMock(IAppConfig::class);
@@ -384,7 +386,7 @@ final class BackfillGlLineAdministrationTest extends TestCase {
 		$this->output = $output;
 
 		return new BackfillGlLineAdministration(
-			settingsService: $settingsService,
+			registerLocation: $settingsService,
 			migrator: new GlLineAdministrationBackfillMigrator(),
 			appConfig: $appConfig,
 			logger: $this->createMock(\Psr\Log\LoggerInterface::class),

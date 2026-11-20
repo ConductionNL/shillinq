@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PublicSector;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\InterestAllocationAction;
 use OCA\Shillinq\Lifecycle\Action\RealiseReserveMutationAction;
 use OCA\Shillinq\Service\KapitaallastenCalculator;
@@ -33,7 +34,7 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 use OCA\Shillinq\Service\PublicSector\PublicSectorRecords;
 use OCA\Shillinq\Service\PublicSector\ReserveBalances;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -90,7 +91,14 @@ trait PublicSectorFixture {
 					}
 
 					if ($executor !== null) {
-						$object = $executor->execute($object, [], ($step['actionParameters'] ?? []), $step['action']);
+						$object = $executor->execute(
+							new LifecycleActionContext(
+								objectData: $object,
+								previousData: [],
+								parameters: ($step['actionParameters'] ?? []),
+								actionName: $step['action']
+							)
+						);
 						$store->setSchema($record['schema'])->saveObject($object);
 					}
 				}
@@ -100,7 +108,7 @@ trait PublicSectorFixture {
 	}//end seed()
 
 	private function records(): PublicSectorRecords {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return new PublicSectorRecords($this->store, $this->runner(), $settings);
 

@@ -55,6 +55,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Portal;
 
+use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -68,11 +69,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
  */
-class PortalAssertionVerifier {
-	/**
-	 * The header portaliq attaches the assertion to (contract v2, A6).
-	 */
-	public const HEADER = 'X-Portal-Subject';
+class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 
 	/**
 	 * The only accepted JWS algorithm — exact-match kills `none` and any

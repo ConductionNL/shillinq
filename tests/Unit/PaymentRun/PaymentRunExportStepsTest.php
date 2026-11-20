@@ -22,11 +22,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
+use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunCsvGenerator;
 use OCA\Shillinq\PaymentRun\Generator\SepaPain001Generator;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -170,7 +171,7 @@ final class PaymentRunExportStepsTest extends TestCase {
 				$this->warnings[] = $message;
 			}
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new PaymentRunExportService(
@@ -203,7 +204,7 @@ final class PaymentRunExportStepsTest extends TestCase {
 	 * @return array<string, mixed> The run.
 	 */
 	private static function approvedRun(): array {
-		return [
+		$run = [
 			'id' => 'pr-1',
 			'runNumber' => 'PR-1',
 			'administrationId' => 'adm-1',
@@ -215,6 +216,9 @@ final class PaymentRunExportStepsTest extends TestCase {
 				['payeeName' => 'Eneco', 'creditorIban' => 'NL00BANK0123456789', 'amount' => 10.5, 'remittanceInfo' => 'INV-1', 'apTransactionRef' => 'a'],
 			],
 		];
+		$run['approvedLinesDigest'] = (new PaymentRunApprovalLock())->digest(run: $run);
+
+		return $run;
 
 	}//end approvedRun()
 
@@ -300,6 +304,7 @@ final class PaymentRunExportStepsTest extends TestCase {
 		self::assertSame(['error' => 'not-approved', 'state' => 'draft'], $this->service(withGenerators: false)->export($run));
 
 		$run['status'] = 'approved';
+		$run['approvedLinesDigest'] = (new PaymentRunApprovalLock())->digest(run: $run);
 		$result = $this->service(withGenerators: false)->export($run);
 		self::assertSame('missing-creditor-iban', $result['error']);
 

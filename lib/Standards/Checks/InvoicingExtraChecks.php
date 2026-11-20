@@ -875,7 +875,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function en16931BrO11(array $o): bool {
-		return (self::breakdownHasCategory($o, 'O') === false
+		return (InvoiceParts::breakdownHasCategory($o, 'O') === false
 			|| self::breakdownOnlyCategory($o, 'O'));
 
 	}//end en16931BrO11()
@@ -888,7 +888,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function en16931BrO12(array $o): bool {
-		return (self::breakdownHasCategory($o, 'O') === false
+		return (InvoiceParts::breakdownHasCategory($o, 'O') === false
 			|| self::allLinesAreCategory($o, 'O'));
 
 	}//end en16931BrO12()
@@ -901,7 +901,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function en16931BrO13(array $o): bool {
-		return (self::breakdownHasCategory($o, 'O') === false
+		return (InvoiceParts::breakdownHasCategory($o, 'O') === false
 			|| self::allCollectionItemsCategory($o, 'allowances', 'O'));
 
 	}//end en16931BrO13()
@@ -914,7 +914,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function en16931BrO14(array $o): bool {
-		return (self::breakdownHasCategory($o, 'O') === false
+		return (InvoiceParts::breakdownHasCategory($o, 'O') === false
 			|| self::allCollectionItemsCategory($o, 'charges', 'O'));
 
 	}//end en16931BrO14()
@@ -927,7 +927,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function en16931BrIc11(array $o): bool {
-		return (self::breakdownHasCategory($o, 'K') === false
+		return (InvoiceParts::breakdownHasCategory($o, 'K') === false
 			|| self::present($o, 'actualDeliveryDate') || self::present($o, 'invoicingPeriodStart')
 			|| self::present($o, 'invoicingPeriodEnd'));
 
@@ -941,7 +941,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function en16931BrIc12(array $o): bool {
-		return (self::breakdownHasCategory($o, 'K') === false
+		return (InvoiceParts::breakdownHasCategory($o, 'K') === false
 			|| self::present($o, 'deliverToCountryCode'));
 
 	}//end en16931BrIc12()
@@ -1059,55 +1059,6 @@ final class InvoicingExtraChecks implements CheckProvider {
 	}//end centsEqual()
 
 	/**
-	 * The invoice lines (BG-25) normalised to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The ARInvoice.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function lines(array $o): array {
-		$lines = ($o['invoiceLines'] ?? []);
-		if (is_array($lines) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($lines, 'is_array'));
-	}//end lines()
-
-	/**
-	 * The VAT breakdown groups (BG-23) normalised to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The ARInvoice.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function vatBreakdown(array $o): array {
-		$vb = ($o['vatBreakdown'] ?? []);
-		if (is_array($vb) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($vb, 'is_array'));
-	}//end vatBreakdown()
-
-	/**
-	 * A named array-of-objects property normalised to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The host object.
-	 * @param string $key The property.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function items(array $o, string $key): array {
-		$items = ($o[$key] ?? []);
-		if (is_array($items) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($items, 'is_array'));
-	}//end items()
-
-	/**
 	 * Every invoice line carries a non-empty value at $key (fail-closed on no lines).
 	 *
 	 * @param array<string, mixed> $o The ARInvoice.
@@ -1116,7 +1067,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allLinesPresent(array $o, string $key): bool {
-		$lines = self::lines($o);
+		$lines = InvoiceParts::lines($o);
 		if ($lines === []) {
 			return false;
 		}
@@ -1139,7 +1090,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allLinesNonNegative(array $o, string $key): bool {
-		foreach (self::lines($o) as $line) {
+		foreach (InvoiceParts::lines($o) as $line) {
 			$value = ($line[$key] ?? null);
 			if ($value === null || $value === '') {
 				continue;
@@ -1187,7 +1138,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function vatCategoriesValid(array $o): bool {
-		$lines = self::lines($o);
+		$lines = InvoiceParts::lines($o);
 		if ($lines === []) {
 			return false;
 		}
@@ -1198,7 +1149,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 			}
 		}
 
-		foreach (self::vatBreakdown($o) as $group) {
+		foreach (InvoiceParts::vatBreakdown($o) as $group) {
 			if (in_array((string)($group['category'] ?? ''), self::VAT_CATEGORY_CODES, true) === false) {
 				return false;
 			}
@@ -1238,7 +1189,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allLinePeriodsOrdered(array $o): bool {
-		foreach (self::lines($o) as $line) {
+		foreach (InvoiceParts::lines($o) as $line) {
 			if (self::periodOrdered(
 				(string)($line['periodStart'] ?? ''),
 				(string)($line['periodEnd'] ?? '')
@@ -1262,7 +1213,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allItemsPresent(array $o, string $key, string $field): bool {
-		foreach (self::items($o, $key) as $item) {
+		foreach (InvoiceParts::items($o, $key) as $item) {
 			if (trim((string)($item[$field] ?? '')) === '') {
 				return false;
 			}
@@ -1280,7 +1231,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allItemsHaveReason(array $o, string $key): bool {
-		foreach (self::items($o, $key) as $item) {
+		foreach (InvoiceParts::items($o, $key) as $item) {
 			$hasReason = (trim((string)($item['reasonText'] ?? '')) !== ''
 				|| trim((string)($item['reasonCode'] ?? '')) !== '');
 			if ($hasReason === false) {
@@ -1300,8 +1251,8 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allLineItemsHaveReason(array $o, string $key): bool {
-		foreach (self::lines($o) as $line) {
-			foreach (self::items($line, $key) as $item) {
+		foreach (InvoiceParts::lines($o) as $line) {
+			foreach (InvoiceParts::items($line, $key) as $item) {
 				$hasReason = (trim((string)($item['reasonText'] ?? '')) !== ''
 					|| trim((string)($item['reasonCode'] ?? '')) !== '');
 				if ($hasReason === false) {
@@ -1322,8 +1273,8 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allLineItemAttributesNamed(array $o): bool {
-		foreach (self::lines($o) as $line) {
-			foreach (self::items($line, 'itemAttributes') as $attribute) {
+		foreach (InvoiceParts::lines($o) as $line) {
+			foreach (InvoiceParts::items($line, 'itemAttributes') as $attribute) {
 				$hasName = trim((string)($attribute['name'] ?? '')) !== '';
 				$hasValue = trim((string)($attribute['value'] ?? '')) !== '';
 				if ($hasName === false || $hasValue === false) {
@@ -1420,24 +1371,6 @@ final class InvoicingExtraChecks implements CheckProvider {
 	}//end hasPayee()
 
 	/**
-	 * True when at least one VAT breakdown group carries the given category code.
-	 *
-	 * @param array<string, mixed> $o The ARInvoice.
-	 * @param string $cat The UNTDID 5305 category code.
-	 *
-	 * @return bool
-	 */
-	private static function breakdownHasCategory(array $o, string $cat): bool {
-		foreach (self::vatBreakdown($o) as $group) {
-			if ((string)($group['category'] ?? '') === $cat) {
-				return true;
-			}
-		}
-
-		return false;
-	}//end breakdownHasCategory()
-
-	/**
 	 * Every VAT breakdown group carries exactly the given category code (used for
 	 * the 'Not subject to VAT' exclusivity rule, EN 16931 BR-O-11).
 	 *
@@ -1447,7 +1380,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function breakdownOnlyCategory(array $o, string $cat): bool {
-		foreach (self::vatBreakdown($o) as $group) {
+		foreach (InvoiceParts::vatBreakdown($o) as $group) {
 			if ((string)($group['category'] ?? '') !== $cat) {
 				return false;
 			}
@@ -1469,7 +1402,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 */
 	private static function breakdownCoversCategory(array $o, string $cat): bool {
 		$used = false;
-		foreach (self::lines($o) as $line) {
+		foreach (InvoiceParts::lines($o) as $line) {
 			if ((string)($line['vatCategory'] ?? '') === $cat) {
 				$used = true;
 				break;
@@ -1478,7 +1411,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 
 		if ($used === false) {
 			foreach (['allowances', 'charges'] as $key) {
-				foreach (self::items($o, $key) as $item) {
+				foreach (InvoiceParts::items($o, $key) as $item) {
 					if ((string)($item['vatCategory'] ?? '') === $cat) {
 						$used = true;
 						break 2;
@@ -1491,7 +1424,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 			return true;
 		}
 
-		return self::breakdownHasCategory($o, $cat);
+		return InvoiceParts::breakdownHasCategory($o, $cat);
 	}//end breakdownCoversCategory()
 
 	/**
@@ -1503,7 +1436,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allLinesAreCategory(array $o, string $cat): bool {
-		foreach (self::lines($o) as $line) {
+		foreach (InvoiceParts::lines($o) as $line) {
 			if ((string)($line['vatCategory'] ?? '') !== $cat) {
 				return false;
 			}
@@ -1523,7 +1456,7 @@ final class InvoicingExtraChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function allCollectionItemsCategory(array $o, string $key, string $cat): bool {
-		foreach (self::items($o, $key) as $item) {
+		foreach (InvoiceParts::items($o, $key) as $item) {
 			if ((string)($item['vatCategory'] ?? '') !== $cat) {
 				return false;
 			}
