@@ -6136,7 +6136,16 @@ OC.L10N.register(
         "Prove that no posted transaction changed since posting, or see the first one that did.": "Prove that no posted transaction changed since posting, or see the first one that did.",
         "The ledger seal chain is intact over %1$d entries.": "The ledger seal chain is intact over %1$d entries.",
         "Transaction %1$s is the first entry that no longer matches its seal.": "Transaction %1$s is the first entry that no longer matches its seal.",
-        "Only a controller can check the ledger seal.": "Only a controller can check the ledger seal."
+        "Only a controller can check the ledger seal.": "Only a controller can check the ledger seal.",
+        "Stock valuation": "Stock valuation",
+        "Valuation date": "Valuation date",
+        "Show valuation": "Show valuation",
+        "Stock value": "Stock value",
+        "Choose a date": "Choose a date",
+        "Value per product and location": "Value per product and location",
+        "No stock on this date.": "No stock on this date.",
+        "Valuation Method": "Valuation Method",
+        "Total Value": "Total Value"
     },
     "nplurals=2; plural=(n != 1);"
 )

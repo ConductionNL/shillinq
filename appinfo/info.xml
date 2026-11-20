@@ -291,6 +291,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <!-- people-hours-budget (design Migration Plan). Sums the hours
                  booked before AssignmentHoursListener existed into
                  ProjectAssignment.loggedHours and the project totals; after
+            <step>OCA\Shillinq\Repair\SeedInvoiceNumberSequences</step>
                  InitializeSettings, which imports the fields. Idempotent. -->
             <step>OCA\Shillinq\Repair\BackfillAssignmentHours</step>
             <!-- tax-vat-number-check D3: a customer's VAT number lives in vatId only;
@@ -302,7 +303,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  the recurring profile or the quick draft's create audit entry
                  gives them. After InitializeSettings; never overwrites; idempotent. -->
             <step>OCA\Shillinq\Repair\BackfillArInvoiceProvenance</step>
-            <step>OCA\Shillinq\Repair\SeedInvoiceNumberSequences</step>
+            <!-- inventory-receipt-cost-layers D2 (REQ-IRCL-003). Replays the posted
+                 receipts and issues into the valuation snapshots, once, posting
+                 nothing, and logs each issue costed without its receipts'
+                 layers. After InitializeSettings; marked done in app config. -->
+            <step>OCA\Shillinq\Repair\BackfillReceiptCostLayers</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>

@@ -8283,7 +8283,14 @@ OC.L10N.register(
         "Prove that no posted transaction changed since posting, or see the first one that did.": "Toon aan dat geen geboekte transactie sinds het boeken is veranderd, of zie de eerste die dat wel is.",
         "The ledger seal chain is intact over %1$d entries.": "De zegelketen van het grootboek is intact over %1$d boekingen.",
         "Transaction %1$s is the first entry that no longer matches its seal.": "Transactie %1$s is de eerste boeking die niet meer bij haar zegel past.",
-        "Only a controller can check the ledger seal.": "Alleen een controller kan het grootboekzegel controleren."
+        "Only a controller can check the ledger seal.": "Alleen een controller kan het grootboekzegel controleren.",
+        "Stock valuation": "Voorraadwaardering",
+        "Valuation date": "Waarderingsdatum",
+        "Show valuation": "Waardering tonen",
+        "Stock value": "Voorraadwaarde",
+        "Choose a date": "Kies een datum",
+        "Value per product and location": "Waarde per product en locatie",
+        "No stock on this date.": "Geen voorraad op deze datum."
     },
     "nplurals=2; plural=(n != 1);"
 )
