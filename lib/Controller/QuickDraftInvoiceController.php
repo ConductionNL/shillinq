@@ -56,6 +56,7 @@ class QuickDraftInvoiceController extends Controller {
 		'reference',
 		'glAccount',
 		'lines',
+		'clientId',
 	];
 
 	/**

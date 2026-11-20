@@ -144,6 +144,10 @@
         {
             "appVersion": "0.5.7-unstable.20261117230000",
             "versionsSha256": "3e073e193417bcbed3cf7df1ec8c55be9f6781e2235e289742e0afff01b3b6a4"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120071700",
+            "versionsSha256": "6e23e16d5cf410c7b5b5000a1ba4f31101e5ccb183465d5df5dfd18ab9ae74ef"
         }
     ],
     "versions": {
@@ -152,7 +156,7 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.4.0",
-        "schema:ARInvoice": "0.18.0",
+        "schema:ARInvoice": "0.19.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
         "schema:Account": "0.4.0",
@@ -543,7 +547,7 @@
         "schema:RateRecord": "0.1.0",
         "schema:RateSchedule": "0.1.0",
         "schema:RealisedFxPosting": "0.2.0",
-        "schema:Receipt": "0.1.0",
+        "schema:Receipt": "0.2.0",
         "schema:Rechtmatigheidsbevinding": "0.1.0",
         "schema:Rechtmatigheidsparagraaf": "0.2.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
