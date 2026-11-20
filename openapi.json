@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Shillinq",
-        "version": "0.5.7-unstable.20261111150000",
+        "version": "0.5.8-unstable.20261119134858",
         "description": "The JSON API of Shillinq, the finance app for Nextcloud: administrations and their ledgers, invoices, payables and dunning, bank statements and reconciliation, budgets, VAT and other tax returns, assets, inventory and the settings behind them. The financial records themselves are stored in OpenRegister and read and written through its API; this document covers the endpoints Shillinq adds on top.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Errors are RFC 9457 problem details (`application/problem+json`), and every response carries an `API-Version` header. Paths that implement an external standard keep the formats of that standard and are not described here.",
         "contact": {
             "name": "Conduction B.V.",
@@ -526,6 +526,10 @@
         {
             "name": "project-billable-hours",
             "description": "A project's rated hours of one month (sales-billable-rate-per-hour)."
+        },
+        {
+            "name": "payment-revenue-accounts",
+            "description": "Which ledger account a paid payment request books against, per kind of request."
         }
     ],
     "paths": {
@@ -11889,6 +11893,113 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/settings/payment-revenue-accounts": {
+            "get": {
+                "operationId": "payment-revenue-accounts-index",
+                "summary": "GET the mapping, one key per request type, empty where unmapped",
+                "description": "GET the mapping from payment request type to the ledger account its receipt books against, one key per request type plus `clearing`, empty where unmapped. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "payment-revenue-accounts-update",
+                "summary": "PUT the submitted types' accounts; an empty value removes a mapping",
+                "description": "PUT the submitted types' accounts; an empty value removes a mapping, a type not submitted keeps its account. A value that is not an account number answers 400 and stores nothing. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "payment-revenue-accounts"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "leges": {
+                                        "description": "The account for leges."
+                                    },
+                                    "dwangsom": {
+                                        "description": "The account for dwangsom."
+                                    },
+                                    "deposit": {
+                                        "description": "The account for deposit."
+                                    },
+                                    "other": {
+                                        "description": "The account for other."
+                                    },
+                                    "contribution": {
+                                        "description": "The account for contribution."
+                                    },
+                                    "event-fee": {
+                                        "description": "The account for event-fee."
+                                    },
+                                    "clearing": {
+                                        "description": "The account for clearing."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "400": {
+                        "description": "A value is not an account number; nothing was stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
                     }
                 }
             }

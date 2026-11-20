@@ -49,6 +49,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'pipelinqSettings#index', 'url' => '/api/pipelinq/settings', 'verb' => 'GET'],
             ['name' => 'pipelinqSettings#create', 'url' => '/api/pipelinq/settings', 'verb' => 'POST'],
             ['name' => 'pipelinqSettings#test', 'url' => '/api/pipelinq/settings/test', 'verb' => 'POST'],
+        // Request type to revenue account mapping, admin only (case-payment-requests REQ-SOPR-002).
+            ['name' => 'paymentRevenueAccounts#index', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'GET'],
+            ['name' => 'paymentRevenueAccounts#update', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'PUT'],
         // First-time setup wizard (ADR-042).
             ['name' => 'setup#status',     'url' => '/api/setup/status',            'verb' => 'GET'],
             ['name' => 'setup#saveConfig', 'url' => '/api/setup/config',            'verb' => 'POST'],

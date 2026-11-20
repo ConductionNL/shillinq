@@ -84,6 +84,8 @@ use RuntimeException;
  * Pre-existing debt (issue #506): broad domain surface area; variable
  * renames deferred pending a dedicated pass.
  * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) The order lifecycle lives in one service; splitting it is its own change.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The order lifecycle reaches the register, the engine and the approval chain.
  */
 class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	/**
@@ -834,6 +836,8 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @return array<string,mixed> The order as it reads after the transition.
 	 *
 	 * @throws RuntimeException When no transition engine is wired or the engine refuses.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) A scheduled send runs as the system, a user's send as that user; one flag picks the runner.
 	 */
 	private function transitionToSent(array $purchaseOrder, bool $asSystem = false): array {
 		if ($this->transitionRunner === null) {
@@ -843,7 +847,9 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		$id = (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
 		if ($asSystem === true) {
 			$this->transitionRunner->runAsSystem(objectId: $id, action: 'send');
-		} else {
+		}
+
+		if ($asSystem === false) {
 			$this->transitionRunner->run(objectId: $id, action: 'send');
 		}
 

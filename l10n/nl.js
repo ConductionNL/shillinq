@@ -7318,6 +7318,14 @@ OC.L10N.register(
         "The XBRL file could not be downloaded.": "Het XBRL-bestand kon niet worden gedownload.",
         "Download the filing's XBRL instance, in any state.": "Download de XBRL-instantie van deze aangifte, in elke status.",
         "Parts": "Onderdelen",
+        "Base budget": "Basisbegroting",
+        "Scenario: {name}": "Scenario: {name}",
+        "Scenario not found.": "Scenario niet gevonden.",
+        "Scenario not found": "Scenario niet gevonden",
+        "scenarioId must be a valid identifier": "scenarioId moet een geldige identificatie zijn",
+        "Revenue Task Field": "Taakveld van de opbrengstrekening",
+        "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.": "Het BBV-taakveld van de opbrengstrekening, overgenomen van de rekening bij het opslaan van het tarief. Alleen-lezen: pas het aan op de rekening.",
+        "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.": "Het BBV-taakveld waarop deze rekening boekt, bijvoorbeeld 8.3. Gelezen door het IV3-rapport en getoond op de pagina met legestarieven.",
         "The invoice stays a draft until you save it. Discard removes it.": "De factuur blijft een concept tot je hem opslaat. Verwijderen haalt hem weg.",
         "Discard": "Verwijderen",
         "Keep as draft": "Als concept bewaren",
@@ -7733,7 +7741,16 @@ OC.L10N.register(
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Doorzoek de gebruikershandleiding van shillinq (helpartikelen). Gebruik dit voor hoe-doe-ik-vragen over shillinq; filter op pageIds met de pagina waarop de gebruiker staat om het artikel te kiezen dat die pagina uitlegt.",
         "Get one help article by id, with its markdown body and documentation link.": "Haal één helpartikel op via zijn id, met de markdowntekst en de documentatielink.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte.",
+        "Revenue accounts for payment requests": "Opbrengstrekeningen voor betaalverzoeken",
+        "The ledger account a paid request books against, per kind of request. A paid request whose kind has no account waits until one is set.": "De grootboekrekening waarop een betaald verzoek wordt geboekt, per soort verzoek. Een betaald verzoek van een soort zonder rekening wacht tot er een is ingesteld.",
+        "Fees (leges)": "Leges",
+        "Penalty payments (dwangsom)": "Dwangsommen",
+        "Contributions": "Bijdragen",
+        "Event fees": "Deelnamekosten evenementen",
+        "Other requests": "Overige verzoeken",
+        "Use an account number of letters, digits, dots or dashes": "Gebruik een rekeningnummer van letters, cijfers, punten of streepjes",
+        "The account the money arrives through before it is booked to revenue.": "De rekening waarop het geld binnenkomt voordat het als opbrengst wordt geboekt."
     },
     "nplurals=2; plural=(n != 1);"
 )
