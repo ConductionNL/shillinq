@@ -1,0 +1,199 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * The quick invoice draft opened from a page other than the dashboard
+ * (sales-quick-draft-from-any-page, REQ-IQD-009).
+ *
+ * The customers and the quick-draft endpoint are answered through
+ * page.route, so the test proves the screens: Create invoice opens the
+ * modal over the page it was chosen on, a customer page starts the draft
+ * with that customer, and saving or cancelling leaves the page as it was.
+ * The request the modal posts is proven by
+ * tests/vitest/invoiceQuickDraft.spec.js and the choice of the starting
+ * customer by tests/vitest/invoiceQuickDraftStartingCustomer.spec.js.
+ *
+ * The purchase invoices and bank reconciliation scenarios need the
+ * app-level Create invoice action (task 1.1), which is not built yet: they
+ * skip with that reason while the page offers no Create invoice action.
+ *
+ * Base URL from the environment (playwright.config.ts, tests/e2e/base-url.ts).
+ *
+ * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md
+ */
+
+import type { Locator, Page, Route } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
+
+const APP = '/index.php/apps/shillinq'
+
+const GEMEENTE = {
+	id: 'cust-gemeente-voorbeeld',
+	customerId: 'D1001',
+	legalName: 'Gemeente Voorbeeld',
+	paymentTermDays: 30,
+	'@self': { id: 'cust-gemeente-voorbeeld' },
+}
+const KORENAAR = {
+	id: 'cust-korenaar',
+	customerId: 'D1002',
+	legalName: 'Bakkerij De Korenaar B.V.',
+	paymentTermDays: 14,
+	'@self': { id: 'cust-korenaar' },
+}
+
+/**
+ * Answer the customer calls of the page and the modal, and the quick-draft
+ * endpoint.
+ *
+ * @param page The page.
+ * @return The bodies posted to the quick-draft endpoint.
+ */
+async function stubCustomersAndDrafts(page: Page): Promise<object[]> {
+	const posted: object[] = []
+	await page.route(
+		'**/apps/openregister/api/objects/shillinq/CustomerMaster**',
+		(route: Route) => {
+			const path = new URL(route.request().url()).pathname
+			const id = decodeURIComponent(path.split('/CustomerMaster/')[1] ?? '').split('/')[0]
+			if (id !== '') {
+				const one = [GEMEENTE, KORENAAR].find((c) => c.id === id)
+				return one
+					? route.fulfill({ json: one })
+					: route.fulfill({ status: 404, json: { message: 'Not found' } })
+			}
+			return route.fulfill({ json: { results: [GEMEENTE, KORENAAR], total: 2 } })
+		},
+	)
+	await page.route(
+		'**/apps/shillinq/api/ar-invoices/quick-drafts',
+		(route: Route) => {
+			posted.push(route.request().postDataJSON())
+			return route.fulfill({
+				status: 201,
+				json: { id: 'ar-quick-1', invoiceNumber: 'CONCEPT-1', status: 'draft' },
+			})
+		},
+	)
+	return posted
+}
+
+/**
+ * The Create invoice action of the current page.
+ *
+ * @param page The page.
+ * @return The action's locator.
+ */
+function createInvoiceAction(page: Page): Locator {
+	return page
+		.getByTestId('cn-action-create-invoice')
+		.or(page.getByRole('button', { name: 'Create invoice' }))
+		.first()
+}
+
+/**
+ * Open the page, dismissing the first-run wizard when it shows.
+ *
+ * @param page The page.
+ * @param path The app path.
+ * @return Nothing.
+ */
+async function open(page: Page, path: string): Promise<void> {
+	await page.goto(APP + path)
+	await page.waitForLoadState('domcontentloaded')
+	const wizard = page.locator('#firstrunwizard')
+	if (await wizard.isVisible().catch(() => false)) {
+		await page.keyboard.press('Escape').catch(() => {})
+		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
+	}
+}
+
+/**
+ * Fill one priced line in the open modal.
+ *
+ * @param page The page.
+ * @return Nothing.
+ */
+async function fillOneLine(page: Page): Promise<void> {
+	await page.getByTestId('iqd-line-description').first().fill('Advies maart')
+	await page.getByTestId('iqd-line-quantity').first().fill('1')
+	await page.getByTestId('iqd-line-unit-price').first().fill('500')
+}
+
+test.describe('shillinq-invoice-quick-draft — from any page', () => {
+	/**
+	 * @e2e shillinq-invoice-quick-draft::the-customer-page-starts-the-draft-for-its-customer
+	 */
+	test('the customer page starts the draft for its customer', async ({ page }) => {
+		const posted = await stubCustomersAndDrafts(page)
+		await open(page, '/bookkeeping/customers/' + GEMEENTE.id)
+		const action = createInvoiceAction(page)
+		await expect(action).toBeVisible({ timeout: 15_000 })
+		const before = page.url()
+
+		await action.click()
+		const modal = page.getByTestId('invoice-quick-draft-modal')
+		await expect(modal).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('iqd-customer')).toContainText(GEMEENTE.legalName)
+		expect(page.url()).toBe(before)
+
+		await fillOneLine(page)
+		await expect(page.getByTestId('iqd-save')).toBeEnabled()
+		await page.getByTestId('iqd-save').click()
+		await expect.poll(() => posted.length).toBe(1)
+		expect(JSON.stringify(posted[0])).toContain(GEMEENTE.customerId)
+		await expect(modal).toBeHidden({ timeout: 10_000 })
+		expect(page.url()).toBe(before)
+	})
+
+	/**
+	 * @e2e shillinq-invoice-quick-draft::a-bookkeeper-drafts-an-invoice-from-the-purchase-invoices-page
+	 */
+	test('a bookkeeper drafts an invoice from the purchase invoices page', async ({ page }) => {
+		const posted = await stubCustomersAndDrafts(page)
+		await open(page, '/inkoop/supplier-invoices')
+		const action = createInvoiceAction(page)
+		await action.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {})
+		test.skip(
+			(await action.count()) === 0,
+			'no Create invoice action on this page: the app-level action (task 1.1) is not built',
+		)
+		const before = page.url()
+
+		await action.click()
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await page.getByTestId('iqd-customer').click()
+		await page.getByText(KORENAAR.legalName, { exact: true }).first().click()
+		await fillOneLine(page)
+		await page.getByTestId('iqd-save').click()
+
+		await expect.poll(() => posted.length).toBe(1)
+		expect(JSON.stringify(posted[0])).toContain(KORENAAR.customerId)
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeHidden({ timeout: 10_000 })
+		expect(page.url()).toBe(before)
+	})
+
+	/**
+	 * @e2e shillinq-invoice-quick-draft::cancelling-keeps-the-page
+	 */
+	test('cancelling keeps the page', async ({ page }) => {
+		const posted = await stubCustomersAndDrafts(page)
+		await open(page, '/bookkeeping/bank-reconciliation')
+		const action = createInvoiceAction(page)
+		await action.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {})
+		test.skip(
+			(await action.count()) === 0,
+			'no Create invoice action on this page: the app-level action (task 1.1) is not built',
+		)
+		const before = page.url()
+
+		await action.click()
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await page.getByTestId('iqd-cancel').click()
+
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeHidden({ timeout: 10_000 })
+		expect(posted).toHaveLength(0)
+		expect(page.url()).toBe(before)
+	})
+})

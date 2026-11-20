@@ -332,6 +332,36 @@ final class PurchaseOrderControllerTest extends TestCase {
 	}//end testSendAnonymousReturns401()
 
 	/**
+	 * dispatchChannels() answers the service's channel availability with HTTP 200.
+	 *
+	 * @return void
+	 */
+	public function testDispatchChannelsReturnsTheServiceAnswer(): void {
+		$channels = [
+			'peppol' => ['available' => false, 'reason' => 'Peppol sending is not configured'],
+			'email' => ['available' => true, 'reason' => null],
+		];
+		$this->purchaseOrderService->expects($this->once())->method('dispatchChannels')->willReturn($channels);
+
+		$response = $this->controller()->dispatchChannels();
+
+		self::assertSame(200, $response->getStatus());
+		self::assertSame($channels, $response->getData());
+	}//end testDispatchChannelsReturnsTheServiceAnswer()
+
+	/**
+	 * dispatchChannels() refuses an anonymous caller with 401 and asks the service nothing.
+	 *
+	 * @return void
+	 */
+	public function testDispatchChannelsRefusesAnonymous(): void {
+		$this->anonymous();
+		$this->purchaseOrderService->expects($this->never())->method('dispatchChannels');
+
+		self::assertSame(401, $this->controller()->dispatchChannels()->getStatus());
+	}//end testDispatchChannelsRefusesAnonymous()
+
+	/**
 	 * previewApprovalChain() returns the server-determined chain for the
 	 * submitted amount with HTTP 200.
 	 *

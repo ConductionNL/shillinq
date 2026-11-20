@@ -94,6 +94,14 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\Hermiq\\\\Event\\\\CollectAgentTemplatesEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\OfferHelperAgentTemplate'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\StockMoveTransitionedListener'",
             "0"
@@ -522,6 +530,46 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
+            "'OCA\\\\Shillinq\\\\PaymentRun\\\\PaymentRunLockListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\PaymentRun\\\\PaymentRunLockListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\ExpenseCategoryAccountListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\ExpenseCategoryAccountListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\PaymentBlockLockListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\AnnualReportSignoffRequestListener'",
             "0"
@@ -684,6 +732,14 @@
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\AdministrationManagedWriteListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\JurisdictionLockListener'",
             "0"
         ]
     ],
@@ -883,6 +939,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\BillableLinesServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\BillableLinesService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\BillableWorkServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Billing\\\\BillableWorkService'"
         ]
     ],
     [
@@ -1140,6 +1203,20 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SelfBilledInvoiceIntakeInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\EInvoice\\\\SelfBilledInvoiceIntake'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SelfBilledInvoiceReviewInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\EInvoice\\\\SelfBilledInvoiceReview'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SubscriptionCancellationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\SubscriptionCancellationService'"
         ]
@@ -1268,6 +1345,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\EnsiaCycleStepsInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\EnsiaCycleSteps'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\EuDeclarationBuilderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\EuDeclarationBuilder'"
         ]
     ],
     [
@@ -1420,6 +1504,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\GrantSettlementInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\GrantSettlement'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\HrmqCostRateAdapterInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\HrmqCostRateAdapter'"
         ]
@@ -1429,6 +1520,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\IcpFilingServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\IcpFilingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\Ib47BatchServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Ib47\\\\Ib47BatchService'"
         ]
     ],
     [
@@ -2050,6 +2148,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SisaAppendixInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\SisaAppendix'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SlotServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\SlotService'"
         ]
@@ -2385,6 +2490,21 @@
         ]
     ],
     [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrder\\\\PeppolTransmissionAdapterInterface'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrder\\\\PurchaseOrderMailerInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrder\\\\IntegriqPurchaseOrderMailer'"
+        ]
+    ],
+    [
         "registerServiceAlias",
         [
             "'OCA\\\\Shillinq\\\\Service\\\\Sms\\\\SmsProviderAdapterInterface'",
@@ -2587,6 +2707,54 @@
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\VatReturnChecksGuard::canSubmit'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requireSettlementModeConsistency'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requireMarkupApprovalIfThreshold'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requirePassThroughMode'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requireGlReversalForModeChange'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseClaimGuard::requireCostCentresAndItems'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseClaimGuard::requireOpenPeriodAndCostCentres'",
             "Closure",
             "true"
         ]
@@ -2920,6 +3088,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReportRecipientPolicyInterface'",
             "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ReportRecipientPolicy'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReportScheduleServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ReportScheduleService'"
         ]
     ],
     [

@@ -82,6 +82,13 @@ class PaymentRunExportService implements PaymentRunExportServiceInterface {
 	private ?array $generators = null;
 
 	/**
+	 * The approval lock rules: the digest of a run's lines as approved. Stateless.
+	 *
+	 * @var PaymentRunApprovalLock
+	 */
+	private readonly PaymentRunApprovalLock $approvalLock;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container App container — lazily resolves
@@ -103,6 +110,7 @@ class PaymentRunExportService implements PaymentRunExportServiceInterface {
 		private readonly LoggerInterface $logger,
 		private readonly PaymentBlockChecker $blockChecker,
 	) {
+		$this->approvalLock = new PaymentRunApprovalLock();
 
 	}//end __construct()
 
@@ -157,6 +165,20 @@ class PaymentRunExportService implements PaymentRunExportServiceInterface {
 		if ($state !== 'approved') {
 			$this->logger->warning('PaymentRunExportService: run not approved', ['state' => $state]);
 			return ['error' => 'not-approved', 'state' => $state];
+		}
+
+		if ($this->approvalLock->approvedBeforeLock(run: $paymentRun) === true) {
+			// Approved before the lock stamped a digest; frozen since, so export the lines it holds.
+			$this->logger->info(
+				'PaymentRunExportService: run approved before the approval lock, exported without a digest',
+				['runNumber' => ($paymentRun['runNumber'] ?? '')]
+			);
+		} else {
+			$approvedDigest = (string)($paymentRun['approvedLinesDigest'] ?? '');
+			if ($approvedDigest === '' || hash_equals($approvedDigest, $this->approvalLock->digest(run: $paymentRun)) === false) {
+				$this->logger->warning('PaymentRunExportService: run differs from what was approved', ['runNumber' => ($paymentRun['runNumber'] ?? '')]);
+				return ['error' => 'changed-after-approval'];
+			}
 		}
 
 		$missing = $this->linesMissingCreditorIban(paymentRun: $paymentRun);

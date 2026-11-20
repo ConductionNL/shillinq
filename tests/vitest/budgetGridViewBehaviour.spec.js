@@ -185,14 +185,20 @@ describe('BudgetGrid.trendChartProps', () => {
 })
 
 describe('BudgetGrid.mounted', () => {
-	it('resolves the administration and then loads the grid, in order', async () => {
+	it('resolves the administration and then loads the grid and its scenarios, in order', async () => {
 		fetchAdministrationContext.mockResolvedValue({ activeAdministrationId: 'adm-1' })
-		axiosGet.mockResolvedValue({ data: { columns: [], rows: [{ id: 'r' }], computedRows: [] } })
+		axiosGet.mockImplementation((url) => Promise.resolve(
+			String(url).includes('BudgetScenario')
+				? { data: { results: [{ id: 's-1', name: 'Krimp' }] } }
+				: { data: { columns: [], rows: [{ id: 'r' }], computedRows: [] } },
+		))
 		const ctx = context()
 		await BudgetGrid.mounted.call(ctx)
 		expect(ctx.administrationId).toBe('adm-1')
-		expect(axiosGet).toHaveBeenCalledTimes(1)
+		expect(axiosGet).toHaveBeenCalledTimes(2)
+		expect(axiosGet.mock.calls.filter(([url]) => String(url).includes('budget-grid'))).toHaveLength(1)
 		expect(ctx.rows).toEqual([{ id: 'r' }])
+		expect(ctx.scenarios).toEqual([{ id: 's-1', name: 'Krimp' }])
 	})
 })
 
