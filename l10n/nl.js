@@ -8297,7 +8297,8 @@ OC.L10N.register(
         "Suggested account (RGS)": "Voorgestelde rekening (RGS)",
         "All rates": "Alle tarieven",
         "Deductible percentage": "Aftrekbaar percentage",
-        "Private-share account": "Rekening privédeel"
+        "Private-share account": "Rekening privédeel",
+        "No active administration, so the budget lines cannot be shown.": "Geen actieve administratie, dus de budgetregels kunnen niet worden getoond."
     },
     "nplurals=2; plural=(n != 1);"
 )

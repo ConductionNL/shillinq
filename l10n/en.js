@@ -6152,7 +6152,8 @@ OC.L10N.register(
         "Suggested account (RGS)": "Suggested account (RGS)",
         "All rates": "All rates",
         "Deductible percentage": "Deductible percentage",
-        "Private-share account": "Private-share account"
+        "Private-share account": "Private-share account",
+        "No active administration, so the budget lines cannot be shown.": "No active administration, so the budget lines cannot be shown."
     },
     "nplurals=2; plural=(n != 1);"
 )

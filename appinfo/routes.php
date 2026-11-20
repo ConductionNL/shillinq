@@ -1031,6 +1031,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
             ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
+            // Commitments per budget line and segment results, scoped to one administration on the server.
+            ['name' => 'administrationResults#commitments', 'url' => '/api/v1/budget-line-commitments', 'verb' => 'GET'],
+            ['name' => 'administrationResults#commitmentLines', 'url' => '/api/v1/budget-line-commitments/lines', 'verb' => 'GET'],
+            ['name' => 'administrationResults#segments', 'url' => '/api/v1/segment-results', 'verb' => 'GET'],
             // receivables-sepa-direct-debit (REQ-SDD-011, REQ-SDD-012): propose the
             // draft batches for a collection date, and download a generated batch's
             // pain.008 file. Both #[NoAdminRequired], administration checked in the
