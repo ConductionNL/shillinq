@@ -7705,7 +7705,16 @@ OC.L10N.register(
         "Slug": "Slug",
         "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.": "Doorzoek de gebruikershandleiding van shillinq (helpartikelen). Gebruik dit voor hoe-doe-ik-vragen over shillinq; filter op pageIds met de pagina waarop de gebruiker staat om het artikel te kiezen dat die pagina uitlegt.",
         "Get one help article by id, with its markdown body and documentation link.": "Haal één helpartikel op via zijn id, met de markdowntekst en de documentatielink.",
-        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte."
+        "Answers how-to questions about shillinq from its user guide, for the page you are on, and links to the guide page it used.": "Beantwoordt hoe-doe-ik-vragen over shillinq vanuit de gebruikershandleiding, voor de pagina waarop je staat, en linkt naar de handleidingpagina die het gebruikte.",
+        "Revenue accounts for payment requests": "Opbrengstrekeningen voor betaalverzoeken",
+        "The ledger account a paid request books against, per kind of request. A paid request whose kind has no account waits until one is set.": "De grootboekrekening waarop een betaald verzoek wordt geboekt, per soort verzoek. Een betaald verzoek van een soort zonder rekening wacht tot er een is ingesteld.",
+        "Fees (leges)": "Leges",
+        "Penalty payments (dwangsom)": "Dwangsommen",
+        "Contributions": "Bijdragen",
+        "Event fees": "Deelnamekosten evenementen",
+        "Other requests": "Overige verzoeken",
+        "Use an account number of letters, digits, dots or dashes": "Gebruik een rekeningnummer van letters, cijfers, punten of streepjes",
+        "The account the money arrives through before it is booked to revenue.": "De rekening waarop het geld binnenkomt voordat het als opbrengst wordt geboekt."
     },
     "nplurals=2; plural=(n != 1);"
 )

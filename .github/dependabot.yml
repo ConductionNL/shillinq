@@ -42,6 +42,13 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@babel/preset-env"
         update-types: ["version-update:semver-major"]
+      # @vueuse/core 15: @conduction/nextcloud-vue (2.173.0) peers
+      #                `@vueuse/core: ^11.0.0 || ^14.0.0`, and shillinq imports
+      #                nothing from vueuse itself, so the bump only moves the
+      #                library onto a major it does not support. Lift it when
+      #                the library's peer range accepts ^15.
+      - dependency-name: "@vueuse/core"
+        update-types: ["version-update:semver-major"]
     cooldown:
       default-days: 1
       include:
