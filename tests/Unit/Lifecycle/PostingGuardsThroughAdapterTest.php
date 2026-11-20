@@ -275,7 +275,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			}
 		);
 
-		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this), $this->restrictions(), $this->dimensions());
+		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this), $this->restrictions());
 
 		$allowed = $guard->validateInvoice(
 			[
@@ -427,7 +427,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			['id' => 'l1', 'transactionId' => 'gl-1', 'accountNumber' => '4000', 'side' => 'debit', 'amount' => 1200.0],
 			['id' => 'l2', 'transactionId' => 'MEM-2026-0001', 'accountNumber' => '1100', 'side' => 'credit', 'amount' => 1200.0],
 		];
-		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this), $this->restrictions(), $this->dimensions());
+		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this), $this->restrictions());
 		$transaction = [
 			'id' => 'gl-1',
 			'transactionNumber' => 'MEM-2026-0001',

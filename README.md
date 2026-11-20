@@ -24,7 +24,7 @@ Measured test coverage: 85.4% of statements (PHP 85.4% of 79,730 statements), at
 
 ## Overview
 
-Shillinq is a comprehensive business administration platform designed for organizations of all sizes who need integrated financial, procurement, and contract management. Built as a Nextcloud app, it brings enterprise-grade accounting capabilities to self-hosted environments while maintaining simplicity and accessibility. From small freelancers managing invoices to enterprises handling complex procurement workflows, Shillinq streamlines business operations.
+Shillinq is a comprehensive business administration platform designed for organizations of all sizes who need integrated financial, procurement, and contract management. Built as a Nextcloud app, it brings enterprise-grade accounting capabilities to self-hosted environments while maintaining simplicity and accessibility. From small freelancers managing invoices to enterprises handling complex procurement workflows, Shillinq streamlines business operations. Install it from the [Nextcloud App Store](https://apps.nextcloud.com/apps/shillinq).
 
 > **Requires:** OpenRegister
 

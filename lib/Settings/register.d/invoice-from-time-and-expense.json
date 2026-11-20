@@ -32,7 +32,7 @@
         },
         "slug": "BillableInvoice",
         "icon": "FileDocumentEditOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Billable Invoice",
         "description": "Invoice materialised from approved time entries + expenses with explicit billing-model semantics. Companion to the canonical Invoice (from bookings-deposit-to-invoice); the BillableInvoice carries the model-specific projection while the Invoice carries the AR-aging-facing record. The billingModel is set once at draft time and immutable after posting (D1). Source-id arrays (timeEntryIds, expenseIds) are checked for duplicates against existing posted/draft BillableInvoice rows before generation (D9).",
         "x-schema-org": "schema:Invoice",
@@ -252,6 +252,42 @@
             "nullable": true,
             "description": "Free-text operator notes captured at draft time, included in the PDF footer.",
             "title": "Notes"
+          },
+          "expenseItemRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "Receipt",
+                    "MileageEntry",
+                    "PerDiem"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "claimId": {
+                  "type": "string"
+                },
+                "disbursement": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "default": [],
+            "description": "Pass-through receipts, mileage and per diem items billed one by one on this invoice: schema, id, the claim they belong to and whether the item is a disbursement outside the VAT base. Checked for duplicates like expenseIds; when every pass-through item of a claim sits on a posted invoice the claim takes markInvoiced.",
+            "example": [
+              {
+                "schema": "Receipt",
+                "id": "rcpt-001",
+                "claimId": "exp-001",
+                "disbursement": false
+              }
+            ],
+            "title": "Expense Item Refs"
           }
         }
       },
@@ -279,7 +315,7 @@
         },
         "slug": "BillableInvoiceLine",
         "icon": "FormatListBulletedSquare",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Billable Invoice Line",
         "description": "Single line item on a BillableInvoice. sourceType identifies the originating record (time_entry, expense, retainer_charge, fixed_fee, manual). rateApplied snapshots the applicable RateCard rate so historical invoices preserve their original rates if the rate card is later amended (D2). modelSpecificFields carries milestone/retainer-month metadata when applicable.",
         "x-schema-org": "schema:Service",
@@ -404,6 +440,47 @@
               "retainerMonth": "2026-05"
             },
             "title": "Model Specific Fields"
+          },
+          "recharge": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "costAmount": {
+                "type": "number"
+              },
+              "markupRuleId": {
+                "type": "string",
+                "nullable": true
+              },
+              "markupRate": {
+                "type": "number",
+                "nullable": true
+              },
+              "markupAmount": {
+                "type": "number"
+              },
+              "vatTreatment": {
+                "type": "string",
+                "enum": [
+                  "main-supply",
+                  "disbursement"
+                ]
+              },
+              "vatMention": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "description": "For a recharged pass-through item: the cost, the markup rule, rate (fraction) and amount locked at claim submission, and the VAT treatment. main-supply takes the VAT rate of the invoice's main supply; disbursement is outside the VAT base at 0 percent with the mention 'Verschotten, buiten de btw-grondslag'. Null on every other line.",
+            "example": {
+              "costAmount": 42.8,
+              "markupRuleId": "rule-001",
+              "markupRate": 0.1,
+              "markupAmount": 4.28,
+              "vatTreatment": "main-supply",
+              "vatMention": null
+            },
+            "title": "Recharge"
           }
         }
       },

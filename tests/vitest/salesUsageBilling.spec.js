@@ -188,7 +188,6 @@ describe('the invoice generator, usage model', () => {
 		const payload = InvoiceGenerator.computed.payload.call({
 			...vm,
 			needsUsage: true,
-			parseIds: InvoiceGenerator.methods.parseIds,
 		})
 		expect(payload.billingModel).toBe('usage')
 		expect(payload.meterReadingIds).toEqual(['r-b'])
@@ -197,7 +196,6 @@ describe('the invoice generator, usage model', () => {
 	it('sends no reading ids for another model', () => {
 		const vm = {
 			...InvoiceGenerator.data(),
-			parseIds: InvoiceGenerator.methods.parseIds,
 			needsUsage: false,
 		}
 		vm.meterReadingIds = ['r-a']

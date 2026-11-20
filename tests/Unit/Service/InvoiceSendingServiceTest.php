@@ -30,9 +30,11 @@ use DateTimeImmutable;
 use DomainException;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
+use OCA\Shillinq\Service\EInvoice\EInvoiceArtefactStore;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
 use OCA\Shillinq\Service\EInvoice\EInvoiceValidationService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
+use OCA\Shillinq\Service\IntegriqCloudEventPublisher;
 use OCA\Shillinq\Service\InvoiceSendingService;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\ViesService;
@@ -40,7 +42,6 @@ use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\Payment\PayLinkService;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IL10N;
@@ -82,6 +83,13 @@ class InvoiceSendingServiceTest extends TestCase {
 	 * @var array<int, string>|RuntimeException
 	 */
 	private array|RuntimeException $mailAnswer = [];
+
+	/**
+	 * The CloudEvent types handed to integriq.
+	 *
+	 * @var array<int,string>
+	 */
+	private array $published = [];
 
 	protected function setUp(): void {
 		$this->mailer = $this->createMock(IMailer::class);
@@ -289,7 +297,10 @@ class InvoiceSendingServiceTest extends TestCase {
 
 		$this->assertSame(InvoiceSendingService::STATUS_SENT, $outcome['status']);
 		$this->assertSame('peppol', $outcome['sending']['sentVia']);
-		$this->assertStringStartsWith('urn:uuid:', $outcome['sending']['sentTo']);
+		// The invoice is handed to integriq's Peppol connection; the transmission
+		// id comes back later with the delivery status (sales-einvoice-exchange).
+		$this->assertSame('', $outcome['sending']['sentTo']);
+		$this->assertCount(1, $this->published);
 	}//end testAPeppolCustomerWithAParticipantIsSentThroughPeppol()
 
 	/**
@@ -416,12 +427,12 @@ class InvoiceSendingServiceTest extends TestCase {
 				appConfig: $appConfig,
 				administrationContext: $context,
 				logger: new NullLogger(),
-				eventDispatcher: $this->createMock(IEventDispatcher::class),
 				ublMapper: new ArInvoiceUblMapper(),
 				pdfGenerator: new InvoicePdfGenerator(),
 				validationService: new EInvoiceValidationService(vies: $vies, peppolPort: $port),
 				objectService: $store,
-				peppolPort: $port,
+				artefactStore: $this->artefactStore(),
+				publisher: $this->publisher(),
 			),
 			l10n: $l10n,
 			time: $time,
@@ -429,6 +440,34 @@ class InvoiceSendingServiceTest extends TestCase {
 			payLinks: $payLinks,
 		);
 	}//end service()
+
+	/**
+	 * An e-invoice file store that stores every file.
+	 *
+	 * @return EInvoiceArtefactStore
+	 */
+	private function artefactStore(): EInvoiceArtefactStore {
+		$store = $this->createMock(EInvoiceArtefactStore::class);
+		$store->method('store')->willReturn('/jan/files/Shillinq/adm-1/e-invoices/2026/invoice.xml');
+		return $store;
+	}//end artefactStore()
+
+	/**
+	 * An integriq publisher that is available and records what it publishes.
+	 *
+	 * @return IntegriqCloudEventPublisher
+	 */
+	private function publisher(): IntegriqCloudEventPublisher {
+		$publisher = $this->createMock(IntegriqCloudEventPublisher::class);
+		$publisher->method('isAvailable')->willReturn(true);
+		$publisher->method('publish')->willReturnCallback(
+			function (string $type, string $source, string $subject, array $data): bool {
+				$this->published[] = $type;
+				return true;
+			}
+		);
+		return $publisher;
+	}//end publisher()
 
 	/**
 	 * A Peppol port that finds the given participant and accepts every submit.
