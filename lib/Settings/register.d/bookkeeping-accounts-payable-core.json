@@ -82,19 +82,10 @@
                 "fill": {
                   "name": "naam",
                   "tradingName": "handelsnamen[0].naam",
-                  "address.street": "_embedded.hoofdvestiging.adressen[0].straatnaam",
-                  "address.houseNumber": {
-                    "join": [
-                      "_embedded.hoofdvestiging.adressen[0].huisnummer",
-                      "_embedded.hoofdvestiging.adressen[0].huisletter",
-                      "_embedded.hoofdvestiging.adressen[0].huisnummerToevoeging"
-                    ]
-                  },
-                  "address.postcode": "_embedded.hoofdvestiging.adressen[0].postcode",
-                  "address.city": "_embedded.hoofdvestiging.adressen[0].plaats",
-                  "address.country": {
-                    "value": "NL"
-                  }
+                  "address.street": "adres.binnenlandsAdres.straatnaam",
+                  "address.postcode": "adres.binnenlandsAdres.postcode",
+                  "address.city": "adres.binnenlandsAdres.plaats",
+                  "address.country": "=NL"
                 }
               }
             }
