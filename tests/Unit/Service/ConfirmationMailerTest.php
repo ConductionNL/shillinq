@@ -18,13 +18,17 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\Booking\TimezoneResolver;
+use OCA\Shillinq\Service\Booking\WithdrawalLinkService;
 use OCA\Shillinq\Service\ConfirmationMailer;
 use OCA\Shillinq\Service\IcsService;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IURLGenerator;
 use OCP\Mail\IAttachment;
@@ -112,11 +116,31 @@ final class ConfirmationMailerTest extends TestCase {
 	 * constructor. integriq's real CallService has call() and callAsync() but
 	 * no send(), so a container lookup finds nothing that sends mail.
 	 *
+	 * @param string $guestPage The portal guest page for the withdrawal link, '' for none.
+	 *
 	 * @return ConfirmationMailer
 	 */
-	private function makeMailer(): ConfirmationMailer {
+	private function makeMailer(string $guestPage = 'https://portal.example.nl/withdraw'): ConfirmationMailer {
 		$url = $this->createMock(IURLGenerator::class);
 		$url->method('linkToRouteAbsolute')->willReturn('https://example.nl/index.php/apps/shillinq/confirm');
+		$url->method('linkToRoute')->willReturnCallback(
+			static function (string $route): string {
+				self::assertSame('shillinq.dashboard.page', $route, 'the confirm link uses a declared route');
+				return '/index.php/apps/shillinq/';
+			}
+		);
+		$url->method('getAbsoluteURL')->willReturnCallback(static fn (string $relative): string => 'https://example.nl' . $relative);
+
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueString')->willReturn('instance-secret');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				WithdrawalLinkService::PAGE_KEY => $guestPage,
+				default => $default,
+			}
+		);
+		$links = new WithdrawalLinkService($config, $appConfig, new \OCA\Shillinq\Service\WithdrawalService($this->createMock(\OCP\IL10N::class)));
 
 		// IcsService is final: a real one over mocked dependencies.
 		$ics = new IcsService(
@@ -133,6 +157,7 @@ final class ConfirmationMailerTest extends TestCase {
 			IcsService::class => $ics,
 			LoggerInterface::class => $this->createMock(LoggerInterface::class),
 			ContainerInterface::class => $container,
+			WithdrawalLinkService::class => $links,
 		];
 
 		$arguments = [];
@@ -200,6 +225,52 @@ final class ConfirmationMailerTest extends TestCase {
 		self::assertStringContainsString('BEGIN:VCALENDAR', $this->sent['attachments'][0]['content']);
 		self::assertCount(1, $this->sent['attached']);
 	}//end testTheConfirmationIsMailedThroughNextcloudsMailerWithTheIcsAttached()
+
+	/**
+	 * The confirm link is the app's confirm page, not the undeclared confirmationApi.portal route (task 3.3).
+	 *
+	 * @return void
+	 */
+	public function testTheConfirmLinkIsTheConfirmPageOfTheAppointment(): void {
+		$this->mailer->method('send')->willReturn([]);
+
+		$this->makeMailer()->send(appointment: ['id' => 'apt-7'] + $this->appointment(), rawToken: 'rawtok123');
+
+		$expected = 'Confirm your appointment here: https://example.nl/index.php/apps/shillinq/confirm/apt-7?token=rawtok123';
+		self::assertStringContainsString($expected, $this->sent['body']);
+	}//end testTheConfirmLinkIsTheConfirmPageOfTheAppointment()
+
+	/**
+	 * A widget booking's mail carries the signed withdrawal link with the last day of the period (REQ-SCX-004).
+	 *
+	 * @return void
+	 */
+	public function testAnOnlineBookingCarriesTheSignedWithdrawalLink(): void {
+		$this->mailer->method('send')->willReturn([]);
+		$appointment = ['id' => 'apt-7', 'source' => 'widget', '@self' => ['created' => '2026-09-20T10:00:00+02:00']] + $this->appointment();
+
+		$this->makeMailer()->send(appointment: $appointment, rawToken: 'rawtok123');
+
+		$pattern = '#You can withdraw from this booking until 2026-10-03 without a fee: '
+			. 'https://portal\.example\.nl/withdraw\?withdraw=[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+#';
+		self::assertMatchesRegularExpression($pattern, $this->sent['body']);
+	}//end testAnOnlineBookingCarriesTheSignedWithdrawalLink()
+
+	/**
+	 * A booking not made online, or an instance without a guest page, gets no withdrawal line.
+	 *
+	 * @return void
+	 */
+	public function testNoWithdrawalLineWithoutAnOnlineBookingOrAGuestPage(): void {
+		$this->mailer->method('send')->willReturn([]);
+		$online = ['id' => 'apt-7', 'source' => 'widget', '@self' => ['created' => '2026-09-20T10:00:00+02:00']] + $this->appointment();
+
+		$this->makeMailer()->send(appointment: ['source' => 'desk'] + $online, rawToken: 'tok');
+		self::assertStringNotContainsString('withdraw', $this->sent['body']);
+
+		$this->makeMailer(guestPage: '')->send(appointment: $online, rawToken: 'tok');
+		self::assertStringNotContainsString('withdraw', $this->sent['body']);
+	}//end testNoWithdrawalLineWithoutAnOnlineBookingOrAGuestPage()
 
 	/**
 	 * A mailer that throws means nothing was sent: send() says false.

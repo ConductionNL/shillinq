@@ -540,6 +540,10 @@
             "description": "A customer ends their own subscription from the portal."
         },
         {
+            "name": "portal-withdrawal",
+            "description": "A consumer withdraws from an appointment booked online, from the portal or a signed link."
+        },
+        {
             "name": "deferral-schedules",
             "description": "Spread a prepaid cost or deferred revenue over its periods (ledger-period-end)."
         },
@@ -10575,6 +10579,46 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/portal/withdrawals": {
+            "post": {
+                "operationId": "portal-withdrawal-withdraw",
+                "summary": "Withdraw from an appointment booked online",
+                "description": "Withdraw a consumer from an appointment they booked online, within the 14-day withdrawal period. Portaliq forwards `POST /apps/shillinq/api/portal/withdrawals` either with `{\"appointmentId\": \"<uuid>\"}` and the signed assertion header of a signed-in customer, or with `{\"token\": \"<signed link token>\"}` from its guest page. Response contract: 200 `{status: withdrawn, acknowledgedAt}`; 409 `{error: not_withdrawable, reason}` when the period ended, the appointment started or the service is exempt; 401 with neither a valid assertion nor a token; 403 for a wrong audience, a tampered or expired link, another customer's appointment or one that does not exist (one body for every reason, no existence oracle); 502 on an OpenRegister failure, never with internals. Rate limit: a human clicks this, and each call can write. Public: it needs no login.",
+                "tags": [
+                    "portal-withdrawal"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "409": {
+                        "description": "The appointment can no longer be withdrawn; `reason` says why.",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
                     }
                 }
             }

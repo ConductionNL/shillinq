@@ -6176,7 +6176,12 @@ OC.L10N.register(
         "Same period last year": "Same period last year",
         "The result per account for the chosen period, compared with the previous period and the same period last year.": "The result per account for the chosen period, compared with the previous period and the same period last year.",
         "The result per account, compared with the previous period and last year.": "The result per account, compared with the previous period and last year.",
-        "Total assets": "Total assets"
+        "Total assets": "Total assets",
+        "We received your withdrawal: %s": "We received your withdrawal: %s",
+        "We received your withdrawal from this booking on %1$s at %2$s.": "We received your withdrawal from this booking on %1$s at %2$s.",
+        "Service: %s": "Service: %s",
+        "Appointment: %s": "Appointment: %s",
+        "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days.": "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days."
     },
     "nplurals=2; plural=(n != 1);"
 )

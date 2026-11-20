@@ -29,6 +29,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Service\Booking\WithdrawalMailer;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
@@ -138,6 +139,7 @@ class WithdrawalService {
 	 * @param CancellationService|null       $cancellation Applies the cancellation.
 	 * @param DepositPaymentAdapterInterface|null $deposits Refunds a deposit.
 	 * @param LoggerInterface|null           $logger       The logger.
+	 * @param WithdrawalMailer|null          $mailer       Mails the acknowledgement.
 	 *
 	 * @return void
 	 */
@@ -147,6 +149,7 @@ class WithdrawalService {
 		private readonly ?CancellationService $cancellation = null,
 		private readonly ?DepositPaymentAdapterInterface $deposits = null,
 		private readonly ?LoggerInterface $logger = null,
+		private readonly ?WithdrawalMailer $mailer = null,
 	) {
 	}//end __construct()
 
@@ -197,9 +200,36 @@ class WithdrawalService {
 		$cancelled['status'] = 'cancelled';
 		$cancelled['withdrawal'] = ['withdrawalId' => (string)($withdrawal['id'] ?? ''), 'withdrawnAt' => $now->format(DATE_ATOM)];
 		$cancelled = $this->save(objects: $objects, schema: 'Appointment', id: $appointmentId, data: self::payload(row: $cancelled));
+		$withdrawal = $this->acknowledge(objects: $objects, appointment: $appointment, withdrawal: $withdrawal, now: $now);
 
 		return ['withdrawn' => true, 'code' => self::WITHDRAWABLE, 'reason' => null, 'withdrawal' => $withdrawal, 'appointment' => $cancelled];
 	}//end withdraw()
+
+	/**
+	 * Mail the acknowledgement and, once the mail server took it, record when.
+	 *
+	 * @param object               $objects     OpenRegister's object service.
+	 * @param array<string, mixed> $appointment The appointment, with the booker's e-mail.
+	 * @param array<string, mixed> $withdrawal  The saved withdrawal.
+	 * @param DateTimeImmutable    $now         The moment of the withdrawal.
+	 *
+	 * @return array<string, mixed> The withdrawal, with `acknowledgedAt` when the mail went out.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 */
+	private function acknowledge(object $objects, array $appointment, array $withdrawal, DateTimeImmutable $now): array {
+		if ($this->mailer === null || $this->mailer->acknowledge(appointment: $appointment, withdrawnAt: $now) === false) {
+			return $withdrawal;
+		}
+
+		$withdrawal['acknowledgedAt'] = $now->format(DATE_ATOM);
+		$id = (string)($withdrawal['id'] ?? '');
+		if ($id === '') {
+			return $withdrawal;
+		}
+
+		return $this->save(objects: $objects, schema: 'Withdrawal', id: $id, data: self::payload(row: $withdrawal));
+	}//end acknowledge()
 
 	/**
 	 * The withdrawal record, with the refund started or recorded as due.
@@ -440,6 +470,24 @@ class WithdrawalService {
 
 		return ['withdrawable' => true, 'code' => self::WITHDRAWABLE, 'reason' => null, 'periodEndsOn' => $periodEndsOn];
 	}//end isWithdrawable()
+
+	/**
+	 * The moment an appointment's withdrawal period ends, null when its booking moment is unknown.
+	 *
+	 * @param array<string, mixed> $appointment The appointment, with its `@self.created` moment.
+	 *
+	 * @return DateTimeImmutable|null The first moment a withdrawal is no longer accepted.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 */
+	public function periodEndFor(array $appointment): ?DateTimeImmutable {
+		$bookedAt = self::bookedAt(appointment: $appointment);
+		if ($bookedAt === null) {
+			return null;
+		}
+
+		return self::periodEnd(bookedAt: $bookedAt);
+	}//end periodEndFor()
 
 	/**
 	 * The moment the withdrawal period ends: 14 days after the booking.
