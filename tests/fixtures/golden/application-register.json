@@ -1328,6 +1328,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\EuDeclarationBuilderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\EuDeclarationBuilder'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ExceptionResolutionServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ExceptionResolutionService'"
         ]
@@ -1470,6 +1477,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\GoodsReceiptNoteServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\GoodsReceiptNoteService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\GrantSettlementInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\GrantSettlement'"
         ]
     ],
     [
@@ -2107,6 +2121,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SignoffDecisionServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Signing\\\\SignoffDecisionService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SisaAppendixInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\SisaAppendix'"
         ]
     ],
     [

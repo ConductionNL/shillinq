@@ -168,6 +168,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120080000",
             "versionsSha256": "03abdac84634b2b19cae2bff14e5063203268404de759e21fc7c2b864c6d3463"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120081900",
+            "versionsSha256": "4ef1ce1e08ab5a7e9e6b1ea3eeadb19de66bcead9f280f1deb90bfad8c13e7f3"
         }
     ],
     "versions": {
@@ -359,6 +363,7 @@
         "schema:EsrsPolicy": "0.1.0",
         "schema:EsrsStatement": "0.1.0",
         "schema:EsrsTarget": "0.1.0",
+        "schema:EuDeclaration": "0.1.0",
         "schema:EuExpenditure": "0.1.0",
         "schema:EuProject": "0.1.0",
         "schema:EuVatRate": "0.1.0",
@@ -615,6 +620,7 @@
         "schema:Service": "0.3.0",
         "schema:ServiceCategoryOverride": "0.1.0",
         "schema:SiSaAssurance": "0.1.0",
+        "schema:SisaIndicator": "0.1.0",
         "schema:SisaRegelingIndicator": "0.1.0",
         "schema:SisaReport": "0.1.0",
         "schema:SoProject": "0.1.0",
