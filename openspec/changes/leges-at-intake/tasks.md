@@ -5,7 +5,7 @@
 ## 1. Schema and admin
 
 - [x] 1.1 Add `feeSchedule` to a register fragment `lib/Settings/register.d/leges-at-intake.json` with the D1 properties and the validity uniqueness (REQ-SOPR-006)
-- [ ] 1.2 Add the fee schedule settings page with the BbvTaakveld column (D4). Page built 9 Oct 2026 (Government > Fee schedules, `src/manifest.d/fee-schedules.json`). The BbvTaakveld column is NOT built: no Account schema carries a task field to read it from (question Q-shillinq-2).
+- [x] 1.2 Add the fee schedule settings page with the BbvTaakveld column (D4). Page built 9 Oct 2026 (Government > Fee schedules, `src/manifest.d/fee-schedules.json`). Column built per Q-shillinq-2 (answered 9 Oct): optional `Account.taskField` (`lib/Settings/register.d/public-sector-account-task-field.json`), copied onto `FeeSchedule.revenueTaskField` on save by `FeeScheduleValidationListener` via `lib/Service/RevenueTaskFieldLookup.php`; IV3 reads the same field. Tests: `tests/Unit/Listener/FeeScheduleValidationListenerTest.php`, `tests/Unit/Reporting/Generator/Iv3ReportGeneratorTaskFieldTest.php` (REQ-SOPR-011).
 
 ## 2. Journey step
 

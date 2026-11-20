@@ -1,0 +1,203 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "purchasing-call-offs-and-reorder-proposals",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Two additions. (1) An additive overlay on FrameworkAgreement: `agreedPrices`, the price per product agreed with the supplier. PurchaseOrderService applies them server-side to the lines of a call-off before the order total is counted against the ceiling (REQ-PG-005). (2) ReorderProposal: the low-stock alert ReorderProposalJob raises when the stock of a reorder rule is at or below its reorder point, linked to the draft PurchaseOrder it proposes. One open proposal per rule at a time; the job resolves it once the stock is back above the point (REQ-IRA-011). Money fields are integer euro cents.",
+    "spec": "openspec/changes/purchasing-call-offs-and-reorder-proposals/specs"
+  },
+  "components": {
+    "schemas": {
+      "FrameworkAgreement": {
+        "version": "0.2.0",
+        "properties": {
+          "agreedPrices": {
+            "type": "array",
+            "description": "The prices agreed with the supplier, one per product. A purchase order line for a product listed here takes the agreed unit price, whatever price the buyer typed (REQ-PG-005).",
+            "items": {
+              "type": "object",
+              "required": [
+                "productCode",
+                "unitAmount"
+              ],
+              "properties": {
+                "productCode": {
+                  "type": "string",
+                  "description": "Product code as the purchase order line carries it.",
+                  "example": "PAPER-A4-BOX",
+                  "title": "Product Code"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "What the product is, for the buyer.",
+                  "example": "Box of A4 paper",
+                  "title": "Description"
+                },
+                "unitAmount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Agreed price per unit, in integer euro cents.",
+                  "example": 4200,
+                  "title": "Agreed Unit Amount (cents)"
+                }
+              }
+            },
+            "title": "Agreed Prices"
+          }
+        }
+      },
+      "ReorderProposal": {
+        "slug": "ReorderProposal",
+        "icon": "CartArrowDown",
+        "version": "0.1.0",
+        "title": "Reorder Proposal",
+        "description": "Low-stock alert raised by ReorderProposalJob for an active InventoryReorderRule whose stock is at or below its reorder point, with the draft PurchaseOrder it proposes for the reorder quantity with the rule's preferred supplier. At most one open proposal per rule; the job resolves it once the stock is back above the reorder point.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md",
+        "type": "object",
+        "required": [
+          "reorderRuleId",
+          "inventoryStockId",
+          "quantityOnHand",
+          "reorderPoint",
+          "reorderQuantity",
+          "statusCode",
+          "administrationId"
+        ],
+        "properties": {
+          "reorderRuleId": {
+            "type": "string",
+            "description": "FK to the InventoryReorderRule that raised the proposal.",
+            "title": "Reorder Rule"
+          },
+          "inventoryStockId": {
+            "type": "string",
+            "description": "FK to the InventoryStock record (item and location) that ran low.",
+            "title": "Inventory Stock"
+          },
+          "productId": {
+            "type": "string",
+            "description": "Product of the stock record, copied for the list.",
+            "title": "Product"
+          },
+          "locationCode": {
+            "type": "string",
+            "description": "Location of the stock record, copied for the list.",
+            "title": "Location"
+          },
+          "quantityOnHand": {
+            "type": "number",
+            "description": "Stock on hand when the proposal was raised.",
+            "title": "Quantity On Hand"
+          },
+          "reorderPoint": {
+            "type": "number",
+            "description": "The rule's reorder point when the proposal was raised.",
+            "title": "Reorder Point"
+          },
+          "reorderQuantity": {
+            "type": "number",
+            "description": "Quantity proposed, the rule's reorder quantity.",
+            "title": "Reorder Quantity"
+          },
+          "supplierId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The rule's preferred supplier. Without one no draft purchase order is proposed; the alert stands alone.",
+            "title": "Supplier"
+          },
+          "purchaseOrderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the draft PurchaseOrder proposed for the buyer.",
+            "title": "Purchase Order"
+          },
+          "raisedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the job raised the proposal.",
+            "title": "Raised At"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the job saw the stock back above the reorder point.",
+            "title": "Resolved At"
+          },
+          "statusCode": {
+            "type": "string",
+            "enum": [
+              "open",
+              "resolved",
+              "dismissed"
+            ],
+            "default": "open",
+            "description": "Proposal lifecycle status.",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Administration (tenant) scope, the rule's own.",
+            "title": "Administration"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Stock is at or below the reorder point; the draft purchase order waits for the buyer."
+            },
+            "resolved": {
+              "label": "Resolved",
+              "description": "Stock is back above the reorder point (terminal)."
+            },
+            "dismissed": {
+              "label": "Dismissed",
+              "description": "The buyer set the proposal aside (terminal)."
+            }
+          },
+          "transitions": {
+            "resolve": {
+              "from": "open",
+              "to": "resolved",
+              "label": "Resolve",
+              "description": "Stock is back above the reorder point."
+            },
+            "dismiss": {
+              "from": "open",
+              "to": "dismissed",
+              "label": "Dismiss",
+              "description": "Set the proposal aside without ordering."
+            }
+          }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_procurement",
+            "shillinq_procurement_officer"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_procurement",
+            "shillinq_procurement_officer",
+            "shillinq_inventory_viewer"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_procurement",
+            "shillinq_procurement_officer"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
+        }
+      }
+    }
+  },
+  "objects": []
+}

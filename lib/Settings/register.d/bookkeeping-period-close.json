@@ -11,7 +11,7 @@
       "FiscalPeriod": {
         "slug": "FiscalPeriod",
         "icon": "CalendarLock",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "title": "Fiscal Period",
         "description": "An accounting period with lifecycle state, close audit-trail, and task checklist for guided month-end / quarter-end close workflows. The open → closing → closed → audit-locked lifecycle freezes the period for audit; postings against a closed or audit-locked period are rejected by the GLTransaction.post precondition. Canonical fleet schema referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas (per add-shillinq-period-close).",
         "x-schema-org": "schema:DateRange",
@@ -170,10 +170,13 @@
                     "ap",
                     "ar",
                     "bank",
-                    "expense-claims"
+                    "expense-claims",
+                    "vat",
+                    "accruals",
+                    "other"
                   ],
                   "title": "Category",
-                  "description": "The date and time for category."
+                  "description": "What the item is about: accounts payable, accounts receivable, bank, expense claims, VAT, accruals, or other."
                 },
                 "description": {
                   "type": "string",
@@ -278,6 +281,13 @@
               "description": "Begin the guided close for this period. Requires the period-closer role.",
               "roles": [
                 "period-closer"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\InstantiateCloseChecklistAction",
+                  "description": "When taskChecklistItems is empty, copy the tasks of the close checklist template for the administration's legal form into it, each unresolved (ledger-period-end REQ-LPE-001). Later template edits do not change the period's items."
+                }
               ]
             },
             "close": {

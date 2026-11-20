@@ -94,7 +94,7 @@ final class PipelinqContactAdapterTransportCasesTest extends TestCase {
 			static function (string $app, string $key, string $default = '') use ($endpoint, $token): string {
 				return match ($key) {
 					PipelinqContactAdapter::CONFIG_KEY_ENDPOINT => $endpoint,
-					PipelinqContactAdapter::CONFIG_KEY_TOKEN => $token,
+					PipelinqContactAdapter::CONFIG_KEY_BEARER => $token,
 					default => $default,
 				};
 			}

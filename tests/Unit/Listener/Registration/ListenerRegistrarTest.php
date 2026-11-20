@@ -38,7 +38,9 @@ use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
+use OCA\Shillinq\Listener\AccountDeductibleShareListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\VatTariffStatutoryLockListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\InvestmentAssetListener;
@@ -272,6 +274,21 @@ final class ListenerRegistrarTest extends TestCase {
 		self::assertContains([ObjectUpdatingEvent::class, FeeScheduleValidationListener::class], $this->listeners);
 
 	}//end testFeeScheduleValidationIsRegisteredOnBothPreSaveEvents()
+
+	/**
+	 * The account deductible-share rule runs on both pre-save events (REQ-TVRD-003).
+	 *
+	 * @return void
+	 */
+	public function testAccountDeductibleShareRuleIsRegisteredOnBothPreSaveEvents(): void {
+		(new ListenerRegistrar())->register($this->recordingContext());
+
+		self::assertContains([ObjectCreatingEvent::class, AccountDeductibleShareListener::class], $this->listeners);
+		self::assertContains([ObjectUpdatingEvent::class, AccountDeductibleShareListener::class], $this->listeners);
+		self::assertContains([ObjectCreatingEvent::class, VatTariffStatutoryLockListener::class], $this->listeners);
+		self::assertContains([ObjectUpdatingEvent::class, VatTariffStatutoryLockListener::class], $this->listeners);
+
+	}//end testAccountDeductibleShareRuleIsRegisteredOnBothPreSaveEvents()
 
 	/**
 	 * The extraction listener hears the event under every app namespace filinq has had.

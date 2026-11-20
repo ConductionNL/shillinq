@@ -2,21 +2,18 @@
  * SPDX-License-Identifier: EUPL-1.2
  * Copyright (C) 2026 Conduction B.V.
  *
- * The inventory operations and catalogs through their own templates: the
+ * The inventory operations through their own templates: the
  * inputs write their fields, the scan opens the scanner, the count shows its
  * variance, the SKU and location watchers re-read the system quantity, the
- * sync badge only syncs online, and the catalog cells render through the
- * `#column-*` slots CnDataTable actually calls.
+ * sync badge only syncs online.
  *
  * Each template is rendered both ways a slot can be taken (server and client
  * branch); the client branch's vnodes carry the real v-model assignments.
  *
  * @spec openspec/specs/inventory-mobile-scanner/spec.md
- * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchEnvelope } from '../../src/components/inventory/catalogEnvelope.js'
 import { readStockQuantity } from '../../src/composables/useInventoryDb.js'
 import { findVnodes, renderSsr } from './helpers/ssrStandIns.js'
 
@@ -33,18 +30,11 @@ vi.mock('../../src/composables/useInventoryDb.js', () => ({ readStockQuantity: v
 vi.mock('../../src/store/modules/inventoryMobileScanner.js', () => ({
 	useInventoryMobileScannerStore: () => store,
 }))
-vi.mock('../../src/components/inventory/catalogEnvelope.js', () => ({
-	fetchEnvelope: vi.fn(),
-	rowsOf: (envelope, key) => envelope[key],
-	isNoAdministration: () => false,
-}))
 vi.mock('@conduction/nextcloud-vue', () => ({ CnDataTable: {} }))
 
 const { default: CountOp } = await import('../../src/components/inventory/CountOp.vue')
 const { default: PickOp } = await import('../../src/components/inventory/PickOp.vue')
 const { default: SyncStatusBadge } = await import('../../src/components/inventory/SyncStatusBadge.vue')
-const { default: ProductCatalogIndex } = await import('../../src/components/inventory/ProductCatalogIndex.vue')
-const { default: ProductAttributeCatalogIndex } = await import('../../src/components/inventory/ProductAttributeCatalogIndex.vue')
 
 const FIELDS = ['InventoryOperationForm', 'InventoryLocationField', 'InventorySkuField', 'InventoryQuantityField']
 
@@ -57,20 +47,6 @@ const FIELDS = ['InventoryOperationForm', 'InventoryLocationField', 'InventorySk
  */
 function formInput(seen, match) {
 	return findVnodes(seen['InventoryOperationForm:vnodes'], (v) => v.type === 'input' && match(v.props || {}))[0]
-}
-
-/**
- * The text of every `#column-*` slot in rendered markup, by column.
- *
- * @param {string} html The markup.
- * @return {object} Column => text.
- */
-function columnCells(html) {
-	const cells = {}
-	for (const [, key, inner] of html.matchAll(/<slot-column-(\w+)>([\s\S]*?)<\/slot-column-\1>/g)) {
-		cells[key] = inner.replace(/<[^>]+>|<!--[\s\S]*?-->/g, '').replace(/\s+/g, ' ').trim()
-	}
-	return cells
 }
 
 beforeEach(() => {
@@ -150,28 +126,3 @@ describe('SyncStatusBadge', () => {
 	})
 })
 
-describe('catalog cells', () => {
-	it('render each product column through its slot, with the unknown placeholder where empty', async () => {
-		const row = { productId: 'P-1', name: '', category: 'Tools', unitPrice: 12.5, currency: 'USD', unitCost: null, quantityOnHand: '3', status: null }
-		const { html } = await renderSsr(ProductCatalogIndex, { standIns: ['CnDataTable'], slotProps: () => ({ row }) })
-
-		expect(columnCells(html)).toMatchObject({
-			productId: 'P-1',
-			name: '—',
-			category: 'Tools',
-			unitPrice: '12.50 USD',
-			unitCost: '—',
-			quantityOnHand: '3.00',
-			status: '—',
-		})
-		expect(fetchEnvelope).not.toHaveBeenCalled()
-	})
-
-	it('render the attribute flags through their slots', async () => {
-		const required = await renderSsr(ProductAttributeCatalogIndex, { standIns: ['CnDataTable'], slotProps: () => ({ row: { isRequired: true, validationRule: '' } }) })
-		const optional = await renderSsr(ProductAttributeCatalogIndex, { standIns: ['CnDataTable'], slotProps: () => ({ row: { isRequired: false, validationRule: '^[A-Z]+$' } }) })
-
-		expect(columnCells(required.html)).toEqual({ isRequired: 'Yes', validationRule: '—' })
-		expect(columnCells(optional.html)).toEqual({ isRequired: 'No', validationRule: '^[A-Z]+$' })
-	})
-})

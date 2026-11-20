@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -403,12 +404,27 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 			}
 		);
 
+		// The declared `send` transition, as the lifecycle engine runs it.
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use ($stub): void {
+				$stub->mutate(
+					'PurchaseOrder',
+					$objectId,
+					static function (array &$row) use ($action): void {
+						$row['statusCode'] = ($action === 'send' ? 'sent' : $row['statusCode']);
+					}
+				);
+			}
+		);
+
 		return new PurchaseOrderService(
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			notificationManager: $manager,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			transitionRunner: $runner,
 		);
 
 	}//end buildService()

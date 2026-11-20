@@ -43,10 +43,19 @@
  *   - APInvoice: debit each line's account, debit input VAT for `taxAmount`,
  *     credit the payables control account for `totalAmount`.
  *
- * ExpenseClaimEntry declares this action too. Its mapper needs the
- * ExpenseAccountResolver of expenses-category-mapping (task 3.2 there), so
- * until that change lands the declaration is refused by name. The
- * InventoryValuation declarations were removed: sale dispatch is booked per
+ *   - ExpenseClaimEntry: ExpenseClaimPosting debits each receipt, mileage and
+ *     per diem line on the account ExpenseAccountResolver answers and credits
+ *     the expense payable account; a line without an account refuses the post,
+ *     naming the line (expenses-category-mapping REQ-ECM-003). A pass-through
+ *     claim is left to its own declaration, which is refused: it has no
+ *     mapper yet.
+ *
+ * A cost line whose deductible percentage (the line's, else its account's)
+ * is below 100 posts in two parts: the deductible share with its input VAT,
+ * and the private share plus the VAT on it to the account's private-share
+ * account, marked nonDeductible (DeductibleShareSplitter, REQ-TVRD-004).
+ *
+ * The InventoryValuation declarations were removed: sale dispatch is booked per
  * stock move by CogsPosterService, and a running valuation snapshot cannot
  * key one posting per event.
  *
@@ -69,7 +78,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
-use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -79,6 +87,8 @@ use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
+use OCA\Shillinq\Service\ExpenseAccountResolver;
+use OCA\Shillinq\Service\Ledger\DeductibleShareSplitter;
 use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Support\RegisterSlug;
@@ -149,7 +159,14 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @var list<string>
 	 */
-	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction'];
+	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction', 'ExpenseClaimEntry'];
+
+	/**
+	 * The settlement mode whose claims this handler does not post.
+	 *
+	 * @var string
+	 */
+	private const PASS_THROUGH = 'pass-through';
 
 	/**
 	 * The dimension codes a source line hands on to its GL line, under the GL line's own names.
@@ -204,6 +221,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param IUserSession|null $userSession The posting user, for the audit trail; none outside a session.
 	 * @param FxAtBookingResolver|null $fxResolver The booking-date rate lookup; built on first use when not injected.
+	 * @param ExpenseAccountResolver|null $expenseAccounts The account of each expense claim line; an expense claim is refused without it.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -211,6 +229,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		private readonly LoggerInterface $logger,
 		private readonly ?IUserSession $userSession = null,
 		private ?FxAtBookingResolver $fxResolver = null,
+		private readonly ?ExpenseAccountResolver $expenseAccounts = null,
 	) {
 	}//end __construct()
 
@@ -242,8 +261,17 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			);
 		}
 
-		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
+		if ($sourceSchema === 'ExpenseClaimEntry' && $this->postsClaim(claim: $objectData, parameters: $parameters) === false) {
 			return $objectData;
+		}
+
+		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
+			return $this->withBackReference(
+				schema: $sourceSchema,
+				source: $objectData,
+				parameters: $parameters,
+				transactionId: (string)$objectData['glTransactionId']
+			);
 		}
 
 		$sourceId = (string)($objectData['id'] ?? ($objectData['@self']['id'] ?? ''));
@@ -255,12 +283,13 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$existing = $this->findExistingTransaction(sourceReference: $sourceReference);
 		if ($existing !== '') {
 			$objectData['glTransactionId'] = $existing;
-			return $objectData;
+			return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $existing);
 		}
 
 		$posting = match ($sourceSchema) {
 			'JournalEntry' => $this->mapJournalEntry(entry: $objectData, sourceId: $sourceId),
 			'ARInvoice' => $this->mapArInvoice(invoice: $objectData, sourceId: $sourceId),
+			'ExpenseClaimEntry' => $this->expenseClaimPosting()->map(claim: $objectData, sourceId: $sourceId),
 			default => $this->mapApInvoice(invoice: $objectData, sourceId: $sourceId),
 		};
 		$lines = $this->normaliseLines(lines: $posting['lines']);
@@ -286,11 +315,90 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$header = $booked['header'];
 
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
-		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
+		$header = (new PostingStamps())->applyNow(transaction: $header, user: $this->actor());
 
 		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
-		return $objectData;
+		return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $objectData['glTransactionId']);
 	}//end execute()
+
+	/**
+	 * Whether this declaration posts the claim. A claim's settlement mode
+	 * picks its declaration: a reimbursable claim (or one without a mode) is
+	 * posted by the declaration without a mode and the reimbursable one, the
+	 * second finding the first's transaction; a pass-through claim only by
+	 * the pass-through declaration, which is refused because no mapper books
+	 * it yet.
+	 *
+	 * @param array<string,mixed> $claim      The ExpenseClaimEntry.
+	 * @param array<string,mixed> $parameters The declared actionParameters.
+	 *
+	 * @return bool
+	 *
+	 * @throws RuntimeException For a pass-through claim on the pass-through declaration.
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function postsClaim(array $claim, array $parameters): bool {
+		$claimIsPassThrough = ((string)($claim['settlementMode'] ?? '') === self::PASS_THROUGH);
+		$declaredPassThrough = ((string)($parameters['settlementMode'] ?? '') === self::PASS_THROUGH);
+		if ($claimIsPassThrough !== $declaredPassThrough) {
+			return false;
+		}
+
+		if ($claimIsPassThrough === true) {
+			throw new RuntimeException('A pass-through expense claim cannot be posted to the ledger yet: no posting is defined for it.');
+		}
+
+		return true;
+	}//end postsClaim()
+
+	/**
+	 * The source with the declared `backReferenceField` set as well. Only an
+	 * expense claim honours it: the other sources keep their existing shape.
+	 *
+	 * @param string              $schema        The source schema.
+	 * @param array<string,mixed> $source        The source.
+	 * @param array<string,mixed> $parameters    The declared actionParameters.
+	 * @param string              $transactionId The GLTransaction id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function withBackReference(string $schema, array $source, array $parameters, string $transactionId): array {
+		if ($schema !== 'ExpenseClaimEntry') {
+			return $source;
+		}
+
+		$field = (string)($parameters['backReferenceField'] ?? '');
+		if ($field !== '' && $field !== 'glTransactionId') {
+			$source[$field] = $transactionId;
+		}
+
+		return $source;
+	}//end withBackReference()
+
+	/**
+	 * The expense claim mapper over the resolver.
+	 *
+	 * @return ExpenseClaimPosting
+	 *
+	 * @throws RuntimeException When no resolver was injected.
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function expenseClaimPosting(): ExpenseClaimPosting {
+		if ($this->expenseAccounts === null) {
+			throw new RuntimeException('An expense claim cannot be posted: no expense account resolver is available.');
+		}
+
+		return new ExpenseClaimPosting(
+			objectService: $this->objectService,
+			register: $this->register(),
+			accounts: $this->expenseAccounts,
+			inputVatAccount: $this->account(key: self::CFG_INPUT_VAT_ACCOUNT)
+		);
+	}//end expenseClaimPosting()
 
 	/**
 	 * JournalEntry: its `lines` already carry account, side and amount.
@@ -301,7 +409,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @return array{header: array<string,mixed>, lines: list<array<string,mixed>>}
 	 */
 	private function mapJournalEntry(array $entry, string $sourceId): array {
-		$lines = [];
+		$lines  = [];
+		$shares = new DeductibleShareSplitter(
+			objectService: $this->objectService,
+			register: $this->register(),
+			administrationId: (string)($entry['administrationId'] ?? '')
+		);
 		foreach ((array)($entry['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A journal entry line is not an object.');
@@ -323,7 +436,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			}
 
 			// A rate typed on the line wins over the booking-date rate (REQ-BFX-003).
-			$lines[] = array_merge($mapped, self::typedRateFields(line: $line));
+			$mapped = array_merge($mapped, self::typedRateFields(line: $line));
+			array_push($lines, ...$this->splitJournalLine(mapped: $mapped, line: $line, shares: $shares));
 		}//end foreach
 
 		return [
@@ -337,6 +451,50 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			'lines' => $lines,
 		];
 	}//end mapJournalEntry()
+
+	/**
+	 * A journal line on a partly deductible account, in its deductible and
+	 * private shares (REQ-TVRD-004). With a `taxCode` the VAT on the private
+	 * share moves from the input VAT account to the private-share account;
+	 * without one the line's own amount is split and the entry's VAT lines
+	 * are left as entered.
+	 *
+	 * @param array<string,mixed>     $mapped The mapped posting line.
+	 * @param array<string,mixed>     $line   The journal entry line.
+	 * @param DeductibleShareSplitter $shares The administration's deductible shares.
+	 *
+	 * @return list<array<string,mixed>> The posting lines; the mapped line alone at 100 percent.
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.2
+	 */
+	private function splitJournalLine(array $mapped, array $line, DeductibleShareSplitter $shares): array {
+		$percentage = $shares->percentage(line: $line);
+		if ($percentage >= DeductibleShareSplitter::FULL) {
+			return [$mapped];
+		}
+
+		$vat      = $this->vatStamper();
+		$code     = $vat->purchaseTariff(line: $line);
+		$vatCents = null;
+		if ($code !== '' && $vat->isReverseCharge(code: $code) === false) {
+			$vatCents = $vat->vatCents(baseCents: (int)$mapped['cents'], rate: $vat->ratePercentage(code: $code));
+		}
+
+		$split = $shares->split(costLine: $mapped, percentage: $percentage, vatCents: $vatCents);
+		$out   = $split['lines'];
+		if ($split['privateVat'] !== 0) {
+			$out[] = [
+				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
+				'side' => self::OPPOSITE_SIDE[(string)$mapped['side']] ?? 'credit',
+				'cents' => $split['privateVat'],
+				'description' => (string)$mapped['description'] . ' VAT not deductible',
+			] + $vat->stamp(code: $code, kind: 'vat', purchase: true);
+		}
+
+		// The shares keep the line's dimensions and typed rate.
+		$carried = array_intersect_key($mapped, array_flip(self::LINE_DIMENSIONS)) + self::typedRateFields(line: $line);
+		return array_map(static fn (array $posting): array => $posting + $carried, $out);
+	}//end splitJournalLine()
 
 	/**
 	 * ARInvoice: receivables against revenue and output VAT (REQ-LPP-007).
@@ -452,41 +610,43 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines   = [];
-		$vat     = $this->vatStamper();
-		$groups  = [];
-		$reverse = [];
+		$lines      = [];
+		$vat        = $this->vatStamper();
+		$shares     = new DeductibleShareSplitter(
+			objectService: $this->objectService,
+			register: $this->register(),
+			administrationId: (string)($invoice['administrationId'] ?? '')
+		);
+		$groups     = [];
+		$reverse    = [];
+		$privateVat = 0;
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
 			}
 
-			$code    = $vat->purchaseTariff(line: $line);
-			$cents   = $this->cents(amount: ($line['amount'] ?? 0));
-			$lines[] = [
-				'accountNumber' => (string)($line['accountNumber'] ?? ''),
-				'side' => 'debit',
-				'cents' => $cents,
-				'description' => (string)($line['description'] ?? $label),
-			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
+			['code' => $code, 'cents' => $cents, 'split' => $split] = $this->apCostLine(line: $line, label: $label, shares: $shares);
+			$isReverse = $vat->isReverseCharge(code: $code);
+			array_push($lines, ...$split['lines']);
+			$privateVat += $split['privateVat'];
 
-			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it.
-			if ($vat->isReverseCharge(code: $code) === true) {
-				$reverse[$code] = (($reverse[$code] ?? 0) + $cents);
+			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it:
+			// the buyer self-assesses it at the line's own rate, else the general rate (design D1).
+			if ($isReverse === true) {
+				$rate = $vat->selfAssessedRate(line: $line);
+				if ($rate !== null) {
+					$reverse[$code] = (($reverse[$code] ?? 0.0) + (float)$vat->vatCents(baseCents: $cents, rate: $rate));
+				}
 			}
 
-			if ($vat->isReverseCharge(code: $code) === false) {
-				$groups = $this->addToVatGroup(
-					groups: $groups,
-					code: $code,
-					baseCents: $cents,
-					vatCents: $vat->vatCents(baseCents: $cents, rate: $vat->ratePercentage(code: $code))
-				);
+			if ($isReverse === false) {
+				$groups = $this->addToVatGroup(groups: $groups, code: $code, baseCents: $split['base'], vatCents: $split['vat']);
 			}
 		}//end foreach
 
-		// Input VAT per tariff, in box 5b (REQ-VBTW-004).
-		foreach ($vat->splitVat(groups: $groups, totalCents: $this->cents(amount: ($invoice['taxAmount'] ?? 0))) as $code => $cents) {
+		// Input VAT per tariff, in box 5b (REQ-VBTW-004), less the VAT booked on private shares.
+		$inputVat = ($this->cents(amount: ($invoice['taxAmount'] ?? 0)) - $privateVat);
+		foreach ($vat->splitVat(groups: $groups, totalCents: $inputVat) as $code => $cents) {
 			$lines[] = [
 				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
 				'side' => 'debit',
@@ -517,29 +677,61 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	}//end mapApInvoice()
 
 	/**
+	 * One purchase invoice cost line, split in its deductible share with its
+	 * input VAT and, below 100 percent, the private share plus the VAT on it
+	 * (REQ-TVRD-004). A reverse-charged line carries no VAT to split.
+	 *
+	 * @param array<string,mixed>     $line   The purchase invoice line.
+	 * @param string                  $label  The document label.
+	 * @param DeductibleShareSplitter $shares The administration's deductible shares.
+	 *
+	 * @return array{code: string, cents: int, split: array<string,mixed>}
+	 */
+	private function apCostLine(array $line, string $label, DeductibleShareSplitter $shares): array {
+		$vat      = $this->vatStamper();
+		$code     = $vat->purchaseTariff(line: $line);
+		$cents    = $this->cents(amount: ($line['amount'] ?? 0));
+		$vatCents = null;
+		if ($vat->isReverseCharge(code: $code) === false) {
+			$vatCents = $vat->vatCents(baseCents: $cents, rate: $vat->ratePercentage(code: $code));
+		}
+
+		$split = $shares->split(
+			costLine: [
+				'accountNumber' => (string)($line['accountNumber'] ?? ''),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => (string)($line['description'] ?? $label),
+			] + $vat->stamp(code: $code, kind: 'base', purchase: true),
+			percentage: $shares->percentage(line: $line),
+			vatCents: $vatCents
+		);
+
+		return ['code' => $code, 'cents' => $cents, 'split' => $split];
+
+	}//end apCostLine()
+
+	/**
 	 * The VAT a supplier did not charge on a reverse-charged purchase, booked
 	 * twice per tariff: deducted in 5b and owed in the tariff's own box (2a,
 	 * 4a or 4b), so the net is nil and the return shows both (REQ-VBTW-004,
-	 * design D1). Without a rate to book it at, nothing is booked and the
-	 * return's reverse-charge check names the purchase.
+	 * design D1). The rate is the line's own, else the general rate
+	 * ({@see VatLineStamper::selfAssessedRate()}); without a rate to book it
+	 * at, nothing is booked and the return's reverse-charge check names the
+	 * purchase.
 	 *
-	 * @param array<string,int> $reverse The reverse-charged base in cents per tariff code.
-	 * @param string            $label   The document label.
+	 * @param array<string,float> $reverse The unrounded self-assessed VAT in cents per tariff code.
+	 * @param string              $label   The document label.
 	 *
 	 * @return list<array<string,mixed>>
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
 	 */
 	private function reverseChargePair(array $reverse, string $label): array {
-		$vat  = $this->vatStamper();
-		$rate = $vat->reverseChargeRate();
-		if ($rate === null) {
-			return [];
-		}
-
+		$vat   = $this->vatStamper();
 		$lines = [];
-		foreach ($reverse as $code => $baseCents) {
-			$cents = (int)round((float)$vat->vatCents(baseCents: $baseCents, rate: $rate));
+		foreach ($reverse as $code => $unrounded) {
+			$cents = (int)round($unrounded);
 			if ($cents === 0) {
 				continue;
 			}
@@ -1012,7 +1204,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 					}
 				}
 
-				foreach (['vatTariffCode', 'vatReturnBox', 'vatAmountKind'] as $vatField) {
+				foreach (['vatTariffCode', 'vatReturnBox', 'vatAmountKind', 'taxTreatment'] as $vatField) {
 					if (isset($line[$vatField]) === true) {
 						$row[$vatField] = (string)$line[$vatField];
 					}

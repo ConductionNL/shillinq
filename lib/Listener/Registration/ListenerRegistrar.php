@@ -26,6 +26,7 @@ use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
@@ -37,10 +38,14 @@ use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
+use OCA\Shillinq\Listener\ExpenseCategoryAccountListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
+use OCA\Shillinq\Listener\AccountDeductibleShareListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\PaymentBlockLockListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
+use OCA\Shillinq\Listener\GLTransactionSealListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
@@ -48,6 +53,7 @@ use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\InvestmentAssetListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Listener\ChartTemplateVersionListener;
+use OCA\Shillinq\Listener\InvoiceNumberLockListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OfferHelperAgentTemplate;
@@ -63,6 +69,7 @@ use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
+use OCA\Shillinq\Listener\VatTariffStatutoryLockListener;
 use OCA\Shillinq\Support\FleetAppId;
 use OCA\Shillinq\PaymentRun\PaymentRunLockRegistration;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -175,6 +182,13 @@ final class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: ReconciliationMatchSettlementListener::class
+		);
+
+		// Ledger-sealed-entries REQ-LSE-001: a posted GLTransaction is sealed
+		// into its administration's chain, under a lock per administration.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: GLTransactionSealListener::class
 		);
 
 		// Planning-commitment-year-end REQ-PCYE-002/003: an approved supplier
@@ -341,21 +355,38 @@ final class ListenerRegistrar {
 
 		(new PurchasingControlsRegistration())->register(context: $context);
 
+		// An assigned AR invoice number cannot be changed (sales-invoice-issue-controls REQ-SIIC-002).
+		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: InvoiceNumberLockListener::class);
+
 		(new PaymentControlsRegistration())->register(context: $context);
 
 		(new ReportingRegistration())->register(context: $context);
 
 		(new FieldRequirementRegistration())->register(context: $context);
 
-		// REQ-SOPR-006 fee-schedule rules on the write path. No controller in
-		// this app writes a FeeSchedule: they go straight into OpenRegister, so
-		// the pre-save veto is the only place the overlap, legal-basis and
-		// default-amount rules can run at all. Until this listener existed
-		// FeeScheduleService::assertNoOverlap() had tests and no caller.
-		self::registerPreSave(context: $context, listener: FeeScheduleValidationListener::class);
+		// Pre-save vetoes for records that go straight into OpenRegister:
+		// fee schedules, deductible accounts and statutory VAT tariffs.
+		self::registerPreSaveVetoes(context: $context);
 
 		// An approved payment run is immutable; approval stamps the digest the export checks.
 		(new PaymentRunLockRegistration())->register(context: $context);
+
+		// REQ-ECM-001: an expense category is refused on save when its account
+		// is not an expense account of its administration's chart. Categories
+		// are written straight into OpenRegister, so the pre-save veto is the
+		// only place the rule can run.
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: ExpenseCategoryAccountListener::class
+			);
+		}
+
+		// Payment block fields change only through the block endpoint.
+		$context->registerEventListener(
+			event: 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent',
+			listener: PaymentBlockLockListener::class
+		);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -458,6 +489,27 @@ final class ListenerRegistrar {
 
 		(new BbvValidationRegistration())->register(context: $context);
 	}//end register()
+
+	/**
+	 * The pre-save vetoes of records that go straight into OpenRegister, so
+	 * the veto is the only place their rules can run:
+	 *  - REQ-SOPR-006 fee-schedule rules: the overlap, legal-basis and
+	 *    default-amount rules (until this listener existed
+	 *    FeeScheduleService::assertNoOverlap() had tests and no caller);
+	 *  - REQ-TVRD-003: an account below 100 percent deductible names a
+	 *    private-share account;
+	 *  - REQ-TVRD-001: a person cannot change a statutory VAT tariff.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 */
+	private static function registerPreSaveVetoes(IRegistrationContext $context): void {
+		self::registerPreSave(context: $context, listener: FeeScheduleValidationListener::class);
+		self::registerPreSave(context: $context, listener: AccountDeductibleShareListener::class);
+		self::registerPreSave(context: $context, listener: VatTariffStatutoryLockListener::class);
+
+	}//end registerPreSaveVetoes()
 
 	/**
 	 * Register a listener on OpenRegister's two pre-save events, create first, then update.

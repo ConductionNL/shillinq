@@ -60,6 +60,28 @@ interface PurchaseOrderServiceInterface {
 	public function markSent(string $administrationId, string $purchaseOrderId): array;
 
 	/**
+	 * Which dispatch channels can take an order, and why one cannot.
+	 *
+	 * @return array{peppol: array{available: bool, reason: string|null}, email: array{available: bool, reason: string|null}}
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 */
+	public function dispatchChannels(): array;
+
+	/**
+	 * Apply integriq's Peppol delivery status to the purchase order it names (REQ-PODR-001).
+	 *
+	 * @param string $purchaseOrderId The order's id.
+	 * @param string $status          integriq's delivery status.
+	 * @param string $detail          integriq's reason, for a failure.
+	 *
+	 * @return bool True when the order changed.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
+	 */
+	public function applyPeppolDeliveryStatus(string $purchaseOrderId, string $status, string $detail): bool;
+
+	/**
 	 * Create a purchase order in draft, routed to its approvers (REQ-PO3W-001).
 	 *
 	 * Server-authoritative:

@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -49,6 +50,13 @@ use Psr\Log\LoggerInterface;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class PurchaseOrderServiceTest extends TestCase {
+
+	/**
+	 * The transitions the lifecycle runner was asked for: [objectId, action].
+	 *
+	 * @var array<int, array{0: string, 1: string}>
+	 */
+	private array $transitions = [];
 
 	/**
 	 * Mock ContainerInterface.
@@ -280,11 +288,37 @@ final class PurchaseOrderServiceTest extends TestCase {
 					$object['id'] = 'obj-' . $this->idCounter;
 				}
 
-				// Also reflect into $this->data so subsequent findAll sees the row.
+				// Also reflect into $this->data so subsequent findAll sees the row;
+				// a save of an existing id replaces it, as the store does.
+				foreach (($this->data[$this->schema] ?? []) as $index => $row) {
+					if (($row['id'] ?? null) === $object['id']) {
+						$this->data[$this->schema][$index] = $object;
+						$this->saved[] = ['schema' => $this->schema, 'object' => $object];
+						return $object;
+					}
+				}
+
 				$this->data[$this->schema][] = $object;
 				$this->saved[] = ['schema' => $this->schema, 'object' => $object];
 				return $object;
 			}//end saveObject()
+
+			/**
+			 * What a run of the declared `send` transition leaves in the store.
+			 *
+			 * @param string $schema The schema.
+			 * @param string $id     The object id.
+			 * @param string $state  The state the transition leads to.
+			 *
+			 * @return void
+			 */
+			public function moveTo(string $schema, string $id, string $state): void {
+				foreach (($this->data[$schema] ?? []) as $index => $row) {
+					if (($row['id'] ?? null) === $id) {
+						$this->data[$schema][$index]['statusCode'] = $state;
+					}
+				}
+			}//end moveTo()
 		};
 
 		$container = $this->createMock(ContainerInterface::class);
@@ -301,12 +335,22 @@ final class PurchaseOrderServiceTest extends TestCase {
 
 		$notificationManager = $this->notificationManagerCapturing($notifications);
 
+		// The declared `send` transition, as the lifecycle engine runs it.
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			function (string $objectId, string $action) use ($stub): void {
+				$this->transitions[] = [$objectId, $action];
+				$stub->moveTo(schema: 'PurchaseOrder', id: $objectId, state: 'sent');
+			}
+		);
+
 		return new PurchaseOrderService(
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			notificationManager: $notificationManager,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			transitionRunner: $runner,
 		);
 
 	}//end buildService()
@@ -562,7 +606,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		$notifications = [];
 		$data          = [
 			'AdministrationMembership' => [['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'tl-1']],
-			'FrameworkAgreement' => [['id' => 'fa-1', 'administrationId' => 'adm-1', 'agreementNumber' => 'FA-1', 'statusCode' => 'active', 'ceilingAmount' => 100000, 'drawnAmount' => 500]],
+			'FrameworkAgreement' => [['id' => 'fa-1', 'administrationId' => 'adm-1', 'agreementNumber' => 'FA-1', 'supplierId' => 'sup-1', 'statusCode' => 'active', 'ceilingAmount' => 100000, 'drawnAmount' => 500]],
 			'CostCenter' => [['administrationId' => 'adm-1', 'code' => 'FAC', 'budgetRemaining' => null]],
 		];
 		$service = $this->buildService(data: $data, saved: $saved, userId: 'inkoper-1', accessibleAdministrations: ['adm-1'], notifications: $notifications);
@@ -598,6 +642,130 @@ final class PurchaseOrderServiceTest extends TestCase {
 		self::assertSame(1303, $saved[2]['object']['drawnAmount']);
 
 	}//end testCreateStoresLinesAndDrawsDown()
+
+	/**
+	 * The paper agreement of the REQ-PG-005 scenario: EUR 42 per box, EUR 10,000
+	 * left under the ceiling.
+	 *
+	 * @param array<string,mixed> $overrides Fields to change.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function paperAgreement(array $overrides=[]): array {
+		return $overrides + [
+			'id' => 'fa-paper',
+			'administrationId' => 'adm-1',
+			'agreementNumber' => 'FA-PAPER',
+			'supplierId' => 'sup-1',
+			'statusCode' => 'active',
+			'ceilingAmount' => 1000000,
+			'drawnAmount' => 0,
+			'agreedPrices' => [
+				['productCode' => 'PAPER', 'description' => 'Box of A4 paper', 'unitAmount' => 4200],
+				['productCode' => '', 'unitAmount' => 1],
+				['productCode' => 'BROKEN', 'unitAmount' => 'n/a'],
+				'not-a-price',
+			],
+		];
+	}//end paperAgreement()
+
+	/**
+	 * A call-off takes the agreed price whatever the buyer typed, leaves a line
+	 * the agreement does not list at its own price, and counts the agreed total
+	 * against the ceiling: 20 boxes at EUR 42 leave EUR 9,160 (REQ-PG-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function testACallOffTakesTheAgreedPriceAndDrawsTheCeilingDown(): void {
+		$saved         = [];
+		$notifications = [];
+		$data          = [
+			'AdministrationMembership' => [['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'tl-1']],
+			'FrameworkAgreement' => [$this->paperAgreement()],
+		];
+		$service = $this->buildService(data: $data, saved: $saved, userId: 'inkoper-1', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+
+		$po = $service->createPurchaseOrder(
+			'adm-1',
+			[
+				'supplierId' => 'sup-1',
+				'costCenter' => 'FAC',
+				'frameworkAgreementId' => 'FA-PAPER',
+				'lines' => [['productCode' => 'PAPER', 'quantity' => 20, 'unitPrice' => 55.0, 'glAccount' => '4400']],
+			]
+		);
+
+		self::assertSame(
+			[['lineNumber' => 1, 'productCode' => 'PAPER', 'quantity' => 20.0, 'unitPrice' => 42.0, 'lineTotal' => 840.0, 'vatRate' => 0.0, 'vatAmount' => 0.0, 'glAccount' => '4400', 'agreedPrice' => true]],
+			$po['lines']
+		);
+		self::assertSame(840.0, $po['totalAmount']);
+		self::assertSame('FA-PAPER', $po['frameworkAgreementId']);
+		self::assertSame(['PurchaseOrder', 'ApprovalTask', 'FrameworkAgreement'], array_column($saved, 'schema'));
+		self::assertSame(84000, $saved[2]['object']['drawnAmount']);
+		self::assertSame(916000, ($saved[2]['object']['ceilingAmount'] - $saved[2]['object']['drawnAmount']));
+
+		$saved = [];
+		$mixed = $this->buildService(data: $data, saved: $saved, userId: 'inkoper-1', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+		$order = $mixed->createPurchaseOrder(
+			'adm-1',
+			[
+				'supplierId' => 'sup-1',
+				'costCenter' => 'FAC',
+				'frameworkAgreementId' => 'fa-paper',
+				'lines' => [
+					['productCode' => 'TONER', 'quantity' => 1, 'unitPrice' => 12.5, 'glAccount' => '4400'],
+					['productCode' => 'PAPER', 'quantity' => 2, 'unitPrice' => 0, 'glAccount' => '4400'],
+				],
+			]
+		);
+
+		self::assertArrayNotHasKey('agreedPrice', $order['lines'][0]);
+		self::assertSame([12.5, 42.0], array_column($order['lines'], 'unitPrice'));
+		self::assertSame(96.5, $order['totalAmount']);
+		self::assertSame(9650, $saved[2]['object']['drawnAmount']);
+	}//end testACallOffTakesTheAgreedPriceAndDrawsTheCeilingDown()
+
+	/**
+	 * A call-off is refused, and nothing is saved, when the agreement is with
+	 * another supplier, or when the agreed total passes the ceiling although
+	 * the typed price would have fitted.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function testACallOffIsRefusedForAnotherSupplierOrOverTheCeilingAtAgreedPrices(): void {
+		$cases = [
+			[$this->paperAgreement(['supplierId' => 'sup-OTHER']), 'Framework agreement is with another supplier.'],
+			[$this->paperAgreement(['ceilingAmount' => 90000, 'drawnAmount' => 10000]), 'Call-off exceeds the framework agreement ceiling.'],
+		];
+
+		foreach ($cases as [$agreement, $message]) {
+			$saved         = [];
+			$notifications = [];
+			$service       = $this->buildService(data: ['FrameworkAgreement' => [$agreement]], saved: $saved, userId: 'inkoper-1', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+			try {
+				$service->createPurchaseOrder(
+					'adm-1',
+					[
+						'supplierId' => 'sup-1',
+						'costCenter' => 'FAC',
+						'frameworkAgreementId' => 'FA-PAPER',
+						'lines' => [['productCode' => 'PAPER', 'quantity' => 20, 'unitPrice' => 1.0, 'glAccount' => '4400']],
+					]
+				);
+				self::fail('The call-off was accepted.');
+			} catch (\RuntimeException $e) {
+				self::assertSame($message, $e->getMessage());
+			}
+
+			self::assertSame([], $saved);
+			self::assertSame([], $notifications);
+		}
+	}//end testACallOffIsRefusedForAnotherSupplierOrOverTheCeilingAtAgreedPrices()
 	/**
 	 * blockSendUntilApproved refuses an inaccessible tenant, an unknown or
 	 * other-tenant order, an order without a chain and an unsigned chain, each
@@ -649,7 +817,10 @@ final class PurchaseOrderServiceTest extends TestCase {
 
 		self::assertSame('sent', $sent['statusCode']);
 		self::assertNotSame('', (string)$sent['sentAt']);
-		self::assertSame([['PurchaseOrder', 'po-ok', 'sent']], array_map(static fn (array $row): array => [$row['schema'], $row['object']['id'], $row['object']['statusCode']], $saved));
+		// The service saves the stamp with the state untouched and asks the
+		// lifecycle for `send`; it never writes `sent` itself (REQ-PODR-003).
+		self::assertSame([['PurchaseOrder', 'po-ok', 'approved']], array_map(static fn (array $row): array => [$row['schema'], $row['object']['id'], $row['object']['statusCode']], $saved));
+		self::assertSame([['po-ok', 'send']], $this->transitions);
 
 	}//end testSendGuardRefusalsAndTheSentSave()
 }//end class

@@ -111,7 +111,7 @@ final class PipelinqTimelineAuthHandlingTest extends TestCase {
 					return 'https://pipelinq.test';
 				}
 
-				if ($key === PipelinqContactAdapter::CONFIG_KEY_TOKEN) {
+				if ($key === PipelinqContactAdapter::CONFIG_KEY_BEARER) {
 					return 'SECRET-TOKEN-DO-NOT-LOG-9876';
 				}
 
@@ -306,7 +306,7 @@ final class PipelinqTimelineAuthHandlingTest extends TestCase {
 		self::assertStringContainsString('Invalid pipelinq API token', $errors[0]['message']);
 		self::assertSame(401, $errors[0]['context']['status']);
 		self::assertSame(
-			PipelinqContactAdapter::CONFIG_KEY_TOKEN,
+			PipelinqContactAdapter::CONFIG_KEY_BEARER,
 			$errors[0]['context']['configKey'],
 			'ADR-005: the alert names the config key, never the token value'
 		);
