@@ -205,6 +205,7 @@ import {
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
 	saveQuickDraftPrefs,
+	startingCustomerOption,
 } from './invoiceQuickDraft.js'
 
 const REGISTER_SLUG = 'shillinq'
@@ -217,6 +218,24 @@ export default {
 		open: {
 			type: Boolean,
 			default: false,
+		},
+
+		/**
+		 * Where the dialog was opened from. `customer` on a customer's detail
+		 * page starts the draft with that customer selected (REQ-IQD-009).
+		 */
+		from: {
+			type: String,
+			default: '',
+		},
+
+		/**
+		 * The starting customer's object id. On a customer page the route's
+		 * id is used when it is not given, as AgreePaymentPlanModal does.
+		 */
+		objectId: {
+			type: String,
+			default: '',
 		},
 	},
 
@@ -291,7 +310,7 @@ export default {
 			handler(next) {
 				if (next === true) {
 					this.reset()
-					this.fetchCustomers()
+					this.fetchCustomers().then(() => this.selectStartingCustomer())
 				}
 			},
 		},
@@ -359,6 +378,35 @@ export default {
 				this.customers = []
 			} finally {
 				this.loadingCustomers = false
+			}
+		},
+
+		/**
+		 * The customer the dialog starts with: the record of the customer page
+		 * it was opened on, else none.
+		 *
+		 * @return {string} The object id, or ''.
+		 * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+		 */
+		startingCustomerRef() {
+			if (this.from !== 'customer') {
+				return ''
+			}
+			return String(this.objectId || this.$route?.params?.id || '')
+		},
+
+		/**
+		 * Select the starting customer once the customer list has loaded,
+		 * through the same path as a choice by hand, so its GL account, stored
+		 * preferences and due date follow.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+		 */
+		selectStartingCustomer() {
+			const option = startingCustomerOption(this.customerOptions, this.startingCustomerRef())
+			if (option !== null) {
+				this.onCustomerSelected(option)
 			}
 		},
 
