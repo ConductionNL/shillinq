@@ -42,6 +42,7 @@ use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -54,6 +55,8 @@ use RuntimeException;
  * Recharged pass-through items on a drafted and posted invoice.
  */
 final class InvoiceGenerationRechargeTest extends TestCase {
+	use SeededVatTariffs;
+
 
 	/**
 	 * The register.
@@ -122,7 +125,7 @@ final class InvoiceGenerationRechargeTest extends TestCase {
 			new RetainerResolver($container, $appConfig, $logger),
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
-			new VATCalculationService(),
+			$this->seededVat(),
 			new UsageRatingCalculator(),
 			objectService: $this->store,
 			billedReadings: $this->createMock(BilledReadings::class),
