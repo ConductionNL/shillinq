@@ -364,12 +364,9 @@ final class ListenerRegistrar {
 
 		(new FieldRequirementRegistration())->register(context: $context);
 
-		// REQ-SOPR-006 fee-schedule rules on the write path. No controller in
-		// this app writes a FeeSchedule: they go straight into OpenRegister, so
-		// the pre-save veto is the only place the overlap, legal-basis and
-		// default-amount rules can run at all. Until this listener existed
-		// FeeScheduleService::assertNoOverlap() had tests and no caller.
-		self::registerPreSave(context: $context, listener: FeeScheduleValidationListener::class);
+		// Pre-save vetoes for records that go straight into OpenRegister:
+		// fee schedules, deductible accounts and statutory VAT tariffs.
+		self::registerPreSaveVetoes(context: $context);
 
 		// An approved payment run is immutable; approval stamps the digest the export checks.
 		(new PaymentRunLockRegistration())->register(context: $context);
@@ -390,8 +387,6 @@ final class ListenerRegistrar {
 			event: 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent',
 			listener: PaymentBlockLockListener::class
 		);
-
-		self::registerDeductibilityGuards(context: $context);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -496,21 +491,25 @@ final class ListenerRegistrar {
 	}//end register()
 
 	/**
-	 * The pre-save vetoes of VAT rates and deductibility: an account below
-	 * 100 percent deductible names a private-share account (REQ-TVRD-003;
-	 * accounts go straight into OpenRegister, so the pre-save veto is where
-	 * the pair rule runs), and a person cannot change a statutory VAT tariff
-	 * (REQ-TVRD-001).
+	 * The pre-save vetoes of records that go straight into OpenRegister, so
+	 * the veto is the only place their rules can run:
+	 *  - REQ-SOPR-006 fee-schedule rules: the overlap, legal-basis and
+	 *    default-amount rules (until this listener existed
+	 *    FeeScheduleService::assertNoOverlap() had tests and no caller);
+	 *  - REQ-TVRD-003: an account below 100 percent deductible names a
+	 *    private-share account;
+	 *  - REQ-TVRD-001: a person cannot change a statutory VAT tariff.
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
 	 * @return void
 	 */
-	private static function registerDeductibilityGuards(IRegistrationContext $context): void {
+	private static function registerPreSaveVetoes(IRegistrationContext $context): void {
+		self::registerPreSave(context: $context, listener: FeeScheduleValidationListener::class);
 		self::registerPreSave(context: $context, listener: AccountDeductibleShareListener::class);
 		self::registerPreSave(context: $context, listener: VatTariffStatutoryLockListener::class);
 
-	}//end registerDeductibilityGuards()
+	}//end registerPreSaveVetoes()
 
 	/**
 	 * Register a listener on OpenRegister's two pre-save events, create first, then update.

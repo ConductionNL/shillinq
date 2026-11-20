@@ -410,7 +410,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 */
 	private function mapJournalEntry(array $entry, string $sourceId): array {
 		$lines  = [];
-		$shares = $this->deductibleShares(source: $entry);
+		$shares = new DeductibleShareSplitter(
+			objectService: $this->objectService,
+			register: $this->register(),
+			administrationId: (string)($entry['administrationId'] ?? '')
+		);
 		foreach ((array)($entry['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A journal entry line is not an object.');
@@ -491,21 +495,6 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$carried = array_intersect_key($mapped, array_flip(self::LINE_DIMENSIONS)) + self::typedRateFields(line: $line);
 		return array_map(static fn (array $posting): array => $posting + $carried, $out);
 	}//end splitJournalLine()
-
-	/**
-	 * The deductible shares of the source's administration.
-	 *
-	 * @param array<string,mixed> $source The source being posted.
-	 *
-	 * @return DeductibleShareSplitter
-	 */
-	private function deductibleShares(array $source): DeductibleShareSplitter {
-		return new DeductibleShareSplitter(
-			objectService: $this->objectService,
-			register: $this->register(),
-			administrationId: (string)($source['administrationId'] ?? '')
-		);
-	}//end deductibleShares()
 
 	/**
 	 * ARInvoice: receivables against revenue and output VAT (REQ-LPP-007).
@@ -623,7 +612,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 
 		$lines      = [];
 		$vat        = $this->vatStamper();
-		$shares     = $this->deductibleShares(source: $invoice);
+		$shares     = new DeductibleShareSplitter(
+			objectService: $this->objectService,
+			register: $this->register(),
+			administrationId: (string)($invoice['administrationId'] ?? '')
+		);
 		$groups     = [];
 		$reverse    = [];
 		$privateVat = 0;
@@ -632,11 +625,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				throw new RuntimeException('A purchase invoice line is not an object.');
 			}
 
-			$cost      = $this->apCostLine(line: $line, label: $label, shares: $shares);
-			$code      = $cost['code'];
-			$cents     = $cost['cents'];
+			['code' => $code, 'cents' => $cents, 'split' => $split] = $this->apCostLine(line: $line, label: $label, shares: $shares);
 			$isReverse = $vat->isReverseCharge(code: $code);
-			$split     = $cost['split'];
 			array_push($lines, ...$split['lines']);
 			$privateVat += $split['privateVat'];
 

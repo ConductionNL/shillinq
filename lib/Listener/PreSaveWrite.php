@@ -64,6 +64,8 @@ final class PreSaveWrite {
 	 * @param Event $event The OpenRegister pre-save event.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-1.3
 	 */
 	public function isCreate(Event $event): bool {
 		return $event instanceof ObjectCreatingEvent;
@@ -76,6 +78,8 @@ final class PreSaveWrite {
 	 * @param Event $event The OpenRegister pre-save event.
 	 *
 	 * @return object|null
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-1.3
 	 */
 	public function storedEntity(Event $event): object|null {
 		if ($event instanceof ObjectUpdatingEvent === true) {

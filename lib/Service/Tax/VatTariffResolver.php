@@ -26,7 +26,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Tax;
 
-use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -197,7 +196,7 @@ class VatTariffResolver {
 			return $date->format('Y-m-d');
 		}
 
-		$parsed = DateTimeImmutable::createFromFormat('!Y-m-d', substr(trim($date), 0, 10));
+		$parsed = date_create_immutable_from_format('!Y-m-d', substr(trim($date), 0, 10));
 		if ($parsed === false) {
 			throw new VatTariffRefusedException(tariffCode: '', date: trim($date), why: 'unknown');
 		}

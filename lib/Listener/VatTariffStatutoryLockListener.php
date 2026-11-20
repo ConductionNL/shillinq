@@ -30,10 +30,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCP\IUserSession;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use OCP\IUserSession;
 
 /**
  * Refuse a person's write to a statutory VAT tariff.
