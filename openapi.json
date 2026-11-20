@@ -264,6 +264,10 @@
             "description": "HTTP API for BillableInvoice drafting + posting."
         },
         {
+            "name": "known-cost",
+            "description": "Operator-triggered regeneration of known-cost budget lines (budget-known-costs)."
+        },
+        {
             "name": "kor",
             "description": "GET /api/kor/monitor — KOR drempel-status for an administration + year."
         },
@@ -3670,6 +3674,76 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/budgets/known-costs/regenerate": {
+            "post": {
+                "operationId": "known-cost-regenerate",
+                "summary": "Regenerate the known-cost budget lines of an administration",
+                "description": "Write the recurring and contract costs of an administration into the default budget of every fiscal year they touch. Lines changed by hand are left alone; a fiscal year without a default budget is reported, not created. Needs a signed-in Nextcloud user who may post in the administration.",
+                "tags": [
+                    "known-cost"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "type": "string",
+                                        "description": "The administration; the caller's active one when omitted."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The run summary: created, updated and overridden counts and the skipped fiscal years.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "created": {
+                                            "type": "integer"
+                                        },
+                                        "updated": {
+                                            "type": "integer"
+                                        },
+                                        "overridden": {
+                                            "type": "integer"
+                                        },
+                                        "skippedFiscalYears": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
                     }
                 }
             }

@@ -763,6 +763,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // column set pre-computed (design.md §1c: expand/collapse must
             // cost zero further requests).
             ['name' => 'budgetGrid#index', 'url' => '/api/budget-grid', 'verb' => 'GET'],
+            // The operator-triggered run of KnownCostBudgetWriter
+            // (budget-known-costs design.md §12). Access is checked in the controller body.
+            ['name' => 'knownCost#regenerate', 'url' => '/api/v1/budgets/known-costs/regenerate', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],

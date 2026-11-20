@@ -4975,8 +4975,6 @@ OC.L10N.register(
         "Deferral Schedule": "Deferral Schedule",
         "One share per fiscal period of the service period. The shares add up to the total exactly.": "One share per fiscal period of the service period. The shares add up to the total exactly.",
         "Opening entry": "Opening entry",
-        "Period end": "Period end",
-        "Period start": "Period start",
         "Released at": "Released at",
         "Releases": "Releases",
         "Semantic reference to the invoice line the schedule spreads (ADR-048), such as ap-invoice:INK-2026-001#line-1.": "Semantic reference to the invoice line the schedule spreads (ADR-048), such as ap-invoice:INK-2026-001#line-1.",
@@ -5763,7 +5761,16 @@ OC.L10N.register(
         "Event fees": "Event fees",
         "Other requests": "Other requests",
         "Use an account number of letters, digits, dots or dashes": "Use an account number of letters, digits, dots or dashes",
-        "The account the money arrives through before it is booked to revenue.": "The account the money arrives through before it is booked to revenue."
+        "The account the money arrives through before it is booked to revenue.": "The account the money arrives through before it is booked to revenue.",
+        "Budget lines created: {created}. Updated: {updated}.": "Budget lines created: {created}. Updated: {updated}.",
+        "Budget lines you changed by hand and that were left alone: {overridden}.": "Budget lines you changed by hand and that were left alone: {overridden}.",
+        "Recurring and contract costs are written into the default budget of every year they touch. Lines you changed by hand are left alone.": "Recurring and contract costs are written into the default budget of every year they touch. Lines you changed by hand are left alone.",
+        "Regenerate": "Regenerate",
+        "Regenerate known costs": "Regenerate known costs",
+        "The known costs could not be regenerated. Try again, or ask your administrator to check the log.": "The known costs could not be regenerated. Try again, or ask your administrator to check the log.",
+        "Years without a default budget, so nothing was written for them: {years}.": "Years without a default budget, so nothing was written for them: {years}.",
+        "You cannot regenerate the budget of this administration.": "You cannot regenerate the budget of this administration.",
+        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone."
     },
     "nplurals=2; plural=(n != 1);"
 )

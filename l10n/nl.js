@@ -7923,7 +7923,16 @@ OC.L10N.register(
         "Event fees": "Deelnamekosten evenementen",
         "Other requests": "Overige verzoeken",
         "Use an account number of letters, digits, dots or dashes": "Gebruik een rekeningnummer van letters, cijfers, punten of streepjes",
-        "The account the money arrives through before it is booked to revenue.": "De rekening waarop het geld binnenkomt voordat het als opbrengst wordt geboekt."
+        "The account the money arrives through before it is booked to revenue.": "De rekening waarop het geld binnenkomt voordat het als opbrengst wordt geboekt.",
+        "Budget lines created: {created}. Updated: {updated}.": "Begrotingsregels aangemaakt: {created}. Bijgewerkt: {updated}.",
+        "Budget lines you changed by hand and that were left alone: {overridden}.": "Begrotingsregels die je met de hand hebt gewijzigd en die zijn ongemoeid gelaten: {overridden}.",
+        "Recurring and contract costs are written into the default budget of every year they touch. Lines you changed by hand are left alone.": "Terugkerende kosten en contractkosten worden in de standaardbegroting gezet van elk jaar waarin ze vallen. Regels die je met de hand hebt gewijzigd, blijven ongemoeid.",
+        "Regenerate": "Opnieuw genereren",
+        "Regenerate known costs": "Bekende kosten opnieuw genereren",
+        "The known costs could not be regenerated. Try again, or ask your administrator to check the log.": "De bekende kosten konden niet opnieuw worden gegenereerd. Probeer het opnieuw, of vraag je beheerder het logboek te bekijken.",
+        "Years without a default budget, so nothing was written for them: {years}.": "Jaren zonder standaardbegroting, waarvoor dus niets is geschreven: {years}.",
+        "You cannot regenerate the budget of this administration.": "Je kunt de begroting van deze administratie niet opnieuw genereren.",
+        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Zet de terugkerende kosten en contractkosten in de standaardbegroting van elk jaar waarin ze vallen. Met de hand gewijzigde regels blijven ongemoeid."
     },
     "nplurals=2; plural=(n != 1);"
 )
