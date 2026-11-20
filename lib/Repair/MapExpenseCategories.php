@@ -50,6 +50,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Seeds expense categories and settings, and maps receipt category text.
@@ -360,7 +361,7 @@ final class MapExpenseCategories implements IRepairStep {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @throws \RuntimeException When it cannot be read.
+	 * @throws RuntimeException When it cannot be read.
 	 *
 	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-1.1
 	 */
@@ -368,7 +369,7 @@ final class MapExpenseCategories implements IRepairStep {
 		$content = file_get_contents(self::SEED_FILE);
 		$seed = json_decode((string)$content, true);
 		if (is_array($seed) === false) {
-			throw new \RuntimeException('the expense category seed cannot be read.');
+			throw new RuntimeException('the expense category seed cannot be read.');
 		}
 
 		return $seed;
@@ -397,7 +398,8 @@ final class MapExpenseCategories implements IRepairStep {
 			}
 
 			$offset += self::PAGE;
-		} while (count($page) === self::PAGE);
+			$fetched = count($page);
+		} while ($fetched === self::PAGE);
 
 		return $records;
 	}//end rows()

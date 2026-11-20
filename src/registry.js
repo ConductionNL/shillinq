@@ -201,6 +201,8 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
 import SalesOverview from './components/sales/SalesOverview.vue'
+// purchasing-order-dispatch-and-receipt task 4.2: three confirmation modes per line.
+import ServiceReceiptForm from './components/service-receipt/ServiceReceiptForm.vue'
 // Import bank statements lives under the Configuratie (settings) group as a
 // page that hosts BankStatementWizard — moved off the Financial overview
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
@@ -375,6 +377,9 @@ import ReceivePage from './views/inventory/ReceivePage.vue'
 import TransferPage from './views/inventory/TransferPage.vue'
 import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
 import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
+import MobileHome from './views/mobile/MobileHome.vue'
+import MobileInvoice from './views/mobile/MobileInvoice.vue'
+import MobileReceipt from './views/mobile/MobileReceipt.vue'
 // receipt-extraction-consume (REQ-RXC-003) — custom detail page for a single
 // Receipt record: prefills from a docudesk extraction draft with per-field
 // confidence + correction + re-request, none of which fits the built-in
@@ -425,6 +430,10 @@ export default {
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },
 	MobileScannerPick: { kind: 'page', component: PickPage },
 	MobileScannerCount: { kind: 'page', component: CountPage },
+	// platform-mobile-pwa: the Shillinq Mobile app (receipts, invoice drafts, offline queue).
+	MobileHome: { kind: 'page', component: MobileHome },
+	MobileReceipt: { kind: 'page', component: MobileReceipt },
+	MobileInvoice: { kind: 'page', component: MobileInvoice },
 
 	InvoiceGenerator: { kind: 'page', component: InvoiceGenerator },
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
@@ -441,6 +450,7 @@ export default {
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
+	ServiceReceiptForm: { kind: 'page', component: ServiceReceiptForm },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 

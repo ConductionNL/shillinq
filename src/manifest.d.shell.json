@@ -5236,6 +5236,45 @@
 		{
 			"menu": [
 				{
+					"id": "Sales",
+					"children": [
+						{
+							"id": "MobileHome",
+							"label": "Shillinq Mobile",
+							"icon": "ReceiptOutline",
+							"route": "MobileHome",
+							"order": 90
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileHome",
+					"route": "/mobile",
+					"type": "custom",
+					"title": "Shillinq Mobile"
+				},
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileReceipt",
+					"route": "/mobile/receipt",
+					"type": "custom",
+					"title": "Capture a receipt"
+				},
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileInvoice",
+					"route": "/mobile/invoice",
+					"type": "custom",
+					"title": "Draft an invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RequiredFields",
 					"label": "Required fields",
 					"icon": "TextBoxCheckOutline",
@@ -5398,6 +5437,45 @@
 					"route": "/gr/verdeelruns/:id",
 					"type": "detail",
 					"title": "Allocation run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"children": [
+						{
+							"id": "ServiceReceipts",
+							"label": "Service receipts",
+							"icon": "ClipboardCheckOutline",
+							"route": "ServiceReceipts",
+							"order": 6.5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceipts",
+					"route": "/inkoop/service-receipts",
+					"type": "index",
+					"title": "Service receipts"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptForm",
+					"route": "/inkoop/service-receipts/new",
+					"type": "custom",
+					"title": "Confirm service"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptDetail",
+					"route": "/inkoop/service-receipts/:id",
+					"type": "detail",
+					"title": "Service receipt"
 				}
 			]
 		},
@@ -5868,6 +5946,25 @@
 					"route": "/reporting-compliance/spend-analytics",
 					"type": "dashboard",
 					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-icp-and-reverse-charge",
+					"id": "IcpOpgaaf",
+					"route": "/belastingen/icp-opgaaf",
+					"type": "index",
+					"title": "ICP-opgaaf"
+				},
+				{
+					"_fragment": "tax-icp-and-reverse-charge",
+					"id": "IcpOpgaafDetail",
+					"route": "/belastingen/icp-opgaaf/:id",
+					"type": "detail",
+					"title": "ICP-opgaaf"
 				}
 			]
 		},
