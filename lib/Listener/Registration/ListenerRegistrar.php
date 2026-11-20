@@ -33,6 +33,7 @@ use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\ActuarialValuationApprovedListener;
+use OCA\Shillinq\Listener\DualGaapPostedListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
@@ -331,12 +332,7 @@ final class ListenerRegistrar {
 			listener: CommitmentTransitionListener::class
 		);
 
-		// Reporting-ifrs-calculations REQ-PEN-011: approving an
-		// ActuarialValuation posts its IAS 19 journal entry.
-		$context->registerEventListener(
-			event: ObjectTransitionedEvent::class,
-			listener: ActuarialValuationApprovedListener::class
-		);
+		self::registerReportingCalculations(context: $context);
 
 		// Task 5.3 — OrderFulfilmentTransitionListener emits
 		// `milestone.completed` on every completed OrderFulfilment and
@@ -489,6 +485,29 @@ final class ListenerRegistrar {
 
 		(new BbvValidationRegistration())->register(context: $context);
 	}//end register()
+
+	/**
+	 * Register the reporting-ifrs-calculations listeners: approving an
+	 * ActuarialValuation posts its IAS 19 entry (REQ-PEN-011), and posting a
+	 * divergent GLTransaction derives the other framework's entry and the
+	 * bridge line (REQ-DGAAP-011).
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 */
+	private static function registerReportingCalculations(IRegistrationContext $context): void {
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: ActuarialValuationApprovedListener::class
+		);
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: DualGaapPostedListener::class
+		);
+	}//end registerReportingCalculations()
 
 	/**
 	 * The pre-save vetoes of records that go straight into OpenRegister, so

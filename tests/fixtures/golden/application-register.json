@@ -255,6 +255,14 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\DualGaapPostedListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\OrderFulfilmentTransitionListener'",
             "0"
         ]
@@ -1953,6 +1961,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PensionValuationPostingServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\PensionValuationPostingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\DualGaapDerivationServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\DualGaapDerivationService'"
         ]
     ],
     [

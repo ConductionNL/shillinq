@@ -84,6 +84,7 @@ use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoiceBatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoiceSendingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DualGaapDerivationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
@@ -542,6 +543,7 @@ final class ContractRegistrar {
 		PaymentSettlementServiceInterface::class => PaymentSettlementService::class,
 		PayrollServiceInterface::class => PayrollService::class,
 		PensionValuationPostingServiceInterface::class => PensionValuationPostingService::class,
+		DualGaapDerivationServiceInterface::class => DualGaapDerivationService::class,
 		PeriodCloseAssistantServiceInterface::class => PeriodCloseAssistantService::class,
 		PeriodCloseServiceInterface::class => PeriodCloseService::class,
 		PipelinqConfigInterface::class => PipelinqConfig::class,
