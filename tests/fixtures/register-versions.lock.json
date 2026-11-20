@@ -148,6 +148,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120071700",
             "versionsSha256": "6e23e16d5cf410c7b5b5000a1ba4f31101e5ccb183465d5df5dfd18ab9ae74ef"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120071900",
+            "versionsSha256": "4f6661b8e7225390a714041dc653a22607c15a9dcc9ab06a32cd066bba87e823"
         }
     ],
     "versions": {
@@ -342,6 +346,7 @@
         "schema:EuProject": "0.1.0",
         "schema:EuVatRate": "0.1.0",
         "schema:Evaluatievraag": "0.1.0",
+        "schema:ExpenseCategory": "0.1.0",
         "schema:ExpenseClaimEntry": "0.1.0",
         "schema:ExpiryAlert": "0.1.0",
         "schema:FXContract": "0.1.0",
