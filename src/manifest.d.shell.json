@@ -799,13 +799,6 @@
 							"icon": "CurrencyUsd",
 							"route": "FXRates",
 							"order": 28
-						},
-						{
-							"id": "FxRatesAdmin",
-							"label": "FX Rates (Admin)",
-							"icon": "CogOutline",
-							"route": "FxRatesAdmin",
-							"order": 29
 						}
 					]
 				}
@@ -824,13 +817,6 @@
 					"route": "/bookkeeping/multi-currency/fx-rates/:id",
 					"type": "detail",
 					"title": "FX Rate"
-				},
-				{
-					"_fragment": "add-shillinq-multi-currency-t4",
-					"id": "FxRatesAdmin",
-					"route": "/bookkeeping/multi-currency/fx-rates/admin",
-					"type": "custom",
-					"title": "FX Rates (Admin)"
 				}
 			]
 		},
@@ -1040,8 +1026,22 @@
 							"id": "BookingsPendingConfirmations",
 							"label": "Pending confirmations",
 							"icon": "EmailCheckOutline",
-							"route": "BookingsPendingConfirmations",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation"
+							},
 							"order": 14
+						},
+						{
+							"id": "BookingsConfirmationRequestFailed",
+							"label": "Confirmation request failed",
+							"icon": "EmailAlertOutline",
+							"route": "Afspraken",
+							"query": {
+								"status": "pending_confirmation",
+								"confirmationRequestStatus": "failed"
+							},
+							"order": 15
 						}
 					]
 				}
@@ -1053,13 +1053,6 @@
 					"route": "/confirm/:appointmentId",
 					"type": "custom",
 					"title": "Confirm your appointment"
-				},
-				{
-					"_fragment": "bookings-confirm-flow",
-					"id": "BookingsPendingConfirmations",
-					"route": "/verkoop/openstaande-bevestigingen",
-					"type": "custom",
-					"title": "Pending confirmations"
 				}
 			]
 		},
@@ -2939,7 +2932,7 @@
 					"_fragment": "bookkeeping-purchase-order-3way-04-goods-receipt-note",
 					"id": "GoodsReceiptNoteDetail",
 					"route": "/inkoop/goods-receipt-notes/:id",
-					"type": "custom",
+					"type": "detail",
 					"title": "Goods Receipt Note"
 				}
 			]
@@ -4728,6 +4721,34 @@
 		{
 			"menu": [
 				{
+					"id": "Overheid",
+					"label": "Government",
+					"icon": "Domain",
+					"order": 30,
+					"children": [
+						{
+							"id": "SubjectCosts",
+							"label": "Case costs",
+							"icon": "ChartBoxOutline",
+							"route": "SubjectCosts",
+							"order": 12
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "iv3-report-takes-case-costs-by-case-type",
+					"id": "SubjectCosts",
+					"route": "/overheid/zaakkosten",
+					"type": "dashboard",
+					"title": "Case costs"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "PostingRestrictions",
 					"label": "Posting restrictions",
 					"icon": "Cancel",
@@ -5099,6 +5120,75 @@
 		{
 			"menu": [
 				{
+					"id": "CustomRecordTypes",
+					"label": "Own records",
+					"icon": "DatabaseOutline",
+					"route": "CustomRecordTypes",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-custom-record-types",
+					"id": "CustomRecordTypes",
+					"route": "/records",
+					"type": "custom",
+					"title": "Own records"
+				},
+				{
+					"_fragment": "platform-custom-record-types",
+					"id": "CustomRecords",
+					"route": "/records/:schema",
+					"type": "index",
+					"title": "Own records"
+				},
+				{
+					"_fragment": "platform-custom-record-types",
+					"id": "CustomRecordDetail",
+					"route": "/records/:schema/:id",
+					"type": "detail",
+					"title": "Own record"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Documentation",
+					"label": "Documentation",
+					"icon": "BookOpenVariantOutline",
+					"order": 90,
+					"children": [
+						{
+							"id": "HelpArticles",
+							"label": "Help articles",
+							"icon": "HelpCircleOutline",
+							"route": "HelpArticles",
+							"order": 1
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-help-agent",
+					"id": "HelpArticles",
+					"route": "/documentation/help-articles",
+					"type": "index",
+					"title": "Help articles"
+				},
+				{
+					"_fragment": "platform-help-agent",
+					"id": "HelpArticleDetail",
+					"route": "/documentation/help-articles/:id",
+					"type": "detail",
+					"title": "Help article"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Integrations",
 					"label": "Integrations",
 					"icon": "StoreOutline",
@@ -5249,6 +5339,38 @@
 					"route": "/overheid/interest-allocation/:id",
 					"type": "detail",
 					"title": "Interest allocation run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "GRAllocationRuns",
+							"label": "Allocation runs",
+							"icon": "ScaleBalance",
+							"route": "GRAllocationRuns",
+							"order": 65
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRuns",
+					"route": "/gr/verdeelruns",
+					"type": "index",
+					"title": "Allocation runs"
+				},
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRunDetail",
+					"route": "/gr/verdeelruns/:id",
+					"type": "detail",
+					"title": "Allocation run"
 				}
 			]
 		},
@@ -5577,6 +5699,33 @@
 		{
 			"menu": [
 				{
+					"id": "InvoiceBatches",
+					"label": "Invoice batches",
+					"icon": "EmailFastOutline",
+					"route": "InvoiceBatches",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatches",
+					"route": "/bookkeeping/invoice-batches",
+					"type": "index",
+					"title": "Invoice batches"
+				},
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatchDetail",
+					"route": "/bookkeeping/invoice-batches/:id",
+					"type": "detail",
+					"title": "Invoice batch"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "MeterReadings",
 					"label": "Meter readings",
 					"icon": "Counter",
@@ -5625,6 +5774,54 @@
 		{
 			"menu": [
 				{
+					"id": "WebshopOrders",
+					"label": "Web shop orders",
+					"icon": "StorefrontOutline",
+					"route": "WebshopOrders",
+					"order": 26
+				},
+				{
+					"id": "WebshopChannels",
+					"label": "Web shop channels",
+					"icon": "Storefront",
+					"route": "WebshopChannels",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrders",
+					"route": "/verkoop/webshop-orders",
+					"type": "index",
+					"title": "Web shop orders"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopOrderDetail",
+					"route": "/verkoop/webshop-orders/:id",
+					"type": "detail",
+					"title": "Web shop order"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannels",
+					"route": "/configuratie/webshop-channels",
+					"type": "index",
+					"title": "Web shop channels"
+				},
+				{
+					"_fragment": "sales-webshop-orders",
+					"id": "WebshopChannelDetail",
+					"route": "/configuratie/webshop-channels/:id",
+					"type": "detail",
+					"title": "Web shop channel"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "ReportingCompliance",
 					"children": [
 						{
@@ -5644,6 +5841,83 @@
 					"route": "/reporting-compliance/spend-analytics",
 					"type": "dashboard",
 					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Taxes",
+					"label": "Taxes",
+					"icon": "PercentOutline",
+					"order": 50,
+					"children": [
+						{
+							"id": "GroupEntities",
+							"label": "Group entities",
+							"icon": "SitemapOutline",
+							"route": "GroupEntities",
+							"order": 120
+						},
+						{
+							"id": "CbcrReturns",
+							"label": "Country-by-country reports",
+							"icon": "EarthBox",
+							"route": "CbcrReturns",
+							"order": 130
+						},
+						{
+							"id": "GlobeInformationReturns",
+							"label": "Minimum tax returns",
+							"icon": "ScaleBalance",
+							"route": "GlobeInformationReturns",
+							"order": 140
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GroupEntities",
+					"route": "/taxes/group-entities",
+					"type": "index",
+					"title": "Group entities"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GroupEntityDetail",
+					"route": "/taxes/group-entities/:id",
+					"type": "detail",
+					"title": "Group entity"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "CbcrReturns",
+					"route": "/taxes/cbc-reports",
+					"type": "index",
+					"title": "Country-by-country reports"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "CbcrReturnDetail",
+					"route": "/taxes/cbc-reports/:id",
+					"type": "detail",
+					"title": "Country-by-country report"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GlobeInformationReturns",
+					"route": "/taxes/minimum-tax",
+					"type": "index",
+					"title": "Minimum tax returns"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GlobeInformationReturnDetail",
+					"route": "/taxes/minimum-tax/:id",
+					"type": "detail",
+					"title": "Minimum tax return"
 				}
 			]
 		},

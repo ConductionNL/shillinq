@@ -33,8 +33,8 @@ namespace OCA\Shillinq\Controller;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\Receivables\DirectDebitBatchService;
-use OCA\Shillinq\Service\Receivables\DirectDebitFileService;
+use OCA\Shillinq\Kernel\Contracts\DirectDebitBatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DirectDebitFileServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
@@ -58,8 +58,8 @@ class DirectDebitBatchController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                              $request          The request.
-	 * @param DirectDebitBatchService               $batches          Proposes the draft batches.
-	 * @param DirectDebitFileService                $files            Serves a batch's stored file.
+	 * @param DirectDebitBatchServiceInterface               $batches          Proposes the draft batches.
+	 * @param DirectDebitFileServiceInterface                $files            Serves a batch's stored file.
 	 * @param AdministrationContextServiceInterface $administrations  The caller's administrations (ADR-005).
 	 * @param ObjectServiceInterface                $objectService    OpenRegister's object service.
 	 * @param RegisterLocation                      $registerLocation Where the register lives.
@@ -68,8 +68,8 @@ class DirectDebitBatchController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly DirectDebitBatchService $batches,
-		private readonly DirectDebitFileService $files,
+		private readonly DirectDebitBatchServiceInterface $batches,
+		private readonly DirectDebitFileServiceInterface $files,
 		private readonly AdministrationContextServiceInterface $administrations,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly RegisterLocation $registerLocation,

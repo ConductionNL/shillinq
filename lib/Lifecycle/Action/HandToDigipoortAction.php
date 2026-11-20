@@ -20,11 +20,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\IntegriqSbrHandoffAdapter;
-use OCA\Shillinq\Service\Sbr\SbrFilingFileStore;
+use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
 use RuntimeException;
 
 /**
@@ -50,14 +51,14 @@ class HandToDigipoortAction implements LifecycleActionInterface {
 	 * Constructor.
 	 *
 	 * @param DigipoortSbrAdapterInterface $adapter  The Digipoort port.
-	 * @param SbrFilingFileStore           $files    Stores the XML.
+	 * @param SbrFilingFileStoreInterface  $files    Stores the XML.
 	 * @param RegisterLocationInterface    $location The register, for the object URI.
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.2
 	 */
 	public function __construct(
 		private readonly DigipoortSbrAdapterInterface $adapter,
-		private readonly SbrFilingFileStore $files,
+		private readonly SbrFilingFileStoreInterface $files,
 		private readonly RegisterLocationInterface $location,
 	) {
 	}//end __construct()
@@ -65,20 +66,17 @@ class HandToDigipoortAction implements LifecycleActionInterface {
 	/**
 	 * Hand the instance to Digipoort through integriq.
 	 *
-	 * @param array<string, mixed> $objectData   The XbrlInstance as the transition leaves it.
-	 * @param array<string, mixed> $previousData The XbrlInstance before.
-	 * @param array<string, mixed> $parameters   Declared parameters (none).
-	 * @param string               $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the XbrlInstance as the transition leaves it.
 	 *
 	 * @return array<string, mixed> The instance with its file, source slug and correlation id.
 	 *
 	 * @throws RuntimeException When filing is not configured or the instance has no XML.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.2
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		if ($this->adapter->isDormant() === true) {
 			throw new RuntimeException(self::NOT_CONFIGURED);
 		}

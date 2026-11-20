@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 
 /**
@@ -73,11 +73,6 @@ final class ShillinqRegister {
 	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-009
 	 */
 	public function slug(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end slug()
 }//end class

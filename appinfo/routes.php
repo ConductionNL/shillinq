@@ -70,6 +70,21 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
+        // tax-cbcr-and-pillar2-returns tasks 6.1 to 6.3: the actions of the
+        // Group entities, Country-by-country reports and Minimum tax returns
+        // pages. Authorised per administration in CbcrController.
+            ['name' => 'cbcr#assessScope', 'url' => '/api/cbcr/entities/{entityId}/assess-scope', 'verb' => 'POST'],
+            ['name' => 'cbcr#readFigures', 'url' => '/api/cbcr/entities/{entityId}/read-figures', 'verb' => 'POST'],
+            ['name' => 'cbcrEnteredFigures#enter', 'url' => '/api/cbcr/entities/{entityId}/figures', 'verb' => 'POST'],
+            ['name' => 'cbcrEnteredFigures#import', 'url' => '/api/cbcr/entities/{entityId}/import-figures', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepare', 'url' => '/api/cbcr/entities/{entityId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbour', 'url' => '/api/cbcr/entities/{entityId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#qdmtt', 'url' => '/api/cbcr/computations/{computationId}/qdmtt', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepareReturn', 'url' => '/api/cbcr/returns/{returnId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbourReturn', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#cbcChecks', 'url' => '/api/cbcr/returns/{returnId}/checks', 'verb' => 'GET'],
+            ['name' => 'cbcr#girChecks', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/checks', 'verb' => 'GET'],
+            ['name' => 'cbcr#createCorrection', 'url' => '/api/cbcr/returns/{returnId}/correction', 'verb' => 'POST'],
         // banking-fx-at-booking task 3.1: the FX rates page's status line —
         // feed or typed, and the newest rate date per pair. Any signed-in
         // user; the rates are read with the caller's own register access.
@@ -118,6 +133,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'fieldRequirement#fields', 'url' => '/api/field-requirements/{id}/fields', 'verb' => 'GET'],
             // reporting-custom-analysis REQ-RCA-002: the financial pivot.
             ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
+            // reporting-financial-statements REQ-RFS-001/002: the on-screen statements.
+            ['name' => 'financialStatement#profitAndLoss', 'url' => '/api/statements/profit-and-loss', 'verb' => 'GET'],
+            ['name' => 'financialStatement#balanceSheet', 'url' => '/api/statements/balance-sheet', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app
@@ -175,6 +193,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'standardsPolicy#show', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#update', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'PUT'],
             ['name' => 'administrationMember#create', 'url' => '/api/administrations/{administrationId}/members', 'verb' => 'POST'],
+            ['name' => 'importBatch#confirmSuggestions', 'url' => '/api/import-batches/{id}/confirm-suggestions', 'verb' => 'POST'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
             ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],
@@ -194,6 +213,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
+            // CORS preflight of an embed on another website (REQ-WSW-011): the origins allowed per widget key.
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/services', 'verb' => 'OPTIONS', 'postfix' => 'services'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/slots', 'verb' => 'OPTIONS', 'postfix' => 'slots'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/appointments', 'verb' => 'OPTIONS', 'postfix' => 'appointments'],
         // Bookings-depth: no-show-fee capture + recurring appointment series.
         // Both are operator actions (#[NoAdminRequired] + per-administration
         // guard). no-show captures the defined noShowFee via the DepositPayment
@@ -211,6 +234,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'vATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
             ['name' => 'vATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
             ['name' => 'vATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
+            ['name' => 'vATReturn#checks', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'],
             // tax-vat-position-and-suppletie (REQ-VPS-001, REQ-VPS-002): the running
             // position, the drift check on a filed return, and preparing its suppletie.
             ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
@@ -243,6 +267,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'invoiceApi#post', 'url' => '/api/v1/invoices/{invoiceId}/post', 'verb' => 'POST'],
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
             ['name' => 'invoiceApi#show', 'url' => '/api/v1/invoices/{invoiceId}', 'verb' => 'GET'],
+
+        // Sales-billable-rate-per-hour: a project's rated hours of one month (REQ-BRPH-003).
+            ['name' => 'projectBillableHours#index', 'url' => '/api/v1/projects/{id}/billable-hours', 'verb' => 'GET'],
 
         // Billing intake (time-expense-invoice-intake): authenticated ingress for
         // pipelinq's time-billing-handoff-emit change to POST a batch of approved
@@ -335,6 +362,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // ARInvoice: pre-send validation, NLCIUS UBL 2.1 + PDF/A-3 hybrid, Peppol
         // submit via the generalised transmission port, delivery-status queued.
             ['name' => 'aRInvoiceEInvoice#send', 'url' => '/api/ar-invoices/{invoiceNumber}/send-einvoice', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-001, REQ-SIS-002): send one issued invoice by the customer's delivery method.
+            ['name' => 'invoiceSending#send', 'url' => '/api/ar-invoices/{id}/send', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-003): send the selected invoices in a queued batch.
+            ['name' => 'invoiceSending#sendBatch', 'url' => '/api/ar-invoices/send-batch', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-004): one invoice per selected customer from one set of lines.
+            ['name' => 'invoiceBatch#create', 'url' => '/api/ar-invoices/batch', 'verb' => 'POST'],
 
             // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
             // down payment on an order, show the order's position, deduct on the final invoice.
@@ -521,8 +554,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // Bookkeeping-reconciliation-reports (T4) — REQ-REC-004 unmatched-item
         // resolution. POST one classification + reason at a time, or bulk-apply
         // across a list of matchIds (REQ-REC-008 Unmatched Items bulk workflow).
-        // Both endpoints are #[NoAdminRequired] but IDOR-guarded: the service
-        // verifies match.reconId matches the path reconId before writing.
+        // All are #[NoAdminRequired] but IDOR-guarded: the service checks the
+        // reconciliation's administration and that match.reconId matches it.
             [
                 'name' => 'reconciliationResolution#resolve',
                 'url'  => '/api/reconciliations/{reconId}/matches/{matchId}/resolve',
@@ -531,6 +564,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             [
                 'name' => 'reconciliationResolution#bulkResolve',
                 'url'  => '/api/reconciliations/{reconId}/matches/bulk-resolve',
+                'verb' => 'POST',
+            ],
+            // Match ids only: the server reads each match's reconciliation.
+            [
+                'name' => 'reconciliationResolution#bulkResolveMatches',
+                'url'  => '/api/reconciliation-matches/bulk-resolve',
                 'verb' => 'POST',
             ],
 
@@ -658,6 +697,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
             // BADO accountantsdossier export (bookkeeping-bado-controleprotocol, REQ-010, Task 16).
             ['name' => 'badoControleprotocol#exportAccountantsdossier', 'url' => '/api/bado/controleprotocol/accountantsdossier', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-011/REQ-012: draw an
+            // audit sample from the protocol's posted ledger lines.
+            // #[NoAdminRequired], the protocol's administration checked in the
+            // controller (another administration's protocol is masked as 404).
+            ['name' => 'auditSample#draw', 'url' => '/api/bado/controleprotocol/samples', 'verb' => 'POST'],
 
             // CBS bestanden extended (bookkeeping-cbs-bestanden-extended,
             // REQ-CBS-001..009). RESTful CBSSubmission CRUD + generate endpoint.
@@ -677,6 +721,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'widgetSettings#create', 'url' => '/api/widget/admin/keys/create', 'verb' => 'POST'],
             ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
             ['name' => 'widgetSettings#revoke', 'url' => '/api/widget/admin/keys/revoke', 'verb' => 'POST'],
+            ['name' => 'widgetSettings#origins', 'url' => '/api/widget/admin/keys/origins', 'verb' => 'POST'],
 
             // Inventory scanner server-authoritative API (inventory-mobile-scanner,
             // REQ-SKU-001/002, REQ-OFFLINE-002/003, REQ-PERM-001). The
@@ -745,6 +790,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // (ADR-005 IDOR-safe). Declared before the SPA catch-all so
             // Symfony route ordering matches it first per ADR-016.
             ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
+            // Discard your own imported invoice while it is still a review draft.
+            ['name' => 'supplierInvoiceImport#discard', 'url' => '/api/v1/supplier-invoices/{id}/draft', 'verb' => 'DELETE'],
 
             // Receipt-extraction-consume (REQ-RXC-004 / REQ-RXC-005) — thin proxy
             // so the frontend never needs docudesk credentials directly. request()
@@ -815,6 +862,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // on the caller's administration.
             ['name' => 'financialDocumentAction#issueInvoice', 'url' => '/api/financial-documents/invoices', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#requestPayment', 'url' => '/api/financial-documents/invoices/{id}/payment-request', 'verb' => 'POST'],
+            // receivables-provider-payouts REQ-RPPO-005: take payment now on the caller's registered phone, or as a QR checkout.
+            ['name' => 'pointOfSalePayment#takePayment', 'url' => '/api/financial-documents/invoices/{id}/take-payment', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#createQuote', 'url' => '/api/financial-documents/quotes', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#creditInvoice', 'url' => '/api/financial-documents/invoices/{id}/credit', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#raisePayout', 'url' => '/api/financial-documents/payouts', 'verb' => 'POST'],
@@ -877,6 +926,13 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
             ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
             ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+            // Report schedules are written only here: the caller owns them, the server sets status and next run.
+            ['name' => 'reportSchedule#create', 'url' => '/api/report-schedules', 'verb' => 'POST'],
+            ['name' => 'reportSchedule#update', 'url' => '/api/report-schedules/{id}', 'verb' => 'PUT'],
+            // iv3-report-takes-case-costs-by-case-type: the rows of the case cost tables
+            // (per taakveld on the Iv3 page, per type on its own page). Static URL, before
+            // the SPA catch-all.
+            ['name' => 'subjectCostReport#rows', 'url' => '/api/reporting/subject-costs', 'verb' => 'GET'],
 
             // Payment-run-sepa-export (REQ-SEPA-006 / REQ-SEPA-007). The HTTP surface
             // behind the "Export to bank" and "Reconcile / import statement" actions
@@ -930,6 +986,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'directDebitBatch#file', 'url' => '/api/v1/direct-debit-batches/{id}/file', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-ENSIA-012: download an
+            // ENSIA cycle's submission XML and its college statement. Both
+            // #[NoAdminRequired], administration checked in the controller
+            // (another administration's cycle is masked as 404).
+            ['name' => 'ensiaCycle#xml', 'url' => '/api/v1/public-sector/ensia/{id}/xml', 'verb' => 'GET'],
+            ['name' => 'ensiaCycle#statement', 'url' => '/api/v1/public-sector/ensia/{id}/statement', 'verb' => 'GET'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
@@ -939,6 +1001,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // URLs declared before the SPA catch-all per ADR-016.
             ['name' => 'deadlineCalendarSettings#index', 'url' => '/api/deadline-calendar/settings', 'verb' => 'GET'],
             ['name' => 'deadlineCalendarSettings#update', 'url' => '/api/deadline-calendar/settings', 'verb' => 'POST'],
+            // platform-custom-record-types (REQ-CRT-001..003): the shown own
+            // record types for any user, and the admin listing and switch.
+            ['name' => 'customRecordType#index', 'url' => '/api/custom-record-types', 'verb' => 'GET'],
+            ['name' => 'customRecordType#available', 'url' => '/api/custom-record-types/available', 'verb' => 'GET'],
+            ['name' => 'customRecordType#update', 'url' => '/api/custom-record-types', 'verb' => 'PUT'],
+            ['name' => 'customRecordType#toggle', 'url' => '/api/custom-record-types', 'verb' => 'PATCH'],
 
             // Accountant portal (accountant-portal, REQ-ACP-001/002/004).
             // These two were MISSING from this table entirely while every other

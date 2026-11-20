@@ -516,7 +516,7 @@
       "Rechtmatigheidsparagraaf": {
         "slug": "Rechtmatigheidsparagraaf",
         "icon": "FileDocumentCheckOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Rechtmatigheidsparagraaf",
         "description": "The aggregated jaarrekening statement per boekjaar. Compares totaal fouten/onzekerheden against toleranties, carries the college-verklaring, and transitions concept -> vastgesteld_college -> behandeld_raad -> definitief. Gating record for jaarrekening-export.",
         "x-schema-org": "schema:Report",
@@ -656,12 +656,32 @@
             }
           },
           "transitions": {
+            "compute": {
+              "from": "draft",
+              "to": "draft",
+              "label": "Compute paragraph",
+              "description": "Compute the totals of the paragraph from the posted ledger, the year's tolerance and its findings (REQ-RV-011).",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ComputeLawfulnessParagraphAction",
+                  "description": "Compute the total expenses including reserve mutations, the tolerance amounts, the sums of the year's findings and whether both stay within tolerance, and keep them on the paragraph (REQ-RV-011)."
+                }
+              ]
+            },
             "vaststellen_college": {
               "from": "draft",
               "to": "vastgesteld_college",
               "label": "Vaststellen door college",
               "description": "College vaststelling; when binnen_tolerantie is false a portefeuillehouder-toelichting (verklaring_college) is required before advancing.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canVaststellenParagraaf"
+              "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canVaststellenParagraaf",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ComputeLawfulnessParagraphAction",
+                  "description": "Recompute the totals before the college adopts the paragraph, so the guard judges current figures (REQ-RV-011)."
+                }
+              ]
             },
             "behandelen_raad": {
               "from": "vastgesteld_college",

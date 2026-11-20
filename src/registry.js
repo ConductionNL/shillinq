@@ -85,6 +85,12 @@ import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappi
 // switch the BudgetBBVMappings page from type=index to
 // type=custom + component=BudgetBBVMappingIndex.
 import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappingIndex.vue'
+// platform-custom-record-types (REQ-CRT-002/003): the own records page, one
+// card per own record type an administrator chose to show. Custom because its
+// cards come from a server list (GET /api/custom-record-types), not from fixed
+// menu children; the list and detail pages themselves stay built-in
+// `index` / `detail` pages over `@route.schema`.
+import CustomRecordTypes from './components/custom-records/CustomRecordTypes.vue'
 // bookkeeping-waterschappen-bbv-variant slice 05 (REQ-BBVW-003 /
 // REQ-BBVW-005): the BBV Compliance Dashboard composes four bespoke
 // widgets — KPI counts, a four-bucket compliance pie, a YTD cumulative
@@ -111,7 +117,6 @@ import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboar
 // with dimmed projection columns — a genuinely custom two-source transform
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
-import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
 // bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
 // the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
 // flow with rejection-reason picker + delivery-photo upload, and the detail
@@ -169,6 +174,7 @@ import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePan
 // declarative `detail` page type — so the page is registered as a
 // kind:"page" custom component per ADR-024 / ADR-036.
 import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
+import ProjectBillableHoursCard from './components/project/ProjectBillableHoursCard.vue'
 import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
 // bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
 // previews the server-determined approval chain as the line total changes
@@ -227,6 +233,7 @@ import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMa
 // fit the built-in `index` page type, so the view is registered as a
 // kind:"page" custom component.
 import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
+import VatReturnChecksPanel from './components/vat/VatReturnChecksPanel.vue'
 import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
 // bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
 // REQ-VP-005): the VendorPerformance index + detail render the monthly
@@ -240,6 +247,7 @@ import VendorPerformanceIndex from './components/vendor-performance/VendorPerfor
 import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
 import BankStatementWizard from './modals/BankStatementWizard.vue'
 import BillImportModal from './modals/BillImportModal.vue'
+import FiscalYearActionModal from './modals/FiscalYearActionModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
 // ribbons are now declarative `config.headerActions[]` (type:"open-modal");
@@ -328,15 +336,6 @@ import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue
 // the page is registered as a kind:"page" custom component per ADR-024.
 import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
 import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
-// add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
-// declarative FxRate index grid with a cron-status overlay (last-run
-// timestamp + TreasuryRateAdapter dormancy flag) read from
-// /api/admin/fx-rate-import-status. The header strip + dormancy hint do
-// not fit any built-in `index` / `detail` / `dashboard` page type, so the
-// page is registered as a kind:"page" custom component per ADR-024.
-// Admin-only — the controller is gated by
-// #[AuthorizedAdminSetting(Application::class)].
-import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 // budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
 // verzamelpost rows (LedgerGroup tree, expandable to child groups or
@@ -407,6 +406,9 @@ export default {
 	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
 	// APTransactionDetail and PayeeDetail.
 	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
+	// tax-cbcr-and-pillar2-returns 6.1 to 6.3: Assess scope and Read figures
+	// from the books on GroupEntityDetail.
+	FiscalYearActionModal: { kind: 'modal', component: FiscalYearActionModal },
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
@@ -438,7 +440,6 @@ export default {
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
-	GoodsReceiptNoteDetail: { kind: 'page', component: GoodsReceiptNoteDetail },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 
@@ -486,7 +487,6 @@ export default {
 	PeriodCloseDetail: { kind: 'page', component: PeriodCloseDetail },
 
 	// add-shillinq-multi-currency Task 14: FxRates admin overlay (cron status).
-	FxRatesAdmin: { kind: 'page', component: FxRatesAdmin },
 
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
@@ -539,6 +539,24 @@ export default {
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
 	},
 
+	// sales-billable-rate-per-hour (REQ-BRPH-003): one month of a project's
+	// rated hours on ProjectDetail, through the slot widget-project-billable-hours.
+	ProjectBillableHoursCard: {
+		// @custom-widget-ratchet exclude the card reads GET /api/v1/projects/{id}/billable-hours, which rates each hour of another app's hours source by the assignment's rate card and joins the invoices that bill it; no declarative widget computes a value per row on the server or says that its source is not connected instead of showing zero.
+		kind: 'widget',
+		component: ProjectBillableHoursCard,
+		_note: 'Lists a month of the project\'s hours with rate, tier, value and billed state and totals the unbilled value. An object-table widget cannot tell "no hours source" from "no hours" and has no month picker.',
+	},
+
+	// tax-vat-return-from-books 3.3 (REQ-TVRB-001): the Checks tab on
+	// VATReturnDetail's sidebar.
+	VatReturnChecksPanel: {
+		// @custom-widget-ratchet exclude the checks are computed on the server over the period's ledger lines, VAT accounts, drafts and earlier returns (GET /api/vat-returns/{id}/checks); no declarative widget runs a server-side rule evaluation or shows a per-check passed/blocking/warning state with the offenders it names.
+		kind: 'widget',
+		component: VatReturnChecksPanel,
+		_note: 'Shows each VAT return check as passed, failed and blocking, or failed as a warning, with the transactions, accounts or documents to fix. An object-table widget lists stored rows; these verdicts are computed per request and stored nowhere.',
+	},
+
 	// ledger-booking-rules (REQ-LBR-003): the booking lines with each
 	// account's guidance, on JournalDetail and GeneralLedgerDetail through the
 	// slots widget-journal-lines and widget-transaction-lines.
@@ -578,6 +596,7 @@ export default {
 
 	// nav-six-clusters: the 5 new cluster landing pages (design.md §3).
 	BookkeepingOverview: { kind: 'page', component: BookkeepingOverview },
+	CustomRecordTypes: { kind: 'page', component: CustomRecordTypes },
 	SalesOverview: { kind: 'page', component: SalesOverview },
 	PurchasingOverview: { kind: 'page', component: PurchasingOverview },
 	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },

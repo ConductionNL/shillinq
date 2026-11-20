@@ -156,15 +156,15 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
 	public function createServiceReceipt(string $administrationId, array $payload): array {
-		$this->assertAccess(administrationId: $administrationId);
-		$approver = $this->requireSessionUser();
+		$this->scope()->assertAccess(administrationId: $administrationId);
+		$approver = $this->scope()->requireSessionUser();
 
-		$poIds = $this->normalisePoIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
+		$poIds = $this->input()->poIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
 		if ($poIds === []) {
 			throw new RuntimeException('At least one purchase order id is required');
 		}
 
-		$this->assertPurchaseOrdersAccessible(administrationId: $administrationId, poIds: $poIds);
+		$this->scope()->assertPurchaseOrdersAccessible(administrationId: $administrationId, poIds: $poIds);
 
 		$receiptNumber = $this->generateReceiptNumber(administrationId: $administrationId);
 
@@ -218,8 +218,8 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
 	public function addServiceReceiptLine(string $administrationId, string $receiptId, array $payload): array {
-		$this->assertAccess(administrationId: $administrationId);
-		$approver = $this->requireSessionUser();
+		$this->scope()->assertAccess(administrationId: $administrationId);
+		$approver = $this->scope()->requireSessionUser();
 
 		$receipt = $this->findReceipt(administrationId: $administrationId, receiptId: $receiptId);
 
@@ -332,7 +332,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 */
 	private function assertPoLineOnReceipt(array $poLine, array $receipt): void {
 		$parentPoId = (string)($poLine['poId'] ?? '');
-		$receiptPoIds = $this->stringArray(input: ($receipt['poIds'] ?? []));
+		$receiptPoIds = $this->input()->strings(input: ($receipt['poIds'] ?? []));
 		if ($parentPoId === '' || in_array($parentPoId, $receiptPoIds, true) === false) {
 			throw new RuntimeException('Purchase order line does not belong to this service receipt');
 		}
@@ -356,7 +356,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
 	public function confirmServiceReceipt(string $administrationId, string $receiptId): array {
-		$this->assertAccess(administrationId: $administrationId);
+		$this->scope()->assertAccess(administrationId: $administrationId);
 
 		$receipt = $this->records()->findOne(
 			schema: self::SCHEMA_SVC_RECEIPT,
@@ -408,7 +408,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
 	public function acceptServiceReceipt(string $administrationId, string $receiptId): array {
-		$this->assertAccess(administrationId: $administrationId);
+		$this->scope()->assertAccess(administrationId: $administrationId);
 
 		$receipt = $this->records()->findOne(
 			schema: self::SCHEMA_SVC_RECEIPT,
@@ -429,7 +429,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 		$receipt['statusCode'] = 'accepted';
 		$persisted = $this->records()->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
 
-		$poIds = $this->stringArray(input: ($persisted['poIds'] ?? $receipt['poIds'] ?? []));
+		$poIds = $this->input()->strings(input: ($persisted['poIds'] ?? $receipt['poIds'] ?? []));
 		foreach ($poIds as $poId) {
 			$this->updatePurchaseOrderReceiptLifecycle(
 				administrationId: $administrationId,
@@ -455,14 +455,14 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 */
 	private function deriveQuantity(array $payload, array $poLine): float {
 		if (isset($payload['quantityConfirmed']) === true && $payload['quantityConfirmed'] !== '') {
-			return $this->normaliseQuantity(value: $payload['quantityConfirmed']);
+			return $this->input()->quantity(value: $payload['quantityConfirmed']);
 		}
 
 		$orderedQuantity = (float)($poLine['quantityOrdered'] ?? 0);
 
 		if (isset($payload['percentageComplete']) === true && $payload['percentageComplete'] !== '') {
 			$basisPoints = (int)$payload['percentageComplete'];
-			return $this->normaliseQuantity(value: (($orderedQuantity * $basisPoints) / 10000.0));
+			return $this->input()->quantity(value: (($orderedQuantity * $basisPoints) / 10000.0));
 		}
 
 		$amountSupplied = (isset($payload['amountConfirmedCents']) === true
@@ -474,7 +474,7 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 			}
 
 			$amountCents = (int)$payload['amountConfirmedCents'];
-			return $this->normaliseQuantity(value: ($amountCents / $unitPriceCents));
+			return $this->input()->quantity(value: ($amountCents / $unitPriceCents));
 		}
 
 		throw new RuntimeException('One of quantityConfirmed, percentageComplete or amountConfirmedCents is required');
@@ -580,6 +580,26 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	}//end receivedQuantities()
 
 	/**
+	 * The receipt input normalisers.
+	 *
+	 * @return ReceiptInput The normalisers.
+	 */
+	private function input(): ReceiptInput {
+		return new ReceiptInput();
+
+	}//end input()
+
+	/**
+	 * The administration, caller and purchase order checks.
+	 *
+	 * @return ReceiptScope The scope.
+	 */
+	private function scope(): ReceiptScope {
+		return new ReceiptScope(administrationContext: $this->administrationContext, records: $this->records());
+
+	}//end scope()
+
+	/**
 	 * The record store on the app's register, logging as this service.
 	 *
 	 * @return SchemaRecordStore The record store.
@@ -620,79 +640,6 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 
 		return sprintf('SVR-%d-%s-%s', $year, $administrationId, $sequence);
 	}//end generateReceiptNumber()
-
-	/**
-	 * Validate the per-PO-id array and trim each entry to a non-empty string.
-	 *
-	 * @param mixed $rawIds Raw input (array or scalar).
-	 *
-	 * @return array<int,string>
-	 */
-	private function normalisePoIds(mixed $rawIds): array {
-		if (is_array($rawIds) === false) {
-			return [];
-		}
-
-		$ids = [];
-		foreach ($rawIds as $entry) {
-			$id = trim((string)$entry);
-			if ($id !== '') {
-				$ids[] = $id;
-			}
-		}
-
-		return array_values(array_unique($ids));
-	}//end normalisePoIds()
-
-	/**
-	 * Verify the caller can see every supplied PurchaseOrder under the
-	 * administration scope. Cross-tenant refs are masked as 404.
-	 *
-	 * @param string $administrationId Administration scope.
-	 * @param array<int,string> $poIds PO ids to validate.
-	 *
-	 * @return void
-	 *
-	 * @throws \RuntimeException When any PO id is missing or cross-tenant.
-	 */
-	private function assertPurchaseOrdersAccessible(string $administrationId, array $poIds): void {
-		foreach ($poIds as $poId) {
-			$po = $this->records()->findOne(
-				schema: self::SCHEMA_PO,
-				filters: [
-					'id' => $poId,
-					'administrationId' => $administrationId,
-				]
-			);
-			if ($po === null) {
-				throw new RuntimeException('Purchase order not found');
-			}
-		}
-
-	}//end assertPurchaseOrdersAccessible()
-
-	/**
-	 * Coerce any string-array input to a sanitised string array.
-	 *
-	 * @param mixed $input Raw input.
-	 *
-	 * @return array<int,string>
-	 */
-	private function stringArray(mixed $input): array {
-		if (is_array($input) === false) {
-			return [];
-		}
-
-		$out = [];
-		foreach ($input as $entry) {
-			$value = trim((string)$entry);
-			if ($value !== '') {
-				$out[] = $value;
-			}
-		}
-
-		return $out;
-	}//end stringArray()
 
 	/**
 	 * Trim a nullable string input, returning null instead of ''.
@@ -743,61 +690,6 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 
 		return (float)$input;
 	}//end nullableFloat()
-
-	/**
-	 * Coerce a quantity input to a non-negative float with multipleOf 0.001.
-	 *
-	 * @param mixed $value Raw input.
-	 *
-	 * @return float
-	 */
-	private function normaliseQuantity(mixed $value): float {
-		$float = (float)$value;
-		if ($float < 0.0) {
-			return 0.0;
-		}
-
-		// Round to thousandths so multipleOf 0.001 enforcement is exact.
-		return (((float)round($float * 1000.0)) / 1000.0);
-	}//end normaliseQuantity()
-
-	/**
-	 * Assert the caller can access the requested administration; mask as
-	 * not-found per ADR-005.
-	 *
-	 * @param string $administrationId Administration scope.
-	 *
-	 * @return void
-	 *
-	 * @throws \RuntimeException When the administration is not accessible.
-	 */
-	private function assertAccess(string $administrationId): void {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Administration not found');
-		}
-
-	}//end assertAccess()
-
-	/**
-	 * Resolve the validated session user — the server-authoritative
-	 * approver identity.
-	 *
-	 * @return string
-	 *
-	 * @throws \RuntimeException When no session user is available.
-	 */
-	private function requireSessionUser(): string {
-		$userId = (string)$this->administrationContext->currentUserId();
-		if ($userId === '') {
-			throw new RuntimeException('Authenticated user is required');
-		}
-
-		return $userId;
-	}//end requireSessionUser()
 
 	/**
 	 * Current timestamp in ISO-8601 (Y-m-d\TH:i:sP) — server-authoritative

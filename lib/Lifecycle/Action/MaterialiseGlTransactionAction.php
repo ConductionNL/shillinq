@@ -74,12 +74,14 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -93,13 +95,6 @@ use RuntimeException;
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
 class MaterialiseGlTransactionAction implements LifecycleActionInterface, MaterialiseGlTransactionActionInterface {
-
-	/**
-	 * App-config key: receivables control account (RGS 3.5 MKB 1100 Debiteuren).
-	 *
-	 * @var string
-	 */
-	public const CFG_AR_CONTROL_ACCOUNT = 'ledger_ar_control_account';
 
 	/**
 	 * App-config key: revenue account (RGS 3.5 MKB 8000 Netto-omzet).
@@ -222,20 +217,20 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	/**
 	 * Book the transitioning source into the ledger.
 	 *
-	 * @param array<string,mixed> $objectData The source after its state moved.
-	 * @param array<string,mixed> $previousData The source before the transition.
-	 * @param array<string,mixed> $parameters The declared actionParameters (`sourceSchema`, `keepBalanced`).
-	 * @param string $actionName The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the source after its state moved. Its
+	 *                                        parameters are the declared actionParameters (`sourceSchema`,
+	 *                                        `keepBalanced`).
 	 *
 	 * @return array<string,mixed> The source with `glTransactionId` set.
 	 *
 	 * @throws RuntimeException When the source schema has no mapper, the posting does not balance, or a write fails.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		$sourceSchema = (string)($parameters['sourceSchema'] ?? '');
 		if (in_array($sourceSchema, self::SUPPORTED_SOURCES, true) === false) {
 			throw new RuntimeException(
@@ -457,9 +452,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines  = [];
-		$vat    = $this->vatStamper();
-		$groups = [];
+		$lines   = [];
+		$vat     = $this->vatStamper();
+		$groups  = [];
+		$reverse = [];
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
@@ -475,6 +471,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
 
 			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it.
+			if ($vat->isReverseCharge(code: $code) === true) {
+				$reverse[$code] = (($reverse[$code] ?? 0) + $cents);
+			}
+
 			if ($vat->isReverseCharge(code: $code) === false) {
 				$groups = $this->addToVatGroup(
 					groups: $groups,
@@ -494,6 +494,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				'description' => $label . ' VAT',
 			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
 		}
+
+		$lines   = array_merge($lines, $this->reverseChargePair(reverse: $reverse, label: $label));
 		$lines[] = [
 			'accountNumber' => $this->account(key: self::CFG_AP_CONTROL_ACCOUNT),
 			'side' => 'credit',
@@ -513,6 +515,51 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * The VAT a supplier did not charge on a reverse-charged purchase, booked
+	 * twice per tariff: deducted in 5b and owed in the tariff's own box (2a,
+	 * 4a or 4b), so the net is nil and the return shows both (REQ-VBTW-004,
+	 * design D1). Without a rate to book it at, nothing is booked and the
+	 * return's reverse-charge check names the purchase.
+	 *
+	 * @param array<string,int> $reverse The reverse-charged base in cents per tariff code.
+	 * @param string            $label   The document label.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	private function reverseChargePair(array $reverse, string $label): array {
+		$vat  = $this->vatStamper();
+		$rate = $vat->reverseChargeRate();
+		if ($rate === null) {
+			return [];
+		}
+
+		$lines = [];
+		foreach ($reverse as $code => $baseCents) {
+			$cents = (int)round((float)$vat->vatCents(baseCents: $baseCents, rate: $rate));
+			if ($cents === 0) {
+				continue;
+			}
+
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => $label . ' reverse-charged VAT deducted',
+			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
+				'side' => 'credit',
+				'cents' => $cents,
+				'description' => $label . ' reverse-charged VAT owed',
+			] + $vat->stampOwed(code: (string)$code);
+		}
+
+		return $lines;
+	}//end reverseChargePair()
 
 	/**
 	 * Book a foreign-currency posting at its rate: each line's amount becomes
@@ -1140,11 +1187,6 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

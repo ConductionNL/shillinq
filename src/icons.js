@@ -157,6 +157,7 @@ import DeleteSweepOutline from 'vue-material-design-icons/DeleteSweepOutline.vue
 import DesktopTowerMonitor from 'vue-material-design-icons/DesktopTowerMonitor.vue'
 import DiamondStone from 'vue-material-design-icons/DiamondStone.vue'
 import Domain from 'vue-material-design-icons/Domain.vue'
+import Download from 'vue-material-design-icons/Download.vue'
 import DownloadOutline from 'vue-material-design-icons/DownloadOutline.vue'
 import Earth from 'vue-material-design-icons/Earth.vue'
 import EarthArrowRight from 'vue-material-design-icons/EarthArrowRight.vue'
@@ -195,6 +196,7 @@ import FileReplaceOutline from 'vue-material-design-icons/FileReplaceOutline.vue
 import FileSendOutline from 'vue-material-design-icons/FileSendOutline.vue'
 import FileSign from 'vue-material-design-icons/FileSign.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
+import FileUploadOutline from 'vue-material-design-icons/FileUploadOutline.vue'
 import FileXmlBox from 'vue-material-design-icons/FileXmlBox.vue'
 import FilterCogOutline from 'vue-material-design-icons/FilterCogOutline.vue'
 import Finance from 'vue-material-design-icons/Finance.vue'
@@ -245,6 +247,7 @@ import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutli
 import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
 import PauseCircleOutline from 'vue-material-design-icons/PauseCircleOutline.vue'
+import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
 import Percent from 'vue-material-design-icons/Percent.vue'
 import PercentOutline from 'vue-material-design-icons/PercentOutline.vue'
 import PiggyBankOutline from 'vue-material-design-icons/PiggyBankOutline.vue'
@@ -279,6 +282,7 @@ import ShieldPlusOutline from 'vue-material-design-icons/ShieldPlusOutline.vue'
 import ShieldRemoveOutline from 'vue-material-design-icons/ShieldRemoveOutline.vue'
 import ShieldSearch from 'vue-material-design-icons/ShieldSearch.vue'
 import ShoppingOutline from 'vue-material-design-icons/ShoppingOutline.vue'
+import Shuffle from 'vue-material-design-icons/Shuffle.vue'
 import Sigma from 'vue-material-design-icons/Sigma.vue'
 import SignatureFreehand from 'vue-material-design-icons/SignatureFreehand.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
@@ -288,6 +292,8 @@ import SourceBranch from 'vue-material-design-icons/SourceBranch.vue'
 import SpeedometerSlow from 'vue-material-design-icons/SpeedometerSlow.vue'
 import StairsUp from 'vue-material-design-icons/StairsUp.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
+import Storefront from 'vue-material-design-icons/Storefront.vue'
+import StorefrontOutline from 'vue-material-design-icons/StorefrontOutline.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import SwapHorizontal from 'vue-material-design-icons/SwapHorizontal.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
@@ -478,6 +484,7 @@ export default {
 	DesktopTowerMonitor,
 	DiamondStone,
 	Domain,
+	Download,
 	DownloadOutline,
 	Earth,
 	EarthArrowRight,
@@ -516,6 +523,7 @@ export default {
 	FileSendOutline,
 	FileSign,
 	FileTreeOutline,
+	FileUploadOutline,
 	FileXmlBox,
 	FilterCogOutline,
 	Finance,
@@ -566,6 +574,7 @@ export default {
 	PackageVariant,
 	PackageVariantClosed,
 	PauseCircleOutline,
+	PencilOutline,
 	Percent,
 	PercentOutline,
 	PiggyBankOutline,
@@ -600,6 +609,7 @@ export default {
 	ShieldRemoveOutline,
 	ShieldSearch,
 	ShoppingOutline,
+	Shuffle,
 	Sigma,
 	SignatureFreehand,
 	Sitemap,
@@ -610,6 +620,8 @@ export default {
 	StairsUp,
 	StarOutline,
 	StoreOutline,
+	Storefront,
+	StorefrontOutline,
 	SwapHorizontal,
 	SwapHorizontalBold,
 	SwapVerticalBold,
