@@ -89,6 +89,8 @@ class DeferralService {
 	 * @throws DeferralRefusedException When the request is not a usable deferral.
 	 *
 	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) DeferralPlan is the pure spreading arithmetic; it holds no state.
 	 */
 	public function preview(array $input): array {
 		$schedule = [
@@ -403,6 +405,8 @@ class DeferralService {
 	 * @return string
 	 *
 	 * @throws DeferralRefusedException When a required field is empty or a field is too long.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) One reader for required and optional text fields keeps the input checks in one place.
 	 */
 	private static function text(array $input, string $key, bool $required = true): string {
 		$value = ($input[$key] ?? '');

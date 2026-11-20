@@ -45,6 +45,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
+use LogicException;
 
 /**
  * REST surface for the PeriodClose lifecycle and close-assistant flags.
@@ -337,7 +338,7 @@ class PeriodCloseController extends Controller {
 		}
 
 		if ($this->checklist === null) {
-			return $this->serverError(action: 'checklist', e: new \LogicException('PeriodChecklistService is not available'));
+			return $this->serverError(action: 'checklist', e: new LogicException('PeriodChecklistService is not available'));
 		}
 
 		try {

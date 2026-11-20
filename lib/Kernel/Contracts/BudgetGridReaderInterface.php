@@ -63,6 +63,7 @@ interface BudgetGridReaderInterface {
 	 *     accountTypeByNumber: array<string,string>,
 	 *     accountByNumber: array<string,array<string,mixed>>,
 	 *     annualBudgetIdByYear: array<int,?string>,
+	 *     budgetLinesByFiscalYear: array<int,list<array<string,mixed>>|null>,
 	 * }
 	 *
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001

@@ -157,6 +157,8 @@ class AccrualBooking {
 	 * @param DateTimeImmutable   $asOf     The run time.
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Kept parallel to book(); a reversal is dated on the period's first day, not on the run time.
 	 */
 	private function reverse(array $rule, array $posting, string $periodId, DateTimeImmutable $asOf): void {
 		$number = (string)$posting['journalEntryId'] . '-rev';
