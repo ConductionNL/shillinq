@@ -115,7 +115,9 @@ final class PortalWithdrawalControllerTest extends TestCase {
 	public function testAValidLinkWithdraws(): void {
 		$this->withdrawals->expects($this->once())->method('withdraw')
 			->with('apt-1', 'guest-link', $this->isInstanceOf(DateTimeImmutable::class))
-			->willReturn(['withdrawn' => true, 'code' => 'withdrawable', 'reason' => null, 'withdrawal' => ['acknowledgedAt' => 'now'], 'appointment' => ['id' => 'apt-1']]);
+			->willReturn(
+				['withdrawn' => true, 'code' => 'withdrawable', 'reason' => null, 'withdrawal' => ['acknowledgedAt' => 'now'], 'appointment' => ['id' => 'apt-1']]
+			);
 		$token = (string)$this->links()->tokenFor('apt-1', time() + 3600);
 
 		$response = $this->controller('', null, ['token' => $token])->withdraw();
@@ -133,7 +135,8 @@ final class PortalWithdrawalControllerTest extends TestCase {
 		$this->withdrawals->expects($this->never())->method('withdraw');
 		$expired = (string)$this->links()->tokenFor('apt-1', time() - 1);
 		$valid = (string)$this->links()->tokenFor('apt-1', time() + 3600);
-		$tampered = rtrim(strtr(base64_encode((string)json_encode(['i' => 'apt-2', 'e' => time() + 3600])), '+/', '-_'), '=') . '.' . explode('.', $valid)[1];
+		$swapped = rtrim(strtr(base64_encode((string)json_encode(['i' => 'apt-2', 'e' => time() + 3600])), '+/', '-_'), '=');
+		$tampered = $swapped . '.' . explode('.', $valid)[1];
 
 		foreach ([$expired, $tampered] as $token) {
 			$response = $this->controller('', null, ['token' => $token])->withdraw();

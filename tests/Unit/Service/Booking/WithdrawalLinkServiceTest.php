@@ -51,7 +51,10 @@ final class WithdrawalLinkServiceTest extends TestCase {
 		$config->method('getSystemValueString')->willReturn($secret);
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => $key === WithdrawalLinkService::PAGE_KEY ? $page : $default
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				WithdrawalLinkService::PAGE_KEY => $page,
+				default => $default,
+			}
 		);
 
 		return new WithdrawalLinkService($config, $appConfig, new \OCA\Shillinq\Service\WithdrawalService($this->createMock(\OCP\IL10N::class)));

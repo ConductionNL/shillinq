@@ -64,7 +64,9 @@ final class PortalWithdrawalServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->rows['portalAccount'] = ['acc-1' => ['subjectRef' => 'sub-visser', 'audience' => 'customer', 'claims' => ['shillinq' => ['customerMasterId' => 'cm-visser']]]];
+		$this->rows['portalAccount'] = [
+			'acc-1' => ['subjectRef' => 'sub-visser', 'audience' => 'customer', 'claims' => ['shillinq' => ['customerMasterId' => 'cm-visser']]],
+		];
 		$this->rows['CustomerMaster'] = ['cm-visser' => ['email' => 'M.Visser@example.nl']];
 		$this->rows['Appointment'] = [
 			'apt-1' => ['customerEmail' => 'm.visser@example.nl', 'customerId' => '', 'source' => 'widget'],
@@ -138,7 +140,13 @@ final class PortalWithdrawalServiceTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private static function outcome(bool $withdrawn, ?string $reason = null): array {
-		return ['withdrawn' => $withdrawn, 'code' => '', 'reason' => $reason, 'withdrawal' => ['acknowledgedAt' => '2026-09-24T14:05:00+00:00'], 'appointment' => ['id' => 'apt-1']];
+		return [
+			'withdrawn' => $withdrawn,
+			'code' => '',
+			'reason' => $reason,
+			'withdrawal' => ['acknowledgedAt' => '2026-09-24T14:05:00+00:00'],
+			'appointment' => ['id' => 'apt-1'],
+		];
 	}//end outcome()
 
 	/**
@@ -149,10 +157,11 @@ final class PortalWithdrawalServiceTest extends TestCase {
 	public function testAValidSubjectWithdrawsTheirOwnBooking(): void {
 		$now = new DateTimeImmutable('2026-09-24T14:05:00+00:00');
 		$this->withdrawals->expects($this->exactly(2))->method('withdraw')
-			->willReturnCallback(fn (string $id, string $channel): array => $channel === 'portal' ? self::outcome(true) : self::outcome(false));
+			->willReturnCallback(static fn (string $id, string $channel): array => self::outcome(withdrawn: $channel === 'portal'));
 		$claims = ['audience' => 'customer', 'sub' => 'sub-visser'];
 
-		$this->assertSame(['status' => 'withdrawn', 'acknowledgedAt' => '2026-09-24T14:05:00+00:00'], $this->service()->withdrawForSubject($claims, 'apt-1', $now));
+		$expected = ['status' => 'withdrawn', 'acknowledgedAt' => '2026-09-24T14:05:00+00:00'];
+		$this->assertSame($expected, $this->service()->withdrawForSubject($claims, 'apt-1', $now));
 		$this->assertSame('withdrawn', $this->service()->withdrawForSubject($claims, 'apt-3', $now)['status']);
 	}//end testAValidSubjectWithdrawsTheirOwnBooking()
 
@@ -203,7 +212,8 @@ final class PortalWithdrawalServiceTest extends TestCase {
 			['withdrawn' => false, 'code' => 'not-booked-online', 'reason' => null, 'withdrawal' => null, 'appointment' => null]
 		);
 
-		$this->assertSame(['status' => 'refused', 'reason' => 'The withdrawal period ended on 2026-10-03.'], $this->service()->withdrawByLink($token, $now));
+		$refused = ['status' => 'refused', 'reason' => 'The withdrawal period ended on 2026-10-03.'];
+		$this->assertSame($refused, $this->service()->withdrawByLink($token, $now));
 		$this->assertSame(['status' => 'error'], $this->service()->withdrawByLink($token, $now));
 		$this->assertSame(['status' => 'forbidden'], $this->service()->withdrawByLink($token, $now));
 	}//end testRefusalsAndFailuresAreAnswered()

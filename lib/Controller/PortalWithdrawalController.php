@@ -139,11 +139,11 @@ class PortalWithdrawalController extends Controller {
 	 * @return string
 	 */
 	private function stringParam(string $key): string {
-		$value = $this->request->getParam($key);
-		if (is_string($value) === false) {
-			return '';
-		}
+		$value = $this->request->getParam($key, '');
 
-		return $value;
+		return match (is_string($value)) {
+			true => $value,
+			false => '',
+		};
 	}//end stringParam()
 }//end class

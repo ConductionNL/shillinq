@@ -18,6 +18,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
@@ -114,6 +116,8 @@ final class ConfirmationMailerTest extends TestCase {
 	 * constructor. integriq's real CallService has call() and callAsync() but
 	 * no send(), so a container lookup finds nothing that sends mail.
 	 *
+	 * @param string $guestPage The portal guest page for the withdrawal link, '' for none.
+	 *
 	 * @return ConfirmationMailer
 	 */
 	private function makeMailer(string $guestPage = 'https://portal.example.nl/withdraw'): ConfirmationMailer {
@@ -130,7 +134,12 @@ final class ConfirmationMailerTest extends TestCase {
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueString')->willReturn('instance-secret');
 		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $key === WithdrawalLinkService::PAGE_KEY ? $guestPage : $default);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				WithdrawalLinkService::PAGE_KEY => $guestPage,
+				default => $default,
+			}
+		);
 		$links = new WithdrawalLinkService($config, $appConfig, new \OCA\Shillinq\Service\WithdrawalService($this->createMock(\OCP\IL10N::class)));
 
 		// IcsService is final: a real one over mocked dependencies.
@@ -218,11 +227,6 @@ final class ConfirmationMailerTest extends TestCase {
 	}//end testTheConfirmationIsMailedThroughNextcloudsMailerWithTheIcsAttached()
 
 	/**
-	 * A mailer that throws means nothing was sent: send() says false.
-	 *
-	 * @return void
-	 */
-	/**
 	 * The confirm link is the app's confirm page, not the undeclared confirmationApi.portal route (task 3.3).
 	 *
 	 * @return void
@@ -232,7 +236,8 @@ final class ConfirmationMailerTest extends TestCase {
 
 		$this->makeMailer()->send(appointment: ['id' => 'apt-7'] + $this->appointment(), rawToken: 'rawtok123');
 
-		self::assertStringContainsString('Confirm your appointment here: https://example.nl/index.php/apps/shillinq/confirm/apt-7?token=rawtok123', $this->sent['body']);
+		$expected = 'Confirm your appointment here: https://example.nl/index.php/apps/shillinq/confirm/apt-7?token=rawtok123';
+		self::assertStringContainsString($expected, $this->sent['body']);
 	}//end testTheConfirmLinkIsTheConfirmPageOfTheAppointment()
 
 	/**
@@ -246,7 +251,9 @@ final class ConfirmationMailerTest extends TestCase {
 
 		$this->makeMailer()->send(appointment: $appointment, rawToken: 'rawtok123');
 
-		self::assertMatchesRegularExpression('#You can withdraw from this booking until 2026-10-03 without a fee: https://portal\.example\.nl/withdraw\?withdraw=[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+#', $this->sent['body']);
+		$pattern = '#You can withdraw from this booking until 2026-10-03 without a fee: '
+			. 'https://portal\.example\.nl/withdraw\?withdraw=[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+#';
+		self::assertMatchesRegularExpression($pattern, $this->sent['body']);
 	}//end testAnOnlineBookingCarriesTheSignedWithdrawalLink()
 
 	/**
@@ -265,6 +272,11 @@ final class ConfirmationMailerTest extends TestCase {
 		self::assertStringNotContainsString('withdraw', $this->sent['body']);
 	}//end testNoWithdrawalLineWithoutAnOnlineBookingOrAGuestPage()
 
+	/**
+	 * A mailer that throws means nothing was sent: send() says false.
+	 *
+	 * @return void
+	 */
 	public function testSendReturnsFalseWhenTheMailerFails(): void {
 		$this->mailer->expects($this->once())->method('send')->willThrowException(new \RuntimeException('SMTP down'));
 

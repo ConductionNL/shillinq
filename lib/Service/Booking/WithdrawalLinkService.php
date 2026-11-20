@@ -117,10 +117,10 @@ class WithdrawalLinkService {
 			return null;
 		}
 
-		$separator = '?';
-		if (str_contains($page, '?') === true) {
-			$separator = '&';
-		}
+		$separator = match (str_contains($page, '?')) {
+			true => '&',
+			false => '?',
+		};
 
 		return $page . $separator . 'withdraw=' . rawurlencode($token);
 	}//end forAppointment()
@@ -165,12 +165,8 @@ class WithdrawalLinkService {
 			return null;
 		}
 
-		$claims = json_decode((string)self::decode(data: $parts[0]), true);
-		if (is_array($claims) === false || is_string($claims['i'] ?? null) === false || is_int($claims['e'] ?? null) === false) {
-			return null;
-		}
-
-		if (preg_match(self::ID_PATTERN, $claims['i']) !== 1 || $now->getTimestamp() >= $claims['e']) {
+		$claims = self::claimsOf(payload: $parts[0]);
+		if ($claims === null || $now->getTimestamp() >= $claims['e']) {
 			return null;
 		}
 
@@ -178,17 +174,37 @@ class WithdrawalLinkService {
 	}//end verify()
 
 	/**
+	 * The appointment id and expiry a payload carries, null when it carries no well-formed pair.
+	 *
+	 * @param string $payload The encoded payload.
+	 *
+	 * @return array{i: string, e: int}|null
+	 */
+	private static function claimsOf(string $payload): ?array {
+		$claims = json_decode((string)self::decode(data: $payload), true);
+		if (is_array($claims) === false || is_string($claims['i'] ?? null) === false || is_int($claims['e'] ?? null) === false) {
+			return null;
+		}
+
+		if (preg_match(self::ID_PATTERN, $claims['i']) !== 1) {
+			return null;
+		}
+
+		return ['i' => $claims['i'], 'e' => $claims['e']];
+	}//end claimsOf()
+
+	/**
 	 * The signing key, derived from the instance secret.
 	 *
 	 * @return string|null Null when the instance has no secret.
 	 */
 	private function key(): ?string {
-		$secret = (string)$this->config->getSystemValueString('secret', '');
-		if ($secret === '') {
-			return null;
+		$secret = trim((string)$this->config->getSystemValueString('secret', ''));
+		if ($secret !== '') {
+			return hash_hmac('sha256', self::CONTEXT, $secret, true);
 		}
 
-		return hash_hmac('sha256', self::CONTEXT, $secret, true);
+		return null;
 	}//end key()
 
 	/**
@@ -210,15 +226,15 @@ class WithdrawalLinkService {
 	 * @return string|null
 	 */
 	private static function decode(string $data): ?string {
-		if (preg_match('/^[A-Za-z0-9_-]+$/', $data) !== 1) {
-			return null;
+		$bytes = false;
+		if (preg_match('/^[A-Za-z0-9_-]+$/', $data) === 1) {
+			$bytes = base64_decode(strtr($data, '-_', '+/'), true);
 		}
 
-		$bytes = base64_decode(strtr($data, '-_', '+/'), true);
-		if ($bytes === false) {
-			return null;
+		if (is_string($bytes) === true) {
+			return $bytes;
 		}
 
-		return $bytes;
+		return null;
 	}//end decode()
 }//end class

@@ -50,6 +50,13 @@ use Throwable;
 class PortalWithdrawalService {
 
 	/**
+	 * Resolves the portal subject to their CustomerMaster.
+	 *
+	 * @var PortalSubjectResolver
+	 */
+	private readonly PortalSubjectResolver $subjects;
+
+	/**
 	 * The appointment is withdrawn.
 	 */
 	public const WITHDRAWN = 'withdrawn';
@@ -74,15 +81,14 @@ class PortalWithdrawalService {
 	 * @param WithdrawalLinkService  $links         Verifies a guest's signed link.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param LoggerInterface        $logger        Diagnostics.
-	 * @param PortalSubjectResolver  $subjects      Resolves the portal subject to their CustomerMaster.
 	 */
 	public function __construct(
 		private readonly WithdrawalService $withdrawals,
 		private readonly WithdrawalLinkService $links,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly LoggerInterface $logger,
-		private readonly PortalSubjectResolver $subjects = new PortalSubjectResolver(),
 	) {
+		$this->subjects = new PortalSubjectResolver();
 	}//end __construct()
 
 	/**

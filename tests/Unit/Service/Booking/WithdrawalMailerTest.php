@@ -85,7 +85,12 @@ final class WithdrawalMailerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private static function appointment(): array {
-		return ['customerEmail' => 'm.visser@example.nl', 'serviceName' => 'Knippen en kleuren', 'startTime' => '2026-10-15T10:00:00Z', 'customerTimezone' => 'Europe/Amsterdam'];
+		return [
+			'customerEmail' => 'm.visser@example.nl',
+			'serviceName' => 'Knippen en kleuren',
+			'startTime' => '2026-10-15T10:00:00Z',
+			'customerTimezone' => 'Europe/Amsterdam',
+		];
 	}//end appointment()
 
 	/**
