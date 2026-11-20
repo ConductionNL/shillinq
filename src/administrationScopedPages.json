@@ -193,6 +193,7 @@
 		"Invoice",
 		"InvoiceBatch",
 		"InvoiceLine",
+		"InvoiceNumberSequence",
 		"IossImport",
 		"IrregularityReport",
 		"JournalEntry",

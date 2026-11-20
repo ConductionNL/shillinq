@@ -303,6 +303,14 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\InvoiceNumberLockListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\PaymentRunLineLockListener'",
             "0"
         ]
@@ -2675,6 +2683,14 @@
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\RuleComplianceGuard::validateInvoice'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\SalesInvoiceApprovalGuard::canApprove'",
             "Closure",
             "true"
         ]

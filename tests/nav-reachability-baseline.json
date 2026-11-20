@@ -44,6 +44,7 @@
         "MobileReceipt": "Shillinq Mobile screen (platform-mobile-pwa): reached from MobileHome's 'Capture a receipt' action and the installed app's shortcut, not from the desktop menu, which lists only the app's home",
         "MobileInvoice": "Shillinq Mobile screen (platform-mobile-pwa): reached from MobileHome's 'Draft an invoice' action and the installed app's shortcut, not from the desktop menu, which lists only the app's home",
         "CashFlowLines": "verified: opened by a row click on the account, result and depreciation rows of the menu-reachable FinancialStatementCashFlow page (its object-table widgets declare rowRoute CashFlowLines with rowIdField linesKey, the figure's scope and range); a widget row route is a real entry point the config-field reachability relation does not model",
-        "FinancialStatementCashFlow": "Reports card (ADR-112 Decision 2): reachable from the Cash flow statement card on the Reports page, so it carries no menu entry (reporting-cash-flow-statement)."
+        "FinancialStatementCashFlow": "Reports card (ADR-112 Decision 2): reachable from the Cash flow statement card on the Reports page, so it carries no menu entry (reporting-cash-flow-statement).",
+        "InvoiceNumberCheck": "sales-invoice-issue-controls REQ-SIIC-004: reachable as a CARD on the Reports page (src/manifest.json Reports config.cards, category housekeeping), which is itself a live menu entry. The card navigates by route name; the checker reads the manifest menu and cannot see a card on a reports page. A menu entry would list the report twice."
     }
 }

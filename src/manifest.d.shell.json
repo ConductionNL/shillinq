@@ -5899,6 +5899,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "sales-invoice-issue-controls",
+					"id": "InvoiceNumberCheck",
+					"route": "/reports/invoice-number-check",
+					"type": "dashboard",
+					"title": "Invoice number check"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "SelfBilledInvoiceRefusals",
