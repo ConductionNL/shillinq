@@ -270,6 +270,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // routes so Symfony matches them first.
             ['name' => 'invoiceApi#generate', 'url' => '/api/v1/invoices/generate', 'verb' => 'POST'],
             ['name' => 'invoiceApi#billable', 'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'],
+            // sales-time-and-expense-billing D1: the unbilled hours and pass-through expenses to tick.
+            ['name' => 'billableWork#index', 'url' => '/api/v1/invoices/billable-work', 'verb' => 'GET'],
             ['name' => 'invoiceApi#index', 'url' => '/api/v1/invoices', 'verb' => 'GET'],
             ['name' => 'invoiceApi#post', 'url' => '/api/v1/invoices/{invoiceId}/post', 'verb' => 'POST'],
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],

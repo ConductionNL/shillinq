@@ -1087,7 +1087,6 @@ OC.L10N.register(
         "Expense": "Expense",
         "Expense Claims": "Expense Claims",
         "Expense Disputed": "Expense Disputed",
-        "Expense IDs (comma-separated)": "Expense IDs (comma-separated)",
         "Expense Invoiced": "Expense Invoiced",
         "Expense No Settlement Mode": "Expense No Settlement Mode",
         "Expense Reimbursed": "Expense Reimbursed",
@@ -2904,7 +2903,6 @@ OC.L10N.register(
         "Time & Materials": "Time & Materials",
         "Time Registration": "Time Registration",
         "Time entry": "Time entry",
-        "Time entry IDs (comma-separated)": "Time entry IDs (comma-separated)",
         "Time tracking": "Time tracking",
         "Timesheet quarter": "Timesheet quarter",
         "Timezone": "Timezone",
@@ -5797,7 +5795,19 @@ OC.L10N.register(
         "Cash from operations, investments and financing, reconciled to the change in cash.": "Cash from operations, investments and financing, reconciled to the change in cash.",
         "Cash flow lines": "Cash flow lines",
         "The posted ledger lines behind one cash flow figure; together they add up to it. Open a line to see its posting.": "The posted ledger lines behind one cash flow figure; together they add up to it. Open a line to see its posting.",
-        "Ledger lines": "Ledger lines"
+        "Ledger lines": "Ledger lines",
+        "Hours to bill": "Hours to bill",
+        "Hours are not available: the hours app is not connected.": "Hours are not available: the hours app is not connected.",
+        "Choose a project to list its unbilled hours.": "Choose a project to list its unbilled hours.",
+        "Every approved hour in this period is already on an invoice.": "Every approved hour in this period is already on an invoice.",
+        "Ticked hours: EUR {amount}": "Ticked hours: EUR {amount}",
+        "Pass-through expenses to bill": "Pass-through expenses to bill",
+        "This customer has no pass-through expenses that are not on an invoice yet.": "This customer has no pass-through expenses that are not on an invoice yet.",
+        "Disbursement, outside the VAT base": "Disbursement, outside the VAT base",
+        "The billable hours and expenses could not be loaded.": "The billable hours and expenses could not be loaded.",
+        "{date} {person}: {hours} hours": "{date} {person}: {hours} hours",
+        "{date} {person}: {hours} hours at EUR {rate}, EUR {amount}": "{date} {person}: {hours} hours at EUR {rate}, EUR {amount}",
+        "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}": "{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}"
     },
     "nplurals=2; plural=(n != 1);"
 )
