@@ -14,6 +14,7 @@
  *
  * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
  * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-006
+ * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -25,14 +26,14 @@ namespace OCA\Shillinq\Tests\Unit\Service\EInvoice;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
+use OCA\Shillinq\Service\EInvoice\EInvoiceArtefactStore;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
 use OCA\Shillinq\Service\EInvoice\EInvoiceValidationService;
+use OCA\Shillinq\Service\IntegriqCloudEventPublisher;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\ViesService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
-use OCP\EventDispatcher\Event;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -40,13 +41,27 @@ use Psr\Log\NullLogger;
 use RuntimeException;
 
 /**
- * Covers REQ-EINV-005/006: send emits exactly one outbound-requested event and
- * advances deliveryStatus to queued; per-administration IDOR guard; B2G send
- * records provenance (transmissionId + payloadFileUri).
+ * Covers REQ-EINV-005/006 and REQ-SEIX-001: send hands exactly one
+ * outbound request to integriq and then advances deliveryStatus to queued;
+ * per-administration IDOR guard; the send records the stored payload.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class EInvoiceServiceTest extends TestCase {
+	/**
+	 * Files path the artefact store reports for the stored XML.
+	 *
+	 * @var string
+	 */
+	private const STORED = '/jan/files/Shillinq/adm-1/e-invoices/2026/invoice-2026-0042.xml';
+
+	/**
+	 * Outbound requests handed to integriq, as [type, source, subject, data].
+	 *
+	 * @var array<int,array{0:string,1:string,2:string,3:array<string,mixed>}>
+	 */
+	private array $published = [];
+
 	/**
 	 * A realistic issued ARInvoice ready to send (B2G debtor).
 	 *
@@ -79,7 +94,6 @@ final class EInvoiceServiceTest extends TestCase {
 	 *
 	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
 	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
-	 * @param IEventDispatcher $dispatcher Event dispatcher (mock).
 	 * @param PeppolTransmissionPortInterface|null $peppolPort Optional port override.
 	 * @param string|null $viesOutcomeValid VIES valid outcome (default true).
 	 * @param array<int,string> $accessibleAdministrations Tenants canAccess returns true for.
@@ -89,7 +103,6 @@ final class EInvoiceServiceTest extends TestCase {
 	private function buildService(
 		array $data,
 		array &$saved,
-		IEventDispatcher $dispatcher,
 		?PeppolTransmissionPortInterface $peppolPort = null,
 		?bool $viesOutcomeValid = true,
 		array $accessibleAdministrations = ['adm-1'],
@@ -198,16 +211,28 @@ final class EInvoiceServiceTest extends TestCase {
 
 		$validationService = new EInvoiceValidationService(vies: $vies, peppolPort: $port);
 
+		$store = $this->createMock(EInvoiceArtefactStore::class);
+		$store->method('store')->willReturn(self::STORED);
+
+		$publisher = $this->createMock(IntegriqCloudEventPublisher::class);
+		$publisher->method('isAvailable')->willReturn(true);
+		$publisher->method('publish')->willReturnCallback(
+			function (string $type, string $source, string $subject, array $data): bool {
+				$this->published[] = [$type, $source, $subject, $data];
+				return true;
+			}
+		);
+
 		return new EInvoiceService(
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: new NullLogger(),
-			eventDispatcher: $dispatcher,
 			ublMapper: new ArInvoiceUblMapper(),
 			pdfGenerator: new InvoicePdfGenerator(),
 			validationService: $validationService,
-			peppolPort: $port,
 			objectService: new DuckObjectServiceAdapter($stub),
+			artefactStore: $store,
+			publisher: $publisher,
 		);
 
 	}//end buildService()
@@ -256,62 +281,54 @@ final class EInvoiceServiceTest extends TestCase {
 	}//end stubPort()
 
 	/**
-	 * REQ-EINV-005 scenario 1: send emits exactly one outbound-requested event
-	 * and advances deliveryStatus to queued.
+	 * REQ-SEIX-001: send hands exactly one outbound request to integriq and
+	 * then advances deliveryStatus to queued.
 	 *
 	 * @return void
 	 */
-	public function testSendEmitsExactlyOneOutboundRequestedEventAndQueues(): void {
+	public function testSendHandsOneOutboundRequestToIntegriqAndQueues(): void {
 		$saved = [];
 		$data = ['ARInvoice' => [$this->issuedInvoice()]];
 
-		$dispatcher = $this->createMock(IEventDispatcher::class);
-		$dispatcher->expects(self::once())
-			->method('dispatch')
-			->with(
-				self::equalTo(EInvoiceService::EVENT_OUTBOUND_REQUESTED),
-				self::isInstanceOf(Event::class)
-			);
-
-		$service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
+		$service = $this->buildService(data: $data, saved: $saved);
 
 		$result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
 		self::assertSame('queued', $result['deliveryStatus']);
-		self::assertNotNull($result['transmissionId']);
-		self::assertNotNull($result['payloadFileUri']);
+		self::assertNull($result['transmissionId']);
+		self::assertSame(self::STORED, $result['payloadFileUri']);
 		self::assertFalse($result['fallback']);
+		self::assertCount(1, $this->published);
+		self::assertSame(EInvoiceService::EVENT_OUTBOUND_REQUESTED, $this->published[0][0]);
 
 		$arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
 		self::assertCount(1, $arSaves);
 		self::assertSame('queued', $arSaves[0]['object']['deliveryStatus']);
 
-	}//end testSendEmitsExactlyOneOutboundRequestedEventAndQueues()
+	}//end testSendHandsOneOutboundRequestToIntegriqAndQueues()
 
 	/**
-	 * REQ-EINV-006: B2G send records transmissionId + payloadFileUri provenance.
+	 * REQ-SEIX-002: the send records the stored XML as its payload, and no
+	 * made-up transmission id.
 	 *
 	 * @return void
 	 */
-	public function testB2GSendRecordsProvenance(): void {
+	public function testSendRecordsTheStoredPayload(): void {
 		$saved = [];
 		$data = ['ARInvoice' => [$this->issuedInvoice()]];
-
-		$dispatcher = $this->createMock(IEventDispatcher::class);
 
 		$service = $this->buildService(
 			data: $data,
 			saved: $saved,
-			dispatcher: $dispatcher,
 			peppolPort: $this->stubPort('0106:00000000')
 		);
 
-		$result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-		self::assertStringStartsWith('urn:uuid:', (string)$result['transmissionId']);
-		self::assertStringStartsWith('docudesk://file/', (string)$result['payloadFileUri']);
+		self::assertSame(self::STORED, $saved[0]['object']['payloadFileUri']);
+		self::assertArrayNotHasKey('transmissionId', $saved[0]['object']);
 
-	}//end testB2GSendRecordsProvenance()
+	}//end testSendRecordsTheStoredPayload()
 
 	/**
 	 * REQ-EINV-005 scenario (IDOR): the send action rejects another
@@ -323,13 +340,10 @@ final class EInvoiceServiceTest extends TestCase {
 		$saved = [];
 		$data = ['ARInvoice' => [$this->issuedInvoice()]];
 
-		$dispatcher = $this->createMock(IEventDispatcher::class);
-		$dispatcher->expects(self::never())->method('dispatch');
 
 		$service = $this->buildService(
 			data: $data,
 			saved: $saved,
-			dispatcher: $dispatcher,
 			accessibleAdministrations: []
 		);
 
@@ -351,10 +365,8 @@ final class EInvoiceServiceTest extends TestCase {
 		$invoice['lifecycleState'] = 'draft';
 		$data = ['ARInvoice' => [$invoice]];
 
-		$dispatcher = $this->createMock(IEventDispatcher::class);
-		$dispatcher->expects(self::never())->method('dispatch');
 
-		$service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
+		$service = $this->buildService(data: $data, saved: $saved);
 
 		$this->expectException(RuntimeException::class);
 
@@ -373,10 +385,8 @@ final class EInvoiceServiceTest extends TestCase {
 		$invoice['buyerVatId'] = 'NL123';
 		$data = ['ARInvoice' => [$invoice]];
 
-		$dispatcher = $this->createMock(IEventDispatcher::class);
-		$dispatcher->expects(self::never())->method('dispatch');
 
-		$service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
+		$service = $this->buildService(data: $data, saved: $saved);
 
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessageMatches('/BTW-nummer/');
@@ -396,13 +406,10 @@ final class EInvoiceServiceTest extends TestCase {
 		$saved = [];
 		$data = ['ARInvoice' => [$this->issuedInvoice()]];
 
-		$dispatcher = $this->createMock(IEventDispatcher::class);
-		$dispatcher->expects(self::never())->method('dispatch');
 
 		$service = $this->buildService(
 			data: $data,
 			saved: $saved,
-			dispatcher: $dispatcher,
 			peppolPort: $this->stubPort(null)
 		);
 
@@ -411,6 +418,7 @@ final class EInvoiceServiceTest extends TestCase {
 		self::assertSame('not-sent', $result['deliveryStatus']);
 		self::assertTrue($result['fallback']);
 		self::assertSame([], array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
+		self::assertSame([], $this->published);
 
 	}//end testUnknownParticipantFallsBackWithoutEmitting()
 	/**
@@ -424,9 +432,7 @@ final class EInvoiceServiceTest extends TestCase {
 		$messages = [];
 		foreach ([['', '2026-0042'], ['adm-2', '2026-0042'], ['adm-1', 'nope']] as [$administrationId, $invoiceNumber]) {
 			$saved      = [];
-			$dispatcher = $this->createMock(IEventDispatcher::class);
-			$dispatcher->expects(self::never())->method('dispatch');
-			$service = $this->buildService(data: ['ARInvoice' => [$this->issuedInvoice()]], saved: $saved, dispatcher: $dispatcher);
+			$service = $this->buildService(data: ['ARInvoice' => [$this->issuedInvoice()]], saved: $saved);
 			try {
 				$service->sendEInvoice($administrationId, $invoiceNumber);
 				$messages[] = 'accepted';
@@ -437,70 +443,47 @@ final class EInvoiceServiceTest extends TestCase {
 			self::assertSame([], $saved);
 		}
 
+		self::assertSame([], $this->published);
+
 		self::assertSame(['administrationId is required', 'ARInvoice not found', 'ARInvoice not found'], $messages);
 
 	}//end testRefusalsAndTheirMessages()
 
 	/**
-	 * A failed Peppol submit answers the PDF fallback with the extra warning,
-	 * saves nothing and emits nothing; a queued send answers its exact
-	 * envelope and saves the invoice with its provenance.
+	 * A queued send answers its exact envelope, saves the invoice with its
+	 * payload and recipient, and hands integriq the envelope its Peppol
+	 * transmission reads.
 	 *
 	 * @return void
 	 */
-	public function testSubmitFailureAndTheQueuedEnvelope(): void {
-		$saved      = [];
-		$dispatcher = $this->createMock(IEventDispatcher::class);
-		$dispatcher->expects(self::never())->method('dispatch');
-		$service = $this->buildService(
-			data: ['ARInvoice' => [$this->issuedInvoice()]],
-			saved: $saved,
-			dispatcher: $dispatcher,
-			peppolPort: $this->stubPort('0106:00000000', true)
-		);
-
-		$failed = $service->sendEInvoice('adm-1', '2026-0042');
-		self::assertSame(['deliveryStatus', 'transmissionId', 'payloadFileUri', 'fallback', 'warnings'], array_keys($failed));
-		self::assertSame(['not-sent', null, null, true], array_slice(array_values($failed), 0, 4));
-		self::assertSame(
-			['field' => 'transmission', 'code' => 'peppol_send_failed', 'message' => 'Peppol transmission failed — falling back to PDF + email'],
-			end($failed['warnings'])
-		);
-		self::assertSame([], $saved);
-
-		$saved      = [];
-		$events     = [];
-		$dispatcher = $this->createMock(IEventDispatcher::class);
-		$dispatcher->method('dispatch')->willReturnCallback(
-			static function (string $name, Event $event) use (&$events): void {
-				$events[] = [$name, $event->getArguments()];
-			}
-		);
-		$service = $this->buildService(data: ['ARInvoice' => [$this->issuedInvoice()]], saved: $saved, dispatcher: $dispatcher);
+	public function testTheQueuedEnvelopeAndTheHandOff(): void {
+		$saved   = [];
+		$service = $this->buildService(data: ['ARInvoice' => [$this->issuedInvoice()]], saved: $saved);
 
 		$queued = $service->sendEInvoice('adm-1', '2026-0042');
-		$transmissionId = 'urn:uuid:' . substr(hash('sha256', '0106:00000000'), 0, 32);
-		self::assertSame(['queued', $transmissionId, false], [$queued['deliveryStatus'], $queued['transmissionId'], $queued['fallback']]);
-		self::assertMatchesRegularExpression('#^docudesk://file/[0-9a-f]{16}$#', (string)$queued['payloadFileUri']);
+		self::assertSame(['deliveryStatus', 'transmissionId', 'payloadFileUri', 'fallback', 'warnings'], array_keys($queued));
+		self::assertSame(['queued', null, self::STORED, false], array_slice(array_values($queued), 0, 4));
 		self::assertCount(1, $saved);
-		self::assertSame(['queued', $transmissionId, $queued['payloadFileUri'], '0106:00000000'], [$saved[0]['object']['deliveryStatus'], $saved[0]['object']['transmissionId'], $saved[0]['object']['payloadFileUri'], $saved[0]['object']['buyerPeppolParticipantId']]);
+		self::assertSame(['queued', self::STORED, '0106:00000000'], [$saved[0]['object']['deliveryStatus'], $saved[0]['object']['payloadFileUri'], $saved[0]['object']['buyerPeppolParticipantId']]);
 		self::assertSame(
 			[
 				[
 					EInvoiceService::EVENT_OUTBOUND_REQUESTED,
+					'/apps/shillinq/ar-invoices',
+					'invoice-obj-1',
 					[
 						'sourceApp' => 'shillinq',
 						'objectType' => 'ar-invoice',
 						'objectUri' => 'openregister://shillinq/ARInvoice/invoice-obj-1',
 						'recipientPeppolId' => '0106:00000000',
 						'documentType' => EInvoiceService::DOCUMENT_TYPE,
-						'payloadFileUri' => $queued['payloadFileUri'],
+						'payloadFileUri' => self::STORED,
 						'administrationId' => 'adm-1',
 					],
 				],
 			],
-			$events
+			$this->published
 		);
 
-	}//end testSubmitFailureAndTheQueuedEnvelope()
+	}//end testTheQueuedEnvelopeAndTheHandOff()
 }//end class

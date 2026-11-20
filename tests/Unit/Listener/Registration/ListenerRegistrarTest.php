@@ -41,7 +41,10 @@ use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\InvestmentAssetListener;
+use OCA\Shillinq\Listener\ChartTemplateVersionListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
@@ -251,9 +254,9 @@ final class ListenerRegistrarTest extends TestCase {
 	public function testStockMovesAreValuedBeforeDeliveriesDispatch(): void {
 		(new ListenerRegistrar())->register($this->recordingContext());
 
-		self::assertSame([ObjectTransitionedEvent::class, StockMoveTransitionedListener::class], $this->listeners[2]);
-		self::assertSame([ObjectTransitionedEvent::class, DeliveryDispatchListener::class], $this->listeners[3]);
-		self::assertSame([ObjectCreatedEvent::class, PeppolInboundUblInvoiceListener::class], $this->listeners[4]);
+		self::assertSame([ObjectTransitionedEvent::class, StockMoveTransitionedListener::class], $this->listeners[3]);
+		self::assertSame([ObjectTransitionedEvent::class, DeliveryDispatchListener::class], $this->listeners[4]);
+		self::assertSame([ObjectCreatedEvent::class, PeppolInboundUblInvoiceListener::class], $this->listeners[5]);
 
 	}//end testStockMovesAreValuedBeforeDeliveriesDispatch()
 
@@ -350,6 +353,9 @@ final class ListenerRegistrarTest extends TestCase {
 				[ObjectUpdatedEvent::class, SupplierInvoiceWarningListener::class],
 				[ObjectCreatedEvent::class, ContractObligationTaskListener::class],
 				[ObjectUpdatedEvent::class, ContractObligationTaskListener::class],
+				[ObjectCreatedEvent::class, InvestmentAssetListener::class],
+				[ObjectUpdatedEvent::class, InvestmentAssetListener::class],
+				[ObjectUpdatedEvent::class, ChartTemplateVersionListener::class],
 				[ObjectCreatedEvent::class, LeaseActivationListener::class],
 				[ObjectUpdatedEvent::class, LeaseActivationListener::class],
 				[ObjectCreatedEvent::class, OssPaymentReconciliationListener::class],
@@ -361,6 +367,8 @@ final class ListenerRegistrarTest extends TestCase {
 				[ObjectCreatedEvent::class, ReconciliationMatchToReportListener::class],
 				[ObjectCreatedEvent::class, TenderNedAwardDetectedListener::class],
 				[ObjectCreatedEvent::class, CommitmentTransitionListener::class],
+				[ObjectCreatedEvent::class, WebshopOrderListener::class],
+				[ObjectUpdatedEvent::class, WebshopOrderListener::class],
 			],
 			$this->dispatched
 		);
@@ -375,7 +383,7 @@ final class ListenerRegistrarTest extends TestCase {
 	public function testEachFallbackLogsAWarningNamingListenerAndEvent(): void {
 		$logger = $this->createMock(LoggerInterface::class);
 		$messages = [];
-		$logger->expects(self::exactly(16))->method('warning')->willReturnCallback(
+		$logger->expects(self::exactly(21))->method('warning')->willReturnCallback(
 			function (string $message, array $context) use (&$messages): void {
 				self::assertSame(['app' => 'shillinq'], $context);
 				$messages[] = $message;

@@ -44,8 +44,13 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
+use OCA\Shillinq\Service\Accrual\AccrualBooking;
+use OCA\Shillinq\Service\Deferral\DeferralService;
+use OCA\Shillinq\Support\RegisterSlug;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -91,6 +96,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	private const NEW_REPORT_TOTALS = [
 		'postingCount' => 0,
 		'accrualPostings' => 0,
+		'deferralReleases' => 0,
 		'fxPostings' => 0,
 		'revenuePostings' => 0,
 		'leasePostings' => 0,
@@ -107,12 +113,17 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for orchestration diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param AccrualBooking|null $accrualBooking Writes and posts the accrual and reversal entries (ledger-period-end REQ-LPE-006);
+	 *                                            without it accruals are only recorded.
+	 * @param DeferralService|null $deferrals Releases the deferral schedules of ended periods (REQ-LPE-005).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?AccrualBooking $accrualBooking = null,
+		private readonly ?DeferralService $deferrals = null,
 	) {
 	}//end __construct()
 
@@ -129,6 +140,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *   periodId: string,
 	 *   postingCount: int,
 	 *   accrualPostings: int,
+	 *   deferralReleases: int,
 	 *   fxPostings: int,
 	 *   revenuePostings: int,
 	 *   leasePostings: int,
@@ -183,6 +195,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	private function closeSteps(SoftCloseRun $run): array {
 		return [
 			'accruals' => fn (array $report): array => $this->accrualStep(run: $run, report: $report),
+			'deferral-releases' => fn (array $report): array => $this->deferralStep(run: $run, report: $report),
 			'fx-revaluation' => fn (array $report): array => $this->fxRevaluationStep(run: $run, report: $report),
 			'revenue-cutoff' => fn (array $report): array => $this->revenueCutoffStep(run: $run, report: $report),
 			'lease-postings' => fn (array $report): array => $this->leaseStep(run: $run, report: $report),
@@ -201,11 +214,36 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 * @return array<string,mixed>
 	 */
 	private function accrualStep(SoftCloseRun $run, array $report): array {
+		$reversals = 0;
+		if ($this->accrualBooking !== null) {
+			$reversals = $this->accrualBooking->reverseDue(administrationId: $run->administrationId, periodId: $run->periodId, asOf: $run->asOf);
+		}
+
 		$accrualResult = $this->runAccrualRules(run: $run);
-		$report['accrualPostings'] = $accrualResult['postingCount'];
-		$report['postingCount'] += $accrualResult['postingCount'];
+		$report['accrualPostings'] = ($accrualResult['postingCount'] + $reversals);
+		$report['postingCount'] += $report['accrualPostings'];
 		return $report;
 	}//end accrualStep()
+
+	/**
+	 * Step 1b: release the deferral schedules of every ended period (ledger-period-end REQ-LPE-005).
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
+	 */
+	private function deferralStep(SoftCloseRun $run, array $report): array {
+		if ($this->deferrals === null) {
+			return $report;
+		}
+
+		$report['deferralReleases'] = $this->deferrals->releaseEnded(administrationId: $run->administrationId, asOf: $run->asOf);
+		$report['postingCount'] += $report['deferralReleases'];
+		return $report;
+	}//end deferralStep()
 
 	/**
 	 * Step 2: delegate to treasury for FX revaluation + interest accruals.
@@ -349,44 +387,81 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 		$method = (string)($rule['calculationMethod'] ?? '');
 		$parameters = (array)($rule['calculationParameters'] ?? []);
 
-		switch ($method) {
-			case 'fixed-amount':
-				$amount = (int)($parameters['amountCents'] ?? 0);
-				return max(0, $amount);
-			case 'percentage-of-revenue':
-				$rate = (float)($parameters['rate'] ?? 0.0);
-				$revenue = (int)($context['revenueMtdCents'] ?? 0);
-				if ($rate <= 0.0 || $revenue <= 0) {
-					return 0;
-				}
-				return (int)round($revenue * $rate);
-			case 'straight-line-from-contract':
-				// PrincipalCents × annualRate × dayCount / dayCountConvention.
-				$principal = (int)($parameters['principalCents'] ?? 0);
-				$rate = (float)($parameters['annualRate'] ?? 0.0);
-				$dayCount = (int)($parameters['dayCount'] ?? 365);
-				$days = (int)($context['daysElapsed'] ?? 0);
-				if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
-					return 0;
-				}
-				return (int)round(($principal * $rate * $days) / $dayCount);
-			case 'days-elapsed-of-period':
-				$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
-				$daysElapsed = (int)($context['daysElapsed'] ?? 0);
-				$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
-				if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
-					return 0;
-				}
-				return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
-			case 'external-lookup':
-				// Lookup amount is provided by the orchestration context.
-				$lookup = (int)($context['lookupAmountCents'] ?? 0);
-				return max(0, $lookup);
-			default:
-				return 0;
-		}//end switch
+		return match ($method) {
+			'fixed-amount' => max(0, (int)($parameters['amountCents'] ?? 0)),
+			'percentage-of-revenue' => $this->revenueAccrualCents(parameters: $parameters, context: $context),
+			'straight-line-from-contract' => $this->contractAccrualCents(parameters: $parameters, context: $context),
+			'days-elapsed-of-period' => $this->periodAccrualCents(parameters: $parameters, context: $context),
+			// Lookup amount is provided by the orchestration context.
+			'external-lookup' => max(0, (int)($context['lookupAmountCents'] ?? 0)),
+			default => 0,
+		};
 
 	}//end computeAccrualCents()
+
+	/**
+	 * Accrual as a rate of the month-to-date revenue.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function revenueAccrualCents(array $parameters, array $context): int {
+		$rate = (float)($parameters['rate'] ?? 0.0);
+		$revenue = (int)($context['revenueMtdCents'] ?? 0);
+		if ($rate <= 0.0 || $revenue <= 0) {
+			return 0;
+		}
+
+		return (int)round($revenue * $rate);
+	}//end revenueAccrualCents()
+
+	/**
+	 * Straight-line contract accrual: principalCents × annualRate × days / dayCount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function contractAccrualCents(array $parameters, array $context): int {
+		// PrincipalCents × annualRate × dayCount / dayCountConvention.
+		$principal = (int)($parameters['principalCents'] ?? 0);
+		$rate = (float)($parameters['annualRate'] ?? 0.0);
+		$dayCount = (int)($parameters['dayCount'] ?? 365);
+		$days = (int)($context['daysElapsed'] ?? 0);
+		if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
+			return 0;
+		}
+
+		return (int)round(($principal * $rate * $days) / $dayCount);
+	}//end contractAccrualCents()
+
+	/**
+	 * The elapsed share of a monthly amount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function periodAccrualCents(array $parameters, array $context): int {
+		$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
+		$daysElapsed = (int)($context['daysElapsed'] ?? 0);
+		$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
+		if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
+			return 0;
+		}
+
+		return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
+	}//end periodAccrualCents()
 
 	/**
 	 * Execute every active AutoAccrualRule for the administratie + period (REQ-CLS-002, REQ-CLS-003).
@@ -424,6 +499,17 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 		$amountCents = $this->computeAccrualCents(rule: $rule, context: $this->accrualContext(run: $run));
 		if ($amountCents <= 0) {
 			return false;
+		}
+
+		// Book the entry the posting names, once per rule, period and version (REQ-LPE-006).
+		if ($this->accrualBooking !== null) {
+			return $this->accrualBooking->book(
+				rule: $rule,
+				periodId: $run->periodId,
+				amountCents: $amountCents,
+				asOf: $run->asOf,
+				journalNumber: $this->journalEntryId(rule: $rule, periodId: $run->periodId, asOf: $run->asOf)
+			);
 		}
 
 		// Persist an AutoAccrualPosting record per execution (REQ-CLS-010).
@@ -468,7 +554,9 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 			->setSchema('AutoAccrualRule')
 			->findAll(['filters' => $filters]);
 
-		return array_values(array_map(static fn ($r): array => (array)$r, $found));
+		// The record of an ObjectEntity row: a bare (array) cast of one yields
+		// its private properties, not the rule.
+		return array_values(array_map(static fn ($r): array => (ObjectIdentifier::recordWithId(candidate: $r) ?? (array)$r), $found));
 	}//end findActiveRules()
 
 	/**
@@ -496,8 +584,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 
 		$this->objectService->saveObject(
 			object: $posting,
-			register: $this->register(),
-			schema: 'AutoAccrualPosting',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'AutoAccrualPosting'))
 		);
 
 	}//end persistAccrualPosting()
@@ -758,8 +845,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 
 		$this->objectService->saveObject(
 			object: $record,
-			register: $this->register(),
-			schema: 'PeriodStatus',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'PeriodStatus'))
 		);
 
 	}//end markSoftClosed()
@@ -789,8 +875,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 		try {
 			$this->objectService->saveObject(
 				object: $alert,
-				register: $this->register(),
-				schema: 'ContinuousCloseAlert',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register(), schema: 'ContinuousCloseAlert'))
 			);
 		} catch (\Throwable $persistError) {
 			$this->logger->error(
@@ -844,11 +929,6 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

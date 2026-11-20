@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 use OCA\Shillinq\Lifecycle\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\BalanceGuard;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\LineDimensionCheck;
 use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\RuleComplianceGuard;
@@ -105,6 +106,19 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	}//end restrictions()
 
 	/**
+	 * The real dimension check over the same store.
+	 *
+	 * @return LineDimensionCheck
+	 */
+	private function dimensions(): LineDimensionCheck {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters)
+		);
+		return new LineDimensionCheck($this->appConfig(), $this->store->mock($this), $l10n);
+	}//end dimensions()
+
+	/**
 	 * Set up an empty store.
 	 *
 	 * @return void
@@ -146,7 +160,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	 * @return void
 	 */
 	public function testABalancedJournalEntryPassesThroughTheAdapter(): void {
-		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions());
+		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions(), $this->dimensions());
 		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost', $guard);
 
 		$entry = [
@@ -287,7 +301,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			['id' => 'a1', 'administrationId' => 'adm-1', 'accountNumber' => '1100', 'name' => 'Debiteuren', 'controlAccountFor' => 'receivables'],
 			['id' => 'a2', 'administrationId' => 'adm-1', 'accountNumber' => '1230', 'name' => 'BTW-vordering', 'controlAccountFor' => 'vat'],
 		];
-		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions());
+		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions(), $this->dimensions());
 		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost', $guard);
 
 		$entry = [

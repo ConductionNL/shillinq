@@ -85,21 +85,11 @@ class PurchaseOrderDecisionLockListener implements IEventListener {
 
 		$refuse = false;
 		if ($event instanceof ObjectCreatingEvent === true) {
-			$entity = $event->getObject();
-			$refuse = $this->isPurchaseOrder(entity: $entity) === true
-				&& $this->hasDecidedEntry(chain: ($entity->getObject()['approvalChain'] ?? [])) === true;
+			$refuse = $this->createsDecided(event: $event);
 		}
 
 		if ($event instanceof ObjectUpdatingEvent === true) {
-			$new = $event->getNewObject();
-			$old = $event->getOldObject();
-			if ($new !== null && $old !== null && $this->isPurchaseOrder(entity: $new) === true) {
-				$before = ($old->getObject()['approvalChain'] ?? []);
-				$after  = ($new->getObject()['approvalChain'] ?? []);
-				$id     = (string)($new->getUuid() ?? '');
-				$refuse = json_encode($before) !== json_encode($after)
-					&& $this->authority->holds(purpose: PurchaseOrderApprovalGuard::PURPOSE, objectId: $id) === false;
-			}
+			$refuse = $this->changesChainWithoutAuthority(event: $event);
 		}
 
 		if ($refuse === true) {
@@ -107,6 +97,45 @@ class PurchaseOrderDecisionLockListener implements IEventListener {
 			$event->stopPropagation();
 		}
 	}//end handle()
+
+	/**
+	 * Whether a purchase order is created with a decided approval entry.
+	 *
+	 * @param ObjectCreatingEvent $event The create.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
+	 */
+	private function createsDecided(ObjectCreatingEvent $event): bool {
+		$entity = $event->getObject();
+		return $this->isPurchaseOrder(entity: $entity) === true
+			&& $this->hasDecidedEntry(chain: ($entity->getObject()['approvalChain'] ?? [])) === true;
+	}//end createsDecided()
+
+	/**
+	 * Whether an update changes a purchase order's approval chain without the approval authority.
+	 *
+	 * @param ObjectUpdatingEvent $event The update.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
+	 */
+	private function changesChainWithoutAuthority(ObjectUpdatingEvent $event): bool {
+		$refuse = false;
+		$new = $event->getNewObject();
+		$old = $event->getOldObject();
+		if ($new !== null && $old !== null && $this->isPurchaseOrder(entity: $new) === true) {
+			$before = ($old->getObject()['approvalChain'] ?? []);
+			$after  = ($new->getObject()['approvalChain'] ?? []);
+			$id     = (string)($new->getUuid() ?? '');
+			$refuse = json_encode($before) !== json_encode($after)
+				&& $this->authority->holds(purpose: PurchaseOrderApprovalGuard::PURPOSE, objectId: $id) === false;
+		}
+
+		return $refuse;
+	}//end changesChainWithoutAuthority()
 
 	/**
 	 * Whether the entity is a PurchaseOrder of shillinq's register.

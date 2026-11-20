@@ -46,12 +46,12 @@ use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\Billing\BillableHoursSource;
 use OCA\Shillinq\Service\Billing\UnavailableBillableHours;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
-use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrBinding;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
 use OCA\Shillinq\Service\External\Ib47\LogIb47Adapter;
 use OCA\Shillinq\Service\External\Kvk\KvkHandelsregisterAdapterInterface;
 use OCA\Shillinq\Service\External\Kvk\LogKvkHandelsregisterAdapter;
-use OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter;
+use OCA\Shillinq\Service\External\Integriq\IntegriqPaymentAdapter;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\RvO\LogRvOAanvraagAdapter;
 use OCA\Shillinq\Service\External\RvO\RvOAanvraagAdapterInterface;
@@ -67,6 +67,10 @@ use OCA\Shillinq\Service\Payment\MolliePaymentProvider;
 use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
+use OCA\Shillinq\Service\PurchaseOrder\IntegriqPeppolOrderAdapter;
+use OCA\Shillinq\Service\PurchaseOrder\IntegriqPurchaseOrderMailer;
+use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
+use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
@@ -74,8 +78,11 @@ use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\Shillinq\Service\Sms\LogSmsProviderAdapter;
 use OCA\Shillinq\Service\Sms\SmsProviderAdapterInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Files\IRootFolder;
 use OCP\IAppConfig;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Container bindings of the Service component.
@@ -182,6 +189,8 @@ final class ServiceRegistrar {
 		// fails when a required in-app interface dependency has no binding.
 		$context->registerServiceAlias(PeppolTransmissionPortInterface::class, LogPeppolTransmissionAdapter::class);
 
+		$this->registerPurchaseOrderDispatch(context: $context);
+
 		$context->registerServiceAlias(SmsProviderAdapterInterface::class, LogSmsProviderAdapter::class);
 
 		// External-API adapter ports — every binding below is dormant by
@@ -210,7 +219,14 @@ final class ServiceRegistrar {
 
 		$context->registerServiceAlias(BzkSisaUploadAdapterInterface::class, LogBzkSisaUploadAdapter::class);
 
-		$context->registerServiceAlias(DigipoortSbrAdapterInterface::class, LogDigipoortSbrAdapter::class);
+		// Change tax-digipoort-filing task 3.1: integriq's hand-off when integriq is
+		// enabled, else the log-only adapter, which HandToDigipoortAction refuses.
+		$context->registerService(
+			DigipoortSbrAdapterInterface::class,
+			static function (ContainerInterface $c): DigipoortSbrAdapterInterface {
+				return (new DigipoortSbrBinding())->adapter(container: $c);
+			}
+		);
 		// Until humaniq's hours read is bound (sales-time-and-expense-billing
 		// task 2.3), the invoice generator is told hours are unavailable (task 2.1).
 		$context->registerServiceAlias(BillableHoursSource::class, UnavailableBillableHours::class);
@@ -237,16 +253,18 @@ final class ServiceRegistrar {
 		// pull + werkgever-setup sectorindeling validation).
 		$context->registerServiceAlias(KvkHandelsregisterAdapterInterface::class, LogKvkHandelsregisterAdapter::class);
 
-		$context->registerServiceAlias(MolliePaymentAdapterInterface::class, LogMolliePaymentAdapter::class);
+		// Receivables-payment-links REQ-RPL-001/002: payments are created by
+		// integriq's payment providers through its typed payment command
+		// event. Without integriq, an unanswered command, a refusal or a
+		// log-provider source the adapter answers dormant with the reason.
+		$context->registerServiceAlias(MolliePaymentAdapterInterface::class, IntegriqPaymentAdapter::class);
 
 		// Portal-payment-initiation REQ-SPPI-001 — the payment-provider port
 		// the subject-initiated pay-now flow drives. Sits one layer ABOVE
-		// MolliePaymentAdapterInterface (already wired immediately above):
-		// the shipped MolliePaymentProvider binding delegates EVERY call to
-		// whichever MolliePaymentAdapterInterface is currently bound, so this
-		// port is dormant-by-default (LogMolliePaymentAdapter) and turns live
-		// automatically the moment the openconnector `mollie-payments` source
-		// is bound — no further change needed here.
+		// MolliePaymentAdapterInterface (wired immediately above): the
+		// MolliePaymentProvider delegates every call to that binding, so it is
+		// live exactly when integriq answers the payment command with a live
+		// payment source, and dormant otherwise.
 		$context->registerService(
 			PaymentProviderInterface::class,
 			static function ($c): PaymentProviderInterface {
@@ -330,4 +348,31 @@ final class ServiceRegistrar {
 			KnownCostScheduleExpander::class
 		);
 	}//end register()
+
+	/**
+	 * Bind the purchase order dispatch ports (REQ-PODR-001/002).
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt
+	 */
+	private function registerPurchaseOrderDispatch(IRegistrationContext $context): void {
+		// Change purchasing-order-dispatch-and-receipt (REQ-PODR-001/002): a purchase
+		// order is handed to integriq's Peppol connector and email channel. The
+		// adapters refuse, and the order stays approved, when integriq is absent;
+		// rebinding these two to the Log* adapters is the rollback.
+		$context->registerService(
+			PeppolTransmissionAdapterInterface::class,
+			static fn (ContainerInterface $c): IntegriqPeppolOrderAdapter => new IntegriqPeppolOrderAdapter(
+				partyDirectory: $c->get(LogPeppolTransmissionAdapter::class),
+				container: $c,
+				rootFolder: $c->get(IRootFolder::class),
+				userSession: $c->get(IUserSession::class),
+				logger: $c->get(LoggerInterface::class),
+			)
+		);
+		$context->registerServiceAlias(PurchaseOrderMailerInterface::class, IntegriqPurchaseOrderMailer::class);
+	}//end registerPurchaseOrderDispatch()
 }//end class

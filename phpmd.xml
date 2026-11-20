@@ -67,6 +67,20 @@
         LedgerGroupEntryKey) are pure functions of their arguments on the same
         testable claim as (f): final, NO constructor, NO properties, NO
         collaborators. Remove an entry if that stops being true.
+        (j) XbrlInstanceWriter writes an XBRL document from its arguments and
+        reads the taxonomy fields it needs from the record it is given: final,
+        NO constructor, NO properties, NO collaborators, as (i).
+        (k) Standards\Checks\VatReturnChecks is a rule registry of category (b)
+        and holds pure functions of their arguments: it declares NO constructor,
+        NO properties and NO collaborators. If an edit gives it state or an
+        injected dependency, remove this entry.
+        (l) RegisterSlug reads the register slug from the IAppConfig it is
+        given, so a test still mocks that config: final, NO constructor, NO
+        properties, NO collaborators of its own, as (i).
+        (m) SubjectCostGrouping and ReportPeriod (iv3-report-takes-case-costs-by-case-type)
+        group cost source rows and read a period's days, pure functions of
+        their arguments on the same testable claim as (f): final, NO constructor,
+        NO properties, NO collaborators. Remove an entry if that stops being true.
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -74,12 +88,15 @@
                 DateTimeImmutable,
                 OCP\Server,
                 OCA\Shillinq\Support\FleetAppId,
+                OCA\Shillinq\Service\Sbr\XbrlInstanceWriter,
                 OCA\Shillinq\Support\DateWindow,
+                OCA\Shillinq\Support\RegisterSlug,
                 OCA\OpenRegister\Lifecycle\GuardResult,
                 OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery,
                 OCA\OpenRegister\AppHost\Observability\MetricSample,
                 OCA\Shillinq\Standards\RuleEngine,
                 OCA\Shillinq\Standards\RuleCatalogue,
+                OCA\Shillinq\Standards\Checks\VatReturnChecks,
                 OCA\Shillinq\Reporting\ReportCatalogue,
                 OCA\Shillinq\Enums\DBAConstants,
                 OCA\Shillinq\Util\TokenValidator,
@@ -90,6 +107,8 @@
                 OCA\Shillinq\Standards\Checks\InvoiceParts,
                 OCA\Shillinq\Service\BudgetMonthFields,
                 OCA\Shillinq\Service\LedgerGroupEntryKey,
+                OCA\Shillinq\Reporting\CostSource\SubjectCostGrouping,
+                OCA\Shillinq\Reporting\CostSource\ReportPeriod,
                 OCA\Shillinq\AppInfo\OpenRegisterAutoloader,
                 OCA\OpenRegister\AppHost\Bootstrap,
                 OCA\Shillinq\Request\InvoiceGenerationRequest,

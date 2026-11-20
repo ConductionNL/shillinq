@@ -50,6 +50,13 @@ vi.mock('@nextcloud/vue', () => {
 	}
 })
 vi.mock('@conduction/nextcloud-vue', () => ({
+	CnSettingsFieldsSection: {
+		name: 'CnSettingsFieldsSection',
+		props: ['appId', 'name', 'description', 'url', 'fields'],
+		render() {
+			return h('section', { 'data-stub': 'CnSettingsFieldsSection' }, [h('h3', this.name), h('p', this.description)])
+		},
+	},
 	CnSettingsSection: {
 		name: 'CnSettingsSection',
 		props: ['name', 'description', 'wide'],
@@ -83,8 +90,6 @@ vi.mock('@conduction/nextcloud-vue', () => ({
 globalThis.t = (app, text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (_m, key) => vars[key]) : text)
 
 const { default: AdminRoot } = await import('../../src/views/settings/AdminRoot.vue')
-const { default: Settings } = await import('../../src/views/settings/Settings.vue')
-const { default: PipelinqIntegration } = await import('../../src/views/settings/PipelinqIntegration.vue')
 const { default: StandardsPolicyEditor } = await import('../../src/views/settings/StandardsPolicyEditor.vue')
 
 /**
@@ -125,87 +130,6 @@ afterEach(() => {
 	delete globalThis.window
 	delete globalThis.OC
 	delete globalThis.fetch
-})
-
-describe('Settings', () => {
-	it('renders the stored register and return address, and the save message', async () => {
-		settingsStoreMock.settings = { register: 'shillinq', portal_payment_redirect_url: 'https://portal.example/paid' }
-
-		const html = await render(Settings, { successMessage: 'Settings saved successfully' })
-
-		expect(html).toMatch(/id="register"[^>]*value="shillinq"|value="shillinq"[^>]*id="register"/)
-		expect(html).toContain('https://portal.example/paid')
-		expect(html).toContain('class="success-message"')
-		expect(html).not.toContain('role="alert"')
-		expect(html).toMatch(/<button[^>]*>\s*Save\s*<\/button>/)
-	})
-
-	it('shows the refusal as an alert and Saving… on a disabled button while it saves', async () => {
-		const html = await render(Settings, { saving: true, errorMessage: 'The settings were not saved.' })
-
-		expect(html).toMatch(/role="alert"[^>]*>\s*The settings were not saved\./)
-		expect(html).toMatch(/<button[^>]*disabled[^>]*>\s*Saving…/)
-	})
-})
-
-describe('PipelinqIntegration', () => {
-	/**
-	 * An instance of the form with its methods bound.
-	 *
-	 * @return {object}
-	 */
-	function instance() {
-		const vm = { ...PipelinqIntegration.data.call({}) }
-		for (const [name, method] of Object.entries(PipelinqIntegration.methods)) {
-			vm[name] = method.bind(vm)
-		}
-		return vm
-	}
-
-	it('reads the stored endpoint and whether a token is stored, with the request token', async () => {
-		globalThis.fetch.mockResolvedValue(response(true, { endpoint: 'https://pipelinq.example/api', hasToken: 1 }))
-		const vm = instance()
-
-		await vm.fetchSettings()
-
-		expect(globalThis.fetch).toHaveBeenCalledWith('/index.php/apps/shillinq/api/pipelinq/settings', { headers: { requesttoken: 'tok' } })
-		expect(vm.form.endpoint).toBe('https://pipelinq.example/api')
-		expect(vm.hasToken).toBe(true)
-	})
-
-	it('keeps the empty form when the read is refused or fails', async () => {
-		const vm = instance()
-		await vm.fetchSettings()
-		expect(vm.form.endpoint).toBe('')
-		expect(vm.hasToken).toBe(false)
-
-		const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-		globalThis.fetch.mockRejectedValue(new Error('offline'))
-		await vm.fetchSettings()
-		expect(vm.form.endpoint).toBe('')
-		expect(error).toHaveBeenCalledWith('Failed to fetch pipelinq settings:', expect.any(Error))
-		error.mockRestore()
-	})
-
-	it('says a token is stored and masks it, and holds Test back without an endpoint', async () => {
-		const stored = await render(PipelinqIntegration, { hasToken: true })
-		expect(stored).toContain('placeholder="••••••••••••"')
-		expect(stored).toContain('A token is stored. Leave empty to keep the current token, or paste a new one to rotate it.')
-		expect(stored).toMatch(/<button[^>]*disabled[^>]*>\s*Test connection/)
-
-		const fresh = await render(PipelinqIntegration, { form: { endpoint: 'https://p.example', token: '' }, feedback: { kind: 'error', message: 'Connection refused' } })
-		expect(fresh).toContain('Paste your pipelinq API token')
-		expect(fresh).toContain('never returned to the browser')
-		expect(fresh).toMatch(/class="feedback error"[^>]*>\s*Connection refused/)
-		expect(fresh).not.toMatch(/<button[^>]*disabled[^>]*>\s*Test connection/)
-	})
-
-	it('names the running act on its button', async () => {
-		const html = await render(PipelinqIntegration, { saving: true, testing: true, form: { endpoint: 'https://p.example', token: '' } })
-
-		expect(html).toMatch(/<button[^>]*disabled[^>]*>\s*Saving…/)
-		expect(html).toMatch(/<button[^>]*disabled[^>]*>\s*Testing…/)
-	})
 })
 
 describe('StandardsPolicyEditor', () => {
@@ -255,22 +179,24 @@ describe('AdminRoot', () => {
 	it('opens on the tab the address names and draws a section per tab with its link', async () => {
 		const html = await render(AdminRoot)
 
-		expect(html).toMatch(/<span data-tab="general">General<\/span><span data-tab="required-fields">Required fields<\/span><span data-tab="connections">Connections<\/span><span data-tab="appointments">Appointments<\/span>/)
+		expect(html).toMatch(/<span data-tab="general">General<\/span><span data-tab="required-fields">Required fields<\/span><span data-tab="custom-record-types">Own records<\/span><span data-tab="connections">Connections<\/span><span data-tab="appointments">Appointments<\/span>/)
 		expect(html).toMatch(/<ol><li>Administration settings<\/li><li>Shillinq<\/li><li>Connections<\/li><\/ol>/)
 		expect(html).toContain('only for administrators, each section saves on its own')
 		expect(html).toMatch(/data-slot="tab-required-fields"[\s\S]*?data-stub="CnToggleTableWidget"[\s\S]*?href="\/index.php\/apps\/shillinq\/settings\/required-fields"[^>]*>\s*Manage required fields/)
 		expect(html).toMatch(/data-slot="tab-connections"[\s\S]*?href="\/index.php\/apps\/shillinq\/external-adapters"[^>]*>\s*Open the connections/)
-		expect(html.match(/data-stub="CnToggleTableWidget"/g)).toHaveLength(1)
+		expect(html).toMatch(/data-slot="tab-custom-record-types"[\s\S]*?data-stub="CnToggleTableWidget"[\s\S]*?href="\/index.php\/apps\/shillinq\/records"[^>]*>\s*Open own records/)
+		expect(html.match(/data-stub="CnToggleTableWidget"/g)).toHaveLength(2)
 	})
 
-	it('shows the settings forms only once the stores are up, and starts them on creation', async () => {
+	it('shows the configuration and Pipelinq sections at once, and starts the stores on creation', async () => {
 		const waiting = await render(AdminRoot)
 		expect(initializeStoresMock).toHaveBeenCalled()
-		expect(waiting).not.toContain('Pipelinq integration')
+		expect(waiting).toContain('data-stub="CnSettingsFieldsSection"')
+		expect(waiting).toContain('Configuration')
+		expect(waiting).toContain('Pipelinq integration')
 
 		const ready = await render(AdminRoot, { storesReady: true })
 		expect(ready).toContain('Pipelinq integration')
-		expect(ready).toContain('OpenRegister register ID')
 	})
 
 	it('reads the required field count when it is created', async () => {

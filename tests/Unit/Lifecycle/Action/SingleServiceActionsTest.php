@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\ApplyReinvestmentReserveAction;
 use OCA\Shillinq\Lifecycle\Action\ExtraDepreciationAction;
 use OCA\Shillinq\Lifecycle\Action\RateMeterReadingAction;
@@ -86,7 +87,14 @@ final class SingleServiceActionsTest extends TestCase {
 
 		$action = new $actionClass($service);
 
-		$this->assertSame(self::RESULT, $action->execute(self::OBJECT, self::PREVIOUS, ['step' => 'post', 'kind' => 'closed'], 'anything'));
+		$this->assertSame(self::RESULT, $action->execute(
+			new LifecycleActionContext(
+				objectData: self::OBJECT,
+				previousData: self::PREVIOUS,
+				parameters: ['step' => 'post', 'kind' => 'closed'],
+				actionName: 'anything'
+			)
+		));
 		$this->assertSame($argument, (new \ReflectionMethod($serviceClass, $method))->getParameters()[0]->getName());
 
 	}//end testTheObjectGoesToTheServiceAndItsAnswerComesBack()
@@ -100,12 +108,26 @@ final class SingleServiceActionsTest extends TestCase {
 		$extra = $this->createMock(FixedAssetDepreciation::class);
 		$extra->expects($this->never())->method('revise');
 		$extra->expects($this->once())->method('extra')->willReturn(['which' => 'extra']);
-		$this->assertSame(['which' => 'extra'], (new ExtraDepreciationAction($extra))->execute(self::OBJECT, [], [], 'extra'));
+		$this->assertSame(['which' => 'extra'], (new ExtraDepreciationAction($extra))->execute(
+			new LifecycleActionContext(
+				objectData: self::OBJECT,
+				previousData: [],
+				parameters: [],
+				actionName: 'extra'
+			)
+		));
 
 		$revise = $this->createMock(FixedAssetDepreciation::class);
 		$revise->expects($this->never())->method('extra');
 		$revise->expects($this->once())->method('revise')->willReturn(['which' => 'revise']);
-		$this->assertSame(['which' => 'revise'], (new ReviseDepreciationAction($revise))->execute(self::OBJECT, [], [], 'revise'));
+		$this->assertSame(['which' => 'revise'], (new ReviseDepreciationAction($revise))->execute(
+			new LifecycleActionContext(
+				objectData: self::OBJECT,
+				previousData: [],
+				parameters: [],
+				actionName: 'revise'
+			)
+		));
 
 	}//end testTheTwoDepreciationActionsDoNotCrossOver()
 }//end class

@@ -1571,7 +1571,7 @@ OC.L10N.register(
         "Where the books sit against budget, and by how much.": "Gdzie stoją księgi wobec budżetu i o ile.",
         "Everything Reporting & Compliance has already produced.": "Wszystko, co Raportowanie i zgodność już wytworzyło.",
         "What retention destroyed, and when.": "Co retencja zniszczyła i kiedy.",
-        "Store": "Sklep",
+        "Marketplace": "Sklep",
         "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Zainstaluj rejestry, schematy i przepływy opublikowane przez inne organizacje."
     },
     "nplurals=2; plural=(n != 1);"

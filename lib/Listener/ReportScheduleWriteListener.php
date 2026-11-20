@@ -95,6 +95,27 @@ class ReportScheduleWriteListener implements IEventListener {
 			return;
 		}
 
+		['entity' => $entity, 'before' => $before, 'owner' => $owner] = self::writeOf(event: $event, caller: $caller);
+		if ($this->isReportSchedule(entity: $entity) === false) {
+			return;
+		}
+
+		$error = $this->refusal(after: $entity->getObject(), before: $before, owner: $owner, caller: $caller);
+		if ($error !== null) {
+			$event->setErrors(['message' => $error, 'field' => 'recipients']);
+			$event->stopPropagation();
+		}
+	}//end handle()
+
+	/**
+	 * The object being written, its previous data and its owner (the caller for a new one).
+	 *
+	 * @param Event  $event  The creating or updating event.
+	 * @param string $caller The caller's uid.
+	 *
+	 * @return array{entity: mixed, before: mixed, owner: string}
+	 */
+	private static function writeOf(Event $event, string $caller): array {
 		$entity = null;
 		$before = null;
 		$owner  = $caller;
@@ -109,16 +130,19 @@ class ReportScheduleWriteListener implements IEventListener {
 			$owner  = (string)($old?->getOwner() ?? $caller);
 		}
 
-		if ($entity === null || $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: 'ReportSchedule') === false) {
-			return;
-		}
+		return ['entity' => $entity, 'before' => $before, 'owner' => $owner];
+	}//end writeOf()
 
-		$error = $this->refusal(after: $entity->getObject(), before: $before, owner: $owner, caller: $caller);
-		if ($error !== null) {
-			$event->setErrors(['message' => $error, 'field' => 'recipients']);
-			$event->stopPropagation();
-		}
-	}//end handle()
+	/**
+	 * Whether the written object is a ReportSchedule.
+	 *
+	 * @param mixed $entity The object being written, or null.
+	 *
+	 * @return bool
+	 */
+	private function isReportSchedule(mixed $entity): bool {
+		return ($entity !== null && $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: 'ReportSchedule') === true);
+	}//end isReportSchedule()
 
 	/**
 	 * Why the save is refused, or null.

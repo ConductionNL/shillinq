@@ -84,29 +84,21 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 	 */
 	public function draft(string $administrationId, array $request): array {
-		if ($administrationId === '') {
-			throw new QuickDraftRefusedException(message: 'Choose an administration before drafting an invoice.');
+		// A draft queued on the phone carries the id the phone gave it, and may
+		// be sent again when a sync was cut off after the save. The second send
+		// is answered with the draft the first one made (REQ-PMP-003).
+		$clientId = self::clientId(value: $request['clientId'] ?? null);
+		if ($clientId !== null && $administrationId !== '') {
+			$existing = $this->draftWithClientId(administrationId: $administrationId, clientId: $clientId);
+			if ($existing !== null) {
+				return $existing;
+			}
 		}
 
-		$customer = $this->customer(administrationId: $administrationId, customerId: trim((string)($request['customerId'] ?? '')));
-		if ($customer === null) {
-			throw new QuickDraftRefusedException(message: 'This customer is not part of your administration.');
-		}
-
-		$invoiceDate = trim((string)($request['invoiceDate'] ?? ''));
-		if (self::isDate(value: $invoiceDate) === false) {
-			throw new QuickDraftRefusedException(message: 'Enter a valid invoice date.');
-		}
-
-		$lines = self::lines(given: $request['lines'] ?? [], glAccount: trim((string)($request['glAccount'] ?? '')));
-		if ($lines === []) {
-			throw new QuickDraftRefusedException(message: 'Add at least one line with a description and a price.');
-		}
-
-		$dueDate = trim((string)($request['dueDate'] ?? ''));
-		if (self::isDate(value: $dueDate) === false || $dueDate < $invoiceDate) {
-			$dueDate = self::addDays(date: $invoiceDate, days: self::termDays(terms: (string)($customer['paymentTerms'] ?? '')));
-		}
+		$customer    = $this->draftCustomer(administrationId: $administrationId, request: $request);
+		$invoiceDate = self::requiredInvoiceDate(request: $request);
+		$lines       = self::requiredLines(request: $request);
+		$dueDate     = self::dueDateFor(request: $request, invoiceDate: $invoiceDate, customer: $customer);
 
 		$invoice = array_merge(
 			[
@@ -124,11 +116,92 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 			self::totals(lines: $lines)
 		);
 
+		if ($clientId !== null) {
+			$invoice['clientId'] = $clientId;
+		}
+
 		$saved = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'ARInvoice')->saveObject($invoice));
 		$invoice['id'] = (string)($saved['id'] ?? '');
 
 		return $invoice;
 	}//end draft()
+
+	/**
+	 * The requested customer, refused without an administration or when it is not part of it.
+	 *
+	 * @param string              $administrationId The administration the invoice is drafted in.
+	 * @param array<string,mixed> $request          The quick draft request.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws QuickDraftRefusedException When there is no administration or the customer is outside it.
+	 */
+	private function draftCustomer(string $administrationId, array $request): array {
+		if ($administrationId === '') {
+			throw new QuickDraftRefusedException(message: 'Choose an administration before drafting an invoice.');
+		}
+
+		$customer = $this->customer(administrationId: $administrationId, customerId: trim((string)($request['customerId'] ?? '')));
+		if ($customer === null) {
+			throw new QuickDraftRefusedException(message: 'This customer is not part of your administration.');
+		}
+
+		return $customer;
+	}//end draftCustomer()
+
+	/**
+	 * The invoice date, refused when it is not a valid date.
+	 *
+	 * @param array<string,mixed> $request The quick draft request.
+	 *
+	 * @return string
+	 *
+	 * @throws QuickDraftRefusedException When the invoice date is not valid.
+	 */
+	private static function requiredInvoiceDate(array $request): string {
+		$invoiceDate = trim((string)($request['invoiceDate'] ?? ''));
+		if (self::isDate(value: $invoiceDate) === false) {
+			throw new QuickDraftRefusedException(message: 'Enter a valid invoice date.');
+		}
+
+		return $invoiceDate;
+	}//end requiredInvoiceDate()
+
+	/**
+	 * The invoice lines, refused when none has a description and a price.
+	 *
+	 * @param array<string,mixed> $request The quick draft request.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @throws QuickDraftRefusedException When there are no usable lines.
+	 */
+	private static function requiredLines(array $request): array {
+		$lines = self::lines(given: $request['lines'] ?? [], glAccount: trim((string)($request['glAccount'] ?? '')));
+		if ($lines === []) {
+			throw new QuickDraftRefusedException(message: 'Add at least one line with a description and a price.');
+		}
+
+		return $lines;
+	}//end requiredLines()
+
+	/**
+	 * The requested due date, else the invoice date plus the customer's payment term.
+	 *
+	 * @param array<string,mixed> $request     The quick draft request.
+	 * @param string              $invoiceDate The invoice date.
+	 * @param array<string,mixed> $customer    The customer.
+	 *
+	 * @return string
+	 */
+	private static function dueDateFor(array $request, string $invoiceDate, array $customer): string {
+		$dueDate = trim((string)($request['dueDate'] ?? ''));
+		if (self::isDate(value: $dueDate) === false || $dueDate < $invoiceDate) {
+			$dueDate = self::addDays(date: $invoiceDate, days: self::termDays(terms: (string)($customer['paymentTerms'] ?? '')));
+		}
+
+		return $dueDate;
+	}//end dueDateFor()
 
 	/**
 	 * The customer, by business key or id, only when it is the administration's.
@@ -403,6 +476,55 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	private static function addDays(string $date, int $days): string {
 		return (new DateTimeImmutable($date . 'T00:00:00Z'))->modify('+' . $days . ' days')->format('Y-m-d');
 	}//end addDays()
+
+	/**
+	 * The client id a request carries, when it is shaped as one.
+	 *
+	 * Anything else is ignored rather than refused, so a desktop draft, which
+	 * sends none, is drafted as before.
+	 *
+	 * @param mixed $value The requested client id.
+	 *
+	 * @return string|null The client id, lower case, or null.
+	 *
+	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 */
+	private static function clientId(mixed $value): ?string {
+		if (is_string($value) === false) {
+			return null;
+		}
+
+		$value = strtolower(trim($value));
+		if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $value) !== 1) {
+			return null;
+		}
+
+		return $value;
+	}//end clientId()
+
+	/**
+	 * The draft this administration already holds for a client id, or null.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $clientId         The client id.
+	 *
+	 * @return array<string,mixed>|null The stored draft, with its id.
+	 *
+	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 */
+	private function draftWithClientId(string $administrationId, string $clientId): ?array {
+		$matches = $this->scoped(schema: 'ARInvoice')->findAll(
+			['filters' => ['administrationId' => $administrationId, 'clientId' => $clientId], 'limit' => 1]
+		);
+		foreach ($matches as $match) {
+			$record = ObjectIdentifier::recordWithId(candidate: $match);
+			if ($record !== null && $record !== []) {
+				return $record;
+			}
+		}
+
+		return null;
+	}//end draftWithClientId()
 
 	/**
 	 * The object service on one schema of shillinq's register.

@@ -46,6 +46,8 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetGridCalculatorInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetGridReaderInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioReaderInterface;
+use OCA\Shillinq\Service\BudgetGridScenarioOverlay;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -124,6 +126,8 @@ class BudgetGridController extends Controller {
 	 * @param BudgetGridCalculatorInterface $calculator Pure arithmetic over the reader's bundle.
 	 * @param AdministrationContextServiceInterface $administrationContext IDOR guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session.
+	 * @param BudgetScenarioReaderInterface $scenarioReader Loads the administration's scenarios and modifiers.
+	 * @param BudgetGridScenarioOverlay $scenarioOverlay Swaps the budget column to one scenario (REQ-BSC-011).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -133,19 +137,25 @@ class BudgetGridController extends Controller {
 		private readonly BudgetGridCalculatorInterface $calculator,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
+		private readonly BudgetScenarioReaderInterface $scenarioReader,
+		private readonly BudgetGridScenarioOverlay $scenarioOverlay,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
 	/**
-	 * GET /api/budget-grid?administrationId=...&startPeriod=YYYY-MM&endPeriod=YYYY-MM&granularity=month|quarter|year
+	 * GET /api/budget-grid?administrationId=...&startPeriod=YYYY-MM&endPeriod=YYYY-MM&granularity=month|quarter|year[&scenarioId=...]
+	 *
+	 * With `scenarioId` the budget figures are the scenario's (base plus its
+	 * modifiers) and the envelope names the scenario; actuals never change.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -154,14 +164,49 @@ class BudgetGridController extends Controller {
 		}
 
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($administrationId === '' || preg_match(self::ID_PATTERN, $administrationId) !== 1) {
-			return new JSONResponse(['error' => $this->l10n->t('administrationId is required')], Http::STATUS_BAD_REQUEST);
+		$idError = $this->administrationIdRefusal(administrationId: $administrationId);
+		if ($idError !== null) {
+			return $idError;
 		}
 
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => $this->l10n->t('Administration not found')], Http::STATUS_NOT_FOUND);
 		}
 
+		$query = $this->gridQuery();
+		if ($query instanceof JSONResponse) {
+			return $query;
+		}
+
+		return $this->gridResponse(administrationId: $administrationId, query: $query);
+
+	}//end index()
+
+	/**
+	 * The 400 for a missing or malformed administrationId, or null when it is valid.
+	 *
+	 * @param string $administrationId The trimmed administrationId parameter.
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function administrationIdRefusal(string $administrationId): JSONResponse|null {
+		if ($administrationId === '' || preg_match(self::ID_PATTERN, $administrationId) !== 1) {
+			return new JSONResponse(['error' => $this->l10n->t('administrationId is required')], Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
+	}//end administrationIdRefusal()
+
+	/**
+	 * Read and validate the granularity and period parameters.
+	 *
+	 * @return array{granularity: string, startPeriod: string, endPeriod: string, scenarioId: string}|JSONResponse The query, or the 400.
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function gridQuery(): array|JSONResponse {
 		$granularity = (string)$this->request->getParam('granularity', 'month');
 		if ((self::GRANULARITIES[$granularity] ?? false) === false) {
 			return new JSONResponse(['error' => $this->l10n->t('granularity must be month, quarter, or year')], Http::STATUS_BAD_REQUEST);
@@ -173,21 +218,66 @@ class BudgetGridController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('startPeriod and endPeriod must be YYYY-MM')], Http::STATUS_BAD_REQUEST);
 		}
 
+		$scenarioId = trim((string)$this->request->getParam('scenarioId', ''));
+		if ($scenarioId !== '' && preg_match(self::ID_PATTERN, $scenarioId) !== 1) {
+			return new JSONResponse(['error' => $this->l10n->t('scenarioId must be a valid identifier')], Http::STATUS_BAD_REQUEST);
+		}
+
+		return ['granularity' => $granularity, 'startPeriod' => $startPeriod, 'endPeriod' => $endPeriod, 'scenarioId' => $scenarioId];
+	}//end gridQuery()
+
+	/**
+	 * Load the grid and wrap it in the response envelope; a load failure is logged and answered with a 500.
+	 *
+	 * @param string $administrationId The accessible administration.
+	 * @param array{granularity: string, startPeriod: string, endPeriod: string, scenarioId: string} $query The validated query.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function gridResponse(string $administrationId, array $query): JSONResponse {
 		try {
 			$grid = $this->reader->loadGrid(
 				administrationId: $administrationId,
-				startPeriod: $startPeriod,
-				endPeriod: $endPeriod,
-				granularity: $granularity
+				startPeriod: $query['startPeriod'],
+				endPeriod: $query['endPeriod'],
+				granularity: $query['granularity']
 			);
 		} catch (Throwable $e) {
 			$this->logger->error('BudgetGridController: failed to load grid', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => $this->l10n->t('Could not load the begroting grid')], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new JSONResponse($this->buildEnvelope(grid: $grid));
+		$scenario = null;
+		if ($query['scenarioId'] !== '') {
+			try {
+				$scenarioContext = $this->scenarioReader->loadContext(administrationId: $administrationId, annualBudgetIds: []);
+				$scenarioRow = $this->scenarioOverlay->findScenario(scenarioContext: $scenarioContext, scenarioId: $query['scenarioId']);
+				if ($scenarioRow === null) {
+					// Absent from THIS administration's scenarios: another
+					// administration's id reads exactly like a missing one.
+					return new JSONResponse(['error' => $this->l10n->t('Scenario not found')], Http::STATUS_NOT_FOUND);
+				}
 
-	}//end index()
+				$grid['budgetLinesByFiscalYear'] = $this->scenarioOverlay->apply(
+					budgetLinesByFiscalYear: $grid['budgetLinesByFiscalYear'],
+					scenarioContext: $scenarioContext,
+					scenarioId: $query['scenarioId']
+				);
+			} catch (Throwable $e) {
+				$this->logger->error('BudgetGridController: failed to apply scenario', ['exception' => $e->getMessage()]);
+				return new JSONResponse(['error' => $this->l10n->t('Could not load the begroting grid')], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+
+			$scenario = ['id' => $query['scenarioId'], 'name' => (string)($scenarioRow['name'] ?? '')];
+		}//end if
+
+		$envelope = $this->buildEnvelope(grid: $grid);
+		$envelope['scenario'] = $scenario;
+
+		return new JSONResponse($envelope);
+	}//end gridResponse()
 
 	/**
 	 * Build the response envelope: column descriptors, the ledger-group rows

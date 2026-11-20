@@ -41,7 +41,8 @@ final class LogPurchaseOrderMailerTest extends TestCase {
 
 		$mailer = new LogPurchaseOrderMailer($logger);
 		$this->assertInstanceOf(PurchaseOrderMailerInterface::class, $mailer);
-		$mailer->sendPurchaseOrderEmail('adm-1', ['poNumber' => 'PO-2026-0042', 'supplierId' => 17, 'lines' => []]);
+		$this->assertTrue($mailer->sendPurchaseOrderEmail('adm-1', ['poNumber' => 'PO-2026-0042', 'supplierId' => 17, 'lines' => []]));
+		$this->assertTrue($mailer->isAvailable(), 'the development binding takes every order');
 
 	}//end testTheDispatchIsLogged()
 
