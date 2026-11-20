@@ -21,6 +21,7 @@ vi.mock('@nextcloud/axios', () => ({ default: { get: vi.fn() } }))
 vi.mock('@nextcloud/router', () => ({ generateUrl: (url) => '/index.php' + url }))
 vi.mock('@nextcloud/vue/functions/dialog', () => ({ spawnDialog: vi.fn() }))
 vi.mock('../../src/modals/LastInvoiceModal.vue', () => ({ default: { name: 'LastInvoiceModal' } }))
+vi.mock('../../src/modals/SpreadOverPeriodsModal.vue', () => ({ default: { name: 'SpreadOverPeriodsModal' } }))
 vi.mock('@nextcloud/vue', () => ({
 	NcButton: {
 		name: 'NcButton',

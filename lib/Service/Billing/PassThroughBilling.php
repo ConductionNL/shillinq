@@ -189,6 +189,8 @@ class PassThroughBilling {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PassThroughMarkupResolver reads the markup rules from the record; it holds no state.
 	 */
 	private function locked(array $item, string $schema): array {
 		if (array_key_exists('markupAmountCalculated', $item) === true && $item['markupAmountCalculated'] !== null) {

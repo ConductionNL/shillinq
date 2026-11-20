@@ -56,3 +56,43 @@ export async function unregisterInventoryServiceWorker() {
 }
 
 export const SERVICE_WORKER_META = Object.freeze({ PATH: SW_PATH, SCOPE: SW_SCOPE })
+
+const MOBILE_SW_PATH = '/apps/shillinq/public/mobileServiceWorker.js'
+const MOBILE_SW_SCOPE = '/apps/shillinq/mobile/'
+
+/**
+ * Register the Shillinq Mobile service worker on its own scope, beside the
+ * warehouse one: an entrepreneur and a warehouse employee install different
+ * apps. No-ops where service workers are unsupported, so the app then works
+ * online only.
+ *
+ * @return {Promise<ServiceWorkerRegistration|null>} The registration or null.
+ * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
+ */
+export async function registerMobileServiceWorker() {
+	if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+		return null
+	}
+	try {
+		return await navigator.serviceWorker.register(MOBILE_SW_PATH, { scope: MOBILE_SW_SCOPE })
+	} catch (e) {
+		// eslint-disable-next-line no-console
+		console.warn('[shillinq] mobile service worker registration failed', e)
+		return null
+	}
+}
+
+/**
+ * Whether this browser can run Shillinq Mobile offline: it needs both a
+ * service worker for the shell and IndexedDB for the queue.
+ *
+ * @return {boolean} True when both are available.
+ * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ */
+export function supportsOfflineMobile() {
+	return typeof navigator !== 'undefined'
+		&& 'serviceWorker' in navigator
+		&& typeof indexedDB !== 'undefined'
+}
+
+export const MOBILE_SERVICE_WORKER_META = Object.freeze({ PATH: MOBILE_SW_PATH, SCOPE: MOBILE_SW_SCOPE })
