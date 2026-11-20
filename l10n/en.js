@@ -5936,7 +5936,27 @@ OC.L10N.register(
         "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.",
         "Reject self-billed invoice": "Reject self-billed invoice",
         "Why this self-billed invoice is not accepted, for example a quantity that does not match the delivery.": "Why this self-billed invoice is not accepted, for example a quantity that does not match the delivery.",
-        "Self-billed invoice rejected.": "Self-billed invoice rejected."
+        "Self-billed invoice rejected.": "Self-billed invoice rejected.",
+        "Take payment now": "Take payment now",
+        "The open amount of this invoice goes to the payment app on your registered phone. The customer pays there.": "The open amount of this invoice goes to the payment app on your registered phone. The customer pays there.",
+        "The payment is on your phone. Once the customer has paid, this invoice shows as paid.": "The payment is on your phone. Once the customer has paid, this invoice shows as paid.",
+        "Your phone cannot take this payment. Let the customer scan this code to pay.": "Your phone cannot take this payment. Let the customer scan this code to pay.",
+        "QR code of the payment page": "QR code of the payment page",
+        "Open the payment page": "Open the payment page",
+        "Take payment": "Take payment",
+        "The payment could not be started.": "The payment could not be started.",
+        "Choose the administration you work in first.": "Choose the administration you work in first.",
+        "Counter sale": "Counter sale",
+        "Counter sales, no named customer": "Counter sales, no named customer",
+        "Customer (optional)": "Customer (optional)",
+        "Customer walked away": "Customer walked away",
+        "Next sale": "Next sale",
+        "Price incl. VAT": "Price incl. VAT",
+        "Remove line {number}": "Remove line {number}",
+        "The payment of {amount} is on your phone. Once the customer has paid, the sale is issued as a paid invoice.": "The payment of {amount} is on your phone. Once the customer has paid, the sale is issued as a paid invoice.",
+        "The sale could not be cancelled.": "The sale could not be cancelled.",
+        "The sale is cancelled. Nothing was booked.": "The sale is cancelled. Nothing was booked.",
+        "Total {amount}": "Total {amount}"
     },
     "nplurals=2; plural=(n != 1);"
 )

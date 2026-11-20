@@ -262,6 +262,7 @@ import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 import RelationLinkDialog from './modals/RelationLinkDialog.vue'
 import SpreadOverPeriodsModal from './modals/SpreadOverPeriodsModal.vue'
+import TakePaymentModal from './modals/TakePaymentModal.vue'
 // accountant-portal: the multi-client dashboard composes a per-card status
 // (period-close state, BTW filing + deadline, missing documents, open items
 // from PeriodCloseAssistantService) plus a per-card "Download handover pack"
@@ -363,6 +364,7 @@ import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
 // kind:"page" custom component; the manifest fragment
 // src/manifest.d/budget-scenarios.json declares the route.
 import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
+import CounterSalePage from './views/CounterSalePage.vue'
 // compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
 // + reminder lead times for the compliance deadline calendar. Talks to
 // the strictly current-user-scoped /api/deadline-calendar/settings
@@ -417,6 +419,8 @@ export default {
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
+	// receivables-provider-payouts REQ-RPPO-005: Take payment now on ARInvoiceDetail.
+	TakePaymentModal: { kind: 'modal', component: TakePaymentModal },
 	// ledger-period-end REQ-LPE-004: Spread over periods on ARInvoiceDetail.
 	SpreadOverPeriodsModal: { kind: 'modal', component: SpreadOverPeriodsModal },
 	// reporting-relation-both-sides: link a customer to its supplier record.
@@ -482,6 +486,8 @@ export default {
 		kind: 'page',
 		component: AdministrationSwitcherPage,
 	},
+	// receivables-provider-payouts REQ-RPPO-006: a counter sale sized for a phone.
+	CounterSalePage: { kind: 'page', component: CounterSalePage },
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
 	BookingsCalendar: { kind: 'page', component: CalendarPage },

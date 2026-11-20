@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "receivables-provider-payouts",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycle, imperative cross-app command",
+    "description": "The counter sale of design.md D6 (REQ-RPPO-006): an ARInvoice flagged simplifiedInvoice and counterSale is created as a draft, paid on the user's phone, issued on capture and cancelled when the payment fails or the customer walks away. Adds the two flags, the cancelled state and the cancel transition from draft. A cancelled draft has booked nothing: the issue transition, which books the invoice, never ran. The ARInvoice version is moved in zz-financial-documents-linked-objects.json, which has the last word on it."
+  },
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "properties": {
+          "simplifiedInvoice": {
+            "type": "boolean",
+            "default": false,
+            "title": "Simplified invoice",
+            "description": "A simplified invoice (VAT directive art. 220a), as a counter sale issues it."
+          },
+          "counterSale": {
+            "type": "boolean",
+            "default": false,
+            "title": "Counter sale",
+            "description": "Recorded on the Counter sale page: issued when its payment is captured, cancelled when it fails (REQ-RPPO-006)."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "states": {
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "A counter sale whose payment failed or was abandoned. Never issued, so nothing was booked."
+            }
+          },
+          "transitions": {
+            "cancel": {
+              "from": "draft",
+              "to": "cancelled",
+              "label": "Cancel counter sale",
+              "description": "The payment of a counter sale failed or the customer walked away (REQ-RPPO-006)."
+            }
+          }
+        }
+      }
+    }
+  }
+}

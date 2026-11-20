@@ -5537,6 +5537,34 @@
 		{
 			"menu": [
 				{
+					"id": "Verkoop",
+					"label": "Sales",
+					"icon": "CartOutline",
+					"order": 33,
+					"children": [
+						{
+							"id": "CounterSale",
+							"label": "Counter sale",
+							"icon": "CashRegister",
+							"route": "CounterSale",
+							"order": 3
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "receivables-counter-sale",
+					"id": "CounterSale",
+					"route": "/sales/counter-sale",
+					"type": "custom",
+					"title": "Counter sale"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "PaymentPlans",
 					"label": "Payment plans",
 					"icon": "CalendarClock",
