@@ -8286,7 +8286,16 @@
         "Quotes": "Offertes",
         "Quote lines": "Offerteregels",
         "Create sales order": "Verkooporder maken",
-        "{total} quotes": "{total} offertes"
+        "{total} quotes": "{total} offertes",
+        "These products come from the product master.": "Deze producten komen uit de productmaster.",
+        "The product master is unavailable, so these are the products your stock and barcode records reference.": "De productmaster is niet bereikbaar, dus dit zijn de producten waar je voorraad- en barcoderecords naar verwijzen.",
+        "Names, categories and prices are owned elsewhere and stay blank.": "Namen, categorieën en prijzen worden elders beheerd en blijven leeg.",
+        "These are the attribute names the product master's own products declare.": "Dit zijn de kenmerknamen die de producten in de productmaster zelf opgeven.",
+        "The product master is unavailable, so these are the attributes the integration contract publishes.": "De productmaster is niet bereikbaar, dus dit zijn de kenmerken die het integratiecontract publiceert.",
+        "Owned by says which application authors each value.": "Eigenaar zegt welke applicatie elke waarde beheert.",
+        "Products this administration holds inventory or barcodes for. The product master owns the definitions; shillinq owns unit cost, quantities and valuation.": "Producten waarvoor deze administratie voorraad of barcodes heeft. De productmaster beheert de definities; shillinq beheert kostprijs, aantallen en waardering.",
+        "No products yet.": "Nog geen producten.",
+        "On hand": "Op voorraad"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
