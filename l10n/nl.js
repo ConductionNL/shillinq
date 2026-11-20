@@ -7932,7 +7932,12 @@ OC.L10N.register(
         "The known costs could not be regenerated. Try again, or ask your administrator to check the log.": "De bekende kosten konden niet opnieuw worden gegenereerd. Probeer het opnieuw, of vraag je beheerder het logboek te bekijken.",
         "Years without a default budget, so nothing was written for them: {years}.": "Jaren zonder standaardbegroting, waarvoor dus niets is geschreven: {years}.",
         "You cannot regenerate the budget of this administration.": "Je kunt de begroting van deze administratie niet opnieuw genereren.",
-        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Zet de terugkerende kosten en contractkosten in de standaardbegroting van elk jaar waarin ze vallen. Met de hand gewijzigde regels blijven ongemoeid."
+        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Zet de terugkerende kosten en contractkosten in de standaardbegroting van elk jaar waarin ze vallen. Met de hand gewijzigde regels blijven ongemoeid.",
+        "Variance items": "Afwijkingsposten",
+        "Actual (cents)": "Werkelijk (centen)",
+        "Variance (cents)": "Afwijking (centen)",
+        "Flux run ID": "Fluxrun-ID",
+        "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011).": "Het eigen id van de run, zoals elk FluxItem van de run het opslaat in fluxRunId (ledger-group-close, REQ-CLS-011)."
     },
     "nplurals=2; plural=(n != 1);"
 )

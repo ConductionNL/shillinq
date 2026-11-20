@@ -5770,7 +5770,12 @@ OC.L10N.register(
         "The known costs could not be regenerated. Try again, or ask your administrator to check the log.": "The known costs could not be regenerated. Try again, or ask your administrator to check the log.",
         "Years without a default budget, so nothing was written for them: {years}.": "Years without a default budget, so nothing was written for them: {years}.",
         "You cannot regenerate the budget of this administration.": "You cannot regenerate the budget of this administration.",
-        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone."
+        "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.": "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone.",
+        "Variance items": "Variance items",
+        "Actual (cents)": "Actual (cents)",
+        "Variance (cents)": "Variance (cents)",
+        "Flux run ID": "Flux run ID",
+        "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011).": "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011)."
     },
     "nplurals=2; plural=(n != 1);"
 )
