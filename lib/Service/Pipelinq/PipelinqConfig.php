@@ -69,7 +69,7 @@ class PipelinqConfig implements PipelinqConfigInterface {
 	 *
 	 * @var string
 	 */
-	public const CREDENTIAL_ID_TOKEN = 'pipelinq_api_token';
+	public const CREDENTIAL_ID_API = 'pipelinq_api_token';
 
 	/**
 	 * Default health-check sub-path appended to the endpoint when
@@ -193,7 +193,7 @@ class PipelinqConfig implements PipelinqConfigInterface {
 	 * @return StoredSecret
 	 */
 	private function token(): StoredSecret {
-		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_TOKEN);
+		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_API);
 	}//end token()
 
 	/**

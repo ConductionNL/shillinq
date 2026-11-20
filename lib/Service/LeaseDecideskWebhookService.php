@@ -71,7 +71,7 @@ class LeaseDecideskWebhookService {
 	 *
 	 * @var string
 	 */
-	public const CREDENTIAL_ID_TOKEN = 'decidesk_webhook_token';
+	public const CREDENTIAL_ID_WEBHOOK = 'decidesk_webhook_token';
 
 	/**
 	 * HTTP timeout in seconds — short enough that an unreachable decidesk
@@ -169,7 +169,7 @@ class LeaseDecideskWebhookService {
 	 * @return StoredSecret
 	 */
 	private function token(): StoredSecret {
-		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_TOKEN);
+		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_WEBHOOK);
 	}//end token()
 
 	/**
