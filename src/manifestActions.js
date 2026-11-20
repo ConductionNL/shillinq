@@ -24,6 +24,12 @@ import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { downloadEnsiaStatement, downloadEnsiaXml } from './utils/ensiaApi.js'
+import {
+	downloadIcpStatementXml,
+	fileIcpStatement,
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+} from './utils/icpStatementActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import {
 	approvePayable,
@@ -130,6 +136,12 @@ export const manifestActions = Object.freeze({
 	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// tax-icp-and-reverse-charge: Prepare statement on the ICP page, and
+	// Reconcile, Download XML and File on a statement.
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+	downloadIcpStatementXml,
+	fileIcpStatement,
 	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
 	// Prepare / Download / File on a correction, and the position's lines.
 	checkVatReturnForCorrections,
