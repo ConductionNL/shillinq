@@ -30,7 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Service\Vat\VatLineBackfill;
+use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -46,11 +46,11 @@ class StampVatReturnBoxes implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param VatLineBackfill $backfill Stamps the lines.
+	 * @param VatLineBackfillInterface $backfill Stamps the lines.
 	 * @param LoggerInterface $logger   Logger.
 	 */
 	public function __construct(
-		private readonly VatLineBackfill $backfill,
+		private readonly VatLineBackfillInterface $backfill,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

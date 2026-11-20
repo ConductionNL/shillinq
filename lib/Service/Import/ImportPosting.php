@@ -31,8 +31,9 @@ namespace OCA\Shillinq\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -50,14 +51,14 @@ class ImportPosting {
 	 * @param ObjectServiceInterface $objectService The register.
 	 * @param ObjectTransitionRunner $transitions   Posts journal entries through their lifecycle.
 	 * @param ImportPostingPayloads  $payloads      Builds the records.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Refusal diagnostics.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
 		private readonly ImportPostingPayloads $payloads,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -97,6 +98,24 @@ class ImportPosting {
 			return $this->failed(code: 'posting-refused', message: $e->getMessage(), findings: $findings);
 		}
 
+		$findings = $this->withMissingOpeningBalance(findings: $findings, entry: $entry, batch: $batch);
+
+		return $this->writePosting(customers: $customers, entry: $entry, findings: $findings);
+
+	}//end post()
+
+	/**
+	 * Add the no-opening-balance warning when the opening balance is in scope but absent.
+	 *
+	 * @param array<int,array<string,mixed>> $findings The findings so far.
+	 * @param array<string,mixed>|null $entry The opening entry, or null.
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @return array<int,array<string,mixed>> The findings.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function withMissingOpeningBalance(array $findings, array|null $entry, array $batch): array {
 		if ($entry === null && $this->inScope(batch: $batch, part: 'openingBalance') === true) {
 			$findings[] = $this->finding(
 				severity: ImportPipelineService::SEVERITY_WARNING,
@@ -105,6 +124,21 @@ class ImportPosting {
 			);
 		}
 
+		return $findings;
+	}//end withMissingOpeningBalance()
+
+	/**
+	 * Write the customers and post the opening entry, removing what was written when that is refused.
+	 *
+	 * @param array<int,array<string,mixed>> $customers The customers to write.
+	 * @param array<string,mixed>|null $entry The opening entry, or null.
+	 * @param array<int,array<string,mixed>> $findings The findings.
+	 *
+	 * @return array{failed:bool,postingRefs:array<string,mixed>|null,findings:array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function writePosting(array $customers, array|null $entry, array $findings): array {
 		$refs = ['openingJournalId' => null, 'masterIds' => [], 'linkedMasterIds' => []];
 		try {
 			$this->writeCustomers(customers: $customers, refs: $refs);
@@ -120,8 +154,7 @@ class ImportPosting {
 		}
 
 		return ['failed' => false, 'postingRefs' => $refs, 'findings' => $findings];
-
-	}//end post()
+	}//end writePosting()
 
 	/**
 	 * Post the reversing entry and remove the customers the import wrote.
@@ -142,7 +175,7 @@ class ImportPosting {
 			}
 
 			foreach ((array)($refs['masterIds'] ?? []) as $masterId) {
-				$this->scoped(schema: 'CustomerMaster')->deleteObject((string)$masterId);
+				$this->scoped(schema: 'CustomerMaster')->deleteObject(new ObjectDeletion(uuid: (string)$masterId));
 				$reversal['deletedMasterIds'][] = (string)$masterId;
 			}
 		} catch (Throwable $e) {
@@ -319,7 +352,7 @@ class ImportPosting {
 	private function remove(string $schema, array $ids): void {
 		foreach ($ids as $id) {
 			try {
-				$this->scoped(schema: $schema)->deleteObject((string)$id);
+				$this->scoped(schema: $schema)->deleteObject(new ObjectDeletion(uuid: (string)$id));
 			} catch (Throwable $e) {
 				$this->logger->error(
 					'ImportPosting: could not remove a record of a refused post',
@@ -351,7 +384,7 @@ class ImportPosting {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 

@@ -34,7 +34,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -44,6 +44,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use RuntimeException;
 use Stringable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Calendar bookings golden tests.
@@ -116,7 +117,7 @@ final class CalendarBookingsGoldenTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturnOnConsecutiveCalls(...match ($world['or']) {
 			'drops' => [true, false],
 			default => [$world['or'], $world['or']],
@@ -424,7 +425,9 @@ final class GoldenCalendarObjects {
 	 *
 	 * @return mixed
 	 */
-	public function saveObject(array $object, string $register, string $schema): mixed {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = ['register' => $register, 'schema' => $schema, 'object' => $object];
 		return match ($this->save) {
 			'throws' => throw new RuntimeException('disk full'),

@@ -524,34 +524,14 @@ export default {
 				await this.confirmPlan()
 				return
 			}
-			const body =
-				this.tab === 'invoices'
-					? { targets: this.selected }
-					: {
-							ledgerAccount: {
-								accountNumber: this.account?.value,
-								vatRate: this.vatRate?.value ?? 0,
-								vatAccountNumber: this.vatAccount?.value ?? '',
-								description: this.description,
-							},
-						}
 			try {
 				const response = await axios.post(
 					generateUrl(
 						`/apps/shillinq/api/v1/bank-lines/${encodeURIComponent(this.line.id)}/match`,
 					),
-					body,
+					this.matchBody(),
 				)
-				const remainder = Number(response.data?.remainder ?? 0)
-				showSuccess(
-					remainder > 0
-						? t(
-								'shillinq',
-								'Part payment recorded, {amount} remains open.',
-								{ amount: this.money(remainder) },
-							)
-						: t('shillinq', 'Bank line matched.'),
-				)
+				showSuccess(this.matchedMessage(response.data))
 				emit('cn:page:refresh', {})
 				this.$emit('close', response.data)
 			} catch (error) {
@@ -561,6 +541,43 @@ export default {
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * The match request: the selected invoices, or the ledger booking.
+		 *
+		 * @return {object}
+		 */
+		matchBody() {
+			if (this.tab === 'invoices') {
+				return { targets: this.selected }
+			}
+			return {
+				ledgerAccount: {
+					accountNumber: this.account?.value,
+					vatRate: this.vatRate?.value ?? 0,
+					vatAccountNumber: this.vatAccount?.value ?? '',
+					description: this.description,
+				},
+			}
+		},
+
+		/**
+		 * The toast of a match: a part payment names what remains open.
+		 *
+		 * @param {object} data The match response body.
+		 * @return {string}
+		 */
+		matchedMessage(data) {
+			const remainder = Number(data?.remainder ?? 0)
+			if (remainder > 0) {
+				return t(
+					'shillinq',
+					'Part payment recorded, {amount} remains open.',
+					{ amount: this.money(remainder) },
+				)
+			}
+			return t('shillinq', 'Bank line matched.')
 		},
 
 		/**

@@ -1443,7 +1443,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_date",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -1611,7 +1611,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_date",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -1664,7 +1664,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -1679,7 +1679,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_date",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -1847,7 +1847,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_date",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -1900,7 +1900,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -3918,7 +3918,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "exception_quantity",
+            "matchStatus": "exception_missing_grn",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -3942,6 +3942,14 @@
                     "expected": 2100,
                     "actual": 2100,
                     "deltaCents": 0,
+                    "deltaPercentage": null,
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "grn_line",
+                    "expected": "received",
+                    "actual": "missing",
+                    "deltaCents": null,
                     "deltaPercentage": null,
                     "toleranceProfileId": "TP-G"
                 }
@@ -4077,7 +4085,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "exception_quantity",
+                    "matchStatus": "exception_missing_grn",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -4101,6 +4109,14 @@
                             "expected": 2100,
                             "actual": 2100,
                             "deltaCents": 0,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "grn_line",
+                            "expected": "received",
+                            "actual": "missing",
+                            "deltaCents": null,
                             "deltaPercentage": null,
                             "toleranceProfileId": "TP-G"
                         }
@@ -4136,7 +4152,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_missing_grn",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -4162,222 +4178,12 @@
                     "deltaCents": 0,
                     "deltaPercentage": null,
                     "toleranceProfileId": "TP-G"
-                }
-            ],
-            "costCenter": "CC-1",
-            "projectCode": "PRJ-1",
-            "createdAt": "(now)",
-            "administrationId": "adm-1",
-            "id": "m-1"
-        },
-        "calls": [
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "SupplierInvoice",
-                {
-                    "filters": {
-                        "id": "inv-1",
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "PurchaseOrder",
-                {
-                    "filters": {
-                        "id": "po-1",
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "PurchaseOrder",
-                {
-                    "filters": {
-                        "id": "po-1",
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "PurchaseOrderLine",
-                {
-                    "filters": {
-                        "poId": "po-1",
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "GoodsReceiptNote",
-                {
-                    "filters": {
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "SvcReceipt",
-                {
-                    "filters": {
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "GoodsReceiptLine",
-                {
-                    "filters": {
-                        "grnId": "grn-1",
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "ToleranceProfile",
-                {
-                    "filters": {
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "saveObject",
-                "ThreeWayMatch",
-                {
-                    "invoiceId": "inv-1",
-                    "matchedPoIds": [
-                        "po-1"
-                    ],
-                    "matchedGrnIds": [
-                        "grn-1"
-                    ],
-                    "matchStatus": "auto_approved",
-                    "divergenceDetails": [
-                        {
-                            "field": "unitPrice",
-                            "expected": 1000,
-                            "actual": 1000,
-                            "deltaCents": 0,
-                            "deltaPercentage": 0,
-                            "toleranceProfileId": "TP-G"
-                        },
-                        {
-                            "field": "quantity",
-                            "expected": 12000,
-                            "actual": 12000,
-                            "deltaCents": null,
-                            "deltaPercentage": 0,
-                            "source": "po",
-                            "toleranceProfileId": "TP-G"
-                        },
-                        {
-                            "field": "vat",
-                            "expected": 2100,
-                            "actual": 2100,
-                            "deltaCents": 0,
-                            "deltaPercentage": null,
-                            "toleranceProfileId": "TP-G"
-                        }
-                    ],
-                    "costCenter": "CC-1",
-                    "projectCode": "PRJ-1",
-                    "createdAt": "(now)",
-                    "administrationId": "adm-1"
-                }
-            ]
-        ],
-        "transitions": [
-            [
-                "adm-1",
-                "inv-1",
-                "matching"
-            ],
-            [
-                "adm-1",
-                "inv-1",
-                "matched"
-            ]
-        ],
-        "alerts": [],
-        "log": []
-    },
-    "grn line read fails": {
-        "result": {
-            "invoiceId": "inv-1",
-            "matchedPoIds": [
-                "po-1"
-            ],
-            "matchedGrnIds": [
-                "grn-1"
-            ],
-            "matchStatus": "exception_quantity",
-            "divergenceDetails": [
-                {
-                    "field": "unitPrice",
-                    "expected": 1000,
-                    "actual": 1000,
-                    "deltaCents": 0,
-                    "deltaPercentage": 0,
-                    "toleranceProfileId": "TP-G"
                 },
                 {
-                    "field": "quantity",
-                    "expected": 12000,
-                    "actual": 10000,
+                    "field": "grn_line",
+                    "expected": "received",
+                    "actual": "missing",
                     "deltaCents": null,
-                    "deltaPercentage": -1667,
-                    "source": "po",
-                    "toleranceProfileId": "TP-G"
-                },
-                {
-                    "field": "vat",
-                    "expected": 2100,
-                    "actual": 2100,
-                    "deltaCents": 0,
                     "deltaPercentage": null,
                     "toleranceProfileId": "TP-G"
                 }
@@ -4513,7 +4319,241 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "exception_quantity",
+                    "matchStatus": "exception_missing_grn",
+                    "divergenceDetails": [
+                        {
+                            "field": "unitPrice",
+                            "expected": 1000,
+                            "actual": 1000,
+                            "deltaCents": 0,
+                            "deltaPercentage": 0,
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "quantity",
+                            "expected": 12000,
+                            "actual": 12000,
+                            "deltaCents": null,
+                            "deltaPercentage": 0,
+                            "source": "po",
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "vat",
+                            "expected": 2100,
+                            "actual": 2100,
+                            "deltaCents": 0,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "grn_line",
+                            "expected": "received",
+                            "actual": "missing",
+                            "deltaCents": null,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
+                        }
+                    ],
+                    "costCenter": "CC-1",
+                    "projectCode": "PRJ-1",
+                    "createdAt": "(now)",
+                    "administrationId": "adm-1"
+                }
+            ]
+        ],
+        "transitions": [
+            [
+                "adm-1",
+                "inv-1",
+                "matching"
+            ],
+            [
+                "adm-1",
+                "inv-1",
+                "exception"
+            ]
+        ],
+        "alerts": [],
+        "log": []
+    },
+    "grn line read fails": {
+        "result": {
+            "invoiceId": "inv-1",
+            "matchedPoIds": [
+                "po-1"
+            ],
+            "matchedGrnIds": [
+                "grn-1"
+            ],
+            "matchStatus": "exception_missing_grn",
+            "divergenceDetails": [
+                {
+                    "field": "unitPrice",
+                    "expected": 1000,
+                    "actual": 1000,
+                    "deltaCents": 0,
+                    "deltaPercentage": 0,
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "quantity",
+                    "expected": 12000,
+                    "actual": 10000,
+                    "deltaCents": null,
+                    "deltaPercentage": -1667,
+                    "source": "po",
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "vat",
+                    "expected": 2100,
+                    "actual": 2100,
+                    "deltaCents": 0,
+                    "deltaPercentage": null,
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "grn_line",
+                    "expected": "received",
+                    "actual": "missing",
+                    "deltaCents": null,
+                    "deltaPercentage": null,
+                    "toleranceProfileId": "TP-G"
+                }
+            ],
+            "costCenter": "CC-1",
+            "projectCode": "PRJ-1",
+            "createdAt": "(now)",
+            "administrationId": "adm-1",
+            "id": "m-1"
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "SupplierInvoice",
+                {
+                    "filters": {
+                        "id": "inv-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "PurchaseOrder",
+                {
+                    "filters": {
+                        "id": "po-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "PurchaseOrder",
+                {
+                    "filters": {
+                        "id": "po-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "PurchaseOrderLine",
+                {
+                    "filters": {
+                        "poId": "po-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "GoodsReceiptNote",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "SvcReceipt",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "GoodsReceiptLine",
+                {
+                    "filters": {
+                        "grnId": "grn-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "ToleranceProfile",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "saveObject",
+                "ThreeWayMatch",
+                {
+                    "invoiceId": "inv-1",
+                    "matchedPoIds": [
+                        "po-1"
+                    ],
+                    "matchedGrnIds": [
+                        "grn-1"
+                    ],
+                    "matchStatus": "exception_missing_grn",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -4537,6 +4577,14 @@
                             "expected": 2100,
                             "actual": 2100,
                             "deltaCents": 0,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "grn_line",
+                            "expected": "received",
+                            "actual": "missing",
+                            "deltaCents": null,
                             "deltaPercentage": null,
                             "toleranceProfileId": "TP-G"
                         }
@@ -4581,7 +4629,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_missing_grn",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -4605,6 +4653,14 @@
                     "expected": 2100,
                     "actual": 2100,
                     "deltaCents": 0,
+                    "deltaPercentage": null,
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "grn_line",
+                    "expected": "received",
+                    "actual": "missing",
+                    "deltaCents": null,
                     "deltaPercentage": null,
                     "toleranceProfileId": "TP-G"
                 }
@@ -4740,7 +4796,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_missing_grn",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -4766,6 +4822,14 @@
                             "deltaCents": 0,
                             "deltaPercentage": null,
                             "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "grn_line",
+                            "expected": "received",
+                            "actual": "missing",
+                            "deltaCents": null,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
                         }
                     ],
                     "costCenter": "CC-1",
@@ -4784,7 +4848,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -5780,7 +5844,7 @@
                 "grn-1",
                 "grn-3"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_missing_grn",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -5792,11 +5856,11 @@
                 },
                 {
                     "field": "quantity",
-                    "expected": 10000,
+                    "expected": 12000,
                     "actual": 10000,
                     "deltaCents": null,
-                    "deltaPercentage": 0,
-                    "source": "grn",
+                    "deltaPercentage": -1667,
+                    "source": "po",
                     "toleranceProfileId": "TP-G"
                 },
                 {
@@ -5804,6 +5868,14 @@
                     "expected": 2100,
                     "actual": 2100,
                     "deltaCents": 0,
+                    "deltaPercentage": null,
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "grn_line",
+                    "expected": "received",
+                    "actual": "missing",
+                    "deltaCents": null,
                     "deltaPercentage": null,
                     "toleranceProfileId": "TP-G"
                 }
@@ -5906,20 +5978,6 @@
                 "GoodsReceiptLine",
                 {
                     "filters": {
-                        "grnId": "grn-1",
-                        "administrationId": "adm-1"
-                    }
-                }
-            ],
-            [
-                "setRegister",
-                "shillinq"
-            ],
-            [
-                "findAll",
-                "GoodsReceiptLine",
-                {
-                    "filters": {
                         "grnId": "grn-3",
                         "administrationId": "adm-1"
                     }
@@ -5954,7 +6012,7 @@
                         "grn-1",
                         "grn-3"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_missing_grn",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -5966,11 +6024,11 @@
                         },
                         {
                             "field": "quantity",
-                            "expected": 10000,
+                            "expected": 12000,
                             "actual": 10000,
                             "deltaCents": null,
-                            "deltaPercentage": 0,
-                            "source": "grn",
+                            "deltaPercentage": -1667,
+                            "source": "po",
                             "toleranceProfileId": "TP-G"
                         },
                         {
@@ -5978,6 +6036,14 @@
                             "expected": 2100,
                             "actual": 2100,
                             "deltaCents": 0,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "grn_line",
+                            "expected": "received",
+                            "actual": "missing",
+                            "deltaCents": null,
                             "deltaPercentage": null,
                             "toleranceProfileId": "TP-G"
                         }
@@ -5998,7 +6064,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -6013,7 +6079,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_missing_po",
             "divergenceDetails": [
                 {
                     "field": "po_line",
@@ -6155,7 +6221,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_missing_po",
                     "divergenceDetails": [
                         {
                             "field": "po_line",
@@ -6182,7 +6248,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -6579,7 +6645,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_missing_po",
             "divergenceDetails": [
                 {
                     "field": "po_line",
@@ -6721,7 +6787,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_missing_po",
                     "divergenceDetails": [
                         {
                             "field": "po_line",
@@ -6748,7 +6814,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -7454,7 +7520,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_missing_po",
             "divergenceDetails": [
                 {
                     "field": "po_line",
@@ -7596,7 +7662,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_missing_po",
                     "divergenceDetails": [
                         {
                             "field": "po_line",
@@ -7623,7 +7689,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -12552,7 +12618,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_missing_po",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -12719,7 +12785,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_missing_po",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -12771,7 +12837,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -13541,7 +13607,7 @@
                 "po-1"
             ],
             "matchedGrnIds": [],
-            "matchStatus": "exception_quantity",
+            "matchStatus": "exception_missing_grn",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -13565,6 +13631,14 @@
                     "expected": 2100,
                     "actual": 2100,
                     "deltaCents": 0,
+                    "deltaPercentage": null,
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "grn_line",
+                    "expected": "received",
+                    "actual": "missing",
+                    "deltaCents": null,
                     "deltaPercentage": null,
                     "toleranceProfileId": "TP-G"
                 }
@@ -13684,7 +13758,7 @@
                         "po-1"
                     ],
                     "matchedGrnIds": [],
-                    "matchStatus": "exception_quantity",
+                    "matchStatus": "exception_missing_grn",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -13708,6 +13782,14 @@
                             "expected": 2100,
                             "actual": 2100,
                             "deltaCents": 0,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "grn_line",
+                            "expected": "received",
+                            "actual": "missing",
+                            "deltaCents": null,
                             "deltaPercentage": null,
                             "toleranceProfileId": "TP-G"
                         }
@@ -13961,7 +14043,7 @@
             "matchedGrnIds": [
                 "svc-1"
             ],
-            "matchStatus": "exception_quantity",
+            "matchStatus": "exception_missing_grn",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -13985,6 +14067,14 @@
                     "expected": 2100,
                     "actual": 2100,
                     "deltaCents": 0,
+                    "deltaPercentage": null,
+                    "toleranceProfileId": "TP-G"
+                },
+                {
+                    "field": "grn_line",
+                    "expected": "received",
+                    "actual": "missing",
+                    "deltaCents": null,
                     "deltaPercentage": null,
                     "toleranceProfileId": "TP-G"
                 }
@@ -14120,7 +14210,7 @@
                     "matchedGrnIds": [
                         "svc-1"
                     ],
-                    "matchStatus": "exception_quantity",
+                    "matchStatus": "exception_missing_grn",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -14144,6 +14234,14 @@
                             "expected": 2100,
                             "actual": 2100,
                             "deltaCents": 0,
+                            "deltaPercentage": null,
+                            "toleranceProfileId": "TP-G"
+                        },
+                        {
+                            "field": "grn_line",
+                            "expected": "received",
+                            "actual": "missing",
+                            "deltaCents": null,
                             "deltaPercentage": null,
                             "toleranceProfileId": "TP-G"
                         }

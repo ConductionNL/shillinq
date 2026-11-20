@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
 use OCP\IGroupManager;
 
 /**
@@ -32,7 +33,7 @@ use OCP\IGroupManager;
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
  */
-class AdministrationManagementAccess {
+class AdministrationManagementAccess implements AdministrationManagementAccessInterface {
 
 	/**
 	 * Constructor.

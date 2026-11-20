@@ -3,6 +3,9 @@
 /**
  * Shillinq BBV Administration Bootstrap Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Bootstraps newly-created BBV-tenants (administrationType ∈ {gemeente, provincie,
  * waterschap}) with the minimum mandatory book-keeping primitives:
  *
@@ -26,17 +29,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -93,12 +95,7 @@ class InitializeBbvAdministration implements IRepairStep {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()
 
 	/**
@@ -143,6 +140,36 @@ class InitializeBbvAdministration implements IRepairStep {
 
 		$registerSlug = $this->getRegisterSlug();
 
+		$administrations = $this->administrationsOrSkip(objectService: $objectService, registerSlug: $registerSlug, output: $output);
+		if ($administrations === null) {
+			return;
+		}
+
+		$totals = ['reserves' => 0, 'skippedReserves' => 0, 'taskFields' => 0];
+		foreach ($administrations as $administration) {
+			$totals = $this->bootstrapAdministration(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				administration: $administration,
+				totals: $totals
+			);
+		}
+
+		$message = 'BBV-administration bootstrap: %d algemene reserve(s) created, %d skipped; %d reserve-taakveld(en) created.';
+		$output->info(sprintf($message, $totals['reserves'], $totals['skippedReserves'], $totals['taskFields']));
+
+	}//end runInner()
+
+	/**
+	 * The administrations to bootstrap, or null (with a note) when the register has none or no Administration schema.
+	 *
+	 * @param object  $objectService OpenRegister's ObjectService.
+	 * @param string  $registerSlug  The register slug.
+	 * @param IOutput $output        Progress output.
+	 *
+	 * @return array<int, mixed>|null
+	 */
+	private function administrationsOrSkip(object $objectService, string $registerSlug, IOutput $output): array|null {
 		try {
 			$administrations = $objectService
 				->setRegister($registerSlug)
@@ -150,57 +177,49 @@ class InitializeBbvAdministration implements IRepairStep {
 				->findAll(['limit' => 500]);
 		} catch (\Throwable $e) {
 			$output->info('Shillinq: Administration register not yet present, skipping BBV-administration bootstrap');
-			return;
+			return null;
 		}
 
 		if (empty($administrations) === true) {
 			$output->info('Shillinq: no administrations found, skipping BBV-administration bootstrap');
-			return;
+			return null;
 		}
 
-		$totalSeededReserves = 0;
-		$totalSkippedReserves = 0;
-		$totalSeededTaskFields = 0;
+		return $administrations;
+	}//end administrationsOrSkip()
 
-		foreach ($administrations as $administration) {
-			$row = $this->toArray(object: $administration);
-			$type = ($row['administrationType'] ?? null);
+	/**
+	 * Seed the algemene reserve and the reserve task field of one BBV administration, and add to the totals.
+	 *
+	 * @param object             $objectService  OpenRegister's ObjectService.
+	 * @param string             $registerSlug   The register slug.
+	 * @param mixed              $administration One Administration row.
+	 * @param array<string, int> $totals         The totals so far.
+	 *
+	 * @return array<string, int>
+	 */
+	private function bootstrapAdministration(object $objectService, string $registerSlug, mixed $administration, array $totals): array {
+		$row  = $this->toArray(object: $administration);
+		$type = ($row['administrationType'] ?? null);
 
-			if (in_array($type, self::BBV_ADMINISTRATION_TYPES, true) === false) {
-				continue;
-			}
+		$administrationId = ($row['id'] ?? $row['uuid'] ?? null);
+		if (in_array($type, self::BBV_ADMINISTRATION_TYPES, true) === false || $administrationId === null) {
+			return $totals;
+		}
 
-			$administrationId = ($row['id'] ?? $row['uuid'] ?? null);
-			if ($administrationId === null) {
-				continue;
-			}
-
-			$reserveResult = $this->ensureAlgemeneReserve(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				administrationId: (string)$administrationId
-			);
-			$totalSeededReserves += $reserveResult['seeded'];
-			$totalSkippedReserves += $reserveResult['skipped'];
-
-			$taskFieldResult = $this->ensureReserveTaskField(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				overheidslaag: (string)$type
-			);
-			$totalSeededTaskFields += $taskFieldResult['seeded'];
-		}//end foreach
-
-		$output->info(
-			sprintf(
-				'BBV-administration bootstrap: %d algemene reserve(s) created, %d skipped; %d reserve-taakveld(en) created.',
-				$totalSeededReserves,
-				$totalSkippedReserves,
-				$totalSeededTaskFields
-			)
+		$reserveResult = $this->ensureAlgemeneReserve(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			administrationId: (string)$administrationId
 		);
+		$totals['reserves']        += $reserveResult['seeded'];
+		$totals['skippedReserves'] += $reserveResult['skipped'];
 
-	}//end runInner()
+		$taskFieldResult = $this->ensureReserveTaskField(objectService: $objectService, registerSlug: $registerSlug, overheidslaag: (string)$type);
+		$totals['taskFields'] += $taskFieldResult['seeded'];
+
+		return $totals;
+	}//end bootstrapAdministration()
 
 	/**
 	 * Ensure an Algemene reserve exists for the given administration.
@@ -251,7 +270,10 @@ class InitializeBbvAdministration implements IRepairStep {
 		];
 
 		try {
-			$objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Reserve');
+			$objectService->saveObject(
+				object: $payload,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'Reserve'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: failed to seed algemene reserve',
@@ -314,7 +336,10 @@ class InitializeBbvAdministration implements IRepairStep {
 		];
 
 		try {
-			$objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Taakveld');
+			$objectService->saveObject(
+				object: $payload,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'Taakveld'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq: failed to seed reserve-taakveld',

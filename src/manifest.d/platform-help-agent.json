@@ -1,0 +1,57 @@
+{
+	"menu": [
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "BookOpenVariantOutline",
+			"order": 90,
+			"children": [
+				{
+					"id": "HelpArticles",
+					"label": "Help articles",
+					"icon": "HelpCircleOutline",
+					"route": "HelpArticles",
+					"order": 1
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "HelpArticles",
+			"route": "/documentation/help-articles",
+			"type": "index",
+			"title": "Help articles",
+			"config": {
+				"register": "shillinq",
+				"schema": "HelpArticle",
+				"_note": "platform-help-agent design D3: the user guide the in-app assistant searches, readable here without the assistant. Seeded from docs/user-guide on install and upgrade.",
+				"columns": [
+					{ "key": "title", "label": "Title", "sortable": true },
+					{ "key": "documentationUrl", "label": "Documentation page", "sortable": false },
+					{ "key": "language", "label": "Language", "sortable": true }
+				],
+				"defaultSort": "title",
+				"detailRoute": "HelpArticleDetail",
+				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "HelpArticleDetail",
+			"route": "/documentation/help-articles/:id",
+			"type": "detail",
+			"title": "Help article",
+			"config": {
+				"register": "shillinq",
+				"schema": "HelpArticle",
+				"fields": [
+					{ "key": "title", "label": "Title", "type": "string" },
+					{ "key": "documentationUrl", "label": "Documentation page", "type": "string" },
+					{ "key": "pageIds", "label": "Explains pages", "type": "string" },
+					{ "key": "language", "label": "Language", "type": "string" },
+					{ "key": "body", "label": "Text", "type": "string" }
+				]
+			}
+		}
+	]
+}

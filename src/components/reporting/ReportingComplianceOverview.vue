@@ -211,7 +211,7 @@
 								v-if="report.kind === 'view'"
 								class="reporting-overview__generate"
 								:data-testid="`reporting-open-${report.id}`"
-								:to="{ name: report.id }">
+								:to="{ name: report.route || report.id, query: report.query || {} }">
 								{{ t('shillinq', 'Open') }}
 							</router-link>
 							<button

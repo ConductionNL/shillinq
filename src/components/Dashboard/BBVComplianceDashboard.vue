@@ -13,6 +13,8 @@
    │  Compliance pie chart            │  YTD trend line chart       │
    ├──────────────────────────────────┴─────────────────────────────┤
    │  Programme utilization table     (full width, sortable)        │
+   ├────────────────────────────────────────────────────────────────┤
+   │  Realisation per task field + unmapped accounts (REQ-BBV-012)  │
    └────────────────────────────────────────────────────────────────┘
 
  The page fetches `BBVProgramme` objects from the OR endpoint
@@ -91,6 +93,12 @@
 					:loading="loading"
 					@rowClick="onProgrammeClick" />
 			</template>
+
+			<template #widget-bbv-task-fields>
+				<BBVTaskFieldRealisation
+					:realisation="taskFieldRealisation"
+					:loading="loading" />
+			</template>
 		</CnDashboardPage>
 
 		<p
@@ -110,6 +118,7 @@ import { generateUrl } from '@nextcloud/router'
 import BBVComplianceChart from './BBVComplianceChart.vue'
 import BBVKPICards from './BBVKPICards.vue'
 import BBVProgrammeTable from './BBVProgrammeTable.vue'
+import BBVTaskFieldRealisation from './BBVTaskFieldRealisation.vue'
 import BBVTrendChart from './BBVTrendChart.vue'
 import { administrationOptions, fetchAdministrationContext } from '../../utils/administrationContext.js'
 
@@ -121,6 +130,7 @@ export default {
 		BBVComplianceChart,
 		BBVTrendChart,
 		BBVProgrammeTable,
+		BBVTaskFieldRealisation,
 	},
 
 	data() {
@@ -128,6 +138,7 @@ export default {
 			programmes: [],
 			timeline: [],
 			mappings: [],
+			taskFieldRealisation: null,
 			loading: true,
 			error: '',
 			administrationId: '',
@@ -162,6 +173,11 @@ export default {
 				{
 					id: 'bbv-table',
 					title: this.t('shillinq', 'Programme utilization'),
+					type: 'custom',
+				},
+				{
+					id: 'bbv-task-fields',
+					title: this.t('shillinq', 'Realisation per task field'),
 					type: 'custom',
 				},
 			]
@@ -199,6 +215,14 @@ export default {
 					widgetId: 'bbv-table',
 					gridX: 0,
 					gridY: 6,
+					gridWidth: 12,
+					gridHeight: 5,
+				},
+				{
+					id: 'layout-task-fields',
+					widgetId: 'bbv-task-fields',
+					gridX: 0,
+					gridY: 11,
 					gridWidth: 12,
 					gridHeight: 5,
 				},
@@ -291,6 +315,11 @@ export default {
 					: []
 				this.mappings = Array.isArray(data.mappings) ? data.mappings : []
 				this.timeline = Array.isArray(data.timeline) ? data.timeline : []
+				// The year per task field and the unmapped accounts
+				// (public-sector-task-field-allocation REQ-BBV-012).
+				this.taskFieldRealisation = data.taskFieldRealisation && typeof data.taskFieldRealisation === 'object'
+					? data.taskFieldRealisation
+					: null
 				this.scope = data.scope || {
 					administrationId: null,
 					fiscalYear: null,
@@ -301,6 +330,7 @@ export default {
 				this.programmes = []
 				this.timeline = []
 				this.mappings = []
+				this.taskFieldRealisation = null
 				this.scope = {
 					administrationId: null,
 					fiscalYear: null,

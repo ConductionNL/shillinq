@@ -37,6 +37,8 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import { NcSelect } from '@nextcloud/vue'
+import { fetchActiveAdministrationId } from '../../api/administrationApi.js'
+import { accountLabelParts, isAmount } from './accountLabel.js'
 import { recordPickerMixin } from './recordPickerMixin.js'
 
 export default {
@@ -83,18 +85,13 @@ export default {
 			if (!account) {
 				return ''
 			}
-			const number = account.accountNumber || account.id || ''
-			const name = account.accountName || account.name || account.title || ''
-			const type = account.accountType || account.type || ''
-			const balanceCents = account.balance ?? account.balanceCents
-			const balance =
-				balanceCents !== null
-				&& balanceCents !== undefined
-				&& Number.isFinite(Number(balanceCents))
-					? this.formatEuro(balanceCents)
-					: ''
-			const parts = [number, name, type, balance].filter(Boolean)
+			const parts = [...accountLabelParts(account), this.balanceText(account)].filter(Boolean)
 			return parts.join(' · ')
+		},
+
+		balanceText(account) {
+			const balanceCents = account.balance ?? account.balanceCents
+			return isAmount(balanceCents) ? this.formatEuro(balanceCents) : ''
 		},
 
 		formatEuro(cents) {
@@ -126,11 +123,17 @@ export default {
 		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 		 */
 		async fetchAccounts() {
-			const params = { _limit: 500 }
-			if (this.administrationId) {
-				params.administrationId = this.administrationId
+			const administrationId =
+				this.administrationId || (await fetchActiveAdministrationId())
+			if (!administrationId) {
+				this.accounts = []
+				this.fetchError = this.t(
+					'shillinq',
+					'No active administration, so the chart of accounts cannot be shown.',
+				)
+				return
 			}
-			await this.loadRecords(params)
+			await this.loadRecords({ _limit: 500, administrationId })
 		},
 	},
 }

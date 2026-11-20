@@ -36,7 +36,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
 use OCP\IL10N;
@@ -45,6 +45,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for CalendarController.
@@ -63,9 +64,9 @@ class CalendarControllerTest extends TestCase {
 	/**
 	 * Settings service stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Administration context stub.
@@ -125,7 +126,7 @@ class CalendarControllerTest extends TestCase {
 		parent::setUp();
 
 		$this->request = $this->createMock(IRequest::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->guard = $this->createMock(TransactionalGuard::class);
 		$this->conflicts = $this->createMock(ConflictDetectionService::class);
@@ -331,7 +332,9 @@ class CalendarControllerTest extends TestCase {
 				return $matched;
 			}
 
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->savedObjects[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 				// Echo back the object so the controller can shape the response.
 				return array_merge($object, ['@self' => ['id' => 'uuid-saved']]);
@@ -903,4 +906,131 @@ class CalendarControllerTest extends TestCase {
 		$this->assertStringNotContainsString('end must be after start', (string)($data['error'] ?? '') . (string)($data['message'] ?? ''));
 	}//end testListBookingsInvalidRangeDoesNotLeakExceptionText()
 
+
+	/**
+	 * index() answers 503 when OpenRegister is unavailable.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturns503WithoutOpenRegister(): void {
+		$this->settings = $this->createMock(RegisterLocation::class);
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(false);
+
+		$response = $this->buildController()->index();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame(['error' => 'OpenRegister unavailable'], $response->getData());
+	}//end testIndexReturns503WithoutOpenRegister()
+
+	/**
+	 * A known status narrows the list; an unknown status is ignored rather
+	 * than passed on as a filter.
+	 *
+	 * @return void
+	 */
+	public function testIndexAppliesOnlyAKnownStatusFilter(): void {
+		$this->fakeObjectService->records['Calendar'][2]['status'] = 'archived';
+
+		$this->params['status'] = 'archived';
+		$archived = $this->buildController()->index()->getData()['calendars'];
+		$this->assertSame(['cal-002'], array_column($archived, 'id'));
+
+		$this->params['status'] = 'deleted';
+		$all = $this->buildController()->index()->getData()['calendars'];
+		$this->assertSame(['cal-001', 'cal-002'], array_column($all, 'id'));
+	}//end testIndexAppliesOnlyAKnownStatusFilter()
+
+	/**
+	 * An explicit organization the caller belongs to scopes the list to it.
+	 *
+	 * @return void
+	 */
+	public function testIndexScopesToAnExplicitOrganizationOfTheCaller(): void {
+		$this->fakeObjectService->records['Calendar'][] = [
+			'calendarId' => 'cal-other',
+			'administrationId' => 'adm-2',
+		];
+		$this->params['organization'] = 'adm-1';
+
+		$data = $this->buildController()->index()->getData();
+
+		$this->assertSame(['cal-001', 'cal-002'], array_column($data['calendars'], 'id'));
+	}//end testIndexScopesToAnExplicitOrganizationOfTheCaller()
+
+	/**
+	 * A failing calendar lookup answers 503 with a generic message.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturns503WhenTheLookupFails(): void {
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->container->method('get')->willThrowException(new \RuntimeException('register offline'));
+
+		$response = $this->buildController()->index();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame(['error' => 'Calendar lookup failed'], $response->getData());
+	}//end testIndexReturns503WhenTheLookupFails()
+
+	/**
+	 * show() refuses a blank calendar id with 400.
+	 *
+	 * @return void
+	 */
+	public function testShowRequiresACalendarId(): void {
+		$response = $this->buildController()->show('  ');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['error' => 'calendarId is required'], $response->getData());
+	}//end testShowRequiresACalendarId()
+
+	/**
+	 * Entity-shaped calendar rows are normalised: a jsonSerialize() array, a
+	 * getObject() array, a plain object (cast) and a scalar (empty row).
+	 *
+	 * @return void
+	 */
+	public function testIndexNormalisesEntityShapedRows(): void {
+		$serialisable = new class implements \JsonSerializable {
+			public function jsonSerialize(): mixed {
+				return ['calendarId' => 'cal-json'];
+			}
+		};
+		$entity = new class {
+			public function jsonSerialize(): mixed {
+				return 'not-an-array';
+			}
+			public function getObject(): array {
+				return ['calendarId' => 'cal-entity'];
+			}
+		};
+		$opaque = new class {
+			public string $calendarId = 'cal-cast';
+			public function getObject(): mixed {
+				return null;
+			}
+		};
+		$rows = [$serialisable, $entity, $opaque, 'scalar'];
+		// phpcs:disable
+		$objectService = new class($rows) {
+			public function __construct(private array $rows) {
+			}
+			public function setRegister(string $_): self {
+				return $this;
+			}
+			public function setSchema(string $_): self {
+				return $this;
+			}
+			public function findAll(array $_ = []): array {
+				return $this->rows;
+			}
+		};
+		// phpcs:enable
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->container->method('get')->willReturn($objectService);
+
+		$data = $this->buildController()->index()->getData();
+
+		$this->assertSame(['cal-json', 'cal-entity', 'cal-cast', ''], array_column($data['calendars'], 'id'));
+	}//end testIndexNormalisesEntityShapedRows()
 }//end class

@@ -141,6 +141,18 @@
 - [x] `node tests/check-manifest-budget.js` — PASS, report exact byte
       delta.
 - [x] `npm run check:nav-reachability` — PASS.
+- [x] The operator-triggered run (`design.md` §12) has an entry point:
+      added 2026-11-17, because nothing called `KnownCostBudgetWriter::run()`
+      and the live e2e pass found no derivation to show. `POST
+      /api/v1/budgets/known-costs/regenerate` (`KnownCostController`, the
+      caller must be allowed to post in the administration, else a masked 404;
+      documented in `openapi.json`), reached from the "Regenerate known
+      costs" header action on Budget Line Derivations
+      (`openRegenerateKnownCosts` → `RegenerateKnownCostsModal`, which shows
+      the created / updated / overridden counts and the skipped fiscal
+      years). Tests: `KnownCostControllerTest`, `tests/vitest/knownCosts.spec.js`,
+      and the first test in `tests/e2e/budget-known-costs.spec.ts` runs it
+      through the dialog before the row tests look for derived lines.
 
 ## 8. e2e coverage (REQ-BKC-001, REQ-BKC-004, REQ-BKC-009)
 - [x] Add `tests/e2e/budget-known-costs.spec.ts` covering
@@ -176,6 +188,8 @@
       the changed-file list; `composer check:strict`'s own `test:all` leg
       is the same full-suite PHPUnit run captured separately below).
 - [ ] `npx playwright test tests/e2e/budget-known-costs.spec.ts` — NOT RUN,
+      Live pass 2026-11-17: 1 passed (Derivations nav leaf), 3 skipped: KnownCostBudgetWriter has
+      not run for the administration, so no recurring/contract BudgetLine or derivation exists.
       per the implementer's explicit brief ("write... but do NOT execute
       it"). The spec is written and lint-clean (`npx eslint`); it should be
       spot-checked against a live run before this change ships, per its own

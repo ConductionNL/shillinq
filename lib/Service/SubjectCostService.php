@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\SubjectCostServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -54,7 +55,7 @@ use Throwable;
  *
  * @spec openspec/specs/subject-cost-aggregation/spec.md
  */
-class SubjectCostService {
+class SubjectCostService implements SubjectCostServiceInterface {
 	/**
 	 * The schema holding hours booked against a domain object.
 	 *
@@ -122,8 +123,86 @@ class SubjectCostService {
 		?array $administrationIds,
 		string $period = '',
 	): array {
-		$rows = $this->hourRows(subjectApp: $subjectApp, subjectId: $subjectId);
+		return $this->costOfNormalisedRows(
+			subject: ['app' => $subjectApp, 'id' => $subjectId],
+			rows: $this->hourRows(subjectApp: $subjectApp, subjectId: $subjectId),
+			administrationIds: $administrationIds,
+			period: $period
+		);
+	}//end costFor()
 
+	/**
+	 * The employer cost of a given set of one domain object's hour rows.
+	 *
+	 * For a caller that already read the hours, for example the hours of one
+	 * period: costFor() reads every hour ever booked on the object, so a report
+	 * over a quarter hands in that quarter's rows. The rows are humaniq
+	 * `TimeEntry` rows as stored; rows of another app are dropped and the
+	 * administration scoping and aggregation are costFor()'s own.
+	 *
+	 * @param array{app: string, id: string} $subject The owning app and the domain object id, as written on the hour row.
+	 * @param array<int, mixed> $timeEntries The hour rows, as stored.
+	 * @param array<int, string>|null $administrationIds Administrations the caller
+	 *     may read, or null for an unrestricted (Nextcloud admin) read.
+	 * @param string $period Costing period `YYYY-MM`, or '' for the current rate.
+	 *
+	 * @return array<string, mixed> The aggregate, shaped as costFor() returns it.
+	 *
+	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 */
+	public function costForHours(
+		array $subject,
+		array $timeEntries,
+		?array $administrationIds,
+		string $period = '',
+	): array {
+		$rows = $this->appHourRows(rows: $timeEntries, subjectApp: (string)($subject['app'] ?? ''));
+
+		return $this->costOfNormalisedRows(subject: $subject, rows: $rows, administrationIds: $administrationIds, period: $period);
+	}//end costForHours()
+
+	/**
+	 * Scope normalised hour rows to the caller and aggregate them.
+	 *
+	 * @param array{app: string, id: string} $subject The owning app and the domain object id.
+	 * @param array<int, array<string, mixed>> $rows The normalised hour rows.
+	 * @param array<int, string>|null $administrationIds Administrations the caller may read.
+	 * @param string $period Costing period.
+	 *
+	 * @return array<string, mixed> The aggregate, echoing the subject it describes.
+	 */
+	private function costOfNormalisedRows(
+		array $subject,
+		array $rows,
+		?array $administrationIds,
+		string $period,
+	): array {
+		$scoped = $this->scopedRows(rows: $rows, administrationIds: $administrationIds);
+
+		$aggregate = $this->aggregator->aggregate(
+			hourRows: $scoped['inScope'],
+			rates: $this->rates->ratesFor(personIds: self::personIds(rows: $scoped['inScope']), period: $period)
+		);
+
+		return array_merge(
+			[
+				'subjectApp' => (string)($subject['app'] ?? ''),
+				'subjectId' => (string)($subject['id'] ?? ''),
+				'unscopedRowsExcluded' => $scoped['unscoped'],
+			],
+			$aggregate
+		);
+	}//end costOfNormalisedRows()
+
+	/**
+	 * The rows the caller may see, and the count of rows without an administration.
+	 *
+	 * @param array<int, array<string, mixed>> $rows              The subject's hour rows.
+	 * @param array<int, string>|null          $administrationIds Readable administrations, or null for all.
+	 *
+	 * @return array{inScope: array<int, array<string, mixed>>, unscoped: int}
+	 */
+	private function scopedRows(array $rows, ?array $administrationIds): array {
 		$inScope = [];
 		$unscoped = 0;
 		foreach ($rows as $row) {
@@ -136,37 +215,47 @@ class SubjectCostService {
 				continue;
 			}
 
-			if ($administrationIds !== null
-				&& in_array($administrationId, $administrationIds, true) === false
-			) {
-				continue;
+			if (self::isReadable(administrationId: $administrationId, administrationIds: $administrationIds) === true) {
+				$inScope[] = $row;
 			}
-
-			$inScope[] = $row;
 		}//end foreach
 
+		return ['inScope' => $inScope, 'unscoped' => $unscoped];
+
+	}//end scopedRows()
+
+	/**
+	 * Whether the caller may read an administration: always for an unrestricted read.
+	 *
+	 * @param string                  $administrationId  The row's administration.
+	 * @param array<int, string>|null $administrationIds Readable administrations, or null for all.
+	 *
+	 * @return bool
+	 */
+	private static function isReadable(string $administrationId, ?array $administrationIds): bool {
+		return $administrationIds === null || in_array($administrationId, $administrationIds, true) === true;
+
+	}//end isReadable()
+
+	/**
+	 * The non-blank person ids of the rows, in order.
+	 *
+	 * @param array<int, array<string, mixed>> $rows The in-scope rows.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function personIds(array $rows): array {
 		$personIds = [];
-		foreach ($inScope as $row) {
+		foreach ($rows as $row) {
 			$personId = trim((string)($row['personId'] ?? ''));
 			if ($personId !== '') {
 				$personIds[] = $personId;
 			}
 		}
 
-		$aggregate = $this->aggregator->aggregate(
-			hourRows: $inScope,
-			rates: $this->rates->ratesFor(personIds: $personIds, period: $period)
-		);
+		return $personIds;
 
-		return array_merge(
-			[
-				'subjectApp' => $subjectApp,
-				'subjectId' => $subjectId,
-				'unscopedRowsExcluded' => $unscoped,
-			],
-			$aggregate
-		);
-	}//end costFor()
+	}//end personIds()
 
 	/**
 	 * The hour rows booked against one subject, or [] when unreadable.
@@ -209,26 +298,33 @@ class SubjectCostService {
 			return [];
 		}
 
+		return $this->appHourRows(rows: $rows, subjectApp: $subjectApp);
+	}//end hourRows()
+
+	/**
+	 * The rows of the asked app, normalised to person, hours and administration.
+	 *
+	 * @param array<int, mixed> $rows       The rows the register returned.
+	 * @param string            $subjectApp The app the caller asked about.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function appHourRows(array $rows, string $subjectApp): array {
 		$normalised = [];
 		foreach ($rows as $row) {
 			$row = $this->toArray(row: $row);
-			if ($row === null) {
-				continue;
+			if ($row !== null && $this->belongsToApp(row: $row, subjectApp: $subjectApp) === true) {
+				$normalised[] = [
+					'personId' => trim((string)($row['employeeId'] ?? '')),
+					'hours' => ($row['hours'] ?? null),
+					'administrationId' => ($row['administrationId'] ?? null),
+				];
 			}
-
-			if ($this->belongsToApp(row: $row, subjectApp: $subjectApp) === false) {
-				continue;
-			}
-
-			$normalised[] = [
-				'personId' => trim((string)($row['employeeId'] ?? '')),
-				'hours' => ($row['hours'] ?? null),
-				'administrationId' => ($row['administrationId'] ?? null),
-			];
 		}
 
 		return $normalised;
-	}//end hourRows()
+
+	}//end appHourRows()
 
 	/**
 	 * Whether an hour row belongs to the app the caller asked about.

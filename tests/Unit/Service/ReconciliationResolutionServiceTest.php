@@ -25,11 +25,13 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ReconciliationResolutionService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * Behaviour holder behind the ObjectServiceInterface mock — a per-schema
@@ -176,7 +178,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 		// (ObjectServiceInterface::updateObject is PUT semantics), so a partial
 		// payload sent to updateObject answers only what was sent.
 		$objectService->method('patchObject')->willReturnCallback(
-			static fn (string $objectId, array $data): ObjectEntityInterface => $fake->updateObject($objectId, $data)
+			static fn (ObjectPatch $patch): ObjectEntityInterface => $fake->updateObject(($patch->objectId), ($patch->data))
 		);
 		$objectService->method('updateObject')->willReturnCallback(
 			static function (string $objectId, array $data) use ($fake): ObjectEntityInterface {
@@ -185,7 +187,10 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 			}
 		);
 
-		return new ReconciliationResolutionService($this->appConfig, $this->logger, $objectService);
+		$administrations = $this->createMock(AdministrationContextService::class);
+		$administrations->method('canAccess')->willReturnCallback(static fn (string $administrationId): bool => $administrationId === 'adm-1');
+
+		return new ReconciliationResolutionService($this->appConfig, $this->logger, $objectService, $administrations);
 	}//end svc()
 
 	/**
@@ -197,7 +202,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 	public function testResolveMatchUpdatesAndLogs(): void {
 		$fake = new FakeObjectService([
 			'BankReconciliation' => [
-				'recon-1' => ['reconciliationStatus' => 'open'],
+				'recon-1' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1'],
 			],
 			'ReconciliationMatch' => [
 				'match-1' => ['reconId' => 'recon-1', 'resolutionStatus' => 'pending'],
@@ -238,7 +243,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 	public function testClosedParentReconciliationIsRejected(): void {
 		$fake = new FakeObjectService([
 			'BankReconciliation' => [
-				'recon-closed' => ['reconciliationStatus' => 'closed'],
+				'recon-closed' => ['reconciliationStatus' => 'closed', 'administrationId' => 'adm-1'],
 			],
 			'ReconciliationMatch' => [],
 		]);
@@ -258,7 +263,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 	public function testCancelledParentReconciliationIsRejected(): void {
 		$fake = new FakeObjectService([
 			'BankReconciliation' => [
-				'recon-cancelled' => ['reconciliationStatus' => 'cancelled'],
+				'recon-cancelled' => ['reconciliationStatus' => 'cancelled', 'administrationId' => 'adm-1'],
 			],
 			'ReconciliationMatch' => [],
 		]);
@@ -295,7 +300,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 	 */
 	public function testMissingMatchThrowsOutOfBounds(): void {
 		$fake = new FakeObjectService([
-			'BankReconciliation' => ['recon-1' => ['reconciliationStatus' => 'open']],
+			'BankReconciliation' => ['recon-1' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1']],
 			'ReconciliationMatch' => ['match-missing' => null],
 		]);
 
@@ -314,7 +319,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 	public function testMatchBelongingToDifferentReconciliationIsRejected(): void {
 		$fake = new FakeObjectService([
 			'BankReconciliation' => [
-				'recon-1' => ['reconciliationStatus' => 'open'],
+				'recon-1' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1'],
 			],
 			'ReconciliationMatch' => [
 				'match-9' => ['reconId' => 'recon-99'],
@@ -329,27 +334,101 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 	}//end testMatchBelongingToDifferentReconciliationIsRejected()
 
 	/**
-	 * Match with no reconId (legacy seed) is allowed through — the update
-	 * itself stamps the reconId, closing the orphan.
+	 * F2-S4: a match without a reconciliation is refused, not re-parented to the caller's.
 	 *
 	 * @return void
 	 */
-	public function testMatchWithoutReconIdAdoptsParentOnUpdate(): void {
+	public function testMatchWithoutReconIdIsRefused(): void {
 		$fake = new FakeObjectService([
 			'BankReconciliation' => [
-				'recon-1' => ['reconciliationStatus' => 'open'],
+				'recon-1' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1'],
 			],
 			'ReconciliationMatch' => [
 				'match-orphan' => ['resolutionStatus' => 'pending'],
 			],
 		]);
 
-		$result = $this->svc($fake)->resolveMatch('recon-1', 'match-orphan', 'timing', 'awaits clearing', 'bob');
+		try {
+			$this->svc($fake)->resolveMatch('recon-1', 'match-orphan', 'timing', 'awaits clearing', 'bob');
+			self::fail('An orphan match must be refused.');
+		} catch (\OutOfBoundsException $e) {
+			self::assertStringContainsString('does not belong', $e->getMessage());
+		}
 
-		self::assertSame('recon-1', $fake->updates[0]['payload']['reconId']);
-		self::assertSame('timing', $result['resolutionStatus']);
+		self::assertSame([], $fake->updates);
 
-	}//end testMatchWithoutReconIdAdoptsParentOnUpdate()
+	}//end testMatchWithoutReconIdIsRefused()
+
+	/**
+	 * F2-S4: a reconciliation of another administration reads as not found.
+	 *
+	 * @return void
+	 */
+	public function testAnotherAdministrationsReconciliationIsNotFound(): void {
+		$fake = new FakeObjectService([
+			'BankReconciliation' => [
+				'recon-2' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-2'],
+			],
+			'ReconciliationMatch' => [
+				'match-2' => ['reconId' => 'recon-2'],
+			],
+		]);
+
+		try {
+			$this->svc($fake)->resolveMatch('recon-2', 'match-2', 'timing', 'r', 'bob');
+			self::fail('Another administration must be refused.');
+		} catch (\OutOfBoundsException $e) {
+			self::assertSame('reconciliation recon-2 not found', $e->getMessage());
+		}
+
+		self::assertSame([], $fake->updates);
+
+	}//end testAnotherAdministrationsReconciliationIsNotFound()
+
+	/**
+	 * F2-S4: the actor is stored on the match, not only logged.
+	 *
+	 * @return void
+	 */
+	public function testTheActorIsStoredOnTheMatch(): void {
+		$fake = new FakeObjectService([
+			'BankReconciliation' => ['recon-1' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1']],
+			'ReconciliationMatch' => ['match-1' => ['reconId' => 'recon-1']],
+		]);
+
+		$this->svc($fake)->resolveMatch('recon-1', 'match-1', 'adjustment', 'Bank fee', 'carla');
+
+		self::assertSame('carla', $fake->updates[0]['payload']['resolvedBy']);
+
+	}//end testTheActorIsStoredOnTheMatch()
+
+	/**
+	 * F2-S4: match ids alone resolve across reconciliations; orphans and other administrations fail.
+	 *
+	 * @return void
+	 */
+	public function testResolveMatchesReadsEachReconciliationOnTheServer(): void {
+		$fake = new FakeObjectService([
+			'BankReconciliation' => [
+				'recon-1' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1'],
+				'recon-3' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1'],
+				'recon-2' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-2'],
+			],
+			'ReconciliationMatch' => [
+				'a' => ['reconId' => 'recon-1'],
+				'b' => ['reconId' => 'recon-3'],
+				'orphan' => ['resolutionStatus' => 'pending'],
+				'foreign' => ['reconId' => 'recon-2'],
+			],
+		]);
+
+		$result = $this->svc($fake)->resolveMatches(['a', 'b', 'orphan', 'foreign'], 'timing', 'Betaling onderweg', 'bob');
+
+		self::assertSame(2, $result['applied']);
+		self::assertSame(['orphan', 'foreign'], array_keys($result['failed']));
+		self::assertSame(['a', 'b'], array_column($fake->updates, 'id'));
+
+	}//end testResolveMatchesReadsEachReconciliationOnTheServer()
 
 	/**
 	 * A find() that throws is rethrown as OutOfBoundsException (chained).
@@ -380,7 +459,7 @@ final class ReconciliationResolutionServiceTest extends TestCase {
 	public function testResolveKeepsTheMatchFields(): void {
 		$fake = new FakeObjectService([
 			'BankReconciliation' => [
-				'recon-1' => ['reconciliationStatus' => 'open'],
+				'recon-1' => ['reconciliationStatus' => 'open', 'administrationId' => 'adm-1'],
 			],
 			'ReconciliationMatch' => [
 				'match-1' => ['reconId' => 'recon-1', 'bankLineId' => 'L-7', 'matchedAmount' => 12.5],

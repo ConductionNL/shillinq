@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 use OCA\Shillinq\Controller\PaymentPlanController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
@@ -73,7 +74,7 @@ final class PaymentPlanControllerTest extends TestCase {
 			$request,
 			$this->service(),
 			$this->matcher(),
-			new ManualMatchService($this->store, $this->runner(), $this->settings(), $logger),
+			new ManualMatchService($this->store, $this->runner(), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $logger),
 			$context,
 			$session,
 			$l10n,

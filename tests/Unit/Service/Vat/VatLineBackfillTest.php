@@ -22,9 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Vat;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Repair\StampVatReturnBoxes;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Vat\VatLineBackfill;
 use OCA\Shillinq\Tests\Unit\Lifecycle\Action\InMemoryObjectStore;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -86,7 +87,14 @@ final class VatLineBackfillTest extends TestCase {
 		);
 		$action = new MaterialiseGlTransactionAction($store->mock($this), $appConfig, $this->createMock(LoggerInterface::class));
 		foreach ($documents as [$document, $sourceSchema]) {
-			$action->execute($document, [], ['sourceSchema' => $sourceSchema], MaterialiseGlTransactionAction::class);
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $document,
+					previousData: [],
+					parameters: ['sourceSchema' => $sourceSchema],
+					actionName: MaterialiseGlTransactionAction::class
+				)
+			);
 		}
 
 		return ['GLTransaction' => $store->savedOf('GLTransaction'), 'GLLine' => $store->savedOf('GLLine')];
@@ -137,7 +145,7 @@ final class VatLineBackfillTest extends TestCase {
 	private function backfill(array $seed, ?LoggerInterface $logger = null): VatLineBackfill {
 		$this->saved = [];
 		$this->store = new InMemoryObjectServiceStub($seed + ['VatTariff' => $this->tariffs()], $this->saved, true);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(

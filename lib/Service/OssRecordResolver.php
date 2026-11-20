@@ -3,6 +3,9 @@
 /**
  * OSS Record Resolver
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities: the storage-aware half of the OSS
  * payment reconciliation. {@see \OCA\Shillinq\Service\OssPaymentReconciliation}
  * is deliberately pure logic ("no persistence: the caller transitions the
@@ -27,27 +30,25 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\OssRecordResolverInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Reads OssReturn / OssPayment records through the real ObjectService API.
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class OssRecordResolver {
+class OssRecordResolver implements OssRecordResolverInterface {
 
 	/**
 	 * OssReturn schema slug.
@@ -200,11 +201,6 @@ class OssRecordResolver {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

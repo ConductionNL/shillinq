@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Service\Asset\DepreciationRun;
+use OCA\Shillinq\Kernel\Contracts\DepreciationRunInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -50,12 +50,12 @@ class DepreciationRunJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory    $time   The clock.
-	 * @param DepreciationRun $pass   The pass.
+	 * @param DepreciationRunInterface $pass   The pass.
 	 * @param LoggerInterface $logger The log.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly DepreciationRun $pass,
+		private readonly DepreciationRunInterface $pass,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

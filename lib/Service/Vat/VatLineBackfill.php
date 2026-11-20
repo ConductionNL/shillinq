@@ -3,6 +3,9 @@
 /**
  * VAT line backfill
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Stamps the VAT tariff, return box and amount kind on ledger lines that were
  * posted before the posting mapper stamped them, or while the VatTariff
  * records were not there yet (REQ-VBTW-004, design D1 "A backfill does the
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -41,10 +41,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Vat;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
+use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -54,7 +57,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
  */
-class VatLineBackfill {
+class VatLineBackfill implements VatLineBackfillInterface {
 	use ReadsSourceRowsInBatches;
 
 	/**
@@ -78,13 +81,13 @@ class VatLineBackfill {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      Resolves the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IAppConfig             $appConfig     The configured VAT accounts.
 	 * @param LoggerInterface        $logger        Logs the lines it cannot resolve.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 	) {
@@ -98,7 +101,7 @@ class VatLineBackfill {
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
 	 */
 	public function run(): array {
-		$register = $this->settings->getRegisterSlug();
+		$register = $this->registerLocation->getRegisterSlug();
 		$stamper  = new VatLineStamper(objectService: $this->objectService, register: $register);
 		$result   = ['stamped' => 0, 'unresolved' => 0];
 
@@ -143,6 +146,22 @@ class VatLineBackfill {
 		$administrationId = (string)($transaction['administrationId'] ?? '');
 		$purchaseSource   = $this->purchaseSource(sourceReference: (string)($transaction['sourceReference'] ?? ''));
 
+		$plans = $this->linePlans(transactionId: $transactionId, register: $register, administrationId: $administrationId, purchaseSource: $purchaseSource);
+
+		return $this->stampPlans(plans: $plans, transactionId: $transactionId, stamper: $stamper, register: $register);
+	}//end stampTransaction()
+
+	/**
+	 * The stamp plan of every VAT relevant line of a transaction.
+	 *
+	 * @param string    $transactionId    The transaction id.
+	 * @param string    $register         The register slug.
+	 * @param string    $administrationId Its administration.
+	 * @param bool|null $purchaseSource   Whether the transaction is a purchase, null when its source does not say.
+	 *
+	 * @return list<array<string,mixed>> Plans with the line id and line.
+	 */
+	private function linePlans(string $transactionId, string $register, string $administrationId, bool|null $purchaseSource): array {
 		$plans = [];
 		$lines = $this->readAllRows(
 			objectService: $this->objectService,
@@ -158,20 +177,26 @@ class VatLineBackfill {
 			}
 		}
 
-		$baseCodes = [];
-		foreach ($plans as $plan) {
-			if ($plan['kind'] === 'base' && $plan['code'] !== '' && $plan['code'] !== self::FROM_BASE_LINES) {
-				$baseCodes[$plan['code']] = true;
-			}
-		}
+		return $plans;
+	}//end linePlans()
+
+	/**
+	 * Stamp every planned line, counting the stamped and the unresolved ones.
+	 *
+	 * @param list<array<string,mixed>> $plans         The line plans.
+	 * @param string                    $transactionId The transaction id.
+	 * @param VatLineStamper            $stamper       Tariff lookups.
+	 * @param string                    $register      The register slug.
+	 *
+	 * @return array{stamped:int,unresolved:int}
+	 */
+	private function stampPlans(array $plans, string $transactionId, VatLineStamper $stamper, string $register): array {
+		$counts = ['stamped' => 0, 'unresolved' => 0];
+		$baseCodes = $this->baseCodes(plans: $plans);
 
 		foreach ($plans as $plan) {
-			$code = $plan['code'];
-			if ($code === self::FROM_BASE_LINES && count($baseCodes) === 1) {
-				$code = (string)array_key_first($baseCodes);
-			}
-
-			if ($code === '' || $code === self::FROM_BASE_LINES) {
+			$code = $this->resolvedCode(plan: $plan, baseCodes: $baseCodes);
+			if ($this->isUnresolved(code: $code) === true) {
 				$counts['unresolved']++;
 				$this->logger->warning(
 					'VatLineBackfill: cannot resolve the VAT tariff of a posted ledger line; it stays out of the VAT return until it is corrected',
@@ -187,7 +212,53 @@ class VatLineBackfill {
 		}//end foreach
 
 		return $counts;
-	}//end stampTransaction()
+	}//end stampPlans()
+
+	/**
+	 * The distinct tariff codes of the transaction's base lines.
+	 *
+	 * @param list<array<string,mixed>> $plans The line plans.
+	 *
+	 * @return array<string,true>
+	 */
+	private function baseCodes(array $plans): array {
+		$baseCodes = [];
+		foreach ($plans as $plan) {
+			if ($plan['kind'] === 'base' && $plan['code'] !== '' && $plan['code'] !== self::FROM_BASE_LINES) {
+				$baseCodes[$plan['code']] = true;
+			}
+		}
+
+		return $baseCodes;
+	}//end baseCodes()
+
+	/**
+	 * A plan's tariff code; a VAT line takes the base lines' code when they share one.
+	 *
+	 * @param array<string,mixed> $plan      The line plan.
+	 * @param array<string,true>  $baseCodes The base lines' codes.
+	 *
+	 * @return string
+	 */
+	private function resolvedCode(array $plan, array $baseCodes): string {
+		$code = $plan['code'];
+		if ($code === self::FROM_BASE_LINES && count($baseCodes) === 1) {
+			$code = (string)array_key_first($baseCodes);
+		}
+
+		return $code;
+	}//end resolvedCode()
+
+	/**
+	 * Whether a code names no tariff.
+	 *
+	 * @param string $code The resolved code.
+	 *
+	 * @return bool
+	 */
+	private function isUnresolved(string $code): bool {
+		return ($code === '' || $code === self::FROM_BASE_LINES);
+	}//end isUnresolved()
 
 	/**
 	 * What a line should be stamped from, or null when it is not VAT relevant.
@@ -204,21 +275,47 @@ class VatLineBackfill {
 		$code          = (string)($line['vatTariffCode'] ?? '');
 
 		if ($code !== '') {
-			$kind = (string)($line['vatAmountKind'] ?? '');
-			if ($kind === '') {
-				$kind = 'base';
-				if ($vatAccount !== null) {
-					$kind = 'vat';
-				}
-			}
-
-			return ['code' => $code, 'kind' => $kind, 'purchase' => ($purchaseSource ?? ($vatAccount === 'input'))];
+			return $this->taggedPlan(line: $line, code: $code, vatAccount: $vatAccount, purchaseSource: $purchaseSource);
 		}
 
 		if ($vatAccount !== null) {
 			return ['code' => self::FROM_BASE_LINES, 'kind' => 'vat', 'purchase' => ($vatAccount === 'input')];
 		}
 
+		return $this->accountPlan(administrationId: $administrationId, accountNumber: $accountNumber);
+	}//end plan()
+
+	/**
+	 * The plan of a line that already carries a tariff code.
+	 *
+	 * @param array<string,mixed> $line           The GLLine.
+	 * @param string              $code           Its tariff code.
+	 * @param string|null         $vatAccount     The VAT account kind of its account, null when not a VAT account.
+	 * @param bool|null           $purchaseSource Whether the transaction is a purchase, null when its source does not say.
+	 *
+	 * @return array{code:string,kind:string,purchase:bool}
+	 */
+	private function taggedPlan(array $line, string $code, string|null $vatAccount, bool|null $purchaseSource): array {
+		$kind = (string)($line['vatAmountKind'] ?? '');
+		if ($kind === '') {
+			$kind = 'base';
+			if ($vatAccount !== null) {
+				$kind = 'vat';
+			}
+		}
+
+		return ['code' => $code, 'kind' => $kind, 'purchase' => ($purchaseSource ?? ($vatAccount === 'input'))];
+	}//end taggedPlan()
+
+	/**
+	 * The plan of an untagged line, from its ledger account's VAT settings.
+	 *
+	 * @param string $administrationId Its administration.
+	 * @param string $accountNumber    Its account number.
+	 *
+	 * @return array{code:string,kind:string,purchase:bool}|null Null when the account is not VAT applicable.
+	 */
+	private function accountPlan(string $administrationId, string $accountNumber): array|null {
 		$account = $this->account(administrationId: $administrationId, accountNumber: $accountNumber);
 		if ($account === null || ($account['vatApplicable'] ?? false) !== true) {
 			return null;
@@ -234,7 +331,7 @@ class VatLineBackfill {
 			'kind' => 'base',
 			'purchase' => ($accountType === 'expenses'),
 		];
-	}//end plan()
+	}//end accountPlan()
 
 	/**
 	 * The tariff of an account's VAT rate: 21 high, 9 low, and 0 zero for a purchase.
@@ -296,10 +393,11 @@ class VatLineBackfill {
 		}
 
 		$this->objectService->patchObject(
-			objectId: $lineId,
-			data: $changes,
-			register: $register,
-			schema: 'GLLine',
+			new ObjectPatch(
+				objectId: $lineId,
+				data: $changes,
+				target: new ObjectFindTarget(register: $register, schema: 'GLLine')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -333,8 +431,8 @@ class VatLineBackfill {
 	 */
 	private function vatAccountKind(string $accountNumber): ?string {
 		$accounts = [
-			'output' => [MaterialiseGlTransactionAction::CFG_OUTPUT_VAT_ACCOUNT, '2110'],
-			'input' => [MaterialiseGlTransactionAction::CFG_INPUT_VAT_ACCOUNT, '1230'],
+			'output' => [MaterialiseGlTransactionActionInterface::CFG_OUTPUT_VAT_ACCOUNT, '2110'],
+			'input' => [MaterialiseGlTransactionActionInterface::CFG_INPUT_VAT_ACCOUNT, '1230'],
 		];
 		foreach ($accounts as $kind => [$key, $default]) {
 			$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $key, ''));
@@ -368,7 +466,7 @@ class VatLineBackfill {
 
 			$rows = $this->readAllRows(
 				objectService: $this->objectService,
-				registerSlug: $this->settings->getRegisterSlug(),
+				registerSlug: $this->registerLocation->getRegisterSlug(),
 				schema: 'Account',
 				filters: $filters
 			);

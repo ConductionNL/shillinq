@@ -3,6 +3,9 @@
 /**
  * Peppol Access Point Adapter Port
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Narrow port the PurchaseOrderService uses to transmit an approved PO as a UBL
  * 2.1 Order via the openconnector Peppol Access Point. The port is intentionally
  * minimal so the production binding (HTTP-backed against
@@ -34,9 +37,6 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -64,12 +64,15 @@ interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInter
 	 * @param string $participantId Peppol participant id resolved earlier
 	 *                              (`scheme:identifier`).
 	 * @param string $ublOrderXml The UBL 2.1 Order document XML.
+	 * @param array<string,mixed> $purchaseOrder The order being sent, so an adapter
+	 *                                           can name it in what it hands on.
 	 *
-	 * @return string The Peppol message id (URN).
+	 * @return string The Peppol message id (URN), or the reference the
+	 *                delivery status will name.
 	 *
 	 * @throws \RuntimeException When the access point refuses or fails.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
 	 */
-	public function submitOrder(string $participantId, string $ublOrderXml): string;
+	public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string;
 }//end interface

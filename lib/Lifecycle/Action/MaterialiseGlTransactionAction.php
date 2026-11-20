@@ -3,6 +3,9 @@
 /**
  * Shillinq MaterialiseGlTransactionAction
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Handler for the posting action declared on the transitions that book a
  * source document into the general ledger: JournalEntry `post` and
  * `postDirect`, APInvoice `post` and ARInvoice `issue` (ledger-posting-path
@@ -40,10 +43,14 @@
  *   - APInvoice: debit each line's account, debit input VAT for `taxAmount`,
  *     credit the payables control account for `totalAmount`.
  *
- * ExpenseClaimEntry declares this action too. Its mapper needs the
- * ExpenseAccountResolver of expenses-category-mapping (task 3.2 there), so
- * until that change lands the declaration is refused by name. The
- * InventoryValuation declarations were removed: sale dispatch is booked per
+ *   - ExpenseClaimEntry: ExpenseClaimPosting debits each receipt, mileage and
+ *     per diem line on the account ExpenseAccountResolver answers and credits
+ *     the expense payable account; a line without an account refuses the post,
+ *     naming the line (expenses-category-mapping REQ-ECM-003). A pass-through
+ *     claim is left to its own declaration, which is refused: it has no
+ *     mapper yet.
+ *
+ * The InventoryValuation declarations were removed: sale dispatch is booked per
  * stock move by CogsPosterService, and a running valuation snapshot cannot
  * key one posting per event.
  *
@@ -60,21 +67,26 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
+use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
+use OCA\Shillinq\Service\ExpenseAccountResolver;
+use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
+use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -87,14 +99,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
-class MaterialiseGlTransactionAction implements LifecycleActionInterface {
-
-	/**
-	 * App-config key: receivables control account (RGS 3.5 MKB 1100 Debiteuren).
-	 *
-	 * @var string
-	 */
-	public const CFG_AR_CONTROL_ACCOUNT = 'ledger_ar_control_account';
+class MaterialiseGlTransactionAction implements LifecycleActionInterface, MaterialiseGlTransactionActionInterface {
 
 	/**
 	 * App-config key: revenue account (RGS 3.5 MKB 8000 Netto-omzet).
@@ -104,25 +109,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	public const CFG_REVENUE_ACCOUNT = 'ledger_revenue_account';
 
 	/**
-	 * App-config key: output VAT account (RGS 3.5 MKB 2110 BTW-schuld).
-	 *
-	 * @var string
-	 */
-	public const CFG_OUTPUT_VAT_ACCOUNT = 'ledger_output_vat_account';
-
-	/**
 	 * App-config key: payables control account (RGS 3.5 MKB 2000 Crediteuren).
 	 *
 	 * @var string
 	 */
 	public const CFG_AP_CONTROL_ACCOUNT = 'ledger_ap_control_account';
-
-	/**
-	 * App-config key: input VAT account (RGS 3.5 MKB 1230 BTW-vordering).
-	 *
-	 * @var string
-	 */
-	public const CFG_INPUT_VAT_ACCOUNT = 'ledger_input_vat_account';
 
 	/**
 	 * App-config key: advances received (RGS 3.5 MKB 2310 Vooruitontvangen
@@ -163,7 +154,21 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 *
 	 * @var list<string>
 	 */
-	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction'];
+	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction', 'ExpenseClaimEntry'];
+
+	/**
+	 * The settlement mode whose claims this handler does not post.
+	 *
+	 * @var string
+	 */
+	private const PASS_THROUGH = 'pass-through';
+
+	/**
+	 * The dimension codes a source line hands on to its GL line, under the GL line's own names.
+	 *
+	 * @var list<string>
+	 */
+	private const LINE_DIMENSIONS = ['costCenterCode', 'costCarrierCode', 'projectCode'];
 
 	/**
 	 * The tariff, box and VAT split, built on first use.
@@ -173,38 +178,73 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	private ?VatLineStamper $vatStamper = null;
 
 	/**
+	 * The snapshot fields a foreign-currency line carries onto its GL line.
+	 *
+	 * @var array<int,string>
+	 */
+	private const FX_FIELDS = [
+		'transactionAmount',
+		'transactionCurrency',
+		'baseCurrencyAmount',
+		'baseCurrency',
+		'fxRate',
+		'fxRateSource',
+		'fxRateDate',
+	];
+
+	/**
+	 * The posting being booked at a rate: its currency, the administration's
+	 * base currency, the booking date and the administration.
+	 *
+	 * @var array{currency:string,base:string,date:string,administrationId:string}
+	 */
+	private array $booking = ['currency' => '', 'base' => '', 'date' => '', 'administrationId' => ''];
+
+	/**
+	 * The booking-date rate of the posting being booked, looked up at the
+	 * first line that has no typed rate.
+	 *
+	 * @var array{rate:float,source:string,date:string}|null
+	 */
+	private ?array $bookingRate = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param IAppConfig $appConfig Register slug and account numbers.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param IUserSession|null $userSession The posting user, for the audit trail; none outside a session.
+	 * @param FxAtBookingResolver|null $fxResolver The booking-date rate lookup; built on first use when not injected.
+	 * @param ExpenseAccountResolver|null $expenseAccounts The account of each expense claim line; an expense claim is refused without it.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ?IUserSession $userSession = null,
+		private ?FxAtBookingResolver $fxResolver = null,
+		private readonly ?ExpenseAccountResolver $expenseAccounts = null,
 	) {
 	}//end __construct()
 
 	/**
 	 * Book the transitioning source into the ledger.
 	 *
-	 * @param array<string,mixed> $objectData The source after its state moved.
-	 * @param array<string,mixed> $previousData The source before the transition.
-	 * @param array<string,mixed> $parameters The declared actionParameters (`sourceSchema`, `keepBalanced`).
-	 * @param string $actionName The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the source after its state moved. Its
+	 *                                        parameters are the declared actionParameters (`sourceSchema`,
+	 *                                        `keepBalanced`).
 	 *
 	 * @return array<string,mixed> The source with `glTransactionId` set.
 	 *
 	 * @throws RuntimeException When the source schema has no mapper, the posting does not balance, or a write fails.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		$sourceSchema = (string)($parameters['sourceSchema'] ?? '');
 		if (in_array($sourceSchema, self::SUPPORTED_SOURCES, true) === false) {
 			throw new RuntimeException(
@@ -216,8 +256,17 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			);
 		}
 
-		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
+		if ($sourceSchema === 'ExpenseClaimEntry' && $this->postsClaim(claim: $objectData, parameters: $parameters) === false) {
 			return $objectData;
+		}
+
+		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
+			return $this->withBackReference(
+				schema: $sourceSchema,
+				source: $objectData,
+				parameters: $parameters,
+				transactionId: (string)$objectData['glTransactionId']
+			);
 		}
 
 		$sourceId = (string)($objectData['id'] ?? ($objectData['@self']['id'] ?? ''));
@@ -229,16 +278,18 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		$existing = $this->findExistingTransaction(sourceReference: $sourceReference);
 		if ($existing !== '') {
 			$objectData['glTransactionId'] = $existing;
-			return $objectData;
+			return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $existing);
 		}
 
 		$posting = match ($sourceSchema) {
 			'JournalEntry' => $this->mapJournalEntry(entry: $objectData, sourceId: $sourceId),
 			'ARInvoice' => $this->mapArInvoice(invoice: $objectData, sourceId: $sourceId),
+			'ExpenseClaimEntry' => $this->expenseClaimPosting()->map(claim: $objectData, sourceId: $sourceId),
 			default => $this->mapApInvoice(invoice: $objectData, sourceId: $sourceId),
 		};
 		$lines = $this->normaliseLines(lines: $posting['lines']);
-		if (($parameters['keepBalanced'] ?? true) !== false) {
+		$keepBalanced = (($parameters['keepBalanced'] ?? true) !== false);
+		if ($keepBalanced === true) {
 			$this->assertBalanced(lines: $lines, label: $posting['header']['description']);
 		}
 
@@ -251,12 +302,98 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			throw new RuntimeException(sprintf('Cannot post %s: it has no administrationId.', $sourceReference));
 		}
 
+		$booked = $this->bookAtRate(
+			booking: ['lines' => $lines, 'header' => $header, 'keepBalanced' => $keepBalanced],
+			currency: strtoupper(trim((string)($objectData['currency'] ?? '')))
+		);
+		$lines  = $booked['lines'];
+		$header = $booked['header'];
+
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
 		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
 
 		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
-		return $objectData;
+		return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $objectData['glTransactionId']);
 	}//end execute()
+
+	/**
+	 * Whether this declaration posts the claim. A claim's settlement mode
+	 * picks its declaration: a reimbursable claim (or one without a mode) is
+	 * posted by the declaration without a mode and the reimbursable one, the
+	 * second finding the first's transaction; a pass-through claim only by
+	 * the pass-through declaration, which is refused because no mapper books
+	 * it yet.
+	 *
+	 * @param array<string,mixed> $claim      The ExpenseClaimEntry.
+	 * @param array<string,mixed> $parameters The declared actionParameters.
+	 *
+	 * @return bool
+	 *
+	 * @throws RuntimeException For a pass-through claim on the pass-through declaration.
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function postsClaim(array $claim, array $parameters): bool {
+		$claimIsPassThrough = ((string)($claim['settlementMode'] ?? '') === self::PASS_THROUGH);
+		$declaredPassThrough = ((string)($parameters['settlementMode'] ?? '') === self::PASS_THROUGH);
+		if ($claimIsPassThrough !== $declaredPassThrough) {
+			return false;
+		}
+
+		if ($claimIsPassThrough === true) {
+			throw new RuntimeException('A pass-through expense claim cannot be posted to the ledger yet: no posting is defined for it.');
+		}
+
+		return true;
+	}//end postsClaim()
+
+	/**
+	 * The source with the declared `backReferenceField` set as well. Only an
+	 * expense claim honours it: the other sources keep their existing shape.
+	 *
+	 * @param string              $schema        The source schema.
+	 * @param array<string,mixed> $source        The source.
+	 * @param array<string,mixed> $parameters    The declared actionParameters.
+	 * @param string              $transactionId The GLTransaction id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function withBackReference(string $schema, array $source, array $parameters, string $transactionId): array {
+		if ($schema !== 'ExpenseClaimEntry') {
+			return $source;
+		}
+
+		$field = (string)($parameters['backReferenceField'] ?? '');
+		if ($field !== '' && $field !== 'glTransactionId') {
+			$source[$field] = $transactionId;
+		}
+
+		return $source;
+	}//end withBackReference()
+
+	/**
+	 * The expense claim mapper over the resolver.
+	 *
+	 * @return ExpenseClaimPosting
+	 *
+	 * @throws RuntimeException When no resolver was injected.
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function expenseClaimPosting(): ExpenseClaimPosting {
+		if ($this->expenseAccounts === null) {
+			throw new RuntimeException('An expense claim cannot be posted: no expense account resolver is available.');
+		}
+
+		return new ExpenseClaimPosting(
+			objectService: $this->objectService,
+			register: $this->register(),
+			accounts: $this->expenseAccounts,
+			inputVatAccount: $this->account(key: self::CFG_INPUT_VAT_ACCOUNT)
+		);
+	}//end expenseClaimPosting()
 
 	/**
 	 * JournalEntry: its `lines` already carry account, side and amount.
@@ -279,15 +416,17 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				'cents' => $this->cents(amount: ($line['amount'] ?? 0)),
 				'description' => (string)($line['description'] ?? ($entry['description'] ?? '')),
 			];
-			// The line's cost centre and project reach the GL line
-			// (ledger-booking-rules: restrictions and segment reports read them).
-			foreach (['costCenterCode', 'projectCode'] as $dimension) {
+			// The line's cost centre, cost carrier and project reach the GL
+			// line (ledger-booking-rules: restrictions and segment reports read
+			// them; ledger-journal-line-dimensions REQ-LJD-001).
+			foreach (self::LINE_DIMENSIONS as $dimension) {
 				if ((string)($line[$dimension] ?? '') !== '') {
 					$mapped[$dimension] = (string)$line[$dimension];
 				}
 			}
 
-			$lines[] = $mapped;
+			// A rate typed on the line wins over the booking-date rate (REQ-BFX-003).
+			$lines[] = array_merge($mapped, self::typedRateFields(line: $line));
 		}//end foreach
 
 		return [
@@ -416,9 +555,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines  = [];
-		$vat    = $this->vatStamper();
-		$groups = [];
+		$lines   = [];
+		$vat     = $this->vatStamper();
+		$groups  = [];
+		$reverse = [];
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
@@ -433,7 +573,15 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				'description' => (string)($line['description'] ?? $label),
 			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
 
-			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it.
+			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it:
+			// the buyer self-assesses it at the line's own rate, else the general rate (design D1).
+			if ($vat->isReverseCharge(code: $code) === true) {
+				$rate = $vat->selfAssessedRate(line: $line);
+				if ($rate !== null) {
+					$reverse[$code] = (($reverse[$code] ?? 0.0) + (float)$vat->vatCents(baseCents: $cents, rate: $rate));
+				}
+			}
+
 			if ($vat->isReverseCharge(code: $code) === false) {
 				$groups = $this->addToVatGroup(
 					groups: $groups,
@@ -453,6 +601,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				'description' => $label . ' VAT',
 			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
 		}
+
+		$lines   = array_merge($lines, $this->reverseChargePair(reverse: $reverse, label: $label));
 		$lines[] = [
 			'accountNumber' => $this->account(key: self::CFG_AP_CONTROL_ACCOUNT),
 			'side' => 'credit',
@@ -472,6 +622,302 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * The VAT a supplier did not charge on a reverse-charged purchase, booked
+	 * twice per tariff: deducted in 5b and owed in the tariff's own box (2a,
+	 * 4a or 4b), so the net is nil and the return shows both (REQ-VBTW-004,
+	 * design D1). The rate is the line's own, else the general rate
+	 * ({@see VatLineStamper::selfAssessedRate()}); without a rate to book it
+	 * at, nothing is booked and the return's reverse-charge check names the
+	 * purchase.
+	 *
+	 * @param array<string,float> $reverse The unrounded self-assessed VAT in cents per tariff code.
+	 * @param string              $label   The document label.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	private function reverseChargePair(array $reverse, string $label): array {
+		$vat   = $this->vatStamper();
+		$lines = [];
+		foreach ($reverse as $code => $unrounded) {
+			$cents = (int)round($unrounded);
+			if ($cents === 0) {
+				continue;
+			}
+
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => $label . ' reverse-charged VAT deducted',
+			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
+				'side' => 'credit',
+				'cents' => $cents,
+				'description' => $label . ' reverse-charged VAT owed',
+			] + $vat->stampOwed(code: (string)$code);
+		}
+
+		return $lines;
+	}//end reverseChargePair()
+
+	/**
+	 * Book a foreign-currency posting at its rate: each line's amount becomes
+	 * the base amount and carries the rate snapshot (REQ-BFX-001..003).
+	 *
+	 * Lines of a posting in the administration's base currency, or with no
+	 * currency, are returned untouched. A line with a typed rate is booked at
+	 * it as source manual and needs a reason; the others at the booking-date
+	 * rate the resolver picks, which refuses when there is none.
+	 *
+	 * @param array<string,mixed> $booking  `lines` (normalised, in transaction cents), `header`, and
+	 *                                      `keepBalanced`: whether the base amounts must balance.
+	 * @param string              $currency The posting's ISO 4217 currency, upper case.
+	 *
+	 * @return array{lines:array<int,array<string,mixed>>,header:array<string,mixed>,keepBalanced:bool}
+	 *
+	 * @throws RuntimeException When a rate is missing, a typed rate is invalid or has no reason, or rounding unbalances the entry.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private function bookAtRate(array $booking, string $currency): array {
+		$administrationId = (string)$booking['header']['administrationId'];
+		$base = $this->foreignBase(currency: $currency, administrationId: $administrationId);
+		if ($base === null) {
+			return $booking;
+		}
+
+		$this->booking     = [
+			'currency' => $currency,
+			'base' => $base,
+			'date' => substr((string)$booking['header']['postingDate'], 0, 10),
+			'administrationId' => $administrationId,
+		];
+		$this->bookingRate = null;
+		foreach ($booking['lines'] as $index => $line) {
+			$booking['lines'][$index] = $this->bookedLine(line: $line, number: ($index + 1));
+		}
+
+		if ($booking['keepBalanced'] === true) {
+			$this->assertBalancedInBase(lines: $booking['lines'], label: (string)$booking['header']['description']);
+		}
+
+		$booking['header']['currency'] = $base;
+		return $booking;
+
+	}//end bookAtRate()
+
+	/**
+	 * The administration's base currency when the posting is in another one, else null.
+	 *
+	 * @param string $currency         The posting's currency, upper case; '' when it names none.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return string|null The base currency to book in, or null to leave the posting as it is.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private function foreignBase(string $currency, string $administrationId): ?string {
+		if ($currency === '') {
+			return null;
+		}
+
+		$base = $this->fxResolver()->baseCurrencyFor(administrationId: $administrationId);
+		if ($currency === $base) {
+			return null;
+		}
+
+		return $base;
+
+	}//end foreignBase()
+
+	/**
+	 * One line booked at its rate: the amount in base cents, the rate snapshot under `fx`.
+	 *
+	 * @param array<string,mixed> $line   The line, in transaction cents.
+	 * @param int                 $number Its 1-based position, for the messages.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws RuntimeException When the typed rate is invalid or no booking-date rate exists.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private function bookedLine(array $line, int $number): array {
+		$snapshot  = ($this->typedRate(line: $line, number: $number) ?? $this->bookingDateRate());
+		$baseCents = FxAtBookingResolver::toBaseCents(cents: (int)$line['cents'], rate: $snapshot['rate']);
+		$line['fx'] = [
+			'transactionAmount' => (int)$line['cents'],
+			'transactionCurrency' => $this->booking['currency'],
+			'baseCurrencyAmount' => $baseCents,
+			'baseCurrency' => $this->booking['base'],
+			'fxRate' => $snapshot['rate'],
+			'fxRateSource' => $snapshot['source'],
+			'fxRateDate' => $snapshot['date'],
+		];
+		$line['cents'] = $baseCents;
+		unset($line['typedFxRate'], $line['fxRateReason']);
+		return $line;
+
+	}//end bookedLine()
+
+	/**
+	 * The booking-date rate of the posting being booked, looked up once.
+	 *
+	 * @return array{rate:float,source:string,date:string}
+	 *
+	 * @throws RuntimeException When no usable rate exists.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private function bookingDateRate(): array {
+		$this->bookingRate ??= $this->fxResolver()->resolve(
+			transactionCurrency: $this->booking['currency'],
+			baseCurrency: $this->booking['base'],
+			date: $this->booking['date'],
+			administrationId: $this->booking['administrationId']
+		);
+
+		return $this->bookingRate;
+
+	}//end bookingDateRate()
+
+	/**
+	 * The snapshot of a rate typed on the line, or null when none is typed.
+	 *
+	 * @param array<string,mixed> $line   The line.
+	 * @param int                 $number Its 1-based position, for the message.
+	 *
+	 * @return array{rate:float,source:string,date:string}|null
+	 *
+	 * @throws RuntimeException When the typed rate is not positive or has no reason.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.2
+	 */
+	private function typedRate(array $line, int $number): ?array {
+		if (array_key_exists('typedFxRate', $line) === false) {
+			return null;
+		}
+
+		self::assertTypedRate(line: $line, number: $number);
+		return ['rate' => (float)$line['typedFxRate'], 'source' => 'manual', 'date' => $this->booking['date']];
+
+	}//end typedRate()
+
+	/**
+	 * Refuse a typed rate that is not a positive number or has no reason.
+	 *
+	 * @param array<string,mixed> $line   The line, carrying `typedFxRate`.
+	 * @param int                 $number Its 1-based position, for the message.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the typed rate is not positive or has no reason.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.2
+	 */
+	private static function assertTypedRate(array $line, int $number): void {
+		if (is_numeric($line['typedFxRate']) === false || (float)$line['typedFxRate'] <= 0.0) {
+			throw new RuntimeException(sprintf('The exchange rate typed on line %d must be a positive number.', $number));
+		}
+
+		if (trim((string)($line['fxRateReason'] ?? '')) === '') {
+			throw new RuntimeException(sprintf('The exchange rate typed on line %d needs a reason.', $number));
+		}
+
+	}//end assertTypedRate()
+
+	/**
+	 * The typed-rate fields a journal-entry line carries to booking, or none.
+	 *
+	 * @param array<string,mixed> $line The journal-entry line.
+	 *
+	 * @return array<string,mixed> `typedFxRate` and `fxRateReason`, or empty when no rate is typed.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.2
+	 */
+	private static function typedRateFields(array $line): array {
+		$rate = ($line['fxRate'] ?? null);
+		if ($rate === null || $rate === '') {
+			return [];
+		}
+
+		return ['typedFxRate' => $rate, 'fxRateReason' => (string)($line['fxRateReason'] ?? '')];
+
+	}//end typedRateFields()
+
+	/**
+	 * The rate snapshot columns a booked line writes onto its GL line.
+	 *
+	 * @param array<string,mixed> $line The booked line.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private static function fxColumns(array $line): array {
+		$fx = array_intersect_key((array)($line['fx'] ?? []), array_flip(self::FX_FIELDS));
+		return array_filter($fx, static fn (mixed $value): bool => $value !== null);
+
+	}//end fxColumns()
+
+	/**
+	 * Refuse when the base amounts no longer balance after rounding, naming the difference.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The lines in base cents.
+	 * @param string                         $label The posting's description.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When debit and credit differ.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private function assertBalancedInBase(array $lines, string $label): void {
+		$debit  = 0;
+		$credit = 0;
+		foreach ($lines as $line) {
+			if ($line['side'] === 'debit') {
+				$debit += (int)$line['cents'];
+				continue;
+			}
+
+			$credit += (int)$line['cents'];
+		}
+
+		if ($debit !== $credit) {
+			throw new RuntimeException(
+				sprintf(
+					'%s does not balance in %s after booking at the exchange rate: debit %.2f, credit %.2f, difference %.2f. '
+					. 'Type the rate on the lines or correct the amounts.',
+					$label,
+					$this->booking['base'],
+					($debit / 100),
+					($credit / 100),
+					(abs($debit - $credit) / 100)
+				)
+			);
+		}
+
+	}//end assertBalancedInBase()
+
+	/**
+	 * The booking-date rate resolver, built on first use when not injected.
+	 *
+	 * @return FxAtBookingResolver
+	 */
+	private function fxResolver(): FxAtBookingResolver {
+		if ($this->fxResolver === null) {
+			$this->fxResolver = new FxAtBookingResolver(objectService: $this->objectService, appConfig: $this->appConfig);
+		}
+
+		return $this->fxResolver;
+
+	}//end fxResolver()
 
 	/**
 	 * The tariff, box and VAT split for this posting.
@@ -641,7 +1087,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	private function write(array $header, array $lines, string $sourceId): string {
 		$register = $this->register();
 		$transactionId = $this->idOf(
-			saved: $this->objectService->saveObject(object: $header, register: $register, schema: 'GLTransaction')->jsonSerialize()
+			saved: $this->objectService->saveObject(
+				object: $header,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'GLTransaction'))
+			)->jsonSerialize()
 		);
 		if ($transactionId === '') {
 			throw new RuntimeException(sprintf('The ledger transaction for %s was not saved.', (string)$header['sourceReference']));
@@ -661,7 +1110,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 					'administrationId' => (string)$header['administrationId'],
 					'description' => (string)($line['description'] ?? ''),
 				];
-				foreach (['costCenterCode', 'projectCode'] as $dimension) {
+				foreach (self::LINE_DIMENSIONS as $dimension) {
 					if (isset($line[$dimension]) === true) {
 						$row[$dimension] = (string)$line[$dimension];
 					}
@@ -673,13 +1122,18 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 					}
 				}
 
+				$row = array_merge($row, self::fxColumns(line: $line));
+
 				if (isset($line['subLedgerType']) === true) {
 					$row['subLedgerType'] = (string)$line['subLedgerType'];
 					$row['subLedgerRef'] = (string)$line['subLedgerRef'];
 				}
 
 				$written[] = $this->idOf(
-					saved: $this->objectService->saveObject(object: $row, register: $register, schema: 'GLLine')->jsonSerialize()
+					saved: $this->objectService->saveObject(
+						object: $row,
+						options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'GLLine'))
+					)->jsonSerialize()
 				);
 			}//end foreach
 		} catch (\Throwable $e) {
@@ -706,14 +1160,18 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		$register = $this->register();
 		foreach (array_filter($lineIds) as $lineId) {
 			try {
-				$this->objectService->deleteObject(uuid: $lineId, register: $register, schema: 'GLLine');
+				$this->objectService->deleteObject(
+					new ObjectDeletion(uuid: $lineId, target: new ObjectFindTarget(register: $register, schema: 'GLLine'))
+				);
 			} catch (\Throwable $e) {
 				$this->logger->error('MaterialiseGlTransactionAction: could not withdraw GL line ' . $lineId, ['exception' => $e->getMessage()]);
 			}
 		}
 
 		try {
-			$this->objectService->deleteObject(uuid: $transactionId, register: $register, schema: 'GLTransaction');
+			$this->objectService->deleteObject(
+				new ObjectDeletion(uuid: $transactionId, target: new ObjectFindTarget(register: $register, schema: 'GLTransaction'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error('MaterialiseGlTransactionAction: could not withdraw GL transaction ' . $transactionId, ['exception' => $e->getMessage()]);
 		}
@@ -833,11 +1291,6 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

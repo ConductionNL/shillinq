@@ -67,6 +67,10 @@ const SCENARIOS = {
 		{ milestoneId: 'ms-1', projectId: 'p-1', ...BASE, rateCardId: 'rc-1' },
 		IDS,
 	],
+	'mixed keeps the rate card': [
+		{ ...BASE, billingModel: 'mixed', rateCardId: 'rc-1', retainerScheduleId: 'rs-1' },
+		IDS,
+	],
 	'empty and zero references': [
 		{
 			...BASE,

@@ -30,7 +30,8 @@ namespace OCA\Shillinq\Service\Relation;
 
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -54,11 +55,11 @@ class RelationRecords {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister object service.
-	 * @param SettingsService        $settings      Resolves the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 	) {
 
 	}//end __construct()
@@ -147,7 +148,7 @@ class RelationRecords {
 		$this->objectService
 			->setRegister($this->settings->getRegisterSlug())
 			->setSchema($schema)
-			->patchObject($id, $fields);
+			->patchObject(new ObjectPatch(objectId: $id, data: $fields));
 
 	}//end patch()
 

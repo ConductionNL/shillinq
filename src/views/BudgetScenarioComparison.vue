@@ -188,6 +188,35 @@ import { administrationOptions, fetchAdministrationContext } from '../utils/admi
 
 const REGISTER_SLUG = 'shillinq'
 
+/**
+ * The rows of a list response: its results, its objects or the body itself;
+ * empty when that is not an array.
+ *
+ * @param {object|Array|null|undefined} data The response body.
+ * @return {Array<object>}
+ */
+function listRows(data) {
+	const rows = data?.results ?? data?.objects ?? data ?? []
+	return Array.isArray(rows) ? rows : []
+}
+
+/**
+ * Ledger-group display names by id; a row without an id is skipped.
+ *
+ * @param {Array<object>} rows The ledger-group rows.
+ * @return {{[id: string]: string}}
+ */
+function ledgerGroupNames(rows) {
+	const names = {}
+	for (const row of rows) {
+		const id = row.id || row['@self']?.id
+		if (id) {
+			names[id] = row.name || row.code || id
+		}
+	}
+	return names
+}
+
 export default {
 	name: 'BudgetScenarioComparison',
 
@@ -403,19 +432,7 @@ export default {
 						},
 					},
 				)
-				const rows =
-					response.data?.results
-					?? response.data?.objects
-					?? response.data
-					?? []
-				const names = {}
-				for (const row of Array.isArray(rows) ? rows : []) {
-					const id = row.id || row['@self']?.id
-					if (id) {
-						names[id] = row.name || row.code || id
-					}
-				}
-				this.ledgerGroupNames = names
+				this.ledgerGroupNames = ledgerGroupNames(listRows(response.data))
 			} catch {
 				this.ledgerGroupNames = {}
 			}

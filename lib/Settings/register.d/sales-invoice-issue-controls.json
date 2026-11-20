@@ -1,0 +1,159 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "sales-invoice-issue-controls",
+    "adr": "ADR-037 modular register fragment",
+    "description": "The two controls on the moment a sales invoice goes out (REQ-SIIC-001, REQ-SIIC-003). InvoiceNumberSequence: one series per administration, kind and fiscal year, from which AssignInvoiceNumberAction (first action of ARInvoice.issue, declared in add-shillinq-bookkeeping-compliance.json) and InvoiceGenerationService take the next number under a lock. Administration.salesInvoiceApprovalThreshold, and on ARInvoice the states awaiting-approval and approved with the transitions requestApproval, approve (refused to the invoice's creator by SalesInvoiceApprovalGuard::canApprove) and rejectApproval; issue also leaves approved, and from draft it is refused above the threshold (SalesInvoiceApprovalGuard::canIssue, called by RuleComplianceGuard::validateInvoice, the one requires of issue)."
+  },
+  "components": {
+    "schemas": {
+      "InvoiceNumberSequence": {
+        "slug": "InvoiceNumberSequence",
+        "icon": "Numeric",
+        "version": "0.1.0",
+        "title": "Invoice number series",
+        "description": "The invoice number series of one administration, kind and fiscal year: its pattern and the last counter value handed out. Written by the server only, under a lock, when an invoice is issued or generated.",
+        "x-spec": "openspec/changes/sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every number handed out raises the counter on the audit trail, so a gap can be traced to the issue that took it."
+        },
+        "type": "object",
+        "required": [
+          "administrationId",
+          "kind",
+          "pattern",
+          "fiscalYear",
+          "lastValue"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration the series numbers the invoices of."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sales",
+              "billable",
+              "credit"
+            ],
+            "x-enum-labels": {
+              "sales": "Sales invoices",
+              "billable": "Time and expense invoices",
+              "credit": "Credit notes"
+            },
+            "title": "Kind",
+            "description": "Which invoices the series numbers."
+          },
+          "pattern": {
+            "type": "string",
+            "default": "{year}-{seq:4}",
+            "example": "{year}-{seq:4}",
+            "title": "Pattern",
+            "description": "The number pattern: {year} for the fiscal year, {seq:N} for the counter padded to N digits, and literal text."
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "example": 2026,
+            "title": "Fiscal year",
+            "description": "The year the series counts; a new year starts again at 1."
+          },
+          "lastValue": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "example": 41,
+            "title": "Last value",
+            "description": "The counter of the last number handed out; the next invoice gets this plus one."
+          }
+        },
+        "authorization": {
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "create": [
+            "shillinq_controller"
+          ],
+          "update": [
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        }
+      },
+      "Administration": {
+        "properties": {
+          "salesInvoiceApprovalThreshold": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "example": 10000,
+            "title": "Sales invoice approval threshold",
+            "description": "A sales invoice whose total including VAT is above this amount is approved by a second person before it is issued. Empty: no approval needed."
+          }
+        }
+      },
+      "ARInvoice": {
+        "properties": {
+          "approvalRejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "title": "Reason for rejection",
+            "description": "Why the approver sent the invoice back to draft."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "states": {
+            "awaiting-approval": {
+              "label": "Awaiting approval",
+              "description": "Above the administration's approval threshold; waits for a second person to approve it."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Approved by someone other than its creator; may be issued."
+            }
+          },
+          "transitions": {
+            "issue": {
+              "from": [
+                "draft",
+                "approved"
+              ]
+            },
+            "requestApproval": {
+              "from": "draft",
+              "to": "awaiting-approval",
+              "label": "Request approval",
+              "description": "Send the invoice to a second person for approval before it is issued."
+            },
+            "approve": {
+              "from": "awaiting-approval",
+              "to": "approved",
+              "label": "Approve",
+              "description": "Approve the invoice for issue. Refused to the user who created it.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\SalesInvoiceApprovalGuard::canApprove"
+            },
+            "rejectApproval": {
+              "from": "awaiting-approval",
+              "to": "draft",
+              "label": "Reject",
+              "description": "Send the invoice back to draft, with the reason.",
+              "inputs": [
+                {
+                  "field": "approvalRejectionReason",
+                  "required": true
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

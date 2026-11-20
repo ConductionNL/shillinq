@@ -335,9 +335,10 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 	private function registeredServices(): array {
 		$bound = [];
 
-		foreach (glob($this->root . '/lib/AppInfo/*.php') as $file) {
+		foreach (array_merge(glob($this->root . '/lib/AppInfo/*.php'), glob($this->root . '/lib/*/*Registrar.php')) as $file) {
 			$source = (string)file_get_contents($file);
 			$aliases = $this->useAliases($source);
+			$namespace = preg_match('/^namespace\s+([^;]+);/m', $source, $nsMatch) === 1 ? $nsMatch[1] . '\\' : 'OCA\\Shillinq\\AppInfo\\';
 
 			preg_match_all(
 				'/registerService\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
@@ -346,7 +347,7 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 			);
 
 			foreach ($matches[1] as $short) {
-				$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+				$bound[$aliases[$short] ?? ($namespace . $short)] = true;
 			}
 
 			// registerServiceAlias() is the other binding form the framework offers.
@@ -357,7 +358,25 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 			);
 
 			foreach ($aliasMatches[1] as $short) {
-				$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+				$bound[$aliases[$short] ?? ($namespace . $short)] = true;
+			}
+
+			// A registrar may keep its aliases in an ALIASES map
+			// (`Contract::class => Implementation::class`) and pass each
+			// pair to registerServiceAlias() in a loop. The keys of that
+			// map are the bound contracts.
+			if (str_contains($source, 'registerServiceAlias(') === true
+				&& preg_match('/const\s+ALIASES\s*=\s*\[(.*?)\];/s', $source, $mapMatch) === 1
+			) {
+				preg_match_all(
+					'/([A-Za-z_\\\\][\w\\\\]*)::class\s*=>\s*[A-Za-z_\\\\][\w\\\\]*::class/',
+					$mapMatch[1],
+					$mapEntries
+				);
+
+				foreach ($mapEntries[1] as $short) {
+					$bound[$aliases[$short] ?? ($namespace . $short)] = true;
+				}
 			}
 		}
 

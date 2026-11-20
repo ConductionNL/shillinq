@@ -3,6 +3,9 @@
 /**
  * Shillinq route table.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * AppHost adoption (adopt-apphost): the canonical fleet-skeleton routes
  * (`dashboard#page`, `dashboard#catchAll`, `settings#index|create|load`,
  * `preferences#getPreference|setPreference`, `metrics#index`, `health#index`)
@@ -29,15 +32,15 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
-return \OCA\OpenRegister\AppHost\Routes::standard(
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OCA\OpenRegister\AppHost\Routes::standard(
         [
+        // The OpenAPI document of shillinq's own API, public, served under /api/v1/ too.
+            ['name' => 'openApi#show', 'url' => '/api/openapi.json', 'verb' => 'GET'],
         // Pipelinq integration connection settings — bookings-pipelinq-customer-bridge
         // member 01. GET returns endpoint + hasToken flag (never the token itself);
         // POST persists endpoint + optional token (absent token preserves current
@@ -46,6 +49,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'pipelinqSettings#index', 'url' => '/api/pipelinq/settings', 'verb' => 'GET'],
             ['name' => 'pipelinqSettings#create', 'url' => '/api/pipelinq/settings', 'verb' => 'POST'],
             ['name' => 'pipelinqSettings#test', 'url' => '/api/pipelinq/settings/test', 'verb' => 'POST'],
+        // Request type to revenue account mapping, admin only (case-payment-requests REQ-SOPR-002).
+            ['name' => 'paymentRevenueAccounts#index', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'GET'],
+            ['name' => 'paymentRevenueAccounts#update', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'PUT'],
         // First-time setup wizard (ADR-042).
             ['name' => 'setup#status',     'url' => '/api/setup/status',            'verb' => 'GET'],
             ['name' => 'setup#saveConfig', 'url' => '/api/setup/config',            'verb' => 'POST'],
@@ -66,6 +72,26 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // page "Import status" header strip. Gated by
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
+
+        // tax-cbcr-and-pillar2-returns tasks 6.1 to 6.3: the actions of the
+        // Group entities, Country-by-country reports and Minimum tax returns
+        // pages. Authorised per administration in CbcrController.
+            ['name' => 'cbcr#assessScope', 'url' => '/api/cbcr/entities/{entityId}/assess-scope', 'verb' => 'POST'],
+            ['name' => 'cbcr#readFigures', 'url' => '/api/cbcr/entities/{entityId}/read-figures', 'verb' => 'POST'],
+            ['name' => 'cbcrEnteredFigures#enter', 'url' => '/api/cbcr/entities/{entityId}/figures', 'verb' => 'POST'],
+            ['name' => 'cbcrEnteredFigures#import', 'url' => '/api/cbcr/entities/{entityId}/import-figures', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepare', 'url' => '/api/cbcr/entities/{entityId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbour', 'url' => '/api/cbcr/entities/{entityId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#qdmtt', 'url' => '/api/cbcr/computations/{computationId}/qdmtt', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepareReturn', 'url' => '/api/cbcr/returns/{returnId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbourReturn', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#cbcChecks', 'url' => '/api/cbcr/returns/{returnId}/checks', 'verb' => 'GET'],
+            ['name' => 'cbcr#girChecks', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/checks', 'verb' => 'GET'],
+            ['name' => 'cbcr#createCorrection', 'url' => '/api/cbcr/returns/{returnId}/correction', 'verb' => 'POST'],
+        // banking-fx-at-booking task 3.1: the FX rates page's status line —
+        // feed or typed, and the newest rate date per pair. Any signed-in
+        // user; the rates are read with the caller's own register access.
+            ['name' => 'fxRateFeedStatus#status', 'url' => '/api/fx-rates/feed-status', 'verb' => 'GET'],
 
         // No external-adapters roster route: adopt-connection-registry moved
         // the External Connections page onto integriq's app_connection rows,
@@ -88,6 +114,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // Both #[NoAdminRequired]; RBAC/multitenancy enforced by OR reads.
             ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
             ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
+            ['name' => 'invoiceNumberCheck#check', 'url' => '/api/sales/invoice-number-check', 'verb' => 'GET'],
             // banking-connected-accounts REQ-BCON-004: cash position per bank account and combined.
             ['name' => 'financialDashboard#cashPosition', 'url' => '/api/v1/cash-position', 'verb' => 'GET'],
             // reporting-relation-both-sides: links between a customer and a supplier record, and both sides of the relation.
@@ -110,6 +137,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'fieldRequirement#fields', 'url' => '/api/field-requirements/{id}/fields', 'verb' => 'GET'],
             // reporting-custom-analysis REQ-RCA-002: the financial pivot.
             ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
+            // reporting-financial-statements REQ-RFS-001/002: the on-screen statements.
+            ['name' => 'financialStatement#profitAndLoss', 'url' => '/api/statements/profit-and-loss', 'verb' => 'GET'],
+            ['name' => 'financialStatement#balanceSheet', 'url' => '/api/statements/balance-sheet', 'verb' => 'GET'],
+            // reporting-cash-flow-statement REQ-RCF-002: the cash flow statement by the indirect method.
+            ['name' => 'financialStatement#cashFlow', 'url' => '/api/statements/cash-flow', 'verb' => 'GET'],
+            // reporting-cash-flow-statement REQ-RCF-003: the ledger lines behind one cash flow figure. Access is checked in the controller body.
+            ['name' => 'financialStatement#cashFlowLines', 'url' => '/api/statements/cash-flow/lines', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app
@@ -145,6 +179,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // Automatic dunning (task 4.1): the Next run preview and a ladder's stage texts.
             ['name' => 'dunningPreview#nextRun', 'url' => '/api/dunning/next-run', 'verb' => 'GET'],
             ['name' => 'dunningPreview#ladderStages', 'url' => '/api/dunning/ladders/{id}/stages', 'verb' => 'GET'],
+            // Records whose retention period has ended (ledger-retention-due-records, REQ-RET-015).
+            // #[NoAdminRequired] with a per-administration canAccess() guard in the controller (ADR-005).
+            ['name' => 'retentionDue#index', 'url' => '/api/retention/due', 'verb' => 'GET'],
 
         // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
             ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],
@@ -155,11 +192,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
             ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
             ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+            ['name' => 'investmentDeduction#calculate', 'url' => '/api/investment-deductions/{year}/calculate', 'verb' => 'POST'],
+            ['name' => 'administrationTemplate#index', 'url' => '/api/administration-templates', 'verb' => 'GET'],
+            ['name' => 'administrationTemplate#saveAs', 'url' => '/api/administrations/{id}/template', 'verb' => 'POST'],
+            ['name' => 'administrationTemplate#seed', 'url' => '/api/administrations/{id}/seed-template', 'verb' => 'POST'],
             ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
             ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#show', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#update', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'PUT'],
             ['name' => 'administrationMember#create', 'url' => '/api/administrations/{administrationId}/members', 'verb' => 'POST'],
+            ['name' => 'importBatch#confirmSuggestions', 'url' => '/api/import-batches/{id}/confirm-suggestions', 'verb' => 'POST'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
             ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],
@@ -179,6 +221,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
+            // CORS preflight of an embed on another website (REQ-WSW-011): the origins allowed per widget key.
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/services', 'verb' => 'OPTIONS', 'postfix' => 'services'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/slots', 'verb' => 'OPTIONS', 'postfix' => 'slots'],
+            ['name' => 'widgetApi#preflight', 'url' => '/api/widget/appointments', 'verb' => 'OPTIONS', 'postfix' => 'appointments'],
         // Bookings-depth: no-show-fee capture + recurring appointment series.
         // Both are operator actions (#[NoAdminRequired] + per-administration
         // guard). no-show captures the defined noShowFee via the DepositPayment
@@ -186,6 +232,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // appointments (skipping availability/conflict violations).
             ['name' => 'bookingDepth#captureNoShow', 'url' => '/api/v1/appointments/{appointmentId}/no-show', 'verb' => 'POST'],
             ['name' => 'bookingDepth#createSeries', 'url' => '/api/v1/appointment-series', 'verb' => 'POST'],
+        // The XBRL file of an SBR filing, in any state (tax-digipoort-filing task 4.2).
+            ['name' => 'sbrFiling#download', 'url' => '/api/sbr-filings/{id}/xbrl', 'verb' => 'GET'],
+
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.
@@ -193,6 +242,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'vATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
             ['name' => 'vATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
             ['name' => 'vATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
+            ['name' => 'vATReturn#checks', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'],
+            // tax-vat-position-and-suppletie (REQ-VPS-001, REQ-VPS-002): the running
+            // position, the drift check on a filed return, and preparing its suppletie.
+            ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
+            ['name' => 'vatSuppletie#prepare', 'url' => '/api/vat-corrections/{correctionId}/prepare', 'verb' => 'POST'],
+            ['name' => 'vatSuppletieFiling#download', 'url' => '/api/vat-corrections/{correctionId}/supplementary-return', 'verb' => 'GET'],
+            ['name' => 'vatSuppletieFiling#file', 'url' => '/api/vat-corrections/{correctionId}/file', 'verb' => 'POST'],
+            ['name' => 'vatPosition#show', 'url' => '/api/vat-position', 'verb' => 'GET'],
+            // tax-vat-return-from-books (REQ-TVRB-002): check a broken fiscal year's returns for corrections.
+            ['name' => 'vatFiscalYearCorrection#check', 'url' => '/api/fiscal-years/{fiscalYearId}/vat-corrections/check', 'verb' => 'POST'],
             ['name' => 'vATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
             ['name' => 'vATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
             ['name' => 'vATLine#listByDeclaration', 'url' => '/api/vat-declarations/{declarationId}/lines', 'verb' => 'GET'],
@@ -214,10 +273,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // routes so Symfony matches them first.
             ['name' => 'invoiceApi#generate', 'url' => '/api/v1/invoices/generate', 'verb' => 'POST'],
             ['name' => 'invoiceApi#billable', 'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'],
+            // sales-time-and-expense-billing D1: the unbilled hours and pass-through expenses to tick.
+            ['name' => 'billableWork#index', 'url' => '/api/v1/invoices/billable-work', 'verb' => 'GET'],
             ['name' => 'invoiceApi#index', 'url' => '/api/v1/invoices', 'verb' => 'GET'],
             ['name' => 'invoiceApi#post', 'url' => '/api/v1/invoices/{invoiceId}/post', 'verb' => 'POST'],
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
             ['name' => 'invoiceApi#show', 'url' => '/api/v1/invoices/{invoiceId}', 'verb' => 'GET'],
+
+        // Sales-billable-rate-per-hour: a project's rated hours of one month (REQ-BRPH-003).
+            ['name' => 'projectBillableHours#index', 'url' => '/api/v1/projects/{id}/billable-hours', 'verb' => 'GET'],
 
         // Billing intake (time-expense-invoice-intake): authenticated ingress for
         // pipelinq's time-billing-handoff-emit change to POST a batch of approved
@@ -283,6 +347,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // approval-chain preview + send-block guard. Static segments precede the
         // {id} wildcard so they are matched first (Symfony route ordering).
             ['name' => 'purchaseOrder#previewApprovalChain', 'url' => '/api/purchase-orders/approval-chain', 'verb' => 'GET'],
+            ['name' => 'purchaseOrder#dispatchChannels', 'url' => '/api/purchase-orders/dispatch-channels', 'verb' => 'GET'],
             ['name' => 'purchaseOrder#create', 'url' => '/api/purchase-orders', 'verb' => 'POST'],
             ['name' => 'purchaseOrder#send', 'url' => '/api/purchase-orders/{id}/send', 'verb' => 'POST'],
 
@@ -310,6 +375,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // ARInvoice: pre-send validation, NLCIUS UBL 2.1 + PDF/A-3 hybrid, Peppol
         // submit via the generalised transmission port, delivery-status queued.
             ['name' => 'aRInvoiceEInvoice#send', 'url' => '/api/ar-invoices/{invoiceNumber}/send-einvoice', 'verb' => 'POST'],
+            // Sales-einvoice-exchange REQ-SEIX-007: reject a received self-billed draft with a reason.
+            ['name' => 'selfBilledInvoice#reject', 'url' => '/api/ar-invoices/{invoiceNumber}/reject-self-billed', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-001, REQ-SIS-002): send one issued invoice by the customer's delivery method.
+            ['name' => 'invoiceSending#send', 'url' => '/api/ar-invoices/{id}/send', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-003): send the selected invoices in a queued batch.
+            ['name' => 'invoiceSending#sendBatch', 'url' => '/api/ar-invoices/send-batch', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-004): one invoice per selected customer from one set of lines.
+            ['name' => 'invoiceBatch#create', 'url' => '/api/ar-invoices/batch', 'verb' => 'POST'],
 
             // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
             // down payment on an order, show the order's position, deduct on the final invoice.
@@ -317,6 +390,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'quickDraftInvoice#create', 'url' => '/api/ar-invoices/quick-drafts', 'verb' => 'POST'],
             ['name' => 'downPayment#show', 'url' => '/api/ar-invoices/{id}/down-payments', 'verb' => 'GET'],
             ['name' => 'downPayment#deduct', 'url' => '/api/ar-invoices/{id}/down-payment-deductions', 'verb' => 'POST'],
+
+            // Sales-quote-and-order-to-invoice (REQ-QTI-001, REQ-QTI-003): an accepted
+            // quote becomes a sales order; a confirmed sales order becomes a draft invoice.
+            ['name' => 'salesOrder#fromQuote', 'url' => '/api/quotes/{id}/order', 'verb' => 'POST'],
+            ['name' => 'salesOrder#invoice', 'url' => '/api/orders/{id}/invoice', 'verb' => 'POST'],
 
         // Goods Receipt Note (slice 04 of bookkeeping-purchase-order-3way):
         // server-authoritative create / add-line / quality-check / accept /
@@ -496,8 +574,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // Bookkeeping-reconciliation-reports (T4) — REQ-REC-004 unmatched-item
         // resolution. POST one classification + reason at a time, or bulk-apply
         // across a list of matchIds (REQ-REC-008 Unmatched Items bulk workflow).
-        // Both endpoints are #[NoAdminRequired] but IDOR-guarded: the service
-        // verifies match.reconId matches the path reconId before writing.
+        // All are #[NoAdminRequired] but IDOR-guarded: the service checks the
+        // reconciliation's administration and that match.reconId matches it.
             [
                 'name' => 'reconciliationResolution#resolve',
                 'url'  => '/api/reconciliations/{reconId}/matches/{matchId}/resolve',
@@ -508,10 +586,19 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
                 'url'  => '/api/reconciliations/{reconId}/matches/bulk-resolve',
                 'verb' => 'POST',
             ],
+            // Match ids only: the server reads each match's reconciliation.
+            [
+                'name' => 'reconciliationResolution#bulkResolveMatches',
+                'url'  => '/api/reconciliation-matches/bulk-resolve',
+                'verb' => 'POST',
+            ],
 
             // ICP opgaaf (bookkeeping-icp-opgaaf, REQ-ICP-002..010). Read-only ledger
             // / reconcile / periodicity / VIES lookup endpoints plus the correction
             // + audit-export write surface. All admin-scoped + IDOR-safe.
+            // IB47 annual batch (people-ib47-statement, REQ-DPA-021): payroll officer only,
+            // within an administration the caller holds a membership of.
+            ['name' => 'ib47#prepare', 'url' => '/api/ib47/batches/prepare', 'verb' => 'POST'],
             ['name' => 'icp#ledger', 'url' => '/api/icp/ledger', 'verb' => 'GET'],
             ['name' => 'icp#reconcile', 'url' => '/api/icp/reconcile', 'verb' => 'GET'],
             ['name' => 'icp#periodicity', 'url' => '/api/icp/periodicity', 'verb' => 'GET'],
@@ -519,6 +606,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
             ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
             ['name' => 'icp#renderInvoicePdf', 'url' => '/api/icp/invoice-pdf', 'verb' => 'GET'],
+            // The tax-icp-and-reverse-charge statement: prepare, download and file the statement (REQ-ICR-002, REQ-ICR-003).
+            ['name' => 'icpStatement#prepare', 'url' => '/api/icp/statements/prepare', 'verb' => 'POST'],
+            ['name' => 'icpStatement#xml', 'url' => '/api/icp/statements/xml', 'verb' => 'GET'],
+            ['name' => 'icpStatement#filing', 'url' => '/api/icp/statements/filing', 'verb' => 'GET'],
+            ['name' => 'icpStatement#file', 'url' => '/api/icp/statements/file', 'verb' => 'POST'],
 
             // Aansluiting (tie-out) framework (bookkeeping-aansluitingen,
             // REQ-AANS-004, REQ-AANS-006). compute() resolves source A / source B
@@ -595,8 +687,17 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'periodClose#startClose', 'url' => '/api/period-close/{periodId}/start-close', 'verb' => 'POST'],
             ['name' => 'periodClose#close', 'url' => '/api/period-close/{periodId}/close', 'verb' => 'POST'],
             ['name' => 'periodClose#reopen', 'url' => '/api/period-close/{periodId}/reopen', 'verb' => 'POST'],
+            ['name' => 'periodClose#addItem', 'url' => '/api/period-close/{periodId}/checklist', 'verb' => 'POST'],
+            ['name' => 'periodClose#resolveItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/resolve', 'verb' => 'POST'],
+            ['name' => 'periodClose#reopenItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/reopen', 'verb' => 'POST'],
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
+
+            // Deferral schedules (ledger-period-end, REQ-LPE-004): "Spread over
+            // periods" on an AP or AR invoice line. preview precedes the bare
+            // collection route only for readability; the verbs and paths differ.
+            ['name' => 'deferralSchedule#preview', 'url' => '/api/deferral-schedules/preview', 'verb' => 'POST'],
+            ['name' => 'deferralSchedule#create', 'url' => '/api/deferral-schedules', 'verb' => 'POST'],
 
             // Budget scenarios (budget-scenarios, REQ-BSC-002). isDefault is set
             // exclusively via this endpoint (a service call, atomic demotion of
@@ -633,6 +734,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
             // BADO accountantsdossier export (bookkeeping-bado-controleprotocol, REQ-010, Task 16).
             ['name' => 'badoControleprotocol#exportAccountantsdossier', 'url' => '/api/bado/controleprotocol/accountantsdossier', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-011/REQ-012: draw an
+            // audit sample from the protocol's posted ledger lines.
+            // #[NoAdminRequired], the protocol's administration checked in the
+            // controller (another administration's protocol is masked as 404).
+            ['name' => 'auditSample#draw', 'url' => '/api/bado/controleprotocol/samples', 'verb' => 'POST'],
 
             // CBS bestanden extended (bookkeeping-cbs-bestanden-extended,
             // REQ-CBS-001..009). RESTful CBSSubmission CRUD + generate endpoint.
@@ -652,6 +758,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'widgetSettings#create', 'url' => '/api/widget/admin/keys/create', 'verb' => 'POST'],
             ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
             ['name' => 'widgetSettings#revoke', 'url' => '/api/widget/admin/keys/revoke', 'verb' => 'POST'],
+            ['name' => 'widgetSettings#origins', 'url' => '/api/widget/admin/keys/origins', 'verb' => 'POST'],
 
             // Inventory scanner server-authoritative API (inventory-mobile-scanner,
             // REQ-SKU-001/002, REQ-OFFLINE-002/003, REQ-PERM-001). The
@@ -675,6 +782,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // column set pre-computed (design.md §1c: expand/collapse must
             // cost zero further requests).
             ['name' => 'budgetGrid#index', 'url' => '/api/budget-grid', 'verb' => 'GET'],
+            // The operator-triggered run of KnownCostBudgetWriter
+            // (budget-known-costs design.md §12). Access is checked in the controller body.
+            ['name' => 'knownCost#regenerate', 'url' => '/api/v1/budgets/known-costs/regenerate', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],
@@ -720,6 +830,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // (ADR-005 IDOR-safe). Declared before the SPA catch-all so
             // Symfony route ordering matches it first per ADR-016.
             ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
+            // Discard your own imported invoice while it is still a review draft.
+            ['name' => 'supplierInvoiceImport#discard', 'url' => '/api/v1/supplier-invoices/{id}/draft', 'verb' => 'DELETE'],
 
             // Receipt-extraction-consume (REQ-RXC-004 / REQ-RXC-005) — thin proxy
             // so the frontend never needs docudesk credentials directly. request()
@@ -790,6 +902,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // on the caller's administration.
             ['name' => 'financialDocumentAction#issueInvoice', 'url' => '/api/financial-documents/invoices', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#requestPayment', 'url' => '/api/financial-documents/invoices/{id}/payment-request', 'verb' => 'POST'],
+            // receivables-provider-payouts REQ-RPPO-005: take payment now on the caller's registered phone, or as a QR checkout.
+            ['name' => 'pointOfSalePayment#takePayment', 'url' => '/api/financial-documents/invoices/{id}/take-payment', 'verb' => 'POST'],
+            // receivables-provider-payouts REQ-RPPO-006: a counter sale, issued on capture, cancelled when the customer walks away.
+            ['name' => 'counterSale#create', 'url' => '/api/financial-documents/counter-sales', 'verb' => 'POST'],
+            ['name' => 'counterSale#cancel', 'url' => '/api/financial-documents/counter-sales/{id}/cancel', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#createQuote', 'url' => '/api/financial-documents/quotes', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#creditInvoice', 'url' => '/api/financial-documents/invoices/{id}/credit', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#raisePayout', 'url' => '/api/financial-documents/payouts', 'verb' => 'POST'],
@@ -836,6 +953,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // X-Portal-Subject assertion IS the authentication, exactly like the
             // pay receiver above. Static URL, before the SPA catch-all (ADR-016).
             ['name' => 'portalContributionDecline#decline', 'url' => '/api/portal/contributions/decline', 'verb' => 'POST'],
+            ['name' => 'portalSubscriptionCancel#cancel', 'url' => '/api/portal/subscriptions/cancel', 'verb' => 'POST'],
 
             // Reporting & Compliance consolidation (reporting-compliance-consolidation).
             // The HTTP surface behind the unified "Reporting & Compliance" section:
@@ -851,6 +969,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
             ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
             ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+            // Report schedules are written only here: the caller owns them, the server sets status and next run.
+            ['name' => 'reportSchedule#create', 'url' => '/api/report-schedules', 'verb' => 'POST'],
+            ['name' => 'reportSchedule#update', 'url' => '/api/report-schedules/{id}', 'verb' => 'PUT'],
+            // iv3-report-takes-case-costs-by-case-type: the rows of the case cost tables
+            // (per taakveld on the Iv3 page, per type on its own page). Static URL, before
+            // the SPA catch-all.
+            ['name' => 'subjectCostReport#rows', 'url' => '/api/reporting/subject-costs', 'verb' => 'GET'],
 
             // Payment-run-sepa-export (REQ-SEPA-006 / REQ-SEPA-007). The HTTP surface
             // behind the "Export to bank" and "Reconcile / import statement" actions
@@ -870,10 +995,19 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'paymentRun#propose', 'url' => '/api/v1/payment-runs/propose', 'verb' => 'POST'],
             ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
             ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
+            // Block or release payment of an APTransaction or a Payee.
+            ['name' => 'paymentBlock#update', 'url' => '/api/v1/payment-blocks/{schema}/{id}', 'verb' => 'POST'],
 
             // banking-manual-match (REQ-BMM-001, REQ-BMM-002): pair a bank line
             // with open invoices, or book it to a ledger account, by hand.
             ['name' => 'manualMatch#match', 'url' => '/api/v1/bank-lines/{lineId}/match', 'verb' => 'POST'],
+
+            // ledger-open-item-clearing (REQ-LOIC-001..004): what is open on a
+            // balance account kept by open item, clearing selected posted lines
+            // into a group and undoing a clearing.
+            ['name' => 'openItemClearing#overview', 'url' => '/api/v1/open-items/accounts/{accountId}', 'verb' => 'GET'],
+            ['name' => 'openItemClearing#clear', 'url' => '/api/v1/open-items/clear', 'verb' => 'POST'],
+            ['name' => 'openItemClearing#undo', 'url' => '/api/v1/open-items/groups/{groupId}/undo', 'verb' => 'POST'],
 
             // receivables-payment-plans (REQ-RPPL-001, REQ-RPPL-003): draw up,
             // activate, settle by hand and cancel a payment plan; the plans a
@@ -895,8 +1029,34 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
             ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
+            // receivables-sepa-direct-debit (REQ-SDD-011, REQ-SDD-012): propose the
+            // draft batches for a collection date, and download a generated batch's
+            // pain.008 file. Both #[NoAdminRequired], administration checked in the
+            // controller (another administration's batch is masked as 404). The
+            // static /propose URL precedes the {id} route.
+            ['name' => 'directDebitBatch#propose', 'url' => '/api/v1/direct-debit-batches/propose', 'verb' => 'POST'],
+            ['name' => 'directDebitBatch#file', 'url' => '/api/v1/direct-debit-batches/{id}/file', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-ENSIA-012: download an
+            // ENSIA cycle's submission XML and its college statement. Both
+            // #[NoAdminRequired], administration checked in the controller
+            // (another administration's cycle is masked as 404).
+            ['name' => 'ensiaCycle#xml', 'url' => '/api/v1/public-sector/ensia/{id}/xml', 'verb' => 'GET'],
+            ['name' => 'ensiaCycle#statement', 'url' => '/api/v1/public-sector/ensia/{id}/statement', 'verb' => 'GET'],
+            // public-sector-grant-accountability REQ-SUBV-012: store a grant's
+            // accountability report (and its pending auditor statement).
+            // #[NoAdminRequired], the grant's administration checked in the
+            // controller (another administration's grant is masked as 404).
+            ['name' => 'grantAccountability#report', 'url' => '/api/v1/public-sector/grants/{id}/report', 'verb' => 'POST'],
+            // public-sector-grant-accountability REQ-SISA-012/013: the SiSa appendix
+            // of a year, as a table or ?format=csv. #[NoAdminRequired], the
+            // administration checked in the controller (masked as 404).
+            ['name' => 'grantAccountability#sisa', 'url' => '/api/v1/public-sector/sisa', 'verb' => 'GET'],
+            // public-sector-grant-accountability REQ-EUF-012: propose an EU project's
+            // declaration for a quarter. #[NoAdminRequired], the project's
+            // administration checked in the controller (masked as 404).
+            ['name' => 'grantAccountability#proposeEuDeclaration', 'url' => '/api/v1/public-sector/eu-projects/{id}/declarations', 'verb' => 'POST'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
@@ -906,6 +1066,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // URLs declared before the SPA catch-all per ADR-016.
             ['name' => 'deadlineCalendarSettings#index', 'url' => '/api/deadline-calendar/settings', 'verb' => 'GET'],
             ['name' => 'deadlineCalendarSettings#update', 'url' => '/api/deadline-calendar/settings', 'verb' => 'POST'],
+            // platform-custom-record-types (REQ-CRT-001..003): the shown own
+            // record types for any user, and the admin listing and switch.
+            ['name' => 'customRecordType#index', 'url' => '/api/custom-record-types', 'verb' => 'GET'],
+            ['name' => 'customRecordType#available', 'url' => '/api/custom-record-types/available', 'verb' => 'GET'],
+            ['name' => 'customRecordType#update', 'url' => '/api/custom-record-types', 'verb' => 'PUT'],
+            ['name' => 'customRecordType#toggle', 'url' => '/api/custom-record-types', 'verb' => 'PATCH'],
 
             // Accountant portal (accountant-portal, REQ-ACP-001/002/004).
             // These two were MISSING from this table entirely while every other
@@ -944,4 +1110,4 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // entry makes that class of mistake fail visibly.
             ['name' => 'apiFallback#notFound', 'url' => '/api/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
         ]
-        );
+        ));

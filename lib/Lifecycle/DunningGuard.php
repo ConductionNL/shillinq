@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Credit-Control / Dunning Lifecycle Guard
  *
  * ADR-031 exception-path lifecycle guards for the credit-control & dunning
@@ -49,7 +54,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -377,28 +383,9 @@ class DunningGuard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
 
 	/**
@@ -407,11 +394,6 @@ class DunningGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end resolveRegister()
 }//end class

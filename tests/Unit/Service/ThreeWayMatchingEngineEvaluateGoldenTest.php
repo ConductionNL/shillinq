@@ -181,6 +181,10 @@ final class RecordingMatchObjectService {
  * @covers \OCA\Shillinq\Service\ThreeWayMatchingEngine
  * @uses   \OCA\Shillinq\Service\ToleranceProfileService
  * @uses   \OCA\Shillinq\Service\ThreeWayMatchRun
+ * @uses   \OCA\Shillinq\Service\ExceptionRoute
+ * @uses   \OCA\Shillinq\Service\RecordStoreLog
+ * @uses   \OCA\Shillinq\Service\RegisterBinding
+ * @uses   \OCA\Shillinq\Service\SchemaRecordStore
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

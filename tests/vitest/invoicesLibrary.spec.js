@@ -59,7 +59,7 @@ describe('invoice pages on the 2.85 library', () => {
 		const action = config.headerActions.find((a) => a.id === primary.action)
 		expect(action).toMatchObject({ type: 'open-form', schema: 'arInvoice' })
 		const menu = config.headerButtons.find((b) => b.action === 'actions-menu')
-		expect(menu.items).toEqual(['new-down-payment-invoice', 'generate-invoices'])
+		expect(menu.items).toEqual(['new-down-payment-invoice', 'generate-invoices', 'new-invoice-batch', 'invoice-batches'])
 		expect(config.showAdd).toBe(false)
 	})
 

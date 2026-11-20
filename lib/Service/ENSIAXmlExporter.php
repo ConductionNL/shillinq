@@ -3,6 +3,9 @@
 /**
  * ENSIA XML Exporter
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-ENSIA-007 — render a college-approved ENSIAJaarcyclus into an
  * ENSIA-XSD-compliant XML document for upload to the landelijke
  * ENSIA-portal. No direct portal API exists in 2026 — the operator
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
