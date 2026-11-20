@@ -5906,7 +5906,18 @@
         "When the declaration and its expenditure were submitted.": "When the declaration and its expenditure were submitted.",
         "Why it was left out, for example missing evidence.": "Why it was left out, for example missing evidence.",
         "draft, submitted to the managing authority, paid.": "draft, submitted to the managing authority, paid.",
-        "spending and income are computed from the ledger; output is entered.": "spending and income are computed from the ledger; output is entered."
+        "spending and income are computed from the ledger; output is entered.": "spending and income are computed from the ledger; output is entered.",
+        "Shown wherever the block stops a payment.": "Shown wherever the block stops a payment.",
+        "Only a controller or a treasurer can release a payment block.": "Only a controller or a treasurer can release a payment block.",
+        "This change to the payment block is not allowed.": "This change to the payment block is not allowed.",
+        "Payment is blocked.": "Payment is blocked.",
+        "Payment is released.": "Payment is released.",
+        "Sign in to change a payment block.": "Sign in to change a payment block.",
+        "You are not allowed to block or release payments.": "You are not allowed to block or release payments.",
+        "Give a reason.": "Give a reason.",
+        "Payment is already blocked.": "Payment is already blocked.",
+        "Payment is not blocked.": "Payment is not blocked.",
+        "This record cannot be found.": "This record cannot be found."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

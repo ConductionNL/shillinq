@@ -257,7 +257,6 @@ import FiscalYearActionModal from './modals/FiscalYearActionModal.vue'
 // each modal is registered here as a kind:"modal" so the manifest action's
 // `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
 import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
-import PaymentBlockModal from './modals/PaymentBlockModal.vue'
 import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
@@ -412,7 +411,6 @@ export default {
 	PaymentRunReconcileModal: { kind: 'modal', component: PaymentRunReconcileModal },
 	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
 	// APTransactionDetail and PayeeDetail.
-	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
 	// tax-cbcr-and-pillar2-returns 6.1 to 6.3: Assess scope and Read figures
 	// from the books on GroupEntityDetail.
 	FiscalYearActionModal: { kind: 'modal', component: FiscalYearActionModal },

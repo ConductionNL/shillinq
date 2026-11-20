@@ -9604,6 +9604,85 @@
                 }
             }
         },
+        "/payment-blocks/{schema}/{id}": {
+            "post": {
+                "operationId": "payment-block-update",
+                "summary": "Block or release payment of an APTransaction or a Payee (POST /api/v1/payment-blocks/{schema}/{id})",
+                "description": "Block or release payment of an APTransaction or a Payee (POST /api/v1/payment-blocks/{schema}/{id}). Needs the payment.block payment action, access to the record's administration and a reason both ways; the person who set a block cannot release it. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "payment-run"
+                ],
+                "parameters": [
+                    {
+                        "name": "schema",
+                        "in": "path",
+                        "required": true,
+                        "description": "APTransaction or Payee.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "APTransaction",
+                                "Payee"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The object id / uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "blocked",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "blocked": {
+                                        "type": "boolean",
+                                        "description": "True blocks payment, false releases the block."
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Why payment is blocked or released."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/direct-debit-batches/propose": {
             "post": {
                 "operationId": "direct-debit-batch-propose",

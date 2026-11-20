@@ -8060,7 +8060,18 @@
         "When the declaration and its expenditure were submitted.": "Wanneer de betaalaanvraag en haar uitgaven zijn ingediend.",
         "Why it was left out, for example missing evidence.": "Waarom zij is weggelaten, bijvoorbeeld ontbrekend bewijs.",
         "draft, submitted to the managing authority, paid.": "concept, ingediend bij de managementautoriteit, betaald.",
-        "spending and income are computed from the ledger; output is entered.": "besteding en baten worden uit het grootboek berekend; prestaties worden ingevuld."
+        "spending and income are computed from the ledger; output is entered.": "besteding en baten worden uit het grootboek berekend; prestaties worden ingevuld.",
+        "Shown wherever the block stops a payment.": "Zichtbaar overal waar de blokkade een betaling tegenhoudt.",
+        "Only a controller or a treasurer can release a payment block.": "Alleen een controller of treasurer kan een betalingsblokkade opheffen.",
+        "This change to the payment block is not allowed.": "Deze wijziging van de betalingsblokkade is niet toegestaan.",
+        "Payment is blocked.": "De betaling is geblokkeerd.",
+        "Payment is released.": "De betaling is vrijgegeven.",
+        "Sign in to change a payment block.": "Log in om een betalingsblokkade te wijzigen.",
+        "You are not allowed to block or release payments.": "Je mag geen betalingen blokkeren of vrijgeven.",
+        "Give a reason.": "Geef een reden.",
+        "Payment is already blocked.": "De betaling is al geblokkeerd.",
+        "Payment is not blocked.": "De betaling is niet geblokkeerd.",
+        "This record cannot be found.": "Dit record is niet gevonden."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

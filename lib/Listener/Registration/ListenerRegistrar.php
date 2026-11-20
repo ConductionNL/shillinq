@@ -40,6 +40,7 @@ use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExpenseCategoryAccountListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\PaymentBlockLockListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
@@ -368,6 +369,12 @@ final class ListenerRegistrar {
 				listener: ExpenseCategoryAccountListener::class
 			);
 		}
+
+		// Payment block fields change only through the block endpoint.
+		$context->registerEventListener(
+			event: 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent',
+			listener: PaymentBlockLockListener::class
+		);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.

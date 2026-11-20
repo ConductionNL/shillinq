@@ -172,6 +172,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120081900",
             "versionsSha256": "4ef1ce1e08ab5a7e9e6b1ea3eeadb19de66bcead9f280f1deb90bfad8c13e7f3"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120095000",
+            "versionsSha256": "a22a7426bb24af1439cc83182bfdd296de6923e07e45681012bbd4a20b2d3cdc"
         }
     ],
     "versions": {
@@ -523,7 +527,7 @@
         "schema:OssThresholdCounter": "0.1.0",
         "schema:Paragraaf": "0.1.0",
         "schema:PassThroughMarkupRule": "0.1.0",
-        "schema:Payee": "0.2.0",
+        "schema:Payee": "0.3.0",
         "schema:Payment": "0.1.0",
         "schema:PaymentDevice": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
