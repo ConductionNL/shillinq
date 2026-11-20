@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * VAT tariff resolver
  *
  * The VatTariff a line's code names on the document date, with the legacy line codes mapped.
@@ -15,9 +20,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

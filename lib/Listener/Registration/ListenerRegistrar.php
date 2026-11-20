@@ -391,20 +391,7 @@ final class ListenerRegistrar {
 			listener: PaymentBlockLockListener::class
 		);
 
-		// REQ-TVRD-003: an account below 100 percent deductible names a
-		// private-share account. Accounts go straight into OpenRegister, so
-		// the pre-save veto is where the pair rule runs.
-		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
-			$context->registerEventListener(
-				event: $preSaveEvent,
-				listener: AccountDeductibleShareListener::class
-			);
-			// REQ-TVRD-001: a person cannot change a statutory VAT tariff.
-			$context->registerEventListener(
-				event: $preSaveEvent,
-				listener: VatTariffStatutoryLockListener::class
-			);
-		}
+		self::registerDeductibilityGuards(context: $context);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -507,6 +494,23 @@ final class ListenerRegistrar {
 
 		(new BbvValidationRegistration())->register(context: $context);
 	}//end register()
+
+	/**
+	 * The pre-save vetoes of VAT rates and deductibility: an account below
+	 * 100 percent deductible names a private-share account (REQ-TVRD-003;
+	 * accounts go straight into OpenRegister, so the pre-save veto is where
+	 * the pair rule runs), and a person cannot change a statutory VAT tariff
+	 * (REQ-TVRD-001).
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 */
+	private static function registerDeductibilityGuards(IRegistrationContext $context): void {
+		self::registerPreSave(context: $context, listener: AccountDeductibleShareListener::class);
+		self::registerPreSave(context: $context, listener: VatTariffStatutoryLockListener::class);
+
+	}//end registerDeductibilityGuards()
 
 	/**
 	 * Register a listener on OpenRegister's two pre-save events, create first, then update.

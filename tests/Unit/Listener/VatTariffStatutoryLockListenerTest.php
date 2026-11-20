@@ -36,6 +36,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * A person cannot change a statutory tariff; an added one stays theirs (REQ-TVRD-001).
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 #[CoversClass(VatTariffStatutoryLockListener::class)]
 #[UsesClass(PreSaveWrite::class)]
@@ -55,7 +57,12 @@ final class VatTariffStatutoryLockListenerTest extends TestCase {
 			static fn (object $entity, string $expectedSlug): bool => ($matches === true && $expectedSlug === 'VatTariff')
 		);
 		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($signedIn === true ? $this->createMock(IUser::class) : null);
+		$user = null;
+		if ($signedIn === true) {
+			$user = $this->createMock(IUser::class);
+		}
+
+		$session->method('getUser')->willReturn($user);
 
 		return new VatTariffStatutoryLockListener(schemaResolver: $resolver, userSession: $session);
 	}//end listener()

@@ -35,6 +35,8 @@ use Psr\Log\NullLogger;
 
 /**
  * An account below 100 percent deductible must name a private-share account (REQ-TVRD-003).
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 #[CoversClass(AccountDeductibleShareListener::class)]
 #[UsesClass(PreSaveWrite::class)]
@@ -125,7 +127,9 @@ final class AccountDeductibleShareListenerTest extends TestCase {
 		self::assertNull(AccountDeductibleShareListener::violation(['accountNumber' => '4300']));
 		self::assertNull(AccountDeductibleShareListener::violation(['accountNumber' => '4300', 'deductiblePercentage' => 100]));
 		self::assertNull(AccountDeductibleShareListener::violation(['accountNumber' => '4300', 'deductiblePercentage' => '']));
-		self::assertNull(AccountDeductibleShareListener::violation(['accountNumber' => '4520', 'deductiblePercentage' => 0, 'privateShareAccountNumber' => '1810']));
+		self::assertNull(
+			AccountDeductibleShareListener::violation(['accountNumber' => '4520', 'deductiblePercentage' => 0, 'privateShareAccountNumber' => '1810']),
+		);
 		self::assertSame(
 			'Account 4520 cannot be its own private-share account.',
 			AccountDeductibleShareListener::violation(['accountNumber' => '4520', 'deductiblePercentage' => 70, 'privateShareAccountNumber' => '4520'])

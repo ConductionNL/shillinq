@@ -31,6 +31,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * Each generated line is taxed at the tariff valid on the invoice date, and
  * a line without one refuses the invoice.
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class BillableInvoiceVatTariffTest extends TestCase {
 	use SeededVatTariffs;

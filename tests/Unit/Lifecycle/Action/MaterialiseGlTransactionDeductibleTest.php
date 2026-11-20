@@ -58,11 +58,23 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 		$this->store->rows['VatTariff'] = $seed['tariffs'];
 		$this->store->rows['Account'] = [
 			array_merge(
-				['accountNumber' => '4520', 'name' => 'Autokosten', 'administrationId' => 'adm-1', 'deductiblePercentage' => 70, 'privateShareAccountNumber' => '1810'],
+				[
+					'accountNumber' => '4520',
+					'name' => 'Autokosten',
+					'administrationId' => 'adm-1',
+					'deductiblePercentage' => 70,
+					'privateShareAccountNumber' => '1810',
+				],
 				$car
 			),
 			['accountNumber' => '4300', 'name' => 'Kantoorkosten', 'administrationId' => 'adm-1'],
-			['accountNumber' => '4520', 'name' => 'Autokosten', 'administrationId' => 'adm-2', 'deductiblePercentage' => 50, 'privateShareAccountNumber' => '1820'],
+			[
+				'accountNumber' => '4520',
+				'name' => 'Autokosten',
+				'administrationId' => 'adm-2',
+				'deductiblePercentage' => 50,
+				'privateShareAccountNumber' => '1820',
+			],
 		];
 
 		$appConfig = $this->createMock(IAppConfig::class);
@@ -108,7 +120,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFuelBillIsSplitSeventyToThirty(): void {
-		$this->action()->execute(new LifecycleActionContext(objectData: $this->fuelInvoice(), previousData: [], parameters: ['sourceSchema' => 'APTransaction'], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $this->fuelInvoice(),
+				previousData: [],
+				parameters: ['sourceSchema' => 'APTransaction'],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		self::assertSame(
 			[
@@ -127,7 +146,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 	 * @return void
 	 */
 	public function testOnlyTheDeductibleVatCountsInBox5b(): void {
-		$this->action()->execute(new LifecycleActionContext(objectData: $this->fuelInvoice(), previousData: [], parameters: ['sourceSchema' => 'APInvoice'], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $this->fuelInvoice(),
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		$vat = array_values(array_filter($this->store->savedOf('GLLine'), static fn (array $l): bool => ($l['vatAmountKind'] ?? '') === 'vat'));
 		self::assertCount(1, $vat);
@@ -144,7 +170,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 	 * @return void
 	 */
 	public function testALineOverrideWinsOverTheAccount(): void {
-		$this->action()->execute(new LifecycleActionContext(objectData: $this->fuelInvoice(['deductiblePercentage' => 100]), previousData: [], parameters: ['sourceSchema' => 'APTransaction'], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $this->fuelInvoice(['deductiblePercentage' => 100]),
+				previousData: [],
+				parameters: ['sourceSchema' => 'APTransaction'],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		self::assertSame(
 			[['4520', 'debit', 100.0, null], ['1230', 'debit', 21.0, null], ['2000', 'credit', 121.0, null]],
@@ -158,7 +191,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 	 * @return void
 	 */
 	public function testALineOverrideCanLowerTheShare(): void {
-		$this->action()->execute(new LifecycleActionContext(objectData: $this->fuelInvoice(['deductiblePercentage' => 0]), previousData: [], parameters: ['sourceSchema' => 'APTransaction'], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $this->fuelInvoice(['deductiblePercentage' => 0]),
+				previousData: [],
+				parameters: ['sourceSchema' => 'APTransaction'],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		self::assertSame([['1810', 'debit', 121.0, 'nonDeductible'], ['2000', 'credit', 121.0, null]], $this->posted());
 	}//end testALineOverrideCanLowerTheShare()
@@ -171,7 +211,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 	public function testTheAccountOfTheSourcesAdministrationDecides(): void {
 		$invoice = $this->fuelInvoice();
 		$invoice['administrationId'] = 'adm-2';
-		$this->action()->execute(new LifecycleActionContext(objectData: $invoice, previousData: [], parameters: ['sourceSchema' => 'APTransaction'], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $invoice,
+				previousData: [],
+				parameters: ['sourceSchema' => 'APTransaction'],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		self::assertSame(
 			[
@@ -195,7 +242,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 		$invoice['lines'][] = ['accountNumber' => '4300', 'amount' => 50.0, 'description' => 'Papier', 'taxCode' => 'BTW21'];
 		$invoice['totalAmount'] = 181.5;
 		$invoice['taxAmount'] = 31.5;
-		$this->action()->execute(new LifecycleActionContext(objectData: $invoice, previousData: [], parameters: ['sourceSchema' => 'APTransaction'], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $invoice,
+				previousData: [],
+				parameters: ['sourceSchema' => 'APTransaction'],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		self::assertSame(
 			[
@@ -219,7 +273,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 		$action = $this->action(['privateShareAccountNumber' => '']);
 
 		try {
-			$action->execute(new LifecycleActionContext(objectData: $this->fuelInvoice(), previousData: [], parameters: ['sourceSchema' => 'APTransaction'], actionName: MaterialiseGlTransactionAction::class));
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $this->fuelInvoice(),
+					previousData: [],
+					parameters: ['sourceSchema' => 'APTransaction'],
+					actionName: MaterialiseGlTransactionAction::class,
+				),
+			);
 			self::fail('The posting was not refused.');
 		} catch (RuntimeException $e) {
 			self::assertStringContainsString('Account 4520 is 70% deductible but names no private-share account', $e->getMessage());
@@ -240,12 +301,26 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 			'id' => 'je-fuel', 'journalNumber' => 'MEM-2026-0007', 'entryDate' => '2026-03-02', 'administrationId' => 'adm-1',
 			'description' => 'Tankbon contant', 'state' => 'posted',
 			'lines' => [
-				['accountNumber' => '4520', 'side' => 'debit', 'amount' => 100.0, 'description' => 'Brandstof', 'taxCode' => 'high', 'costCenterCode' => 'KP-01'],
+				[
+					'accountNumber' => '4520',
+					'side' => 'debit',
+					'amount' => 100.0,
+					'description' => 'Brandstof',
+					'taxCode' => 'high',
+					'costCenterCode' => 'KP-01',
+				],
 				['accountNumber' => '1230', 'side' => 'debit', 'amount' => 21.0, 'description' => 'Voorbelasting'],
 				['accountNumber' => '1000', 'side' => 'credit', 'amount' => 121.0, 'description' => 'Kas'],
 			],
 		];
-		$this->action()->execute(new LifecycleActionContext(objectData: $entry, previousData: [], parameters: ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $entry,
+				previousData: [],
+				parameters: ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		self::assertSame(
 			[
@@ -276,7 +351,14 @@ final class MaterialiseGlTransactionDeductibleTest extends TestCase {
 				['accountNumber' => '1100', 'side' => 'credit', 'amount' => 33.33, 'description' => 'Bank'],
 			],
 		];
-		$this->action()->execute(new LifecycleActionContext(objectData: $entry, previousData: [], parameters: ['sourceSchema' => 'JournalEntry'], actionName: MaterialiseGlTransactionAction::class));
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $entry,
+				previousData: [],
+				parameters: ['sourceSchema' => 'JournalEntry'],
+				actionName: MaterialiseGlTransactionAction::class,
+			),
+		);
 
 		self::assertSame(
 			[['4520', 'debit', 23.33, null], ['1810', 'debit', 10.0, 'nonDeductible'], ['1100', 'credit', 33.33, null]],

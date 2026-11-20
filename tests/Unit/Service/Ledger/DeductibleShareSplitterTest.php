@@ -30,6 +30,8 @@ use RuntimeException;
 
 /**
  * The deductible percentage of a line and its two shares (REQ-TVRD-004).
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 #[CoversClass(DeductibleShareSplitter::class)]
 final class DeductibleShareSplitterTest extends TestCase {
@@ -156,7 +158,13 @@ final class DeductibleShareSplitterTest extends TestCase {
 		self::assertSame(630, $split['privateVat']);
 		self::assertSame(self::costLine(['cents' => 7000]), $split['lines'][0]);
 		self::assertSame(
-			['accountNumber' => '1810', 'side' => 'debit', 'cents' => 3630, 'description' => 'Brandstof (non-deductible 30%)', 'taxTreatment' => 'nonDeductible'],
+			[
+				'accountNumber' => '1810',
+				'side' => 'debit',
+				'cents' => 3630,
+				'description' => 'Brandstof (non-deductible 30%)',
+				'taxTreatment' => 'nonDeductible',
+			],
 			$split['lines'][1]
 		);
 	}//end testSeventyPercentSplitsBaseAndVat()

@@ -78,7 +78,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
-use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -316,7 +315,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$header = $booked['header'];
 
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
-		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
+		$header = (new PostingStamps())->applyNow(transaction: $header, user: $this->actor());
 
 		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
 		return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $objectData['glTransactionId']);
@@ -633,25 +632,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				throw new RuntimeException('A purchase invoice line is not an object.');
 			}
 
-			$code     = $vat->purchaseTariff(line: $line);
-			$cents    = $this->cents(amount: ($line['amount'] ?? 0));
+			$cost      = $this->apCostLine(line: $line, label: $label, shares: $shares);
+			$code      = $cost['code'];
+			$cents     = $cost['cents'];
 			$isReverse = $vat->isReverseCharge(code: $code);
-			$vatCents  = null;
-			if ($isReverse === false) {
-				$vatCents = $vat->vatCents(baseCents: $cents, rate: $vat->ratePercentage(code: $code));
-			}
-
-			// A partly deductible cost books its private share apart, with the VAT on it (REQ-TVRD-004).
-			$split = $shares->split(
-				costLine: [
-					'accountNumber' => (string)($line['accountNumber'] ?? ''),
-					'side' => 'debit',
-					'cents' => $cents,
-					'description' => (string)($line['description'] ?? $label),
-				] + $vat->stamp(code: $code, kind: 'base', purchase: true),
-				percentage: $shares->percentage(line: $line),
-				vatCents: $vatCents
-			);
+			$split     = $cost['split'];
 			array_push($lines, ...$split['lines']);
 			$privateVat += $split['privateVat'];
 
@@ -700,6 +685,41 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * One purchase invoice cost line, split in its deductible share with its
+	 * input VAT and, below 100 percent, the private share plus the VAT on it
+	 * (REQ-TVRD-004). A reverse-charged line carries no VAT to split.
+	 *
+	 * @param array<string,mixed>     $line   The purchase invoice line.
+	 * @param string                  $label  The document label.
+	 * @param DeductibleShareSplitter $shares The administration's deductible shares.
+	 *
+	 * @return array{code: string, cents: int, split: array<string,mixed>}
+	 */
+	private function apCostLine(array $line, string $label, DeductibleShareSplitter $shares): array {
+		$vat      = $this->vatStamper();
+		$code     = $vat->purchaseTariff(line: $line);
+		$cents    = $this->cents(amount: ($line['amount'] ?? 0));
+		$vatCents = null;
+		if ($vat->isReverseCharge(code: $code) === false) {
+			$vatCents = $vat->vatCents(baseCents: $cents, rate: $vat->ratePercentage(code: $code));
+		}
+
+		$split = $shares->split(
+			costLine: [
+				'accountNumber' => (string)($line['accountNumber'] ?? ''),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => (string)($line['description'] ?? $label),
+			] + $vat->stamp(code: $code, kind: 'base', purchase: true),
+			percentage: $shares->percentage(line: $line),
+			vatCents: $vatCents
+		);
+
+		return ['code' => $code, 'cents' => $cents, 'split' => $split];
+
+	}//end apCostLine()
 
 	/**
 	 * The VAT a supplier did not charge on a reverse-charged purchase, booked

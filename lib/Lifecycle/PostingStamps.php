@@ -62,6 +62,21 @@ final class PostingStamps {
 	public const TRAIL_ACTION = 'post';
 
 	/**
+	 * Stamp a transaction as posted at this moment.
+	 *
+	 * @param array<string,mixed> $transaction The GLTransaction.
+	 * @param string $user The posting user id.
+	 *
+	 * @return array<string,mixed> The stamped transaction.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
+	 */
+	public function applyNow(array $transaction, string $user): array {
+		return $this->apply(transaction: $transaction, user: $user, now: new DateTimeImmutable());
+
+	}//end applyNow()
+
+	/**
 	 * Stamp a transaction as posted.
 	 *
 	 * Retention runs to 31 December of the posting year plus RETENTION_YEARS,

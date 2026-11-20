@@ -19,6 +19,8 @@ use PHPUnit\Framework\TestCase;
  * One VatTariff declaration, with every field the seed and the posting path use.
  *
  * @coversNothing
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class VatTariffDeclarationTest extends TestCase {
 	/**
@@ -35,6 +37,11 @@ final class VatTariffDeclarationTest extends TestCase {
 		return $data;
 	}//end json()
 
+	/**
+	 * VatTariff is declared once, in its register fragment.
+	 *
+	 * @return void
+	 */
 	public function testVatTariffIsDeclaredOnceInItsFragment(): void {
 		$monolith = self::json(path: 'lib/Settings/shillinq_register.json');
 		self::assertArrayNotHasKey('VatTariff', $monolith['components']['schemas']);
@@ -50,11 +57,32 @@ final class VatTariffDeclarationTest extends TestCase {
 		self::assertSame(['add-shillinq-bookkeeping-operations.json'], $declaring);
 	}//end testVatTariffIsDeclaredOnceInItsFragment()
 
+	/**
+	 * The declaration keeps every field and rule of both former copies.
+	 *
+	 * @return void
+	 */
 	public function testTheDeclarationKeepsEveryFieldAndRuleOfBothFormerCopies(): void {
 		$schema = self::json(path: 'lib/Settings/register.d/add-shillinq-bookkeeping-operations.json')['components']['schemas']['VatTariff'];
 
 		self::assertSame(
-			['category', 'code', 'defaultAccounts', 'description', 'effectiveFrom', 'effectiveTo', 'jurisdiction', 'label', 'legalBasis', 'rate', 'ratePercentage', 'reverseCharge', 'rgsAccountHint', 'section', 'statutory'],
+			[
+				'category',
+				'code',
+				'defaultAccounts',
+				'description',
+				'effectiveFrom',
+				'effectiveTo',
+				'jurisdiction',
+				'label',
+				'legalBasis',
+				'rate',
+				'ratePercentage',
+				'reverseCharge',
+				'rgsAccountHint',
+				'section',
+				'statutory',
+			],
 			self::sorted(values: array_keys($schema['properties']))
 		);
 		self::assertSame(['code', 'rate', 'description', 'category', 'effectiveFrom', 'ratePercentage'], $schema['required']);
@@ -63,6 +91,11 @@ final class VatTariffDeclarationTest extends TestCase {
 		self::assertFalse($schema['properties']['statutory']['default']);
 	}//end testTheDeclarationKeepsEveryFieldAndRuleOfBothFormerCopies()
 
+	/**
+	 * Every seeded tariff is statutory and carries what the schema requires.
+	 *
+	 * @return void
+	 */
 	public function testEverySeededTariffIsStatutoryAndCarriesWhatTheSchemaRequires(): void {
 		$schema = self::json(path: 'lib/Settings/register.d/add-shillinq-bookkeeping-operations.json')['components']['schemas']['VatTariff'];
 		$tariffs = self::json(path: 'lib/Settings/seeds/btw-tariffs-2026.json')['tariffs'];

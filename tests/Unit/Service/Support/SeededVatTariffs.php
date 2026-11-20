@@ -31,6 +31,8 @@ use OCA\Shillinq\Service\VATCalculationService;
 /**
  * Gives a TestCase a VAT service whose tariffs are the shipped seed, plus a
  * retired 6 percent tariff that ended on 2018-12-31.
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 trait SeededVatTariffs {
 

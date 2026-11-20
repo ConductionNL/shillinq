@@ -30,8 +30,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
-use OCA\OpenRegister\Event\ObjectCreatingEvent;
-use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -96,24 +94,36 @@ class VatTariffStatutoryLockListener implements IEventListener {
 	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-1.3
 	 */
 	public function handle(Event $event): void {
-		if ($this->userSession->getUser() === null) {
+		$reason = $this->refusal(event: $event);
+		if ($reason === null) {
 			return;
 		}
 
-		$reason = null;
-		if ($event instanceof ObjectCreatingEvent === true) {
-			$reason = $this->createRefusal(entity: $event->getObject());
-		}
-
-		if ($event instanceof ObjectUpdatingEvent === true) {
-			$reason = $this->updateRefusal(new: $event->getNewObject(), old: $event->getOldObject());
-		}
-
-		if ($reason !== null) {
-			$event->setErrors(['message' => $reason, 'requirement' => self::REQUIREMENT]);
-			$event->stopPropagation();
-		}
+		$event->setErrors(['message' => $reason, 'requirement' => self::REQUIREMENT]);
+		$event->stopPropagation();
 	}//end handle()
+
+	/**
+	 * Why a person's save is refused, or null when it may go ahead. A save
+	 * without a user (the seeding repair step) always passes.
+	 *
+	 * @param Event $event The OpenRegister pre-save event.
+	 *
+	 * @return string|null
+	 */
+	private function refusal(Event $event): ?string {
+		if ($this->userSession->getUser() === null) {
+			return null;
+		}
+
+		$write  = new PreSaveWrite();
+		$entity = $write->incomingEntity(event: $event);
+		if ($write->isCreate(event: $event) === true) {
+			return $this->createRefusal(entity: $entity);
+		}
+
+		return $this->updateRefusal(new: $entity, old: $write->storedEntity(event: $event));
+	}//end refusal()
 
 	/**
 	 * The refusal of a create that marks a tariff statutory, or null.

@@ -80,13 +80,7 @@ class AccountDeductibleShareListener implements IEventListener {
 	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.1
 	 */
 	public function handle(Event $event): void {
-		$write  = new PreSaveWrite();
-		$entity = $write->incomingEntity(event: $event);
-		if ($entity === null || $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
-			return;
-		}
-
-		$reason = self::violation(account: $write->payload(entity: $entity));
+		$reason = $this->violationOf(event: $event);
 		if ($reason === null) {
 			return;
 		}
@@ -95,6 +89,24 @@ class AccountDeductibleShareListener implements IEventListener {
 		$event->setErrors(['message' => $reason, 'requirement' => self::REQUIREMENT]);
 		$event->stopPropagation();
 	}//end handle()
+
+	/**
+	 * The pair rule an Account save breaks, or null for a save that keeps it
+	 * or is not an Account.
+	 *
+	 * @param Event $event The OpenRegister pre-save event.
+	 *
+	 * @return string|null
+	 */
+	private function violationOf(Event $event): ?string {
+		$write   = new PreSaveWrite();
+		$account = $write->incomingEntity(event: $event);
+		if ($account === null || $this->schemaResolver->matchesSchema(entity: $account, expectedSlug: self::SCHEMA_SLUG) === false) {
+			return null;
+		}
+
+		return self::violation(account: $write->payload(entity: $account));
+	}//end violationOf()
 
 	/**
 	 * The pair rule the account breaks, or null when it keeps it.
