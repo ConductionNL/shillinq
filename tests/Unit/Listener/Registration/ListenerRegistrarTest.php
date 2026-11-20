@@ -256,9 +256,9 @@ final class ListenerRegistrarTest extends TestCase {
 	public function testStockMovesAreValuedBeforeDeliveriesDispatch(): void {
 		(new ListenerRegistrar())->register($this->recordingContext());
 
-		self::assertSame([ObjectTransitionedEvent::class, StockMoveTransitionedListener::class], $this->listeners[2]);
-		self::assertSame([ObjectTransitionedEvent::class, DeliveryDispatchListener::class], $this->listeners[3]);
-		self::assertSame([ObjectCreatedEvent::class, PeppolInboundUblInvoiceListener::class], $this->listeners[4]);
+		self::assertSame([ObjectTransitionedEvent::class, StockMoveTransitionedListener::class], $this->listeners[3]);
+		self::assertSame([ObjectTransitionedEvent::class, DeliveryDispatchListener::class], $this->listeners[4]);
+		self::assertSame([ObjectCreatedEvent::class, PeppolInboundUblInvoiceListener::class], $this->listeners[5]);
 
 	}//end testStockMovesAreValuedBeforeDeliveriesDispatch()
 

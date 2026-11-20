@@ -24,6 +24,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
@@ -35,6 +38,7 @@ use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -247,6 +251,8 @@ final class MeteredInvoiceGenerationTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
 			billedReadings: $this->createMock(BilledReadings::class),
+			passThrough: $this->createMock(PassThroughBilling::class),
+			billableRates: new BillableRateService(new DuckObjectServiceAdapter($this->objectService), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 	}//end setUp()
 

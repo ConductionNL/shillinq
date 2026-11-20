@@ -85,6 +85,12 @@ import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappi
 // switch the BudgetBBVMappings page from type=index to
 // type=custom + component=BudgetBBVMappingIndex.
 import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappingIndex.vue'
+// platform-custom-record-types (REQ-CRT-002/003): the own records page, one
+// card per own record type an administrator chose to show. Custom because its
+// cards come from a server list (GET /api/custom-record-types), not from fixed
+// menu children; the list and detail pages themselves stay built-in
+// `index` / `detail` pages over `@route.schema`.
+import CustomRecordTypes from './components/custom-records/CustomRecordTypes.vue'
 // bookkeeping-waterschappen-bbv-variant slice 05 (REQ-BBVW-003 /
 // REQ-BBVW-005): the BBV Compliance Dashboard composes four bespoke
 // widgets — KPI counts, a four-bucket compliance pie, a YTD cumulative
@@ -111,6 +117,7 @@ import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboar
 // with dimmed projection columns — a genuinely custom two-source transform
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
+import ClaimReceiptAccounts from './components/expenses/ClaimReceiptAccounts.vue'
 // bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
 // the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
 // flow with rejection-reason picker + delivery-photo upload, and the detail
@@ -120,21 +127,6 @@ import CashflowChartWidget from './components/dashboard/financial/CashflowChartW
 // fits a built-in `index` / `detail` page type, so both are kind:"page"
 // custom components.
 import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNoteForm.vue'
-// inventory-product-catalog (#860, REQ-IPC-004 / REQ-IPC-008 +
-// shillinq-product-vendor-to-pipelinq REQ-SPVP-004): the two read-only
-// catalog surfaces. A declarative `type: "index"` page binds to ONE
-// OpenRegister register + schema, and the product master these two pages
-// show is not in shillinq's register at all — REQ-SPVP-004 deleted the local
-// `Product` register and moved ownership to pipelinq. Binding an index page
-// to `register: "pipelinq"` instead would render an empty table on every
-// install without pipelinq while satisfying every "the page mounted"
-// assertion; these components call shillinq's own catalog endpoint, which
-// resolves the master first and falls back to the local denormalised cache
-// the ADR-019 contract declares, and renders WHICH OF THE TWO answered.
-// Neither page can write: no create affordance and no write route exists,
-// per REQ-SPVP-004.
-import ProductAttributeCatalogIndex from './components/inventory/ProductAttributeCatalogIndex.vue'
-import ProductCatalogIndex from './components/inventory/ProductCatalogIndex.vue'
 // invoice-from-time-and-expense (issue #111): drafting form + admin list
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
@@ -168,6 +160,7 @@ import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePan
 // declarative `detail` page type — so the page is registered as a
 // kind:"page" custom component per ADR-024 / ADR-036.
 import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
+import ProjectBillableHoursCard from './components/project/ProjectBillableHoursCard.vue'
 import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
 // bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
 // previews the server-determined approval chain as the line total changes
@@ -193,6 +186,8 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
 import SalesOverview from './components/sales/SalesOverview.vue'
+// purchasing-order-dispatch-and-receipt task 4.2: three confirmation modes per line.
+import ServiceReceiptForm from './components/service-receipt/ServiceReceiptForm.vue'
 // Import bank statements lives under the Configuratie (settings) group as a
 // page that hosts BankStatementWizard — moved off the Financial overview
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
@@ -240,17 +235,19 @@ import VendorPerformanceIndex from './components/vendor-performance/VendorPerfor
 import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
 import BankStatementWizard from './modals/BankStatementWizard.vue'
 import BillImportModal from './modals/BillImportModal.vue'
+import FiscalYearActionModal from './modals/FiscalYearActionModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
 // ribbons are now declarative `config.headerActions[]` (type:"open-modal");
 // each modal is registered here as a kind:"modal" so the manifest action's
 // `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
 import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
-import PaymentBlockModal from './modals/PaymentBlockModal.vue'
 import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 import RelationLinkDialog from './modals/RelationLinkDialog.vue'
+import SpreadOverPeriodsModal from './modals/SpreadOverPeriodsModal.vue'
+import TakePaymentModal from './modals/TakePaymentModal.vue'
 // accountant-portal: the multi-client dashboard composes a per-card status
 // (period-close state, BTW filing + deadline, missing documents, open items
 // from PeriodCloseAssistantService) plus a per-card "Download handover pack"
@@ -352,6 +349,7 @@ import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
 // kind:"page" custom component; the manifest fragment
 // src/manifest.d/budget-scenarios.json declares the route.
 import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
+import CounterSalePage from './views/CounterSalePage.vue'
 // compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
 // + reminder lead times for the compliance deadline calendar. Talks to
 // the strictly current-user-scoped /api/deadline-calendar/settings
@@ -366,6 +364,9 @@ import ReceivePage from './views/inventory/ReceivePage.vue'
 import TransferPage from './views/inventory/TransferPage.vue'
 import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
 import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
+import MobileHome from './views/mobile/MobileHome.vue'
+import MobileInvoice from './views/mobile/MobileInvoice.vue'
+import MobileReceipt from './views/mobile/MobileReceipt.vue'
 // receipt-extraction-consume (REQ-RXC-003) — custom detail page for a single
 // Receipt record: prefills from a docudesk extraction draft with per-field
 // confidence + correction + re-request, none of which fits the built-in
@@ -397,10 +398,16 @@ export default {
 	PaymentRunReconcileModal: { kind: 'modal', component: PaymentRunReconcileModal },
 	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
 	// APTransactionDetail and PayeeDetail.
-	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
+	// tax-cbcr-and-pillar2-returns 6.1 to 6.3: Assess scope and Read figures
+	// from the books on GroupEntityDetail.
+	FiscalYearActionModal: { kind: 'modal', component: FiscalYearActionModal },
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
+	// receivables-provider-payouts REQ-RPPO-005: Take payment now on ARInvoiceDetail.
+	TakePaymentModal: { kind: 'modal', component: TakePaymentModal },
+	// ledger-period-end REQ-LPE-004: Spread over periods on ARInvoiceDetail.
+	SpreadOverPeriodsModal: { kind: 'modal', component: SpreadOverPeriodsModal },
 	// reporting-relation-both-sides: link a customer to its supplier record.
 	RelationLinkDialog: { kind: 'modal', component: RelationLinkDialog },
 	PaymentPlanActionModal: { kind: 'modal', component: PaymentPlanActionModal },
@@ -413,6 +420,10 @@ export default {
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },
 	MobileScannerPick: { kind: 'page', component: PickPage },
 	MobileScannerCount: { kind: 'page', component: CountPage },
+	// platform-mobile-pwa: the Shillinq Mobile app (receipts, invoice drafts, offline queue).
+	MobileHome: { kind: 'page', component: MobileHome },
+	MobileReceipt: { kind: 'page', component: MobileReceipt },
+	MobileInvoice: { kind: 'page', component: MobileInvoice },
 
 	InvoiceGenerator: { kind: 'page', component: InvoiceGenerator },
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
@@ -429,6 +440,7 @@ export default {
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
+	ServiceReceiptForm: { kind: 'page', component: ServiceReceiptForm },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 
@@ -459,6 +471,8 @@ export default {
 		kind: 'page',
 		component: AdministrationSwitcherPage,
 	},
+	// receivables-provider-payouts REQ-RPPO-006: a counter sale sized for a phone.
+	CounterSalePage: { kind: 'page', component: CounterSalePage },
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
 	BookingsCalendar: { kind: 'page', component: CalendarPage },
@@ -519,6 +533,16 @@ export default {
 		_note: 'Renders all four /api/analytics/spend dimensions with four distinct states (loading / unavailable / no-rows / rows) and prints no figure for a view that did not answer. No built-in widget surfaces an endpoint error as anything but "no data" (CnChartWidget discards ep.error) or a bare em dash (CnStatWidget), which would report REQ-GLS-003\'s deliberate raise as a zero total.',
 	},
 
+	// expenses-category-mapping (REQ-ECM-003): the account each receipt of
+	// a claim posts to, beside its docudesk suggestion, through the slot
+	// widget-claim-receipt-accounts on ExpenseClaimDetail.
+	ClaimReceiptAccounts: {
+		// @custom-widget-ratchet exclude each row joins a receipt to its administration's expense category to show the account it posts to (confirmed account, else the category's account) beside the docudesk suggestion; no declarative widget resolves a value through a second schema by code.
+		kind: 'widget',
+		component: ClaimReceiptAccounts,
+		_note: 'Shows the account each receipt of the claim posts to, in ExpenseAccountResolver order, next to the docudesk suggestion, which never replaces it.',
+	},
+
 	// sales-down-payments (REQ-SDP-003, REQ-SDP-005): the order's down
 	// payments on ARInvoiceDetail, through the slot widget-invoice-down-payments.
 	ArDownPaymentPanel: {
@@ -526,6 +550,15 @@ export default {
 		kind: 'widget',
 		component: ArDownPaymentPanel,
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
+	},
+
+	// sales-billable-rate-per-hour (REQ-BRPH-003): one month of a project's
+	// rated hours on ProjectDetail, through the slot widget-project-billable-hours.
+	ProjectBillableHoursCard: {
+		// @custom-widget-ratchet exclude the card reads GET /api/v1/projects/{id}/billable-hours, which rates each hour of another app's hours source by the assignment's rate card and joins the invoices that bill it; no declarative widget computes a value per row on the server or says that its source is not connected instead of showing zero.
+		kind: 'widget',
+		component: ProjectBillableHoursCard,
+		_note: 'Lists a month of the project\'s hours with rate, tier, value and billed state and totals the unbilled value. An object-table widget cannot tell "no hours source" from "no hours" and has no month picker.',
 	},
 
 	// tax-vat-return-from-books 3.3 (REQ-TVRB-001): the Checks tab on
@@ -576,6 +609,7 @@ export default {
 
 	// nav-six-clusters: the 5 new cluster landing pages (design.md §3).
 	BookkeepingOverview: { kind: 'page', component: BookkeepingOverview },
+	CustomRecordTypes: { kind: 'page', component: CustomRecordTypes },
 	SalesOverview: { kind: 'page', component: SalesOverview },
 	PurchasingOverview: { kind: 'page', component: PurchasingOverview },
 	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },
@@ -594,14 +628,6 @@ export default {
 	BudgetScenarioComparison: {
 		kind: 'page',
 		component: BudgetScenarioComparison,
-	},
-
-	// inventory-product-catalog (#860). See the import docblock above for why
-	// these are custom pages rather than declarative `type: "index"` ones.
-	ProductCatalogIndex: { kind: 'page', component: ProductCatalogIndex },
-	ProductAttributeCatalogIndex: {
-		kind: 'page',
-		component: ProductAttributeCatalogIndex,
 	},
 
 	// platform-administration-import: the six-step import wizard (REQ-AIW-002).

@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
-use OCA\Shillinq\Service\WidgetCorsPolicy;
+use OCA\Shillinq\Kernel\Contracts\WidgetCorsPolicyInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -50,13 +50,13 @@ class WidgetSettingsController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param WidgetAuthServiceInterface $authService API-key lifecycle service.
 	 * @param IUserSession $userSession Session for the acting admin user id (audit-trail actor).
-	 * @param WidgetCorsPolicy|null $corsPolicy Stores the browser origins a key allows (REQ-WSW-011).
+	 * @param WidgetCorsPolicyInterface|null $corsPolicy Stores the browser origins a key allows (REQ-WSW-011).
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly WidgetAuthServiceInterface $authService,
 		private readonly IUserSession $userSession,
-		private readonly ?WidgetCorsPolicy $corsPolicy = null,
+		private readonly ?WidgetCorsPolicyInterface $corsPolicy = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

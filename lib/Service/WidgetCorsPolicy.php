@@ -29,12 +29,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\WidgetCorsPolicyInterface;
+
 /**
  * Resolves and stores the browser origins a widget key allows.
  *
  * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md
  */
-class WidgetCorsPolicy {
+class WidgetCorsPolicy implements WidgetCorsPolicyInterface {
 	/**
 	 * At most this many origins per key.
 	 */

@@ -1,0 +1,39 @@
+{
+  "x-shillinq-fragment": "reporting-cash-flow-statement",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "reporting-cash-flow-statement",
+    "adr": "ADR-037 modular register fragment, never edit shillinq_register.json",
+    "description": "The cash flow category of a balance sheet account (design D1, REQ-RCF-001). Named zz- so its Account version is the last one merged."
+  },
+  "components": {
+    "schemas": {
+      "Account": {
+        "version": "0.5.0",
+        "properties": {
+          "cashFlowCategory": {
+            "type": "string",
+            "title": "Cash flow category",
+            "description": "Where a movement on this balance sheet account goes in the cash flow statement: cash (the change the statement explains), working capital (operating), fixed assets (investing), financing or equity (financing). Revenue and expense accounts need none. A balance account without one shows as unclassified.",
+            "enum": [
+              "cash",
+              "working-capital",
+              "fixed-assets",
+              "financing",
+              "equity"
+            ],
+            "nullable": true,
+            "x-enum-labels": {
+              "cash": "Cash",
+              "working-capital": "Working capital",
+              "fixed-assets": "Fixed assets",
+              "financing": "Financing",
+              "equity": "Equity"
+            }
+          }
+        }
+      }
+    }
+  }
+}

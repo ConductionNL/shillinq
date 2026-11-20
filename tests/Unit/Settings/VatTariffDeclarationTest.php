@@ -54,7 +54,7 @@ final class VatTariffDeclarationTest extends TestCase {
 		$schema = self::json(path: 'lib/Settings/register.d/add-shillinq-bookkeeping-operations.json')['components']['schemas']['VatTariff'];
 
 		self::assertSame(
-			['category', 'code', 'defaultAccounts', 'description', 'effectiveFrom', 'effectiveTo', 'label', 'legalBasis', 'rate', 'ratePercentage', 'reverseCharge', 'rgsAccountHint', 'section', 'statutory'],
+			['category', 'code', 'defaultAccounts', 'description', 'effectiveFrom', 'effectiveTo', 'jurisdiction', 'label', 'legalBasis', 'rate', 'ratePercentage', 'reverseCharge', 'rgsAccountHint', 'section', 'statutory'],
 			self::sorted(values: array_keys($schema['properties']))
 		);
 		self::assertSame(['code', 'rate', 'description', 'category', 'effectiveFrom', 'ratePercentage'], $schema['required']);

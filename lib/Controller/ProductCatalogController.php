@@ -51,6 +51,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -69,12 +70,14 @@ class ProductCatalogController extends Controller {
 	 * @param ProductCatalogServiceInterface $catalogService Resolves the catalog.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IL10N $l10n Translations for the source note and the refusal.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly ProductCatalogServiceInterface $catalogService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -101,7 +104,11 @@ class ProductCatalogController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function products(): JSONResponse {
-		return $this->listing(list: fn (): ?array => $this->catalogService->listProducts(), lookup: 'product catalog');
+		return $this->listing(
+			list: fn (): ?array => $this->catalogService->listProducts(),
+			lookup: 'product catalog',
+			note: fn (bool $authoritative): string => $this->productsNote(authoritative: $authoritative)
+		);
 	}//end products()
 
 	/**
@@ -115,25 +122,38 @@ class ProductCatalogController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function productAttributes(): JSONResponse {
-		return $this->listing(list: fn (): ?array => $this->catalogService->listAttributes(), lookup: 'product attribute');
+		return $this->listing(
+			list: fn (): ?array => $this->catalogService->listAttributes(),
+			lookup: 'product attribute',
+			note: fn (bool $authoritative): string => $this->attributesNote(authoritative: $authoritative)
+		);
 	}//end productAttributes()
 
 	/**
 	 * Answer one listing: 401 without a session, 403 without an accessible
-	 * administration, the rows, or a logged 500 without internals.
+	 * administration, the rows with a translated `sourceNote` saying which
+	 * source answered, or a logged 500 without internals.
 	 *
 	 * @param callable(): (array<string, mixed>|null) $list   The service listing.
 	 * @param string                                  $lookup What is looked up, for the log line.
+	 * @param callable(bool): string                  $note   The source note, given whether the source is authoritative.
 	 *
 	 * @return JSONResponse
 	 */
-	private function listing(callable $list, string $lookup): JSONResponse {
+	private function listing(callable $list, string $lookup, callable $note): JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			return self::rowsResponse(rows: $list());
+			$rows = $list();
+			if ($rows === null) {
+				return $this->noAdministration();
+			}
+
+			$rows['sourceNote'] = $note(($rows['authoritative'] ?? false) === true);
+
+			return new JSONResponse($rows);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'ProductCatalogController: ' . $lookup . ' lookup failed',
@@ -144,17 +164,52 @@ class ProductCatalogController extends Controller {
 	}//end listing()
 
 	/**
-	 * The rows, or the 403 when the caller has no accessible administration.
+	 * The product listing's note on which source answered.
 	 *
-	 * @param array<string, mixed>|null $rows The listing.
+	 * @param bool $authoritative Whether the product master answered.
 	 *
-	 * @return JSONResponse
+	 * @return string The translated note.
 	 */
-	private static function rowsResponse(array|null $rows): JSONResponse {
-		if ($rows === null) {
-			return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
+	private function productsNote(bool $authoritative): string {
+		if ($authoritative === true) {
+			return $this->l10n->t('These products come from the product master.');
 		}
 
-		return new JSONResponse($rows);
-	}//end rowsResponse()
+		return $this->l10n->t('The product master is unavailable, so these are the products your stock and barcode records reference.')
+			. ' ' . $this->l10n->t('Names, categories and prices are owned elsewhere and stay blank.');
+
+	}//end productsNote()
+
+	/**
+	 * The attribute listing's note on which source answered.
+	 *
+	 * @param bool $authoritative Whether the product master answered.
+	 *
+	 * @return string The translated note.
+	 */
+	private function attributesNote(bool $authoritative): string {
+		if ($authoritative === true) {
+			return $this->l10n->t('These are the attribute names the product master\'s own products declare.');
+		}
+
+		return $this->l10n->t('The product master is unavailable, so these are the attributes the integration contract publishes.')
+			. ' ' . $this->l10n->t('Owned by says which application authors each value.');
+
+	}//end attributesNote()
+
+	/**
+	 * The refusal for a caller without an administration.
+	 *
+	 * @return JSONResponse 403 with the reason.
+	 */
+	private function noAdministration(): JSONResponse {
+		return new JSONResponse(
+			[
+				'error' => 'no_accessible_administration',
+				'message' => $this->l10n->t('You have no administration yet, so there is no inventory to show. Ask an administrator for access.'),
+			],
+			Http::STATUS_FORBIDDEN
+		);
+
+	}//end noAdministration()
 }//end class

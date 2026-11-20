@@ -51,6 +51,18 @@ vi.mock('../../src/components/FieldConfidenceBadge.vue', () => ({
 		},
 	},
 }))
+vi.mock('../../src/components/expenses/ExpenseCategoryPicker.vue', () => ({
+	default: {
+		name: 'ExpenseCategoryPicker',
+		props: ['modelValue', 'administrationId'],
+		render() {
+			return h('input', {
+				'data-testid': 'expense-category-picker',
+				value: this.modelValue,
+			})
+		},
+	},
+}))
 vi.mock('../../src/components/BudgetBBVMapping/GlAccountPicker.vue', () => ({
 	default: {
 		name: 'GlAccountPicker',
@@ -198,6 +210,21 @@ describe('ReceiptCapture rendering', () => {
 		)
 		expect(html).toContain('files://receipt.pdf')
 		expect(html).toContain('data-testid="rc-rerequest"')
+	})
+
+	it('keeps the photo read-only on a draft, whose confirm keeps the source document, and editable on a plain receipt', async () => {
+		const photo = /<input[^>]*id="rc-photo-uri"[^>]*>/
+		const draft = (await render({ loading: false, record: DRAFT })).match(photo)[0]
+		const plain = (
+			await render({
+				loading: false,
+				record: { id: 'rec-1', amount: 10 },
+				form: { ...ReceiptCapture.data().form, amount: 10, category: 'Food' },
+			})
+		).match(photo)[0]
+
+		expect(draft).toContain('readonly')
+		expect(plain).not.toContain('readonly')
 	})
 
 	it('words a high-confidence draft hint differently and hides re-request without a source document', async () => {
