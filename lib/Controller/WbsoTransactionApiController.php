@@ -32,9 +32,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\WbsoRbacResolver;
-use OCA\Shillinq\Service\WbsoTransactionService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoTransactionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,7 +52,6 @@ use RuntimeException;
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-27
  */
 class WbsoTransactionApiController extends Controller {
-
 	/**
 	 * Identifier-safe slug pattern.
 	 *
@@ -60,63 +60,61 @@ class WbsoTransactionApiController extends Controller {
 	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
 	/**
+	 * Roles that may create and post transactions.
+	 *
+	 * @var array<int,string>
+	 */
+	private const BOOKKEEPER_ROLES = ['bookkeeper', 'administrator'];
+
+	/**
+	 * Refusal for a caller without a bookkeeper role.
+	 */
+	private const BOOKKEEPER_REFUSAL = 'Bookkeeper or administrator role required';
+
+	/**
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
-	 * @param WbsoTransactionService $transactions Transaction service.
-	 * @param WbsoRbacResolver $rbac Role resolver.
+	 * @param WbsoTransactionServiceInterface $transactions Transaction service.
+	 * @param WbsoRbacResolverInterface $rbac Role resolver.
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
+	 * @param AdministrationContextServiceInterface $administrationContext Membership check on the requested administration.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WbsoTransactionService $transactions,
-		private readonly WbsoRbacResolver $rbac,
+		private readonly WbsoTransactionServiceInterface $transactions,
+		private readonly WbsoRbacResolverInterface $rbac,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
 	 * GET /api/v1/transactions (bookkeeper / auditor / admin).
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
+		$administrationId = $this->guard()->read();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$filters = [
-			'status' => (string)$this->request->getParam('status', ''),
-			'type' => (string)$this->request->getParam('type', ''),
-			'dateFrom' => (string)$this->request->getParam('dateFrom', ''),
-			'dateTo' => (string)$this->request->getParam('dateTo', ''),
-		];
 
 		try {
-			$rows = $this->transactions->listTransactions(administrationId: $administrationId, filters: $filters);
+			$rows = $this->transactions->listTransactions(administrationId: $administrationId, filters: $this->listFilters());
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to load transactions', context: ['exception' => $e->getMessage()]);
 		}
 
-		return new JSONResponse(
-			[
-				'transactions' => $rows,
-				'canCreate' => $this->rbac->hasAny(['bookkeeper', 'administrator']),
-			],
-			Http::STATUS_OK
-		);
+		return $this->listing(rows: $rows);
 
 	}//end index()
 
@@ -126,21 +124,18 @@ class WbsoTransactionApiController extends Controller {
 	 * @param string $id Transaction id or transactionNumber.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		$administrationId = $this->guard()->read();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidId();
 		}
 
 		try {
@@ -149,11 +144,7 @@ class WbsoTransactionApiController extends Controller {
 			return $this->fail(message: 'Failed to load transaction', context: ['exception' => $e->getMessage()]);
 		}
 
-		if ($row === null) {
-			return new JSONResponse(['error' => 'Transaction not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		return new JSONResponse($row, Http::STATUS_OK);
+		return $this->rowOrNotFound(row: $row);
 	}//end show()
 
 	/**
@@ -166,40 +157,15 @@ class WbsoTransactionApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
+		$administrationId = $this->guard()->book(roles: self::BOOKKEEPER_ROLES, refusal: self::BOOKKEEPER_REFUSAL);
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
-
-		if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
-			return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$payload = [
-			'transactionNumber' => (string)$this->request->getParam('transactionNumber', ''),
-			'transactionType' => (string)$this->request->getParam('transactionType', ''),
-			'transactionDate' => (string)$this->request->getParam('transactionDate', ''),
-			'amount' => $this->request->getParam('amount', 0),
-			'description' => (string)$this->request->getParam('description', ''),
-		];
 
 		try {
-			$row = $this->transactions->createTransaction(administrationId: $administrationId, payload: $payload);
+			$row = $this->transactions->createTransaction(administrationId: $administrationId, payload: $this->transactionPayload());
 		} catch (InvalidArgumentException $e) {
-			$this->logger->error('WbsoTransactionApiController.create failed', ['exception' => $e]);
-
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Invalid transaction data'),
-					'error' => 'wbso-transaction-invalid-input',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
+			return $this->invalidTransaction(failure: $e);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to create transaction', context: ['exception' => $e->getMessage()]);
 		}
@@ -219,45 +185,16 @@ class WbsoTransactionApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function post(string $id): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
-			return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		$administrationId = $this->guard()->book(roles: self::BOOKKEEPER_ROLES, refusal: self::BOOKKEEPER_REFUSAL);
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidId();
 		}
 
-		try {
-			$row = $this->transactions->postTransaction(administrationId: $administrationId, transactionId: $id);
-		} catch (InvalidArgumentException $e) {
-			$this->logger->error('WbsoTransactionApiController.post failed', ['exception' => $e]);
-
-			return new JSONResponse(
-				['message' => $this->l10n->t('Transaction not found'), 'error' => 'wbso-transaction-not-found'],
-				Http::STATUS_NOT_FOUND,
-			);
-		} catch (RuntimeException $e) {
-			$this->logger->error('WbsoTransactionApiController.post failed', ['exception' => $e]);
-
-			return new JSONResponse(
-				['message' => $this->l10n->t('Unable to post transaction'), 'error' => 'wbso-transaction-conflict'],
-				Http::STATUS_CONFLICT,
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(message: 'Failed to post transaction', context: ['exception' => $e->getMessage()]);
-		}
-
-		return new JSONResponse($row, Http::STATUS_OK);
+		return $this->postTransaction(administrationId: $administrationId, transactionId: $id);
 	}//end post()
 
 	/**
@@ -272,93 +209,17 @@ class WbsoTransactionApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function reverse(string $id): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		if ($this->rbac->hasAny(['administrator']) === false) {
-			return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		$administrationId = $this->guard()->book(roles: ['administrator'], refusal: 'Administrator role required');
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidId();
 		}
 
-		$reason = trim((string)$this->request->getParam('reason', ''));
-
-		try {
-			$row = $this->transactions->reverseTransaction(
-				administrationId: $administrationId,
-				transactionId: $id,
-				reason: $reason,
-			);
-		} catch (InvalidArgumentException $e) {
-			$this->logger->error('WbsoTransactionApiController.reverse failed', ['exception' => $e]);
-
-			if ($e->getMessage() === 'Transaction not found') {
-				return new JSONResponse(
-					['message' => $this->l10n->t('Transaction not found'), 'error' => 'wbso-transaction-not-found'],
-					Http::STATUS_NOT_FOUND,
-				);
-			}
-
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Invalid reversal request'),
-					'error' => 'wbso-transaction-invalid-input',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
-		} catch (RuntimeException $e) {
-			$this->logger->error('WbsoTransactionApiController.reverse failed', ['exception' => $e]);
-
-			return new JSONResponse(
-				['message' => $this->l10n->t('Unable to reverse transaction'), 'error' => 'wbso-transaction-conflict'],
-				Http::STATUS_CONFLICT,
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(message: 'Failed to reverse transaction', context: ['exception' => $e->getMessage()]);
-		}
-
-		return new JSONResponse($row, Http::STATUS_CREATED);
+		return $this->reverseTransaction(administrationId: $administrationId, transactionId: $id);
 	}//end reverse()
-
-	/**
-	 * Authentication precondition.
-	 *
-	 * @return JSONResponse|null
-	 */
-	private function requireAuthenticated(): ?JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		return null;
-	}//end requireAuthenticated()
-
-	/**
-	 * Resolve administration scope, default to the demo administration.
-	 *
-	 * @return string|null
-	 */
-	private function resolveAdministration(): ?string {
-		$value = trim((string)$this->request->getParam('administration_id', 'adm-consultancy-nl'));
-		if ($value === '') {
-			return null;
-		}
-
-		if (preg_match(self::ID_PATTERN, $value) !== 1) {
-			return null;
-		}
-
-		return $value;
-	}//end resolveAdministration()
 
 	/**
 	 * Logger + 500 response without stack-traces.
@@ -373,4 +234,245 @@ class WbsoTransactionApiController extends Controller {
 
 		return new JSONResponse(['error' => $message], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}//end fail()
+
+	/**
+	 * The access steps of this API.
+	 *
+	 * @return WbsoActionGuard
+	 */
+	private function guard(): WbsoActionGuard {
+		return new WbsoActionGuard(
+			caller: new WbsoCallerCheck(userSession: $this->userSession, rbac: $this->rbac),
+			scope: new WbsoAdministrationScope(request: $this->request, administrationContext: $this->administrationContext),
+		);
+
+	}//end guard()
+
+	/**
+	 * The listing filters from the request.
+	 *
+	 * @return array<string,string>
+	 */
+	private function listFilters(): array {
+		return [
+			'status' => (string)$this->request->getParam('status', ''),
+			'type' => (string)$this->request->getParam('type', ''),
+			'dateFrom' => (string)$this->request->getParam('dateFrom', ''),
+			'dateTo' => (string)$this->request->getParam('dateTo', ''),
+		];
+
+	}//end listFilters()
+
+	/**
+	 * The transaction to create, from the request.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function transactionPayload(): array {
+		return [
+			'transactionNumber' => (string)$this->request->getParam('transactionNumber', ''),
+			'transactionType' => (string)$this->request->getParam('transactionType', ''),
+			'transactionDate' => (string)$this->request->getParam('transactionDate', ''),
+			'amount' => $this->request->getParam('amount', 0),
+			'description' => (string)$this->request->getParam('description', ''),
+		];
+
+	}//end transactionPayload()
+
+	/**
+	 * Answer a transaction the service rejected as invalid with a 400.
+	 *
+	 * @param InvalidArgumentException $failure The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidTransaction(InvalidArgumentException $failure): JSONResponse {
+		$this->logger->error('WbsoTransactionApiController.create failed', ['exception' => $failure]);
+
+		return new JSONResponse(
+			['message' => $this->l10n->t('Invalid transaction data'), 'error' => 'wbso-transaction-invalid-input'],
+			Http::STATUS_BAD_REQUEST,
+		);
+
+	}//end invalidTransaction()
+
+	/**
+	 * Post a draft transaction: 404 when the service does not know it, 409
+	 * when its state does not allow posting.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $transactionId The transaction to post.
+	 *
+	 * @return JSONResponse
+	 */
+	private function postTransaction(string $administrationId, string $transactionId): JSONResponse {
+		try {
+			$row = $this->transactions->postTransaction(administrationId: $administrationId, transactionId: $transactionId);
+		} catch (InvalidArgumentException $e) {
+			$this->logger->error('WbsoTransactionApiController.post failed', ['exception' => $e]);
+
+			return $this->transactionNotFound();
+		} catch (RuntimeException $e) {
+			return $this->postConflict(failure: $e);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to post transaction', context: ['exception' => $e->getMessage()]);
+		}
+
+		return new JSONResponse($row, Http::STATUS_OK);
+
+	}//end postTransaction()
+
+	/**
+	 * Answer a post the transaction's state does not allow with a 409.
+	 *
+	 * @param RuntimeException $failure The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function postConflict(RuntimeException $failure): JSONResponse {
+		$this->logger->error('WbsoTransactionApiController.post failed', ['exception' => $failure]);
+
+		return new JSONResponse(
+			['message' => $this->l10n->t('Unable to post transaction'), 'error' => 'wbso-transaction-conflict'],
+			Http::STATUS_CONFLICT,
+		);
+
+	}//end postConflict()
+
+	/**
+	 * Answer a reversal the transaction's state does not allow with a 409.
+	 *
+	 * @param RuntimeException $failure The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function reversalConflict(RuntimeException $failure): JSONResponse {
+		$this->logger->error('WbsoTransactionApiController.reverse failed', ['exception' => $failure]);
+
+		return new JSONResponse(
+			['message' => $this->l10n->t('Unable to reverse transaction'), 'error' => 'wbso-transaction-conflict'],
+			Http::STATUS_CONFLICT,
+		);
+
+	}//end reversalConflict()
+
+	/**
+	 * Reverse a posted transaction with the request's reason.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $transactionId The transaction to reverse.
+	 *
+	 * @return JSONResponse
+	 */
+	private function reverseTransaction(string $administrationId, string $transactionId): JSONResponse {
+		try {
+			$row = $this->reversal(administrationId: $administrationId, transactionId: $transactionId);
+		} catch (InvalidArgumentException $e) {
+			return $this->reversalRejected(failure: $e);
+		} catch (RuntimeException $e) {
+			return $this->reversalConflict(failure: $e);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to reverse transaction', context: ['exception' => $e->getMessage()]);
+		}
+
+		return new JSONResponse($row, Http::STATUS_CREATED);
+
+	}//end reverseTransaction()
+
+	/**
+	 * Hand the reversal, with the request's trimmed reason, to the service.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $transactionId The transaction to reverse.
+	 *
+	 * @return array<string,mixed> The reversing transaction.
+	 */
+	private function reversal(string $administrationId, string $transactionId): array {
+		return $this->transactions->reverseTransaction(
+			administrationId: $administrationId,
+			transactionId: $transactionId,
+			reason: trim((string)$this->request->getParam('reason', '')),
+		);
+
+	}//end reversal()
+
+	/**
+	 * The listing response, with whether the caller may create.
+	 *
+	 * @param array<int,mixed> $rows The transactions.
+	 *
+	 * @return JSONResponse
+	 */
+	private function listing(array $rows): JSONResponse {
+		return new JSONResponse(
+			[
+				'transactions' => $rows,
+				'canCreate' => $this->rbac->hasAny(self::BOOKKEEPER_ROLES),
+			],
+			Http::STATUS_OK
+		);
+
+	}//end listing()
+
+	/**
+	 * Answer a reversal the service rejected: 404 for an unknown transaction,
+	 * 400 for an invalid request.
+	 *
+	 * @param InvalidArgumentException $failure The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function reversalRejected(InvalidArgumentException $failure): JSONResponse {
+		$this->logger->error('WbsoTransactionApiController.reverse failed', ['exception' => $failure]);
+
+		if ($failure->getMessage() === 'Transaction not found') {
+			return $this->transactionNotFound();
+		}
+
+		return new JSONResponse(
+			['message' => $this->l10n->t('Invalid reversal request'), 'error' => 'wbso-transaction-invalid-input'],
+			Http::STATUS_BAD_REQUEST,
+		);
+
+	}//end reversalRejected()
+
+	/**
+	 * The 404 for a transaction the service does not know.
+	 *
+	 * @return JSONResponse
+	 */
+	private function transactionNotFound(): JSONResponse {
+		return new JSONResponse(
+			['message' => $this->l10n->t('Transaction not found'), 'error' => 'wbso-transaction-not-found'],
+			Http::STATUS_NOT_FOUND,
+		);
+
+	}//end transactionNotFound()
+
+	/**
+	 * The 400 for a malformed transaction id.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidId(): JSONResponse {
+		return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
+
+	}//end invalidId()
+
+	/**
+	 * The transaction, or a 404 when there is none.
+	 *
+	 * @param array<string,mixed>|null $row The transaction.
+	 *
+	 * @return JSONResponse
+	 */
+	private function rowOrNotFound(?array $row): JSONResponse {
+		if ($row === null) {
+			return new JSONResponse(['error' => 'Transaction not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return new JSONResponse($row, Http::STATUS_OK);
+
+	}//end rowOrNotFound()
+
 }//end class

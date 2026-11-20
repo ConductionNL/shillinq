@@ -1,0 +1,140 @@
+{
+    "withSamples": {
+        "aggregation": {
+            "protocolId": "cp-1",
+            "materialityAmount": 10000.0,
+            "topics": [
+                {
+                    "topic": "rechtmatigheid",
+                    "acceptabelCount": 1,
+                    "teCorrigerenCount": 0,
+                    "materieelCount": 0,
+                    "rechtmatigheidCents": 0,
+                    "getrouwheidCents": 0,
+                    "verdict": "acceptable",
+                    "rechtmatigheidAmount": 0,
+                    "getrouwheidAmount": 0
+                }
+            ],
+            "proposedOpinion": "goedkeurend"
+        },
+        "calls": [
+            [
+                "Materialiteit",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "ToleranceMatrix",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "AuditSample",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "AuditFinding",
+                []
+            ]
+        ]
+    },
+    "noSamples": {
+        "aggregation": {
+            "protocolId": "cp-1",
+            "materialityAmount": 10000.0,
+            "topics": [],
+            "proposedOpinion": "goedkeurend"
+        },
+        "calls": [
+            [
+                "Materialiteit",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "ToleranceMatrix",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "AuditSample",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "noMateriality": {
+        "aggregation": {
+            "protocolId": "cp-1",
+            "materialityAmount": 0.0,
+            "topics": [
+                {
+                    "topic": "rechtmatigheid",
+                    "acceptabelCount": 1,
+                    "teCorrigerenCount": 0,
+                    "materieelCount": 0,
+                    "rechtmatigheidCents": 0,
+                    "getrouwheidCents": 0,
+                    "verdict": "acceptable",
+                    "rechtmatigheidAmount": 0,
+                    "getrouwheidAmount": 0
+                }
+            ],
+            "proposedOpinion": "goedkeurend"
+        },
+        "calls": [
+            [
+                "Materialiteit",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "Controleprotocol",
+                "find:cp-1"
+            ],
+            [
+                "ToleranceMatrix",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "AuditSample",
+                {
+                    "filters": {
+                        "protocol": "cp-1"
+                    }
+                }
+            ],
+            [
+                "AuditFinding",
+                []
+            ]
+        ]
+    }
+}

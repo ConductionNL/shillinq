@@ -23,8 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Budget;
 
 use OCA\Shillinq\Budget\BudgetEditingService;
-use OCA\Shillinq\Budget\BudgetEditRefusedException;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * Typing, spreading and multi-year budgeting (REQ-PBE-001 to REQ-PBE-003).
@@ -117,7 +118,7 @@ final class BudgetEditingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAClosedBudgetIsRefused(): void {
-		$this->store->setSchema('AnnualBudget')->patchObject($this->ids['budget-2026'], ['state' => 'closed']);
+		$this->store->setSchema('AnnualBudget')->patchObject(new ObjectPatch(objectId: $this->ids['budget-2026'], data: ['state' => 'closed']));
 
 		$this->assertFalse($this->service()->lines('adm-voorbeeld', $this->ids['budget-2026'])['rows'][1]['editable']);
 		$this->expectExceptionMessage('This budget is closed. Its amounts can no longer change.');

@@ -18,12 +18,13 @@ use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
 use OCA\Shillinq\Listener\PurchaseOrderDecisionLockListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ServerWriteAuthority;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Purchase order and supplier invoice approvals only happen through their services.
@@ -94,22 +95,34 @@ final class PurchasingGuardsTest extends TestCase {
 			public function setSchema($s): self {
 				return $this;
 			}
-			public function findAll(array $config = [], bool $rbac = true, bool $multi = true): array {
-				$id = ($config['filters']['id'] ?? '');
-				return array_values(array_filter($this->rows, fn (array $r): bool => $r['id'] === $id));
+			public function find(string $id, ...$named): ObjectEntity {
+				$named = LegacyObjectArgs::flatten(args: $named);
+				foreach ($this->rows as $row) {
+					if ($row['id'] === $id) {
+						$entity = new ObjectEntity();
+						$entity->setRegister('shillinq');
+						$entity->setSchema('APTransaction');
+						$entity->setObject($row + ['administrationId' => 'adm-1', 'supplierInvoiceId' => 'inv-1']);
+						return $entity;
+					}
+				}
+				throw new \RuntimeException('DoesNotExist');
 			}
 		};
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
-		return new SupplierInvoicePayGuard($container, $settings, $this->createMock(LoggerInterface::class));
+		$schemas = $this->createMock(ListenerSchemaResolver::class);
+		$schemas->method('matchesRegisterAndSchema')->willReturn(true);
+		return new SupplierInvoicePayGuard($container, $settings, $this->createMock(LoggerInterface::class), $schemas);
 	}
 
 	public function testInvoiceIsPaidOnlyWhenItsApTransactionIsPaid(): void {
 		$guard = $this->payGuard([['id' => 'ap-paid', 'state' => 'paid'], ['id' => 'ap-open', 'state' => 'issued']]);
-		self::assertTrue($guard->check(['apTransactionId' => 'ap-paid'], 'pay', 'ann')->isAllowed());
-		self::assertFalse($guard->check(['apTransactionId' => 'ap-open'], 'pay', 'ann')->isAllowed());
+		self::assertTrue($guard->check(['id' => 'inv-1', 'apTransactionId' => 'ap-paid', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
+		self::assertFalse($guard->check(['id' => 'inv-1', 'apTransactionId' => 'ap-open', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
+		self::assertFalse($guard->check(['id' => 'inv-2', 'apTransactionId' => 'ap-paid', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
 		self::assertFalse($guard->check(['apTransactionId' => 'ap-missing'], 'pay', 'ann')->isAllowed());
 		self::assertFalse($guard->check([], 'pay', 'ann')->isAllowed());
 	}

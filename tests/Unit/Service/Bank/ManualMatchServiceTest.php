@@ -31,18 +31,23 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * REQ-BMM-001, REQ-BMM-002, REQ-BMM-003.
@@ -118,7 +123,7 @@ final class ManualMatchServiceTest extends TestCase {
 			onRan: function (array $record, array $object) use (&$settlementListener): void {
 				if ($record['schema'] === 'JournalEntry' && $record['action'] === 'postDirect') {
 					// MaterialiseGlTransactionAction writes the back reference.
-					$this->store->setSchema('JournalEntry')->patchObject($record['objectId'], ['glTransactionId' => 'gl-' . $record['objectId']]);
+					$this->store->setSchema('JournalEntry')->patchObject(new ObjectPatch(objectId: $record['objectId'], data: ['glTransactionId' => 'gl-' . $record['objectId']]));
 				}
 
 				if ($record['schema'] === 'ReconciliationMatch') {
@@ -126,7 +131,7 @@ final class ManualMatchServiceTest extends TestCase {
 					$entity->setObject($object);
 					$entity->setSchema('ReconciliationMatch');
 					$entity->setRegister('shillinq');
-					$settlementListener->handle(new ObjectTransitionedEvent($entity, $record['action'], $record['from'], $record['to'], 'bookkeeper', 'shillinq', 'ReconciliationMatch'));
+					$settlementListener->handle(new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: $record['action'], from: $record['from'], to: $record['to']), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'ReconciliationMatch'), actor: new TransitionActor(userId: 'bookkeeper')));
 				}
 			}
 		);
@@ -135,7 +140,7 @@ final class ManualMatchServiceTest extends TestCase {
 			settlement: new InvoiceSettlementService(
 				objectService: $this->store,
 				transitions: $this->runner(),
-				settings: $this->settings(),
+				registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 				logger: $this->createMock(LoggerInterface::class),
 			),
 			schemas: $this->createConfiguredMock(ListenerSchemaResolver::class, ['matchesSchema' => true]),
@@ -161,10 +166,10 @@ final class ManualMatchServiceTest extends TestCase {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return $settings;
 
@@ -179,7 +184,7 @@ final class ManualMatchServiceTest extends TestCase {
 		return new ManualMatchService(
 			objectService: $this->store,
 			transitions: $this->runner(),
-			settings: $this->settings(),
+			registerLocation: $this->settings(),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 
@@ -194,7 +199,7 @@ final class ManualMatchServiceTest extends TestCase {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find($id, schema: $schema)->getObject();
+		return $this->store->find($id, new ObjectFindOptions(schema: $schema))->getObject();
 
 	}//end stored()
 
@@ -351,7 +356,7 @@ final class ManualMatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testBankAccountWithoutLedgerAccountIsRefused(): void {
-		$this->store->setSchema('BankAccount')->patchObject('ba-1', ['ledgerAccountNumber' => '']);
+		$this->store->setSchema('BankAccount')->patchObject(new ObjectPatch(objectId: 'ba-1', data: ['ledgerAccountNumber' => '']));
 		$service = $this->service();
 
 		$this->expectExceptionMessage('Set the ledger account of bank account NL91BANK0417164300 first.');
@@ -365,7 +370,7 @@ final class ManualMatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReconciledStatementIsRefused(): void {
-		$this->store->setSchema('BankStatement')->patchObject('stmt-1', ['lifecycleState' => 'reconciled']);
+		$this->store->setSchema('BankStatement')->patchObject(new ObjectPatch(objectId: 'stmt-1', data: ['lifecycleState' => 'reconciled']));
 		$service = $this->service();
 
 		$this->expectExceptionMessage('The bank statement of this line is already reconciled.');

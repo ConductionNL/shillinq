@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-007, REQ-DP-011)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -21,12 +24,13 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\DepositReconciliationService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests the idempotent reconciliation + polling fallback (REQ-DP-006/007/011).
@@ -92,7 +96,9 @@ final class DepositReconciliationServiceTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->rbacFlags[] = $_rbac;
 				$this->saved[] = $object;
 				return $object;
@@ -524,4 +530,29 @@ final class DepositReconciliationServiceTest extends TestCase {
 		self::assertSame(1, $counters['reconciled']);
 		self::assertSame('failed', $saved[0]['state']);
 	}//end testPollPendingViaAdapterProjectsFailedLifecycleOntoFailedOutcome()
+
+	/**
+	 * An unknown outcome is a no-op that reads nothing; a void stamps voidedAt
+	 * and the webhook time; a failure without details records the defaults.
+	 *
+	 * @return void
+	 */
+	public function testUnknownOutcomeVoidAndDefaultFailureDetails(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub([['paymentIntentId' => 'tr_1', 'state' => 'pending']], $saved);
+		$service = $this->makeService($stub);
+
+		self::assertSame(DepositReconciliationService::RESULT_NOOP, $service->reconcile(paymentIntentId: 'tr_1', outcome: 'refunded', gateway: 'mollie'));
+		self::assertSame([], $stub->rbacFlags);
+
+		self::assertSame(DepositReconciliationService::RESULT_APPLIED, $service->reconcile(paymentIntentId: 'tr_1', outcome: DepositReconciliationService::OUTCOME_VOIDED, gateway: 'mollie'));
+		self::assertSame(['voided', 'mollie'], [$saved[0]['state'], $saved[0]['paymentGateway']]);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $saved[0]['voidedAt']);
+		self::assertMatchesRegularExpression('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$/', $saved[0]['lastWebhookAttempt']);
+		self::assertArrayNotHasKey('authorizedAt', $saved[0]);
+
+		self::assertSame(DepositReconciliationService::RESULT_APPLIED, $service->reconcile(paymentIntentId: 'tr_1', outcome: DepositReconciliationService::OUTCOME_FAILED, gateway: 'stripe'));
+		self::assertSame(['failed', 'payment_failed', 'Payment failed at gateway.'], [$saved[1]['state'], $saved[1]['lastErrorCode'], $saved[1]['lastErrorMessage']]);
+		self::assertArrayNotHasKey('voidedAt', $saved[1]);
+	}//end testUnknownOutcomeVoidAndDefaultFailureDetails()
 }//end class

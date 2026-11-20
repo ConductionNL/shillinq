@@ -288,4 +288,59 @@ final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 		self::assertFalse($guard->trialBalanceVerifies(['periodId' => '2026-04']));
 
 	}//end testUnscopedPeriodCountsEveryLine()
+
+	/**
+	 * Amounts are compared in rounded cents and lines with any other side are ignored.
+	 *
+	 * @return void
+	 */
+	public function testCentRoundingAndForeignSides(): void {
+		$guard = $this->buildGuard(
+			[],
+			[
+				['periodId' => 'p', 'side' => 'debit', 'amount' => 0.1],
+				['periodId' => 'p', 'side' => 'debit', 'amount' => '0.2'],
+				['periodId' => 'p', 'side' => 'credit', 'amount' => 0.3],
+				['periodId' => 'p', 'side' => 'memo', 'amount' => 999],
+				['periodId' => 'p', 'amount' => 5],
+				['periodId' => 'q', 'side' => 'debit', 'amount' => 7],
+			]
+		);
+
+		self::assertTrue($guard->trialBalanceVerifies(['periodId' => 'p']));
+
+	}//end testCentRoundingAndForeignSides()
+
+	/**
+	 * A string id is resolved through FiscalPeriod; an unknown id is denied.
+	 *
+	 * @return void
+	 */
+	public function testStringIdIsResolvedAndUnknownIdDenied(): void {
+		$guard = $this->buildGuard(
+			[['id' => 'fp-1', 'periodId' => 'p']],
+			[['periodId' => 'p', 'side' => 'debit', 'amount' => 3]]
+		);
+
+		self::assertFalse($guard->trialBalanceVerifies('fp-1'));
+		self::assertFalse($guard->trialBalanceVerifies('fp-missing'));
+
+	}//end testStringIdIsResolvedAndUnknownIdDenied()
+
+	/**
+	 * No period scope, or an administration with no transactions, is trivially balanced.
+	 *
+	 * @return void
+	 */
+	public function testMissingScopeIsTriviallyBalanced(): void {
+		$guard = $this->buildGuard(
+			[['id' => 'fp-2', 'administrationId' => 'adm-1']],
+			[['periodId' => 'p', 'side' => 'debit', 'amount' => 3], ['side' => 'debit', 'amount' => 1]]
+		);
+
+		self::assertTrue($guard->trialBalanceVerifies(['periodId' => '']));
+		self::assertTrue($guard->trialBalanceVerifies('fp-2'));
+		self::assertTrue($guard->trialBalanceVerifies(['periodId' => 'p', 'administrationId' => 'adm-none']));
+
+	}//end testMissingScopeIsTriviallyBalanced()
 }//end class

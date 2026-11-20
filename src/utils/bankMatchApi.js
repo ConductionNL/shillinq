@@ -1,24 +1,21 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// banking-manual-match: the calls behind the unmatched items bulk actions.
+// banking-manual-match: the call behind the unmatched items bulk actions.
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
-const REGISTER_SLUG = 'shillinq'
-
 /**
- * Classify selected ReconciliationMatch rows, one bulk call per reconciliation.
+ * Classify selected ReconciliationMatch rows in one call.
  *
- * The endpoint is scoped to one reconciliation, and a selection on the
- * unmatched items page can span several, so the matches are read first and
- * grouped by their `reconId`.
+ * The server reads each match's reconciliation and checks its administration,
+ * so a selection may span several reconciliations.
  *
  * @param {Array<string>} matchIds The selected match ids.
  * @param {string} resolutionStatus `timing`, `pending` or `adjustment`.
  * @param {string} resolutionReason The shared reason.
- * @return {Promise<{applied: number, failed: number}>} Totals over all groups.
+ * @return {Promise<{applied: number, failed: number}>} Totals.
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function classifyUnmatchedItems(
@@ -26,37 +23,12 @@ export async function classifyUnmatchedItems(
 	resolutionStatus,
 	resolutionReason,
 ) {
-	const groups = {}
-	let failed = 0
-	for (const id of matchIds) {
-		try {
-			const response = await axios.get(
-				generateUrl(
-					`/apps/openregister/api/objects/${REGISTER_SLUG}/ReconciliationMatch/${encodeURIComponent(id)}`,
-				),
-			)
-			const reconId = String(response.data?.reconId || '')
-			if (reconId === '') {
-				failed++
-				continue
-			}
-			groups[reconId] = [...(groups[reconId] || []), id]
-		} catch {
-			failed++
-		}
+	const response = await axios.post(
+		generateUrl('/apps/shillinq/api/reconciliation-matches/bulk-resolve'),
+		{ matchIds, resolutionStatus, resolutionReason },
+	)
+	return {
+		applied: Number(response.data?.applied ?? 0),
+		failed: Object.keys(response.data?.failed ?? {}).length,
 	}
-
-	let applied = 0
-	for (const [reconId, ids] of Object.entries(groups)) {
-		const response = await axios.post(
-			generateUrl(
-				`/apps/shillinq/api/reconciliations/${encodeURIComponent(reconId)}/matches/bulk-resolve`,
-			),
-			{ matchIds: ids, resolutionStatus, resolutionReason },
-		)
-		applied += Number(response.data?.applied ?? 0)
-		failed += Object.keys(response.data?.failed ?? {}).length
-	}
-
-	return { applied, failed }
 }

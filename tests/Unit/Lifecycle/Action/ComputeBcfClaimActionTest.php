@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\ComputeBcfClaimAction;
 use OCA\Shillinq\Service\BcfClaimService;
 use OCA\Shillinq\Service\BcfCompensationCalculator;
@@ -86,7 +87,14 @@ final class ComputeBcfClaimActionTest extends TestCase {
 			'claimNumber' => 'BCF-2026-Q3',
 			'state' => 'draft',
 		];
-		$saved = $this->action($os)->execute($claim, $claim, [], 'compute');
+		$saved = $this->action($os)->execute(
+			new LifecycleActionContext(
+				objectData: $claim,
+				previousData: $claim,
+				parameters: [],
+				actionName: 'compute'
+			)
+		);
 
 		self::assertSame(23100.0, $saved['totalCompensableAmount']);
 		// The approval-threshold guard on submit reads totalClaimAmount.
@@ -105,7 +113,14 @@ final class ComputeBcfClaimActionTest extends TestCase {
 	public function testAClaimWithoutAQuarterIsRefused(): void {
 		$this->expectException(\InvalidArgumentException::class);
 		$claim = ['administrationId' => 'adm-1', 'state' => 'draft'];
-		$this->action(new InMemoryObjectService())->execute($claim, $claim, [], 'compute');
+		$this->action(new InMemoryObjectService())->execute(
+			new LifecycleActionContext(
+				objectData: $claim,
+				previousData: $claim,
+				parameters: [],
+				actionName: 'compute'
+			)
+		);
 
 	}//end testAClaimWithoutAQuarterIsRefused()
 }//end class

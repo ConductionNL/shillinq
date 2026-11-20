@@ -1,0 +1,784 @@
+{
+    "full": [
+        {
+            "type": "cover",
+            "title": "BBV-jaarstukken",
+            "subtitle": "Jaarstukken — programmaverantwoording",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Documenttype": "Jaarstukken",
+                "Soort lichaam": "gemeente",
+                "Jurisdictie": "NL",
+                "Boekjaar": "2025",
+                "Valuta": "EUR",
+                "Onderdelen": "programmaverantwoording, jaarrekening"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Programmaplan (art. 8 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "table",
+            "styleKey": "reportTable",
+            "rows": [
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Code",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 12,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Programma",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    }
+                ],
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "P1",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 12,
+                        "cellStyle": [],
+                        "text": "Veiligheid",
+                        "textStyle": "value",
+                        "textOptions": []
+                    }
+                ],
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "P2",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 12,
+                        "cellStyle": [],
+                        "text": "Onderwijs",
+                        "textStyle": "value",
+                        "textOptions": []
+                    }
+                ]
+            ]
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Algemene posten",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Algemene dekkingsmiddelen",
+                    "amount": 1250000.5
+                },
+                {
+                    "label": "Overhead",
+                    "amount": 300000
+                },
+                {
+                    "label": "Heffing vennootschapsbelasting (VPB)",
+                    "amount": 12.34
+                },
+                {
+                    "label": "Onvoorzien",
+                    "amount": 0
+                }
+            ],
+            "total": null,
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Verplichte paragrafen (art. 9 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Lokale heffingen": "Aanwezig",
+                "Weerstandsvermogen en risicobeheersing": "Ontbreekt",
+                "Onderhoud kapitaalgoederen": "Ontbreekt",
+                "Financing": "Aanwezig",
+                "Operations": "Ontbreekt",
+                "Verbonden partijen": "Ontbreekt",
+                "LandPolicy": "Aanwezig"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Overzicht taakvelden",
+            "depth": 2
+        },
+        {
+            "type": "table",
+            "styleKey": "reportTable",
+            "rows": [
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Code",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Taakveld",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Baten",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Lasten",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    }
+                ],
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "0.1",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "Bestuur",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "EUR 10,50",
+                        "textStyle": "amount",
+                        "textOptions": {
+                            "alignment": "end"
+                        }
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "EUR 2.000,00",
+                        "textStyle": "amount",
+                        "textOptions": {
+                            "alignment": "end"
+                        }
+                    }
+                ],
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "1.1",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "Crisisbeheersing",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "EUR 0,00",
+                        "textStyle": "amount",
+                        "textOptions": {
+                            "alignment": "end"
+                        }
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "EUR 99,99",
+                        "textStyle": "amount",
+                        "textOptions": {
+                            "alignment": "end"
+                        }
+                    }
+                ],
+                [
+                    {
+                        "widthCm": 8,
+                        "cellStyle": {
+                            "bgColor": "EEF2FF",
+                            "gridSpan": 2
+                        },
+                        "text": "Totaal",
+                        "textStyle": "amountBold",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "EEF2FF"
+                        },
+                        "text": "EUR 10,50",
+                        "textStyle": "amountBold",
+                        "textOptions": {
+                            "alignment": "end"
+                        }
+                    },
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "EEF2FF"
+                        },
+                        "text": "EUR 2.099,99",
+                        "textStyle": "amountBold",
+                        "textOptions": {
+                            "alignment": "end"
+                        }
+                    }
+                ]
+            ]
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Jaarrekening (art. 24 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Overzicht van baten en lasten": "Ja",
+                "Balans": "Nee",
+                "Accountantsverklaring": "Ja"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Vaste activa (art. 59/62 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Vast actief",
+            "amountHead": "Verkrijgings-/vervaardigingsprijs",
+            "lines": [
+                {
+                    "label": "Raadhuis (materieel, geactiveerd)",
+                    "amount": 5000000
+                },
+                {
+                    "label": "Software (immaterieel, niet geactiveerd)",
+                    "amount": 12000.5
+                }
+            ],
+            "total": {
+                "label": "Totaal vaste activa",
+                "amount": 5012000.5
+            },
+            "currency": "EUR"
+        }
+    ],
+    "begrotingUsd": [
+        {
+            "type": "cover",
+            "title": "BBV-jaarstukken",
+            "subtitle": "Begroting — programmaverantwoording",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Documenttype": "Begroting",
+                "Soort lichaam": "gemeente",
+                "Jurisdictie": "NL",
+                "Boekjaar": "2025",
+                "Valuta": "USD",
+                "Onderdelen": "programmaverantwoording, jaarrekening"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Programmaplan (art. 8 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "table",
+            "styleKey": "reportTable",
+            "rows": [
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Code",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 12,
+                        "cellStyle": {
+                            "bgColor": "1A2A6C"
+                        },
+                        "text": "Programma",
+                        "textStyle": "tableHeader",
+                        "textOptions": []
+                    }
+                ],
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "P1",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 12,
+                        "cellStyle": [],
+                        "text": "Veiligheid",
+                        "textStyle": "value",
+                        "textOptions": []
+                    }
+                ],
+                [
+                    {
+                        "widthCm": 4,
+                        "cellStyle": [],
+                        "text": "P2",
+                        "textStyle": "value",
+                        "textOptions": []
+                    },
+                    {
+                        "widthCm": 12,
+                        "cellStyle": [],
+                        "text": "Onderwijs",
+                        "textStyle": "value",
+                        "textOptions": []
+                    }
+                ]
+            ]
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Algemene posten",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Algemene dekkingsmiddelen",
+                    "amount": 1250000.5
+                },
+                {
+                    "label": "Overhead",
+                    "amount": 300000
+                },
+                {
+                    "label": "Heffing vennootschapsbelasting (VPB)",
+                    "amount": 12.34
+                },
+                {
+                    "label": "Onvoorzien",
+                    "amount": 0
+                }
+            ],
+            "total": null,
+            "currency": "USD"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Verplichte paragrafen (art. 9 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Lokale heffingen": "Aanwezig",
+                "Weerstandsvermogen en risicobeheersing": "Ontbreekt",
+                "Onderhoud kapitaalgoederen": "Ontbreekt",
+                "Financing": "Aanwezig",
+                "Operations": "Ontbreekt",
+                "Verbonden partijen": "Ontbreekt",
+                "LandPolicy": "Aanwezig"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Overzicht taakvelden",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen taakvelden opgenomen."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Jaarrekening (art. 24 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Overzicht van baten en lasten": "Ja",
+                "Balans": "Nee",
+                "Accountantsverklaring": "Ja"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Vaste activa (art. 59/62 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen vaste activa opgenomen."
+        }
+    ],
+    "bare": [
+        {
+            "type": "cover",
+            "title": "BBV-jaarstukken",
+            "subtitle": "Jaarstukken — programmaverantwoording",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Documenttype": "Jaarstukken",
+                "Valuta": "EUR"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Programmaplan (art. 8 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen programma's opgenomen in het programmaplan."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Algemene posten",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Algemene dekkingsmiddelen",
+                    "amount": 0
+                },
+                {
+                    "label": "Overhead",
+                    "amount": 0
+                },
+                {
+                    "label": "Heffing vennootschapsbelasting (VPB)",
+                    "amount": 0
+                },
+                {
+                    "label": "Onvoorzien",
+                    "amount": 0
+                }
+            ],
+            "total": null,
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Verplichte paragrafen (art. 9 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Lokale heffingen": "Ontbreekt",
+                "Weerstandsvermogen en risicobeheersing": "Ontbreekt",
+                "Onderhoud kapitaalgoederen": "Ontbreekt",
+                "Financing": "Ontbreekt",
+                "Operations": "Ontbreekt",
+                "Verbonden partijen": "Ontbreekt",
+                "LandPolicy": "Ontbreekt"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Overzicht taakvelden",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen taakvelden opgenomen."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Jaarrekening (art. 24 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen gegevens beschikbaar."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Vaste activa (art. 59/62 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen vaste activa opgenomen."
+        }
+    ],
+    "noProgrammes": [
+        {
+            "type": "cover",
+            "title": "BBV-jaarstukken",
+            "subtitle": "Jaarstukken — programmaverantwoording",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Documenttype": "Jaarstukken",
+                "Valuta": "EUR"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Programmaplan (art. 8 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen programma's opgenomen in het programmaplan."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Algemene posten",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Algemene dekkingsmiddelen",
+                    "amount": 0
+                },
+                {
+                    "label": "Overhead",
+                    "amount": 0
+                },
+                {
+                    "label": "Heffing vennootschapsbelasting (VPB)",
+                    "amount": 0
+                },
+                {
+                    "label": "Onvoorzien",
+                    "amount": 0
+                }
+            ],
+            "total": null,
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Verplichte paragrafen (art. 9 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Lokale heffingen": "Ontbreekt",
+                "Weerstandsvermogen en risicobeheersing": "Ontbreekt",
+                "Onderhoud kapitaalgoederen": "Ontbreekt",
+                "Financing": "Ontbreekt",
+                "Operations": "Ontbreekt",
+                "Verbonden partijen": "Ontbreekt",
+                "LandPolicy": "Ontbreekt"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Overzicht taakvelden",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen taakvelden opgenomen."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Jaarrekening (art. 24 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen gegevens beschikbaar."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Vaste activa (art. 59/62 BBV)",
+            "depth": 2
+        },
+        {
+            "type": "note",
+            "text": "Geen vaste activa opgenomen."
+        }
+    ]
+}

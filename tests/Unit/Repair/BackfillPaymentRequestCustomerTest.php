@@ -23,12 +23,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillPaymentRequestCustomer;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A PaymentRequest store with OpenRegister's paging and JSON-property filters.
@@ -100,7 +101,11 @@ final class BackfillRequestStore {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$this->saved[] = ['object' => $object, 'uuid' => $uuid, 'rbac' => $_rbac];
 		$this->rows[(string)$uuid] = $object;
 
@@ -124,7 +129,7 @@ final class BackfillPaymentRequestCustomerTest extends TestCase {
 	 * @return BackfillPaymentRequestCustomer
 	 */
 	private function step(BackfillRequestStore $store): BackfillPaymentRequestCustomer {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new BackfillPaymentRequestCustomer(

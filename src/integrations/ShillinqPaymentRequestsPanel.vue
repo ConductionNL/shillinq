@@ -32,6 +32,14 @@
 			</p>
 
 			<p
+				v-if="onlinePaymentOff"
+				class="shillinq-leaf__notice"
+				role="status"
+				data-testid="shillinq-online-payment-off">
+				{{ onlinePaymentOffLabel }}
+			</p>
+
+			<p
 				v-if="requests.length === 0 && !carded"
 				class="shillinq-leaf__empty"
 				data-testid="shillinq-payment-requests-empty">
@@ -63,7 +71,8 @@
 
 					<div class="shillinq-leaf__actions">
 						<NcButton
-							:disabled="busyId === request.id"
+							:disabled="busyId === request.id || onlinePaymentOff"
+							:title="onlinePaymentOff ? onlinePaymentOffLabel : undefined"
 							variant="secondary"
 							:data-testid="`shillinq-send-link-${request.id}`"
 							@click="send(request)">
@@ -143,13 +152,11 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import {
 	formatAmount,
-	hostIdentity,
-	isResolvable,
 	PAYMENT_REQUESTS_DATA_LEAF,
-	readLeaf,
 	sendPaymentLink,
 	settleByOtherMeans,
 } from './leafApi.js'
+import { leafHostPanelMixin } from './leafHostPanel.js'
 import { leafReportMixin } from './leafReport.js'
 
 /**
@@ -164,23 +171,13 @@ export default {
 		NcLoadingIcon,
 	},
 
-	mixins: [leafReportMixin],
-
-	props: {
-		/** OpenRegister register id of the host object. */
-		register: { type: String, default: '' },
-		/** OpenRegister schema id of the host object. */
-		schema: { type: String, default: '' },
-		/** Id of the host object the requests stand on. */
-		objectId: { type: [String, Number], default: '' },
-		/** Whole registry context, the fallback when the discrete props are absent. */
-		integrationContext: { type: Object, default: () => ({}) },
-	},
+	mixins: [leafReportMixin, leafHostPanelMixin],
 
 	data() {
 		return {
 			requests: [],
 			fee: null,
+			onlinePayment: null,
 			loading: false,
 			error: '',
 			busyId: '',
@@ -199,7 +196,7 @@ export default {
 		 * What this leaf reports to a carding host or a "linked" card.
 		 *
 		 * @return {object} The report.
-		 * @spec openspec/changes/leaves-library-card/specs/leaves-library-card/spec.md#requirement-the-finance-leaves-report-to-the-library-card-and-the-linked-card
+		 * @spec openspec/specs/leaves-library-card/spec.md#requirement-the-finance-leaves-report-to-the-library-card-and-the-linked-card
 		 */
 		leafReport() {
 			return {
@@ -207,7 +204,9 @@ export default {
 				emptyLabel: this.emptyLabel,
 				noun: t('shillinq', 'fees and payments'),
 				rows: this.requests.map((request) => ({
-					label: [this.amountOf(request), this.stateOf(request)].filter((part) => part !== '').join(' · '),
+					label: [this.amountOf(request), this.stateOf(request)]
+						.filter((part) => part !== '')
+						.join(' · '),
 					icon: 'CashMultiple',
 				})),
 			}
@@ -219,6 +218,27 @@ export default {
 				'shillinq',
 				'Nobody has been asked to pay anything on this record yet.',
 			)
+		},
+
+		/**
+		 * Whether the leaf reports that no live payment provider is bound, so
+		 * no payment link can be created and Send payment link is disabled.
+		 *
+		 * @return {boolean} True when online payment is not set up.
+		 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+		 */
+		onlinePaymentOff() {
+			return Boolean(this.onlinePayment) && this.onlinePayment.live === false
+		},
+
+		/**
+		 * Why Send payment link is disabled, and where to set it up.
+		 *
+		 * @return {string} The reason.
+		 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+		 */
+		onlinePaymentOffLabel() {
+			return t('shillinq', 'Online payment is not set up: configure a payment source in integriq.')
 		},
 
 		/** @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004) */
@@ -307,23 +327,16 @@ export default {
 		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		async load() {
-			const identity = hostIdentity(this.$props)
-			if (isResolvable(identity) === false) {
-				this.error = t('shillinq', 'This panel needs a record to stand on.')
-				return
-			}
-
-			this.loading = true
-			this.error = ''
-			try {
-				const envelope = await readLeaf(identity, PAYMENT_REQUESTS_DATA_LEAF)
-				this.requests = Array.isArray(envelope.items) ? envelope.items : []
-				this.fee = envelope.fee || null
-			} catch {
-				this.error = t('shillinq', 'The payment requests could not be read.')
-			} finally {
-				this.loading = false
-			}
+			await this.readHostLeaf(PAYMENT_REQUESTS_DATA_LEAF, {
+				apply: (envelope) => {
+					this.requests = Array.isArray(envelope.items) ? envelope.items : []
+					this.fee = envelope.fee || null
+					this.onlinePayment = envelope.onlinePayment && typeof envelope.onlinePayment === 'object'
+						? envelope.onlinePayment
+						: null
+				},
+				failedText: () => t('shillinq', 'The payment requests could not be read.'),
+			})
 		},
 
 		/**
@@ -453,48 +466,15 @@ export default {
 			}
 		},
 
-		/**
-		 * The server's own words for a refusal, so a handler reads why rather
-		 * than a generic failure.
-		 *
-		 * @param {object} e The axios error.
-		 * @return {string} The message.
-		 *
-		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
-		 */
-		refusal(e) {
-			const message =
-				e && e.response && e.response.data && e.response.data.error
-			if (typeof message === 'string' && message !== '') {
-				return message
-			}
-			return t('shillinq', 'That did not go through.')
-		},
 	},
 }
 </script>
 
+<style scoped src="./leafPanel.css"></style>
+
 <style scoped>
 .shillinq-payment-requests-panel {
 	padding: 8px;
-}
-
-.shillinq-leaf__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.shillinq-leaf__row {
-	border-bottom: 1px solid var(--color-border);
-	padding: 8px 0;
-}
-
-.shillinq-leaf__row-head {
-	display: flex;
-	justify-content: space-between;
-	gap: 8px;
-	font-weight: bold;
 }
 
 .shillinq-leaf__state {
@@ -527,13 +507,5 @@ export default {
 .shillinq-leaf__settle input,
 .shillinq-leaf__settle select {
 	width: 100%;
-}
-
-.shillinq-leaf__error {
-	color: var(--color-error);
-}
-
-.shillinq-leaf__notice {
-	margin-top: 8px;
 }
 </style>

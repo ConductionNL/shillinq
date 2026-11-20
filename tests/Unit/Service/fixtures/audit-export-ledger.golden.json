@@ -1,0 +1,235 @@
+{
+    "full": {
+        "events": [
+            {
+                "event": "grn_lifecycle_state",
+                "timestamp": "",
+                "actor": "system",
+                "objectType": "GoodsReceiptNote",
+                "objectId": "grn-3",
+                "details": {
+                    "statusCode": "rejected",
+                    "qualityCheckPassed": false
+                }
+            },
+            {
+                "event": "po_approval_decision",
+                "timestamp": "",
+                "actor": "x",
+                "objectType": "PurchaseOrder",
+                "objectId": "po-2",
+                "details": {
+                    "decision": "approved",
+                    "comment": ""
+                }
+            },
+            {
+                "event": "match_resolved",
+                "timestamp": "2027-01-01T08:00:00Z",
+                "actor": "",
+                "objectType": "ThreeWayMatch",
+                "objectId": "m-2",
+                "details": {
+                    "resolutionAction": "",
+                    "resolutionNotes": ""
+                }
+            },
+            {
+                "event": "po_approval_decision",
+                "timestamp": "2027-01-01T08:00:00Z",
+                "actor": "erin",
+                "objectType": "PurchaseOrder",
+                "objectId": "po-1",
+                "details": {
+                    "decision": "rejected",
+                    "comment": ""
+                }
+            },
+            {
+                "event": "po_created",
+                "timestamp": "2027-01-01T08:00:00Z",
+                "actor": "alice",
+                "objectType": "PurchaseOrder",
+                "objectId": "po-1",
+                "details": {
+                    "poNumber": "PO-1",
+                    "supplierId": "sup-1",
+                    "totalAmount": 100.0,
+                    "currency": "EUR",
+                    "costCenter": "CC1",
+                    "projectCode": ""
+                }
+            },
+            {
+                "event": "po_created",
+                "timestamp": "2027-01-01T08:00:00Z",
+                "actor": "",
+                "objectType": "PurchaseOrder",
+                "objectId": " ",
+                "details": {
+                    "poNumber": "",
+                    "supplierId": "",
+                    "totalAmount": 0.0,
+                    "currency": "EUR",
+                    "costCenter": "",
+                    "projectCode": ""
+                }
+            },
+            {
+                "event": "po_approval_decision",
+                "timestamp": "2027-01-02T08:00:00Z",
+                "actor": "bob",
+                "objectType": "PurchaseOrder",
+                "objectId": "po-1",
+                "details": {
+                    "decision": "approved",
+                    "comment": "ok"
+                }
+            },
+            {
+                "event": "po_sent_to_supplier",
+                "timestamp": "2027-01-03T08:00:00Z",
+                "actor": "peppol_transmitter",
+                "objectType": "PurchaseOrder",
+                "objectId": "po-1",
+                "details": {
+                    "peppolMessageId": "msg-1"
+                }
+            },
+            {
+                "event": "grn_lifecycle_state",
+                "timestamp": "2027-01-05T08:00:00Z",
+                "actor": "frank",
+                "objectType": "GoodsReceiptNote",
+                "objectId": "grn-1",
+                "details": {
+                    "statusCode": "accepted",
+                    "qualityCheckPassed": true
+                }
+            },
+            {
+                "event": "grn_received",
+                "timestamp": "2027-01-05T08:00:00Z",
+                "actor": "frank",
+                "objectType": "GoodsReceiptNote",
+                "objectId": "grn-1",
+                "details": {
+                    "grnNumber": "GRN-1",
+                    "photoCount": 2
+                }
+            },
+            {
+                "event": "grn_received",
+                "timestamp": "2027-01-06T08:00:00Z",
+                "actor": "",
+                "objectType": "GoodsReceiptNote",
+                "objectId": "grn-2",
+                "details": {
+                    "grnNumber": "",
+                    "photoCount": 0
+                }
+            },
+            {
+                "event": "invoice_lifecycle_state",
+                "timestamp": "2027-01-10T09:00:00Z",
+                "actor": "system",
+                "objectType": "SupplierInvoice",
+                "objectId": "si-1",
+                "details": {
+                    "statusCode": "approved"
+                }
+            },
+            {
+                "event": "invoice_received",
+                "timestamp": "2027-01-10T09:00:00Z",
+                "actor": "peppol_receiver",
+                "objectType": "SupplierInvoice",
+                "objectId": "si-1",
+                "details": {
+                    "invoiceNumber": "INV-1",
+                    "supplierId": "sup-1",
+                    "totalInclVat": 12100,
+                    "currency": "USD"
+                }
+            },
+            {
+                "event": "match_evaluated",
+                "timestamp": "2027-01-10T09:00:00Z",
+                "actor": "matching_engine",
+                "objectType": "ThreeWayMatch",
+                "objectId": "m-1",
+                "details": {
+                    "matchStatus": "diverged",
+                    "matchedPoIds": [
+                        "po-1"
+                    ],
+                    "matchedGrnIds": [
+                        "grn-1"
+                    ],
+                    "divergenceDetails": [
+                        {
+                            "field": "qty"
+                        }
+                    ]
+                }
+            },
+            {
+                "event": "match_resolved",
+                "timestamp": "2027-01-11T09:00:00Z",
+                "actor": "gina",
+                "objectType": "ThreeWayMatch",
+                "objectId": "m-1",
+                "details": {
+                    "resolutionAction": "accept",
+                    "resolutionNotes": ""
+                }
+            }
+        ],
+        "summary": {
+            "invoiceId": "si-1",
+            "invoiceNumber": "INV-1",
+            "supplierId": "sup-1",
+            "totalInclVat": 12100,
+            "currency": "USD",
+            "eventCount": 15,
+            "purchaseOrderIds": [
+                "po-1"
+            ]
+        }
+    },
+    "empty": {
+        "events": [],
+        "summary": {
+            "invoiceId": "",
+            "invoiceNumber": "",
+            "supplierId": "",
+            "totalInclVat": 0,
+            "currency": "EUR",
+            "eventCount": 0,
+            "purchaseOrderIds": []
+        }
+    },
+    "invoiceStatusOnly": {
+        "events": [
+            {
+                "event": "invoice_lifecycle_state",
+                "timestamp": "",
+                "actor": "system",
+                "objectType": "SupplierInvoice",
+                "objectId": "si-2",
+                "details": {
+                    "statusCode": "new"
+                }
+            }
+        ],
+        "summary": {
+            "invoiceId": "",
+            "invoiceNumber": "",
+            "supplierId": "",
+            "totalInclVat": 0,
+            "currency": "EUR",
+            "eventCount": 1,
+            "purchaseOrderIds": []
+        }
+    }
+}

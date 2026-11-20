@@ -11,7 +11,7 @@
       "Payee": {
         "slug": "Payee",
         "icon": "TruckOutline",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Payee",
         "description": "Canonical \"anyone we pay\" master for accounts payable +: covers suppliers, vendors, AND freelancers (Dutch ZZP'ers / sole traders / contractors), plus government payees. Holds party contact details, payment terms, a structured bankAccount object (IBAN + BIC/SWIFT + account holder), payeeType, folded financial fields (creditLimit, apBalance), dunning policy reference, and default expense account. Folds in the retired VendorFinancialProfile duplicate. Symmetric to CustomerMaster on the AR side. Per + ADR-024 (registers, not parallel PHP tables) + ADR-022 (consumes OR contact abstraction when available via contactRef).",
         "x-openregister-audit-trail": {
@@ -74,7 +74,21 @@
             "description": "Dutch KvK number (8 digits).",
             "nullable": true,
             "example": "24502797",
-            "title": "KvK Number"
+            "title": "KvK Number",
+            "x-openregister-property-source": {
+              "provider": "kvk",
+              "mode": "default",
+              "config": {
+                "fill": {
+                  "name": "naam",
+                  "tradingName": "handelsnamen[0].naam",
+                  "address.street": "adres.binnenlandsAdres.straatnaam",
+                  "address.postcode": "adres.binnenlandsAdres.postcode",
+                  "address.city": "adres.binnenlandsAdres.plaats",
+                  "address.country": "=NL"
+                }
+              }
+            }
           },
           "vatNumber": {
             "type": "string",
@@ -159,6 +173,38 @@
             "nullable": true,
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
+          },
+          "paymentBlockedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who set the payment block. Written by the block endpoint.",
+            "title": "Payment blocked by"
+          },
+          "paymentBlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment block was set. Written by the block endpoint.",
+            "title": "Payment blocked at"
+          },
+          "paymentReleasedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who released the last payment block. Written by the block endpoint.",
+            "title": "Payment released by"
+          },
+          "paymentReleasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the last payment block was released. Written by the block endpoint.",
+            "title": "Payment released at"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
           },
           "dunningPolicyRef": {
             "type": "string",
@@ -304,7 +350,7 @@
       "APTransaction": {
         "slug": "APTransaction",
         "icon": "ReceiptTextOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "AP Transaction",
         "description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting (issued transition) materialises one balanced GLTransaction per T1 (credit AP payable, debit expense per lines). Lifecycle: draft → received → issued → paid with partially-paid / overdue / disputed / written-off / voided branches. The issued → overdue transition fires via OR ScheduledWorkflow (ADR-031 path 2: no PHP cron job). Aged-payables aggregations (detail / summary / timeline) declared inline. Sub-ledger linkage: every GLLine emitted from issue or write-off carries subLedgerType=ap + subLedgerRef=<APTransaction UUID> (scenario).",
         "x-openregister-audit-trail": {
@@ -470,6 +516,38 @@
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
           },
+          "paymentBlockedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who set the payment block. Written by the block endpoint.",
+            "title": "Payment blocked by"
+          },
+          "paymentBlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment block was set. Written by the block endpoint.",
+            "title": "Payment blocked at"
+          },
+          "paymentReleasedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who released the last payment block. Written by the block endpoint.",
+            "title": "Payment released by"
+          },
+          "paymentReleasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the last payment block was released. Written by the block endpoint.",
+            "title": "Payment released at"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
+          },
           "writeOffReason": {
             "type": "string",
             "description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition.",
@@ -494,6 +572,12 @@
             "description": "FK to the administration owning this AP invoice.",
             "example": "adm-1",
             "title": "Administration ID"
+          },
+          "supplierInvoiceId": {
+            "type": "string",
+            "description": "UUID of the SupplierInvoice this transaction was written for by the hand-over to accounts payable. The supplier invoice's pay guard accepts only a transaction that names the invoice itself.",
+            "nullable": true,
+            "title": "Supplier invoice ID"
           }
         },
         "x-openregister-lifecycle": {
@@ -1044,7 +1128,7 @@
       "PaymentRun": {
         "slug": "PaymentRun",
         "icon": "BankTransfer",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "title": "Payment Run",
         "description": "A batch of approved Payee payments (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export: there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. BankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
         "x-openregister-audit-trail": {
@@ -1196,6 +1280,28 @@
             "description": "Timestamp the batch was reconciled against the bank statement.",
             "nullable": true,
             "title": "Reconciled At"
+          },
+          "approvedLinesDigest": {
+            "type": "string",
+            "description": "Digest of the administration, dates, accounts, currency, total and payment lines as approved. Written by the server on approval; the export refuses a run whose lines no longer match it.",
+            "nullable": true,
+            "readOnly": true,
+            "title": "Approved lines digest"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "User who approved the batch. Written by the server on approval.",
+            "nullable": true,
+            "readOnly": true,
+            "title": "Approved by"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the batch was approved. Written by the server on approval.",
+            "nullable": true,
+            "readOnly": true,
+            "title": "Approved at"
           },
           "lifecycleState": {
             "type": "string",
@@ -1790,6 +1896,8 @@
         "lifecycleState": "approved",
         "currency": "EUR",
         "totalAmount": 1497.5,
+        "approvedLinesDigest": "ec19b53237d7986ce7e4090392a316c710bfdf5f75890f15a686f063be209229",
+        "approvedAt": "2026-06-30T10:00:00Z",
         "paymentLines": [
           {
             "payeeId": "payee-eneco",

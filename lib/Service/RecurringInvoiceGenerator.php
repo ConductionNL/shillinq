@@ -3,6 +3,9 @@
 /**
  * Recurring Invoice Generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The thin ADR-031 exception-path executor behind the recurring-invoicing
  * change. Generation is declared on the RecurringInvoiceProfile schema
  * (lib/Settings/register.d/recurring-invoicing.json) — schedule, lifecycle,
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/recurring-invoicing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -54,7 +54,8 @@ namespace OCA\Shillinq\Service;
 
 use DateInterval;
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -66,7 +67,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/recurring-invoicing/spec.md
  */
-class RecurringInvoiceGenerator {
+class RecurringInvoiceGenerator implements RecurringInvoiceGeneratorInterface {
 
 	/**
 	 * English month names for the {month} token (the document language
@@ -118,6 +119,7 @@ class RecurringInvoiceGenerator {
 	 *                                      swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param InvoiceSendingService|null $sending Mails an auto-issued invoice of a profile with email delivery (sales-invoice-sending task 4.1).
 	 *
 	 * @return void
 	 */
@@ -125,6 +127,7 @@ class RecurringInvoiceGenerator {
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ?InvoiceSendingService $sending = null,
 	) {
 
 	}//end __construct()
@@ -162,45 +165,150 @@ class RecurringInvoiceGenerator {
 		$generated = $this->findGeneratedInvoices(profileId: $profileId, billingPeriod: $billingPeriod);
 		$existing = self::liveInvoice(rows: $generated);
 		if ($existing !== null) {
-			return [
-				'invoice' => $existing,
-				'profile' => $profile,
-				'created' => false,
-				'billingPeriod' => $billingPeriod,
-			];
+			return ['invoice' => $existing, 'profile' => $profile, 'created' => false, 'billingPeriod' => $billingPeriod];
 		}
 
-		$language = (string)($profile['documentLanguage'] ?? 'en');
-		$periodStart = self::periodStartDate(billingPeriod: $billingPeriod);
-		$issueDate = self::clampedInvoiceDate(profile: $profile, billingPeriod: $billingPeriod);
-		$dueDate = self::addDays(date: $issueDate, days: (int)($profile['paymentTermsDays'] ?? 30));
+		$period = self::periodFor(profile: $profile, billingPeriod: $billingPeriod);
+		$period->sequence = (count($generated) + 1);
+		$invoice = $this->saveGeneratedInvoice(period: $period);
+		$advanced = $this->saveObject(schema: 'RecurringInvoiceProfile', object: self::advancedProfile(period: $period));
+		// The send writes its own outcome onto the invoice's sending group.
+		$this->sendIssued(profile: $profile, invoice: $invoice);
 
-		$invoicePayload = self::buildArInvoicePayload(
-			profile: $profile,
-			profileId: $profileId,
-			billingPeriod: $billingPeriod,
-			periodStart: $periodStart,
-			issueDate: $issueDate,
-			dueDate: $dueDate,
-			language: $language,
-			sequence: (count($generated) + 1),
-		);
+		return [
+			'invoice' => $invoice,
+			'profile' => $advanced,
+			'created' => true,
+			'billingPeriod' => $billingPeriod,
+		];
+
+	}//end generateForProfile()
+
+	/**
+	 * Mail an auto-issued invoice of a profile whose delivery channel is
+	 * email (sales-invoice-sending REQ-SIS-007). A draft is never sent, and a
+	 * failed send does not undo the invoice: the run reports it and the
+	 * invoice records the error.
+	 *
+	 * @param array<string,mixed> $profile The RecurringInvoiceProfile.
+	 * @param array<string,mixed> $invoice The ARInvoice just generated.
+	 *
+	 * @return string The send's status (sent, recorded or failed), or '' when nothing was sent.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-4.1
+	 */
+	private function sendIssued(array $profile, array $invoice): string {
+		if ($this->sending === null || self::mailsOnIssue(profile: $profile, invoice: $invoice) === false) {
+			return '';
+		}
 
 		try {
-			$invoice = $this->saveObject(schema: 'ARInvoice', object: $invoicePayload);
+			$outcome = $this->sending->sendUnattended(
+				administrationId: (string)($invoice['administrationId'] ?? ''),
+				invoiceId: self::referenceOf(invoice: $invoice),
+				via: 'email'
+			);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'RecurringInvoiceGenerator: the issued invoice was not sent',
+				['profileId' => (string)($profile['id'] ?? ''), 'exception' => $e->getMessage()]
+			);
+			return InvoiceSendingService::STATUS_FAILED;
+		}
+
+		return $outcome['status'];
+	}//end sendIssued()
+
+	/**
+	 * Whether the profile issues automatically and mails, and the invoice is issued.
+	 *
+	 * @param array<string, mixed> $profile The recurring profile.
+	 * @param array<string, mixed> $invoice The generated invoice.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private static function mailsOnIssue(array $profile, array $invoice): bool {
+		return ($profile['issueMode'] ?? '') === 'auto-issue'
+			&& ($profile['deliveryChannel'] ?? '') === 'email'
+			&& ($invoice['lifecycleState'] ?? '') === 'issued';
+	}//end mailsOnIssue()
+
+	/**
+	 * The invoice's id, else its uuid, else its number.
+	 *
+	 * @param array<string, mixed> $invoice The invoice.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md
+	 */
+	private static function referenceOf(array $invoice): string {
+		$reference = (string)($invoice['id'] ?? ($invoice['uuid'] ?? ''));
+		if ($reference === '') {
+			$reference = (string)($invoice['invoiceNumber'] ?? '');
+		}
+
+		return $reference;
+	}//end referenceOf()
+
+	/**
+	 * The period a profile generates for: its start, the clamped issue date,
+	 * the due date after the payment terms and the document language.
+	 *
+	 * @param array<string,mixed> $profile       The profile.
+	 * @param string              $billingPeriod The due billing-period key.
+	 *
+	 * @return RecurringInvoicePeriod The period.
+	 */
+	private static function periodFor(array $profile, string $billingPeriod): RecurringInvoicePeriod {
+		$period = new RecurringInvoicePeriod(profile: $profile, profileId: (string)($profile['id'] ?? $profile['uuid'] ?? ''));
+		$period->billingPeriod = $billingPeriod;
+		$period->language = (string)($profile['documentLanguage'] ?? 'en');
+		$period->periodStart = self::periodStartDate(billingPeriod: $billingPeriod);
+		$period->issueDate = self::clampedInvoiceDate(profile: $profile, billingPeriod: $billingPeriod);
+		$period->dueDate = self::addDays(date: $period->issueDate, days: (int)($profile['paymentTermsDays'] ?? 30));
+		return $period;
+	}//end periodFor()
+
+	/**
+	 * Save the period's ARInvoice; on failure mark the profile failed and
+	 * refuse.
+	 *
+	 * @param RecurringInvoicePeriod $period The period.
+	 *
+	 * @return array<string,mixed> The saved invoice.
+	 *
+	 * @throws RuntimeException When the invoice cannot be saved.
+	 */
+	private function saveGeneratedInvoice(RecurringInvoicePeriod $period): array {
+		try {
+			return $this->saveObject(schema: 'ARInvoice', object: self::arInvoicePayload(period: $period));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RecurringInvoiceGenerator: failed to generate invoice',
-				['profileId' => $profileId, 'exception' => $e->getMessage()]
+				['profileId' => $period->profileId, 'exception' => $e->getMessage()]
 			);
+			$profile = $period->profile;
 			$profile['lastRunStatus'] = 'failed';
 			$profile['lastRunError'] = 'Invoice generation failed.';
 			$this->saveObject(schema: 'RecurringInvoiceProfile', object: $profile);
 			throw new RuntimeException('Recurring invoice generation failed');
 		}
+	}//end saveGeneratedInvoice()
 
-		// Advance the profile bookkeeping (REQ-RIN-002/005).
-		$profile['lastBillingPeriod'] = $billingPeriod;
+	/**
+	 * The profile advanced past the generated period (REQ-RIN-002/005): last
+	 * period and run status, the next run date and the occurrence count.
+	 *
+	 * @param RecurringInvoicePeriod $period The generated period.
+	 *
+	 * @return array<string,mixed> The advanced profile.
+	 */
+	private static function advancedProfile(RecurringInvoicePeriod $period): array {
+		$profile = $period->profile;
+		$profile['lastBillingPeriod'] = $period->billingPeriod;
 		$profile['lastRunStatus'] = 'ok';
 		$profile['lastRunError'] = null;
 		$profile['nextRunDate'] = self::nextRunDate(
@@ -208,30 +316,32 @@ class RecurringInvoiceGenerator {
 			interval: (int)($profile['interval'] ?? 1),
 			invoiceDay: (int)($profile['invoiceDay'] ?? 1),
 			startDate: (string)($profile['startDate'] ?? ''),
-			lastBillingPeriod: $billingPeriod,
+			lastBillingPeriod: $period->billingPeriod,
 		);
 
-		// Occurrence-count ending (REQ-RIN-005).
-		if (array_key_exists('remainingOccurrences', $profile) === true
-			&& $profile['remainingOccurrences'] !== null
-		) {
-			$remaining = (int)$profile['remainingOccurrences'] - 1;
-			$profile['remainingOccurrences'] = max(0, $remaining);
-			if ($profile['remainingOccurrences'] === 0) {
-				$profile['status'] = 'ended';
-			}
+		return self::countedOccurrence(profile: $profile);
+	}//end advancedProfile()
+
+	/**
+	 * Occurrence-count ending (REQ-RIN-005): one occurrence fewer, and the
+	 * profile ends at zero. A profile without a count is unlimited.
+	 *
+	 * @param array<string,mixed> $profile The profile.
+	 *
+	 * @return array<string,mixed> The profile with its count advanced.
+	 */
+	private static function countedOccurrence(array $profile): array {
+		if (array_key_exists('remainingOccurrences', $profile) === false || $profile['remainingOccurrences'] === null) {
+			return $profile;
 		}
 
-		$profile = $this->saveObject(schema: 'RecurringInvoiceProfile', object: $profile);
+		$profile['remainingOccurrences'] = max(0, ((int)$profile['remainingOccurrences'] - 1));
+		if ($profile['remainingOccurrences'] === 0) {
+			$profile['status'] = 'ended';
+		}
 
-		return [
-			'invoice' => $invoice,
-			'profile' => $profile,
-			'created' => true,
-			'billingPeriod' => $billingPeriod,
-		];
-
-	}//end generateForProfile()
+		return $profile;
+	}//end countedOccurrence()
 
 	/**
 	 * Scheduled entry point referenced by the register fragment's
@@ -304,84 +414,152 @@ class RecurringInvoiceGenerator {
 		string $language,
 		int $sequence = 1,
 	): array {
-		$lines = [];
-		$net = 0.0;
-		$vat = 0.0;
-		$rawLines = [];
-		if (is_array($profile['lines'] ?? null) === true) {
-			$rawLines = $profile['lines'];
-		}
+		$period = new RecurringInvoicePeriod(profile: $profile, profileId: $profileId);
+		$period->billingPeriod = $billingPeriod;
+		$period->periodStart = $periodStart;
+		$period->issueDate = $issueDate;
+		$period->dueDate = $dueDate;
+		$period->language = $language;
+		$period->sequence = $sequence;
+		return self::arInvoicePayload(period: $period);
 
-		$lineNumber = 1;
-		foreach ($rawLines as $raw) {
-			$quantity = (float)($raw['quantity'] ?? 1);
-			$unitPrice = (float)($raw['unitPrice'] ?? 0);
-			$vatRate = (int)($raw['vatCode'] ?? 21);
-			$lineNet = ($quantity * $unitPrice);
-			$lineVat = ($lineNet * ($vatRate / 100));
+	}//end buildArInvoicePayload()
 
-			$description = self::expandTokens(
-				description: (string)($raw['description'] ?? ''),
-				periodStart: $periodStart,
-				language: $language
-			);
-
-			// ARInvoice declares its lines as `invoiceLines` in the EN 16931
-			// BG-25 shape; the former `lines` was dropped by OpenRegister, so
-			// every generated invoice arrived without lines (REQ-RIN-009). The
-			// line declares `glAccount` since ARInvoice 0.16.0, so the profile
-			// line's revenue account is booked per line (REQ-RIN-010).
-			$lines[] = [
-				'lineId' => (string)$lineNumber,
-				'itemName' => $description,
-				'quantity' => $quantity,
-				'unitCode' => 'C62',
-				'netPrice' => $unitPrice,
-				'netAmount' => round($lineNet, 2),
-				'vatRate' => $vatRate,
-				'vatCategory' => self::vatCategory(vatRate: $vatRate),
-				'glAccount' => ($raw['revenueAccount'] ?? null),
-			];
-
-			$net += $lineNet;
-			$vat += $lineVat;
-			$lineNumber++;
-		}//end foreach
-
-		$net = round($net, 2);
-		$vat = round($vat, 2);
+	/**
+	 * The ordinary ARInvoice payload of a generated period: the per-line BTW
+	 * totals, the provisional invoice number and the recurringProfileId +
+	 * billingPeriod provenance. issueMode draft-for-review yields lifecycleState
+	 * draft; auto-issue yields issued.
+	 *
+	 * @param RecurringInvoicePeriod $period The period.
+	 *
+	 * @return array<string,mixed> The ARInvoice payload.
+	 */
+	private static function arInvoicePayload(RecurringInvoicePeriod $period): array {
+		$profile = $period->profile;
+		$lines = self::invoiceLines(period: $period);
+		$net = round($lines['net'], 2);
+		$vat = round($lines['vat'], 2);
 
 		$lifecycleState = 'draft';
 		if (($profile['issueMode'] ?? 'draft-for-review') === 'auto-issue') {
 			$lifecycleState = 'issued';
 		}
 
-		// ARInvoice requires an invoice number and a period. The number is
-		// provisional and unique per profile, period and attempt, so a period
-		// regenerated after a cancellation gets its own (REQ-RIN-010).
 		return [
-			'invoiceNumber' => sprintf(
-				'REC-%s-%s-%02d',
-				str_replace('-', '', $billingPeriod),
-				strtoupper(substr(str_replace('-', '', $profileId), 0, 8)),
-				$sequence
-			),
-			'periodId' => $billingPeriod,
-			'customerId' => (string)($profile['customerReference'] ?? ''),
+			'invoiceNumber' => self::provisionalNumber(period: $period),
+			'periodId' => $period->billingPeriod,
+			'customerId' => self::customerIdOf(profile: $profile),
 			'administrationId' => ($profile['administrationId'] ?? null),
-			'invoiceDate' => $issueDate,
-			'dueDate' => $dueDate,
+			'invoiceDate' => $period->issueDate,
+			'dueDate' => $period->dueDate,
 			'currency' => (string)($profile['currency'] ?? 'EUR'),
 			'netAmount' => $net,
 			'vatAmount' => $vat,
 			'grossAmount' => round(($net + $vat), 2),
 			'lifecycleState' => $lifecycleState,
-			'recurringProfileId' => $profileId,
-			'billingPeriod' => $billingPeriod,
-			'invoiceLines' => $lines,
+			'recurringProfileId' => $period->profileId,
+			'billingPeriod' => $period->billingPeriod,
+			'invoiceLines' => $lines['lines'],
 		];
+	}//end arInvoicePayload()
 
-	}//end buildArInvoicePayload()
+	/**
+	 * The customer a generated invoice bills: the profile's CustomerMaster
+	 * once it has one (sales-cancellation, REQ-SCX-003), else its contact
+	 * reference as before.
+	 *
+	 * @param array<string, mixed> $profile The recurring profile.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 */
+	private static function customerIdOf(array $profile): string {
+		$customerMasterId = trim((string)($profile['customerMasterId'] ?? ''));
+		if ($customerMasterId !== '') {
+			return $customerMasterId;
+		}
+
+		return (string)($profile['customerReference'] ?? '');
+	}//end customerIdOf()
+
+	/**
+	 * ARInvoice requires an invoice number and a period. The number is
+	 * provisional and unique per profile, period and attempt, so a period
+	 * regenerated after a cancellation gets its own (REQ-RIN-010).
+	 *
+	 * @param RecurringInvoicePeriod $period The period.
+	 *
+	 * @return string The provisional invoice number.
+	 */
+	private static function provisionalNumber(RecurringInvoicePeriod $period): string {
+		return sprintf(
+			'REC-%s-%s-%02d',
+			str_replace('-', '', $period->billingPeriod),
+			strtoupper(substr(str_replace('-', '', $period->profileId), 0, 8)),
+			$period->sequence
+		);
+	}//end provisionalNumber()
+
+	/**
+	 * The invoice lines of the profile with the unrounded net and VAT totals
+	 * (inclusive per-line BTW with the standard Dutch rates).
+	 *
+	 * @param RecurringInvoicePeriod $period The period.
+	 *
+	 * @return array{lines:list<array<string,mixed>>,net:float,vat:float}
+	 */
+	private static function invoiceLines(RecurringInvoicePeriod $period): array {
+		$totals = ['lines' => [], 'net' => 0.0, 'vat' => 0.0];
+		$rawLines = [];
+		if (is_array($period->profile['lines'] ?? null) === true) {
+			$rawLines = $period->profile['lines'];
+		}
+
+		foreach ($rawLines as $raw) {
+			$line = self::invoiceLine(period: $period, raw: $raw);
+			$lineNet = ((float)($raw['quantity'] ?? 1) * (float)($raw['unitPrice'] ?? 0));
+			$totals['lines'][] = ['lineId' => (string)(count($totals['lines']) + 1)] + $line;
+			$totals['net'] += $lineNet;
+			$totals['vat'] += ($lineNet * ($line['vatRate'] / 100));
+		}
+
+		return $totals;
+	}//end invoiceLines()
+
+	/**
+	 * One invoice line in the EN 16931 BG-25 shape ARInvoice declares as
+	 * `invoiceLines` (the former `lines` was dropped by OpenRegister, so every
+	 * generated invoice arrived without lines — REQ-RIN-009). The line
+	 * declares `glAccount` since ARInvoice 0.16.0, so the profile line's
+	 * revenue account is booked per line (REQ-RIN-010).
+	 *
+	 * @param RecurringInvoicePeriod $period The period (tokens, language).
+	 * @param array<string,mixed>    $raw    The profile line.
+	 *
+	 * @return array<string,mixed> The line without its lineId.
+	 */
+	private static function invoiceLine(RecurringInvoicePeriod $period, array $raw): array {
+		$quantity = (float)($raw['quantity'] ?? 1);
+		$unitPrice = (float)($raw['unitPrice'] ?? 0);
+		$vatRate = (int)($raw['vatCode'] ?? 21);
+
+		return [
+			'itemName' => self::expandTokens(
+				description: (string)($raw['description'] ?? ''),
+				periodStart: $period->periodStart,
+				language: $period->language
+			),
+			'quantity' => $quantity,
+			'unitCode' => 'C62',
+			'netPrice' => $unitPrice,
+			'netAmount' => round(($quantity * $unitPrice), 2),
+			'vatRate' => $vatRate,
+			'vatCategory' => self::vatCategory(vatRate: $vatRate),
+			'glAccount' => ($raw['revenueAccount'] ?? null),
+		];
+	}//end invoiceLine()
 
 	/**
 	 * The EN 16931 VAT category of a line: S for a standard rate, Z at zero.
@@ -544,35 +722,11 @@ class RecurringInvoiceGenerator {
 		$invoiceDay = max(1, min(31, $invoiceDay));
 
 		if ($lastBillingPeriod === '') {
-			// No period generated yet — next run is the start period's
-			// clamped invoice day. Weekly cadences advance from the literal
-			// start date and ignore invoiceDay (a day-of-month concept).
-			$start = self::immutable(value: $startDate);
-			if ($start === null) {
-				return '';
-			}
-
-			if ($frequency === 'weekly') {
-				return $start->format('Y-m-d');
-			}
-
-			return self::clampDay(date: $start, day: $invoiceDay)->format('Y-m-d');
+			return self::firstRunDate(frequency: $frequency, invoiceDay: $invoiceDay, startDate: $startDate);
 		}
 
 		if ($frequency === 'weekly') {
-			// Weekly advances 7 * interval days from the last period's start;
-			// the lastBillingPeriod for weekly is the start date itself, so
-			// resolve it from startDate when the key is month-shaped.
-			$weekBase = self::immutable(value: $startDate);
-			if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastBillingPeriod) === 1) {
-				$weekBase = self::immutable(value: $lastBillingPeriod);
-			}
-
-			if ($weekBase === null) {
-				return '';
-			}
-
-			return self::addPeriod(date: $weekBase, frequency: 'weekly', interval: $interval)->format('Y-m-d');
+			return self::nextWeeklyRunDate(interval: $interval, startDate: $startDate, lastBillingPeriod: $lastBillingPeriod);
 		}
 
 		$lastStart = self::immutable(value: $lastBillingPeriod . '-01');
@@ -583,6 +737,54 @@ class RecurringInvoiceGenerator {
 		$nextPeriod = self::addPeriod(date: $lastStart, frequency: $frequency, interval: $interval);
 		return self::clampDay(date: $nextPeriod, day: $invoiceDay)->format('Y-m-d');
 	}//end nextRunDate()
+
+	/**
+	 * No period generated yet — next run is the start period's
+	 * clamped invoice day. Weekly cadences advance from the literal
+	 * start date and ignore invoiceDay (a day-of-month concept).
+	 *
+	 * @param string $frequency  The cadence.
+	 * @param int    $invoiceDay The clamped day of month to invoice on.
+	 * @param string $startDate  The schedule's start date.
+	 *
+	 * @return string The ISO date, or '' when the start date does not parse.
+	 */
+	private static function firstRunDate(string $frequency, int $invoiceDay, string $startDate): string {
+		$start = self::immutable(value: $startDate);
+		if ($start === null) {
+			return '';
+		}
+
+		if ($frequency === 'weekly') {
+			return $start->format('Y-m-d');
+		}
+
+		return self::clampDay(date: $start, day: $invoiceDay)->format('Y-m-d');
+	}//end firstRunDate()
+
+	/**
+	 * Weekly advances 7 * interval days from the last period's start;
+	 * the lastBillingPeriod for weekly is the start date itself, so
+	 * resolve it from startDate when the key is month-shaped.
+	 *
+	 * @param int    $interval          The clamped interval.
+	 * @param string $startDate         The schedule's start date.
+	 * @param string $lastBillingPeriod The last generated period key.
+	 *
+	 * @return string The ISO date, or '' when no base date parses.
+	 */
+	private static function nextWeeklyRunDate(int $interval, string $startDate, string $lastBillingPeriod): string {
+		$weekBase = self::immutable(value: $startDate);
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastBillingPeriod) === 1) {
+			$weekBase = self::immutable(value: $lastBillingPeriod);
+		}
+
+		if ($weekBase === null) {
+			return '';
+		}
+
+		return self::addPeriod(date: $weekBase, frequency: 'weekly', interval: $interval)->format('Y-m-d');
+	}//end nextWeeklyRunDate()
 
 	/**
 	 * Add one cadence step (frequency × interval) to a civil date, landing on
@@ -788,11 +990,6 @@ class RecurringInvoiceGenerator {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Compliance rule-audit data-report generator
  *
  * Renders the compliance auditor's result natively as CSV. It resolves the existing
@@ -44,9 +49,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
-use OCA\Shillinq\Service\RuleAuditService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -100,57 +105,9 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 		$report = $this->runAudit($context);
 
 		$handle = fopen('php://temp', 'r+');
-
-		// --- Summary block ---.
-		fputcsv($handle, ['section', 'metric', 'value']);
-		fputcsv($handle, ['summary', 'catalogueVersion', (string)($report['catalogueVersion'] ?? '')]);
-		fputcsv($handle, ['summary', 'corpusTotal', (string)($report['corpusTotal'] ?? 0)]);
-		fputcsv($handle, ['summary', 'machineCheckable', (string)($report['machineCheckable'] ?? 0)]);
-		fputcsv($handle, ['summary', 'enforceableRules', (string)($report['enforceableRules'] ?? 0)]);
-		fputcsv($handle, ['summary', 'coveragePct', (string)($report['coveragePct'] ?? 0)]);
-		fputcsv($handle, ['summary', 'objectsChecked', (string)($report['objectsChecked'] ?? 0)]);
-		fputcsv($handle, ['summary', 'objectsCompliant', (string)($report['objectsCompliant'] ?? 0)]);
-		fputcsv($handle, ['summary', 'objectsWithViolations', (string)($report['objectsWithViolations'] ?? 0)]);
-
-		$severity = ($report['violationsBySeverity'] ?? []);
-		foreach (['mandatory', 'conditional', 'recommended'] as $level) {
-			fputcsv($handle, ['severity', $level, (string)($severity[$level] ?? 0)]);
-		}
-
-		// --- Per object type ---.
-		fputcsv($handle, []);
-		fputcsv($handle, ['objectType', 'checked', 'compliant', 'withViolations', 'violations', 'compliancePct']);
-		foreach (($report['types'] ?? []) as $type => $stat) {
-			if (is_array($stat) === false) {
-				continue;
-			}
-
-			$checked = (int)($stat['checked'] ?? 0);
-			$compliant = (int)($stat['compliant'] ?? 0);
-			$compliance = ($checked > 0) ? round((($compliant / $checked) * 100), 1) : 0.0;
-			fputcsv(
-				$handle,
-				[
-					(string)$type,
-					(string)$checked,
-					(string)$compliant,
-					(string)($stat['withViolations'] ?? 0),
-					(string)($stat['violations'] ?? 0),
-					$this->money((float)$compliance),
-				]
-			);
-		}//end foreach
-
-		// --- Top violated rules ---.
-		fputcsv($handle, []);
-		fputcsv($handle, ['topViolatedRule', 'count']);
-		foreach (($report['topViolatedRules'] ?? []) as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			fputcsv($handle, [(string)($entry['ruleId'] ?? ''), (string)($entry['count'] ?? 0)]);
-		}
+		$this->writeSummary(handle: $handle, report: $report);
+		$this->writeTypeStats(handle: $handle, report: $report);
+		$this->writeTopRules(handle: $handle, report: $report);
 
 		rewind($handle);
 		$content = (string)stream_get_contents($handle);
@@ -166,6 +123,98 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 	}//end generate()
 
 	/**
+	 * Write the summary and per-severity rows.
+	 *
+	 * @param resource $handle The CSV stream.
+	 * @param array<string,mixed> $report The audit report.
+	 *
+	 * @return void
+	 */
+	private function writeSummary($handle, array $report): void {
+		fputcsv($handle, ['section', 'metric', 'value']);
+		fputcsv($handle, ['summary', 'catalogueVersion', (string)($report['catalogueVersion'] ?? '')]);
+		fputcsv($handle, ['summary', 'corpusTotal', (string)($report['corpusTotal'] ?? 0)]);
+		fputcsv($handle, ['summary', 'machineCheckable', (string)($report['machineCheckable'] ?? 0)]);
+		fputcsv($handle, ['summary', 'enforceableRules', (string)($report['enforceableRules'] ?? 0)]);
+		fputcsv($handle, ['summary', 'coveragePct', (string)($report['coveragePct'] ?? 0)]);
+		fputcsv($handle, ['summary', 'objectsChecked', (string)($report['objectsChecked'] ?? 0)]);
+		fputcsv($handle, ['summary', 'objectsCompliant', (string)($report['objectsCompliant'] ?? 0)]);
+		fputcsv($handle, ['summary', 'objectsWithViolations', (string)($report['objectsWithViolations'] ?? 0)]);
+
+		$severity = ($report['violationsBySeverity'] ?? []);
+		foreach (['mandatory', 'conditional', 'recommended'] as $level) {
+			fputcsv($handle, ['severity', $level, (string)($severity[$level] ?? 0)]);
+		}
+
+	}//end writeSummary()
+
+	/**
+	 * Write the per-object-type block after a blank separator row.
+	 *
+	 * @param resource $handle The CSV stream.
+	 * @param array<string,mixed> $report The audit report.
+	 *
+	 * @return void
+	 */
+	private function writeTypeStats($handle, array $report): void {
+		fputcsv($handle, []);
+		fputcsv($handle, ['objectType', 'checked', 'compliant', 'withViolations', 'violations', 'compliancePct']);
+		foreach (($report['types'] ?? []) as $type => $stat) {
+			if (is_array($stat) === false) {
+				continue;
+			}
+
+			fputcsv($handle, $this->typeRow(type: (string)$type, stat: $stat));
+		}
+
+	}//end writeTypeStats()
+
+	/**
+	 * One per-object-type row, with compliance as a percentage of checked.
+	 *
+	 * @param string $type The object type.
+	 * @param array<string,mixed> $stat The type's audit stats.
+	 *
+	 * @return array<int,string> The CSV row.
+	 */
+	private function typeRow(string $type, array $stat): array {
+		$checked = (int)($stat['checked'] ?? 0);
+		$compliant = (int)($stat['compliant'] ?? 0);
+		$compliance = ($checked > 0) ? round((($compliant / $checked) * 100), 1) : 0.0;
+
+		return [
+			$type,
+			(string)$checked,
+			(string)$compliant,
+			(string)($stat['withViolations'] ?? 0),
+			(string)($stat['violations'] ?? 0),
+			$this->money((float)$compliance),
+		];
+
+	}//end typeRow()
+
+	/**
+	 * Write the top-violated-rules block after a blank separator row.
+	 *
+	 * @param resource $handle The CSV stream.
+	 * @param array<string,mixed> $report The audit report.
+	 *
+	 * @return void
+	 */
+	private function writeTopRules($handle, array $report): void {
+		fputcsv($handle, []);
+		fputcsv($handle, ['topViolatedRule', 'count']);
+		foreach (($report['topViolatedRules'] ?? []) as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
+
+			fputcsv($handle, [(string)($entry['ruleId'] ?? ''), (string)($entry['count'] ?? 0)]);
+		}
+
+	}//end writeTopRules()
+
+	/**
 	 * Resolve RuleAuditService from the container and run its audit.
 	 *
 	 * Degrades to an empty (well-formed) report when the service cannot be
@@ -177,7 +226,7 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 	 */
 	private function runAudit(array $context): array {
 		try {
-			$service = $this->container->get(RuleAuditService::class);
+			$service = $this->container->get(RuleAuditServiceInterface::class);
 			return $service->audit($context);
 		} catch (\Throwable $e) {
 			$this->logger->warning('RuleAuditReportGenerator: audit failed: ' . $e->getMessage());

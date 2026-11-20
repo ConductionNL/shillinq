@@ -3,6 +3,9 @@
 /**
  * Contribution Decline Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A parent may refuse a voluntary school contribution (Wet vrijwillige
  * ouderbijdrage). The one reminder tells them how: "I will not pay" in the
  * parent portal (decision D28). Portaliq forwards that choice here, and this
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,6 +40,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -52,13 +55,7 @@ use Throwable;
  *
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
  */
-class ContributionDeclineService {
-	/**
-	 * The contribution is declined (or already was, by this guardian).
-	 *
-	 * @var string
-	 */
-	public const DECLINED = 'declined';
+class ContributionDeclineService implements ContributionDeclineServiceInterface {
 
 	/**
 	 * Anything that is not an open voluntary contribution the guardian owns.
@@ -66,13 +63,6 @@ class ContributionDeclineService {
 	 * @var string
 	 */
 	public const FORBIDDEN = 'forbidden';
-
-	/**
-	 * OpenRegister failed.
-	 *
-	 * @var string
-	 */
-	public const DOWNSTREAM_ERROR = 'downstream_error';
 
 	/**
 	 * OpenRegister's object service, fetched lazily.
@@ -138,38 +128,70 @@ class ContributionDeclineService {
 
 		try {
 			$objectService = $this->container->get(self::OBJECT_SERVICE);
-			$customerMasterId = $this->subjects->customerMasterId(
-				objectService: $objectService,
-				subjectRef: (string)($claims['sub'] ?? ''),
-				audience: $audience,
-			);
-			if ($customerMasterId === null) {
-				return self::FORBIDDEN;
-			}
-
-			$invoice = $this->findOwnedVoluntaryInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId);
-			if ($invoice === null) {
-				return self::FORBIDDEN;
-			}
-
-			// A double click, or a second tab: the refusal already stands.
-			if ($this->policy->isDeclined(invoice: $invoice) === true) {
-				return self::DECLINED;
-			}
-
-			if (in_array((string)($invoice['lifecycleState'] ?? ''), self::OPEN_STATES, true) === false) {
-				return self::FORBIDDEN;
-			}
-
-			$this->closeInvoice(objectService: $objectService, invoice: $invoice, now: ($now ?? new DateTimeImmutable()));
-			$this->voidPendingRequests(objectService: $objectService, invoiceId: (string)$invoice['id']);
+			return $this->declineAsSubject(objectService: $objectService, claims: $claims, target: $target, now: $now);
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq: declining a voluntary contribution failed', ['exception' => $e->getMessage()]);
 			return self::DOWNSTREAM_ERROR;
 		}//end try
+	}//end decline()
+
+	/**
+	 * Decline the invoice when it belongs to the asserted subject's customer.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
+	 * @param string $target The trimmed opaque invoice id.
+	 * @param DateTimeImmutable|null $now The moment to stamp; defaults to now.
+	 *
+	 * @return string DECLINED or FORBIDDEN.
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 */
+	private function declineAsSubject(object $objectService, array $claims, string $target, DateTimeImmutable|null $now): string {
+		$customerMasterId = $this->subjects->customerMasterId(
+			objectService: $objectService,
+			subjectRef: (string)($claims['sub'] ?? ''),
+			audience: (string)($claims['audience'] ?? ''),
+		);
+		if ($customerMasterId === null) {
+			return self::FORBIDDEN;
+		}
+
+		return $this->declineOwnedInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId, now: $now);
+	}//end declineAsSubject()
+
+	/**
+	 * Close the customer's open voluntary invoice and void its pending payment requests.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $target The trimmed opaque invoice id.
+	 * @param string $customerMasterId The subject's customer.
+	 * @param DateTimeImmutable|null $now The moment to stamp; defaults to now.
+	 *
+	 * @return string DECLINED or FORBIDDEN.
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 */
+	private function declineOwnedInvoice(object $objectService, string $target, string $customerMasterId, DateTimeImmutable|null $now): string {
+		$invoice = $this->findOwnedVoluntaryInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId);
+		if ($invoice === null) {
+			return self::FORBIDDEN;
+		}
+
+		// A double click, or a second tab: the refusal already stands.
+		if ($this->policy->isDeclined(invoice: $invoice) === true) {
+			return self::DECLINED;
+		}
+
+		if (in_array((string)($invoice['lifecycleState'] ?? ''), self::OPEN_STATES, true) === false) {
+			return self::FORBIDDEN;
+		}
+
+		$this->closeInvoice(objectService: $objectService, invoice: $invoice, now: ($now ?? new DateTimeImmutable()));
+		$this->voidPendingRequests(objectService: $objectService, invoiceId: (string)$invoice['id']);
 
 		return self::DECLINED;
-	}//end decline()
+	}//end declineOwnedInvoice()
 
 	/**
 	 * The target invoice when it exists, belongs to this customer and is a
@@ -186,12 +208,10 @@ class ContributionDeclineService {
 	 */
 	private function findOwnedVoluntaryInvoice(object $objectService, string $target, string $customerMasterId): ?array {
 		try {
-			$found = $objectService->find(
+			$found = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister(self::REGISTER)->setSchema('ARInvoice'),
 				id: $target,
-				register: self::REGISTER,
-				schema: 'ARInvoice',
-				_rbac: false,
-				_multitenancy: false,
+				named: ['_rbac' => false, '_multitenancy' => false]
 			);
 		} catch (Throwable $notFound) {
 			return null;
@@ -232,11 +252,12 @@ class ContributionDeclineService {
 
 		$objectService->saveObject(
 			object: $data,
-			register: self::REGISTER,
-			schema: 'ARInvoice',
-			uuid: (string)$invoice['id'],
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::REGISTER, schema: 'ARInvoice'),
+				uuid: (string)$invoice['id']
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end closeInvoice()
 
@@ -276,11 +297,12 @@ class ContributionDeclineService {
 			$data['state'] = 'voided';
 			$objectService->saveObject(
 				object: $data,
-				register: self::REGISTER,
-				schema: 'PaymentRequest',
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: self::REGISTER, schema: 'PaymentRequest'),
+					uuid: $uuid
+				),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 		}
 	}//end voidPendingRequests()

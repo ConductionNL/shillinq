@@ -63,28 +63,43 @@ export function buildPrepareRequest(form) {
  * @param {object} error The axios error.
  * @return {string} The sentence.
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.3
+ * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
  */
 export function prepareErrorText(error) {
 	const status = error?.response?.status
-	const code = String(error?.response?.data?.error || '')
-	if (status === 400 && code.includes('future')) {
+	if (status === 400) {
+		return badPeriodText(String(error?.response?.data?.error || ''))
+	}
+	if (status === 403 || status === 404) {
+		return t('shillinq', 'You cannot prepare a return for this administration.')
+	}
+	// REQ-TVRB-003: a member of a VAT fiscal unity is refused with a sentence naming the unity.
+	const data = error?.response?.data
+	if (status === 409 && data?.error === 'vat-fiscal-unity-member' && typeof data.message === 'string' && data.message !== '') {
+		return data.message
+	}
+	return t(
+		'shillinq',
+		'The return could not be prepared. Try again, or ask your administrator to check the log.',
+	)
+}
+
+/**
+ * The sentence for a period the server refused.
+ *
+ * @param {string} code The server's error code.
+ * @return {string} The sentence.
+ */
+function badPeriodText(code) {
+	if (code.includes('future')) {
 		return t(
 			'shillinq',
 			'That period has not ended yet. Prepare a return for a period that is over.',
 		)
 	}
-	if (status === 400) {
-		return t(
-			'shillinq',
-			'Choose a period kind, a year from 2020 and a period number that fits it.',
-		)
-	}
-	if (status === 403 || status === 404) {
-		return t('shillinq', 'You cannot prepare a return for this administration.')
-	}
 	return t(
 		'shillinq',
-		'The return could not be prepared. Try again, or ask your administrator to check the log.',
+		'Choose a period kind, a year from 2020 and a period number that fits it.',
 	)
 }
 

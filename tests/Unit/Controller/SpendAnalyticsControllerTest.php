@@ -363,4 +363,78 @@ final class SpendAnalyticsControllerTest extends TestCase {
 			'period' => ['period', 'spendByPeriod'],
 		];
 	}//end glBackedDimensions()
+	/**
+	 * Every refusal body, the failing access check and the failing
+	 * aggregation with their log lines, and each dimension's label.
+	 *
+	 * @return void
+	 */
+	public function testBodiesLabelsAndLogLines(): void {
+		$params = [];
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static function (string $key, $default = null) use (&$params) {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$service = $this->createMock(SpendAnalyticsService::class);
+		$service->method('spendBySupplier')->willReturn(['rows' => []]);
+		$service->method('spendByCategory')->willReturn(['rows' => []]);
+		$service->method('spendByCostCentre')->willReturn(['rows' => []]);
+		$service->method('spendByPeriod')->willThrowException(new \RuntimeException('gl down'));
+		$access = true;
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('alice');
+		$context->method('canAccess')->willReturnCallback(
+			static function () use (&$access): bool {
+				if ($access === null) {
+					throw new \RuntimeException('membership down');
+				}
+
+				return $access;
+			}
+		);
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => 'nl:' . $text);
+		$logged = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+		$controller = new SpendAnalyticsController(request: $request, service: $service, context: $context, l10n: $l10n, logger: $logger);
+		$answer = static function () use ($controller): array {
+			$response = $controller->spend();
+			return [$response->getStatus(), $response->getData()];
+		};
+
+		self::assertSame([400, ['error' => 'administration_id is required']], $answer());
+		$params = ['administration_id' => 'a b'];
+		self::assertSame([400, ['error' => 'administration_id must be a valid identifier']], $answer());
+		$params = ['administration_id' => ' ADM-1 ', 'dimension' => 'x'];
+		self::assertSame([400, ['error' => 'dimension must be one of: supplier, category, costCentre, period']], $answer());
+		$access = false;
+		self::assertSame([404, ['error' => 'Administration not found']], $answer());
+		$access = null;
+		self::assertSame([500, ['error' => 'Authorization failure']], $answer());
+		$access = true;
+
+		$labels = ['supplier' => 'nl:Spend by supplier', 'category' => 'nl:Spend by category', 'costCentre' => 'nl:Spend by cost centre'];
+		foreach ($labels as $dimension => $label) {
+			$params['dimension'] = $dimension;
+			self::assertSame([200, ['rows' => [], 'label' => $label]], $answer());
+		}
+
+		$params['dimension'] = 'period';
+		self::assertSame([500, ['error' => 'Failed to compute spend analysis']], $answer());
+		self::assertSame(
+			[
+				['SpendAnalyticsController: administration access check failed', ['exception' => 'membership down']],
+				['SpendAnalyticsController: failed to compute spend-by-period', ['exception' => 'gl down']],
+			],
+			$logged
+		);
+
+	}//end testBodiesLabelsAndLogLines()
 }//end class

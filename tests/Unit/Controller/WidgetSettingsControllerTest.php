@@ -3,6 +3,9 @@
 /**
  * Unit tests for WidgetSettingsController's key lifecycle (REQ-WSW-009).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The point of these tests is the seam that was MISSING, not the one that
  * worked: `WidgetAuthService::createApiKey()` was fully implemented (mint,
  * bcrypt hash, prefix, persist, audit) and had no route, no controller method
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-self-service-widget/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

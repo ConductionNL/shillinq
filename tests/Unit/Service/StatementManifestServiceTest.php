@@ -108,4 +108,36 @@ class StatementManifestServiceTest extends TestCase {
 	// Repair\InitializeSettings, the only consumer, calls import(). The
 	// preserve-operator-edits behaviour it contrasted with is still asserted
 	// by testImportSkipsExistingWithoutForce above.
+	/**
+	 * Golden: a mixed import reads every key once, writes only the absent ones
+	 * as JSON, logs the counts and answers them.
+	 *
+	 * @return void
+	 */
+	public function testMixedImportReadsEveryKeyAndLogsTheCounts(): void {
+		$read = [];
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key) use (&$read): string {
+				$read[] = $key;
+				return (count($read) === 2) ? '{"kept":true}' : '';
+			}
+		);
+		$written = [];
+		$this->appConfig->method('setValueString')->willReturnCallback(
+			static function (string $app, string $key, string $value) use (&$written): bool {
+				$written[] = [$app, $key, is_array(json_decode($value, true))];
+				return true;
+			}
+		);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$logger->expects($this->once())->method('info')->with('Shillinq: statement manifests imported', ['imported' => 2, 'skipped' => 1]);
+		$service = new StatementManifestService(appConfig: $this->appConfig, logger: $logger);
+
+		self::assertSame(['success' => true, 'imported' => 2, 'skipped' => 1], $service->import());
+		self::assertCount(3, $read);
+		self::assertSame([$read[0], $read[2]], array_column($written, 1));
+		self::assertSame([true, true], array_column($written, 2));
+
+	}//end testMixedImportReadsEveryKeyAndLogsTheCounts()
+
 }//end class

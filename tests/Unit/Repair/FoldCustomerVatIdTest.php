@@ -23,12 +23,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\FoldCustomerVatId;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * One spelling for a customer's VAT number.
@@ -50,7 +51,7 @@ class FoldCustomerVatIdTest extends TestCase {
 				],
 			]
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$step = new FoldCustomerVatId($store, $settings, $this->createMock(LoggerInterface::class));
 
@@ -72,9 +73,9 @@ class FoldCustomerVatIdTest extends TestCase {
 			$messages
 		);
 
-		$this->assertSame('NL001234567B01', $store->find(id: 'c-1', schema: 'CustomerMaster')->getObject()['vatId']);
-		$this->assertSame('DE000000000', $store->find(id: 'c-2', schema: 'CustomerMaster')->getObject()['vatId']);
-		$this->assertArrayNotHasKey('vatId', $store->find(id: 'c-3', schema: 'CustomerMaster')->getObject());
+		$this->assertSame('NL001234567B01', $store->find(id: 'c-1', options: new ObjectFindOptions(schema: 'CustomerMaster'))->getObject()['vatId']);
+		$this->assertSame('DE000000000', $store->find(id: 'c-2', options: new ObjectFindOptions(schema: 'CustomerMaster'))->getObject()['vatId']);
+		$this->assertArrayNotHasKey('vatId', $store->find(id: 'c-3', options: new ObjectFindOptions(schema: 'CustomerMaster'))->getObject());
 
 	}//end testTheOldSpellingMovesIntoTheCheckedField()
 

@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\RetireSubsidieSchema;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IDBConnection;
 use OCP\IGroup;
 use OCP\IGroupManager;
@@ -41,6 +41,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Tests for RetireSubsidieSchema.
@@ -50,9 +51,9 @@ class RetireSubsidieSchemaTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settingsService;
+	private RegisterLocation&MockObject $settingsService;
 
 	/**
 	 * Container mock.
@@ -95,7 +96,7 @@ class RetireSubsidieSchemaTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->settingsService = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->groupManager = $this->createMock(IGroupManager::class);
@@ -201,7 +202,8 @@ class RetireSubsidieSchemaTest extends TestCase {
 				return array_values($rows);
 			}//end findAll()
 
-			public function deleteObject(string $id, bool $_rbac, bool $_multitenancy): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
+				$id = $deletion->uuid;
 				$this->deleted[] = $id;
 
 			}//end deleteObject()

@@ -37,6 +37,15 @@ export function perPeriodNet(lines) {
 	return Math.round((net + Number.EPSILON) * 100) / 100
 }
 
+/** The draft checks, in the order their errors are listed: [passes(form), error]. */
+const PROFILE_CHECKS = [
+	[hasName, 'A profile name is required.'],
+	[hasCustomer, 'A customer is required.'],
+	[hasPricedLine, 'At least one line with a description and a price is required.'],
+	[hasStartDate, 'A valid start date is required.'],
+	[validInvoiceDay, 'Invoice day must be between 1 and 31.'],
+]
+
 /**
  * Validate a profile draft. Returns an array of human-readable error
  * strings; empty array means valid enough to save as a draft.
@@ -46,28 +55,72 @@ export function perPeriodNet(lines) {
  * @return {Array<string>} Validation errors.
  */
 export function validateProfile(form) {
-	const errors = []
-	if (!(form.name || '').trim()) {
-		errors.push('A profile name is required.')
-	}
-	if (!(form.customerReference || '').trim()) {
-		errors.push('A customer is required.')
-	}
-	const lines = form.lines || []
-	const hasPricedLine = lines.some(
-		(l) => (l.description || '').trim().length > 0 && Number(l.unitPrice) > 0,
+	return PROFILE_CHECKS.filter(([passes]) => !passes(form)).map(
+		([, message]) => message,
 	)
-	if (!hasPricedLine) {
-		errors.push('At least one line with a description and a price is required.')
-	}
-	if (!(form.startDate || '').match(/^\d{4}-\d{2}-\d{2}$/)) {
-		errors.push('A valid start date is required.')
-	}
+}
+
+/**
+ * Whether a text field holds more than whitespace.
+ *
+ * @param {string|undefined|null} value The field.
+ * @return {boolean}
+ */
+function filled(value) {
+	return (value || '').trim().length > 0
+}
+
+/**
+ * Whether the draft is named.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasName(form) {
+	return filled(form.name)
+}
+
+/**
+ * Whether the draft names a customer.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasCustomer(form) {
+	return filled(form.customerReference)
+}
+
+/**
+ * Whether the start date reads as YYYY-MM-DD.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasStartDate(form) {
+	return Boolean((form.startDate || '').match(/^\d{4}-\d{2}-\d{2}$/))
+}
+
+/**
+ * Whether the draft has a line with a description and a positive price.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function hasPricedLine(form) {
+	return (form.lines || []).some(
+		(l) => filled(l.description) && Number(l.unitPrice) > 0,
+	)
+}
+
+/**
+ * Whether the invoice day is a whole day of the month, 1 to 31.
+ *
+ * @param {object} form The form state.
+ * @return {boolean}
+ */
+function validInvoiceDay(form) {
 	const day = Number(form.invoiceDay)
-	if (!Number.isInteger(day) || day < 1 || day > 31) {
-		errors.push('Invoice day must be between 1 and 31.')
-	}
-	return errors
+	return Number.isInteger(day) && day >= 1 && day <= 31
 }
 
 /**
@@ -79,7 +132,33 @@ export function validateProfile(form) {
  * @return {object} The profile payload.
  */
 export function buildProfilePayload(form) {
-	const lines = (form.lines || [])
+	return {
+		name: (form.name || '').trim(),
+		customerReference: (form.customerReference || '').trim(),
+		lines: payloadLines(form.lines),
+		frequency: form.frequency || 'monthly',
+		interval: Number(form.interval) || 1,
+		startDate: form.startDate,
+		invoiceDay: Number(form.invoiceDay) || 1,
+		issueMode: form.issueMode || 'draft-for-review',
+		deliveryChannel: form.deliveryChannel || 'email',
+		paymentTermsDays: Number(form.paymentTermsDays) || 30,
+		currency: form.currency || 'EUR',
+		status: form.status || 'draft',
+		...indexationFields(form),
+		...endConditionFields(form),
+	}
+}
+
+/**
+ * The payload lines: lines with a description or a positive price,
+ * normalised (quantity defaults to 1).
+ *
+ * @param {Array<object>|undefined} lines The form lines.
+ * @return {Array<object>} The payload lines.
+ */
+function payloadLines(lines) {
+	return (lines || [])
 		.filter(
 			(l) =>
 				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
@@ -91,35 +170,79 @@ export function buildProfilePayload(form) {
 			vatCode: Number(l.vatCode) || 0,
 			revenueAccount: l.revenueAccount || '',
 		}))
+}
 
-	const payload = {
-		name: (form.name || '').trim(),
-		customerReference: (form.customerReference || '').trim(),
-		lines,
-		frequency: form.frequency || 'monthly',
-		interval: Number(form.interval) || 1,
-		startDate: form.startDate,
-		invoiceDay: Number(form.invoiceDay) || 1,
-		issueMode: form.issueMode || 'draft-for-review',
-		deliveryChannel: form.deliveryChannel || 'email',
-		paymentTermsDays: Number(form.paymentTermsDays) || 30,
-		currency: form.currency || 'EUR',
-		status: form.status || 'draft',
+/**
+ * The indexationPercent field, present only when the form sets one.
+ *
+ * @param {object} form The form state.
+ * @return {object} `{ indexationPercent }` or an empty object.
+ */
+function indexationFields(form) {
+	const percent = form.indexationPercent
+	if (percent === undefined || percent === null || percent === '') {
+		return {}
 	}
+	return { indexationPercent: Number(percent) }
+}
 
-	if (
-		form.indexationPercent !== undefined
-		&& form.indexationPercent !== null
-		&& form.indexationPercent !== ''
-	) {
-		payload.indexationPercent = Number(form.indexationPercent)
-	}
+/**
+ * The end condition: an end date wins over an occurrence count, which also
+ * sets remainingOccurrences. Neither set gives an empty object.
+ *
+ * @param {object} form The form state.
+ * @return {object} The endCondition (and remainingOccurrences) fields.
+ */
+function endConditionFields(form) {
 	if (form.endDate) {
-		payload.endCondition = { endDate: form.endDate }
-	} else if (form.occurrenceCount) {
-		payload.endCondition = { occurrenceCount: Number(form.occurrenceCount) }
-		payload.remainingOccurrences = Number(form.occurrenceCount)
+		return { endCondition: { endDate: form.endDate } }
 	}
+	if (form.occurrenceCount) {
+		const count = Number(form.occurrenceCount)
+		return {
+			endCondition: { occurrenceCount: count },
+			remainingOccurrences: count,
+		}
+	}
+	return {}
+}
 
-	return payload
+/**
+ * The customer a typed reference names: the first row whose customer code,
+ * legal name or trade name equals it, ignoring case and outer spaces.
+ *
+ * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+ * @param {Array<object>} customers CustomerMaster rows.
+ * @param {string} reference The typed customer reference.
+ * @return {object|null} The customer, or null.
+ */
+export function matchCustomer(customers, reference) {
+	const wanted = String(reference || '').trim().toLowerCase()
+	if (wanted === '') {
+		return null
+	}
+	for (const customer of Array.isArray(customers) ? customers : []) {
+		const names = [customer?.customerId, customer?.legalName, customer?.tradeName]
+		if (names.some((name) => String(name ?? '').trim().toLowerCase() === wanted)) {
+			return customer
+		}
+	}
+	return null
+}
+
+/**
+ * The payment term a new profile takes from its customer: the customer's
+ * `paymentTermDays` (0 to 365), or null when the customer carries none.
+ *
+ * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+ * @param {object|null} customer The CustomerMaster.
+ * @return {number|null} The days, or null.
+ */
+export function customerTermDays(customer) {
+	const raw = customer?.paymentTermDays
+	if (raw === null || raw === undefined || raw === '') {
+		return null
+	}
+	const days = Number(raw)
+	return Number.isInteger(days) && days >= 0 && days <= 365 ? days : null
 }
