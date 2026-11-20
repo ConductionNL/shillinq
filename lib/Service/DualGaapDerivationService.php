@@ -42,6 +42,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\DualGaapDerivationServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -405,21 +406,10 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 */
 	private function find(string $schema, string $id): ?array {
 		try {
-			$found = $this->objectService->setRegister($this->register())->setSchema($schema)->find($id);
+			return ObjectIdentifier::findOneStrict(scoped: $this->objectService->setRegister($this->register())->setSchema($schema), id: $id);
 		} catch (Throwable $e) {
 			return null;
 		}
-
-		if ($found === null) {
-			return null;
-		}
-
-		$row = $found->jsonSerialize();
-		if (is_array($row) === false) {
-			return null;
-		}
-
-		return $row;
 	}//end find()
 
 	/**

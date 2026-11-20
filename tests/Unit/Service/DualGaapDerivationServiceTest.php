@@ -77,7 +77,7 @@ class DualGaapDerivationServiceTest extends TestCase {
 				foreach (($this->rows[$schema] ?? []) as $row) {
 					if ((string)($row['id'] ?? '') === (string)$id) {
 						$entity = $this->createMock(ObjectEntityInterface::class);
-						$entity->method('jsonSerialize')->willReturn($row);
+						$entity->method('getObject')->willReturn($row);
 						return $entity;
 					}
 				}
