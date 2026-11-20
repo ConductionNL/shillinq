@@ -7937,7 +7937,25 @@ OC.L10N.register(
         "Actual (cents)": "Werkelijk (centen)",
         "Variance (cents)": "Afwijking (centen)",
         "Flux run ID": "Fluxrun-ID",
-        "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011).": "Het eigen id van de run, zoals elk FluxItem van de run het opslaat in fluxRunId (ledger-group-close, REQ-CLS-011)."
+        "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011).": "Het eigen id van de run, zoals elk FluxItem van de run het opslaat in fluxRunId (ledger-group-close, REQ-CLS-011).",
+        "Cash flow category": "Kasstroomcategorie",
+        "Where a movement on this balance sheet account goes in the cash flow statement: cash (the change the statement explains), working capital (operating), fixed assets (investing), financing or equity (financing). Revenue and expense accounts need none. A balance account without one shows as unclassified.": "Waar een mutatie op deze balansrekening in het kasstroomoverzicht terechtkomt: liquide middelen (de mutatie die het overzicht verklaart), werkkapitaal (operationeel), vaste activa (investeringen), financiering of eigen vermogen (financiering). Opbrengst- en kostenrekeningen hebben er geen nodig. Een balansrekening zonder categorie staat onder niet ingedeeld.",
+        "Working capital": "Werkkapitaal",
+        "Fixed assets": "Vaste activa",
+        "Cash flow statement": "Kasstroomoverzicht",
+        "Where the money went in the period: from operations, investments and financing, reconciled to the change in cash.": "Waar het geld in de periode naartoe ging: uit de bedrijfsvoering, investeringen en financiering, aangesloten op de mutatie in liquide middelen.",
+        "Accounts without a category": "Rekeningen zonder categorie",
+        "Cash flow": "Kasstroom",
+        "Operating activities": "Operationele activiteiten",
+        "Investing activities": "Investeringsactiviteiten",
+        "Financing activities": "Financieringsactiviteiten",
+        "Not classified": "Niet ingedeeld",
+        "Accounts without a cash flow category": "Rekeningen zonder kasstroomcategorie",
+        "Balance sheet accounts the cash flow statement cannot place yet. Open one to set its cash flow category; until then its movements show as not classified.": "Balansrekeningen die het kasstroomoverzicht nog niet kan plaatsen. Open er een om de kasstroomcategorie in te stellen; tot dan staan de mutaties onder niet ingedeeld.",
+        "Cash from operations, investments and financing, reconciled to the change in cash.": "Kasstromen uit bedrijfsvoering, investeringen en financiering, aangesloten op de mutatie in liquide middelen.",
+        "Cash flow lines": "Kasstroomregels",
+        "The posted ledger lines behind one cash flow figure; together they add up to it. Open a line to see its posting.": "De geboekte grootboekregels achter één bedrag in het kasstroomoverzicht; samen tellen ze op tot dat bedrag. Open een regel om de boeking te zien.",
+        "Ledger lines": "Grootboekregels"
     },
     "nplurals=2; plural=(n != 1);"
 )

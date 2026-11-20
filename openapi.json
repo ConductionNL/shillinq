@@ -15487,6 +15487,74 @@
                     }
                 }
             }
+        },
+        "/statements/cash-flow": {
+            "get": {
+                "operationId": "financial-statement-cash-flow",
+                "summary": "GET /api/statements/cash-flow?from=&to=&administrationId=",
+                "description": "GET /api/statements/cash-flow?from=&to=&administrationId=. The cash flow statement of a period by the indirect method: the result, depreciation and working capital as operating, fixed assets as investing, financing and equity as financing, and the change of the cash accounts, from posted ledger lines without year-closing entries. Balance accounts without a cash flow category show as unclassified, so the statement still reconciles. The administration defaults to the one the caller is working in. One the caller is not a member of is masked as absent (ADR-005). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-statement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/statements/cash-flow/lines": {
+            "get": {
+                "operationId": "financial-statement-cash-flow-lines",
+                "summary": "GET /api/statements/cash-flow/lines?key=&administrationId=",
+                "description": "GET /api/statements/cash-flow/lines?key=&administrationId=. The posted ledger lines behind one cash flow figure, named by that figure's linesKey (scope~from~to: an account number, result or depreciation, and the range). The lines add up to the figure and each names its transaction. A malformed key or range is a bad request. The administration defaults to the one the caller is working in. One the caller is not a member of is masked as absent (ADR-005). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-statement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
         }
     },
     "components": {
