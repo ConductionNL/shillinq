@@ -32,6 +32,7 @@
 		"SelfBilledInvoiceRefusals": "Sales",
 		"Communicatie": "Sales",
 		"Orders": "Sales",
+		"Quotes": "Sales",
 		"RecurringInvoicing": "Sales",
 		"PaymentRequests": "Sales",
 		"WebshopOrders": "Sales",

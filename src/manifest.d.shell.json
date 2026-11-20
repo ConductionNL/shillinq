@@ -6009,6 +6009,33 @@
 		{
 			"menu": [
 				{
+					"id": "Quotes",
+					"label": "Quotes",
+					"icon": "FileDocumentEditOutline",
+					"route": "Quotes",
+					"order": 27
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-quotes",
+					"id": "Quotes",
+					"route": "/quotes",
+					"type": "index",
+					"title": "Quotes"
+				},
+				{
+					"_fragment": "sales-quotes",
+					"id": "QuoteDetail",
+					"route": "/quotes/:id",
+					"type": "detail",
+					"title": "Quote"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "MeterReadings",
 					"label": "Meter readings",
 					"icon": "Counter",

@@ -1,0 +1,8 @@
+{
+	"_meta": {"spdx-license": "EUPL-1.2", "spdx-copyright": "2026 Conduction B.V.", "change": "sales-quote-and-order-to-invoice", "adr": "ADR-037 fragment (design D4): Quotes index and quote detail with its lines and Create sales order (REQ-QTI-001)."},
+	"menu": [{"id": "Quotes", "label": "Quotes", "icon": "FileDocumentEditOutline", "route": "Quotes", "order": 27}],
+	"pages": [
+		{"id": "Quotes", "title": "Quotes", "route": "/quotes", "type": "index", "config": {"register": "shillinq", "schema": "Quote", "showTitle": true, "countSubtitle": "{total} quotes", "showCount": false, "addLabel": "New quote", "headerButtons": [{"action": "export"}, {"action": "add", "variant": "primary", "label": "New quote"}], "quickFilters": [{"label": "All", "filter": {}, "default": true, "showCount": true}, {"label": "Sent", "filter": {"status": "sent"}, "showCount": true}, {"label": "Accepted", "filter": {"status": "accepted"}, "showCount": true}], "columns": ["quoteNumber", "customerReference", "validUntil", "acceptedAt", "status"], "detailRoute": "QuoteDetail"}},
+		{"id": "QuoteDetail", "title": "Quote", "route": "/quotes/:id", "type": "detail", "config": {"register": "shillinq", "schema": "Quote", "headerActions": [{"id": "create-sales-order", "label": "Create sales order", "type": "handler", "handler": "createSalesOrderFromQuote", "icon": "ClipboardListOutline", "visibleWhen": {"field": "status", "op": "eq", "value": "accepted"}}], "relatedCollections": [{"title": "Quote lines", "register": "shillinq", "schema": "QuoteLine", "filter": {"quote": "@objectId"}, "columns": [{"key": "lineNumber", "label": "#"}, {"key": "description", "label": "Description"}, {"key": "quantity", "label": "Qty"}, {"key": "unitPrice", "label": "Unit price"}]}]}}
+	]
+}
