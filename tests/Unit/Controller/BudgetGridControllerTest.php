@@ -39,6 +39,10 @@ use OCA\Shillinq\Controller\BudgetGridController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BudgetGridCalculator;
 use OCA\Shillinq\Service\BudgetGridReader;
+use OCA\Shillinq\Service\BudgetGridScenarioOverlay;
+use OCA\Shillinq\Service\BudgetScenarioEvaluator;
+use OCA\Shillinq\Service\BudgetScenarioReader;
+use OCA\Shillinq\Service\KnownCostScheduleExpander;
 use OCA\Shillinq\Service\BudgetVsActualsCalculator;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
@@ -90,6 +94,14 @@ final class BudgetGridControllerTest extends TestCase {
 	private BudgetGridReader&MockObject $reader;
 
 	/**
+	 * Mock BudgetScenarioReader (the scenario context is I/O); the overlay
+	 * and the evaluator behind it stay REAL.
+	 *
+	 * @var BudgetScenarioReader&MockObject
+	 */
+	private BudgetScenarioReader&MockObject $scenarioReader;
+
+	/**
 	 * Request params for the current test, read by the IRequest mock.
 	 *
 	 * @var array<string,mixed>
@@ -123,6 +135,7 @@ final class BudgetGridControllerTest extends TestCase {
 		$this->administrationContext->method('canAccess')->willReturn(true);
 
 		$this->reader = $this->createMock(BudgetGridReader::class);
+		$this->scenarioReader = $this->createMock(BudgetScenarioReader::class);
 
 	}//end setUp()
 
@@ -143,6 +156,8 @@ final class BudgetGridControllerTest extends TestCase {
 			new BudgetGridCalculator(new BudgetVsActualsCalculator()),
 			$this->administrationContext,
 			$this->userSession,
+			$this->scenarioReader,
+			new BudgetGridScenarioOverlay(new BudgetScenarioEvaluator(new KnownCostScheduleExpander(), new NullLogger())),
 		);
 
 	}//end controller()
@@ -469,4 +484,137 @@ final class BudgetGridControllerTest extends TestCase {
 		self::assertArrayHasKey('TOTAAL', $computedByCode['bruto-marge']['cells']);
 
 	}//end testIndexBuildsFullEnvelope()
+
+	/**
+	 * The scenario context for administration adm-1: scenario "Krimp" lowers
+	 * Omzet by 10,000.00 in January 2027 (Q-shillinq-1, REQ-BSC-011).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function scenarioContext(): array {
+		return [
+			'scenarios' => [
+				['id' => 'sc-krimp', 'administrationId' => 'adm-1', 'name' => 'Krimp', 'isDefault' => false, 'status' => 'draft'],
+			],
+			'modifiersByScenarioId' => [
+				'sc-krimp' => [
+					[
+						'scenarioId' => 'sc-krimp',
+						'modifierType' => 'LEDGER_AMOUNT_DELTA',
+						'targetLedgerGroupId' => 'lg-omzet',
+						'effectiveDate' => '2027-01-01',
+						'amountDeltaCents' => -1000000,
+					],
+				],
+			],
+			'cashflowRecurringRows' => [],
+			'budgetLines' => [],
+			'ledgerGroups' => [
+				['id' => 'lg-omzet', 'slug' => 'omzet', 'code' => 'omzet'],
+				['id' => 'lg-kostprijs', 'slug' => 'kostprijs-van-de-omzet', 'code' => 'kostprijs-van-de-omzet'],
+				['id' => 'lg-personeel', 'slug' => 'personeel', 'code' => 'personeel'],
+				['id' => 'lg-lonen', 'slug' => 'lonen', 'code' => 'lonen', 'parentLedgerGroupId' => 'lg-personeel'],
+			],
+		];
+
+	}//end scenarioContext()
+
+	/**
+	 * Choosing a scenario swaps the budget figures (rows, computed rows,
+	 * TOTAAL) to base plus the scenario's modifiers; actuals do not move and
+	 * the response names the scenario for the "Scenario: X" label.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 */
+	public function testIndexSwapsBudgetColumnToChosenScenario(): void {
+		$this->actAs('alice');
+		$this->params['scenarioId'] = 'sc-krimp';
+		$this->reader->method('loadGrid')->willReturn($this->gridBundle());
+		$this->scenarioReader->expects(self::once())->method('loadContext')
+			->with('adm-1', [])
+			->willReturn($this->scenarioContext());
+
+		$response = $this->controller()->index();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+
+		self::assertSame(['id' => 'sc-krimp', 'name' => 'Krimp'], $data['scenario']);
+
+		[$omzetRow, $kostprijsRow, $personeelRow] = $data['rows'];
+		self::assertSame(4000000, $omzetRow['cells']['2027-01']['budget']);
+		self::assertSame(6000000, $omzetRow['cells']['2027-01']['actual']);
+		self::assertSame(4000000, $omzetRow['cells']['TOTAAL']['budget']);
+		// Untouched groups keep their base budget, the parent its rollup.
+		self::assertSame(1500000, $kostprijsRow['cells']['2027-01']['budget']);
+		self::assertSame(800000, $personeelRow['cells']['2027-01']['budget']);
+
+		$computedByCode = [];
+		foreach ($data['computedRows'] as $row) {
+			$computedByCode[$row['code']] = $row;
+		}
+
+		// Bruto-marge = 40,000 - 15,000 under the scenario (base read 35,000).
+		self::assertSame(2500000, $computedByCode['bruto-marge']['cells']['2027-01']['budget']);
+		self::assertSame(4000000, $computedByCode['bruto-marge']['cells']['2027-01']['actual']);
+
+	}//end testIndexSwapsBudgetColumnToChosenScenario()
+
+	/**
+	 * NEGATIVE CONTROL: a scenario that is not in the requested
+	 * administration answers 404, never the grid.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 */
+	public function testIndexAnswers404ForScenarioOutsideAdministration(): void {
+		$this->actAs('alice');
+		$this->params['scenarioId'] = 'sc-other-admin';
+		$this->reader->method('loadGrid')->willReturn($this->gridBundle());
+		$this->scenarioReader->method('loadContext')->willReturn($this->scenarioContext());
+
+		$response = $this->controller()->index();
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertArrayNotHasKey('rows', $response->getData());
+
+	}//end testIndexAnswers404ForScenarioOutsideAdministration()
+
+	/**
+	 * A malformed scenarioId is refused before any read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 */
+	public function testIndexRejectsMalformedScenarioId(): void {
+		$this->actAs('alice');
+		$this->params['scenarioId'] = '../etc';
+		$this->reader->expects(self::never())->method('loadGrid');
+		$this->scenarioReader->expects(self::never())->method('loadContext');
+
+		$response = $this->controller()->index();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+
+	}//end testIndexRejectsMalformedScenarioId()
+
+	/**
+	 * Without a scenarioId the grid shows the default budget, names no
+	 * scenario and never reads the scenario context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 */
+	public function testIndexWithoutScenarioNamesNone(): void {
+		$this->actAs('alice');
+		$this->reader->method('loadGrid')->willReturn($this->gridBundle());
+		$this->scenarioReader->expects(self::never())->method('loadContext');
+
+		$data = $this->controller()->index()->getData();
+		self::assertNull($data['scenario']);
+		self::assertSame(5000000, $data['rows'][0]['cells']['2027-01']['budget']);
+
+	}//end testIndexWithoutScenarioNamesNone()
 }//end class

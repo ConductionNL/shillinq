@@ -49,6 +49,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'pipelinqSettings#index', 'url' => '/api/pipelinq/settings', 'verb' => 'GET'],
             ['name' => 'pipelinqSettings#create', 'url' => '/api/pipelinq/settings', 'verb' => 'POST'],
             ['name' => 'pipelinqSettings#test', 'url' => '/api/pipelinq/settings/test', 'verb' => 'POST'],
+        // Request type to revenue account mapping, admin only (case-payment-requests REQ-SOPR-002).
+            ['name' => 'paymentRevenueAccounts#index', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'GET'],
+            ['name' => 'paymentRevenueAccounts#update', 'url' => '/api/settings/payment-revenue-accounts', 'verb' => 'PUT'],
         // First-time setup wizard (ADR-042).
             ['name' => 'setup#status',     'url' => '/api/setup/status',            'verb' => 'GET'],
             ['name' => 'setup#saveConfig', 'url' => '/api/setup/config',            'verb' => 'POST'],
@@ -136,6 +139,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // reporting-financial-statements REQ-RFS-001/002: the on-screen statements.
             ['name' => 'financialStatement#profitAndLoss', 'url' => '/api/statements/profit-and-loss', 'verb' => 'GET'],
             ['name' => 'financialStatement#balanceSheet', 'url' => '/api/statements/balance-sheet', 'verb' => 'GET'],
+            // reporting-cash-flow-statement REQ-RCF-002: the cash flow statement by the indirect method.
+            ['name' => 'financialStatement#cashFlow', 'url' => '/api/statements/cash-flow', 'verb' => 'GET'],
+            // reporting-cash-flow-statement REQ-RCF-003: the ledger lines behind one cash flow figure. Access is checked in the controller body.
+            ['name' => 'financialStatement#cashFlowLines', 'url' => '/api/statements/cash-flow/lines', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app
@@ -263,6 +270,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // routes so Symfony matches them first.
             ['name' => 'invoiceApi#generate', 'url' => '/api/v1/invoices/generate', 'verb' => 'POST'],
             ['name' => 'invoiceApi#billable', 'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'],
+            // sales-time-and-expense-billing D1: the unbilled hours and pass-through expenses to tick.
+            ['name' => 'billableWork#index', 'url' => '/api/v1/invoices/billable-work', 'verb' => 'GET'],
             ['name' => 'invoiceApi#index', 'url' => '/api/v1/invoices', 'verb' => 'GET'],
             ['name' => 'invoiceApi#post', 'url' => '/api/v1/invoices/{invoiceId}/post', 'verb' => 'POST'],
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
@@ -335,6 +344,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // approval-chain preview + send-block guard. Static segments precede the
         // {id} wildcard so they are matched first (Symfony route ordering).
             ['name' => 'purchaseOrder#previewApprovalChain', 'url' => '/api/purchase-orders/approval-chain', 'verb' => 'GET'],
+            ['name' => 'purchaseOrder#dispatchChannels', 'url' => '/api/purchase-orders/dispatch-channels', 'verb' => 'GET'],
             ['name' => 'purchaseOrder#create', 'url' => '/api/purchase-orders', 'verb' => 'POST'],
             ['name' => 'purchaseOrder#send', 'url' => '/api/purchase-orders/{id}/send', 'verb' => 'POST'],
 
@@ -576,6 +586,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // ICP opgaaf (bookkeeping-icp-opgaaf, REQ-ICP-002..010). Read-only ledger
             // / reconcile / periodicity / VIES lookup endpoints plus the correction
             // + audit-export write surface. All admin-scoped + IDOR-safe.
+            // IB47 annual batch (people-ib47-statement, REQ-DPA-021): payroll officer only,
+            // within an administration the caller holds a membership of.
+            ['name' => 'ib47#prepare', 'url' => '/api/ib47/batches/prepare', 'verb' => 'POST'],
             ['name' => 'icp#ledger', 'url' => '/api/icp/ledger', 'verb' => 'GET'],
             ['name' => 'icp#reconcile', 'url' => '/api/icp/reconcile', 'verb' => 'GET'],
             ['name' => 'icp#periodicity', 'url' => '/api/icp/periodicity', 'verb' => 'GET'],
@@ -583,6 +596,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
             ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
             ['name' => 'icp#renderInvoicePdf', 'url' => '/api/icp/invoice-pdf', 'verb' => 'GET'],
+            // The tax-icp-and-reverse-charge statement: prepare, download and file the statement (REQ-ICR-002, REQ-ICR-003).
+            ['name' => 'icpStatement#prepare', 'url' => '/api/icp/statements/prepare', 'verb' => 'POST'],
+            ['name' => 'icpStatement#xml', 'url' => '/api/icp/statements/xml', 'verb' => 'GET'],
+            ['name' => 'icpStatement#filing', 'url' => '/api/icp/statements/filing', 'verb' => 'GET'],
+            ['name' => 'icpStatement#file', 'url' => '/api/icp/statements/file', 'verb' => 'POST'],
 
             // Aansluiting (tie-out) framework (bookkeeping-aansluitingen,
             // REQ-AANS-004, REQ-AANS-006). compute() resolves source A / source B
@@ -659,8 +677,17 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'periodClose#startClose', 'url' => '/api/period-close/{periodId}/start-close', 'verb' => 'POST'],
             ['name' => 'periodClose#close', 'url' => '/api/period-close/{periodId}/close', 'verb' => 'POST'],
             ['name' => 'periodClose#reopen', 'url' => '/api/period-close/{periodId}/reopen', 'verb' => 'POST'],
+            ['name' => 'periodClose#addItem', 'url' => '/api/period-close/{periodId}/checklist', 'verb' => 'POST'],
+            ['name' => 'periodClose#resolveItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/resolve', 'verb' => 'POST'],
+            ['name' => 'periodClose#reopenItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/reopen', 'verb' => 'POST'],
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
+
+            // Deferral schedules (ledger-period-end, REQ-LPE-004): "Spread over
+            // periods" on an AP or AR invoice line. preview precedes the bare
+            // collection route only for readability; the verbs and paths differ.
+            ['name' => 'deferralSchedule#preview', 'url' => '/api/deferral-schedules/preview', 'verb' => 'POST'],
+            ['name' => 'deferralSchedule#create', 'url' => '/api/deferral-schedules', 'verb' => 'POST'],
 
             // Budget scenarios (budget-scenarios, REQ-BSC-002). isDefault is set
             // exclusively via this endpoint (a service call, atomic demotion of
@@ -745,6 +772,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // column set pre-computed (design.md §1c: expand/collapse must
             // cost zero further requests).
             ['name' => 'budgetGrid#index', 'url' => '/api/budget-grid', 'verb' => 'GET'],
+            // The operator-triggered run of KnownCostBudgetWriter
+            // (budget-known-costs design.md §12). Access is checked in the controller body.
+            ['name' => 'knownCost#regenerate', 'url' => '/api/v1/budgets/known-costs/regenerate', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],
@@ -994,6 +1024,19 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // (another administration's cycle is masked as 404).
             ['name' => 'ensiaCycle#xml', 'url' => '/api/v1/public-sector/ensia/{id}/xml', 'verb' => 'GET'],
             ['name' => 'ensiaCycle#statement', 'url' => '/api/v1/public-sector/ensia/{id}/statement', 'verb' => 'GET'],
+            // public-sector-grant-accountability REQ-SUBV-012: store a grant's
+            // accountability report (and its pending auditor statement).
+            // #[NoAdminRequired], the grant's administration checked in the
+            // controller (another administration's grant is masked as 404).
+            ['name' => 'grantAccountability#report', 'url' => '/api/v1/public-sector/grants/{id}/report', 'verb' => 'POST'],
+            // public-sector-grant-accountability REQ-SISA-012/013: the SiSa appendix
+            // of a year, as a table or ?format=csv. #[NoAdminRequired], the
+            // administration checked in the controller (masked as 404).
+            ['name' => 'grantAccountability#sisa', 'url' => '/api/v1/public-sector/sisa', 'verb' => 'GET'],
+            // public-sector-grant-accountability REQ-EUF-012: propose an EU project's
+            // declaration for a quarter. #[NoAdminRequired], the project's
+            // administration checked in the controller (masked as 404).
+            ['name' => 'grantAccountability#proposeEuDeclaration', 'url' => '/api/v1/public-sector/eu-projects/{id}/declarations', 'verb' => 'POST'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
