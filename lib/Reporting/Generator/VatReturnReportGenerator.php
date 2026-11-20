@@ -172,6 +172,12 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 		$writer->writeAttribute('period', $this->contextString($context, 'period'));
 		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
 		$writer->writeAttribute('aangifte', (string)($vatReturn['returnNumber'] ?? ''));
+		// REQ-TVRB-003: a VAT fiscal unity's return is filed under the unity's number.
+		$vatNumber = trim((string)($vatReturn['vatNumber'] ?? ''));
+		if ($vatNumber !== '') {
+			$writer->writeAttribute('btwNummer', $vatNumber);
+		}
+
 		$writer->writeAttribute('status', (string)($vatReturn['statusCode'] ?? ''));
 		$writer->writeAttribute('valuta', 'EUR');
 		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));

@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
+use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Reporting\Generator\RuleAuditReportGenerator;
 use OCA\Shillinq\Service\RuleAuditService;
 use PHPUnit\Framework\TestCase;
@@ -136,7 +137,7 @@ final class RuleAuditReportGeneratorTest extends TestCase {
 	 */
 	private function generator(RuleAuditService $audit, LoggerInterface|null $logger = null): RuleAuditReportGenerator {
 		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->with(RuleAuditService::class)->willReturn($audit);
+		$container->method('get')->with(RuleAuditServiceInterface::class)->willReturn($audit);
 
 		return new RuleAuditReportGenerator($container, ($logger ?? $this->createMock(LoggerInterface::class)));
 

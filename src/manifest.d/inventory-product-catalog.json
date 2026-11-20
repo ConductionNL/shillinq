@@ -24,18 +24,122 @@
 		{
 			"id": "ProductCatalog",
 			"route": "/inventory/products",
-			"type": "custom",
+			"type": "index",
 			"title": "Products",
-			"component": "ProductCatalogIndex",
-			"_note": "inventory-product-catalog REQ-IPC-008 (#860). NOT type:'index' — a declarative index page binds to ONE OpenRegister register+schema, and the product master is not in shillinq's register: shillinq-product-vendor-to-pipelinq REQ-SPVP-004 deleted the local Product register and moved ownership to pipelinq, which is why 'schema: Product' 404s. Binding this page to register:'pipelinq' instead would render an empty table on every install without pipelinq while satisfying every 'the page mounted' assertion. The component calls GET /apps/shillinq/api/inventory/products, which resolves the master first and falls back to the local denormalised cache the ADR-019 integration contract already declares, and renders which of the two answered. Read-only: no create affordance, no write route — REQ-SPVP-004 forbids a shillinq surface that accepts a product definition. No detail page for the same reason: the object being detailed lives in pipelinq, so a shillinq detail route would be a second empty shell."
+			"config": {
+				"entitySource": "endpoint",
+				"sourceConfig": {
+					"url": "/apps/shillinq/api/inventory/products",
+					"rowsPath": "products",
+					"totalPath": "total",
+					"notePath": "sourceNote",
+					"refusedText": "You have no administration yet, so there is no inventory to show. Ask an administrator for access."
+				},
+				"showTitle": true,
+				"headerMeta": "Products this administration holds inventory or barcodes for. The product master owns the definitions; shillinq owns unit cost, quantities and valuation.",
+				"showAdd": false,
+				"showViewAction": false,
+				"allowSavedViews": false,
+				"emptyText": "No products yet.",
+				"columns": [
+					{
+						"key": "productId",
+						"label": "Product ID"
+					},
+					{
+						"key": "sku",
+						"label": "SKU"
+					},
+					{
+						"key": "name",
+						"label": "Name"
+					},
+					{
+						"key": "category",
+						"label": "Category"
+					},
+					{
+						"key": "unitPrice",
+						"label": "Unit price",
+						"formatter": "currency",
+						"formatterOptions": {
+							"currencyField": "currency"
+						}
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit cost",
+						"formatter": "currency",
+						"formatterOptions": {
+							"currencyField": "currency"
+						}
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "On hand",
+						"format": {
+							"style": "number",
+							"decimals": 2
+						}
+					},
+					{
+						"key": "status",
+						"label": "Status"
+					}
+				]
+			}
 		},
 		{
 			"id": "ProductAttributeCatalog",
 			"route": "/inventory/product-attributes",
-			"type": "custom",
+			"type": "index",
 			"title": "Product Attributes",
-			"component": "ProductAttributeCatalogIndex",
-			"_note": "inventory-product-catalog REQ-IPC-003 / REQ-IPC-004 (#860). Same ownership story as ProductCatalog: the ProductAttribute register was deleted from shillinq by shillinq-product-vendor-to-pipelinq REQ-SPVP-004. Serves GET /apps/shillinq/api/inventory/product-attributes — the attribute names the product master's products declare when it is reachable, otherwise the attribute surface the ADR-019 contract publishes, every row naming its owning application. Read-only, no write route."
+			"config": {
+				"entitySource": "endpoint",
+				"sourceConfig": {
+					"url": "/apps/shillinq/api/inventory/product-attributes",
+					"rowsPath": "attributes",
+					"totalPath": "total",
+					"notePath": "sourceNote",
+					"refusedText": "You have no administration yet, so there is no inventory to show. Ask an administrator for access."
+				},
+				"showTitle": true,
+				"headerMeta": "Attribute definitions the product catalog exposes, and which application owns each one.",
+				"showAdd": false,
+				"showViewAction": false,
+				"allowSavedViews": false,
+				"emptyText": "No attribute definitions are available.",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name"
+					},
+					{
+						"key": "dataType",
+						"label": "Data Type"
+					},
+					{
+						"key": "applicableToCategories",
+						"label": "Applies To"
+					},
+					{
+						"key": "isRequired",
+						"label": "Required"
+					},
+					{
+						"key": "displayOrder",
+						"label": "Order"
+					},
+					{
+						"key": "ownedBy",
+						"label": "Owned By"
+					},
+					{
+						"key": "validationRule",
+						"label": "Notes"
+					}
+				]
+			}
 		}
 	]
 }

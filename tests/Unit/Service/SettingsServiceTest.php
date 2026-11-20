@@ -1014,10 +1014,10 @@ class SettingsServiceTest extends TestCase {
 
 		$choices = $this->service->chartTemplateChoices();
 
-		self::assertSame(['mkb', 'zzp', 'bbv', 'office:tpl-1'], array_column($choices, 'value'));
+		self::assertSame(['mkb', 'zzp', 'bbv', 'legislation-be', 'office:tpl-1'], array_column($choices, 'value'));
 		self::assertSame(
 			['value' => 'office:tpl-1', 'label' => 'Kantoor De Boer MKB', 'office' => true, 'version' => 2, 'accounts' => 40, 'dimensions' => 2],
-			$choices[3]
+			$choices[4]
 		);
 	}//end testTheTemplateStepListsShippedThenOfficeTemplates()
 
@@ -1036,7 +1036,7 @@ class SettingsServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($templates);
 		$this->logger->expects($this->once())->method('warning');
 
-		self::assertSame(['mkb', 'zzp', 'bbv'], array_column($this->service->chartTemplateChoices(), 'value'));
+		self::assertSame(['mkb', 'zzp', 'bbv', 'legislation-be'], array_column($this->service->chartTemplateChoices(), 'value'));
 	}//end testUnreadableOfficeTemplatesLeaveTheShippedVariants()
 
 	/**
@@ -1050,6 +1050,6 @@ class SettingsServiceTest extends TestCase {
 		$this->appManager->method('isInstalled')->willReturn(false);
 		$this->container->expects($this->never())->method('get');
 
-		self::assertSame(['mkb', 'zzp', 'bbv'], array_column($this->service->chartTemplateChoices(), 'value'));
+		self::assertSame(['mkb', 'zzp', 'bbv', 'legislation-be'], array_column($this->service->chartTemplateChoices(), 'value'));
 	}//end testWithoutOpenRegisterOnlyShippedVariantsAreOffered()
 }//end class
