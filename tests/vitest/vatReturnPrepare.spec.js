@@ -141,6 +141,17 @@ describe('Prepare return', () => {
 		expect(prepareErrorText({})).toContain('could not be prepared')
 	})
 
+	it('names the fiscal unity when a member is refused', async () => {
+		const { prepareErrorText } = await import('../../src/utils/vatReturnApi.js')
+		const message = 'This administration is a member of the VAT fiscal unity Fiscale eenheid Holding Voorbeeld in this period; the representative files the return for the unity.'
+		expect(
+			prepareErrorText({ response: { status: 409, data: { error: 'vat-fiscal-unity-member', message } } }),
+		).toBe(message)
+		expect(prepareErrorText({ response: { status: 409, data: { error: 'other', message } } })).toContain(
+			'could not be prepared',
+		)
+	})
+
 	it('links the prepared return to its page route', async () => {
 		const { vatReturnUrl } = await import('../../src/utils/vatReturnApi.js')
 		expect(page('VATReturnDetail').route).toBe('/vat-returns/:id')

@@ -1,0 +1,36 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "receivables-provider-payouts",
+		"adr": "ADR-037 modular manifest fragment; never edit src/manifest.json",
+		"description": "The Counter sale page of design.md D6 (REQ-RPPO-006), under Sales: a phone-sized page that records a counter sale and takes its payment on the user's phone."
+	},
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Sales",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "CounterSale",
+					"label": "Counter sale",
+					"icon": "CashRegister",
+					"route": "CounterSale",
+					"order": 3
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CounterSale",
+			"route": "/sales/counter-sale",
+			"type": "custom",
+			"component": "CounterSalePage",
+			"title": "Counter sale",
+			"_note": "Records a sale and drives its payment on the user's phone, which no index, detail or form page type does: the lines become a draft simplified ARInvoice through POST /api/financial-documents/counter-sales, the capture issues it and a failed payment or Customer walked away cancels it. See src/views/CounterSalePage.vue."
+		}
+	]
+}

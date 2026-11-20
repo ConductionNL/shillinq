@@ -27,8 +27,8 @@ namespace OCA\Shillinq\Controller;
 
 use DomainException;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\Contracts\SuggestedMappingConfirmationInterface;
 use OCA\Shillinq\Service\Import\ImportBatchNotFoundException;
-use OCA\Shillinq\Service\Import\SuggestedMappingConfirmation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -49,7 +49,7 @@ class ImportBatchController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request.
-	 * @param SuggestedMappingConfirmation $confirmation Confirms the suggested mappings.
+	 * @param SuggestedMappingConfirmationInterface $confirmation Confirms the suggested mappings.
 	 * @param IUserSession $userSession The session.
 	 * @param IL10N $l10n Translated refusals.
 	 * @param LoggerInterface $logger Logger.
@@ -58,7 +58,7 @@ class ImportBatchController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SuggestedMappingConfirmation $confirmation,
+		private readonly SuggestedMappingConfirmationInterface $confirmation,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
