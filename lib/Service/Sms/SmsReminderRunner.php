@@ -38,6 +38,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SmsReminderRunnerInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -47,7 +48,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
  */
-class SmsReminderRunner {
+class SmsReminderRunner implements SmsReminderRunnerInterface {
 	/**
 	 * The channel state while a real provider is bound.
 	 */

@@ -81,13 +81,17 @@ use OCA\Shillinq\Kernel\Contracts\EuDeclarationBuilderInterface;
 use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
 use OCA\Shillinq\Kernel\Contracts\FxRateFeedStatusInterface;
 use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceBatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceSendingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SbrFilingFileStoreInterface;
 use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceIntakeInterface;
 use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceReviewInterface;
 use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
+use OCA\Shillinq\Kernel\Contracts\SmsReminderRunnerInterface;
 use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CrossSubsidyScanInterface;
@@ -225,6 +229,7 @@ use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StatementManifestServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StockLedgerServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SubjectCostServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SuggestedMappingConfirmationInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SuspenseAgeingServiceInterface;
@@ -239,6 +244,7 @@ use OCA\Shillinq\Kernel\Contracts\TransactionalGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
 use OCA\Shillinq\Kernel\Contracts\VatNumberCheckInterface;
+use OCA\Shillinq\Kernel\Contracts\VatPositionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VatReturnXbrlBuilderInterface;
 use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
@@ -254,6 +260,7 @@ use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\WbsoTransactionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WebshopOrderInvoicerInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetCorsPolicyInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\XbrlInstanceCheckInterface;
 use OCA\Shillinq\Kernel\Contracts\XbrlTaxonomyLookupInterface;
@@ -292,6 +299,7 @@ use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
 use OCA\Shillinq\Service\Ib47\Ib47BatchService;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
 use OCA\Shillinq\Service\Import\ImportPeriod;
+use OCA\Shillinq\Service\Import\SuggestedMappingConfirmation;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
@@ -330,8 +338,10 @@ use OCA\Shillinq\Service\Sbr\XbrlInstanceCheck;
 use OCA\Shillinq\Service\Sbr\XbrlTaxonomyLookup;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
+use OCA\Shillinq\Service\Sms\SmsReminderRunner;
 use OCA\Shillinq\Service\Tax\FiledReturnDriftCheck;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
+use OCA\Shillinq\Service\Tax\VatPositionService;
 use OCA\Shillinq\Service\Tax\VatSuppletieFilingService;
 use OCA\Shillinq\Service\Treasury\FxRateFeedStatus;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
@@ -426,12 +436,16 @@ final class ContractRegistrar {
 		DirectDebitFileServiceInterface::class => DirectDebitFileService::class,
 		FiledReturnDriftCheckInterface::class => FiledReturnDriftCheck::class,
 		FxRateFeedStatusInterface::class => FxRateFeedStatus::class,
+		InvoiceBatchServiceInterface::class => InvoiceBatchService::class,
+		InvoiceSendingServiceInterface::class => InvoiceSendingService::class,
 		PensionValuationPostingServiceInterface::class => PensionValuationPostingService::class,
 		RecurringInvoiceGeneratorInterface::class => RecurringInvoiceGenerator::class,
 		RetentionDueServiceInterface::class => RetentionDueService::class,
+		RuleAuditServiceInterface::class => RuleAuditService::class,
 		SbrFilingFileStoreInterface::class => SbrFilingFileStore::class,
 		SelfBilledInvoiceIntakeInterface::class => SelfBilledInvoiceIntake::class,
 		SelfBilledInvoiceReviewInterface::class => SelfBilledInvoiceReview::class,
+		SmsReminderRunnerInterface::class => SmsReminderRunner::class,
 		SubscriptionCancellationServiceInterface::class => SubscriptionCancellationService::class,
 		ContributionRaiseServiceInterface::class => ContributionRaiseService::class,
 		CrossSubsidyScanInterface::class => CrossSubsidyScan::class,
@@ -574,6 +588,7 @@ final class ContractRegistrar {
 		StatementManifestServiceInterface::class => StatementManifestService::class,
 		StockLedgerServiceInterface::class => StockLedgerService::class,
 		SubjectCostServiceInterface::class => SubjectCostService::class,
+		SuggestedMappingConfirmationInterface::class => SuggestedMappingConfirmation::class,
 		SupplierInvoiceChecksInterface::class => SupplierInvoiceChecks::class,
 		SupplierInvoiceServiceInterface::class => SupplierInvoiceService::class,
 		SuspenseAgeingServiceInterface::class => SuspenseAgeingService::class,
@@ -586,6 +601,7 @@ final class ContractRegistrar {
 		TimeIntakeServiceInterface::class => TimeIntakeService::class,
 		TransactionalGuardInterface::class => TransactionalGuard::class,
 		TrialBalanceServiceInterface::class => TrialBalanceService::class,
+		VatPositionServiceInterface::class => VatPositionService::class,
 		VATReturnServiceInterface::class => VATReturnService::class,
 		VatLineBackfillInterface::class => VatLineBackfill::class,
 		VatNumberCheckInterface::class => VatNumberCheck::class,
@@ -603,6 +619,7 @@ final class ContractRegistrar {
 		WbsoTransactionServiceInterface::class => WbsoTransactionService::class,
 		WebshopOrderInvoicerInterface::class => WebshopOrderInvoicer::class,
 		WidgetAuthServiceInterface::class => WidgetAuthService::class,
+		WidgetCorsPolicyInterface::class => WidgetCorsPolicy::class,
 		WidgetServiceInterface::class => WidgetService::class,
 		XbrlInstanceCheckInterface::class => XbrlInstanceCheck::class,
 		XbrlTaxonomyLookupInterface::class => XbrlTaxonomyLookup::class,
