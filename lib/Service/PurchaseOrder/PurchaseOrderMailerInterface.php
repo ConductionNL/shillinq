@@ -41,16 +41,26 @@ interface PurchaseOrderMailerInterface {
 	 *
 	 * Implementations are expected to render the PO into a PDF representation
 	 * (or attach a UBL document as a fallback) and dispatch it to the supplier
-	 * contact resolved server-side. The method MUST throw on failure — the
-	 * orchestration layer treats a successful return as proof of dispatch and
-	 * records the lifecycle transition.
+	 * contact resolved server-side. The orchestration layer moves the order to
+	 * sent only when this returns true (REQ-PODR-002).
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param array<string,mixed> $purchaseOrder The persisted PurchaseOrder record.
 	 *
-	 * @return void
+	 * @return bool True when the mail channel accepted the message.
 	 *
 	 * @throws \RuntimeException When the mailer cannot dispatch.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
-	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void;
+	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool;
+
+	/**
+	 * Whether a mail channel is there to take a purchase order at all.
+	 *
+	 * @return bool False when sending would only be logged, so nothing may be claimed.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 */
+	public function isAvailable(): bool;
 }//end interface

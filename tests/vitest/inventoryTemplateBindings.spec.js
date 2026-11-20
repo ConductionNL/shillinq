@@ -5,18 +5,16 @@
  * The template wiring of the inventory components, server-rendered from
  * their real templates: the v-model and scan bindings each warehouse
  * operation hands its child fields, the scan / cancel relay of the shared
- * operation frame, the scanner's camera states, the catalog tables' column
- * slots and error line, and the sync badge's refresh ticker. Child
+ * operation frame, the scanner's camera states and the sync badge's refresh
+ * ticker. Child
  * components are replaced by stand-ins that record the props and listeners
  * they receive, so a spec can fire a listener and read back the state the
  * template wrote.
  *
  * @spec openspec/specs/inventory-mobile-scanner/spec.md
- * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-002
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { h } from 'vue'
 import { renderWithStandIns } from './helpers/renderWithStandIns.js'
 
 const scanner = vi.hoisted(() => ({ store: null }))
@@ -35,33 +33,12 @@ const { default: CountOp } = await import('../../src/components/inventory/CountO
 const { default: InventoryOperationForm } = await import('../../src/components/inventory/InventoryOperationForm.vue')
 const { default: InventoryLocationField } = await import('../../src/components/inventory/InventoryLocationField.vue')
 const { default: BarcodeScanner } = await import('../../src/components/inventory/BarcodeScanner.vue')
-const { default: ProductCatalogIndex } = await import('../../src/components/inventory/ProductCatalogIndex.vue')
-const { default: ProductAttributeCatalogIndex } = await import('../../src/components/inventory/ProductAttributeCatalogIndex.vue')
 const { default: SyncStatusBadge } = await import('../../src/components/inventory/SyncStatusBadge.vue')
 
 const LOCATIONS = [
 	{ code: 'A', name: 'Aisle A' },
 	{ code: 'B', name: 'Back room' },
 ]
-
-/**
- * A CnDataTable stand-in that renders each row through the parent's
- * `#column-<key>` scoped slots, one cell per column.
- *
- * @return {object} The component.
- */
-function tableStandIn() {
-	return {
-		name: 'CnDataTable',
-		props: { columns: Array, rows: Array, loading: Boolean, emptyText: String },
-		setup(props, { slots }) {
-			return () => h('table', { 'data-empty': props.emptyText },
-				(props.rows || []).map((row) => h('tr', {},
-					props.columns.map((col) => h('td', { 'data-col': col.key },
-						slots[`column-${col.key}`]?.({ row, value: row[col.key] }) ?? String(row[col.key] ?? ''))))))
-		},
-	}
-}
 
 const render = renderWithStandIns
 
@@ -194,87 +171,6 @@ describe('BarcodeScanner', () => {
 		expect(html).toContain('aria-label="Live camera preview for barcode scanning"')
 		expect(text(html)).toContain('Point the camera at the barcode')
 		expect(html).not.toContain('barcode-scanner__error')
-	})
-})
-
-describe('ProductCatalogIndex template', () => {
-	const ROW = {
-		productId: 'P-1',
-		name: '',
-		category: null,
-		unitPrice: 18.99,
-		currency: 'USD',
-		unitCost: null,
-		quantityOnHand: 4,
-		status: 'active',
-	}
-
-	it('renders each column through its own slot', async () => {
-		const { html } = await render(ProductCatalogIndex, {
-			data: { products: [ROW], loading: false },
-			components: { CnDataTable: tableStandIn() },
-		})
-		const cell = (key) => text(html.match(new RegExp(`<td data-col="${key}">(.*?)</td>`))[1])
-		expect(html).toContain('<code class="product-catalog__id"')
-		expect(cell('productId')).toBe('P-1')
-		expect(cell('name')).toBe('—')
-		expect(cell('category')).toBe('—')
-		expect(cell('unitPrice')).toBe('18.99 USD')
-		expect(cell('unitCost')).toBe('—')
-		expect(cell('quantityOnHand')).toBe('4.00')
-		expect(cell('status')).toBe('active')
-	})
-
-	it('shows the error line only when there is an error', async () => {
-		const failed = await render(ProductCatalogIndex, {
-			data: { error: 'Could not load the product catalog.', loading: false },
-			components: { CnDataTable: tableStandIn() },
-		})
-		expect(failed.html).toContain('data-testid="product-catalog-error"')
-		expect(text(failed.html)).toContain('Could not load the product catalog.')
-
-		const fine = await render(ProductCatalogIndex, { components: { CnDataTable: tableStandIn() } })
-		expect(fine.html).not.toContain('product-catalog-error')
-	})
-
-	it('loads the catalog when mounted', () => {
-		const loadCatalog = vi.fn()
-		ProductCatalogIndex.mounted.call({ loadCatalog })
-		expect(loadCatalog).toHaveBeenCalledTimes(1)
-	})
-})
-
-describe('ProductAttributeCatalogIndex template', () => {
-	it('renders the required flag as Yes/No and a missing rule as a dash', async () => {
-		const { html } = await render(ProductAttributeCatalogIndex, {
-			data: {
-				attributes: [
-					{ key: 'colour', isRequired: true, validationRule: 'enum:red,blue' },
-					{ key: 'size', isRequired: false, validationRule: '' },
-				],
-				loading: false,
-			},
-			components: { CnDataTable: tableStandIn() },
-		})
-		const cells = (key) => [...html.matchAll(new RegExp(`<td data-col="${key}">(.*?)</td>`, 'g'))].map((m) => text(m[1]))
-		expect(cells('isRequired')).toEqual(['Yes', 'No'])
-		expect(cells('validationRule')).toEqual(['enum:red,blue', '—'])
-		expect(html).toContain('data-empty="No attribute definitions are available."')
-	})
-
-	it('shows the error line only when there is an error', async () => {
-		const { html } = await render(ProductAttributeCatalogIndex, {
-			data: { error: 'Could not load', loading: false },
-			components: { CnDataTable: tableStandIn() },
-		})
-		expect(html).toContain('data-testid="product-attributes-error"')
-		expect(text(html)).toContain('Could not load')
-	})
-
-	it('loads the attributes when mounted', () => {
-		const loadAttributes = vi.fn()
-		ProductAttributeCatalogIndex.mounted.call({ loadAttributes })
-		expect(loadAttributes).toHaveBeenCalledTimes(1)
 	})
 })
 

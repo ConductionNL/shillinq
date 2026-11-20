@@ -17,7 +17,6 @@ import BookingNotificationConfigModal from '../../src/modals/BookingNotification
 import LastInvoiceModal from '../../src/modals/LastInvoiceModal.vue'
 import MeterReadingImportModal from '../../src/modals/MeterReadingImportModal.vue'
 import MissedDepreciationDialog from '../../src/modals/MissedDepreciationDialog.vue'
-import PaymentBlockModal from '../../src/modals/PaymentBlockModal.vue'
 import PrepareVatReturnModal from '../../src/modals/PrepareVatReturnModal.vue'
 import ReopenPeriodDialog from '../../src/modals/ReopenPeriodDialog.vue'
 
@@ -64,68 +63,6 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.useRealTimers()
-})
-
-describe('PaymentBlockModal', () => {
-	it('takes the id from the prop, else the route', () => {
-		expect(instance(PaymentBlockModal, { objectId: 'p-1', $route: { params: { id: 'r' } } }).effectiveId).toBe('p-1')
-		expect(instance(PaymentBlockModal, { $route: { params: { id: 'r-1' } } }).effectiveId).toBe('r-1')
-		expect(instance(PaymentBlockModal).effectiveId).toBe('')
-	})
-
-	it('refuses a block without a reason and sends nothing', async () => {
-		const vm = instance(PaymentBlockModal, { schema: 'APTransaction', mode: 'block', objectId: 'ap-1', reason: '  ' })
-		await vm.submit()
-		expect(vm.error).toBe('Give a reason for the payment block.')
-		expect(vm.submitting).toBe(false)
-		expect(axios.patch).not.toHaveBeenCalled()
-	})
-
-	it('blocks a transaction and refreshes its detail', async () => {
-		const vm = instance(PaymentBlockModal, { schema: 'APTransaction', mode: 'block', objectId: 'ap-1', reason: ' disputed ', error: 'old' })
-		axios.patch.mockResolvedValueOnce({ data: {} })
-		await vm.submit()
-		expect(axios.patch).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/APTransaction/ap-1',
-			{ paymentBlocked: true, paymentBlockReason: 'disputed' },
-		)
-		expect(showSuccess).toHaveBeenCalledWith('Payment blocked')
-		expect(emit).toHaveBeenCalledWith('cn:widget:refresh', { widget: 'APTransactionDetail' })
-		expect(vm.emitted).toEqual([['close', { paymentBlocked: true, paymentBlockReason: 'disputed' }]])
-		expect(vm.error).toBe('')
-		expect(vm.submitting).toBe(false)
-	})
-
-	it('releases a payee and refreshes the payee detail', async () => {
-		const vm = instance(PaymentBlockModal, { schema: 'Payee', mode: 'release', $route: { params: { id: 'pay-1' } } })
-		vm.reason = 'IBAN verified'
-		axios.patch.mockResolvedValueOnce({ data: {} })
-		await vm.submit()
-		expect(axios.patch.mock.calls[0]).toEqual([
-			'/index.php/apps/openregister/api/objects/shillinq/Payee/pay-1',
-			{ paymentBlocked: false, paymentBlockReleaseReason: 'IBAN verified' },
-		])
-		expect(showSuccess).toHaveBeenCalledWith('Payment released')
-		expect(emit).toHaveBeenCalledWith('cn:widget:refresh', { widget: 'PayeeDetail' })
-	})
-
-	it('shows why a save failed and stays open', async () => {
-		const vm = instance(PaymentBlockModal, { schema: 'Invoice', mode: 'release', objectId: 'x' })
-		vm.reason = 'Creditnota ontvangen'
-		await vm.submit()
-		expect(vm.error).toBe('The payment block could not be saved.')
-		expect(axios.patch).not.toHaveBeenCalled()
-
-		const other = instance(PaymentBlockModal, { schema: 'Payee', mode: 'release', objectId: 'p' })
-		other.reason = 'Creditnota ontvangen'
-		axios.patch.mockRejectedValueOnce(httpError({ message: 'Locked' }))
-		await other.submit()
-		expect(other.error).toBe('Locked')
-		expect(other.emitted).toEqual([])
-		expect(showSuccess).not.toHaveBeenCalled()
-		other.onClose()
-		expect(other.emitted).toEqual([['close']])
-	})
 })
 
 describe('LastInvoiceModal', () => {

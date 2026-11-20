@@ -84,6 +84,17 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 	 */
 	public function draft(string $administrationId, array $request): array {
+		// A draft queued on the phone carries the id the phone gave it, and may
+		// be sent again when a sync was cut off after the save. The second send
+		// is answered with the draft the first one made (REQ-PMP-003).
+		$clientId = self::clientId(value: $request['clientId'] ?? null);
+		if ($clientId !== null && $administrationId !== '') {
+			$existing = $this->draftWithClientId(administrationId: $administrationId, clientId: $clientId);
+			if ($existing !== null) {
+				return $existing;
+			}
+		}
+
 		$customer    = $this->draftCustomer(administrationId: $administrationId, request: $request);
 		$invoiceDate = self::requiredInvoiceDate(request: $request);
 		$lines       = self::requiredLines(request: $request);
@@ -104,6 +115,10 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 			],
 			self::totals(lines: $lines)
 		);
+
+		if ($clientId !== null) {
+			$invoice['clientId'] = $clientId;
+		}
 
 		$saved = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'ARInvoice')->saveObject($invoice));
 		$invoice['id'] = (string)($saved['id'] ?? '');
@@ -461,6 +476,55 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	private static function addDays(string $date, int $days): string {
 		return (new DateTimeImmutable($date . 'T00:00:00Z'))->modify('+' . $days . ' days')->format('Y-m-d');
 	}//end addDays()
+
+	/**
+	 * The client id a request carries, when it is shaped as one.
+	 *
+	 * Anything else is ignored rather than refused, so a desktop draft, which
+	 * sends none, is drafted as before.
+	 *
+	 * @param mixed $value The requested client id.
+	 *
+	 * @return string|null The client id, lower case, or null.
+	 *
+	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 */
+	private static function clientId(mixed $value): ?string {
+		if (is_string($value) === false) {
+			return null;
+		}
+
+		$value = strtolower(trim($value));
+		if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $value) !== 1) {
+			return null;
+		}
+
+		return $value;
+	}//end clientId()
+
+	/**
+	 * The draft this administration already holds for a client id, or null.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $clientId         The client id.
+	 *
+	 * @return array<string,mixed>|null The stored draft, with its id.
+	 *
+	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 */
+	private function draftWithClientId(string $administrationId, string $clientId): ?array {
+		$matches = $this->scoped(schema: 'ARInvoice')->findAll(
+			['filters' => ['administrationId' => $administrationId, 'clientId' => $clientId], 'limit' => 1]
+		);
+		foreach ($matches as $match) {
+			$record = ObjectIdentifier::recordWithId(candidate: $match);
+			if ($record !== null && $record !== []) {
+				return $record;
+			}
+		}
+
+		return null;
+	}//end draftWithClientId()
 
 	/**
 	 * The object service on one schema of shillinq's register.

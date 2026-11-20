@@ -28,9 +28,9 @@ namespace OCA\Shillinq\Controller;
 use DomainException;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceSendingServiceInterface;
 use OCA\Shillinq\Service\InvoiceBatchSendService;
-use OCA\Shillinq\Service\InvoiceSendingService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,17 +57,17 @@ class InvoiceSendingController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param IRequest                     $request The request.
-	 * @param InvoiceSendingService        $sending The send.
-	 * @param AdministrationContextService $context Whether the user may act on the administration.
-	 * @param LoggerInterface              $logger  An unexpected failure, never shown in full.
-	 * @param InvoiceBatchSendService|null $batches Queues a send of selected invoices (REQ-SIS-003).
-	 * @param IUserSession|null            $session Who asked for a batch, to tell them when it is done.
+	 * @param IRequest                              $request The request.
+	 * @param InvoiceSendingServiceInterface        $sending The send.
+	 * @param AdministrationContextServiceInterface $context Whether the user may act on the administration.
+	 * @param LoggerInterface                       $logger  An unexpected failure, never shown in full.
+	 * @param InvoiceBatchSendService|null          $batches Queues a send of selected invoices (REQ-SIS-003).
+	 * @param IUserSession|null                     $session Who asked for a batch, to tell them when it is done.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly InvoiceSendingService $sending,
-		private readonly AdministrationContextService $context,
+		private readonly InvoiceSendingServiceInterface $sending,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 		private readonly ?InvoiceBatchSendService $batches = null,
 		private readonly ?IUserSession $session = null,

@@ -516,8 +516,9 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testASchemaWithoutAMapperIsRefusedByName()
 
 	/**
-	 * An expense claim is refused by name until expenses-category-mapping
-	 * adds its mapper, and nothing is written (REQ-LPP-006).
+	 * An expense claim is refused while its accounts cannot resolve (here: no
+	 * ExpenseAccountResolver), and nothing is written (REQ-LPP-006). Its
+	 * mapping is tested in MaterialiseExpenseClaimTest.
 	 *
 	 * @return void
 	 */
@@ -535,7 +536,7 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 			);
 			self::fail('An expense claim must not post without its account mapping.');
 		} catch (RuntimeException $e) {
-			self::assertStringContainsString('"ExpenseClaimEntry"', $e->getMessage());
+			self::assertSame('An expense claim cannot be posted: no expense account resolver is available.', $e->getMessage());
 		}
 
 		self::assertSame([], $this->store->savedOf('GLTransaction'));
@@ -804,6 +805,47 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 			$this->stampedLines()
 		);
 	}//end testWithoutAHighTariffNoReverseChargePairIsGuessed()
+
+	/**
+	 * A reverse-charged line that names its own rate self-assesses at that
+	 * rate, not at the general one; a line at a zero rate tariff that is not
+	 * reverse-charged books no self-assessed VAT.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-11', 'invoiceNumber' => 'INK-92', 'invoiceDate' => '2026-08-04', 'administrationId' => 'adm-1',
+					'totalAmount' => 1500.0, 'taxAmount' => 0,
+					'lines' => [
+						['accountNumber' => '7120', 'amount' => 1000.0, 'description' => 'Boeken uit Belgie', 'taxCode' => 'intra-eu-acquisition', 'vatRate' => 9],
+						['accountNumber' => '7130', 'amount' => 500.0, 'description' => 'Vrijgesteld', 'taxCode' => 'zero'],
+					],
+					'state' => 'posted',
+				],
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
+
+		self::assertSame(
+			[
+				['7120', 'debit', 1000.0, 'intra-eu-acquisition', '4b', 'base'],
+				['7130', 'debit', 500.0, 'zero', null, 'base'],
+				['1230', 'debit', 90.0, 'intra-eu-acquisition', '5b', 'vat'],
+				['2110', 'credit', 90.0, 'intra-eu-acquisition', '4b', 'vat'],
+				['2000', 'credit', 1500.0, null, null, null],
+			],
+			$this->stampedLines()
+		);
+	}//end testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate()
 
 	/**
 	 * Without tariff records the lines still carry their tariff code and

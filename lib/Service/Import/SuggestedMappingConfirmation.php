@@ -29,6 +29,7 @@ use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\SuggestedMappingConfirmationInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -38,7 +39,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
-class SuggestedMappingConfirmation {
+class SuggestedMappingConfirmation implements SuggestedMappingConfirmationInterface {
 
 	/**
 	 * Constructor.

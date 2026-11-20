@@ -240,6 +240,31 @@ class PurchaseOrderController extends Controller {
 	}//end previewApprovalChain()
 
 	/**
+	 * Which dispatch channels can take an order, and why one cannot.
+	 *
+	 * GET /api/purchase-orders/dispatch-channels
+	 * The detail page disables a channel that is not there and shows the
+	 * reason, instead of offering a send that would only be logged.
+	 *
+	 * @return JSONResponse 200 with {peppol: {available, reason}, email: {available, reason}}; 401 anonymous.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 *
+	 * @no-admin-idor-exempt Instance-wide capability read — takes no object reference
+	 *     and reads no storage: it reports whether a Peppol adapter and a mail channel
+	 *     are bound (PurchaseOrderService::dispatchChannels()), which is the same for
+	 *     every tenant. Verify by reading that method.
+	 */
+	#[NoAdminRequired]
+	public function dispatchChannels(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse($this->purchaseOrderService->dispatchChannels(), Http::STATUS_OK);
+	}//end dispatchChannels()
+
+	/**
 	 * Attempt to advance a purchase order's lifecycle to "sent".
 	 *
 	 * POST /api/purchase-orders/{id}/send
