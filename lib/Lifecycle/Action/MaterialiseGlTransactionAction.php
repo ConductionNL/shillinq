@@ -573,9 +573,13 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				'description' => (string)($line['description'] ?? $label),
 			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
 
-			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it.
+			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it:
+			// the buyer self-assesses it at the line's own rate, else the general rate (design D1).
 			if ($vat->isReverseCharge(code: $code) === true) {
-				$reverse[$code] = (($reverse[$code] ?? 0) + $cents);
+				$rate = $vat->selfAssessedRate(line: $line);
+				if ($rate !== null) {
+					$reverse[$code] = (($reverse[$code] ?? 0.0) + (float)$vat->vatCents(baseCents: $cents, rate: $rate));
+				}
 			}
 
 			if ($vat->isReverseCharge(code: $code) === false) {
@@ -623,26 +627,23 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * The VAT a supplier did not charge on a reverse-charged purchase, booked
 	 * twice per tariff: deducted in 5b and owed in the tariff's own box (2a,
 	 * 4a or 4b), so the net is nil and the return shows both (REQ-VBTW-004,
-	 * design D1). Without a rate to book it at, nothing is booked and the
-	 * return's reverse-charge check names the purchase.
+	 * design D1). The rate is the line's own, else the general rate
+	 * ({@see VatLineStamper::selfAssessedRate()}); without a rate to book it
+	 * at, nothing is booked and the return's reverse-charge check names the
+	 * purchase.
 	 *
-	 * @param array<string,int> $reverse The reverse-charged base in cents per tariff code.
-	 * @param string            $label   The document label.
+	 * @param array<string,float> $reverse The unrounded self-assessed VAT in cents per tariff code.
+	 * @param string              $label   The document label.
 	 *
 	 * @return list<array<string,mixed>>
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
 	 */
 	private function reverseChargePair(array $reverse, string $label): array {
-		$vat  = $this->vatStamper();
-		$rate = $vat->reverseChargeRate();
-		if ($rate === null) {
-			return [];
-		}
-
+		$vat   = $this->vatStamper();
 		$lines = [];
-		foreach ($reverse as $code => $baseCents) {
-			$cents = (int)round((float)$vat->vatCents(baseCents: $baseCents, rate: $rate));
+		foreach ($reverse as $code => $unrounded) {
+			$cents = (int)round($unrounded);
 			if ($cents === 0) {
 				continue;
 			}

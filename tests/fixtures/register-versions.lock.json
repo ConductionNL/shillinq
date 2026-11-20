@@ -192,6 +192,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120102600",
             "versionsSha256": "0450d0dd94ac92a31b01dffb00832f9825aebb4aee07a6f6c21fa3ef7a082e59"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102700",
+            "versionsSha256": "0b96554ee0ea054552d2246bd5834caa6eddb4f70b85d8a1fec191134f536126"
         }
     ],
     "versions": {
@@ -266,7 +270,7 @@
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",
         "schema:BookingSmsReminderChannel": "0.1.0",
-        "schema:BtwAangifte": "0.2.0",
+        "schema:BtwAangifte": "0.3.0",
         "schema:BudgetBBVMapping": "0.3.0",
         "schema:BudgetLine": "0.1.0",
         "schema:BudgetLineDerivation": "0.1.0",
@@ -701,11 +705,12 @@
         "schema:VATAuditRecord": "0.1.0",
         "schema:VATDeclaration": "0.2.0",
         "schema:VATGLAccounts": "0.1.0",
-        "schema:VATLine": "0.2.0",
+        "schema:VATLine": "0.3.0",
         "schema:ValueChainActor": "0.1.0",
         "schema:VamilDepreciation": "0.1.0",
         "schema:VariableConsiderationAdjustment": "0.1.0",
-        "schema:VatCorrection": "0.1.0",
+        "schema:VatCorrection": "0.2.0",
+        "schema:VatFiscalUnity": "0.1.0",
         "schema:VatReturn": "0.1.0",
         "schema:VatReturnFiling": "0.3.0",
         "schema:VatTariff": "0.4.0",

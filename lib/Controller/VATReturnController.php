@@ -57,6 +57,7 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Lifecycle\PostingRefusedException;
 use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
+use OCA\Shillinq\Service\Vat\VatFiscalUnityMemberException;
 use OCA\Shillinq\Service\Vat\VatReturnCheckService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -314,6 +315,18 @@ class VATReturnController extends Controller {
 				periodYear: $periodYear,
 				periodNumber: $periodNumber,
 				regime: $regime
+			);
+		} catch (VatFiscalUnityMemberException $e) {
+			// REQ-TVRB-003: the representative files for the unity; the refusal names it.
+			return new JSONResponse(
+				[
+					'error' => 'vat-fiscal-unity-member',
+					'message' => $this->l10n->t(
+						'This administration is a member of the VAT fiscal unity %s in this period; the representative files the return for the unity.',
+						[$e->unityName]
+					),
+				],
+				Http::STATUS_CONFLICT
 			);
 		} catch (JurisdictionRefusedException $e) {
 			return new JSONResponse(

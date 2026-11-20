@@ -482,6 +482,7 @@
                     "VamilDepreciation",
                     "VariableConsiderationAdjustment",
                     "VatCorrection",
+                    "VatFiscalUnity",
                     "VatReturn",
                     "VatReturnFiling",
                     "VatTariff",
