@@ -99,6 +99,13 @@ class ExtractionRequestController extends Controller {
 	private const REGISTER_SLUG = 'shillinq';
 
 	/**
+	 * Administration roles that approve receipts and may correct anyone's.
+	 *
+	 * @var array<string>
+	 */
+	private const RECEIPT_APPROVER_ROLES = ['eigenaar', 'controller', 'boekhouder'];
+
+	/**
 	 * Schemas this endpoint may operate on (REQ-RXC-001 docType targets).
 	 *
 	 * @var array<string>
@@ -297,6 +304,11 @@ class ExtractionRequestController extends Controller {
 			return $existing;
 		}
 
+		$receiptRefusal = $this->receiptRefusal(schema: $schema, id: $id, existing: $existing);
+		if ($receiptRefusal !== null) {
+			return $receiptRefusal;
+		}
+
 		$incomingFields = $this->editableFields(schema: $schema);
 		$refusal        = $this->invoiceRefusal(schema: $schema, existing: $existing, incomingFields: $incomingFields);
 		if ($refusal !== null) {
@@ -384,6 +396,86 @@ class ExtractionRequestController extends Controller {
 
 		return new JSONResponse(['record' => $record], Http::STATUS_OK);
 	}//end savedCorrection()
+
+	/**
+	 * Refuse a receipt change by anyone but its submitter or a receipt approver.
+	 *
+	 * @param string               $schema   The draft's schema.
+	 * @param string               $id       The draft id.
+	 * @param array<string, mixed> $existing The stored draft.
+	 *
+	 * @return JSONResponse|null The 403 refusal, or null when the change may go ahead.
+	 */
+	private function receiptRefusal(string $schema, string $id, array $existing): ?JSONResponse {
+		if ($schema !== ExtractionPrefillServiceInterface::SCHEMA_RECEIPT) {
+			return null;
+		}
+
+		if ($this->mayEditReceipt(id: $id, administrationId: (string)($existing['administrationId'] ?? '')) === true) {
+			return null;
+		}
+
+		return new JSONResponse(['error' => 'Only the employee who submitted this receipt, or a bookkeeper, can change it.'], Http::STATUS_FORBIDDEN);
+
+	}//end receiptRefusal()
+
+	/**
+	 * A receipt is changed by the employee who submitted it, or by someone
+	 * who approves receipts in its administration.
+	 *
+	 * @param string $id               The receipt id.
+	 * @param string $administrationId The receipt's administration.
+	 *
+	 * @return bool
+	 */
+	private function mayEditReceipt(string $id, string $administrationId): bool {
+		$userId = (string)($this->session->getUser()?->getUID() ?? '');
+		if ($userId === '') {
+			return false;
+		}
+
+		foreach (($this->administrationContext->buildContext()['administrations'] ?? []) as $membership) {
+			if ((string)($membership['administrationId'] ?? '') === $administrationId
+				&& in_array((string)($membership['role'] ?? ''), self::RECEIPT_APPROVER_ROLES, true) === true
+			) {
+				return true;
+			}
+		}
+
+		return $this->ownerOf(schema: ExtractionPrefillServiceInterface::SCHEMA_RECEIPT, id: $id) === $userId;
+
+	}//end mayEditReceipt()
+
+	/**
+	 * The user who created a record.
+	 *
+	 * @param string $schema The schema.
+	 * @param string $id     The record id.
+	 *
+	 * @return string The owner's user id; empty when it cannot be read.
+	 */
+	private function ownerOf(string $schema, string $id): string {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$found         = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister(self::REGISTER_SLUG)->setSchema($schema),
+				id: $id
+			);
+		} catch (Throwable $e) {
+			return '';
+		}
+
+		if (is_object($found) === true && method_exists($found, 'getOwner') === true) {
+			return (string)($found->getOwner() ?? '');
+		}
+
+		if (is_array($found) === true) {
+			return (string)($found['@self']['owner'] ?? ($found['owner'] ?? ''));
+		}
+
+		return '';
+
+	}//end ownerOf()
 
 	/**
 	 * A supplier invoice is confirmed once, from its review draft, and the
