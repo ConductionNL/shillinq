@@ -516,8 +516,9 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testASchemaWithoutAMapperIsRefusedByName()
 
 	/**
-	 * An expense claim is refused by name until expenses-category-mapping
-	 * adds its mapper, and nothing is written (REQ-LPP-006).
+	 * An expense claim is refused while its accounts cannot resolve (here: no
+	 * ExpenseAccountResolver), and nothing is written (REQ-LPP-006). Its
+	 * mapping is tested in MaterialiseExpenseClaimTest.
 	 *
 	 * @return void
 	 */
@@ -535,7 +536,7 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 			);
 			self::fail('An expense claim must not post without its account mapping.');
 		} catch (RuntimeException $e) {
-			self::assertStringContainsString('"ExpenseClaimEntry"', $e->getMessage());
+			self::assertSame('An expense claim cannot be posted: no expense account resolver is available.', $e->getMessage());
 		}
 
 		self::assertSame([], $this->store->savedOf('GLTransaction'));
@@ -722,13 +723,16 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 
 	/**
 	 * A reverse-charged purchase puts its base in the box of its tariff
-	 * (2a domestic, 4b from the EU, 4a from outside the EU).
+	 * (2a domestic, 4b from the EU, 4a from outside the EU), and books the
+	 * VAT the supplier did not charge twice: owed in that box and deducted in
+	 * 5b, at the high tariff's rate (decision 72). The lines validate against
+	 * the merged register.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
 	 */
-	public function testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff(): void {
+	public function testAReverseChargedPurchaseBooksItsVatOwedAndDeducted(): void {
 		$action = $this->action();
 		$this->seedTariffs();
 		$action->execute(
@@ -752,11 +756,96 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 			[
 				['7100', 'debit', 2000.0, 'reverse-charge', '2a', 'base'],
 				['7110', 'debit', 1000.0, 'intra-eu-acquisition', '4b', 'base'],
+				['1230', 'debit', 420.0, 'reverse-charge', '5b', 'vat'],
+				['2110', 'credit', 420.0, 'reverse-charge', '2a', 'vat'],
+				['1230', 'debit', 210.0, 'intra-eu-acquisition', '5b', 'vat'],
+				['2110', 'credit', 210.0, 'intra-eu-acquisition', '4b', 'vat'],
 				['2000', 'credit', 3000.0, null, null, null],
 			],
 			$this->stampedLines()
 		);
-	}//end testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff()
+		foreach ($this->store->savedOf('GLLine') as $row) {
+			unset($row['id']);
+			// The store mints non-uuid ids; OpenRegister hands out uuids.
+			$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
+			self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
+		}
+	}//end testAReverseChargedPurchaseBooksItsVatOwedAndDeducted()
+
+	/**
+	 * Without a high tariff record there is no rate to book the pair at, so
+	 * none is guessed: the base is booked and the return check names it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testWithoutAHighTariffNoReverseChargePairIsGuessed(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$this->store->rows['VatTariff'] = array_values(
+			array_filter($this->store->rows['VatTariff'], static fn (array $t): bool => $t['code'] !== 'high')
+		);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-12', 'invoiceNumber' => 'INK-92', 'invoiceDate' => '2026-08-04', 'administrationId' => 'adm-1',
+					'totalAmount' => 2000.0, 'taxAmount' => 0,
+					'lines' => [['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge']],
+					'state' => 'posted',
+				],
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
+
+		self::assertSame(
+			[['7100', 'debit', 2000.0, 'reverse-charge', '2a', 'base'], ['2000', 'credit', 2000.0, null, null, null]],
+			$this->stampedLines()
+		);
+	}//end testWithoutAHighTariffNoReverseChargePairIsGuessed()
+
+	/**
+	 * A reverse-charged line that names its own rate self-assesses at that
+	 * rate, not at the general one; a line at a zero rate tariff that is not
+	 * reverse-charged books no self-assessed VAT.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-11', 'invoiceNumber' => 'INK-92', 'invoiceDate' => '2026-08-04', 'administrationId' => 'adm-1',
+					'totalAmount' => 1500.0, 'taxAmount' => 0,
+					'lines' => [
+						['accountNumber' => '7120', 'amount' => 1000.0, 'description' => 'Boeken uit Belgie', 'taxCode' => 'intra-eu-acquisition', 'vatRate' => 9],
+						['accountNumber' => '7130', 'amount' => 500.0, 'description' => 'Vrijgesteld', 'taxCode' => 'zero'],
+					],
+					'state' => 'posted',
+				],
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
+
+		self::assertSame(
+			[
+				['7120', 'debit', 1000.0, 'intra-eu-acquisition', '4b', 'base'],
+				['7130', 'debit', 500.0, 'zero', null, 'base'],
+				['1230', 'debit', 90.0, 'intra-eu-acquisition', '5b', 'vat'],
+				['2110', 'credit', 90.0, 'intra-eu-acquisition', '4b', 'vat'],
+				['2000', 'credit', 1500.0, null, null, null],
+			],
+			$this->stampedLines()
+		);
+	}//end testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate()
 
 	/**
 	 * Without tariff records the lines still carry their tariff code and

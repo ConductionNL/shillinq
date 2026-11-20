@@ -62,6 +62,8 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\Payout\CaptureBookingService;
+use OCA\Shillinq\Service\Payout\CounterSaleSettlement;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -77,6 +79,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Matching, settling and reversing a payment share one reconciliation state.
  */
 class PaymentReconciliationService implements PaymentReconciliationServiceInterface {
 
@@ -173,6 +177,8 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	 * @param ?PaymentRevenueAccountResolver $revenueAccounts Resolves the revenue account for a settlement, absent when nothing maps one.
 	 * @param ?PaymentSettlementService $settlements Stamps the settled edge; built on demand when absent.
 	 * @param ?ObjectTransitionRunner $transitions Posts the receipt's journal entry; built on demand when absent.
+	 * @param ?CaptureBookingService $captureBooking Books the capture of a paid invoice; built on demand when absent.
+	 * @param ?CounterSaleSettlement $counterSales Issues a captured counter sale and cancels a failed one; built on demand when absent.
 	 *
 	 * @return void
 	 */
@@ -184,6 +190,8 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		private readonly ?PaymentRevenueAccountResolver $revenueAccounts = null,
 		private readonly ?PaymentSettlementService $settlements = null,
 		private readonly ?ObjectTransitionRunner $transitions = null,
+		private readonly ?CaptureBookingService $captureBooking = null,
+		private readonly ?CounterSaleSettlement $counterSales = null,
 	) {
 	}//end __construct()
 
@@ -206,6 +214,39 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	private function settlements(): PaymentSettlementService {
 		return ($this->settlements ?? new PaymentSettlementService());
 	}//end settlements()
+
+	/**
+	 * The capture booking, built on demand so the callers that constructed
+	 * this service before `receivables-provider-payouts` keep working.
+	 *
+	 * @return CaptureBookingService The service.
+	 *
+	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 */
+	private function captureBooking(): CaptureBookingService {
+		return ($this->captureBooking ?? new CaptureBookingService(
+			objectService: $this->objectService,
+			appConfig: $this->appConfig,
+			transitions: $this->transitions(),
+			logger: $this->logger,
+			revenueAccounts: $this->revenueAccounts(),
+		));
+	}//end captureBooking()
+
+	/**
+	 * The counter-sale step of a payment outcome, built on demand when absent.
+	 *
+	 * @return CounterSaleSettlement
+	 *
+	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 */
+	private function counterSales(): CounterSaleSettlement {
+		return ($this->counterSales ?? new CounterSaleSettlement(
+			objectService: $this->objectService,
+			transitions: $this->transitions(),
+			logger: $this->logger,
+		));
+	}//end counterSales()
 
 	/**
 	 * The revenue-account mapping, resolved lazily so the existing callers that
@@ -269,6 +310,11 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		}
 
 		$record = $this->applyOutcome(record: $record, gateway: $gateway, outcome: $outcome, event: $event);
+
+		// A counter sale whose payment failed or was voided booked nothing: cancel its draft (REQ-RPPO-006).
+		if (($outcome === self::OUTCOME_FAILED || $outcome === self::OUTCOME_VOIDED) && $schema === self::SCHEMA_PAYMENT_REQUEST) {
+			$this->counterSales()->cancelOnFailure(registerSlug: $registerSlug, request: $record);
+		}
 
 		[$record, $result] = $this->settleWhenCapturedRequest(
 			registerSlug: $registerSlug,
@@ -482,6 +528,11 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 			// the slug arm and an invoice referenced by uuid never reconciled.
 			$invoices = $this->findLinkedInvoices(objectService: $objectService, registerSlug: $registerSlug, invoiceRef: $invoiceRef);
 
+			// A counter sale is a draft until its payment is captured: issue it first (REQ-RPPO-006).
+			if (is_array($invoices[0] ?? null) === true) {
+				$invoices[0] = $this->counterSales()->issueOnCapture(registerSlug: $registerSlug, invoice: $invoices[0]);
+			}
+
 			$invoice = $this->settleableInvoice(invoices: $invoices, invoiceRef: $invoiceRef);
 			if ($invoice === null) {
 				return null;
@@ -494,6 +545,11 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'ARInvoice')),
 				_rbac: false
 			);
+
+			// Book the capture: debit clearing, credit debtors, so the clearing
+			// account holds what the provider holds until its payout
+			// (receivables-provider-payouts D3, REQ-RPPO-003). Fail-soft inside.
+			$this->captureBooking()->book(registerSlug: $registerSlug, request: $request, invoice: $invoice);
 
 			// Post the realised FX gain/loss when the invoice was issued in a
 			// foreign currency and settles at a different rate (REQ-MC-010).

@@ -15,7 +15,21 @@
 		docUrl="https://shillinq.conduction.nl/docs/intro"
 		@tabChange="activeTab = $event"
 		@reimported="onReimported">
-		<Settings v-if="storesReady" />
+		<CnSettingsFieldsSection
+			appId="shillinq"
+			:name="t('shillinq', 'Configuration')"
+			:description="t('shillinq', 'The register Shillinq keeps its data in, and where a payment sends a person back to.')"
+			:url="settingsUrl"
+			:fields="configurationFields"
+			data-testid="admin-section-configuration" />
+
+		<CnSettingsFieldsSection
+			appId="shillinq"
+			:name="t('shillinq', 'Revenue accounts for payment requests')"
+			:description="t('shillinq', 'The ledger account a paid request books against, per kind of request. A paid request whose kind has no account waits until one is set.')"
+			:url="revenueAccountsUrl"
+			:fields="revenueAccountFields"
+			data-testid="admin-section-revenue-accounts" />
 
 		<CnSettingsFieldsSection
 			appId="shillinq"
@@ -67,7 +81,7 @@ import {
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
-import Settings from './Settings.vue'
+import customRecordTypesFragment from '../../manifest.d/platform-custom-record-types.json'
 import requiredFieldsFragment from '../../manifest.d/platform-required-fields.json'
 import { initializeStores } from '../../store/store.js'
 
@@ -79,7 +93,6 @@ export default {
 		CnSettingsSection,
 		CnToggleTableWidget,
 		NcButton,
-		Settings,
 	},
 
 	/**
@@ -106,6 +119,80 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Where the app's own settings are read and saved.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+		 */
+		settingsUrl() {
+			return generateUrl('/apps/shillinq/api/settings')
+		},
+
+		/**
+		 * The app's own settings: the register (chosen from the registers
+		 * OpenRegister has, not typed) and the portal return address.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+		 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
+		 */
+		configurationFields() {
+			return [
+				{
+					key: 'register',
+					label: 'Register',
+					type: 'select',
+					optionsUrl: generateUrl('/apps/openregister/api/registers'),
+					optionsPath: 'results',
+					optionLabel: 'title',
+					optionValue: 'slug',
+					required: true,
+				},
+				{
+					key: 'portal_payment_redirect_url',
+					label: 'Portal return address',
+					type: 'text',
+					pattern: '^https://.+',
+					patternMessage: 'Use an address that starts with https://',
+					hint: 'Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.',
+				},
+			]
+		},
+
+		/**
+		 * Where the request-type to revenue-account mapping is read and saved.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+		 */
+		revenueAccountsUrl() {
+			return generateUrl('/apps/shillinq/api/settings/payment-revenue-accounts')
+		},
+
+		/**
+		 * One account field per kind of payment request, plus the clearing
+		 * account the money arrives through. Empty means unmapped: the paid
+		 * request then waits in captured_unapplied instead of booking to a
+		 * guessed account.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+		 */
+		revenueAccountFields() {
+			const accountPattern = '^[A-Za-z0-9._-]{1,32}$'
+			const accountMessage = 'Use an account number of letters, digits, dots or dashes'
+			return [
+				{ key: 'leges', label: 'Fees (leges)', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'dwangsom', label: 'Penalty payments (dwangsom)', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'deposit', label: 'Deposits', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'contribution', label: 'Contributions', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'event-fee', label: 'Event fees', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'other', label: 'Other requests', type: 'text', pattern: accountPattern, patternMessage: accountMessage },
+				{ key: 'clearing', label: 'Clearing account', type: 'text', pattern: accountPattern, patternMessage: accountMessage, hint: 'The account the money arrives through before it is booked to revenue.' },
+			]
+		},
+
 		/**
 		 * Where the Pipelinq connection is read and saved.
 		 *
@@ -190,6 +277,18 @@ export default {
 					linkLabel: this.t('shillinq', 'Manage required fields'),
 					href: generateUrl('/apps/shillinq/settings/required-fields'),
 					widget: requiredFieldsFragment.adminTab.widget,
+				},
+				{
+					id: 'custom-record-types',
+					name: this.t('shillinq', 'Own records'),
+					description: this.t(
+						'shillinq',
+						'Show record types you added to the shillinq register in Open Register, each with its own list in shillinq.',
+					),
+
+					linkLabel: this.t('shillinq', 'Open own records'),
+					href: generateUrl('/apps/shillinq/records'),
+					widget: customRecordTypesFragment.adminTab.widget,
 				},
 				{
 					id: 'connections',

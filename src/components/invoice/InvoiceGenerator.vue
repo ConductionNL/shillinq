@@ -122,16 +122,70 @@
 				</label>
 			</fieldset>
 
-			<div v-if="!needsUsage" class="invoice-generator__row">
-				<label class="invoice-generator__row--wide">
-					{{ t('shillinq', 'Time entry IDs (comma-separated)') }}
-					<textarea v-model="timeIdsRaw" rows="2" />
-				</label>
-				<label class="invoice-generator__row--wide">
-					{{ t('shillinq', 'Expense IDs (comma-separated)') }}
-					<textarea v-model="expenseIdsRaw" rows="2" />
-				</label>
-			</div>
+			<p v-if="!needsUsage && workError" role="alert">
+				{{ workError }}
+			</p>
+
+			<fieldset
+				v-if="!needsUsage"
+				class="invoice-generator__work"
+				data-testid="billable-hours">
+				<legend>{{ t('shillinq', 'Hours to bill') }}</legend>
+				<p v-if="!work.hours.available" role="status">
+					{{ t('shillinq', 'Hours are not available: the hours app is not connected.') }}
+				</p>
+				<p v-else-if="!form.projectId">
+					{{ t('shillinq', 'Choose a project to list its unbilled hours.') }}
+				</p>
+				<p v-else-if="work.hours.entries.length === 0">
+					{{ t('shillinq', 'Every approved hour in this period is already on an invoice.') }}
+				</p>
+				<template v-else>
+					<label
+						v-for="hour in work.hours.entries"
+						:key="hour.id"
+						class="invoice-generator__item">
+						<input
+							v-model="timeEntryIds"
+							type="checkbox"
+							:value="hour.id" />
+						{{ hourLabel(hour) }}
+					</label>
+					<p class="invoice-generator__subtotal">
+						{{ t('shillinq', 'Ticked hours: EUR {amount}', { amount: formatMoney(tickedHoursAmount) }) }}
+					</p>
+				</template>
+			</fieldset>
+
+			<fieldset
+				v-if="!needsUsage"
+				class="invoice-generator__work"
+				data-testid="billable-expenses">
+				<legend>{{ t('shillinq', 'Pass-through expenses to bill') }}</legend>
+				<p v-if="work.expenses.length === 0">
+					{{ t('shillinq', 'This customer has no pass-through expenses that are not on an invoice yet.') }}
+				</p>
+				<div
+					v-for="item in work.expenses"
+					:key="item.id"
+					class="invoice-generator__expense">
+					<label class="invoice-generator__item">
+						<input
+							v-model="expenseItemIds"
+							type="checkbox"
+							:value="item.id" />
+						{{ expenseLabel(item) }}
+					</label>
+					<label class="invoice-generator__disbursement">
+						<input
+							v-model="disbursementIds"
+							type="checkbox"
+							:value="item.id"
+							:disabled="!expenseItemIds.includes(item.id)" />
+						{{ t('shillinq', 'Disbursement, outside the VAT base') }}
+					</label>
+				</div>
+			</fieldset>
 
 			<div class="invoice-generator__row">
 				<label class="invoice-generator__row--wide">
@@ -177,7 +231,17 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import invoiceApi from '../../api/invoiceApi.js'
+import { RATE_CARD_MODELS } from '../../utils/billableRate.js'
 import { loadBillableReadings } from '../../utils/usageBilling.js'
+
+/**
+ * The work list before anything is loaded: hours available but none listed.
+ *
+ * @return {object}
+ */
+function emptyWork() {
+	return { hours: { available: true, reason: '', entries: [] }, expenses: [] }
+}
 
 export default {
 	name: 'InvoiceGenerator',
@@ -212,8 +276,11 @@ export default {
 			readings: [],
 			meterReadingIds: [],
 			readingsError: '',
-			timeIdsRaw: '',
-			expenseIdsRaw: '',
+			work: emptyWork(),
+			workError: '',
+			timeEntryIds: [],
+			expenseItemIds: [],
+			disbursementIds: [],
 			draftId: null,
 			totals: null,
 			busy: false,
@@ -222,8 +289,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the model takes one rate card for the whole invoice; a time
+		 * and material invoice prices each hour by its own rate
+		 * (sales-billable-rate-per-hour REQ-BRPH-005).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+		 */
 		needsRateCard() {
-			return ['t_and_m', 'mixed'].includes(this.form.billingModel)
+			return RATE_CARD_MODELS.includes(this.form.billingModel)
 		},
 
 		needsRetainer() {
@@ -270,13 +345,50 @@ export default {
 		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
 		 */
 		payload() {
+			const ticked = this.needsUsage ? [] : this.work.expenses.filter((item) => this.expenseItemIds.includes(item.id))
 			return {
 				...this.form,
-				timeEntryIds: this.parseIds(this.timeIdsRaw),
-				expenseIds: this.parseIds(this.expenseIdsRaw),
+				rateCardId: this.needsRateCard ? this.form.rateCardId : '',
+				timeEntryIds: this.needsUsage ? [] : [...this.timeEntryIds],
+				expenseIds: [],
+				expenseItemRefs: ticked.map((item) => ({
+					schema: item.kind,
+					id: item.id,
+					disbursement: this.disbursementIds.includes(item.id),
+				})),
+
 				fixedFeeCents: Math.round(Number(this.fixedFeeEuros) * 100),
 				meterReadingIds: this.needsUsage ? [...this.meterReadingIds] : [],
 			}
+		},
+
+		/**
+		 * What the hours and expense lists depend on.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 */
+		workQuery() {
+			return [
+				this.needsUsage,
+				this.form.customerId,
+				this.form.projectId,
+				this.form.fromDate,
+				this.form.toDate,
+				this.form.rateCardId,
+			].join('|')
+		},
+
+		/**
+		 * The amount of the ticked hours.
+		 *
+		 * @return {number}
+		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 */
+		tickedHoursAmount() {
+			return this.work.hours.entries
+				.filter((hour) => this.timeEntryIds.includes(hour.id))
+				.reduce((sum, hour) => sum + Number(hour.amount || 0), 0)
 		},
 	},
 
@@ -289,18 +401,91 @@ export default {
 		usageQuery() {
 			this.loadReadings()
 		},
+
+		/**
+		 * Reload the unbilled hours and expenses when the customer, project, period or rate card changes.
+		 *
+		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 */
+		workQuery() {
+			this.loadWork()
+		},
 	},
 
 	methods: {
 		t,
-		parseIds(raw) {
-			if (typeof raw !== 'string' || raw.trim() === '') {
-				return []
+		/**
+		 * Load the customer's unbilled hours and pass-through expenses; nothing is ticked.
+		 *
+		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 */
+		async loadWork() {
+			this.work = emptyWork()
+			this.workError = ''
+			this.timeEntryIds = []
+			this.expenseItemIds = []
+			this.disbursementIds = []
+			const { customerId, projectId, fromDate, toDate, rateCardId } = this.form
+			if (this.needsUsage || !customerId) {
+				return
 			}
-			return raw
-				.split(',')
-				.map((s) => s.trim())
-				.filter(Boolean)
+			try {
+				const work = await invoiceApi.billableWork({
+					customerId,
+					projectId,
+					from: fromDate,
+					to: toDate,
+					rateCardId,
+				})
+				this.work = {
+					hours: { ...emptyWork().hours, ...(work?.hours || {}) },
+					expenses: Array.isArray(work?.expenses) ? work.expenses : [],
+				}
+				this.work.hours.entries = Array.isArray(this.work.hours.entries) ? this.work.hours.entries : []
+			} catch {
+				this.workError = t('shillinq', 'The billable hours and expenses could not be loaded.')
+			}
+		},
+
+		/**
+		 * One hour entry as a line: person, date, hours and amount.
+		 *
+		 * @param {object} hour An hour entry.
+		 * @return {string}
+		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 */
+		hourLabel(hour) {
+			if (hour.amount === null || hour.amount === undefined) {
+				return t('shillinq', '{date} {person}: {hours} hours', {
+					date: hour.date || '',
+					person: hour.person || '',
+					hours: hour.hours,
+				})
+			}
+			return t('shillinq', '{date} {person}: {hours} hours at EUR {rate}, EUR {amount}', {
+				date: hour.date || '',
+				person: hour.person || '',
+				hours: hour.hours,
+				rate: this.formatMoney(hour.rate),
+				amount: this.formatMoney(hour.amount),
+			})
+		},
+
+		/**
+		 * One pass-through item as a line: date, description, cost, markup and amount.
+		 *
+		 * @param {object} item A pass-through item.
+		 * @return {string}
+		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 */
+		expenseLabel(item) {
+			return t('shillinq', '{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}', {
+				date: item.date || '',
+				description: item.description || item.kind,
+				cost: this.formatMoney(item.cost),
+				markup: this.formatMoney(item.markup),
+				amount: this.formatMoney(item.amount),
+			})
 		},
 
 		/**
@@ -433,6 +618,23 @@ export default {
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
+}
+
+.invoice-generator__work {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 12px;
+}
+
+.invoice-generator__expense {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+}
+
+.invoice-generator__disbursement {
+	color: var(--color-text-maxcontrast);
 }
 
 .invoice-generator__totals {

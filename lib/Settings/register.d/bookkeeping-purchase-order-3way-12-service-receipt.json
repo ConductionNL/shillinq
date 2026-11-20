@@ -81,6 +81,13 @@
             "example": "July retainer delivered in full",
             "title": "Notes"
           },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).",
+            "nullable": true,
+            "example": "Uren niet onderbouwd",
+            "title": "Reason for rejection"
+          },
           "costCenter": {
             "type": "string",
             "description": "Dimensional cost-centre tag inherited from the originating PO(s).",
@@ -149,7 +156,10 @@
             "reject": {
               "from": "confirmed",
               "to": "rejected",
-              "label": "Afkeuren"
+              "label": "Afkeuren",
+              "inputs": [
+                {"field": "rejectionReason", "required": true}
+              ]
             }
           }
         },

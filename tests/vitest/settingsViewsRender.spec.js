@@ -54,7 +54,7 @@ vi.mock('@conduction/nextcloud-vue', () => ({
 		name: 'CnSettingsFieldsSection',
 		props: ['appId', 'name', 'description', 'url', 'fields'],
 		render() {
-			return h('section', { 'data-stub': 'CnSettingsFieldsSection' }, [h('h3', this.name)])
+			return h('section', { 'data-stub': 'CnSettingsFieldsSection' }, [h('h3', this.name), h('p', this.description)])
 		},
 	},
 	CnSettingsSection: {
@@ -90,7 +90,6 @@ vi.mock('@conduction/nextcloud-vue', () => ({
 globalThis.t = (app, text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (_m, key) => vars[key]) : text)
 
 const { default: AdminRoot } = await import('../../src/views/settings/AdminRoot.vue')
-const { default: Settings } = await import('../../src/views/settings/Settings.vue')
 const { default: StandardsPolicyEditor } = await import('../../src/views/settings/StandardsPolicyEditor.vue')
 
 /**
@@ -131,27 +130,6 @@ afterEach(() => {
 	delete globalThis.window
 	delete globalThis.OC
 	delete globalThis.fetch
-})
-
-describe('Settings', () => {
-	it('renders the stored register and return address, and the save message', async () => {
-		settingsStoreMock.settings = { register: 'shillinq', portal_payment_redirect_url: 'https://portal.example/paid' }
-
-		const html = await render(Settings, { successMessage: 'Settings saved successfully' })
-
-		expect(html).toMatch(/id="register"[^>]*value="shillinq"|value="shillinq"[^>]*id="register"/)
-		expect(html).toContain('https://portal.example/paid')
-		expect(html).toContain('class="success-message"')
-		expect(html).not.toContain('role="alert"')
-		expect(html).toMatch(/<button[^>]*>\s*Save\s*<\/button>/)
-	})
-
-	it('shows the refusal as an alert and Saving… on a disabled button while it saves', async () => {
-		const html = await render(Settings, { saving: true, errorMessage: 'The settings were not saved.' })
-
-		expect(html).toMatch(/role="alert"[^>]*>\s*The settings were not saved\./)
-		expect(html).toMatch(/<button[^>]*disabled[^>]*>\s*Saving…/)
-	})
 })
 
 describe('StandardsPolicyEditor', () => {
@@ -201,23 +179,24 @@ describe('AdminRoot', () => {
 	it('opens on the tab the address names and draws a section per tab with its link', async () => {
 		const html = await render(AdminRoot)
 
-		expect(html).toMatch(/<span data-tab="general">General<\/span><span data-tab="required-fields">Required fields<\/span><span data-tab="connections">Connections<\/span><span data-tab="appointments">Appointments<\/span>/)
+		expect(html).toMatch(/<span data-tab="general">General<\/span><span data-tab="required-fields">Required fields<\/span><span data-tab="custom-record-types">Own records<\/span><span data-tab="connections">Connections<\/span><span data-tab="appointments">Appointments<\/span>/)
 		expect(html).toMatch(/<ol><li>Administration settings<\/li><li>Shillinq<\/li><li>Connections<\/li><\/ol>/)
 		expect(html).toContain('only for administrators, each section saves on its own')
 		expect(html).toMatch(/data-slot="tab-required-fields"[\s\S]*?data-stub="CnToggleTableWidget"[\s\S]*?href="\/index.php\/apps\/shillinq\/settings\/required-fields"[^>]*>\s*Manage required fields/)
 		expect(html).toMatch(/data-slot="tab-connections"[\s\S]*?href="\/index.php\/apps\/shillinq\/external-adapters"[^>]*>\s*Open the connections/)
-		expect(html.match(/data-stub="CnToggleTableWidget"/g)).toHaveLength(1)
+		expect(html).toMatch(/data-slot="tab-custom-record-types"[\s\S]*?data-stub="CnToggleTableWidget"[\s\S]*?href="\/index.php\/apps\/shillinq\/records"[^>]*>\s*Open own records/)
+		expect(html.match(/data-stub="CnToggleTableWidget"/g)).toHaveLength(2)
 	})
 
-	it('shows the settings form only once the stores are up, the Pipelinq section at once, and starts the stores on creation', async () => {
+	it('shows the configuration and Pipelinq sections at once, and starts the stores on creation', async () => {
 		const waiting = await render(AdminRoot)
 		expect(initializeStoresMock).toHaveBeenCalled()
-		expect(waiting).not.toContain('OpenRegister register ID')
+		expect(waiting).toContain('data-stub="CnSettingsFieldsSection"')
+		expect(waiting).toContain('Configuration')
 		expect(waiting).toContain('Pipelinq integration')
 
 		const ready = await render(AdminRoot, { storesReady: true })
 		expect(ready).toContain('Pipelinq integration')
-		expect(ready).toContain('OpenRegister register ID')
 	})
 
 	it('reads the required field count when it is created', async () => {
