@@ -291,6 +291,8 @@
       Trend tab is declared under legacy `sidebarProps.tabs` and nc-vue's detail sidebar is off
       unless `config.sidebar` is set, so the tab never renders (242 detail pages share this; a
       decision for the boards, not a test fix).
+      Round 2 (17 Nov): the Trend tab now sits under `config.sidebar` with `enabled: true` (the
+      shape Customers uses), so the detail sidebar opens and reaches the chart; re-run to confirm.
       **NOT RUN, per this batch's explicit instruction ("Write the
       Playwright spec, do NOT execute it").**
 - [x] `openspec validate budget-charts --strict` — PASS.

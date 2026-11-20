@@ -396,6 +396,8 @@ class SetupController extends Controller {
 	 * @return DataResponse
 	 *
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) LegislationPackSeeder::countryOfTemplate() is a pure lookup of a template's country.
 	 */
 	private function seedFor(string $template, string $adminId): DataResponse {
 		// A legislation pack template (`legislation-be`) seeds another country's

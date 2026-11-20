@@ -200,6 +200,8 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
 import SalesOverview from './components/sales/SalesOverview.vue'
+// purchasing-order-dispatch-and-receipt task 4.2: three confirmation modes per line.
+import ServiceReceiptForm from './components/service-receipt/ServiceReceiptForm.vue'
 // Import bank statements lives under the Configuratie (settings) group as a
 // page that hosts BankStatementWizard — moved off the Financial overview
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
@@ -440,6 +442,7 @@ export default {
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
+	ServiceReceiptForm: { kind: 'page', component: ServiceReceiptForm },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 

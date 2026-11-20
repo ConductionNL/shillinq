@@ -192,6 +192,36 @@
             "example": null,
             "title": "Peppol Fallback Reason"
           },
+          "dispatchChannel": {
+            "type": "string",
+            "enum": [
+              "peppol",
+              "email"
+            ],
+            "description": "How the order was last sent to the supplier: through integriq's Peppol connector or by PDF and email (REQ-PODR-001/002).",
+            "nullable": true,
+            "example": "peppol",
+            "title": "Dispatch Channel"
+          },
+          "dispatchStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "sent",
+              "failed"
+            ],
+            "description": "Whether the last dispatch reached the supplier: pending until integriq reports the Peppol delivery, sent once it did or the mail channel accepted it, failed with dispatchError otherwise.",
+            "nullable": true,
+            "example": "pending",
+            "title": "Dispatch Status"
+          },
+          "dispatchError": {
+            "type": "string",
+            "description": "Why the last dispatch did not reach the supplier, as integriq or the mail channel reported it.",
+            "nullable": true,
+            "example": null,
+            "title": "Dispatch Error"
+          },
           "statusCode": {
             "type": "string",
             "enum": [

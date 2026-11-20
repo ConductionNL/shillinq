@@ -5276,7 +5276,8 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts",
-				"sidebarProps": {
+				"sidebar": {
+					"enabled": true,
 					"tabs": [
 						{
 							"id": "trend",
