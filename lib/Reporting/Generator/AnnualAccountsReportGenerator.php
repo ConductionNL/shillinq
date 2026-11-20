@@ -49,7 +49,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use OCA\Shillinq\Reporting\CashFlowCalculator;
+use OCA\Shillinq\Reporting\CashFlowStatementRecord;
 use OCA\Shillinq\Reporting\ReportSection;
+use Throwable;
 
 /**
  * Renders the statutory annual accounts from a FinancialStatement object.
@@ -117,6 +120,9 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 		$section->addTextBreak(1);
 		$this->addHeading($section, 'Winst- en verliesrekening');
 		$this->buildProfitAndLoss($section, $statement, $currency);
+
+		// --- Kasstroomoverzicht ---
+		$this->buildCashFlow(section: $section, statement: $statement, context: $context, currency: $currency);
 
 		// --- Toelichting ---
 		$section->addTextBreak(1);
@@ -252,6 +258,102 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 		}
 
 	}//end buildProfitAndLoss()
+
+	/**
+	 * Lay out the kasstroomoverzicht from the same calculator as the cash flow
+	 * page, and keep it as the annual report's CashFlowStatement (REQ-RCF-004).
+	 *
+	 * Left out when the calculator cannot be resolved or the statement names
+	 * no reporting period; a failing calculation says so in the document.
+	 *
+	 * @param ReportSection        $section   The block accumulator.
+	 * @param array<string, mixed> $statement The FinancialStatement object.
+	 * @param array<string, mixed> $context   `{ administrationId, ... }`.
+	 * @param string               $currency  The presentation currency.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.2
+	 */
+	private function buildCashFlow(ReportSection $section, array $statement, array $context, string $currency): void {
+		$calculator = $this->resolve(class: CashFlowCalculator::class);
+		$administrationId = $this->str($context, 'administrationId');
+		if ($administrationId === '') {
+			$administrationId = $this->str($statement, 'administrationId');
+		}
+
+		$from = substr($this->str($statement, 'reportingPeriodStart'), 0, 10);
+		$to = substr($this->str($statement, 'reportingPeriodEnd'), 0, 10);
+		if ($calculator instanceof CashFlowCalculator === false || $administrationId === '' || $from === '' || $to === '') {
+			return;
+		}
+
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Kasstroomoverzicht');
+		try {
+			$flow = $calculator->between(administrationId: $administrationId, from: $from, to: $to);
+		} catch (Throwable $e) {
+			$this->addNote($section, 'Het kasstroomoverzicht kon niet worden berekend.');
+			return;
+		}
+
+		$sections = [
+			'operating' => [CashFlowCalculator::SECTION_LABELS['operating'], 'Totaal operationeel'],
+			'investing' => [CashFlowCalculator::SECTION_LABELS['investing'], 'Totaal investeringen'],
+			'financing' => [CashFlowCalculator::SECTION_LABELS['financing'], 'Totaal financiering'],
+			'unclassified' => [CashFlowCalculator::SECTION_LABELS['unclassified'], 'Totaal niet ingedeeld'],
+		];
+		foreach ($sections as $key => [$head, $totalLabel]) {
+			$rows = (array)($flow[$key]['rows'] ?? []);
+			if ($key === 'unclassified' && $rows === []) {
+				continue;
+			}
+
+			$lines = array_map(static fn (array $row): array => ['label' => (string)$row['label'], 'amount' => (float)$row['amount']], $rows);
+			$this->addAmountTable($section, $head, 'Bedrag', $lines, ['label' => $totalLabel, 'amount' => (float)($flow[$key]['total'] ?? 0.0)], $currency);
+			$section->addTextBreak(1);
+		}
+
+		$totals = (array)($flow['totals'] ?? []);
+		$reconciliation = [
+			['label' => 'Liquide middelen begin', 'amount' => (float)($flow['cash']['opening'] ?? 0.0)],
+			['label' => 'Liquide middelen einde', 'amount' => (float)($flow['cash']['closing'] ?? 0.0)],
+			['label' => 'Netto kasstroom', 'amount' => (float)($totals['netCashFlow'] ?? 0.0)],
+		];
+		if (abs((float)($totals['difference'] ?? 0.0)) >= 0.005) {
+			$reconciliation[] = ['label' => 'Verschil', 'amount' => (float)$totals['difference']];
+		}
+
+		$this->addAmountTable($section, 'Aansluiting liquide middelen', 'Bedrag', $reconciliation, ['label' => CashFlowCalculator::CASH_CHANGE_LABEL, 'amount' => (float)($totals['cashChange'] ?? 0.0)], $currency);
+
+		$record = $this->resolve(class: CashFlowStatementRecord::class);
+		if ($record instanceof CashFlowStatementRecord) {
+			try {
+				$record->store(administrationId: $administrationId, statement: $flow, currency: $currency);
+			} catch (Throwable $e) {
+				// The document stands without the record; the register refusal is logged by the store.
+				return;
+			}
+		}
+
+	}//end buildCashFlow()
+
+	/**
+	 * A service from the container, or null when it cannot be resolved.
+	 *
+	 * @param string $class The class name.
+	 *
+	 * @return object|null
+	 */
+	private function resolve(string $class): ?object {
+		try {
+			$service = $this->container->get($class);
+		} catch (Throwable $e) {
+			return null;
+		}
+
+		return is_object($service) === true ? $service : null;
+	}//end resolve()
 
 	/**
 	 * Build the toelichting (notes): general principles, audit and filing.

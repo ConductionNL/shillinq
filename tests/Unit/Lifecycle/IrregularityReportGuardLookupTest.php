@@ -122,7 +122,7 @@ final class IrregularityReportGuardLookupTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnIdOnlyTransitionReadsTheRecordFromTheConfiguredRegister(): void {
-		$this->expectRead('books', 'IrregularityReport', ['filters' => ['id' => 'x-1'], 'limit' => 1], ['not a record', ['amountConcerned' => 10000, 'imsReference' => ' IMS-1 ']]);
+		$this->expectRead('books', 'IrregularityReport', ['filters' => ['id' => 'x-1'], 'limit' => 1], ['not a record', ['amountConcerned' => 10000, 'imsReference' => ' IMS-1 ', 'recoveryAmount' => '2500.00']]);
 
 		$this->assertTrue($this->guard()->canEscalate('x-1'));
 	}//end testAnIdOnlyTransitionReadsTheRecordFromTheConfiguredRegister()
@@ -168,7 +168,7 @@ final class IrregularityReportGuardLookupTest extends TestCase {
 	public function testAPassedRecordIsUsedWithoutARead(): void {
 		$this->expectNoRead();
 
-		$this->assertTrue($this->guard()->canEscalate('', ['amountConcerned' => 10000, 'imsReference' => ' IMS-1 ']));
+		$this->assertTrue($this->guard()->canEscalate('', ['amountConcerned' => 10000, 'imsReference' => ' IMS-1 ', 'recoveryAmount' => 0]));
 	}//end testAPassedRecordIsUsedWithoutARead()
 
 	/**
@@ -199,4 +199,30 @@ final class IrregularityReportGuardLookupTest extends TestCase {
 		$this->assertTrue($guard->canEscalate('', ['amountConcerned' => 9999.99]));
 		$this->assertTrue($guard->canEscalate('', []));
 	}//end testTheThresholdIsInclusiveAndAMissingAmountIsBelowIt()
+	/**
+	 * At or above the threshold the amount to recover must be recorded too,
+	 * and the threshold is the app configuration's when it is a positive number
+	 * (public-sector-grant-accountability REQ-EUF-007).
+	 *
+	 * @return void
+	 */
+	public function testTheRecoveryAmountIsRequiredAndTheThresholdIsConfigured(): void {
+		$this->assertFalse($this->guard()->canEscalate('', ['amountConcerned' => 10000, 'imsReference' => 'IMS-1', 'recoveryAmount' => '']));
+
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ['register' => 'books', 'eu_irregularity_threshold' => ' 2500 '][$key] ?? $default
+		);
+		$guard = new IrregularityReportGuard($config, $this->logger, $this->objects);
+		$this->assertFalse($guard->canEscalate('', ['amountConcerned' => 2500.0]));
+		$this->assertTrue($guard->canEscalate('', ['amountConcerned' => 2499.99]));
+
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ['eu_irregularity_threshold' => '-1'][$key] ?? $default
+		);
+		$guard = new IrregularityReportGuard($config, $this->logger, $this->objects);
+		$this->assertTrue($guard->canEscalate('', ['amountConcerned' => 9999.99]));
+		$this->assertFalse($guard->canEscalate('', ['amountConcerned' => 10000.0]));
+	}//end testTheRecoveryAmountIsRequiredAndTheThresholdIsConfigured()
 }//end class
