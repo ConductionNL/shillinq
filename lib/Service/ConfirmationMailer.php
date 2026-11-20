@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Service\Booking\WithdrawalLinkService;
 use OCP\IURLGenerator;
 use OCP\Mail\IMailer;
 use Psr\Log\LoggerInterface;
@@ -63,12 +64,14 @@ class ConfirmationMailer {
 	 * @param IURLGenerator $urlGenerator For building the confirmation web link.
 	 * @param IcsService $icsService ICS calendar generator.
 	 * @param LoggerInterface $logger Logger.
+	 * @param WithdrawalLinkService|null $withdrawalLinks Signs the withdrawal link of a booking made online.
 	 */
 	public function __construct(
 		private IMailer $mailer,
 		private IURLGenerator $urlGenerator,
 		private IcsService $icsService,
 		private LoggerInterface $logger,
+		private ?WithdrawalLinkService $withdrawalLinks = null,
 	) {
 	}//end __construct()
 
@@ -106,9 +109,7 @@ class ConfirmationMailer {
 	 * @spec openspec/specs/bookings-confirm-flow/spec.md
 	 */
 	private function buildPayload(array $appointment, string $rawToken, string $email): array {
-		$webLink = $this->urlGenerator->linkToRouteAbsolute(
-			AppIdentity::APP_ID . '.confirmationApi.portal',
-		) . '?token=' . rawurlencode($rawToken);
+		$webLink = $this->confirmLink(appointment: $appointment, rawToken: $rawToken);
 		$customer = [
 			'id' => (string)($appointment['customerId'] ?? ''),
 			'userId' => (string)($appointment['customerUserId'] ?? ''),
@@ -175,8 +176,58 @@ class ConfirmationMailer {
 		$lines[] = '';
 		$lines[] = 'Open the attached appointment.ics to add the appointment to your calendar.';
 
+		$withdrawal = $this->withdrawalLine(appointment: $appointment);
+		if ($withdrawal !== null) {
+			$lines[] = '';
+			$lines[] = $withdrawal;
+		}
+
 		return implode("\n", $lines) . "\n";
 	}//end buildBody()
+
+	/**
+	 * The confirm link: the app's own confirm page for this appointment with the token.
+	 *
+	 * Replaces the link built from the undeclared `confirmationApi.portal` route
+	 * (sales-cancellation task 3.3); it is the page ConfirmationTokenService links to.
+	 *
+	 * @param array<string, mixed> $appointment The appointment.
+	 * @param string               $rawToken    The plaintext confirmation token.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 */
+	private function confirmLink(array $appointment, string $rawToken): string {
+		$appointmentId = (string)($appointment['id'] ?? ($appointment['appointmentId'] ?? ''));
+		$relative = $this->urlGenerator->linkToRoute(AppIdentity::APP_ID . '.dashboard.page')
+			. 'confirm/' . rawurlencode($appointmentId) . '?token=' . rawurlencode($rawToken);
+
+		return $this->urlGenerator->getAbsoluteURL($relative);
+	}//end confirmLink()
+
+	/**
+	 * The withdrawal line with the signed link, for a booking made online (REQ-SCX-004).
+	 *
+	 * @param array<string, mixed> $appointment The appointment.
+	 *
+	 * @return string|null Null when the booking has no withdrawal link.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 */
+	private function withdrawalLine(array $appointment): ?string {
+		if ($this->withdrawalLinks === null) {
+			return null;
+		}
+
+		$link = $this->withdrawalLinks->forAppointment(appointment: $appointment);
+		$lastDay = $this->withdrawalLinks->lastDayFor(appointment: $appointment);
+		if ($link === null || $lastDay === null) {
+			return null;
+		}
+
+		return 'Changed your mind? You can withdraw from this booking until ' . $lastDay . ' without a fee: ' . $link;
+	}//end withdrawalLine()
 
 	/**
 	 * Send the payload through Nextcloud's mailer.

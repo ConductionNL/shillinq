@@ -8319,7 +8319,12 @@ OC.L10N.register(
         "Revenue in the period": "Omzet in de periode",
         "Same period last year": "Dezelfde periode vorig jaar",
         "The result per account for the chosen period, compared with the previous period and the same period last year.": "Het resultaat per rekening over de gekozen periode, vergeleken met de vorige periode en dezelfde periode vorig jaar.",
-        "The result per account, compared with the previous period and last year.": "Het resultaat per rekening, vergeleken met de vorige periode en vorig jaar."
+        "The result per account, compared with the previous period and last year.": "Het resultaat per rekening, vergeleken met de vorige periode en vorig jaar.",
+        "We received your withdrawal: %s": "We hebben je herroeping ontvangen: %s",
+        "We received your withdrawal from this booking on %1$s at %2$s.": "We hebben je herroeping van deze boeking ontvangen op %1$s om %2$s.",
+        "Service: %s": "Dienst: %s",
+        "Appointment: %s": "Afspraak: %s",
+        "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days.": "De boeking is geannuleerd zonder annuleringskosten. Wat je ervoor hebt betaald, krijg je binnen 14 dagen volledig terug."
     },
     "nplurals=2; plural=(n != 1);"
 )

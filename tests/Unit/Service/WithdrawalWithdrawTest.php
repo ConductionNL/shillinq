@@ -26,6 +26,7 @@ use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use OCA\Shillinq\Service\CancellationService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\Booking\WithdrawalMailer;
 use OCA\Shillinq\Service\WithdrawalService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IL10N;
@@ -209,7 +210,7 @@ final class WithdrawalWithdrawTest extends TestCase {
 	 *
 	 * @return WithdrawalService
 	 */
-	private function service(): WithdrawalService {
+	private function service(?WithdrawalMailer $mailer = null): WithdrawalService {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $params = []): string => vsprintf($text, $params));
 		$container = $this->createStub(ContainerInterface::class);
@@ -221,6 +222,7 @@ final class WithdrawalWithdrawTest extends TestCase {
 			cancellation: new CancellationService(logger: new NullLogger()),
 			deposits: $this->deposits,
 			logger: new NullLogger(),
+			mailer: $mailer,
 		);
 	}//end service()
 
@@ -308,6 +310,44 @@ final class WithdrawalWithdrawTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * The acknowledgement goes out with the moment of the withdrawal, and that moment is recorded (task 3.3).
+	 *
+	 * @return void
+	 */
+	public function testTheAcknowledgementIsMailedAndRecorded(): void {
+		$this->deposits->method('isDormant')->willReturn(true);
+		$now = new DateTimeImmutable('2026-09-24T14:05:00+00:00');
+		$mailer = $this->createMock(WithdrawalMailer::class);
+		$mailer->expects($this->once())->method('acknowledge')
+			->with($this->callback(static fn (array $appointment): bool => $appointment['appointmentId'] === 'apt-1'), $now)
+			->willReturn(true);
+
+		$outcome = $this->service(mailer: $mailer)->withdraw('apt-1', 'portal', $now);
+
+		[$schema, $uuid, $record] = $this->os->saved[2];
+		$this->assertSame(['Withdrawal', 'wd-1'], [$schema, $uuid]);
+		$this->assertSame('2026-09-24T14:05:00+00:00', $record['acknowledgedAt']);
+		$this->assertSame('2026-09-24T14:05:00+00:00', $outcome['withdrawal']['acknowledgedAt']);
+	}//end testTheAcknowledgementIsMailedAndRecorded()
+
+	/**
+	 * A mail the server refused leaves the withdrawal unacknowledged and standing.
+	 *
+	 * @return void
+	 */
+	public function testARefusedAcknowledgementLeavesTheWithdrawalStanding(): void {
+		$this->deposits->method('isDormant')->willReturn(true);
+		$mailer = $this->createMock(WithdrawalMailer::class);
+		$mailer->method('acknowledge')->willReturn(false);
+
+		$outcome = $this->service(mailer: $mailer)->withdraw('apt-1', 'portal', new DateTimeImmutable('2026-09-24T14:05:00+00:00'));
+
+		$this->assertTrue($outcome['withdrawn']);
+		$this->assertCount(2, $this->os->saved);
+		$this->assertNull($outcome['withdrawal']['acknowledgedAt']);
+	}//end testARefusedAcknowledgementLeavesTheWithdrawalStanding()
+
 	public function testABookingWithoutADepositHasNothingToRefund(): void {
 		unset($this->os->data['Appointment']['apt-1']['depositPaymentId']);
 		$this->deposits->expects($this->never())->method('initiateRefund');
