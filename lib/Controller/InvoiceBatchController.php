@@ -27,8 +27,8 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\InvoiceBatchService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceBatchServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -55,16 +55,16 @@ class InvoiceBatchController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param IRequest                     $request The request.
-	 * @param InvoiceBatchService          $batches Writes the invoices.
-	 * @param AdministrationContextService $context Whether the user may act on the administration.
-	 * @param IUserSession                 $session Who asked, to tell them when a send is done.
-	 * @param LoggerInterface              $logger  An unexpected failure, never shown in full.
+	 * @param IRequest                              $request The request.
+	 * @param InvoiceBatchServiceInterface          $batches Writes the invoices.
+	 * @param AdministrationContextServiceInterface $context Whether the user may act on the administration.
+	 * @param IUserSession                          $session Who asked, to tell them when a send is done.
+	 * @param LoggerInterface                       $logger  An unexpected failure, never shown in full.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly InvoiceBatchService $batches,
-		private readonly AdministrationContextService $context,
+		private readonly InvoiceBatchServiceInterface $batches,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 	) {

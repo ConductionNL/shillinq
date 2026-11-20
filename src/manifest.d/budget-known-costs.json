@@ -49,7 +49,16 @@
 					}
 				],
 				"defaultSort": "lastGeneratedAt",
-				"detailRoute": "BudgetLineDerivationDetail"
+				"detailRoute": "BudgetLineDerivationDetail",
+				"headerActions": [
+					{
+						"id": "regenerate-known-costs",
+						"label": "Regenerate known costs",
+						"icon": "Refresh",
+						"handler": "openRegenerateKnownCosts",
+						"description": "Write the recurring and contract costs into the default budget of every year they touch. Lines changed by hand are left alone."
+					}
+				]
 			}
 		},
 		{

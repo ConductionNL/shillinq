@@ -1,0 +1,337 @@
+{
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "public-sector-grant-accountability",
+        "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycles, imperative settlement (the reclaim amount, the SiSa sums and the EU declaration are calculations over the books)",
+        "description": "Grant settlement on Subsidie.vaststellen (SettleGrantAction: the reclaimed amount and a draft reclaim invoice or payable), the grant's SiSa regulation code and its reclaim document ids. The work lives in lib/Service/PublicSector; the report endpoint is GrantAccountabilityController. The SiSa appendix: Subsidie.sisaRegulationCode, GLLine.subsidieId (the grant a posting belongs to) and SisaIndicator (entered indicators and indicator codes); SisaAppendix sums the books and the appendix is served by GrantAccountabilityController. The EU declaration: EuDeclaration bundles a project's declared expenditure with certified, complete evidence for a period (EuDeclarationBuilder), lists what was left out and why, and submitting it submits each expenditure (SubmitEuDeclarationAction)."
+    },
+    "components": {
+        "schemas": {
+            "Subsidie": {
+                "properties": {
+                    "reclaimInvoiceId": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Reclaim invoice",
+                        "description": "The draft receivable invoice determining a grant given wrote for what was paid out above the determined amount (REQ-SUBV-011). Set once; determining again writes no second invoice."
+                    },
+                    "reclaimPayableId": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Reclaim payable",
+                        "description": "The draft payable determining a grant received wrote for what was received above the determined amount (REQ-SUBV-011). Set once."
+                    },
+                    "sisaRegulationCode": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "SiSa regulation code",
+                        "description": "The code of the specific grant in the SiSa appendix (for example D8). Set on a grant received that the annual accounts account for in the appendix (REQ-SISA-012).",
+                        "example": "D8"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "transitions": {
+                        "vaststellen": {
+                            "actions": [
+                                {
+                                    "trigger": "x-openregister-lifecycle-action",
+                                    "action": "OCA\\Shillinq\\Lifecycle\\Action\\SettleGrantAction",
+                                    "description": "Settle the difference with what was paid out: set reclaimedAmount and, when more was paid out than determined, write a draft reclaim invoice to the beneficiary (grant given) or a draft payable to the granting body (grant received), naming the grant (REQ-SUBV-011)."
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "GLLine": {
+                "properties": {
+                    "subsidieId": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Grant",
+                        "description": "The grant (Subsidie) this posting is spent on or received for. The SiSa appendix sums the posted profit-and-loss lines tagged with a specific grant: debits as spending, credits as income (REQ-SISA-012)."
+                    }
+                }
+            },
+            "SisaIndicator": {
+                "slug": "SisaIndicator",
+                "icon": "TableCheck",
+                "version": "0.1.0",
+                "title": "SiSa indicator",
+                "description": "One indicator of a specific grant in the SiSa appendix for a year. Output indicators are entered here and kept as entered; spending and income are computed from the books, and a record of that kind only names the regulation's own indicator code and description (REQ-SISA-012).",
+                "x-schema-org": "schema:PropertyValue",
+                "x-spec": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md",
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "grantId",
+                    "indicatorCode",
+                    "fiscalYear",
+                    "kind"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "title": "Administration",
+                        "description": "The administration the grant belongs to.",
+                        "example": "gem-almelo"
+                    },
+                    "grantId": {
+                        "type": "string",
+                        "title": "Grant",
+                        "description": "The specific grant (Subsidie) the indicator belongs to."
+                    },
+                    "regulationCode": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Regulation code",
+                        "description": "The regulation's code, as on the grant (sisaRegulationCode).",
+                        "example": "D8"
+                    },
+                    "indicatorCode": {
+                        "type": "string",
+                        "title": "Indicator",
+                        "description": "The indicator's number in the BZK template, for example D8/01.",
+                        "example": "D8/01"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Description",
+                        "description": "What the indicator measures, as the template words it."
+                    },
+                    "fiscalYear": {
+                        "type": "integer",
+                        "minimum": 2000,
+                        "maximum": 2100,
+                        "title": "Year",
+                        "description": "The year the indicator is for.",
+                        "example": 2026
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "spending",
+                            "income",
+                            "output"
+                        ],
+                        "title": "Kind",
+                        "description": "spending and income are computed from the ledger; output is entered.",
+                        "example": "output"
+                    },
+                    "value": {
+                        "type": "number",
+                        "nullable": true,
+                        "title": "Value",
+                        "description": "The entered value of an output indicator. Empty is reported as missing."
+                    },
+                    "unit": {
+                        "type": "string",
+                        "nullable": true,
+                        "title": "Unit",
+                        "description": "The unit of the value, for example EUR or an amount of homes.",
+                        "example": "aantal"
+                    }
+                },
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Who entered or changed an indicator, and when."
+                },
+                "authorization": {
+                    "create": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "read": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller",
+                        "shillinq_auditor"
+                    ],
+                    "update": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "delete": [
+                        "shillinq_admin"
+                    ]
+                }
+            },
+            "EuDeclaration": {
+                "slug": "EuDeclaration",
+                "icon": "CashCheck",
+                "version": "0.1.0",
+                "title": "EU declaration",
+                "description": "A declaration (betaalaanvraag) of one EU project for a period: the declared expenditure that carries certified, complete evidence, with the eligible total and the EU share, and the project's other expenditure of the period listed as left out with the reason. Submitting it submits each expenditure it holds (REQ-EUF-012, REQ-EUF-013).",
+                "x-schema-org": "schema:Invoice",
+                "x-spec": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md",
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "euProjectId",
+                    "periodFrom",
+                    "periodTo",
+                    "expenditureIds",
+                    "state"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "title": "Administration",
+                        "description": "The administration the project belongs to.",
+                        "example": "gem-almelo"
+                    },
+                    "euProjectId": {
+                        "type": "string",
+                        "title": "EU project",
+                        "description": "The EuProject the declaration is for."
+                    },
+                    "periodFrom": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Period from",
+                        "description": "The first day of the period; an expenditure is in it when its declaration quarter starts in it.",
+                        "example": "2026-07-01"
+                    },
+                    "periodTo": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Period to",
+                        "description": "The last day of the period.",
+                        "example": "2026-09-30"
+                    },
+                    "expenditureIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Expenditure",
+                        "description": "The EuExpenditure the declaration holds."
+                    },
+                    "leftOut": {
+                        "type": "array",
+                        "title": "Left out",
+                        "description": "The project's expenditure of the period that is not in the declaration, each with the reason.",
+                        "default": [],
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "expenditureId",
+                                "reason"
+                            ],
+                            "properties": {
+                                "expenditureId": {
+                                    "type": "string",
+                                    "title": "Expenditure",
+                                    "description": "The EuExpenditure left out."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "title": "Description",
+                                    "description": "The expenditure's description."
+                                },
+                                "reason": {
+                                    "type": "string",
+                                    "title": "Reason",
+                                    "description": "Why it was left out, for example missing evidence."
+                                }
+                            }
+                        }
+                    },
+                    "eligibleTotal": {
+                        "type": "number",
+                        "minimum": 0,
+                        "title": "Eligible total",
+                        "description": "The declared amounts of the expenditure held, in EUR."
+                    },
+                    "euShare": {
+                        "type": "number",
+                        "minimum": 0,
+                        "title": "EU share",
+                        "description": "The EU co-funding of the expenditure held, in EUR."
+                    },
+                    "submittedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "title": "Submitted at",
+                        "description": "When the declaration and its expenditure were submitted."
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted",
+                            "paid"
+                        ],
+                        "default": "draft",
+                        "title": "Status",
+                        "description": "draft, submitted to the managing authority, paid."
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "state",
+                    "initialState": "draft",
+                    "states": {
+                        "draft": {
+                            "label": "Draft",
+                            "description": "Proposed; can be checked before it is submitted."
+                        },
+                        "submitted": {
+                            "label": "Submitted",
+                            "description": "Submitted to the managing authority, with each expenditure it holds."
+                        },
+                        "paid": {
+                            "label": "Paid",
+                            "description": "Paid out by the managing authority."
+                        }
+                    },
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted",
+                            "label": "Submit",
+                            "description": "Submit the declaration and every expenditure it holds, all or none (REQ-EUF-013).",
+                            "actions": [
+                                {
+                                    "trigger": "x-openregister-lifecycle-action",
+                                    "action": "OCA\\Shillinq\\Lifecycle\\Action\\SubmitEuDeclarationAction",
+                                    "description": "Check that every expenditure can still be submitted, then run its submit transition and set submittedAt."
+                                }
+                            ]
+                        },
+                        "markPaid": {
+                            "from": "submitted",
+                            "to": "paid",
+                            "label": "Mark paid",
+                            "description": "The managing authority paid the declaration."
+                        }
+                    }
+                },
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Who proposed and submitted the declaration, and when."
+                },
+                "authorization": {
+                    "create": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "read": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller",
+                        "shillinq_auditor"
+                    ],
+                    "update": [
+                        "shillinq_admin",
+                        "shillinq_bbv_controller"
+                    ],
+                    "delete": [
+                        "shillinq_admin"
+                    ]
+                }
+            }
+        }
+    },
+    "objects": []
+}

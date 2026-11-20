@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\Vat\VatFiscalYearCorrectionService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCA\Shillinq\Service\VatSuppletieDetectionService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -736,4 +737,120 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		);
 
 	}//end testCorrectionPostingLinesGolden()
+	/**
+	 * REQ-TVRB-002: when the correction was found by checking a broken
+	 * fiscal year, the EUR 1,000 grens applies to the year's total, not to
+	 * this one correction; correctionTotal() reads the same net amount
+	 * without preparing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testInABrokenFiscalYearTheGrensAppliesToTheYearsTotal(): void {
+		$correction = [
+			'id' => 'corr-fy', 'administrationId' => 'adm-1', 'originalVatReturnId' => 'vat-2', 'originalReturnId' => 'vat-2',
+			'state' => 'draft', 'preparedAt' => null, 'fiscalYearCorrectionTotal' => 1250.0,
+			'filedSnapshot' => [['type' => 'collected', 'taxRate' => 9.0, 'totalVATAmount' => 180.0, 'totalTaxableAmount' => 2000.0]],
+			'currentSnapshot' => [['type' => 'collected', 'taxRate' => 9.0, 'totalVATAmount' => 450.0, 'totalTaxableAmount' => 5000.0]],
+		];
+		$stub = $this->fakeObjectService(
+			[
+				'VatCorrection' => [$correction],
+				'VATLine' => [['id' => 'line-2', 'returnId' => 'vat-2', 'type' => 'collected', 'taxRate' => 9.0, 'glAccountNumber' => '4010']],
+			]
+		);
+		[, $detectionService] = $this->buildServices($stub);
+
+		self::assertSame(270.0, $detectionService->correctionTotal(correction: $correction));
+
+		$prepared = $detectionService->prepare(vatCorrectionId: 'corr-fy');
+
+		self::assertSame(270.0, $prepared['correctionAmount']);
+		self::assertTrue($prepared['thresholdExceeded']);
+		self::assertNotNull($prepared['filingDeadline']);
+	}//end testInABrokenFiscalYearTheGrensAppliesToTheYearsTotal()
+
+	/**
+	 * Stichting Voorbeeld's fiscal year 2025/2026: the check reads only the
+	 * accepted returns whose period lies in the year, writes a correction for
+	 * the one that drifted, and stamps it with the year and the total.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testCheckingABrokenFiscalYearTotalsTheCorrectionsOfItsReturns(): void {
+		$entries = $this->q1Sale();
+		$entries['gl-2'] = ['2026-03-01', [['8000', 'credit', 500.0, 'high', '1a', 'base'], ['2110', 'credit', 105.0, 'high', '1a', 'vat']]];
+		$rows = $this->ledger($entries) + $this->filedQ1();
+		$quarter = static fn (string $id, string $number, string $start, string $end, string $status): array => [
+			'id' => $id, 'returnNumber' => $number, 'period' => 'quarter', 'startDate' => $start, 'endDate' => $end,
+			'regime' => 'standard', 'administrationId' => 'adm-1', 'statusCode' => $status,
+		];
+		$rows['BtwAangifte'][] = $quarter('vat-q3-25', 'NL-2025-Q3', '2025-07-01', '2025-09-30', 'filed');
+		$rows['BtwAangifte'][] = $quarter('vat-q2-26', 'NL-2026-Q2', '2026-04-01', '2026-06-30', 'draft');
+		$rows['BtwAangifte'][] = $quarter('vat-q3-26', 'NL-2026-Q3', '2026-07-01', '2026-09-30', 'filed');
+		$rows['Administration'] = [['id' => 'adm-1', 'name' => 'Stichting Voorbeeld', 'nonCalendarFiscalYear' => true]];
+		$rows['VatCorrection'] = [];
+		$fiscalYear = ['id' => 'fy-1', 'administrationId' => 'adm-1', 'startDate' => '2025-07-01', 'endDate' => '2026-06-30'];
+		$stub = $this->fakeObjectService($rows);
+		[, $detectionService] = $this->buildServices($stub);
+		$service = new VatFiscalYearCorrectionService(
+			objectService: new DuckObjectServiceAdapter($stub),
+			appConfig: $this->appConfig,
+			suppletie: $detectionService,
+		);
+
+		$result = $service->check(fiscalYear: $fiscalYear);
+
+		self::assertSame('2025/2026', $result['fiscalYear']);
+		self::assertSame(['vat-q3-25', 'vat-1'], array_column($result['returns'], 'returnId'));
+		self::assertSame([false, true], array_column($result['returns'], 'drift'));
+		self::assertSame([0.0, 105.0], array_column($result['returns'], 'correctionTotal'));
+		self::assertSame(105.0, $result['total']);
+		self::assertFalse($result['thresholdExceeded']);
+
+		$corrections = $stub->dump('VatCorrection');
+		self::assertCount(1, $corrections);
+		self::assertSame('vat-1', $corrections[0]['originalVatReturnId']);
+		self::assertSame('fy-1', $corrections[0]['fiscalYearId']);
+		self::assertSame('2025/2026', $corrections[0]['fiscalYearLabel']);
+		self::assertSame(105.0, $corrections[0]['fiscalYearCorrectionTotal']);
+		self::assertSame($corrections[0]['id'], $result['returns'][1]['correctionId']);
+		self::assertNull($result['returns'][0]['correctionId']);
+	}//end testCheckingABrokenFiscalYearTotalsTheCorrectionsOfItsReturns()
+
+	/**
+	 * A fiscal year that is the calendar year is not checked as a whole.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testACalendarFiscalYearIsRefused(): void {
+		$stub = $this->fakeObjectService(['Administration' => [['id' => 'adm-1', 'nonCalendarFiscalYear' => false]]]);
+		[, $detectionService] = $this->buildServices($stub);
+		$service = new VatFiscalYearCorrectionService(
+			objectService: new DuckObjectServiceAdapter($stub),
+			appConfig: $this->appConfig,
+			suppletie: $detectionService,
+		);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('calendar year');
+		$service->check(fiscalYear: ['id' => 'fy-26', 'administrationId' => 'adm-1', 'startDate' => '2026-01-01', 'endDate' => '2026-12-31']);
+	}//end testACalendarFiscalYearIsRefused()
+
+	/**
+	 * A fiscal year's name spans its calendar years.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testTheNameOfAFiscalYear(): void {
+		self::assertSame('2025/2026', VatFiscalYearCorrectionService::label(start: '2025-07-01', end: '2026-06-30'));
+		self::assertSame('2026', VatFiscalYearCorrectionService::label(start: '2026-01-01', end: '2026-12-31'));
+	}//end testTheNameOfAFiscalYear()
 }//end class

@@ -34,8 +34,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -203,6 +207,7 @@ final class PurchaseOrderRegisterSchemaTest extends TestCase {
 				notificationManager: $notificationManager,
 				logger: $logger,
 				objectService: $this->store,
+				transitionRunner: $this->sendingRunner(),
 			),
 			new PurchaseOrderApprovalService(
 				appConfig: $appConfig,
@@ -268,6 +273,26 @@ final class PurchaseOrderRegisterSchemaTest extends TestCase {
 
 		self::assertSame([], $this->invalidPurchaseOrderSaves());
 	}//end testApprovedAndSentPurchaseOrderValidatesAgainstRegisterSchema()
+
+	/**
+	 * The declared `send` transition as the lifecycle engine runs it: the stored
+	 * order moves to sent through a save, so the schema check sees it.
+	 *
+	 * @return ObjectTransitionRunner
+	 */
+	private function sendingRunner(): ObjectTransitionRunner {
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			function (string $objectId, string $action): void {
+				$order = $this->store->find(id: $objectId, options: new ObjectFindOptions(register: 'shillinq', schema: 'PurchaseOrder'));
+				$order = (is_array($order) === true ? $order : $order->jsonSerialize());
+				$order['statusCode'] = ($action === 'send' ? 'sent' : $order['statusCode']);
+				$this->store->saveObject(object: $order, options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'shillinq', schema: 'PurchaseOrder')));
+			}
+		);
+
+		return $runner;
+	}//end sendingRunner()
 
 	/**
 	 * A rejected purchase order ends in the schema's terminal state and validates.
