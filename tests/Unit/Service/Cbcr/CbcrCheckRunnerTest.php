@@ -157,6 +157,30 @@ final class CbcrCheckRunnerTest extends TestCase {
 	}//end testTheCbcChecksJudgeTheGroupsRecords()
 
 	/**
+	 * The records of a CbC file: the reporting entity, the ultimate parent, the
+	 * included entities with their figures and the group's summaries.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function testTheRecordsOfACbcFile(): void {
+		$records = $this->runner()->cbcRecords(['id' => 'r-2026', 'reportingEntity' => 'ge-productie', 'period' => 'FY2026']);
+
+		$this->assertSame('ge-productie', $records['reportingEntity']['id']);
+		$this->assertSame('ge-holding', $records['upeId']);
+		$this->assertSame(['ge-holding', 'ge-productie'], array_column($records['entities'], 'id'), 'an excluded entity and another group stay out');
+		$this->assertSame('f-p', $records['entities'][1]['figures']['id']);
+		$this->assertSame(['s-nl'], array_column($records['summaries'], 'id'));
+
+		$upe = $this->runner()->cbcRecords(['id' => 'r-h', 'reportingEntity' => 'ge-holding', 'period' => 'FY2026']);
+		$this->assertSame('ge-holding', $upe['upeId'], 'the ultimate parent reports for itself');
+
+		$none = $this->runner()->cbcRecords(['id' => 'r-x', 'period' => 'FY2026']);
+		$this->assertNull($none['reportingEntity']);
+	}//end testTheRecordsOfACbcFile()
+
+	/**
 	 * Tangible assets are compared with the register of the entity's own
 	 * administration, counting only assets in use with a book value; a gap
 	 * over 1% warns and does not block.

@@ -139,6 +139,24 @@ final class ThrowingGenerator implements ReportGeneratorInterface {
 }//end class
 
 /**
+ * A generator stub that refuses with the context it was given, as JSON.
+ */
+final class ContextEchoGenerator implements ReportGeneratorInterface {
+
+	public static function reportType(): string {
+		return 'balance-sheet';
+	}//end reportType()
+
+	public static function supportedFormats(): array {
+		return ['odt', 'pdf'];
+	}//end supportedFormats()
+
+	public function generate(array $context, string $format): GeneratedFile {
+		throw new \RuntimeException((string)json_encode($context));
+	}//end generate()
+}//end class
+
+/**
  * Tests ReportGenerationService's docudesk-unavailable outcome.
  */
 final class ReportGenerationServiceTest extends TestCase {
@@ -209,6 +227,28 @@ final class ReportGenerationServiceTest extends TestCase {
 		$this->assertSame('generation-failed', $result['error']);
 		$this->assertCount(0, $objectService->saved, 'A generic generation failure must not write a GeneratedReport record.');
 	}//end testOtherExceptionKeepsGenericBehaviourAndWritesNoRecord()
+
+	/**
+	 * The record a report is made from reaches the generator, and never overrides the fixed keys.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function testTheSubjectReachesTheGenerator(): void {
+		$service = $this->service(new ContextEchoGenerator(), new FakeRgsObjectService());
+
+		$result = $service->generate('balance-sheet', '2026', 'admin-1', 'pdf', null, ['returnId' => 'cbc-2026', 'period' => '1999', 'administrationId' => 'other']);
+
+		$this->assertSame('generation-failed', $result['error']);
+		$this->assertSame(
+			['reportType' => 'balance-sheet', 'period' => '2026', 'administrationId' => 'admin-1', 'returnId' => 'cbc-2026'],
+			json_decode($result['message'], true)
+		);
+		$this->assertSame(
+			['reportType' => 'balance-sheet', 'period' => '2026', 'administrationId' => 'admin-1'],
+			json_decode($service->generate('balance-sheet', '2026', 'admin-1', 'pdf')['message'], true),
+			'without a subject the context is as before'
+		);
+	}//end testTheSubjectReachesTheGenerator()
 
 	/**
 	 * Without an administration nothing is generated and nothing is read.

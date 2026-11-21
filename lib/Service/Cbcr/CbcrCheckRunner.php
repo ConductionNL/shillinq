@@ -133,6 +133,34 @@ class CbcrCheckRunner {
 	}//end cbcFingerprint()
 
 	/**
+	 * The records a CbC file is made from: the reporting entity, its ultimate
+	 * parent's id, the group's included entities and the jurisdiction summaries,
+	 * read the same way the checks and the fingerprint read them.
+	 *
+	 * @param array<string,mixed> $return The CbcrReturn.
+	 *
+	 * @return array{reportingEntity:array<string,mixed>|null,upeId:string,entities:array<int,array<string,mixed>>,summaries:array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function cbcRecords(array $return): array {
+		$reporting = $this->one(schema: 'GroupEntityRegistry', id: (string)($return['reportingEntity'] ?? ''));
+		$upeId     = trim((string)($reporting['ultimateParentEntity'] ?? ''));
+		if ($upeId === '') {
+			$upeId = (string)($return['reportingEntity'] ?? '');
+		}
+
+		$joined = $this->joinCbc(return: $return);
+
+		return [
+			'reportingEntity' => $reporting,
+			'upeId' => $upeId,
+			'entities' => $joined['_entities'],
+			'summaries' => $joined['_summaries'],
+		];
+	}//end cbcRecords()
+
+	/**
 	 * The fingerprint of the records a GIR file is made from: the group's
 	 * safe harbour records and jurisdiction computations for the year.
 	 *

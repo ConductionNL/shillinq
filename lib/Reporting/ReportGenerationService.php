@@ -147,14 +147,18 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	 * @param string $format One of the report's catalogue formats.
 	 * @param string|null $asUserId The user the report is produced for when there
 	 *                              is no session (a scheduled run); null = the session user.
+	 * @param array<string, string> $subject The record the report is made from, passed on to the
+	 *                                       generator (e.g. `['returnId' => ...]`); it never
+	 *                                       overrides reportType, period or administrationId.
 	 *
 	 * @return array<string, mixed> The recorded GeneratedReport (incl. fileId + downloadPath),
 	 *                              or an `{ error: ... }` envelope when generation cannot proceed.
 	 *
 	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 */
-	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array {
+	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null, array $subject=[]): array {
 		$userId = ($asUserId ?? ($this->userSession->getUser()?->getUID() ?? ''));
 
 		$prepared = $this->prepareGeneration(reportType: $reportType, administrationId: $administrationId, format: $format);
@@ -172,7 +176,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 		];
 
 		try {
-			$rendered = $generator->generate($context, $useFormat);
+			$rendered = $generator->generate($context + $subject, $useFormat);
 		} catch (DocudeskUnavailableException $e) {
 			return $this->recordDocudeskUnavailable(exception: $e, prepared: $prepared, context: $context, userId: $userId);
 		} catch (\Throwable $e) {

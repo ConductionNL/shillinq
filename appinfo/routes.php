@@ -88,6 +88,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'cbcr#cbcChecks', 'url' => '/api/cbcr/returns/{returnId}/checks', 'verb' => 'GET'],
             ['name' => 'cbcr#girChecks', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/checks', 'verb' => 'GET'],
             ['name' => 'cbcr#createCorrection', 'url' => '/api/cbcr/returns/{returnId}/correction', 'verb' => 'POST'],
+            ['name' => 'cbcrFile#generateCbc', 'url' => '/api/cbcr/returns/{returnId}/xml', 'verb' => 'POST'],
         // banking-fx-at-booking task 3.1: the FX rates page's status line —
         // feed or typed, and the newest rate date per pair. Any signed-in
         // user; the rates are read with the caller's own register access.

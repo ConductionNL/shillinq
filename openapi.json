@@ -4554,6 +4554,51 @@
                 }
             }
         },
+        "/cbcr/returns/{returnId}/xml": {
+            "post": {
+                "operationId": "cbcr-generate-cbc-file",
+                "summary": "Generate the CbC XML file of a report",
+                "description": "Render the report's country-by-country file in the OECD CbC XML v2.0 layout, validate it against the bundled schema set, store it as a generated report and link it on the report. Refused while a blocking check fails, naming it, or when the file does not pass the schema; a correction sends only the records that changed. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The CbcrReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The file was stored: the generated report and the updated report.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
         "/cbs-submissions": {
             "get": {
                 "operationId": "c-bs-submission-index",
