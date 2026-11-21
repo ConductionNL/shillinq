@@ -163,15 +163,15 @@ class FinancialStatementControllerTest extends TestCase {
 	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
 	 */
 	public function testTheLinesBehindAnAccountFigure(): void {
-		$statement = $this->controller(['from' => '2026-01-01', 'to' => '2026-09-30', 'compare' => 'previous-year'])->profitAndLoss()->getData();
+		$statement = $this->controller(params: ['from' => '2026-01-01', 'to' => '2026-09-30', 'compare' => 'previous-year'])->profitAndLoss()->getData();
 		$housing = $statement['expense'][1];
 
-		$response = $this->controller(['key' => $housing['linesKey']])->accountLines();
+		$response = $this->controller(params: ['key' => $housing['linesKey']])->accountLines();
 
-		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$data = $response->getData();
-		self::assertSame([VanDijkLedger::ADM, '4100', 36000.0], [$data['administrationId'], $data['accountNumber'], $data['total']]);
-		self::assertSame($housing['amounts']['current'], $data['total']);
+		self::assertSame(expected: [VanDijkLedger::ADM, '4100', 36000.0], actual: [$data['administrationId'], $data['accountNumber'], $data['total']]);
+		self::assertSame(expected: $housing['amounts']['current'], actual: $data['total']);
 	}
 
 	/**
@@ -182,18 +182,21 @@ class FinancialStatementControllerTest extends TestCase {
 	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
 	 */
 	public function testAccountLinesRefusals(): void {
-		$untouched = $this->createMock(StatementCalculator::class);
-		$untouched->expects(self::never())->method('accountLines');
+		$untouched = $this->createMock(originalClassName: StatementCalculator::class);
+		$untouched->expects(self::never())->method(constraint: 'accountLines');
 		$key = '4100~2026-01-01~2026-09-30';
 
-		$anonymous = $this->controller(['key' => $key], null, $untouched)->accountLines();
-		self::assertSame([Http::STATUS_UNAUTHORIZED, ['error' => 'Not authenticated']], [$anonymous->getStatus(), $anonymous->getData()]);
+		$anonymous = $this->controller(params: ['key' => $key], userId: null, calculator: $untouched)->accountLines();
+		self::assertSame(expected: [Http::STATUS_UNAUTHORIZED, ['error' => 'Not authenticated']], actual: [$anonymous->getStatus(), $anonymous->getData()]);
 
-		$foreign = $this->controller(['key' => $key, 'administrationId' => 'adm-other'], 'director', $untouched)->accountLines();
-		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Not found']], [$foreign->getStatus(), $foreign->getData()]);
+		$foreign = $this->controller(params: ['key' => $key, 'administrationId' => 'adm-other'], calculator: $untouched)->accountLines();
+		self::assertSame(expected: [Http::STATUS_NOT_FOUND, ['error' => 'Not found']], actual: [$foreign->getStatus(), $foreign->getData()]);
 
-		$malformed = $this->controller(['key' => '4100~2026'])->accountLines();
-		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'key must be account~from~to or a trial balance line id.']], [$malformed->getStatus(), $malformed->getData()]);
+		$malformed = $this->controller(params: ['key' => '4100~2026'])->accountLines();
+		self::assertSame(
+			expected: [Http::STATUS_BAD_REQUEST, ['error' => 'key must be account~from~to or a trial balance line id.']],
+			actual: [$malformed->getStatus(), $malformed->getData()]
+		);
 	}
 
 	/**

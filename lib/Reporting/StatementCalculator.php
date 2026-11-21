@@ -389,15 +389,7 @@ class StatementCalculator {
 			}
 
 			$total += $line['amount'];
-			$lines[] = [
-				'id' => $line['id'],
-				'transactionId' => $line['transactionId'],
-				'date' => $line['date'],
-				'accountNumber' => $line['account'],
-				'account' => trim($line['account'].' '.trim((string)($names[$line['account']]['name'] ?? ''))),
-				'description' => $line['description'],
-				'amount' => self::round(value: $line['amount']),
-			];
+			$lines[] = self::lineRow(line: $line, names: $names, sign: 1.0);
 		}
 
 		usort(
@@ -505,15 +497,7 @@ class StatementCalculator {
 				continue;
 			}
 
-			$lines[] = [
-				'id' => $line['id'],
-				'transactionId' => $line['transactionId'],
-				'date' => $line['date'],
-				'accountNumber' => $line['account'],
-				'account' => trim($line['account'].' '.trim((string)($names[$line['account']]['name'] ?? ''))),
-				'description' => $line['description'],
-				'amount' => self::round(value: -$line['amount']),
-			];
+			$lines[] = self::lineRow(line: $line, names: $names, sign: -1.0);
 		}
 
 		usort(
@@ -533,6 +517,29 @@ class StatementCalculator {
 			'total' => self::round(value: array_sum(array_column($lines, 'amount'))),
 		];
 	}//end trialBalanceLineLines()
+
+	/**
+	 * One listed ledger line.
+	 *
+	 * @param array<string, mixed>                $line  A counting line.
+	 * @param array<string, array<string, mixed>> $names The administration's accounts by number.
+	 * @param float                               $sign  1.0 for credit positive, -1.0 for debit positive.
+	 *
+	 * @return array<string, mixed> id, transactionId, date, accountNumber, account, description, amount.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	private static function lineRow(array $line, array $names, float $sign): array {
+		return [
+			'id' => $line['id'],
+			'transactionId' => $line['transactionId'],
+			'date' => $line['date'],
+			'accountNumber' => $line['account'],
+			'account' => trim($line['account'].' '.trim((string)($names[$line['account']]['name'] ?? ''))),
+			'description' => $line['description'],
+			'amount' => self::round(value: ($sign * $line['amount'])),
+		];
+	}//end lineRow()
 
 	/**
 	 * Whether a statement shows the account debit positive: an expense or

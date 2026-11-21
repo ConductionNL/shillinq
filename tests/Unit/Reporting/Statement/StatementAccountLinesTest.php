@@ -66,16 +66,19 @@ class StatementAccountLinesTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheHousingCostsFigureOpensItsLines(): void {
-		$calculator = VanDijkLedger::calculator($this, self::rows());
-		$row = $calculator->resultsBetween(VanDijkLedger::ADM, '2026-01-01', '2026-09-30')['expense'][1];
+		$calculator = VanDijkLedger::calculator(test: $this, rows: self::rows());
+		$row = $calculator->resultsBetween(administrationId: VanDijkLedger::ADM, from: '2026-01-01', to: '2026-09-30')['expense'][1];
 
-		$found = $calculator->accountLines(VanDijkLedger::ADM, $row['linesKey']);
+		$found = $calculator->accountLines(administrationId: VanDijkLedger::ADM, key: $row['linesKey']);
 
-		self::assertSame(['4100', '2026-01-01', '2026-09-30', null], [$found['accountNumber'], $found['from'], $found['to'], $found['periodId']]);
-		self::assertSame($row['amount'], $found['total']);
-		self::assertSame(36000.0, $found['total']);
-		self::assertSame(['tx-rent-2026'], array_column($found['lines'], 'transactionId'));
-		self::assertSame('4100 Huisvesting', $found['lines'][0]['account']);
+		self::assertSame(
+			expected: ['4100', '2026-01-01', '2026-09-30', null],
+			actual: [$found['accountNumber'], $found['from'], $found['to'], $found['periodId']]
+		);
+		self::assertSame(expected: $row['amount'], actual: $found['total']);
+		self::assertSame(expected: 36000.0, actual: $found['total']);
+		self::assertSame(expected: ['tx-rent-2026'], actual: array_column($found['lines'], 'transactionId'));
+		self::assertSame(expected: '4100 Huisvesting', actual: $found['lines'][0]['account']);
 	}
 
 	/**
@@ -85,12 +88,13 @@ class StatementAccountLinesTest extends TestCase {
 	 * @return void
 	 */
 	public function testRevenueLinesAddUpCreditPositive(): void {
-		$calculator = VanDijkLedger::calculator($this, self::rows());
+		$calculator = VanDijkLedger::calculator(test: $this, rows: self::rows());
+		$key = StatementCalculator::accountLinesKey(account: '8000', from: '2026-01-01', to: '2026-09-30');
 
-		$found = $calculator->accountLines(VanDijkLedger::ADM, StatementCalculator::accountLinesKey('8000', '2026-01-01', '2026-09-30'));
+		$found = $calculator->accountLines(administrationId: VanDijkLedger::ADM, key: $key);
 
-		self::assertSame(180000.0, $found['total']);
-		self::assertSame(['tx-sale-2026'], array_column($found['lines'], 'transactionId'));
+		self::assertSame(expected: 180000.0, actual: $found['total']);
+		self::assertSame(expected: ['tx-sale-2026'], actual: array_column($found['lines'], 'transactionId'));
 	}
 
 	/**
@@ -100,14 +104,14 @@ class StatementAccountLinesTest extends TestCase {
 	 * @return void
 	 */
 	public function testABalanceSheetFigureOpensTheYearsLines(): void {
-		$calculator = VanDijkLedger::calculator($this, self::rows());
-		$assets = $calculator->balancesAsOf(VanDijkLedger::ADM, '2026-09-30')['assets'];
+		$calculator = VanDijkLedger::calculator(test: $this, rows: self::rows());
+		$assets = $calculator->balancesAsOf(administrationId: VanDijkLedger::ADM, asOf: '2026-09-30')['assets'];
 		$bank = $assets[array_search('1100', array_column($assets, 'accountNumber'), true)];
 
-		self::assertSame('1100~2026-01-01~2026-09-30', $bank['linesKey']);
-		$found = $calculator->accountLines(VanDijkLedger::ADM, $bank['linesKey']);
-		self::assertSame(['tx-sale-2026', 'tx-wages-2026'], array_column($found['lines'], 'transactionId'));
-		self::assertSame(84000.0, $found['total']);
+		self::assertSame(expected: '1100~2026-01-01~2026-09-30', actual: $bank['linesKey']);
+		$found = $calculator->accountLines(administrationId: VanDijkLedger::ADM, key: $bank['linesKey']);
+		self::assertSame(expected: ['tx-sale-2026', 'tx-wages-2026'], actual: array_column($found['lines'], 'transactionId'));
+		self::assertSame(expected: 84000.0, actual: $found['total']);
 	}
 
 	/**
@@ -116,10 +120,11 @@ class StatementAccountLinesTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheRunningResultLineCarriesNoKey(): void {
-		$equity = VanDijkLedger::calculator($this, self::rows())->balancesAsOf(VanDijkLedger::ADM, '2026-09-30')['equity'];
+		$calculator = VanDijkLedger::calculator(test: $this, rows: self::rows());
+		$equity = $calculator->balancesAsOf(administrationId: VanDijkLedger::ADM, asOf: '2026-09-30')['equity'];
 		$running = $equity[array_search(StatementCalculator::RUNNING_RESULT_LABEL, array_column($equity, 'label'), true)];
 
-		self::assertArrayNotHasKey('linesKey', $running);
+		self::assertArrayNotHasKey(key: 'linesKey', array: $running);
 	}
 
 	/**
@@ -129,11 +134,12 @@ class StatementAccountLinesTest extends TestCase {
 	 * @return void
 	 */
 	public function testATrialBalanceLineOpensItsPeriodsLines(): void {
-		$found = VanDijkLedger::calculator($this, self::rows())->accountLines(VanDijkLedger::ADM, 'tb-4100-q2');
+		$calculator = VanDijkLedger::calculator(test: $this, rows: self::rows());
+		$found = $calculator->accountLines(administrationId: VanDijkLedger::ADM, key: 'tb-4100-q2');
 
-		self::assertSame(['4100', '2026-Q2', null, null], [$found['accountNumber'], $found['periodId'], $found['from'], $found['to']]);
-		self::assertSame(['tx-rent-2026'], array_column($found['lines'], 'transactionId'));
-		self::assertSame(36000.0, $found['total']);
+		self::assertSame(expected: ['4100', '2026-Q2', null, null], actual: [$found['accountNumber'], $found['periodId'], $found['from'], $found['to']]);
+		self::assertSame(expected: ['tx-rent-2026'], actual: array_column($found['lines'], 'transactionId'));
+		self::assertSame(expected: 36000.0, actual: $found['total']);
 	}
 
 	/**
@@ -143,11 +149,11 @@ class StatementAccountLinesTest extends TestCase {
 	 * @return void
 	 */
 	public function testRefusals(): void {
-		$calculator = VanDijkLedger::calculator($this, self::rows());
+		$calculator = VanDijkLedger::calculator(test: $this, rows: self::rows());
 		$refusals = [];
 		foreach (['tb-other', '4100~2026-09-30~2026-01-01', '4100~2026-1-1~2026-09-30', 'a b'] as $key) {
 			try {
-				$calculator->accountLines(VanDijkLedger::ADM, $key);
+				$calculator->accountLines(administrationId: VanDijkLedger::ADM, key: $key);
 				$refusals[] = null;
 			} catch (InvalidArgumentException $e) {
 				$refusals[] = $e->getMessage();
@@ -155,13 +161,13 @@ class StatementAccountLinesTest extends TestCase {
 		}
 
 		self::assertSame(
-			[
+			expected: [
 				'No such trial balance line.',
 				'to must not be before from.',
 				'key must be account~from~to or a trial balance line id.',
 				'key must be account~from~to or a trial balance line id.',
 			],
-			$refusals
+			actual: $refusals
 		);
 	}
 
@@ -171,9 +177,9 @@ class StatementAccountLinesTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheComparedRowsKeyTheCurrentRange(): void {
-		$calculator = VanDijkLedger::calculator($this, self::rows());
-		$statement = (new ProfitLossComparison($calculator))->compare(VanDijkLedger::ADM, '2026-01-01', '2026-09-30', ['previous-year']);
+		$comparison = new ProfitLossComparison(calculator: VanDijkLedger::calculator(test: $this, rows: self::rows()));
+		$statement = $comparison->compare(administrationId: VanDijkLedger::ADM, from: '2026-01-01', to: '2026-09-30', comparisons: ['previous-year']);
 
-		self::assertSame(['4000~2026-01-01~2026-09-30', '4100~2026-01-01~2026-09-30'], array_column($statement['expense'], 'linesKey'));
+		self::assertSame(expected: ['4000~2026-01-01~2026-09-30', '4100~2026-01-01~2026-09-30'], actual: array_column($statement['expense'], 'linesKey'));
 	}
 }
