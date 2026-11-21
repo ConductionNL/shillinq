@@ -387,7 +387,9 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
 	private function invalidMessage(array $errors): string {
-		return $this->l10n->t('The country-by-country file does not pass the OECD schema, so it was not stored. %s', [self::firstSchemaErrors(errors: $errors)]);
+		$lines = self::firstSchemaErrors(errors: $errors);
+
+		return $this->l10n->t('The country-by-country file does not pass the OECD schema, so it was not stored. %s', [$lines]);
 	}//end invalidMessage()
 
 	/**

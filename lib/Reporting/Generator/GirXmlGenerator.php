@@ -43,6 +43,7 @@ use RuntimeException;
  * approve guard compares, and a `DocRefId` per block in `docRefIds`.
  *
  * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+ * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
  */
 final class GirXmlGenerator implements ReportGeneratorInterface {
 	use OecdFileGeneratorSupport;
@@ -114,25 +115,23 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 		$missing = $this->document->missingElements(records: $records);
 		$return  = $this->update(return: $return, fields: ['missingElements' => $missing]);
 
-		$this->refuseOnBlockingChecks(return: $return);
+		$failing = $this->failingBlockingChecks(results: $this->checks->runGir(return: $return));
+		if ($failing !== []) {
+			throw new RuntimeException(
+				$this->l10n->t('The GloBE information return is not made while a blocking check fails. %s', [implode(' ', $failing)])
+			);
+		}
+
 		if ($missing !== []) {
 			throw new RuntimeException($this->missingMessage(missing: $missing));
 		}
 
-		$file       = $this->fileParts(return: $return, records: $records);
-		$xml        = $this->document->render(file: $file);
-		$validation = $this->document->validate(xml: $xml) + ['validatedAt' => self::utcNow()->format('Y-m-d\TH:i:s\Z')];
-		if ($validation['valid'] === false) {
-			$this->update(return: $return, fields: ['lastValidation' => $validation]);
-			throw new RuntimeException($this->invalidMessage(errors: $validation['errors']));
-		}
-
-		$validation['fingerprint']  = $this->checks->girFingerprint(return: $return);
-		$validation['messageRefId'] = $file['messageRefId'];
-		$this->update(return: $return, fields: ['lastValidation' => $validation, 'docRefIds' => $file['docRefIds']]);
+		$parts = $this->fileParts(return: $return, records: $records);
+		$xml   = $this->document->render(file: $parts);
+		$this->recordValidation(return: $return, parts: $parts, outcome: $this->document->validate(xml: $xml));
 
 		return new GeneratedFile(
-			fileName: sprintf('globe-information-return-%s-%s.xml', self::fiscalYearOf(return: $return), $file['messageRefId']),
+			fileName: 'globe-information-return-' . $parts['year'] . '-' . $parts['messageRefId'] . '.xml',
 			mimeType: 'application/xml',
 			format: 'xml',
 			content: $xml,
@@ -140,24 +139,33 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 	}//end generate()
 
 	/**
-	 * Refuse while a mandatory check fails, naming every failing check.
+	 * Write the schema validation on the return; refuse an invalid file, record a valid one.
 	 *
-	 * @param array<string,mixed> $return The GlobeInformationReturn, with its missing elements.
+	 * A valid file's validation carries the fingerprint the approve guard
+	 * compares and the message reference, and the DocRefIds go with it.
+	 *
+	 * @param array<string,mixed>                                                                    $return  The GlobeInformationReturn.
+	 * @param array<string,mixed>                                                                    $parts   The file parts.
+	 * @param array{valid:bool,errors:array<int,array{line:int,element:string,message:string}>} $outcome The validation.
 	 *
 	 * @return void
 	 *
-	 * @throws RuntimeException When a blocking check fails.
+	 * @throws RuntimeException When the file does not pass the schema.
 	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
-	private function refuseOnBlockingChecks(array $return): void {
-		$failing = $this->failingBlockingChecks(results: $this->checks->runGir(return: $return));
-		if ($failing !== []) {
-			throw new RuntimeException(
-				$this->l10n->t('The GloBE information return is not made while a blocking check fails. %s', [implode(' ', $failing)])
-			);
+	private function recordValidation(array $return, array $parts, array $outcome): void {
+		$outcome['validatedAt'] = self::utcNow()->format('Y-m-d\TH:i:s\Z');
+		if ($outcome['valid'] !== true) {
+			$this->update(return: $return, fields: ['lastValidation' => $outcome]);
+			$errors = self::firstSchemaErrors(errors: $outcome['errors']);
+			throw new RuntimeException($this->l10n->t('The GloBE information return does not pass the OECD schema, so it was not stored. %s', [$errors]));
 		}
-	}//end refuseOnBlockingChecks()
+
+		$outcome['fingerprint']  = $this->checks->girFingerprint(return: $return);
+		$outcome['messageRefId'] = $parts['messageRefId'];
+		$this->update(return: $return, fields: ['lastValidation' => $outcome, 'docRefIds' => $parts['docRefIds']]);
+	}//end recordValidation()
 
 	/**
 	 * The parts the document renders, with a DocRefId per block.
@@ -204,17 +212,6 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 			[(string)count($missing), implode('; ', $lines)]
 		);
 	}//end missingMessage()
-
-	/**
-	 * The refusal for a file that does not pass the schema: its first three errors.
-	 *
-	 * @param array<int,array{line:int,element:string,message:string}> $errors The errors.
-	 *
-	 * @return string
-	 */
-	private function invalidMessage(array $errors): string {
-		return $this->l10n->t('The GloBE information return does not pass the OECD schema, so it was not stored. %s', [self::firstSchemaErrors(errors: $errors)]);
-	}//end invalidMessage()
 
 	/**
 	 * Write fields onto the return in place.
