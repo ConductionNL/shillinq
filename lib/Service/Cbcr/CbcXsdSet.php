@@ -27,7 +27,7 @@ use LibXMLError;
  * Validates a file against an OECD XML schema set kept in the repository.
  *
  * The CbC set lives in `lib/Standards/Xsd/oecd-cbc-v2.0/`, the GloBE
- * information return set (forGir()) in `lib/Standards/Xsd/oecd-gir-2025-01/`
+ * information return set (constructed with GIR_MAIN_XSD and GIR_FOLDER) in `lib/Standards/Xsd/oecd-gir-2025-01/`
  * (task 2.1 of the change fetches both by hand, each with its SOURCE.md).
  * While the folder holds no main XSD the answer is "not valid" with one error
  * saying so: a file that could not be validated is never stored (design D3,
@@ -79,19 +79,6 @@ class CbcXsdSet {
 	) {
 		$this->folder = rtrim(($folder ?? dirname(__DIR__, 2) . '/Standards/Xsd/' . $this->folderName), '/');
 	}//end __construct()
-
-	/**
-	 * The GloBE information return set: GLOBEXML_v1.0.xsd in lib/Standards/Xsd/oecd-gir-2025-01.
-	 *
-	 * @param string|null $folder The folder holding the set; null for the bundled one.
-	 *
-	 * @return self
-	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
-	 */
-	public static function forGir(?string $folder = null): self {
-		return new self(folder: $folder, mainXsd: self::GIR_MAIN_XSD, folderName: self::GIR_FOLDER, version: GirXmlDocument::VERSION);
-	}//end forGir()
 
 	/**
 	 * The target namespace the main schema declares.

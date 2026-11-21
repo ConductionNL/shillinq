@@ -43,14 +43,16 @@ final class GirXmlBuilder {
 	/**
 	 * Constructor.
 	 *
-	 * @param DOMDocument $doc       The document the elements belong to.
-	 * @param string      $namespace The GIR namespace.
+	 * @param DOMDocument     $doc       The document the elements belong to.
+	 * @param string          $namespace The GIR namespace.
+	 * @param GirRecordLookup $lookup    Reads the records.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
 	public function __construct(
 		private readonly DOMDocument $doc,
 		private readonly string $namespace,
+		private readonly GirRecordLookup $lookup,
 	) {
 	}//end __construct()
 
@@ -88,7 +90,7 @@ final class GirXmlBuilder {
 		$this->children(
 			parent: $spec,
 			children: [
-				'SendingEntityIN' => GirXmlDocument::tinOf(entity: (array)($file['upe'] ?? []))['value'],
+				'SendingEntityIN' => $this->lookup->tinOf(entity: (array)($file['upe'] ?? []))['value'],
 				'TransmittingCountry' => 'NL',
 				'ReceivingCountry' => 'NL',
 				'MessageType' => 'GIR',
@@ -174,13 +176,13 @@ final class GirXmlBuilder {
 		$summary = $this->element(name: 'Summary');
 		$summary->appendChild($this->element(name: 'Jurisdiction', text: $code));
 
-		$test = GirXmlDocument::passedTest(records: $file, code: $code);
+		$test = $this->lookup->passedTest(records: $file, code: $code);
 		if ($test !== null) {
 			$summary->appendChild($this->element(name: 'SafeHarbour', text: $test));
 			return $summary;
 		}
 
-		$computation = (GirXmlDocument::computationOf(records: $file, code: $code) ?? []);
+		$computation = ($this->lookup->computationOf(records: $file, code: $code) ?? []);
 		$summary->appendChild($this->element(name: 'ETRRate', text: self::rate(value: $computation['etrJurisdiction'] ?? 0)));
 		$summary->appendChild($this->element(name: 'SBIE', text: self::flag(value: ((float)($computation['substanceBasedIncomeExclusion'] ?? 0) > 0))));
 		$summary->appendChild($this->amount(name: 'QDMTTAmount', value: $computation['qdmttAmount'] ?? 0, file: $file));
@@ -203,7 +205,7 @@ final class GirXmlBuilder {
 		$section = $this->element(name: 'JurisdictionSection');
 		$section->appendChild($this->element(name: 'Jurisdiction', text: $code));
 
-		$test = GirXmlDocument::passedTest(records: $file, code: $code);
+		$test = $this->lookup->passedTest(records: $file, code: $code);
 		if ($test !== null) {
 			$election = $this->element(name: 'SafeHarbourElection');
 			$election->appendChild($this->element(name: 'SafeHarbour', text: $test));
@@ -228,7 +230,7 @@ final class GirXmlBuilder {
 	 * @return DOMElement
 	 */
 	private function globeTax(array $file, string $code): DOMElement {
-		$computation = (GirXmlDocument::computationOf(records: $file, code: $code) ?? []);
+		$computation = ($this->lookup->computationOf(records: $file, code: $code) ?? []);
 
 		$etr = $this->element(name: 'ETR');
 		$etr->appendChild($this->element(name: 'ETRRate', text: self::rate(value: $computation['etrJurisdiction'] ?? 0)));
@@ -262,8 +264,9 @@ final class GirXmlBuilder {
 		$element = $this->entity(name: 'CE', entity: $entity);
 
 		$ownership = $this->element(name: 'Ownership');
-		$ownership->appendChild($this->element(name: 'OwnerTIN', text: GirXmlDocument::tinOf(entity: $owner)['value']));
-		$ownership->appendChild($this->element(name: 'OwnershipPercentage', text: self::rate(value: ((float)($entity['consolidationPercentage'] ?? 100)) / 100)));
+		$ownership->appendChild($this->element(name: 'OwnerTIN', text: $this->lookup->tinOf(entity: $owner)['value']));
+		$share = ((float)($entity['consolidationPercentage'] ?? 100)) / 100;
+		$ownership->appendChild($this->element(name: 'OwnershipPercentage', text: self::rate(value: $share)));
 		$element->appendChild($ownership);
 
 		$excluded = trim((string)($entity['excludedEntityType'] ?? ''));
@@ -284,9 +287,9 @@ final class GirXmlBuilder {
 	 */
 	private function entity(string $name, array $entity): DOMElement {
 		$element = $this->element(name: $name);
-		$element->appendChild($this->element(name: 'ResCountryCode', text: GirXmlDocument::jurisdictionOf(entity: $entity)));
+		$element->appendChild($this->element(name: 'ResCountryCode', text: $this->lookup->jurisdictionOf(entity: $entity)));
 
-		$tin        = GirXmlDocument::tinOf(entity: $entity);
+		$tin        = $this->lookup->tinOf(entity: $entity);
 		$tinElement = $this->element(name: 'TIN', text: $tin['value']);
 		if ($tin['issuedBy'] !== '') {
 			$tinElement->setAttribute('issuedBy', $tin['issuedBy']);
@@ -297,7 +300,7 @@ final class GirXmlBuilder {
 		}
 
 		$element->appendChild($tinElement);
-		$element->appendChild($this->element(name: 'Name', text: GirXmlDocument::nameOf(entity: $entity)));
+		$element->appendChild($this->element(name: 'Name', text: $this->lookup->nameOf(entity: $entity)));
 
 		return $element;
 	}//end entity()

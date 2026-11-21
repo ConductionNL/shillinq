@@ -28,6 +28,7 @@ use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Reporting\Generator\GirXmlGenerator;
 use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
 use OCA\Shillinq\Service\Cbcr\CbcXsdSet;
+use OCA\Shillinq\Service\Cbcr\GirRecordLookup;
 use OCA\Shillinq\Service\Cbcr\GirXmlBuilder;
 use OCA\Shillinq\Service\Cbcr\GirXmlDocument;
 use OCA\Shillinq\Service\Sbr\SbrRecords;
@@ -46,6 +47,7 @@ use RuntimeException;
 #[CoversClass(GirXmlGenerator::class)]
 #[UsesClass(GirXmlDocument::class)]
 #[UsesClass(GirXmlBuilder::class)]
+#[UsesClass(GirRecordLookup::class)]
 #[UsesClass(CbcXsdSet::class)]
 #[UsesClass(ObjectIdentifier::class)]
 #[UsesClass(SbrRecords::class)]
@@ -207,7 +209,8 @@ final class GirXmlGeneratorTest extends TestCase {
 			self::fail('A GIR with missing elements was made.');
 		} catch (RuntimeException $refused) {
 			self::assertStringContainsString('3 elements the schema requires are not in the records', $refused->getMessage());
-			self::assertStringContainsString('IE Voorbeeld Ireland Ltd: JurisdictionSection/GLoBETax/ETR/ETRComputation/CEComputation/GLoBEIncome', $refused->getMessage());
+			$first = 'IE Voorbeeld Ireland Ltd: ' . GirXmlDocument::ENTITY_ELEMENTS[0];
+			self::assertStringContainsString($first, $refused->getMessage());
 		}
 
 		$stored = $this->stored();

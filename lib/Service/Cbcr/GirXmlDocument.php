@@ -80,6 +80,13 @@ final class GirXmlDocument {
 	private readonly CbcXsdSet $xsd;
 
 	/**
+	 * Reads the records.
+	 *
+	 * @var GirRecordLookup
+	 */
+	private readonly GirRecordLookup $lookup;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string|null $xsdFolder The folder holding the GIR set; null for the bundled one.
@@ -87,7 +94,8 @@ final class GirXmlDocument {
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
 	public function __construct(?string $xsdFolder = null) {
-		$this->xsd = CbcXsdSet::forGir(folder: $xsdFolder);
+		$this->xsd    = new CbcXsdSet(folder: $xsdFolder, mainXsd: CbcXsdSet::GIR_MAIN_XSD, folderName: CbcXsdSet::GIR_FOLDER, version: self::VERSION);
+		$this->lookup = new GirRecordLookup();
 	}//end __construct()
 
 	/**
@@ -125,17 +133,21 @@ final class GirXmlDocument {
 
 		$entities = (array)($records['entities'] ?? []);
 		foreach ($entities as $entity) {
-			if (self::tinOf(entity: (array)$entity)['value'] === self::NO_TIN) {
-				$missing[] = ['jurisdiction' => self::jurisdictionOf(entity: (array)$entity), 'entity' => self::nameOf(entity: (array)$entity), 'element' => 'TIN'];
+			if ($this->lookup->tinOf(entity: (array)$entity)['value'] === self::NO_TIN) {
+				$missing[] = [
+					'jurisdiction' => $this->lookup->jurisdictionOf(entity: (array)$entity),
+					'entity' => $this->lookup->nameOf(entity: (array)$entity),
+					'element' => 'TIN',
+				];
 			}
 		}
 
 		foreach ((array)($records['jurisdictions'] ?? []) as $code) {
-			if (self::passedTest(records: $records, code: (string)$code) !== null) {
+			if ($this->lookup->passedTest(records: $records, code: (string)$code) !== null) {
 				continue;
 			}
 
-			$missing = array_merge($missing, self::computedJurisdictionGaps(records: $records, code: (string)$code));
+			$missing = array_merge($missing, $this->computedJurisdictionGaps(records: $records, code: (string)$code));
 		}
 
 		return $missing;
@@ -168,7 +180,7 @@ final class GirXmlDocument {
 		$root->setAttribute('version', self::VERSION);
 		$doc->appendChild($root);
 
-		$builder = new GirXmlBuilder(doc: $doc, namespace: $namespace);
+		$builder = new GirXmlBuilder(doc: $doc, namespace: $namespace, lookup: $this->lookup);
 		$root->appendChild($builder->messageSpec(file: $file));
 
 		$body = $builder->element(name: 'GLOBEBody');
@@ -188,6 +200,19 @@ final class GirXmlDocument {
 	}//end render()
 
 	/**
+	 * An entity's TIN as the GIR asks it (see GirRecordLookup::tinOf()).
+	 *
+	 * @param array<string,mixed> $entity The GroupEntityRegistry row.
+	 *
+	 * @return array{value:string,issuedBy:string,type:string}
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 */
+	public function tinOf(array $entity): array {
+		return $this->lookup->tinOf(entity: $entity);
+	}//end tinOf()
+
+	/**
 	 * The record keys a DocSpec is written for: the filing info, the general section and each jurisdiction.
 	 *
 	 * @param string            $returnId      The return.
@@ -197,7 +222,7 @@ final class GirXmlDocument {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
-	public static function docRefKeys(string $returnId, array $jurisdictions): array {
+	public function docRefKeys(string $returnId, array $jurisdictions): array {
 		$keys = ['filing-info:' . $returnId, 'general-section:' . $returnId];
 		foreach ($jurisdictions as $code) {
 			$keys[] = 'jurisdiction:' . strtoupper((string)$code);
@@ -207,134 +232,6 @@ final class GirXmlDocument {
 	}//end docRefKeys()
 
 	/**
-	 * An entity's TIN as the GIR asks it: a Dutch RSIN padded to nine digits with issuer NL and type GIR3001.
-	 *
-	 * @param array<string,mixed> $entity The GroupEntityRegistry row.
-	 *
-	 * @return array{value:string,issuedBy:string,type:string} `type` is '' for a foreign TIN.
-	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
-	 */
-	public static function tinOf(array $entity): array {
-		$tin      = trim((string)($entity['tin'] ?? ''));
-		$issuedBy = strtoupper(trim((string)($entity['tinIssuedBy'] ?? '')));
-		if ($issuedBy === '') {
-			$issuedBy = self::jurisdictionOf(entity: $entity);
-		}
-
-		if ($tin === '') {
-			return ['value' => self::NO_TIN, 'issuedBy' => $issuedBy, 'type' => ''];
-		}
-
-		if ($issuedBy === 'NL') {
-			$digits = (string)preg_replace('/\D/', '', $tin);
-			if ($digits !== '' && strlen($digits) <= 9) {
-				return ['value' => str_pad($digits, 9, '0', STR_PAD_LEFT), 'issuedBy' => 'NL', 'type' => self::DUTCH_TIN_TYPE];
-			}
-		}
-
-		return ['value' => $tin, 'issuedBy' => $issuedBy, 'type' => ''];
-	}//end tinOf()
-
-	/**
-	 * The jurisdiction an entity is resident in: its tax residency, else its jurisdiction.
-	 *
-	 * @param array<string,mixed> $entity The entity.
-	 *
-	 * @return string
-	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
-	 */
-	public static function jurisdictionOf(array $entity): string {
-		$code = trim((string)($entity['taxResidency'] ?? ''));
-		if ($code === '') {
-			$code = trim((string)($entity['jurisdiction'] ?? ''));
-		}
-
-		return strtoupper($code);
-	}//end jurisdictionOf()
-
-	/**
-	 * The test a jurisdiction passed, null when it passed none.
-	 *
-	 * @param array<string,mixed> $records The records.
-	 * @param string              $code    The jurisdiction.
-	 *
-	 * @return string|null The test applied.
-	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
-	 */
-	public static function passedTest(array $records, string $code): ?string {
-		foreach ((array)($records['safeHarbours'] ?? []) as $test) {
-			$test = (array)$test;
-			if (strtoupper((string)($test['jurisdiction'] ?? '')) === $code && (string)($test['testResult'] ?? '') === 'pass') {
-				return (string)($test['testApplied'] ?? '');
-			}
-		}
-
-		return null;
-	}//end passedTest()
-
-	/**
-	 * A jurisdiction's computation, null when there is none.
-	 *
-	 * @param array<string,mixed> $records The records.
-	 * @param string              $code    The jurisdiction.
-	 *
-	 * @return array<string,mixed>|null
-	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
-	 */
-	public static function computationOf(array $records, string $code): ?array {
-		foreach ((array)($records['computations'] ?? []) as $computation) {
-			if (strtoupper((string)(((array)$computation)['jurisdiction'] ?? '')) === $code) {
-				return (array)$computation;
-			}
-		}
-
-		return null;
-	}//end computationOf()
-
-	/**
-	 * The entities resident in a jurisdiction.
-	 *
-	 * @param array<int,mixed> $entities The entities.
-	 * @param string           $code     The jurisdiction.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
-	 */
-	public static function residentsOf(array $entities, string $code): array {
-		$residents = [];
-		foreach ($entities as $entity) {
-			if (self::jurisdictionOf(entity: (array)$entity) === $code) {
-				$residents[] = (array)$entity;
-			}
-		}
-
-		return $residents;
-	}//end residentsOf()
-
-	/**
-	 * An entity's name, its id when it has none.
-	 *
-	 * @param array<string,mixed> $entity The entity.
-	 *
-	 * @return string
-	 *
-	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
-	 */
-	public static function nameOf(array $entity): string {
-		$name = trim((string)($entity['entityName'] ?? ''));
-		if ($name === '') {
-			$name = (string)($entity['id'] ?? '');
-		}
-
-		return $name;
-	}//end nameOf()
-
-	/**
 	 * What a jurisdiction without a passed test lacks: its computation, its entities, their per-entity figures.
 	 *
 	 * @param array<string,mixed> $records The records.
@@ -342,20 +239,20 @@ final class GirXmlDocument {
 	 *
 	 * @return array<int,array{jurisdiction:string,entity:string,element:string}>
 	 */
-	private static function computedJurisdictionGaps(array $records, string $code): array {
+	private function computedJurisdictionGaps(array $records, string $code): array {
 		$gaps = [];
-		if (self::computationOf(records: $records, code: $code) === null) {
+		if ($this->lookup->computationOf(records: $records, code: $code) === null) {
 			$gaps[] = ['jurisdiction' => $code, 'entity' => '', 'element' => 'JurisdictionSection/GLoBETax/ETR'];
 		}
 
-		$residents = self::residentsOf(entities: (array)($records['entities'] ?? []), code: $code);
+		$residents = $this->lookup->residentsOf(entities: (array)($records['entities'] ?? []), code: $code);
 		if ($residents === []) {
 			$gaps[] = ['jurisdiction' => $code, 'entity' => '', 'element' => 'JurisdictionSection/GLoBETax/ETR/ETRComputation/CEComputation'];
 		}
 
 		foreach ($residents as $entity) {
 			foreach (self::ENTITY_ELEMENTS as $element) {
-				$gaps[] = ['jurisdiction' => $code, 'entity' => self::nameOf(entity: $entity), 'element' => $element];
+				$gaps[] = ['jurisdiction' => $code, 'entity' => $this->lookup->nameOf(entity: $entity), 'element' => $element];
 			}
 		}
 

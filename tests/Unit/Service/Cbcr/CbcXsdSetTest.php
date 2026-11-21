@@ -202,21 +202,26 @@ XSD;
 	 * @return void
 	 */
 	public function testTheGirSetIsItsOwnFolder(): void {
-		$missing = CbcXsdSet::forGir($this->folder . '/missing');
+		$gir     = static fn (?string $folder = null): CbcXsdSet => new CbcXsdSet(
+			$folder,
+			CbcXsdSet::GIR_MAIN_XSD,
+			CbcXsdSet::GIR_FOLDER,
+			GirXmlDocument::VERSION
+		);
+		$missing = $gir($this->folder . '/missing');
 		self::assertFalse($missing->isBundled());
 		self::assertSame('', $missing->targetNamespace());
 		$outcome = $missing->validate('<x/>');
 		self::assertStringContainsString('lib/Standards/Xsd/oecd-gir-2025-01', $outcome['errors'][0]['message']);
 		self::assertSame('1.0', $outcome['schemaVersion']);
 
-		self::assertFalse(CbcXsdSet::forGir($this->folder)->isBundled(), 'The CbC main schema is not the GIR one.');
+		self::assertFalse($gir($this->folder)->isBundled(), 'The CbC main schema is not the GIR one.');
 		file_put_contents($this->folder . '/' . CbcXsdSet::GIR_MAIN_XSD, GirXmlDocumentTest::fixtureXsd());
-		$gir = CbcXsdSet::forGir($this->folder);
-		self::assertTrue($gir->isBundled());
-		self::assertSame('urn:test:gir:v1', $gir->targetNamespace());
+		self::assertTrue($gir($this->folder)->isBundled());
+		self::assertSame('urn:test:gir:v1', $gir($this->folder)->targetNamespace());
 		self::assertSame('urn:oecd:ties:cbc:v2', (new CbcXsdSet($this->folder))->targetNamespace());
 
 		$expected = is_file(__DIR__ . '/../../../../lib/Standards/Xsd/oecd-gir-2025-01/' . CbcXsdSet::GIR_MAIN_XSD);
-		self::assertSame($expected, CbcXsdSet::forGir()->isBundled());
+		self::assertSame($expected, $gir()->isBundled());
 	}//end testTheGirSetIsItsOwnFolder()
 }//end class

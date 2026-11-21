@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Cbcr;
 use DOMDocument;
 use DOMXPath;
 use OCA\Shillinq\Service\Cbcr\CbcXsdSet;
+use OCA\Shillinq\Service\Cbcr\GirRecordLookup;
 use OCA\Shillinq\Service\Cbcr\GirXmlBuilder;
 use OCA\Shillinq\Service\Cbcr\GirXmlDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -42,6 +43,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(GirXmlDocument::class)]
 #[CoversClass(GirXmlBuilder::class)]
+#[CoversClass(GirRecordLookup::class)]
 #[UsesClass(CbcXsdSet::class)]
 final class GirXmlDocumentTest extends TestCase {
 
@@ -187,11 +189,12 @@ XSD;
 	 * @return void
 	 */
 	public function testTheDutchTinRule(): void {
-		self::assertSame(['value' => '001234567', 'issuedBy' => 'NL', 'type' => 'GIR3001'], GirXmlDocument::tinOf(self::HOLDING));
-		self::assertSame(['value' => '001234567', 'issuedBy' => 'NL', 'type' => 'GIR3001'], GirXmlDocument::tinOf(['tin' => '1234567', 'taxResidency' => 'nl']));
-		self::assertSame(['value' => 'DE123', 'issuedBy' => 'DE', 'type' => ''], GirXmlDocument::tinOf(self::GMBH));
-		self::assertSame(['value' => 'NOTIN', 'issuedBy' => 'IE', 'type' => ''], GirXmlDocument::tinOf(['taxResidency' => 'IE']));
-		self::assertSame('NL1234567890', GirXmlDocument::tinOf(['tin' => 'NL1234567890', 'tinIssuedBy' => 'NL'])['value']);
+		$document = new GirXmlDocument($this->folder);
+		self::assertSame(['value' => '001234567', 'issuedBy' => 'NL', 'type' => 'GIR3001'], $document->tinOf(self::HOLDING));
+		self::assertSame(['value' => '001234567', 'issuedBy' => 'NL', 'type' => 'GIR3001'], $document->tinOf(['tin' => '1234567', 'taxResidency' => 'nl']));
+		self::assertSame(['value' => 'DE123', 'issuedBy' => 'DE', 'type' => ''], $document->tinOf(self::GMBH));
+		self::assertSame(['value' => 'NOTIN', 'issuedBy' => 'IE', 'type' => ''], $document->tinOf(['taxResidency' => 'IE']));
+		self::assertSame('NL1234567890', $document->tinOf(['tin' => 'NL1234567890', 'tinIssuedBy' => 'NL'])['value']);
 	}//end testTheDutchTinRule()
 
 	/**
@@ -241,7 +244,8 @@ XSD;
 		self::assertContains(['jurisdiction' => '', 'entity' => '', 'element' => 'FilingInfo/FilingCE'], $missing);
 		self::assertContains(['jurisdiction' => 'BE', 'entity' => 'ge-x', 'element' => 'TIN'], $missing);
 		self::assertContains(['jurisdiction' => 'FR', 'entity' => '', 'element' => 'JurisdictionSection/GLoBETax/ETR'], $missing);
-		self::assertContains(['jurisdiction' => 'FR', 'entity' => '', 'element' => 'JurisdictionSection/GLoBETax/ETR/ETRComputation/CEComputation'], $missing);
+		$noResident = ['jurisdiction' => 'FR', 'entity' => '', 'element' => 'JurisdictionSection/GLoBETax/ETR/ETRComputation/CEComputation'];
+		self::assertContains($noResident, $missing);
 		self::assertCount(4, $missing);
 	}//end testEveryOtherGapIsNamed()
 
@@ -334,7 +338,7 @@ XSD;
 	public function testTheDocRefKeys(): void {
 		self::assertSame(
 			['filing-info:g-1', 'general-section:g-1', 'jurisdiction:DE', 'jurisdiction:NL'],
-			GirXmlDocument::docRefKeys('g-1', ['de', 'NL'])
+			(new GirXmlDocument($this->folder))->docRefKeys('g-1', ['de', 'NL'])
 		);
 	}//end testTheDocRefKeys()
 

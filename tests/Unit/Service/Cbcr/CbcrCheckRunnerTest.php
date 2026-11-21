@@ -271,7 +271,9 @@ final class CbcrCheckRunnerTest extends TestCase {
 		$this->store->setSchema('GroupEntityRegistry');
 		$this->store->saveObject(['id' => 'ge-out', 'entityName' => 'Buiten B.V.', 'ultimateParentEntity' => 'ge-holding', 'pillar2Included' => false]);
 		$this->store->setSchema('Pillar2JurisdictionComputation');
-		$this->store->saveObject(['id' => 'c-ie', 'ultimateParentEntity' => 'ge-holding', 'period' => 'FY2026', 'jurisdiction' => 'ie', 'state' => 'draft']);
+		$this->store->saveObject(
+			['id' => 'c-ie', 'ultimateParentEntity' => 'ge-holding', 'period' => 'FY2026', 'jurisdiction' => 'ie', 'state' => 'draft']
+		);
 
 		$records = $this->runner()->girRecords(['id' => 'g-2026', 'ultimateParent' => 'ge-holding', 'period' => 'FY2026']);
 

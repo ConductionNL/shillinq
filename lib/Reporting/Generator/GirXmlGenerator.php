@@ -174,10 +174,10 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 	 * @return array<string,mixed>
 	 */
 	private function fileParts(array $return, array $records): array {
-		$messageRefId = self::messageRefId(return: $return, upe: (array)($records['upe'] ?? []));
+		$messageRefId = $this->messageRefId(return: $return, upe: (array)($records['upe'] ?? []));
 
 		$docRefIds = [];
-		foreach (GirXmlDocument::docRefKeys(returnId: (string)($return['id'] ?? ''), jurisdictions: $records['jurisdictions']) as $index => $key) {
+		foreach ($this->document->docRefKeys(returnId: (string)($return['id'] ?? ''), jurisdictions: $records['jurisdictions']) as $index => $key) {
 			$docRefIds[$key] = $messageRefId . '-' . ($index + 1);
 		}
 
@@ -255,8 +255,8 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return string
 	 */
-	private static function messageRefId(array $return, array $upe): string {
-		$tin = (string)preg_replace('/[^A-Za-z0-9]/', '', GirXmlDocument::tinOf(entity: $upe)['value']);
+	private function messageRefId(array $return, array $upe): string {
+		$tin = (string)preg_replace('/[^A-Za-z0-9]/', '', $this->document->tinOf(entity: $upe)['value']);
 
 		return sprintf('NL%sGIR%s-%s', self::yearOf(return: $return), $tin, bin2hex(random_bytes(6)));
 	}//end messageRefId()
