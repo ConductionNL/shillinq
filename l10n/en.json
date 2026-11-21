@@ -6246,7 +6246,8 @@
         "{label} is not a #RRGGBB colour.": "{label} is not a #RRGGBB colour.",
         "{label}: contrast {ratio}:1 against white, readable.": "{label}: contrast {ratio}:1 against white, readable.",
         "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.": "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.",
-        "Document language": "Document language"
+        "Document language": "Document language",
+        "The payment link could not be sent.": "The payment link could not be sent."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
