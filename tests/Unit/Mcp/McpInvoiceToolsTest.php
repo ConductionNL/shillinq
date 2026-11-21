@@ -229,7 +229,7 @@ class McpInvoiceToolsTest extends TestCase {
 		$this->records['BillableInvoice']['inv-1'] = ['id' => 'inv-1', 'administrationId' => 'adm-1'];
 		$this->records['BillableInvoiceLine'] = ['l1' => ['id' => 'l1', 'invoiceId' => 'inv-1'], 'l2' => ['id' => 'l2', 'invoiceId' => 'inv-9']];
 		$tools = $this->tools(canAccess: true);
-		$this->pdf->expects($this->once())->method('generatePdf')
+		$this->pdf->expects($this->once())->method('generateHtml')
 			->with(['id' => 'inv-1', 'administrationId' => 'adm-1'], [['id' => 'l1', 'invoiceId' => 'inv-1']])
 			->willReturn(['filename' => 'F2026-0001', 'html' => '<h1>Invoice</h1>']);
 

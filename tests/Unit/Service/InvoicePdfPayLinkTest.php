@@ -90,7 +90,7 @@ final class InvoicePdfPayLinkTest extends TestCase {
 	 * @return string
 	 */
 	private static function html(InvoicePdfGenerator $generator, array $invoice): string {
-		return $generator->generatePdf(invoice: $invoice, lines: [], creditor: ['legalName' => 'Adviesbureau Kade B.V.'], recipient: [])['html'];
+		return $generator->generateHtml(invoice: $invoice, lines: [], creditor: ['legalName' => 'Adviesbureau Kade B.V.'], recipient: [])['html'];
 	}//end html()
 
 	/**

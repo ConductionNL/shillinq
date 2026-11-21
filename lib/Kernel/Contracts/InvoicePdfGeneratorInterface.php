@@ -38,7 +38,37 @@ namespace OCA\Shillinq\Kernel\Contracts;
 interface InvoicePdfGeneratorInterface {
 
 	/**
-	 * Generate the renderable invoice payload.
+	 * What a caller shows when docudesk is absent (REQ-SID-002).
+	 */
+	public const DOCUDESK_NEEDED = 'Docudesk is needed to produce invoice documents.';
+
+	/**
+	 * Whether an invoice PDF can be rendered: docudesk is installed and resolves.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 */
+	public function documentsAvailable(): bool;
+
+	/**
+	 * Render the invoice PDF through docudesk.
+	 *
+	 * @param array<string,mixed> $invoice BillableInvoice or ARInvoice record.
+	 * @param array<int,array<string,mixed>> $lines Its lines.
+	 * @param array<string,mixed> $context `creditor`, `recipient`, `layout` (the InvoiceLayout),
+	 *                                     `language` (the administration's default) and `userId`.
+	 *
+	 * @return array{filename:string,pdf:string,mimeType:string}
+	 *
+	 * @throws \OCA\Shillinq\Reporting\DocudeskUnavailableException When docudesk is not installed.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 */
+	public function generatePdf(array $invoice, array $lines, array $context = []): array;
+
+	/**
+	 * The invoice as HTML.
 	 *
 	 * @param array<string,mixed> $invoice BillableInvoice record.
 	 * @param array<int,array<string,mixed>> $lines BillableInvoiceLine records.
@@ -47,9 +77,9 @@ interface InvoicePdfGeneratorInterface {
 	 *
 	 * @return array{filename:string,html:string,mimeType:string}
 	 *
-	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
 	 */
-	public function generatePdf(
+	public function generateHtml(
 		array $invoice,
 		array $lines,
 		array $creditor = [],

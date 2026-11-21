@@ -466,11 +466,15 @@ class InvoiceApiController extends Controller {
 	}//end showInvoice()
 
 	/**
-	 * Render the invoice document, when it belongs to the caller's administration.
+	 * Render the invoice PDF through docudesk, when the invoice belongs to the
+	 * caller's administration; without docudesk, say that it is needed
+	 * (REQ-SID-002).
 	 *
 	 * @param string $invoiceId The invoice id.
 	 *
 	 * @return DataDisplayResponse|JSONResponse
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
 	 */
 	private function renderPdf(string $invoiceId): DataDisplayResponse|JSONResponse {
 		$invoice = $this->ownInvoice(invoiceId: $invoiceId);
@@ -478,14 +482,25 @@ class InvoiceApiController extends Controller {
 			return $invoice;
 		}
 
-		$pdf = $this->pdfGenerator->generatePdf(invoice: $invoice, lines: $this->invoiceLines(invoiceId: $invoiceId));
+		if ($this->pdfGenerator->documentsAvailable() === false) {
+			return new JSONResponse(
+				['error' => 'docudesk-unavailable', 'message' => InvoicePdfGeneratorInterface::DOCUDESK_NEEDED],
+				Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		}
+
+		$pdf = $this->pdfGenerator->generatePdf(
+			invoice: $invoice,
+			lines: $this->invoiceLines(invoiceId: $invoiceId),
+			context: ['userId' => (string)$this->session->getUser()?->getUID()]
+		);
 
 		return new DataDisplayResponse(
-			$pdf['html'],
+			$pdf['pdf'],
 			Http::STATUS_OK,
 			[
-				'Content-Type' => 'text/html; charset=utf-8',
-				'Content-Disposition' => sprintf('inline; filename="%s.html"', preg_replace('/[^A-Za-z0-9._-]/', '_', $pdf['filename'])),
+				'Content-Type' => 'application/pdf',
+				'Content-Disposition' => sprintf('inline; filename="%s"', preg_replace('/[^A-Za-z0-9._-]/', '_', $pdf['filename'])),
 			]
 		);
 
