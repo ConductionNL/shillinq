@@ -11,6 +11,7 @@
 
 - [x] 2.1 `RequiredFields` settings page with the form-field list per schema (REQ-PRF-001). Verify: `npm run check:manifest`, nav reachability.
 - [ ] 2.2 Raise the runtime required-fields input on nextcloud-vue and show the server's field errors in forms meanwhile (REQ-PRF-002). Verify: issue link in the PR; vitest for the error display.
+  - Meanwhile half done: `FieldRequirementListener` refuses with errors keyed by field, OpenRegister answers that veto as 422 `{error, errors}`, and the installed library reads it as a validation error and keeps the index page's form open with each message under its field (`tests/vitest/requiredFieldServerErrors.spec.js` through `parseResponseError` and the self-mode `handleFormSave`). Left: the issue on ConductionNL/nextcloud-vue for the runtime required-fields input, outside this repository.
 
 ## 3. End to end and strings
 
