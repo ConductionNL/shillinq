@@ -38,6 +38,8 @@ export default {
 		 * Whether the link is https and the day a date.
 		 *
 		 * @return {boolean}
+		 *
+		 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
 		 */
 		usable() {
 			return /^https:\/\//i.test(this.link) && /^\d{4}-\d{2}-\d{2}$/.test(this.lastDay)
