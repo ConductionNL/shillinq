@@ -28,9 +28,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
-use Throwable;
 
 /**
  * "Generate XML" on a country-by-country report, for any signed-in user; the
@@ -45,7 +43,6 @@ class CbcrFileController extends Controller {
 	 *
 	 * @param IRequest        $request The request.
 	 * @param CbcrFileService $files   Generates and links the file, for members of the group only.
-	 * @param LoggerInterface $logger  Logger.
 	 * @param IL10N           $l10n    Translated answers.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
@@ -53,7 +50,6 @@ class CbcrFileController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly CbcrFileService $files,
-		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -65,7 +61,8 @@ class CbcrFileController extends Controller {
 	 * @param string $returnId The CbcrReturn id.
 	 *
 	 * @return JSONResponse 201 with the GeneratedReport and the return; 422 with the reason
-	 *                      when refused; 404 for a report the caller may not see.
+	 *                      when refused; 404 for a report the caller may not see. Any other
+	 *                      failure is left to the framework, which logs it and answers 500.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
@@ -76,9 +73,6 @@ class CbcrFileController extends Controller {
 			$result = $this->files->generateCbc(returnId: $returnId);
 		} catch (RuntimeException $refused) {
 			return new JSONResponse(['error' => $refused->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
-		} catch (Throwable $error) {
-			$this->logger->error('CbcrFileController: generating the file failed', ['exception' => $error->getMessage()]);
-			return new JSONResponse(['error' => $this->l10n->t('The action could not be completed.')], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		if ($result === null) {

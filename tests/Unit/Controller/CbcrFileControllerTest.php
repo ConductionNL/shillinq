@@ -32,7 +32,6 @@ use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -54,7 +53,7 @@ final class CbcrFileControllerTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
-		return new CbcrFileController($this->createMock(IRequest::class), $service, $this->createMock(LoggerInterface::class), $l10n);
+		return new CbcrFileController($this->createMock(IRequest::class), $service, $l10n);
 	}//end controller()
 
 	/**
@@ -88,7 +87,7 @@ final class CbcrFileControllerTest extends TestCase {
 	}//end testAReportTheCallerMayNotSeeIsNotFound()
 
 	/**
-	 * A refusal answers 422 with its reason; an unexpected failure answers 500 without details.
+	 * A refusal answers 422 with its reason; any other failure is left to the framework.
 	 *
 	 * @return void
 	 */
@@ -98,8 +97,7 @@ final class CbcrFileControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $refused->getStatus());
 		self::assertSame($reason, $refused->getData()['error']);
 
-		$failed = $this->controller(static fn (): array => throw new LogicException('database gone'))->generateCbc('cbc-2026');
-		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $failed->getStatus());
-		self::assertSame('The action could not be completed.', $failed->getData()['error']);
+		$this->expectException(LogicException::class);
+		$this->controller(static fn (): array => throw new LogicException('database gone'))->generateCbc('cbc-2026');
 	}//end testRefusalsAndFailures()
 }//end class
