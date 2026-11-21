@@ -52,13 +52,13 @@ class InvoiceLayoutContrastListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param ColourContrast                  $contrast       The contrast formula.
-	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema to its slug.
 	 * @param LoggerInterface                 $logger         Logger for refusals.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema to its slug.
 	 */
 	public function __construct(
 		private readonly ColourContrast $contrast,
-		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 	) {
 	}//end __construct()
 
@@ -74,30 +74,9 @@ class InvoiceLayoutContrastListener implements IEventListener {
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
 	 */
 	public function handle(Event $event): void {
-		$write  = new PreSaveWrite();
-		$entity = $write->incomingEntity(event: $event);
-		if ($entity === null || $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
+		$colour = $this->incomingPrimaryColour(event: $event);
+		if ($colour === null || $this->contrast->passesOnWhite(hex: $colour) === true) {
 			return;
-		}
-
-		$primary = ($write->payload(entity: $entity)['primaryColor'] ?? null);
-		if ($primary === null || $primary === '') {
-			return;
-		}
-
-		$colour = (string) $primary;
-		if ($this->contrast->passesOnWhite(hex: $colour) === true) {
-			return;
-		}
-
-		$ratio  = $this->contrast->ratioAgainstWhite(hex: $colour);
-		$reason = 'The primary colour '.$colour.' is not a #RRGGBB colour.';
-		if ($ratio !== null) {
-			$reason = sprintf(
-				'The primary colour %s has a contrast of %.1f:1 against white; choose a darker colour that reaches at least 4.5:1.',
-				$colour,
-				floor($ratio * 10) / 10
-			);
 		}
 
 		$this->logger->warning(
@@ -107,11 +86,61 @@ class InvoiceLayoutContrastListener implements IEventListener {
 
 		$event->setErrors(
 			[
-				'message'     => $reason,
+				'message'     => $this->refusal(colour: $colour),
 				'requirement' => 'REQ-SID-001',
 			]
 		);
 		$event->stopPropagation();
 
 	}//end handle()
+
+	/**
+	 * The primary colour an invoice layout write carries, or null when the
+	 * write is of another schema or sets no primary colour.
+	 *
+	 * @param Event $event The OpenRegister pre-save event.
+	 *
+	 * @return string|null
+	 */
+	private function incomingPrimaryColour(Event $event): string|null {
+		$write  = new PreSaveWrite();
+		$entity = $write->incomingEntity(event: $event);
+		if ($entity === null) {
+			return null;
+		}
+
+		if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
+			return null;
+		}
+
+		$primary = (string) ($write->payload(entity: $entity)['primaryColor'] ?? '');
+		if ($primary === '') {
+			return null;
+		}
+
+		return $primary;
+
+	}//end incomingPrimaryColour()
+
+	/**
+	 * The sentence that refuses the colour, with its ratio rounded down so a
+	 * colour just under the line never reads 4.5:1.
+	 *
+	 * @param string $colour The refused colour.
+	 *
+	 * @return string
+	 */
+	private function refusal(string $colour): string {
+		$ratio = $this->contrast->ratioAgainstWhite(hex: $colour);
+		if ($ratio === null) {
+			return 'The primary colour '.$colour.' is not a #RRGGBB colour.';
+		}
+
+		return sprintf(
+			'The primary colour %s has a contrast of %.1f:1 against white; choose a darker colour that reaches at least 4.5:1.',
+			$colour,
+			(floor($ratio * 10) / 10)
+		);
+
+	}//end refusal()
 }//end class

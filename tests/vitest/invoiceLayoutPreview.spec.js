@@ -13,9 +13,9 @@
 
 import fs from 'fs'
 import path from 'path'
+import { describe, expect, it, vi } from 'vitest'
 import { createSSRApp } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@nextcloud/router', () => ({
 	generateUrl: (url, vars = {}) =>

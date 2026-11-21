@@ -6223,8 +6223,7 @@ OC.L10N.register(
         "{label} is not a #RRGGBB colour.": "{label} is not a #RRGGBB colour.",
         "{label}: contrast {ratio}:1 against white, readable.": "{label}: contrast {ratio}:1 against white, readable.",
         "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.": "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.",
-        "Document language": "Document language",
-        "Docudesk is needed to produce invoice documents.": "Docudesk is needed to produce invoice documents."
+        "Document language": "Document language"
     },
     "nplurals=2; plural=(n != 1);"
 )

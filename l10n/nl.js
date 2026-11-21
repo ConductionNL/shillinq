@@ -8361,8 +8361,7 @@ OC.L10N.register(
         "{label} is not a #RRGGBB colour.": "{label} is geen #RRGGBB-kleur.",
         "{label}: contrast {ratio}:1 against white, readable.": "{label}: contrast {ratio}:1 tegen wit, leesbaar.",
         "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.": "{label}: contrast {ratio}:1 tegen wit, onder 4,5:1. Kies een donkerdere kleur.",
-        "Document language": "Documenttaal",
-        "Docudesk is needed to produce invoice documents.": "Docudesk is nodig om factuurdocumenten te maken."
+        "Document language": "Documenttaal"
     },
     "nplurals=2; plural=(n != 1);"
 )

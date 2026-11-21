@@ -1584,7 +1584,6 @@ OC.L10N.register(
         "Scan to pay": "Scanner pour payer",
         "VAT rate": "Taux de TVA",
         "Invoice number": "Numéro de facture",
-        "Docudesk is needed to produce invoice documents.": "Docudesk est nécessaire pour produire les documents de facture.",
         "Invoice layout": "Mise en page de la facture",
         "Document language": "Langue du document"
     },

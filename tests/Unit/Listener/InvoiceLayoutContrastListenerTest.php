@@ -19,6 +19,8 @@
  * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
  */
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
@@ -135,8 +137,8 @@ final class InvoiceLayoutContrastListenerTest extends TestCase {
 
 		return new InvoiceLayoutContrastListener(
 			contrast: new ColourContrast(),
-			schemaResolver: $resolver,
 			logger: new NullLogger(),
+			schemaResolver: $resolver,
 		);
 	}//end listener()
 

@@ -1584,7 +1584,6 @@ OC.L10N.register(
         "Scan to pay": "Zum Bezahlen scannen",
         "VAT rate": "MwSt.-Satz",
         "Invoice number": "Rechnungsnummer",
-        "Docudesk is needed to produce invoice documents.": "Docudesk wird benötigt, um Rechnungsdokumente zu erstellen.",
         "Invoice layout": "Rechnungslayout",
         "Document language": "Dokumentsprache"
     },

@@ -32,7 +32,6 @@ use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -363,43 +362,6 @@ final class InvoiceApiControllerTest extends TestCase {
 		);
 
 	}//end testPdfWithoutDocudeskSaysItIsNeeded()
-
-	/**
-	 * The docudesk message reaches the caller in their own language.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.3
-	 */
-	public function testTheDocudeskMessageIsInTheCallersLanguage(): void {
-		$this->objectService->method('find')->willReturn(
-			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
-		);
-		$this->objectService->method('findAll')->willReturn([]);
-		$this->pdfGenerator->method('documentsAvailable')->willReturn(false);
-		$l10n = $this->createMock(IL10N::class);
-		$l10n->method('t')->willReturnMap(
-			[['Docudesk is needed to produce invoice documents.', [], 'Docudesk is nodig om factuurdocumenten te maken.']]
-		);
-
-		$controller = new InvoiceApiController(
-			request: $this->request,
-			service: $this->service,
-			pdfGenerator: $this->pdfGenerator,
-			session: $this->session,
-			administrationContext: $this->administrationContext,
-			logger: $this->logger,
-			objectService: $this->objectService,
-			billableLines: $this->billableLines,
-			l10n: $l10n,
-		);
-
-		$response = $controller->pdf('inv-1');
-
-		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
-		self::assertSame('Docudesk is nodig om factuurdocumenten te maken.', $response->getData()['message']);
-
-	}//end testTheDocudeskMessageIsInTheCallersLanguage()
 
 	/**
 	 * A renderer failure yields HTTP 500 and leaks no stack trace (ADR-005).

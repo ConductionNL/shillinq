@@ -50,7 +50,6 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -118,7 +117,6 @@ class InvoiceApiController extends Controller {
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param BillableLinesServiceInterface $billableLines The lines one customer can be invoiced for.
-	 * @param IL10N|null $l10n The app's catalogue, to answer in the caller's language.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -129,7 +127,6 @@ class InvoiceApiController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly BillableLinesServiceInterface $billableLines,
-		private readonly ?IL10N $l10n = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -469,25 +466,6 @@ class InvoiceApiController extends Controller {
 	}//end showInvoice()
 
 	/**
-	 * The message in the caller's language, or the English source when the
-	 * app's catalogue is not wired (unit tests that build the controller by hand).
-	 *
-	 * @param string $text The English source string.
-	 *
-	 * @return string
-	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.3
-	 */
-	private function translated(string $text): string {
-		if ($this->l10n === null) {
-			return $text;
-		}
-
-		return $this->l10n->t($text);
-
-	}//end translated()
-
-	/**
 	 * Render the invoice PDF through docudesk, when the invoice belongs to the
 	 * caller's administration; without docudesk, say that it is needed
 	 * (REQ-SID-002).
@@ -506,7 +484,7 @@ class InvoiceApiController extends Controller {
 
 		if ($this->pdfGenerator->documentsAvailable() === false) {
 			return new JSONResponse(
-				['error' => 'docudesk-unavailable', 'message' => $this->translated(text: InvoicePdfGeneratorInterface::DOCUDESK_NEEDED)],
+				['error' => 'docudesk-unavailable', 'message' => InvoicePdfGeneratorInterface::DOCUDESK_NEEDED],
 				Http::STATUS_SERVICE_UNAVAILABLE
 			);
 		}

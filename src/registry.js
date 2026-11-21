@@ -185,6 +185,7 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // kind:"page" custom components per ADR-024 / ADR-036; the manifest
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
+import InvoiceLayoutPreview from './components/sales/InvoiceLayoutPreview.vue'
 import SalesOverview from './components/sales/SalesOverview.vue'
 // purchasing-order-dispatch-and-receipt task 4.2: three confirmation modes per line.
 import ServiceReceiptForm from './components/service-receipt/ServiceReceiptForm.vue'
@@ -222,7 +223,6 @@ import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMa
 // kind:"page" custom component.
 import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
 import VatReturnChecksPanel from './components/vat/VatReturnChecksPanel.vue'
-import InvoiceLayoutPreview from './components/sales/InvoiceLayoutPreview.vue'
 import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
 // bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
 // REQ-VP-005): the VendorPerformance index + detail render the monthly
