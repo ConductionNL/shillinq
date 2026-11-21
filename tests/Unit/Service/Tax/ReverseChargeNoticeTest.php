@@ -160,10 +160,10 @@ final class ReverseChargeNoticeTest extends TestCase {
 	public function testThePdfPrintsTheNoticeAndTheBuyerNumber(): void {
 		$generator = new InvoicePdfGenerator();
 
-		$html = $generator->generatePdf(self::invoice(), [], [], ['legalName' => 'Brouwerij Het Anker BV'])['html'];
+		$html = $generator->generateHtml(self::invoice(), [], [], ['legalName' => 'Brouwerij Het Anker BV'])['html'];
 		$this->assertStringContainsString('<p class="reverse-charge"><strong>Btw verlegd</strong> &nbsp; BTW-nummer afnemer: BE0123456749</p>', $html);
 
-		$plain = $generator->generatePdf(self::invoice('S'), [])['html'];
+		$plain = $generator->generateHtml(self::invoice('S'), [])['html'];
 		$this->assertStringNotContainsString('reverse-charge', $plain);
 	}//end testThePdfPrintsTheNoticeAndTheBuyerNumber()
 }//end class
