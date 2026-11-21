@@ -40,6 +40,7 @@ use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\AccountDeductibleShareListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\InvoiceLayoutContrastListener;
 use OCA\Shillinq\Listener\VatTariffStatutoryLockListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
@@ -289,6 +290,21 @@ final class ListenerRegistrarTest extends TestCase {
 		self::assertContains([ObjectUpdatingEvent::class, VatTariffStatutoryLockListener::class], $this->listeners);
 
 	}//end testAccountDeductibleShareRuleIsRegisteredOnBothPreSaveEvents()
+
+	/**
+	 * The invoice layout contrast rule runs on both pre-save events (REQ-SID-001).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+	 */
+	public function testInvoiceLayoutContrastRuleIsRegisteredOnBothPreSaveEvents(): void {
+		(new ListenerRegistrar())->register($this->recordingContext());
+
+		self::assertContains([ObjectCreatingEvent::class, InvoiceLayoutContrastListener::class], $this->listeners);
+		self::assertContains([ObjectUpdatingEvent::class, InvoiceLayoutContrastListener::class], $this->listeners);
+
+	}//end testInvoiceLayoutContrastRuleIsRegisteredOnBothPreSaveEvents()
 
 	/**
 	 * The extraction listener hears the event under every app namespace filinq has had.

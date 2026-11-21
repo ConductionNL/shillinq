@@ -185,6 +185,7 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // kind:"page" custom components per ADR-024 / ADR-036; the manifest
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
+import InvoiceLayoutPreview from './components/sales/InvoiceLayoutPreview.vue'
 import SalesOverview from './components/sales/SalesOverview.vue'
 // purchasing-order-dispatch-and-receipt task 4.2: three confirmation modes per line.
 import ServiceReceiptForm from './components/service-receipt/ServiceReceiptForm.vue'
@@ -559,6 +560,15 @@ export default {
 		kind: 'widget',
 		component: ProjectBillableHoursCard,
 		_note: 'Lists a month of the project\'s hours with rate, tier, value and billed state and totals the unbilled value. An object-table widget cannot tell "no hours source" from "no hours" and has no month picker.',
+	},
+
+	// sales-invoice-document 4.1 (REQ-SID-001): the Preview tab on
+	// InvoiceLayoutDetail's sidebar.
+	InvoiceLayoutPreview: {
+		// @custom-widget-ratchet exclude a sample invoice page drawn in the layout's own colours and variant, with the WCAG contrast of each colour written out; no declarative widget paints content in colours read from the object or computes a contrast ratio.
+		kind: 'widget',
+		component: InvoiceLayoutPreview,
+		_note: 'Draws a sample invoice page in the layout\'s logo, colours, variant and footer, and says whether each colour reaches 4.5:1 against white. A data widget lists the hex values; it cannot show them as the invoice will.',
 	},
 
 	// tax-vat-return-from-books 3.3 (REQ-TVRB-001): the Checks tab on

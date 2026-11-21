@@ -1,0 +1,122 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "sales-invoice-document",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "The invoice layout pages (REQ-SID-001, task 4.1): an index of the layouts, one per administration, and a detail page that edits the logo, the primary and accent colours, the variant, the footer and the QR switch, with a Preview sidebar tab (InvoiceLayoutPreview) that draws a sample invoice page in those colours and writes out each colour's contrast against white. The server refuses a primary colour below 4.5:1 on save (InvoiceLayoutContrastListener). The menu leaf is lifted into the settings foldout by src/menu-layout.json."
+	},
+	"menu": [
+		{
+			"id": "InvoiceLayouts",
+			"label": "Invoice layout",
+			"icon": "FileDocumentEditOutline",
+			"route": "InvoiceLayouts",
+			"order": 45
+		}
+	],
+	"pages": [
+		{
+			"id": "InvoiceLayouts",
+			"route": "/sales/invoice-layouts",
+			"type": "index",
+			"title": "Invoice layouts",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvoiceLayout",
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "variant",
+						"label": "Variant",
+						"sortable": true
+					},
+					{
+						"key": "primaryColor",
+						"label": "Primary colour"
+					},
+					{
+						"key": "accentColor",
+						"label": "Accent colour"
+					},
+					{
+						"key": "showQr",
+						"label": "Show QR codes"
+					}
+				],
+				"defaultSort": "administrationId",
+				"detailRoute": "InvoiceLayoutDetail",
+				"description": "How each administration's invoices look: logo, colours, layout variant, footer and the QR codes to pay."
+			}
+		},
+		{
+			"id": "InvoiceLayoutDetail",
+			"route": "/sales/invoice-layouts/:id",
+			"type": "detail",
+			"title": "Invoice layout",
+			"config": {
+				"_note": "One administration's invoice layout (REQ-SID-001). The body edits the layout's fields; the Preview tab shows a sample invoice page in the saved colours and variant with the contrast of each colour written out, and the audit trail records every change. A save with a primary colour below 4.5:1 against white is refused by the server with the ratio in the message.",
+				"register": "shillinq",
+				"schema": "InvoiceLayout",
+				"indexRoute": "InvoiceLayouts",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "logoFileId",
+						"label": "Logo",
+						"type": "string"
+					},
+					{
+						"key": "primaryColor",
+						"label": "Primary colour",
+						"type": "string"
+					},
+					{
+						"key": "accentColor",
+						"label": "Accent colour",
+						"type": "string"
+					},
+					{
+						"key": "variant",
+						"label": "Variant",
+						"type": "string"
+					},
+					{
+						"key": "footerText",
+						"label": "Footer text",
+						"type": "string"
+					},
+					{
+						"key": "showQr",
+						"label": "Show QR codes",
+						"type": "boolean"
+					}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "preview",
+							"label": "Preview",
+							"icon": "FileDocumentOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "InvoiceLayoutPreview"
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}
