@@ -275,6 +275,11 @@
             "type": "string"
           },
           {
+            "key": "cbcrCategory",
+            "label": "Country-by-country category",
+            "type": "string"
+          },
+          {
             "key": "description",
             "label": "Description",
             "type": "string"

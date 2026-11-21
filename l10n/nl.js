@@ -8342,7 +8342,8 @@ OC.L10N.register(
         "Imported statements": "Geïmporteerde afschriften",
         "Receipt evidence": "Bonnen als bewijs",
         "Changed your mind? You can withdraw from this booking without a fee until": "Bedacht? Je kunt deze boeking zonder kosten herroepen tot en met",
-        "Withdraw from this booking": "Deze boeking herroepen"
+        "Withdraw from this booking": "Deze boeking herroepen",
+        "Account mapping": "Rekeningkoppeling"
     },
     "nplurals=2; plural=(n != 1);"
 )
