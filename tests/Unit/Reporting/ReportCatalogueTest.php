@@ -35,7 +35,7 @@ final class ReportCatalogueTest extends TestCase {
 		$ids = array_column(ReportCatalogue::all(), 'id');
 
 		self::assertSame(array_values(array_unique($ids)), $ids);
-		self::assertCount(19, $ids);
+		self::assertCount(20, $ids);
 	}//end testEveryReportIdIsUnique()
 
 	public function testEveryReportIsInAKnownCategoryAndEveryCategoryHasAReport(): void {

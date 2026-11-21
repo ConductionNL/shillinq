@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Tests\Unit\Reporting;
 use OCA\Shillinq\Reporting\Generator\AnnualAccountsReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BalanceSheetReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BbvJaarstukkenReportGenerator;
+use OCA\Shillinq\Reporting\Generator\CbcXmlGenerator;
 use OCA\Shillinq\Reporting\Generator\GeneralLedgerReportGenerator;
 use OCA\Shillinq\Reporting\Generator\Ib47StatementReportGenerator;
 use OCA\Shillinq\Reporting\Generator\IcpReportGenerator;
@@ -81,6 +82,7 @@ class ReportGeneratorCatalogueContractTest extends TestCase {
 		AnnualAccountsReportGenerator::class,
 		BalanceSheetReportGenerator::class,
 		BbvJaarstukkenReportGenerator::class,
+		CbcXmlGenerator::class,
 		GeneralLedgerReportGenerator::class,
 		Ib47StatementReportGenerator::class,
 		IcpReportGenerator::class,

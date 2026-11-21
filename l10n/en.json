@@ -6257,7 +6257,21 @@
         "Figures are read from the books; figures entered or imported by hand are named in the additional information.": "Figures are read from the books; figures entered or imported by hand are named in the additional information.",
         "The tangible assets other than cash of an entity that keeps its books here differ by no more than 1% from the net book value in its fixed asset register.": "The tangible assets other than cash of an entity that keeps its books here differ by no more than 1% from the net book value in its fixed asset register.",
         "Every jurisdiction of the group has a passed safe harbour test or an approved jurisdiction computation.": "Every jurisdiction of the group has a passed safe harbour test or an approved jurisdiction computation.",
-        "No mandatory element of the GloBE information return is left without a value from the records.": "No mandatory element of the GloBE information return is left without a value from the records."
+        "No mandatory element of the GloBE information return is left without a value from the records.": "No mandatory element of the GloBE information return is left without a value from the records.",
+        "Generate XML": "Generate XML",
+        "The country-by-country file was validated and stored under Files.": "The country-by-country file was validated and stored under Files.",
+        "The country-by-country file was not made.": "The country-by-country file was not made.",
+        "Make the OECD country-by-country file from the figures as they are now. It is refused while a blocking check fails, and stored only when it passes the OECD schema.": "Make the OECD country-by-country file from the figures as they are now. It is refused while a blocking check fails, and stored only when it passes the OECD schema.",
+        "The country-by-country file is XML only.": "The country-by-country file is XML only.",
+        "Generate the country-by-country file from its report page.": "Generate the country-by-country file from its report page.",
+        "The report names no reporting entity.": "The report names no reporting entity.",
+        "The country-by-country file is not made while a blocking check fails. %s": "The country-by-country file is not made while a blocking check fails. %s",
+        "The corrected report has no file to correct.": "The corrected report has no file to correct.",
+        "Nothing changed since the corrected file, so there is nothing to correct.": "Nothing changed since the corrected file, so there is nothing to correct.",
+        "The country-by-country file does not pass the OECD schema, so it was not stored. %s": "The country-by-country file does not pass the OECD schema, so it was not stored. %s",
+        "The country-by-country report was not found.": "The country-by-country report was not found.",
+        "A filed report keeps its file. Create a correction to send changed figures.": "A filed report keeps its file. Create a correction to send changed figures.",
+        "The country-by-country file could not be stored.": "The country-by-country file could not be stored."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
