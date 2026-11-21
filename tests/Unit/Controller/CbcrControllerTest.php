@@ -94,10 +94,11 @@ final class CbcrControllerTest extends TestCase {
 	 * The controller with the given request parameters, for a member of adm-holding and adm-productie only.
 	 *
 	 * @param array<string,mixed> $parameters The request parameters.
+	 * @param IL10N|null          $l10n       The translator, or one that answers the text as given.
 	 *
 	 * @return CbcrController
 	 */
-	private function controller(array $parameters = []): CbcrController {
+	private function controller(array $parameters = [], ?IL10N $l10n = null): CbcrController {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParam')->willReturnCallback(static fn (string $key, mixed $default = null): mixed => ($parameters[$key] ?? $default));
 
@@ -135,8 +136,10 @@ final class CbcrControllerTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $default);
-		$l10n = $this->createMock(IL10N::class);
-		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		if ($l10n === null) {
+			$l10n = $this->createMock(IL10N::class);
+			$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		}
 
 		return new CbcrController(
 			$request,
@@ -270,6 +273,33 @@ final class CbcrControllerTest extends TestCase {
 		$this->assertSame(['cbc-accounts-mapped'], $checks['blocking']);
 		$this->assertCount(2, $checks['checks']);
 	}//end testSafeHarbourQdmttAndChecksAnswerWithTheResults()
+
+	/**
+	 * The Checks tabs show each check's statement in the caller's language, the blocking list unchanged.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-7.1
+	 */
+	public function testTheChecksStatementsAreTranslated(): void {
+		$statement = 'Every jurisdiction reports at least one main business activity.';
+		$this->checks->method('runCbc')->willReturn(
+			[
+				['id' => 'cbc-business-activity', 'severity' => 'mandatory', 'passed' => false, 'source' => 's', 'statement' => $statement],
+				['id' => 'cbc-later', 'severity' => 'recommended', 'passed' => true, 'source' => 's', 'statement' => 'Not in the table.'],
+			]
+		);
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text): string => ($text === $statement) ? 'Elk land meldt ten minste één hoofdactiviteit.' : $text
+		);
+
+		$checks = $this->controller(['fiscalYear' => 2026], $l10n)->cbcChecks('cbc-2026')->getData();
+
+		$this->assertSame('Elk land meldt ten minste één hoofdactiviteit.', $checks['checks'][0]['statement']);
+		$this->assertSame('Not in the table.', $checks['checks'][1]['statement']);
+		$this->assertSame(['cbc-business-activity'], $checks['blocking']);
+	}//end testTheChecksStatementsAreTranslated()
 	/**
 	 * The report-keyed actions take the group and year from the report, and refuse another group's report.
 	 *

@@ -8385,7 +8385,17 @@
         "{label}: contrast {ratio}:1 against white, readable.": "{label}: contrast {ratio}:1 tegen wit, leesbaar.",
         "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.": "{label}: contrast {ratio}:1 tegen wit, onder 4,5:1. Kies een donkerdere kleur.",
         "Document language": "Documenttaal",
-        "The payment link could not be sent.": "De betaallink kon niet worden verstuurd."
+        "The payment link could not be sent.": "De betaallink kon niet worden verstuurd.",
+        "Every constituent entity in scope has country-by-country figures for the fiscal year before the report is made.": "Elke groepsentiteit binnen de reikwijdte heeft landenrapportcijfers over het boekjaar voordat het rapport wordt opgesteld.",
+        "Every ledger account with a movement or balance in the year carries a country-by-country category, so no amount is left out of the summary figures.": "Elke grootboekrekening met een mutatie of saldo in het jaar heeft een landenrapportcategorie, zodat geen bedrag buiten de samenvattende cijfers blijft.",
+        "Every constituent entity has a tax identification number, or the value NOTIN with the reason it has none.": "Elke groepsentiteit heeft een fiscaal identificatienummer, of de waarde NOTIN met de reden waarom zij er geen heeft.",
+        "Every jurisdiction reports at least one main business activity.": "Elk land meldt ten minste één hoofdactiviteit.",
+        "Total revenue of every jurisdiction equals its unrelated plus related party revenue.": "De totale opbrengst van elk land is gelijk aan de opbrengst van niet-gelieerde plus gelieerde partijen.",
+        "A difference of more than EUR 1,000,000 between the report and the consolidated statements is explained by reconciliation items.": "Een verschil van meer dan EUR 1.000.000 tussen het rapport en de geconsolideerde jaarrekening wordt verklaard door aansluitposten.",
+        "Figures are read from the books; figures entered or imported by hand are named in the additional information.": "Cijfers worden uit de boekhouding gelezen; met de hand ingevoerde of geïmporteerde cijfers worden in de aanvullende informatie genoemd.",
+        "The tangible assets other than cash of an entity that keeps its books here differ by no more than 1% from the net book value in its fixed asset register.": "De materiële activa anders dan geldmiddelen van een entiteit die hier haar boekhouding voert, wijken niet meer dan 1% af van de boekwaarde in haar activaregister.",
+        "Every jurisdiction of the group has a passed safe harbour test or an approved jurisdiction computation.": "Elk land van de groep heeft een geslaagde safe-harbourtoets of een goedgekeurde landberekening.",
+        "No mandatory element of the GloBE information return is left without a value from the records.": "Geen verplicht onderdeel van de GloBE-informatieaangifte blijft zonder waarde uit de gegevens."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
