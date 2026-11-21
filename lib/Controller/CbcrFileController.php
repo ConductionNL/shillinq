@@ -25,7 +25,6 @@ use OCA\Shillinq\Service\Cbcr\CbcrFileService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use RuntimeException;
@@ -60,7 +59,7 @@ class CbcrFileController extends Controller {
 	 *
 	 * @param string $returnId The CbcrReturn id.
 	 *
-	 * @return JSONResponse 201 with the GeneratedReport and the return; 422 with the reason
+	 * @return Http\JSONResponse 201 with the GeneratedReport and the return; 422 with the reason
 	 *                      when refused; 404 for a report the caller may not see. Any other
 	 *                      failure is left to the framework, which logs it and answers 500.
 	 *
@@ -68,17 +67,17 @@ class CbcrFileController extends Controller {
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
 	 */
 	#[NoAdminRequired]
-	public function generateCbc(string $returnId): JSONResponse {
+	public function generateCbc(string $returnId): Http\JSONResponse {
 		try {
 			$result = $this->files->generateCbc(returnId: $returnId);
 		} catch (RuntimeException $refused) {
-			return new JSONResponse(['error' => $refused->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
+			return new Http\JSONResponse(['error' => $refused->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
 		if ($result === null) {
-			return new JSONResponse(['error' => $this->l10n->t('Not found')], Http::STATUS_NOT_FOUND);
+			return new Http\JSONResponse(['error' => $this->l10n->t('Not found')], Http::STATUS_NOT_FOUND);
 		}
 
-		return new JSONResponse($result, Http::STATUS_CREATED);
+		return new Http\JSONResponse($result, Http::STATUS_CREATED);
 	}//end generateCbc()
 }//end class
