@@ -116,8 +116,7 @@
 						"disabledWhen": {"endpoint": "/apps/shillinq/api/online-payment/status", "field": "live", "op": "eq", "value": false},
 						"disabledReason": "Online payment is not set up: configure a payment source in integriq.",
 						"successMessage": "The payment link went out to the debtor.",
-						"errorMessage": "The payment link could not be sent.",
-						"description": "Mails the payment link to the debtor and records when it went out (REQ-RPL-002: disabled with the reason while online payment is not set up)."
+						"errorMessage": "The payment link could not be sent."
 					}
 				],
 				"actions": [
