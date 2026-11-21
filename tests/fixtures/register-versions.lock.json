@@ -212,6 +212,10 @@
         {
             "appVersion": "0.5.8-unstable.20261120230000",
             "versionsSha256": "38a6523ace25f3eaa8cd5b32d1b4b0f499c0e7a1020087ec9bb24cdd17044629"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261121000000",
+            "versionsSha256": "4e81ddb9a9e0f722085741d2f092240ea41a68dc880cd662b1d44ab4f70af437"
         }
     ],
     "versions": {
@@ -220,7 +224,7 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.4.0",
-        "schema:ARInvoice": "0.19.0",
+        "schema:ARInvoice": "0.20.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
         "schema:Account": "0.5.0",
@@ -359,7 +363,7 @@
         "schema:CreditNote": "0.1.0",
         "schema:CreditScore": "0.1.0",
         "schema:CurrencyBalance": "0.1.0",
-        "schema:CustomerMaster": "0.4.0",
+        "schema:CustomerMaster": "0.5.0",
         "schema:DBAEvidenceDossier": "0.1.0",
         "schema:DBAIntake": "0.1.0",
         "schema:DBAModelovereenkomst": "0.1.0",
@@ -501,6 +505,7 @@
         "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
         "schema:InvoiceBatch": "0.1.0",
+        "schema:InvoiceLayout": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
         "schema:InvoiceNumberSequence": "0.1.0",
         "schema:IossImport": "0.1.0",

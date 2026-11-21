@@ -6181,7 +6181,11 @@ OC.L10N.register(
         "We received your withdrawal from this booking on %1$s at %2$s.": "We received your withdrawal from this booking on %1$s at %2$s.",
         "Service: %s": "Service: %s",
         "Appointment: %s": "Appointment: %s",
-        "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days.": "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days."
+        "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days.": "The booking is cancelled without a cancellation fee. Any payment you made for it is refunded in full within 14 days.",
+        "Total excluding VAT": "Total excluding VAT",
+        "Amount due": "Amount due",
+        "Pay online": "Pay online",
+        "Scan to pay": "Scan to pay"
     },
     "nplurals=2; plural=(n != 1);"
 )
