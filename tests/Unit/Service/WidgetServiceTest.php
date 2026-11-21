@@ -356,7 +356,6 @@ class WidgetServiceTest extends TestCase {
 			appointments: [],
 			saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation', '@self' => ['created' => '2026-11-21T10:00:00+00:00']],
 		);
-		$this->container->method('get')->willReturn($objectService);
 		$this->offerCanonicalSlot();
 		$seen = [];
 		$links = $this->createMock(WithdrawalLinkService::class);
@@ -367,8 +366,9 @@ class WidgetServiceTest extends TestCase {
 			}
 		);
 		$links->method('lastDayFor')->willReturn('2026-12-04');
+		$this->resolve(objectService: $objectService, links: $links);
 
-		$result = $this->withLinks(links: $links)->createAppointment('salon-demo', $this->payload());
+		$result = $this->service->createAppointment('salon-demo', $this->payload());
 
 		self::assertSame(expected: 201, actual: $result['code']);
 		self::assertSame(
@@ -379,7 +379,9 @@ class WidgetServiceTest extends TestCase {
 	}//end testACreatedBookingCarriesItsWithdrawalLink()
 
 	/**
-	 * Without a link (no guest page, no signer) the answer is what it was.
+	 * Without a link (no guest page) the answer is what it was; the golden
+	 * record of the appointment endpoint pins the same for a container that
+	 * resolves no signer.
 	 *
 	 * @return void
 	 *
@@ -391,40 +393,38 @@ class WidgetServiceTest extends TestCase {
 			appointments: [],
 			saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation'],
 		);
-		$this->container->method('get')->willReturn($objectService);
 		$this->offerCanonicalSlot();
 		$links = $this->createMock(WithdrawalLinkService::class);
 		$links->method('forAppointment')->willReturn(null);
 		$links->method('lastDayFor')->willReturn('2026-12-04');
+		$this->resolve(objectService: $objectService, links: $links);
 
-		$withSigner = $this->withLinks(links: $links)->createAppointment('salon-demo', $this->payload());
-		$withoutSigner = $this->service->createAppointment('salon-demo', $this->payload());
+		$result = $this->service->createAppointment('salon-demo', $this->payload());
 
-		foreach ([$withSigner, $withoutSigner] as $result) {
-			self::assertArrayNotHasKey(key: 'withdrawalLink', array: $result);
-			self::assertArrayNotHasKey(key: 'withdrawalLastDay', array: $result);
-		}
+		self::assertArrayNotHasKey(key: 'withdrawalLink', array: $result);
+		self::assertArrayNotHasKey(key: 'withdrawalLastDay', array: $result);
 	}//end testACreatedBookingWithoutALinkSaysNone()
 
 	/**
-	 * The service under test with a withdrawal link signer.
+	 * Have the container resolve OpenRegister's object service and the
+	 * withdrawal link signer.
 	 *
-	 * @param WithdrawalLinkService $links The signer.
+	 * @param object                $objectService The object service.
+	 * @param WithdrawalLinkService $links         The signer.
 	 *
-	 * @return WidgetService
+	 * @return void
 	 */
-	private function withLinks(WithdrawalLinkService $links): WidgetService {
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
+	private function resolve(object $objectService, WithdrawalLinkService $links): void {
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($objectService, $links): object {
+				if ($id === WithdrawalLinkService::class) {
+					return $links;
+				}
 
-		return new WidgetService(
-			container: $this->container,
-			appConfig: $appConfig,
-			slotService: $this->slotService,
-			logger: $this->createMock(LoggerInterface::class),
-			withdrawalLinks: $links,
+				return $objectService;
+			}
 		);
-	}//end withLinks()
+	}//end resolve()
 
 	/**
 	 * The anonymous widget is authenticated by its key, not by a Nextcloud

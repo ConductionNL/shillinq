@@ -66,14 +66,12 @@ class WidgetService implements WidgetServiceInterface {
 	 * @param IAppConfig $appConfig App config for register-slug resolution.
 	 * @param SlotService $slotService Slot availability + cache invalidation.
 	 * @param LoggerInterface $logger Nextcloud logger.
-	 * @param WithdrawalLinkService|null $withdrawalLinks Signs the withdrawal link the confirmation step shows.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly SlotService $slotService,
 		private readonly LoggerInterface $logger,
-		private readonly ?WithdrawalLinkService $withdrawalLinks = null,
 	) {
 	}//end __construct()
 
@@ -554,12 +552,18 @@ class WidgetService implements WidgetServiceInterface {
 	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
 	 */
 	private function withdrawal(array $booked): array {
-		if ($this->withdrawalLinks === null) {
+		try {
+			$links = $this->container->get(WithdrawalLinkService::class);
+		} catch (\Throwable $e) {
 			return [];
 		}
 
-		$link = $this->withdrawalLinks->forAppointment(appointment: $booked);
-		$lastDay = $this->withdrawalLinks->lastDayFor(appointment: $booked);
+		if (($links instanceof WithdrawalLinkService) === false) {
+			return [];
+		}
+
+		$link = $links->forAppointment(appointment: $booked);
+		$lastDay = $links->lastDayFor(appointment: $booked);
 		if ($link === null || $lastDay === null) {
 			return [];
 		}
