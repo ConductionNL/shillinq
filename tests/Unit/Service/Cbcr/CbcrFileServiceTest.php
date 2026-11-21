@@ -70,12 +70,15 @@ final class CbcrFileServiceTest extends TestCase {
 	 * A service whose report pipeline answers the given envelope.
 	 *
 	 * @param array<string,mixed>            $answer  What generateForRecord() answers.
-	 * @param array<int,array<string,mixed>> $returns The stored returns.
+	 * @param array<int,array<string,mixed>> $returns    The stored CbC returns.
+	 * @param array<int,array<string,mixed>> $girReturns The stored minimum tax returns.
 	 *
 	 * @return CbcrFileService
 	 */
-	private function service(array $answer, array $returns): CbcrFileService {
-		$this->store = new InMemoryObjectServiceStub(['CbcrReturn' => $returns, 'GroupEntityRegistry' => self::ENTITIES]);
+	private function service(array $answer, array $returns, array $girReturns = []): CbcrFileService {
+		$this->store = new InMemoryObjectServiceStub(
+			['CbcrReturn' => $returns, 'GlobeInformationReturn' => $girReturns, 'GroupEntityRegistry' => self::ENTITIES]
+		);
 		$reports     = $this->createMock(ReportGenerationServiceInterface::class);
 		$reports->method('generateForRecord')->willReturnCallback(
 			function (mixed ...$arguments) use ($answer): array {
@@ -189,4 +192,72 @@ final class CbcrFileServiceTest extends TestCase {
 
 		self::assertSame([], $this->calls);
 	}//end testAFiledReportKeepsItsFile()
+
+	/**
+	 * A stored GIR file is linked on the minimum tax return, filed under the ultimate parent's administration.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 *
+	 * @return void
+	 */
+	public function testAStoredGirFileIsLinkedOnTheReturn(): void {
+		$return = ['id' => 'gir-2026', 'period' => 'FY2026', 'ultimateParent' => 'ge-holding', 'state' => 'draft'];
+
+		$result = $this->service(['id' => 'report-9'], [], [$return])->generateGir('gir-2026');
+
+		self::assertSame(['globe-information-return', 'FY2026', 'adm-holding', ['returnId' => 'gir-2026']], $this->calls[0]);
+		self::assertSame('report-9', $result['return']['globeXmlSubmission']);
+		self::assertSame('GlobeInformationReturn', $this->store->saved[0]['schema']);
+		self::assertSame('report-9', $this->store->saved[0]['object']['globeXmlSubmission']);
+	}//end testAStoredGirFileIsLinkedOnTheReturn()
+
+	/**
+	 * Another group's minimum tax return, or one with an unknown parent, is not there; a refusal clears the old link.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 *
+	 * @return void
+	 */
+	public function testAGirRefusalClearsTheOldLinkAndOthersAreNotThere(): void {
+		$returns = [
+			['id' => 'gir-other', 'ultimateParent' => 'ge-other', 'period' => 'FY2026'],
+			['id' => 'gir-2026', 'ultimateParent' => 'ge-holding', 'period' => 'FY2026', 'globeXmlSubmission' => 'report-old'],
+		];
+		$answer  = ['error' => 'generation-failed', 'message' => 'The GloBE information return is not made: 3 elements'];
+		$service = $this->service($answer, [], $returns);
+		foreach (['gir-other', 'gir-missing', '../x'] as $returnId) {
+			self::assertNull($service->generateGir($returnId), $returnId);
+		}
+
+		self::assertSame([], $this->calls);
+		try {
+			$service->generateGir('gir-2026');
+			self::fail('A refused GIR file was linked.');
+		} catch (RuntimeException $refused) {
+			self::assertSame($answer['message'], $refused->getMessage());
+		}
+
+		self::assertSame('', $this->store->saved[0]['object']['globeXmlSubmission']);
+	}//end testAGirRefusalClearsTheOldLinkAndOthersAreNotThere()
+
+	/**
+	 * Only a draft minimum tax return gets a new file.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 *
+	 * @return void
+	 */
+	public function testOnlyADraftGirGetsAFile(): void {
+		foreach (['approved', 'submitted', 'locked'] as $state) {
+			$return = ['id' => 'gir-2026', 'period' => 'FY2026', 'ultimateParent' => 'ge-holding', 'state' => $state];
+			try {
+				$this->service(['id' => 'report-9'], [], [$return])->generateGir('gir-2026');
+				self::fail('A ' . $state . ' return got a new file.');
+			} catch (RuntimeException $refused) {
+				self::assertSame('An approved or filed minimum tax return keeps its file.', $refused->getMessage());
+			}
+		}
+
+		self::assertSame([], $this->calls);
+	}//end testOnlyADraftGirGetsAFile()
 }//end class

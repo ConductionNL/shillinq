@@ -4599,6 +4599,51 @@
                 }
             }
         },
+        "/cbcr/minimum-tax-returns/{returnId}/xml": {
+            "post": {
+                "operationId": "cbcr-generate-gir-file",
+                "summary": "Generate the GloBE information return XML file of a minimum tax return",
+                "description": "List the mandatory elements the records cannot fill on the return, then render the GloBE information return in the OECD GIR XML layout (January 2025), validate it against the bundled schema set, store it as a generated report and link it on the return. Refused while an element is missing or a blocking check fails, naming it, or when the file does not pass the schema. Only a draft return gets a new file. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GlobeInformationReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The file was stored: the generated report and the updated return.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
         "/cbs-submissions": {
             "get": {
                 "operationId": "c-bs-submission-index",

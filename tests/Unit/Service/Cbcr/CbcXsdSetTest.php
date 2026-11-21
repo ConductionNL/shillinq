@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Cbcr;
 
 use OCA\Shillinq\Service\Cbcr\CbcXmlDocument;
 use OCA\Shillinq\Service\Cbcr\CbcXsdSet;
+use OCA\Shillinq\Service\Cbcr\GirXmlDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +40,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(CbcXsdSet::class)]
 #[UsesClass(CbcXmlDocument::class)]
+#[UsesClass(GirXmlDocument::class)]
 final class CbcXsdSetTest extends TestCase {
 
 	/**
@@ -191,4 +193,35 @@ XSD;
 		file_put_contents($this->folder . '/oecdcbctypes_v5.0.xsd', '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"/>');
 		self::assertNotSame($before, $set->checksum());
 	}//end testTheChecksumFollowsTheFiles()
+
+	/**
+	 * The GIR set has its own folder, main schema and version, and reads the namespace its main schema declares.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 *
+	 * @return void
+	 */
+	public function testTheGirSetIsItsOwnFolder(): void {
+		$gir     = static fn (?string $folder = null): CbcXsdSet => new CbcXsdSet(
+			$folder,
+			CbcXsdSet::GIR_MAIN_XSD,
+			CbcXsdSet::GIR_FOLDER,
+			GirXmlDocument::VERSION
+		);
+		$missing = $gir($this->folder . '/missing');
+		self::assertFalse($missing->isBundled());
+		self::assertSame('', $missing->targetNamespace());
+		$outcome = $missing->validate('<x/>');
+		self::assertStringContainsString('lib/Standards/Xsd/oecd-gir-2025-01', $outcome['errors'][0]['message']);
+		self::assertSame('1.0', $outcome['schemaVersion']);
+
+		self::assertFalse($gir($this->folder)->isBundled(), 'The CbC main schema is not the GIR one.');
+		file_put_contents($this->folder . '/' . CbcXsdSet::GIR_MAIN_XSD, GirXmlDocumentTest::fixtureXsd());
+		self::assertTrue($gir($this->folder)->isBundled());
+		self::assertSame('urn:test:gir:v1', $gir($this->folder)->targetNamespace());
+		self::assertSame('urn:oecd:ties:cbc:v2', (new CbcXsdSet($this->folder))->targetNamespace());
+
+		$expected = is_file(__DIR__ . '/../../../../lib/Standards/Xsd/oecd-gir-2025-01/' . CbcXsdSet::GIR_MAIN_XSD);
+		self::assertSame($expected, $gir()->isBundled());
+	}//end testTheGirSetIsItsOwnFolder()
 }//end class

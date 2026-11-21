@@ -24,15 +24,17 @@ use DOMDocument;
 use LibXMLError;
 
 /**
- * Validates a CbC file against the OECD CbC XML Schema v2.0 set kept in the repository.
+ * Validates a file against an OECD XML schema set kept in the repository.
  *
- * The set lives in `lib/Standards/Xsd/oecd-cbc-v2.0/` (task 2.1 of the change
- * fetches it by hand, with its SOURCE.md). While the folder holds no main XSD
- * the answer is "not valid" with one error saying so: a file that could not be
- * validated is never stored (design D3), so Generate XML fails closed until
- * the set is there.
+ * The CbC set lives in `lib/Standards/Xsd/oecd-cbc-v2.0/`, the GloBE
+ * information return set (constructed with GIR_MAIN_XSD and GIR_FOLDER) in `lib/Standards/Xsd/oecd-gir-2025-01/`
+ * (task 2.1 of the change fetches both by hand, each with its SOURCE.md).
+ * While the folder holds no main XSD the answer is "not valid" with one error
+ * saying so: a file that could not be validated is never stored (design D3,
+ * D5), so Generate XML fails closed until the set is there.
  *
  * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+ * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
  */
 class CbcXsdSet {
 
@@ -40,6 +42,16 @@ class CbcXsdSet {
 	 * The main schema of the set.
 	 */
 	public const MAIN_XSD = 'CbcXML_v2.0.xsd';
+
+	/**
+	 * The main schema of the GloBE information return set.
+	 */
+	public const GIR_MAIN_XSD = 'GLOBEXML_v1.0.xsd';
+
+	/**
+	 * The folder of the GloBE information return set, under lib/Standards/Xsd.
+	 */
+	public const GIR_FOLDER = 'oecd-gir-2025-01';
 
 	/**
 	 * The folder of the set, absolute.
@@ -51,13 +63,42 @@ class CbcXsdSet {
 	/**
 	 * Constructor.
 	 *
-	 * @param string|null $folder The folder holding the set; null for the bundled one.
+	 * @param string|null $folder     The folder holding the set; null for the bundled one.
+	 * @param string      $mainXsd    The main schema's file name.
+	 * @param string      $folderName The bundled folder's name under lib/Standards/Xsd.
+	 * @param string      $version    The schema version a valid file is recorded with.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
-	public function __construct(?string $folder = null) {
-		$this->folder = rtrim(($folder ?? dirname(__DIR__, 2) . '/Standards/Xsd/oecd-cbc-v2.0'), '/');
+	public function __construct(
+		?string $folder = null,
+		private readonly string $mainXsd = self::MAIN_XSD,
+		private readonly string $folderName = 'oecd-cbc-v2.0',
+		private readonly string $version = CbcXmlDocument::VERSION,
+	) {
+		$this->folder = rtrim(($folder ?? dirname(__DIR__, 2) . '/Standards/Xsd/' . $this->folderName), '/');
 	}//end __construct()
+
+	/**
+	 * The target namespace the main schema declares.
+	 *
+	 * @return string The namespace, '' while the set is not bundled or declares none.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 */
+	public function targetNamespace(): string {
+		if ($this->isBundled() === false) {
+			return '';
+		}
+
+		$head = (string)file_get_contents($this->folder . '/' . $this->mainXsd, false, null, 0, 4096);
+		if (preg_match('/targetNamespace\s*=\s*"([^"]+)"/', $head, $match) === 1) {
+			return $match[1];
+		}
+
+		return '';
+	}//end targetNamespace()
 
 	/**
 	 * Whether the set's main schema is present.
@@ -65,9 +106,10 @@ class CbcXsdSet {
 	 * @return bool
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
 	public function isBundled(): bool {
-		return is_file($this->folder . '/' . self::MAIN_XSD) === true;
+		return is_file($this->folder . '/' . $this->mainXsd) === true;
 	}//end isBundled()
 
 	/**
@@ -104,15 +146,16 @@ class CbcXsdSet {
 	 * @return array{valid:bool,errors:array<int,array{line:int,element:string,message:string}>,schemaVersion:string,xsdChecksum:string}
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
 	 */
 	public function validate(string $xml): array {
 		if ($this->isBundled() === false) {
-			return self::outcome(
+			return $this->outcome(
 				errors: [
 					[
 						'line' => 0,
 						'element' => '',
-						'message' => 'The OECD CbC XML schema set is not in lib/Standards/Xsd/oecd-cbc-v2.0, so the file cannot be validated.',
+						'message' => 'The OECD XML schema set is not in lib/Standards/Xsd/' . $this->folderName . ', so the file cannot be validated.',
 					],
 				],
 				checksum: ''
@@ -125,7 +168,7 @@ class CbcXsdSet {
 			$doc    = new DOMDocument();
 			$loaded = $doc->loadXML($xml, LIBXML_NONET);
 			if ($loaded === true) {
-				$doc->schemaValidate($this->folder . '/' . self::MAIN_XSD, LIBXML_NONET);
+				$doc->schemaValidate($this->folder . '/' . $this->mainXsd, LIBXML_NONET);
 			}
 
 			$errors = array_map(static fn (LibXMLError $error): array => self::errorOf(error: $error), libxml_get_errors());
@@ -137,7 +180,7 @@ class CbcXsdSet {
 			libxml_use_internal_errors($previous);
 		}
 
-		return self::outcome(errors: $errors, checksum: $this->checksum());
+		return $this->outcome(errors: $errors, checksum: $this->checksum());
 	}//end validate()
 
 	/**
@@ -148,11 +191,11 @@ class CbcXsdSet {
 	 *
 	 * @return array{valid:bool,errors:array<int,array{line:int,element:string,message:string}>,schemaVersion:string,xsdChecksum:string}
 	 */
-	private static function outcome(array $errors, string $checksum): array {
+	private function outcome(array $errors, string $checksum): array {
 		return [
 			'valid' => ($errors === []),
 			'errors' => $errors,
-			'schemaVersion' => CbcXmlDocument::VERSION,
+			'schemaVersion' => $this->version,
 			'xsdChecksum' => $checksum,
 		];
 	}//end outcome()

@@ -529,6 +529,11 @@
                   "title": "Jurisdiction",
                   "description": "Two-letter ISO 3166 code."
                 },
+                "entity": {
+                  "type": "string",
+                  "title": "Entity",
+                  "description": "The constituent entity the element belongs to; empty for a jurisdiction-level element."
+                },
                 "element": {
                   "type": "string",
                   "title": "Element",

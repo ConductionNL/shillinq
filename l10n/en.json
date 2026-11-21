@@ -6271,7 +6271,19 @@
         "The country-by-country file does not pass the OECD schema, so it was not stored. %s": "The country-by-country file does not pass the OECD schema, so it was not stored. %s",
         "The country-by-country report was not found.": "The country-by-country report was not found.",
         "A filed report keeps its file. Create a correction to send changed figures.": "A filed report keeps its file. Create a correction to send changed figures.",
-        "The country-by-country file could not be stored.": "The country-by-country file could not be stored."
+        "The country-by-country file could not be stored.": "The country-by-country file could not be stored.",
+        "The GloBE information return is XML only.": "The GloBE information return is XML only.",
+        "Generate the GloBE information return from its return page.": "Generate the GloBE information return from its return page.",
+        "The GloBE information return is not made while a blocking check fails. %s": "The GloBE information return is not made while a blocking check fails. %s",
+        "The GloBE information return is not made: %1$s elements the schema requires are not in the records. %2$s": "The GloBE information return is not made: %1$s elements the schema requires are not in the records. %2$s",
+        "The GloBE information return does not pass the OECD schema, so it was not stored. %s": "The GloBE information return does not pass the OECD schema, so it was not stored. %s",
+        "An approved or filed minimum tax return keeps its file.": "An approved or filed minimum tax return keeps its file.",
+        "The GloBE information return could not be stored.": "The GloBE information return could not be stored.",
+        "The GloBE information return was validated and stored under Files.": "The GloBE information return was validated and stored under Files.",
+        "The GloBE information return was not made.": "The GloBE information return was not made.",
+        "Make the OECD GloBE information return from the records as they are now. Missing elements are listed on the return; it is refused while one is missing or a blocking check fails, and stored only when it passes the OECD schema.": "Make the OECD GloBE information return from the records as they are now. Missing elements are listed on the return; it is refused while one is missing or a blocking check fails, and stored only when it passes the OECD schema.",
+        "Entity": "Entity",
+        "The constituent entity the element belongs to; empty for a jurisdiction-level element.": "The constituent entity the element belongs to; empty for a jurisdiction-level element."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

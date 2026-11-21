@@ -8386,7 +8386,18 @@ OC.L10N.register(
         "The country-by-country file does not pass the OECD schema, so it was not stored. %s": "Het landenrapportbestand voldoet niet aan het OESO-schema en is daarom niet opgeslagen. %s",
         "The country-by-country report was not found.": "Het landenrapport is niet gevonden.",
         "A filed report keeps its file. Create a correction to send changed figures.": "Een ingediend rapport houdt zijn bestand. Maak een correctie om gewijzigde cijfers te sturen.",
-        "The country-by-country file could not be stored.": "Het landenrapportbestand kon niet worden opgeslagen."
+        "The country-by-country file could not be stored.": "Het landenrapportbestand kon niet worden opgeslagen.",
+        "The GloBE information return is XML only.": "De GloBE-informatieaangifte is alleen XML.",
+        "Generate the GloBE information return from its return page.": "Maak de GloBE-informatieaangifte vanaf de pagina van de aangifte.",
+        "The GloBE information return is not made while a blocking check fails. %s": "De GloBE-informatieaangifte wordt niet gemaakt zolang een blokkerende controle faalt. %s",
+        "The GloBE information return is not made: %1$s elements the schema requires are not in the records. %2$s": "De GloBE-informatieaangifte is niet gemaakt: %1$s elementen die het schema vraagt staan niet in de records. %2$s",
+        "The GloBE information return does not pass the OECD schema, so it was not stored. %s": "De GloBE-informatieaangifte voldoet niet aan het OESO-schema en is daarom niet opgeslagen. %s",
+        "An approved or filed minimum tax return keeps its file.": "Een goedgekeurde of ingediende minimumbelastingaangifte houdt haar bestand.",
+        "The GloBE information return could not be stored.": "De GloBE-informatieaangifte kon niet worden opgeslagen.",
+        "The GloBE information return was validated and stored under Files.": "De GloBE-informatieaangifte is gecontroleerd en opgeslagen onder Bestanden.",
+        "The GloBE information return was not made.": "De GloBE-informatieaangifte is niet gemaakt.",
+        "Make the OECD GloBE information return from the records as they are now. Missing elements are listed on the return; it is refused while one is missing or a blocking check fails, and stored only when it passes the OECD schema.": "Maak de OESO GloBE-informatieaangifte uit de records zoals ze nu zijn. Ontbrekende elementen staan op de aangifte; het bestand wordt geweigerd zolang er een ontbreekt of een blokkerende controle faalt, en alleen opgeslagen als het aan het OESO-schema voldoet.",
+        "The constituent entity the element belongs to; empty for a jurisdiction-level element.": "De groepsentiteit waar het element bij hoort; leeg voor een element op het niveau van de jurisdictie."
     },
     "nplurals=2; plural=(n != 1);"
 )

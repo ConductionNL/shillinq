@@ -261,6 +261,34 @@ final class CbcrCheckRunnerTest extends TestCase {
 	}//end testTheGirChecksSeeAnUncoveredJurisdiction()
 
 	/**
+	 * The records of a GIR file: the parent, the group's entities in the minimum tax and every jurisdiction named.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 *
+	 * @return void
+	 */
+	public function testTheRecordsOfAGirFile(): void {
+		$this->store->setSchema('GroupEntityRegistry');
+		$this->store->saveObject(['id' => 'ge-out', 'entityName' => 'Buiten B.V.', 'ultimateParentEntity' => 'ge-holding', 'pillar2Included' => false]);
+		$this->store->setSchema('Pillar2JurisdictionComputation');
+		$this->store->saveObject(
+			['id' => 'c-ie', 'ultimateParentEntity' => 'ge-holding', 'period' => 'FY2026', 'jurisdiction' => 'ie', 'state' => 'draft']
+		);
+
+		$records = $this->runner()->girRecords(['id' => 'g-2026', 'ultimateParent' => 'ge-holding', 'period' => 'FY2026']);
+
+		$this->assertSame('ge-holding', $records['upe']['id']);
+		$this->assertSame(['ge-holding', 'ge-productie', 'ge-dormant'], array_column($records['entities'], 'id'));
+		$this->assertSame(['sh-nl'], array_column($records['safeHarbours'], 'id'));
+		$this->assertSame(['c-ie'], array_column($records['computations'], 'id'));
+		$this->assertSame(['IE', 'NL'], $records['jurisdictions']);
+
+		$none = $this->runner()->girRecords(['id' => 'g-x', 'ultimateParent' => '', 'period' => 'FY2026']);
+		$this->assertNull($none['upe']);
+		$this->assertSame([], $none['entities']);
+	}//end testTheRecordsOfAGirFile()
+
+	/**
 	 * The fingerprint moves with the figures, not with the state or the filing bookkeeping.
 	 *
 	 * @return void
