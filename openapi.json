@@ -15651,6 +15651,40 @@
                 }
             }
         },
+        "/statements/lines": {
+            "get": {
+                "operationId": "financial-statement-account-lines",
+                "summary": "GET /api/statements/lines?key=&administrationId=",
+                "description": "GET /api/statements/lines?key=&administrationId=. The posted ledger lines behind one account figure of the profit and loss, the balance sheet or the trial balance, named by the figure's linesKey (account~from~to) or by a trial balance line's id (that line's account in its period). The lines add up to the figure, read the way the statement shows it, and each names its transaction. A malformed key or range, or a trial balance line the administration does not have, is a bad request. The administration defaults to the one the caller is working in. One the caller is not a member of is masked as absent (ADR-005). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-statement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
         "/period-close/{periodId}/checklist": {
             "post": {
                 "operationId": "period-close-add-item",
