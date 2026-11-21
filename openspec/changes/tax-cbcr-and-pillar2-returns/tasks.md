@@ -42,8 +42,8 @@
 
 ## 7. Docs and l10n
 
-- [ ] 7.1 Dutch and English strings for every label, action, check message and tab, and a user page under `docs/` on preparing and filing the CbC report and the minimum tax return, naming what the GIR does not cover yet (REQ-CBC-011). Verify: `npm run test:l10n` and the manifest copy-style gate pass.
-  - In so far: Dutch and English for every string of the built pages, dialogs, notifications and refusals, and `docs/user-guide/tax/cbc-and-minimum-tax.md`. The check statements in `lib/Standards/rules/cbcr-pillar2.json` are English only, like the rest of the rule catalogue.
+- [x] 7.1 Dutch and English strings for every label, action, check message and tab, and a user page under `docs/` on preparing and filing the CbC report and the minimum tax return, naming what the GIR does not cover yet (REQ-CBC-011). Verify: `npm run test:l10n` and the manifest copy-style gate pass.
+  - Done: Dutch and English for every string of the built pages, dialogs, notifications and refusals, and `docs/user-guide/tax/cbc-and-minimum-tax.md`. The check statements stay English in `lib/Standards/rules/cbcr-pillar2.json`, like the rest of the rule catalogue; the Checks tabs show them in the caller's language, because `CbcrController` translates each statement of the checks answer through `l10n/` (all ten in en and nl; `CbcrControllerTest::testTheChecksStatementsAreTranslated`).
 - [x] 7.2 Point the matrix row `tax-cbcr` at this change with evidence from the merged code, and set its state when the pages are reachable (REQ-CBC-011). Verify: `python3 -m json.tool openspec/parity/capabilities.json`.
 
 Quality reminders (not tracked as tasks): `@spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-N` on every new method; scenario names quoted in the Playwright tests for the e2e coverage gate; `composer check:strict` once before push; no `_rbac: false` writes.

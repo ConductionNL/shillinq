@@ -6224,7 +6224,17 @@ OC.L10N.register(
         "{label}: contrast {ratio}:1 against white, readable.": "{label}: contrast {ratio}:1 against white, readable.",
         "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.": "{label}: contrast {ratio}:1 against white, below 4.5:1. Choose a darker colour.",
         "Document language": "Document language",
-        "The payment link could not be sent.": "The payment link could not be sent."
+        "The payment link could not be sent.": "The payment link could not be sent.",
+        "Every constituent entity in scope has country-by-country figures for the fiscal year before the report is made.": "Every constituent entity in scope has country-by-country figures for the fiscal year before the report is made.",
+        "Every ledger account with a movement or balance in the year carries a country-by-country category, so no amount is left out of the summary figures.": "Every ledger account with a movement or balance in the year carries a country-by-country category, so no amount is left out of the summary figures.",
+        "Every constituent entity has a tax identification number, or the value NOTIN with the reason it has none.": "Every constituent entity has a tax identification number, or the value NOTIN with the reason it has none.",
+        "Every jurisdiction reports at least one main business activity.": "Every jurisdiction reports at least one main business activity.",
+        "Total revenue of every jurisdiction equals its unrelated plus related party revenue.": "Total revenue of every jurisdiction equals its unrelated plus related party revenue.",
+        "A difference of more than EUR 1,000,000 between the report and the consolidated statements is explained by reconciliation items.": "A difference of more than EUR 1,000,000 between the report and the consolidated statements is explained by reconciliation items.",
+        "Figures are read from the books; figures entered or imported by hand are named in the additional information.": "Figures are read from the books; figures entered or imported by hand are named in the additional information.",
+        "The tangible assets other than cash of an entity that keeps its books here differ by no more than 1% from the net book value in its fixed asset register.": "The tangible assets other than cash of an entity that keeps its books here differ by no more than 1% from the net book value in its fixed asset register.",
+        "Every jurisdiction of the group has a passed safe harbour test or an approved jurisdiction computation.": "Every jurisdiction of the group has a passed safe harbour test or an approved jurisdiction computation.",
+        "No mandatory element of the GloBE information return is left without a value from the records.": "No mandatory element of the GloBE information return is left without a value from the records."
     },
     "nplurals=2; plural=(n != 1);"
 )
