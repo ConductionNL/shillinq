@@ -1583,7 +1583,10 @@ OC.L10N.register(
         "Pay online": "Online bezahlen",
         "Scan to pay": "Zum Bezahlen scannen",
         "VAT rate": "MwSt.-Satz",
-        "Invoice number": "Rechnungsnummer"
+        "Invoice number": "Rechnungsnummer",
+        "Docudesk is needed to produce invoice documents.": "Docudesk wird benötigt, um Rechnungsdokumente zu erstellen.",
+        "Invoice layout": "Rechnungslayout",
+        "Document language": "Dokumentsprache"
     },
     "nplurals=2; plural=(n != 1);"
 )

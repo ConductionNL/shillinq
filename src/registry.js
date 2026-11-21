@@ -222,6 +222,7 @@ import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMa
 // kind:"page" custom component.
 import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
 import VatReturnChecksPanel from './components/vat/VatReturnChecksPanel.vue'
+import InvoiceLayoutPreview from './components/sales/InvoiceLayoutPreview.vue'
 import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
 // bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
 // REQ-VP-005): the VendorPerformance index + detail render the monthly
@@ -559,6 +560,15 @@ export default {
 		kind: 'widget',
 		component: ProjectBillableHoursCard,
 		_note: 'Lists a month of the project\'s hours with rate, tier, value and billed state and totals the unbilled value. An object-table widget cannot tell "no hours source" from "no hours" and has no month picker.',
+	},
+
+	// sales-invoice-document 4.1 (REQ-SID-001): the Preview tab on
+	// InvoiceLayoutDetail's sidebar.
+	InvoiceLayoutPreview: {
+		// @custom-widget-ratchet exclude a sample invoice page drawn in the layout's own colours and variant, with the WCAG contrast of each colour written out; no declarative widget paints content in colours read from the object or computes a contrast ratio.
+		kind: 'widget',
+		component: InvoiceLayoutPreview,
+		_note: 'Draws a sample invoice page in the layout\'s logo, colours, variant and footer, and says whether each colour reaches 4.5:1 against white. A data widget lists the hex values; it cannot show them as the invoice will.',
 	},
 
 	// tax-vat-return-from-books 3.3 (REQ-TVRB-001): the Checks tab on

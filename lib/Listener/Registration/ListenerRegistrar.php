@@ -43,6 +43,7 @@ use OCA\Shillinq\Listener\ExpenseCategoryAccountListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\AccountDeductibleShareListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\InvoiceLayoutContrastListener;
 use OCA\Shillinq\Listener\PaymentBlockLockListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
@@ -517,7 +518,9 @@ final class ListenerRegistrar {
 	 *    FeeScheduleService::assertNoOverlap() had tests and no caller);
 	 *  - REQ-TVRD-003: an account below 100 percent deductible names a
 	 *    private-share account;
-	 *  - REQ-TVRD-001: a person cannot change a statutory VAT tariff.
+	 *  - REQ-TVRD-001: a person cannot change a statutory VAT tariff;
+	 *  - REQ-SID-001: an invoice layout's primary colour reaches 4.5:1
+	 *    against white.
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
@@ -527,6 +530,7 @@ final class ListenerRegistrar {
 		self::registerPreSave(context: $context, listener: FeeScheduleValidationListener::class);
 		self::registerPreSave(context: $context, listener: AccountDeductibleShareListener::class);
 		self::registerPreSave(context: $context, listener: VatTariffStatutoryLockListener::class);
+		self::registerPreSave(context: $context, listener: InvoiceLayoutContrastListener::class);
 
 	}//end registerPreSaveVetoes()
 
