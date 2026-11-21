@@ -51,6 +51,7 @@ use Throwable;
  * belong to, before anything is read.
  *
  * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
  * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.2
  */
 class FinancialStatementController extends Controller {
@@ -162,6 +163,26 @@ class FinancialStatementController extends Controller {
 			}
 		);
 	}//end cashFlowLines()
+
+	/**
+	 * The posted ledger lines behind one account figure (REQ-RFS-003).
+	 *
+	 * GET /api/statements/lines?key=<account~from~to | trial balance line id>
+	 * The statement row's `linesKey`, or a trial balance line's id; the lines
+	 * add up to the figure.
+	 *
+	 * @return JSONResponse 200 with lines and total; 400 malformed key; 401; 404 no access.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	#[NoAdminRequired]
+	public function accountLines(): JSONResponse {
+		return $this->answer(
+			compute: function (string $administrationId): array {
+				return $this->calculator->accountLines(administrationId: $administrationId, key: (string)$this->request->getParam('key', ''));
+			}
+		);
+	}//end accountLines()
 
 	/**
 	 * Check the caller and the administration, then compute.

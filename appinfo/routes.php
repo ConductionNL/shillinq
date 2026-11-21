@@ -140,6 +140,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // reporting-financial-statements REQ-RFS-001/002: the on-screen statements.
             ['name' => 'financialStatement#profitAndLoss', 'url' => '/api/statements/profit-and-loss', 'verb' => 'GET'],
             ['name' => 'financialStatement#balanceSheet', 'url' => '/api/statements/balance-sheet', 'verb' => 'GET'],
+            // The lines behind an account figure (reporting-financial-statements REQ-RFS-003).
+            ['name' => 'financialStatement#accountLines', 'url' => '/api/statements/lines', 'verb' => 'GET'],
             // reporting-cash-flow-statement REQ-RCF-002: the cash flow statement by the indirect method.
             ['name' => 'financialStatement#cashFlow', 'url' => '/api/statements/cash-flow', 'verb' => 'GET'],
             // reporting-cash-flow-statement REQ-RCF-003: the ledger lines behind one cash flow figure. Access is checked in the controller body.

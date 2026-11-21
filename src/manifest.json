@@ -6851,6 +6851,7 @@
                     }
                 ],
                 "defaultSort": "accountNumber",
+                "rowRoute": "LedgerLinesForAccount",
                 "documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
             }
         },

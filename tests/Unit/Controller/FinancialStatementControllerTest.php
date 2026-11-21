@@ -155,6 +155,51 @@ class FinancialStatementControllerTest extends TestCase {
 	}
 
 	/**
+	 * A profit and loss figure opens the posted lines of its account in its
+	 * range, adding up to it (REQ-RFS-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	public function testTheLinesBehindAnAccountFigure(): void {
+		$statement = $this->controller(params: ['from' => '2026-01-01', 'to' => '2026-09-30', 'compare' => 'previous-year'])->profitAndLoss()->getData();
+		$housing = $statement['expense'][1];
+
+		$response = $this->controller(params: ['key' => $housing['linesKey']])->accountLines();
+
+		self::assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$data = $response->getData();
+		self::assertSame(expected: [VanDijkLedger::ADM, '4100', 36000.0], actual: [$data['administrationId'], $data['accountNumber'], $data['total']]);
+		self::assertSame(expected: $housing['amounts']['current'], actual: $data['total']);
+	}
+
+	/**
+	 * The account lines refuse like the statements, before anything is read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	public function testAccountLinesRefusals(): void {
+		$untouched = $this->createMock(originalClassName: StatementCalculator::class);
+		$untouched->expects(self::never())->method(constraint: 'accountLines');
+		$key = '4100~2026-01-01~2026-09-30';
+
+		$anonymous = $this->controller(params: ['key' => $key], userId: null, calculator: $untouched)->accountLines();
+		self::assertSame(expected: [Http::STATUS_UNAUTHORIZED, ['error' => 'Not authenticated']], actual: [$anonymous->getStatus(), $anonymous->getData()]);
+
+		$foreign = $this->controller(params: ['key' => $key, 'administrationId' => 'adm-other'], calculator: $untouched)->accountLines();
+		self::assertSame(expected: [Http::STATUS_NOT_FOUND, ['error' => 'Not found']], actual: [$foreign->getStatus(), $foreign->getData()]);
+
+		$malformed = $this->controller(params: ['key' => '4100~2026'])->accountLines();
+		self::assertSame(
+			expected: [Http::STATUS_BAD_REQUEST, ['error' => 'key must be account~from~to or a trial balance line id.']],
+			actual: [$malformed->getStatus(), $malformed->getData()]
+		);
+	}
+
+	/**
 	 * The lines refuse like the statements, before anything is read, and a
 	 * malformed key is a bad request.
 	 *

@@ -35,6 +35,7 @@ import ArchiveArrowDownOutline from 'vue-material-design-icons/ArchiveArrowDownO
 import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
 import ArrowDecisionOutline from 'vue-material-design-icons/ArrowDecisionOutline.vue'
 import ArrowDownBoldOutline from 'vue-material-design-icons/ArrowDownBoldOutline.vue'
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import ArrowRightBoldOutline from 'vue-material-design-icons/ArrowRightBoldOutline.vue'
 import ArrowUpDown from 'vue-material-design-icons/ArrowUpDown.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
@@ -363,6 +364,7 @@ export default {
 	ArchiveArrowUpOutline,
 	ArrowDecisionOutline,
 	ArrowDownBoldOutline,
+	ArrowLeft,
 	ArrowRightBoldOutline,
 	ArrowUpDown,
 	AutoFix,

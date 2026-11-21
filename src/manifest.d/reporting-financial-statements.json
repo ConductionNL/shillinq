@@ -4,7 +4,7 @@
   "spdx-copyright": "2026 Conduction B.V.",
   "change": "reporting-financial-statements",
   "adr": "ADR-037 modular manifest fragment",
-  "description": "The profit and loss over a chosen range with the previous period and the same period last year beside it, each with its difference (REQ-RFS-001), and the balance sheet on the end date of the chosen range with the running result of the open fiscal year in equity (REQ-RFS-002). Both read GET /api/statements/*, the calculator the report documents use, and are opened from their cards on the Reports page (ADR-112). The balance sheet takes the end date of the range as its as-of date. Account figures linking to their lines is task 2.3."
+  "description": "The profit and loss over a chosen range with the previous period and the same period last year beside it, each with its difference (REQ-RFS-001), and the balance sheet on the end date of the chosen range with the running result of the open fiscal year in equity (REQ-RFS-002). Both read GET /api/statements/*, the calculator the report documents use, and are opened from their cards on the Reports page (ADR-112). The balance sheet takes the end date of the range as its as-of date. Every account figure opens the posted ledger lines behind it on LedgerLinesForAccount (REQ-RFS-003), through the row's linesKey (account~from~to: the statement's range, for the balance sheet the fiscal year start to the as-of date); the trial balance lines open the same page with their own id, which names the account and the period."
  },
  "pages": [
   {
@@ -197,7 +197,9 @@
           "decimals": 2
          }
         }
-       ]
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
       }
      },
      {
@@ -265,7 +267,9 @@
           "decimals": 2
          }
         }
-       ]
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
       }
      }
     ],
@@ -423,7 +427,9 @@
           "decimals": 2
          }
         }
-       ]
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
       }
      },
      {
@@ -453,7 +459,9 @@
           "decimals": 2
          }
         }
-       ]
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
       }
      },
      {
@@ -483,7 +491,9 @@
           "decimals": 2
          }
         }
-       ]
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
       }
      }
     ],
@@ -527,6 +537,112 @@
       "gridY": 6,
       "gridWidth": 6,
       "gridHeight": 4
+     }
+    ]
+   }
+  },
+  {
+   "id": "LedgerLinesForAccount",
+   "route": "/ledger/lines/:id",
+   "type": "dashboard",
+   "title": "Ledger lines for an account",
+   "config": {
+    "description": "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.",
+    "headerActions": [
+     {
+      "id": "ledger-lines-profit-loss",
+      "label": "Profit and loss",
+      "type": "open-page",
+      "route": "FinancialStatementProfitLoss",
+      "icon": "ArrowLeft"
+     },
+     {
+      "id": "ledger-lines-balance-sheet",
+      "label": "Balance sheet",
+      "type": "open-page",
+      "route": "FinancialStatementBalanceSheet",
+      "icon": "ArrowLeft"
+     }
+    ],
+    "widgets": [
+     {
+      "id": "ledger-lines-total",
+      "type": "stat",
+      "title": "Total",
+      "content": {
+       "label": "Total of the lines",
+       "icon": "Sigma",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/lines",
+        "params": {
+         "key": "@route.id"
+        }
+       },
+       "valueField": "total"
+      }
+     },
+     {
+      "id": "ledger-lines",
+      "type": "object-table",
+      "title": "Ledger lines",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/lines",
+        "params": {
+         "key": "@route.id"
+        },
+        "responsePath": "lines"
+       },
+       "emptyText": "No lines are posted on this account in this range.",
+       "columns": [
+        {
+         "key": "date",
+         "label": "Date"
+        },
+        {
+         "key": "account",
+         "label": "Account"
+        },
+        {
+         "key": "description",
+         "label": "Description"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "GeneralLedgerDetail",
+       "rowIdField": "transactionId"
+      }
+     }
+    ],
+    "layout": [
+     {
+      "id": "1",
+      "widgetId": "ledger-lines-total",
+      "gridX": 0,
+      "gridY": 0,
+      "gridWidth": 4,
+      "gridHeight": 2
+     },
+     {
+      "id": "2",
+      "widgetId": "ledger-lines",
+      "gridX": 0,
+      "gridY": 2,
+      "gridWidth": 12,
+      "gridHeight": 8
      }
     ]
    }
