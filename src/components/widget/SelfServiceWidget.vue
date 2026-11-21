@@ -246,11 +246,14 @@
 			role="status">
 			<strong>{{ t('Booking confirmed') }}</strong>
 			<p>{{ confirmationMessage }}</p>
+			<WithdrawalNotice :link="withdrawalLink" :lastDay="withdrawalLastDay" :t="t" />
 		</section>
 	</div>
 </template>
 
 <script>
+import WithdrawalNotice from './WithdrawalNotice.vue'
+
 const DEFAULT_RESOURCE_ID = 'res-001'
 
 // Walks the customer through the four-step booking flow and submits the
@@ -263,6 +266,7 @@ let nextWidgetId = 1
 
 export default {
 	name: 'SelfServiceWidget',
+	components: { WithdrawalNotice },
 	props: {
 		businessId: {
 			type: String,
@@ -333,6 +337,8 @@ export default {
 			submitting: false,
 			submitError: '',
 			confirmationMessage: '',
+			withdrawalLink: '',
+			withdrawalLastDay: '',
 			ids: {
 				service: 'wsw-service-' + uid,
 				date: 'wsw-date-' + uid,
@@ -758,6 +764,8 @@ export default {
 				payload && payload.confirmationMessage
 					? payload.confirmationMessage
 					: this.t('Booking confirmed')
+			this.withdrawalLink = String(payload?.withdrawalLink || '')
+			this.withdrawalLastDay = String(payload?.withdrawalLastDay || '')
 			this.step = 'confirmed'
 		},
 	},

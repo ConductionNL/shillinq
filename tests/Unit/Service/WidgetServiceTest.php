@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\Booking\WithdrawalLinkService;
 use OCA\Shillinq\Service\SlotService;
 use OCA\Shillinq\Service\WidgetService;
 use OCP\IAppConfig;
@@ -339,6 +340,94 @@ class WidgetServiceTest extends TestCase {
 		self::assertStringNotContainsString('+31612345678', (string)$encoded);
 
 	}//end testCreateAppointmentSucceedsWithoutLeakingPii()
+
+	/**
+	 * A booking made online answers with its signed withdrawal link and the
+	 * link's last day, built from the saved appointment, for the widget's
+	 * confirmation step (sales-cancellation REQ-SCX-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 */
+	public function testACreatedBookingCarriesItsWithdrawalLink(): void {
+		$objectService = $this->buildObjectService(
+			services: [$this->bookableService()],
+			appointments: [],
+			saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation', '@self' => ['created' => '2026-11-21T10:00:00+00:00']],
+		);
+		$this->offerCanonicalSlot();
+		$seen = [];
+		$links = $this->createMock(originalClassName: WithdrawalLinkService::class);
+		$links->method('forAppointment')->willReturnCallback(
+			static function (array $appointment) use (&$seen): string {
+				$seen = $appointment;
+				return 'https://salon.example.org/withdraw?withdraw=t.s';
+			}
+		);
+		$links->method('lastDayFor')->willReturn('2026-12-04');
+		$this->resolve(objectService: $objectService, links: $links);
+
+		$result = $this->service->createAppointment('salon-demo', $this->payload());
+
+		self::assertSame(expected: 201, actual: $result['code']);
+		self::assertSame(
+			expected: ['https://salon.example.org/withdraw?withdraw=t.s', '2026-12-04'],
+			actual: [$result['withdrawalLink'], $result['withdrawalLastDay']]
+		);
+		self::assertSame(
+			expected: ['apt-new', 'widget', '2026-11-21T10:00:00+00:00'],
+			actual: [$seen['appointmentId'], $seen['source'], $seen['@self']['created']]
+		);
+	}//end testACreatedBookingCarriesItsWithdrawalLink()
+
+	/**
+	 * Without a link (no guest page) the answer is what it was; the golden
+	 * record of the appointment endpoint pins the same for a container that
+	 * resolves no signer.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 */
+	public function testACreatedBookingWithoutALinkSaysNone(): void {
+		$objectService = $this->buildObjectService(
+			services: [$this->bookableService()],
+			appointments: [],
+			saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation'],
+		);
+		$this->offerCanonicalSlot();
+		$links = $this->createMock(originalClassName: WithdrawalLinkService::class);
+		$links->method('forAppointment')->willReturn(null);
+		$links->method('lastDayFor')->willReturn('2026-12-04');
+		$this->resolve(objectService: $objectService, links: $links);
+
+		$result = $this->service->createAppointment('salon-demo', $this->payload());
+
+		self::assertArrayNotHasKey(key: 'withdrawalLink', array: $result);
+		self::assertArrayNotHasKey(key: 'withdrawalLastDay', array: $result);
+	}//end testACreatedBookingWithoutALinkSaysNone()
+
+	/**
+	 * Have the container resolve OpenRegister's object service and the
+	 * withdrawal link signer.
+	 *
+	 * @param object                $objectService The object service.
+	 * @param WithdrawalLinkService $links         The signer.
+	 *
+	 * @return void
+	 */
+	private function resolve(object $objectService, WithdrawalLinkService $links): void {
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($objectService, $links): object {
+				if ($id === WithdrawalLinkService::class) {
+					return $links;
+				}
+
+				return $objectService;
+			}
+		);
+	}//end resolve()
 
 	/**
 	 * The anonymous widget is authenticated by its key, not by a Nextcloud

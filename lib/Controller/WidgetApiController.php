@@ -813,19 +813,29 @@ class WidgetApiController extends Controller {
 	}//end appointmentResponse()
 
 	/**
-	 * Build the 201 Created response; never echoes customer PII.
+	 * Build the 201 Created response; never echoes customer PII. It carries
+	 * the signed withdrawal link and its last day when the booking has one
+	 * (sales-cancellation REQ-SCX-004).
 	 *
 	 * @param array<string,mixed> $result Result of WidgetService::createAppointment().
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
 	 */
 	private function appointmentCreated(array $result): JSONResponse {
+		$data = [
+			'appointmentId' => (string)($result['appointmentId'] ?? ''),
+			'status' => (string)($result['status'] ?? 'pending_confirmation'),
+			'confirmationMessage' => (string)($result['confirmationMessage'] ?? ''),
+		];
+		if (isset($result['withdrawalLink'], $result['withdrawalLastDay']) === true) {
+			$data['withdrawalLink'] = (string)$result['withdrawalLink'];
+			$data['withdrawalLastDay'] = (string)$result['withdrawalLastDay'];
+		}
+
 		return new JSONResponse(
-			data: [
-				'appointmentId' => (string)($result['appointmentId'] ?? ''),
-				'status' => (string)($result['status'] ?? 'pending_confirmation'),
-				'confirmationMessage' => (string)($result['confirmationMessage'] ?? ''),
-			],
+			data: $data,
 			statusCode: Http::STATUS_CREATED,
 		);
 

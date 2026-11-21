@@ -6198,7 +6198,9 @@ OC.L10N.register(
         "Fixed asset": "Fixed asset",
         "Filed return attachment": "Filed return attachment",
         "Imported statements": "Imported statements",
-        "Receipt evidence": "Receipt evidence"
+        "Receipt evidence": "Receipt evidence",
+        "Changed your mind? You can withdraw from this booking without a fee until": "Changed your mind? You can withdraw from this booking without a fee until",
+        "Withdraw from this booking": "Withdraw from this booking"
     },
     "nplurals=2; plural=(n != 1);"
 )
