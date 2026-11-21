@@ -13,6 +13,7 @@ use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use PHPUnit\Framework\TestCase;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Contract\ObjectFindOptions as PublishedObjectFindOptions;
 
 /**
  * RW124 probe: assertNotInOpenPlan over the magic-accessor, OR-faithful store.
@@ -81,7 +82,7 @@ final class Rw124OpenPlanProbeTest extends TestCase {
 		$this->store = new class() extends \OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub {
 			public function find(
 				int|string $id,
-				?ObjectFindOptions $options = null,
+				ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 				bool $_rbac = true,
 				bool $_multitenancy = true
 			): ?\OCA\OpenRegister\Contract\ObjectEntityInterface {
