@@ -896,6 +896,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // the same right as settling its money.
             ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
             ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
+            // Receivables-payment-links 3.3: whether a payment link can be created (REQ-RPL-002).
+            ['name' => 'onlinePaymentStatus#status', 'url' => '/api/online-payment/status', 'verb' => 'GET'],
             // Financial documents on any object (financial-documents-on-any-object,
             // REQ-FDO-003/004/009): issue an invoice on a host object, ask for
             // payment of an invoice, start a quote, credit an invoice, raise a

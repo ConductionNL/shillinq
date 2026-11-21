@@ -9092,6 +9092,51 @@
                 }
             }
         },
+        "/online-payment/status": {
+            "get": {
+                "operationId": "online-payment-status",
+                "summary": "Whether online payment is set up (GET /api/v1/online-payment/status)",
+                "description": "Whether a payment link can be created on this instance: a live payment source is bound in integriq. Answers live false with the reason not-set-up and the sentence to show while the bound payment adapter is dormant. Names no object or amount. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-document-action"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "live": {
+                                            "type": "boolean"
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "enum": [
+                                                "",
+                                                "not-set-up"
+                                            ]
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/payment-plans": {
             "post": {
                 "operationId": "payment-plan-create",
