@@ -57,6 +57,13 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
+use OCA\OpenRegister\Contract\BulkSaveOptions as PublishedBulkSaveOptions;
+use OCA\OpenRegister\Contract\LockRequest as PublishedLockRequest;
+use OCA\OpenRegister\Contract\ObjectDeletion as PublishedObjectDeletion;
+use OCA\OpenRegister\Contract\ObjectFindOptions as PublishedObjectFindOptions;
+use OCA\OpenRegister\Contract\ObjectPatch as PublishedObjectPatch;
+use OCA\OpenRegister\Contract\ObjectSaveOptions as PublishedObjectSaveOptions;
+use OCA\OpenRegister\Contract\UnlockRequest as PublishedUnlockRequest;
 
 /**
  * Minimal in-memory store supporting equality + `{in: [...]}` reads AND
@@ -210,7 +217,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function find(
 		int|string $id,
-		?ObjectFindOptions $options = null,
+		ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
@@ -255,7 +262,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function saveObject(
 		array $object,
-		ObjectSaveOptions $options = new ObjectSaveOptions(),
+		ObjectSaveOptions|PublishedObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
@@ -352,7 +359,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		ObjectPatch $patch,
+		ObjectPatch|PublishedObjectPatch $patch,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
@@ -499,7 +506,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	/**
 	 * Not modelled.
 	 *
-	 * @param ObjectDeletion $deletion The uuid, the register and schema, the acting user and whether to delete permanently.
+	 * @param ObjectDeletion|PublishedObjectDeletion $deletion The uuid, the register and schema, the acting user and whether to delete permanently.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
 	 * @param bool $_retentionSweep Run as part of a retention sweep.
@@ -507,7 +514,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * @return bool
 	 */
 	public function deleteObject(
-		ObjectDeletion $deletion,
+		ObjectDeletion|PublishedObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $_retentionSweep = false
@@ -585,7 +592,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function saveObjects(
 		array $objects,
-		BulkSaveOptions $options = new BulkSaveOptions(),
+		BulkSaveOptions|PublishedBulkSaveOptions $options = new BulkSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
@@ -648,7 +655,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(UnlockRequest $request): bool {
+	public function unlockObject(UnlockRequest|PublishedUnlockRequest $request): bool {
 		$identifier = $request->identifier;
 		$advisory = $request->advisory ?? false;
 		$runUuid = $request->runUuid;
@@ -669,7 +676,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * @return array
 	 */
 	public function lockObject(
-		LockRequest $request,
+		LockRequest|PublishedLockRequest $request,
 		bool $advisory = false
 	): array {
 		$identifier = $request->identifier;
@@ -778,7 +785,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 */
 	public function findSilent(
 		string $id,
-		?ObjectFindOptions $options = null,
+		ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {

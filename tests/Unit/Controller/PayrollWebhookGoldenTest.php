@@ -29,6 +29,7 @@ use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Contract\ObjectSaveOptions as PublishedObjectSaveOptions;
 
 /**
  * A php:// stream wrapper that answers php://input with a fixed body.
@@ -290,7 +291,7 @@ final class PayrollWebhookGoldenTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				ObjectSaveOptions $options = new ObjectSaveOptions(),
+				ObjectSaveOptions|PublishedObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
 				bool $_multitenancy = true
 			): \OCA\OpenRegister\Contract\ObjectEntityInterface {

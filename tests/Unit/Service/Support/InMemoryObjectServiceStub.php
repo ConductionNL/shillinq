@@ -58,6 +58,13 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
+use OCA\OpenRegister\Contract\BulkSaveOptions as PublishedBulkSaveOptions;
+use OCA\OpenRegister\Contract\LockRequest as PublishedLockRequest;
+use OCA\OpenRegister\Contract\ObjectDeletion as PublishedObjectDeletion;
+use OCA\OpenRegister\Contract\ObjectFindOptions as PublishedObjectFindOptions;
+use OCA\OpenRegister\Contract\ObjectPatch as PublishedObjectPatch;
+use OCA\OpenRegister\Contract\ObjectSaveOptions as PublishedObjectSaveOptions;
+use OCA\OpenRegister\Contract\UnlockRequest as PublishedUnlockRequest;
 
 /**
  * Minimal in-memory ObjectService test double.
@@ -290,7 +297,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function find(
 		int|string $id,
-		?ObjectFindOptions $options = null,
+		ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
@@ -408,7 +415,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function saveObject(
 		array $object,
-		ObjectSaveOptions $options = new ObjectSaveOptions(),
+		ObjectSaveOptions|PublishedObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
@@ -521,7 +528,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @return bool
 	 */
 	public function deleteObject(
-		ObjectDeletion $deletion,
+		ObjectDeletion|PublishedObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $_retentionSweep = false
@@ -636,7 +643,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function saveObjects(
 		array $objects,
-		BulkSaveOptions $options = new BulkSaveOptions(),
+		BulkSaveOptions|PublishedBulkSaveOptions $options = new BulkSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
@@ -758,7 +765,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(UnlockRequest $request): bool {
+	public function unlockObject(UnlockRequest|PublishedUnlockRequest $request): bool {
 		$identifier = $request->identifier;
 		$advisory = $request->advisory ?? false;
 		$runUuid = $request->runUuid;
@@ -779,7 +786,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function lockObject(
-		LockRequest $request,
+		LockRequest|PublishedLockRequest $request,
 		bool $advisory = false
 	): array {
 		$identifier = $request->identifier;
@@ -874,7 +881,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		ObjectPatch $patch,
+		ObjectPatch|PublishedObjectPatch $patch,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
@@ -965,7 +972,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function findSilent(
 		string $id,
-		?ObjectFindOptions $options = null,
+		ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
