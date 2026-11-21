@@ -20,12 +20,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use DateTimeImmutable;
-use DateTimeZone;
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
 use OCA\Shillinq\Service\Cbcr\GirXmlDocument;
+use OCA\Shillinq\Service\Cbcr\OecdFileGeneratorSupport;
 use OCA\Shillinq\Service\Sbr\SbrRecords;
 use OCP\IL10N;
 use RuntimeException;
@@ -46,6 +45,7 @@ use RuntimeException;
  * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
  */
 final class GirXmlGenerator implements ReportGeneratorInterface {
+	use OecdFileGeneratorSupport;
 
 	/**
 	 * Constructor.
@@ -121,7 +121,7 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 
 		$file       = $this->fileParts(return: $return, records: $records);
 		$xml        = $this->document->render(file: $file);
-		$validation = $this->document->validate(xml: $xml) + ['validatedAt' => self::now()->format('Y-m-d\TH:i:s\Z')];
+		$validation = $this->document->validate(xml: $xml) + ['validatedAt' => self::utcNow()->format('Y-m-d\TH:i:s\Z')];
 		if ($validation['valid'] === false) {
 			$this->update(return: $return, fields: ['lastValidation' => $validation]);
 			throw new RuntimeException($this->invalidMessage(errors: $validation['errors']));
@@ -132,7 +132,7 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 		$this->update(return: $return, fields: ['lastValidation' => $validation, 'docRefIds' => $file['docRefIds']]);
 
 		return new GeneratedFile(
-			fileName: sprintf('globe-information-return-%s-%s.xml', self::yearOf(return: $return), $file['messageRefId']),
+			fileName: sprintf('globe-information-return-%s-%s.xml', self::fiscalYearOf(return: $return), $file['messageRefId']),
 			mimeType: 'application/xml',
 			format: 'xml',
 			content: $xml,
@@ -151,13 +151,7 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
 	 */
 	private function refuseOnBlockingChecks(array $return): void {
-		$failing = [];
-		foreach ($this->checks->runGir(return: $return) as $result) {
-			if ($result['passed'] === false && $result['severity'] === 'mandatory') {
-				$failing[] = $result['id'] . ': ' . $this->l10n->t($result['statement']);
-			}
-		}
-
+		$failing = $this->failingBlockingChecks(results: $this->checks->runGir(return: $return));
 		if ($failing !== []) {
 			throw new RuntimeException(
 				$this->l10n->t('The GloBE information return is not made while a blocking check fails. %s', [implode(' ', $failing)])
@@ -183,8 +177,9 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 
 		return $records + [
 			'return' => $return,
+			'year' => self::fiscalYearOf(return: $return),
 			'messageRefId' => $messageRefId,
-			'timestamp' => self::now()->format('Y-m-d\TH:i:s'),
+			'timestamp' => self::utcNow()->format('Y-m-d\TH:i:s'),
 			'docRefIds' => $docRefIds,
 			'language' => 'EN',
 			'currency' => strtoupper((string)($return['currency'] ?? 'EUR')),
@@ -218,17 +213,7 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 	 * @return string
 	 */
 	private function invalidMessage(array $errors): string {
-		$lines = [];
-		foreach (array_slice($errors, 0, 3) as $error) {
-			$line = $error['message'];
-			if ($error['line'] > 0) {
-				$line = 'Line ' . $error['line'] . ': ' . $line;
-			}
-
-			$lines[] = $line;
-		}
-
-		return $this->l10n->t('The GloBE information return does not pass the OECD schema, so it was not stored. %s', [implode(' ', $lines)]);
+		return $this->l10n->t('The GloBE information return does not pass the OECD schema, so it was not stored. %s', [self::firstSchemaErrors(errors: $errors)]);
 	}//end invalidMessage()
 
 	/**
@@ -258,30 +243,7 @@ final class GirXmlGenerator implements ReportGeneratorInterface {
 	private function messageRefId(array $return, array $upe): string {
 		$tin = (string)preg_replace('/[^A-Za-z0-9]/', '', $this->document->tinOf(entity: $upe)['value']);
 
-		return sprintf('NL%sGIR%s-%s', self::yearOf(return: $return), $tin, bin2hex(random_bytes(6)));
+		return sprintf('NL%sGIR%s-%s', self::fiscalYearOf(return: $return), $tin, bin2hex(random_bytes(6)));
 	}//end messageRefId()
 
-	/**
-	 * Now, in UTC.
-	 *
-	 * @return DateTimeImmutable
-	 */
-	private static function now(): DateTimeImmutable {
-		return new DateTimeImmutable('now', new DateTimeZone('UTC'));
-	}//end now()
-
-	/**
-	 * The fiscal year of the return.
-	 *
-	 * @param array<string,mixed> $return The GlobeInformationReturn.
-	 *
-	 * @return string
-	 */
-	private static function yearOf(array $return): string {
-		if (preg_match('/(\d{4})/', (string)($return['period'] ?? ''), $match) === 1) {
-			return $match[1];
-		}
-
-		return '0000';
-	}//end yearOf()
 }//end class

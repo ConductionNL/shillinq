@@ -86,7 +86,7 @@ final class GirXmlBuilder {
 	 */
 	public function messageSpec(array $file): DOMElement {
 		$spec = $this->element(name: 'MessageSpec');
-		$year = self::yearOf(return: (array)($file['return'] ?? []));
+		$year = (string)($file['year'] ?? '0000');
 		$this->children(
 			parent: $spec,
 			children: [
@@ -118,7 +118,7 @@ final class GirXmlBuilder {
 		$info = $this->element(name: 'FilingInfo');
 		$info->appendChild($this->entity(name: 'FilingCE', entity: (array)($file['upe'] ?? [])));
 
-		$year   = self::yearOf(return: (array)($file['return'] ?? []));
+		$year   = (string)($file['year'] ?? '0000');
 		$period = $this->element(name: 'Period');
 		$this->children(parent: $period, children: ['Start' => $year . '-01-01', 'End' => $year . '-12-31']);
 		$info->appendChild($period);
@@ -402,19 +402,4 @@ final class GirXmlBuilder {
 	private static function returnId(array $file): string {
 		return (string)(((array)($file['return'] ?? []))['id'] ?? '');
 	}//end returnId()
-
-	/**
-	 * The fiscal year of the return.
-	 *
-	 * @param array<string,mixed> $return The return.
-	 *
-	 * @return string
-	 */
-	private static function yearOf(array $return): string {
-		if (preg_match('/(\d{4})/', (string)($return['period'] ?? ''), $match) === 1) {
-			return $match[1];
-		}
-
-		return '0000';
-	}//end yearOf()
 }//end class

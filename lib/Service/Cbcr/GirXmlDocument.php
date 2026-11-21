@@ -158,7 +158,7 @@ final class GirXmlDocument {
 	 *
 	 * @param array<string,mixed> $file The parts: `return` (GlobeInformationReturn), `upe`, `entities`,
 	 *                                  `safeHarbours`, `computations`, `jurisdictions` (see
-	 *                                  CbcrCheckRunner::girRecords()), `messageRefId`, `timestamp`
+	 *                                  CbcrCheckRunner::girRecords()), `year`, `messageRefId`, `timestamp`
 	 *                                  (ISO 8601), `docRefIds` (record key => DocRefId), `language`
 	 *                                  and `currency`.
 	 *

@@ -158,6 +158,7 @@ XSD;
 	private static function file(array $records): array {
 		return $records + [
 			'return' => ['id' => 'g-2026', 'period' => 'FY2026'],
+			'year' => '2026',
 			'messageRefId' => 'NL2026GIR001234567-abc',
 			'timestamp' => '2027-03-01T10:00:00',
 			'docRefIds' => ['filing-info:g-2026' => 'D-1', 'general-section:g-2026' => 'D-2', 'jurisdiction:NL' => 'D-3'],
