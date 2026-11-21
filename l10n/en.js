@@ -6189,7 +6189,9 @@ OC.L10N.register(
         "Ledger lines for an account": "Ledger lines for an account",
         "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.": "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.",
         "Total of the lines": "Total of the lines",
-        "No lines are posted on this account in this range.": "No lines are posted on this account in this range."
+        "No lines are posted on this account in this range.": "No lines are posted on this account in this range.",
+        "Changed your mind? You can withdraw from this booking without a fee until": "Changed your mind? You can withdraw from this booking without a fee until",
+        "Withdraw from this booking": "Withdraw from this booking"
     },
     "nplurals=2; plural=(n != 1);"
 )

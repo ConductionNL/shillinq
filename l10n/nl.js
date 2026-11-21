@@ -8331,7 +8331,9 @@ OC.L10N.register(
         "Ledger lines for an account": "Grootboekregels van een rekening",
         "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.": "De geboekte grootboekregels achter één rekeningbedrag; samen tellen ze daarop op. Open een regel om de boeking te zien.",
         "Total of the lines": "Totaal van de regels",
-        "No lines are posted on this account in this range.": "Er zijn in deze periode geen regels op deze rekening geboekt."
+        "No lines are posted on this account in this range.": "Er zijn in deze periode geen regels op deze rekening geboekt.",
+        "Changed your mind? You can withdraw from this booking without a fee until": "Bedacht? Je kunt deze boeking zonder kosten herroepen tot en met",
+        "Withdraw from this booking": "Deze boeking herroepen"
     },
     "nplurals=2; plural=(n != 1);"
 )
