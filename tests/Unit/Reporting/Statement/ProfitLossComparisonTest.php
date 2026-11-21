@@ -57,6 +57,7 @@ class ProfitLossComparisonTest extends TestCase {
 				'amounts' => ['current' => 36000.0, 'previous-year' => 30000.0],
 				'ranges' => ['current' => ['from' => '2026-01-01', 'to' => '2026-09-30'], 'previous-year' => ['from' => '2025-01-01', 'to' => '2025-09-30']],
 				'differences' => ['previous-year' => 6000.0],
+				'linesKey' => '4100~2026-01-01~2026-09-30',
 			],
 			$statement['expense'][1]
 		);

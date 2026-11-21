@@ -5872,6 +5872,13 @@
 					"route": "/reports/balance-sheet",
 					"type": "dashboard",
 					"title": "Balance sheet"
+				},
+				{
+					"_fragment": "reporting-financial-statements",
+					"id": "LedgerLinesForAccount",
+					"route": "/ledger/lines/:id",
+					"type": "dashboard",
+					"title": "Ledger lines for an account"
 				}
 			]
 		},

@@ -56,7 +56,7 @@ class StatementCalculatorTest extends TestCase {
 		self::assertSame(['4000 Lonen' => 96000.0, '4100 Huisvesting' => 36000.0], self::amounts($statement['expense']));
 		self::assertSame(['revenue' => 180000.0, 'expense' => 132000.0, 'result' => 48000.0], $statement['totals']);
 		self::assertSame(
-			['accountNumber' => '4100', 'label' => '4100 Huisvesting', 'amount' => 36000.0, 'from' => '2026-01-01', 'to' => '2026-09-30'],
+			['accountNumber' => '4100', 'label' => '4100 Huisvesting', 'amount' => 36000.0, 'from' => '2026-01-01', 'to' => '2026-09-30', 'linesKey' => '4100~2026-01-01~2026-09-30'],
 			$statement['expense'][1]
 		);
 	}

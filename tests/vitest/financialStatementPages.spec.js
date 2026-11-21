@@ -13,6 +13,7 @@
  *
  * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.1
  * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.2
+ * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
  */
 
 import fs from 'fs'
@@ -118,8 +119,48 @@ describe('balance sheet page (REQ-RFS-002)', () => {
 	})
 })
 
+describe('every figure opens the lines behind it (REQ-RFS-003)', () => {
+	const tables = [
+		['FinancialStatementProfitLoss', 'profit-loss-revenue-accounts'],
+		['FinancialStatementProfitLoss', 'profit-loss-expense-accounts'],
+		['FinancialStatementBalanceSheet', 'balance-sheet-assets-accounts'],
+		['FinancialStatementBalanceSheet', 'balance-sheet-liabilities-accounts'],
+		['FinancialStatementBalanceSheet', 'balance-sheet-equity-accounts'],
+	]
+
+	it('routes every account row of both statements to the lines page by its lines key', () => {
+		for (const [pageId, id] of tables) {
+			const table = widget(pageId, id)
+			expect([id, table.content.rowRoute, table.content.rowIdField]).toEqual([id, 'LedgerLinesForAccount', 'linesKey'])
+		}
+		expect(calculator).toMatch(/'linesKey' => self::accountLinesKey\(account: \$account/)
+		expect(comparison).toMatch(/\['linesKey'\] = StatementCalculator::accountLinesKey\(/)
+	})
+
+	it('has the lines page read the key from its own route and open each line\'s transaction', () => {
+		const lines = page('LedgerLinesForAccount')
+		expect(lines.route).toBe('/ledger/lines/:id')
+		const table = lines.config.widgets.find((candidate) => candidate.id === 'ledger-lines')
+		expect(table.content.endpointSource).toEqual({
+			url: '/apps/shillinq/api/statements/lines',
+			params: { key: '@route.id' },
+			responsePath: 'lines',
+		})
+		expect([table.content.rowRoute, table.content.rowIdField]).toEqual(['GeneralLedgerDetail', 'transactionId'])
+		const total = lines.config.widgets.find((candidate) => candidate.id === 'ledger-lines-total')
+		expect([total.content.endpointSource.params.key, total.content.valueField]).toEqual(['@route.id', 'total'])
+		expect(routes).toMatch(/'financialStatement#accountLines', 'url' => '\/api\/statements\/lines', 'verb' => 'GET'/)
+	})
+
+	it('routes the trial balance lines to the same page', () => {
+		const trialBalance = manifest.pages.find((candidate) => candidate.id === 'TrialBalanceLines')
+		expect(trialBalance.config.rowRoute).toBe('LedgerLinesForAccount')
+		expect(calculator).toMatch(/schema: 'TrialBalanceLine'/)
+	})
+})
+
 describe('both pages', () => {
-	it('lay out every widget once', () => {
+	it('lay out every widget once, the lines page too', () => {
 		for (const entry of fragment.pages) {
 			expect(entry.config.layout.map((cell) => cell.widgetId).sort())
 				.toEqual(entry.config.widgets.map((candidate) => candidate.id).sort())

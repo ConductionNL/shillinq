@@ -6208,7 +6208,11 @@
         "Total excluding VAT": "Total excluding VAT",
         "Amount due": "Amount due",
         "Pay online": "Pay online",
-        "Scan to pay": "Scan to pay"
+        "Scan to pay": "Scan to pay",
+        "Ledger lines for an account": "Ledger lines for an account",
+        "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.": "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.",
+        "Total of the lines": "Total of the lines",
+        "No lines are posted on this account in this range.": "No lines are posted on this account in this range."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

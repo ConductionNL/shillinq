@@ -16,8 +16,8 @@
  *      year is open, and a date before the first posting is empty
  *      (REQ-RFS-002);
  *   3. click a figure: an account figure opens the ledger lines of that
- *      account in the figure's range (REQ-RFS-003). Fixme until task 2.3
- *      adds the `LedgerLinesForAccount` page.
+ *      account in the figure's range, adding up to it, and each line opens
+ *      its transaction (REQ-RFS-003).
  *
  * Invariants are asserted on whatever the instance's administration holds,
  * so the spec needs no seeded ledger. The caller is the suite's
@@ -49,6 +49,14 @@ interface ComparedRow {
 	amounts: Record<string, number>
 	differences: Record<string, number>
 	ranges: Record<string, { from: string, to: string }>
+	linesKey: string
+}
+
+/** The lines behind one figure. */
+interface LinesAnswer {
+	accountNumber: string
+	lines: Array<{ transactionId: string, amount: number }>
+	total: number
 }
 
 /** The part of the profit and loss answer this spec reads. */
@@ -167,10 +175,26 @@ test.describe('reporting-financial-statements: profit and loss and balance sheet
 		}
 	})
 
-	test.fixme('an account figure opens the ledger lines behind it @spec REQ-RFS-003', async ({ page }) => {
-		// Task 2.3: the LedgerLinesForAccount page (/ledger/lines/:accountNumber/:from/:to)
-		// and the row links from both statements do not exist yet.
-		await page.goto(APP + '/reports/profit-and-loss')
-		await expect(page).toHaveURL(/\/ledger\/lines\//)
+	test('an account figure opens the ledger lines behind it @spec REQ-RFS-003', async ({ page, request }) => {
+		const { from, to } = lastYear()
+		const statement = await request.get(`${API}/profit-and-loss?from=${from}&to=${to}&compare=previous-year`, { headers: HEADERS })
+		expect(statement.ok()).toBe(true)
+		const body = (await statement.json()) as ProfitLossAnswer
+		const row = [...body.expense, ...body.revenue].find((candidate) => candidate.amounts.current !== 0)
+		test.skip(row === undefined, 'the administration has no posted result lines in the last twelve months')
+
+		const answer = await request.get(`${API}/lines?key=${encodeURIComponent(row!.linesKey)}`, { headers: HEADERS })
+		expect(answer.ok()).toBe(true)
+		const lines = (await answer.json()) as LinesAnswer
+		expect(lines.accountNumber).toBe(row!.accountNumber)
+		expect(cents(lines.total), 'the lines add up to the figure').toBe(cents(row!.amounts.current))
+
+		await page.goto(`${APP}/ledger/lines/${encodeURIComponent(row!.linesKey)}`)
+		await dismissOverlays(page)
+		await expect(page.getByText(/^(Ledger lines|Grootboekregels)$/i).first()).toBeVisible({ timeout: 20_000 })
+		const first = page.locator('table tbody tr').first()
+		await expect(first).toBeVisible({ timeout: 20_000 })
+		await first.click()
+		await expect(page).toHaveURL(/\/general-ledger\//)
 	})
 })

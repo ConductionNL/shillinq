@@ -155,6 +155,48 @@ class FinancialStatementControllerTest extends TestCase {
 	}
 
 	/**
+	 * A profit and loss figure opens the posted lines of its account in its
+	 * range, adding up to it (REQ-RFS-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	public function testTheLinesBehindAnAccountFigure(): void {
+		$statement = $this->controller(['from' => '2026-01-01', 'to' => '2026-09-30', 'compare' => 'previous-year'])->profitAndLoss()->getData();
+		$housing = $statement['expense'][1];
+
+		$response = $this->controller(['key' => $housing['linesKey']])->accountLines();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame([VanDijkLedger::ADM, '4100', 36000.0], [$data['administrationId'], $data['accountNumber'], $data['total']]);
+		self::assertSame($housing['amounts']['current'], $data['total']);
+	}
+
+	/**
+	 * The account lines refuse like the statements, before anything is read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	public function testAccountLinesRefusals(): void {
+		$untouched = $this->createMock(StatementCalculator::class);
+		$untouched->expects(self::never())->method('accountLines');
+		$key = '4100~2026-01-01~2026-09-30';
+
+		$anonymous = $this->controller(['key' => $key], null, $untouched)->accountLines();
+		self::assertSame([Http::STATUS_UNAUTHORIZED, ['error' => 'Not authenticated']], [$anonymous->getStatus(), $anonymous->getData()]);
+
+		$foreign = $this->controller(['key' => $key, 'administrationId' => 'adm-other'], 'director', $untouched)->accountLines();
+		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Not found']], [$foreign->getStatus(), $foreign->getData()]);
+
+		$malformed = $this->controller(['key' => '4100~2026'])->accountLines();
+		self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'key must be account~from~to or a trial balance line id.']], [$malformed->getStatus(), $malformed->getData()]);
+	}
+
+	/**
 	 * The lines refuse like the statements, before anything is read, and a
 	 * malformed key is a bad request.
 	 *

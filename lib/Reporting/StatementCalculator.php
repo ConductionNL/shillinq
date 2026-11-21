@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Reporting;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\FiscalYearContextService;
@@ -54,6 +55,16 @@ class StatementCalculator {
 	 * Rows read per page.
 	 */
 	private const PAGE_SIZE = 500;
+
+	/**
+	 * A statement figure's lines key: account~from~to.
+	 */
+	private const ACCOUNT_LINES_KEY = '/^([A-Za-z0-9._-]{1,64})~(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/';
+
+	/**
+	 * A trial balance line's object id, the key its row route carries.
+	 */
+	private const OBJECT_ID_KEY = '/^[A-Za-z0-9-]{1,64}$/';
 
 	/**
 	 * The equity line carrying the result of the fiscal year so far.
@@ -400,6 +411,172 @@ class StatementCalculator {
 	}//end linesBetween()
 
 	/**
+	 * The key that opens the posted lines behind one account figure.
+	 *
+	 * @param string $account The account number.
+	 * @param string $from    First posting date, YYYY-MM-DD.
+	 * @param string $to      Last posting date, YYYY-MM-DD.
+	 *
+	 * @return string account~from~to.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	public static function accountLinesKey(string $account, string $from, string $to): string {
+		return $account.'~'.$from.'~'.$to;
+	}//end accountLinesKey()
+
+	/**
+	 * The posted lines behind one account figure (REQ-RFS-003).
+	 *
+	 * The key is a statement row's `linesKey` (account~from~to), or the id
+	 * of one of the administration's trial balance lines, whose account and
+	 * period then name the lines. Together the lines add up to the figure.
+	 *
+	 * @param string $administrationId The administration, already checked for access.
+	 * @param string $key              account~from~to, or a trial balance line id.
+	 *
+	 * @return array<string, mixed> administrationId, accountNumber, from, to, periodId, lines and total.
+	 *
+	 * @throws InvalidArgumentException When the key is malformed, its range is, or no such trial balance line exists.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StatementPeriods is pure period arithmetic; it holds no state.
+	 */
+	public function accountLines(string $administrationId, string $key): array {
+		if (preg_match(self::ACCOUNT_LINES_KEY, $key, $match) === 1) {
+			[, $account, $from, $to] = $match;
+			StatementPeriods::assertRange(from: $from, to: $to);
+			$found = $this->linesBetween(administrationId: $administrationId, accounts: [$account], class: '', from: $from, to: $to);
+			$lines = $found['lines'];
+			if ($this->shownDebitPositive(administrationId: $administrationId, account: $account, signed: $found['total']) === true) {
+				$lines = self::flipped(lines: $lines);
+			}
+
+			return [
+				'administrationId' => $administrationId,
+				'accountNumber' => $account,
+				'from' => $from,
+				'to' => $to,
+				'periodId' => null,
+				'lines' => $lines,
+				'total' => self::round(value: array_sum(array_column($lines, 'amount'))),
+			];
+		}
+
+		if (preg_match(self::OBJECT_ID_KEY, $key) !== 1) {
+			throw new InvalidArgumentException('key must be account~from~to or a trial balance line id.');
+		}
+
+		return $this->trialBalanceLineLines(administrationId: $administrationId, lineId: $key);
+	}//end accountLines()
+
+	/**
+	 * The posted lines of a trial balance line's account in its period.
+	 *
+	 * @param string $administrationId The administration, already checked for access.
+	 * @param string $lineId           The trial balance line's id.
+	 *
+	 * @return array<string, mixed> administrationId, accountNumber, from, to, periodId, lines and total.
+	 *
+	 * @throws InvalidArgumentException When the administration has no such trial balance line.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	private function trialBalanceLineLines(string $administrationId, string $lineId): array {
+		$account = '';
+		$period = '';
+		foreach ($this->read(schema: 'TrialBalanceLine', filters: ['administrationId' => $administrationId]) as $row) {
+			if ((string)($row['@self']['id'] ?? $row['id'] ?? '') === $lineId) {
+				$account = trim((string)($row['accountNumber'] ?? ''));
+				$period = trim((string)($row['periodId'] ?? ''));
+				break;
+			}
+		}
+
+		if ($account === '' || $period === '') {
+			throw new InvalidArgumentException('No such trial balance line.');
+		}
+
+		$names = $this->accountRows(administrationId: $administrationId);
+		$lines = [];
+		foreach ($this->countingLines(administrationId: $administrationId) as $line) {
+			if ($line['account'] !== $account || $line['period'] !== $period) {
+				continue;
+			}
+
+			$lines[] = [
+				'id' => $line['id'],
+				'transactionId' => $line['transactionId'],
+				'date' => $line['date'],
+				'accountNumber' => $line['account'],
+				'account' => trim($line['account'].' '.trim((string)($names[$line['account']]['name'] ?? ''))),
+				'description' => $line['description'],
+				'amount' => self::round(value: -$line['amount']),
+			];
+		}
+
+		usort(
+			$lines,
+			static function (array $left, array $right): int {
+				return [$left['date'], $left['id']] <=> [$right['date'], $right['id']];
+			}
+		);
+
+		return [
+			'administrationId' => $administrationId,
+			'accountNumber' => $account,
+			'from' => null,
+			'to' => null,
+			'periodId' => $period,
+			'lines' => $lines,
+			'total' => self::round(value: array_sum(array_column($lines, 'amount'))),
+		];
+	}//end trialBalanceLineLines()
+
+	/**
+	 * Whether a statement shows the account debit positive: an expense or
+	 * asset account, or an account of no known type whose balance is a debit,
+	 * as the statement sections place it.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $account          The account number.
+	 * @param float  $signed           The credit-positive sum of its lines.
+	 *
+	 * @return bool True for debit positive.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	private function shownDebitPositive(string $administrationId, string $account, float $signed): bool {
+		$type = $this->accountType(administrationId: $administrationId, account: $account);
+		$section = (self::PNL_TYPES[$type] ?? self::BALANCE_TYPES[$type] ?? null);
+		if ($section !== null) {
+			return $section === 'expense' || $section === 'assets';
+		}
+
+		return $signed < 0.0;
+	}//end shownDebitPositive()
+
+	/**
+	 * The lines with their amounts debit positive.
+	 *
+	 * @param list<array<string, mixed>> $lines Lines with credit-positive amounts.
+	 *
+	 * @return list<array<string, mixed>> The same lines, amounts negated.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	private static function flipped(array $lines): array {
+		return array_map(
+			static function (array $line): array {
+				$line['amount'] = self::round(value: -(float)$line['amount']);
+				return $line;
+			},
+			$lines
+		);
+	}//end flipped()
+
+	/**
 	 * The administration's account records by account number.
 	 *
 	 * @param string $administrationId The administration, already checked for access.
@@ -500,6 +677,7 @@ class StatementCalculator {
 				'id' => (string)($line['@self']['id'] ?? $line['id'] ?? ''),
 				'transactionId' => (string)($line['transactionId'] ?? ''),
 				'description' => trim((string)($line['description'] ?? '')),
+				'period' => trim((string)($line['periodId'] ?? '')),
 			];
 		}
 
@@ -621,6 +799,7 @@ class StatementCalculator {
 			'amount' => self::round(value: $amount),
 			'from' => $from,
 			'to' => $to,
+			'linesKey' => self::accountLinesKey(account: $account, from: $from, to: $to),
 		];
 	}//end row()
 
