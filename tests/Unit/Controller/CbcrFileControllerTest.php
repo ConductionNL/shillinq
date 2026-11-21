@@ -50,6 +50,7 @@ final class CbcrFileControllerTest extends TestCase {
 	private function controller(callable $files): CbcrFileController {
 		$service = $this->createMock(CbcrFileService::class);
 		$service->method('generateCbc')->willReturnCallback($files);
+		$service->method('generateGir')->willReturnCallback($files);
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
@@ -100,4 +101,31 @@ final class CbcrFileControllerTest extends TestCase {
 		$this->expectException(LogicException::class);
 		$this->controller(static fn (): array => throw new LogicException('database gone'))->generateCbc('cbc-2026');
 	}//end testRefusalsAndFailures()
+
+	/**
+	 * Generate XML on a minimum tax return: 201 with the file, 404 when not visible, 422 on a refusal.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 *
+	 * @return void
+	 */
+	public function testTheGirFileAnswersAsTheCbcFile(): void {
+		$asked    = [];
+		$response = $this->controller(
+			static function (string $returnId) use (&$asked): array {
+				$asked[] = $returnId;
+				return ['report' => ['id' => 'report-9'], 'return' => ['id' => $returnId]];
+			}
+		)->generateGir('gir-2026');
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame('report-9', $response->getData()['report']['id']);
+		self::assertSame(['gir-2026'], $asked);
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller(static fn (): ?array => null)->generateGir('gir-other')->getStatus());
+
+		$reason  = 'The GloBE information return is not made: 3 elements the schema requires are not in the records.';
+		$refused = $this->controller(static fn (): array => throw new RuntimeException($reason))->generateGir('gir-2026');
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $refused->getStatus());
+		self::assertSame($reason, $refused->getData()['error']);
+	}//end testTheGirFileAnswersAsTheCbcFile()
 }//end class

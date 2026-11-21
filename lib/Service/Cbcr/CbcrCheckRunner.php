@@ -198,6 +198,55 @@ class CbcrCheckRunner {
 	}//end girFingerprint()
 
 	/**
+	 * The records a GIR file is made from: the ultimate parent, the group's
+	 * entities in the minimum tax, the safe harbour records, the jurisdiction
+	 * computations and every jurisdiction any of them names, read the same way
+	 * the checks and the fingerprint read them (design D5).
+	 *
+	 * @param array<string,mixed> $return The GlobeInformationReturn.
+	 *
+	 * @return array{upe:array<string,mixed>|null,entities:array<int,array<string,mixed>>,safeHarbours:array<int,array<string,mixed>>,computations:array<int,array<string,mixed>>,jurisdictions:array<int,string>}
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 */
+	public function girRecords(array $return): array {
+		[$upeId, $period] = self::girScope(return: $return);
+		$filters = ['ultimateParentEntity' => $upeId, 'period' => $period];
+
+		$entities = [];
+		foreach ($this->all(schema: 'GroupEntityRegistry', filters: []) as $member) {
+			$inGroup = ((string)($member['id'] ?? '') === $upeId || (string)($member['ultimateParentEntity'] ?? '') === $upeId);
+			if ($upeId !== '' && $inGroup === true && ($member['pillar2Included'] ?? true) !== false) {
+				$entities[] = $member;
+			}
+		}
+
+		$safeHarbours = $this->all(schema: 'Pillar2SafeHarbour', filters: $filters);
+		$computations = $this->all(schema: 'Pillar2JurisdictionComputation', filters: $filters);
+		$summaries    = $this->all(schema: 'CbcrJurisdictionSummary', filters: $filters);
+
+		$codes = [];
+		foreach ([$summaries, $safeHarbours, $computations] as $rows) {
+			foreach ($rows as $row) {
+				$code = strtoupper(trim((string)($row['jurisdiction'] ?? '')));
+				if ($code !== '') {
+					$codes[$code] = true;
+				}
+			}
+		}
+
+		ksort($codes);
+
+		return [
+			'upe' => $this->one(schema: 'GroupEntityRegistry', id: $upeId),
+			'entities' => $entities,
+			'safeHarbours' => $safeHarbours,
+			'computations' => $computations,
+			'jurisdictions' => array_map('strval', array_keys($codes)),
+		];
+	}//end girRecords()
+
+	/**
 	 * The CbC return joined with its group's entities (and their figures) and summaries.
 	 *
 	 * @param array<string,mixed> $return The CbcrReturn.

@@ -80,4 +80,31 @@ class CbcrFileController extends Controller {
 
 		return new Http\JSONResponse($result, Http::STATUS_CREATED);
 	}//end generateCbc()
+
+	/**
+	 * Generate the minimum tax return's GloBE information return, refused while a
+	 * blocking check fails, an element is missing or the file does not pass the schema.
+	 *
+	 * @param string $returnId The GlobeInformationReturn id.
+	 *
+	 * @return Http\JSONResponse 201 with the GeneratedReport and the return; 422 with the reason
+	 *                      when refused; 404 for a return the caller may not see.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-6.3
+	 */
+	#[NoAdminRequired]
+	public function generateGir(string $returnId): Http\JSONResponse {
+		try {
+			$result = $this->files->generateGir(returnId: $returnId);
+		} catch (RuntimeException $refused) {
+			return new Http\JSONResponse(['error' => $refused->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
+
+		if ($result === null) {
+			return new Http\JSONResponse(['error' => $this->l10n->t('Not found')], Http::STATUS_NOT_FOUND);
+		}
+
+		return new Http\JSONResponse($result, Http::STATUS_CREATED);
+	}//end generateGir()
 }//end class
