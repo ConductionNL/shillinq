@@ -2,22 +2,17 @@
 <!-- Copyright (C) 2026 Conduction B.V. -->
 
 <!--
- Segment P&L Dashboard (bookkeeping-cost-centers-dimensions Task 14).
+ Segment P&L Dashboard (bookkeeping-cost-centers-dimensions Task 14,
+ reporting-segment-results REQ-RSR-003).
 
- Drives the operator-facing segment-P&L drill-down by reading the four
- server-side `x-openregister-aggregations` declared on GLLine
- (`byCostCenter`, `byCostCenterHierarchy`, `byProject`,
- `byAnalyticalDimension`) and rendering them into a per-segment table
- with hierarchical roll-up support and a CSV export. Selector chips let
- the operator switch between CostCenter, Project, and operator-defined
- AnalyticalDimensions (REQ-CD-004 / REQ-CD-007).
+ Shows revenue, costs and result per cost center, cost object, project or
+ analytical dimension, for one period or all of them. The figures come from
+ the `x-openregister-aggregations` declared on GLLine, which count only
+ posted lines on profit and loss accounts (the stamps written by
+ GLLineResultStampListener) and answer `{ groups: [{ key, values }] }`.
+ Amounts are euros.
 
- Reads from the OpenRegister aggregation endpoint (the same one the
- declarative manifest pages use for `byX` aggregations). Falls back to a
- client-side rollup of the raw GLLine list if the aggregation endpoint
- returns 404 (older OR builds).
-
- @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
+ @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -30,7 +25,7 @@
 					{{
 						t(
 							'shillinq',
-							'Per-segment profit and loss roll-up across cost centers, projects, and operator-defined analytical dimensions. Driven by the server-side aggregations on GLLine — no client-side recomputation.',
+							'Revenue, costs and result per segment. Only posted lines on profit and loss accounts count.',
 						)
 					}}
 				</p>
@@ -38,7 +33,7 @@
 
 			<section
 				class="segment-pnl-dashboard__controls"
-				aria-label="segment selector">
+				:aria-label="t('shillinq', 'Segment and period')">
 				<div class="segment-pnl-dashboard__chips">
 					<NcButton
 						v-for="segment in availableSegments"
@@ -49,6 +44,25 @@
 						@click="selectSegment(segment.id)">
 						{{ segment.label }}
 					</NcButton>
+				</div>
+				<div class="segment-pnl-dashboard__period">
+					<label for="segment-pnl-period">{{
+						t('shillinq', 'Period')
+					}}</label>
+					<select
+						id="segment-pnl-period"
+						v-model="periodId"
+						@change="loadSegment(activeSegment)">
+						<option value="">
+							{{ t('shillinq', 'All periods') }}
+						</option>
+						<option
+							v-for="period in periods"
+							:key="period.id"
+							:value="period.id">
+							{{ period.label }}
+						</option>
+					</select>
 				</div>
 				<NcButton
 					variant="tertiary"
@@ -69,7 +83,7 @@
 					:description="
 						t(
 							'shillinq',
-							'No GL postings carry this dimension yet. Tag postings with a cost center, project, or analytical dimension to populate the drill-down.',
+							'No posted lines on profit and loss accounts carry this segment yet.',
 						)
 					" />
 				<table
@@ -84,7 +98,17 @@
 							<th
 								scope="col"
 								class="segment-pnl-dashboard__amount-col">
-								{{ t('shillinq', 'Amount') }}
+								{{ t('shillinq', 'Revenue') }}
+							</th>
+							<th
+								scope="col"
+								class="segment-pnl-dashboard__amount-col">
+								{{ t('shillinq', 'Costs') }}
+							</th>
+							<th
+								scope="col"
+								class="segment-pnl-dashboard__amount-col">
+								{{ t('shillinq', 'Result') }}
 							</th>
 							<th v-if="hasHierarchy" scope="col">
 								{{ t('shillinq', 'Parent') }}
@@ -108,19 +132,25 @@
 								<span
 									v-if="row.name"
 									class="segment-pnl-dashboard__group-name">
-									— {{ row.name }}
+									{{ row.name }}
 								</span>
 							</th>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(row.revenue) }}
+							</td>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(row.costs) }}
+							</td>
 							<td
 								class="segment-pnl-dashboard__amount-cell"
 								:class="{
 									'segment-pnl-dashboard__amount-cell--negative':
-										row.amount < 0,
+										row.result < 0,
 								}">
-								{{ formatAmount(row.amount) }}
+								{{ formatAmount(row.result) }}
 							</td>
 							<td v-if="hasHierarchy">
-								{{ row.parent || '—' }}
+								{{ row.parent }}
 							</td>
 						</tr>
 					</tbody>
@@ -130,7 +160,13 @@
 								{{ t('shillinq', 'Total') }}
 							</th>
 							<td class="segment-pnl-dashboard__amount-cell">
-								{{ formatAmount(total) }}
+								{{ formatAmount(total.revenue) }}
+							</td>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(total.costs) }}
+							</td>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(total.result) }}
 							</td>
 							<td v-if="hasHierarchy" />
 						</tr>
@@ -156,15 +192,13 @@ import {
 	NcEmptyContent,
 	NcLoadingIcon,
 } from '@nextcloud/vue'
-
-const REGISTER_SLUG = 'shillinq'
-
-const SEGMENT_AGGREGATION = {
-	costCenter: 'byCostCenter',
-	costCenterHierarchy: 'byCostCenterHierarchy',
-	project: 'byProject',
-	analyticalDimension: 'byAnalyticalDimension',
-}
+import {
+	normaliseSegmentRows,
+	periodOptions,
+	segmentQuery,
+	SEGMENTS,
+	segmentTotals,
+} from '../../../utils/segmentResults.js'
 
 export default {
 	name: 'SegmentPnLDashboard',
@@ -183,7 +217,8 @@ export default {
 			activeSegment: 'costCenter',
 			rows: [],
 			analyticalDimensions: [],
-			administrationId: '',
+			periodId: '',
+			periods: [],
 		}
 	},
 
@@ -192,20 +227,39 @@ export default {
 			return this.activeSegment === 'costCenterHierarchy'
 		},
 
+		/**
+		 * Column heading for the segment the report is grouped by.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
 		groupLabel() {
 			const map = {
 				costCenter: this.t('shillinq', 'Cost center'),
 				costCenterHierarchy: this.t('shillinq', 'Cost center (hierarchy)'),
+				costObject: this.t('shillinq', 'Cost object'),
 				project: this.t('shillinq', 'Project'),
 				analyticalDimension: this.t('shillinq', 'Analytical dimension'),
 			}
 			return map[this.activeSegment] ?? this.t('shillinq', 'Segment')
 		},
 
+		/**
+		 * Revenue, costs and result summed over the shown segments.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
 		total() {
-			return this.rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+			return segmentTotals(this.rows)
 		},
 
+		/**
+		 * The segments the user can group the report by.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
 		availableSegments() {
 			return [
 				{ id: 'costCenter', label: this.t('shillinq', 'Cost center') },
@@ -213,6 +267,7 @@ export default {
 					id: 'costCenterHierarchy',
 					label: this.t('shillinq', 'Cost center (rolled up)'),
 				},
+				{ id: 'costObject', label: this.t('shillinq', 'Cost object') },
 				{ id: 'project', label: this.t('shillinq', 'Project') },
 				{
 					id: 'analyticalDimension',
@@ -228,47 +283,9 @@ export default {
 
 	methods: {
 		/**
-		 * Resolve the caller's active administration.
-		 *
-		 * These aggregations used to declare
-		 * `administrationId: "@self.administrationId"`. That is not a
-		 * placeholder OpenRegister implements — PlaceholderResolver only acts on
-		 * values beginning with `$` — so it was left LITERAL and the filter
-		 * matched nothing, which is why this dashboard returned zero rows over
-		 * live data (#1216, swept in #1255).
-		 *
-		 * An administration is a shillinq layer over OpenRegister's organisation
-		 * tenancy, so it is a normal property, and the scope comes from the
-		 * CALLER as a narrowing filter (openregister#2852) — which can add a
-		 * constraint but never relax one.
-		 *
-		 * Returns '' when the context cannot be read, and loadSegment() then
-		 * REFUSES to query. That matters more here than it looks: the declared
-		 * filter is gone, so an unscoped call would roll up EVERY
-		 * administration's P&L into one plausible-looking total.
-		 *
-		 * @return {Promise<string>} The active administration id, or ''.
-		 * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
-		 */
-		async resolveAdministrationId() {
-			try {
-				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				return (
-					data?.activeAdministrationId
-					|| data?.administrations?.[0]?.administrationId
-					|| ''
-				)
-			} catch {
-				return ''
-			}
-		},
-
-		/**
 		 * Switch the dashboard to another segment and reload it.
 		 *
-		 * @param {string} segment One of SEGMENT_AGGREGATION's keys.
+		 * @param {string} segment One of SEGMENTS.
 		 * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
 		 */
 		selectSegment(segment) {
@@ -280,9 +297,10 @@ export default {
 		},
 
 		/**
-		 * Load one segment's P&L roll-up, scoped to the caller's administration.
+		 * Load one segment's revenue, costs and result for the chosen period.
+		 * The server picks and checks the administration.
 		 *
-		 * @param {string} segment One of SEGMENT_AGGREGATION's keys.
+		 * @param {string} segment One of SEGMENTS.
 		 * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
 		 */
 		async loadSegment(segment) {
@@ -290,93 +308,65 @@ export default {
 			this.errorMessage = ''
 			this.rows = []
 
-			const aggregationName = SEGMENT_AGGREGATION[segment]
-			if (!aggregationName) {
+			if (!SEGMENTS.includes(segment)) {
 				this.errorMessage = this.t('shillinq', 'Unknown segment selected.')
 				this.loading = false
 				return
 			}
 
 			try {
-				this.administrationId = await this.resolveAdministrationId()
-				if (!this.administrationId) {
-					// Deliberately not a fallback to an unscoped call: the
-					// declaration no longer carries administrationId, so omitting
-					// it here would roll up every administration the register
-					// holds into one total that looks entirely reasonable.
-					this.errorMessage = this.t(
-						'shillinq',
-						'No active administration — cannot scope segment P&L.',
-					)
-					return
-				}
-
-				const url = generateUrl(
-					`/apps/openregister/api/objects/aggregations/${REGISTER_SLUG}/GLLine/`
-						+ encodeURIComponent(aggregationName),
+				const { data } = await axios.get(
+					generateUrl('/apps/shillinq/api/v1/segment-results'),
+					{ params: segmentQuery(segment, this.periodId) },
 				)
-				const { data } = await axios.get(url, {
-					params: { 'filter[administrationId]': this.administrationId },
-				})
+				this.periods = periodOptions(data?.periods)
 				this.rows = this.normaliseRows(data, segment)
 			} catch (error) {
-				const status = error?.response?.status
-				if (status === 404 || status === 501) {
-					// Older OR builds without the aggregation endpoint —
-					// keep the dashboard navigable instead of breaking.
-					this.errorMessage = this.t(
-						'shillinq',
-						'Aggregation endpoint unavailable on this OpenRegister build. Upgrade OR to read segment P&L roll-ups.',
-					)
-				} else if (status === 401 || status === 403) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Permission required to read segment P&L data.',
-					)
-				} else {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Failed to load segment P&L.',
-					)
-				}
+				this.errorMessage = this.segmentLoadError(error)
 			} finally {
 				this.loading = false
 			}
 		},
 
-		normaliseRows(payload, segment) {
-			const buckets = Array.isArray(payload?.buckets)
-				? payload.buckets
-				: Array.isArray(payload)
-					? payload
-					: []
-			const flat = buckets
-				.map((bucket) => {
-					const key = bucket?.key ?? bucket?.code ?? bucket?.groupKey ?? ''
-					const name =
-						bucket?.name
-						?? bucket?.['CostCenter.name']
-						?? bucket?.['Project.name']
-						?? ''
-					const parent =
-						bucket?.parent ?? bucket?.['CostCenter.parentCode'] ?? ''
-					const amount = Number(
-						bucket?.amount ?? bucket?.sum ?? bucket?.total ?? 0,
-					)
-					return {
-						key: String(key),
-						name: String(name),
-						parent: String(parent),
-						amount,
-						depth: 0,
-					}
-				})
-				.filter((r) => r.key !== '')
+		/**
+		 * The message of a failed segment load, by HTTP status: 400 when the
+		 * caller has no active administration, 401/403/404 when the
+		 * administration may not be read.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
+		segmentLoadError(error) {
+			const status = error?.response?.status
+			if (status === 400) {
+				return this.t(
+					'shillinq',
+					'No active administration, so the segment P&L cannot be scoped.',
+				)
+			}
+			if (status === 401 || status === 403 || status === 404) {
+				return this.t(
+					'shillinq',
+					'Permission required to read segment P&L data.',
+				)
+			}
+			return this.t('shillinq', 'Failed to load segment P&L.')
+		},
 
+		/**
+		 * Turn the aggregation envelope into rows, nested for the hierarchy.
+		 *
+		 * @param {object} payload The aggregation response.
+		 * @param {string} segment The segment type.
+		 * @return {Array<object>} The rows.
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
+		normaliseRows(payload, segment) {
+			const flat = normaliseSegmentRows(payload)
 			if (segment === 'costCenterHierarchy') {
 				return this.applyHierarchy(flat)
 			}
-
 			return flat
 		},
 
@@ -418,8 +408,15 @@ export default {
 			return result
 		},
 
-		formatAmount(cents) {
-			const value = (Number(cents) || 0) / 100
+		/**
+		 * Format an amount in euros.
+		 *
+		 * @param {number} euros The amount.
+		 * @return {string} The formatted amount.
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
+		formatAmount(euros) {
+			const value = Number(euros) || 0
 			try {
 				return new Intl.NumberFormat(undefined, {
 					style: 'currency',
@@ -432,22 +429,54 @@ export default {
 			}
 		},
 
+		/**
+		 * Download the rows as CSV, one line per segment with revenue, costs and result.
+		 *
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
 		exportCsv() {
 			if (!this.rows.length) {
 				return
 			}
-			const header = ['segment', 'name', 'parent', 'amount_cents']
+			this.downloadCsv(this.segmentCsv())
+		},
+
+		/**
+		 * The rows as CSV: a header, then one line per segment.
+		 *
+		 * @return {string}
+		 */
+		segmentCsv() {
+			const header = [
+				'segment',
+				'name',
+				'parent',
+				'revenue',
+				'costs',
+				'result',
+			]
 			const lines = [header.join(',')]
 			for (const row of this.rows) {
 				const cells = [
 					this.csvEscape(row.key),
 					this.csvEscape(row.name),
 					this.csvEscape(row.parent),
-					String(Math.round(Number(row.amount) || 0)),
+					row.revenue.toFixed(2),
+					row.costs.toFixed(2),
+					row.result.toFixed(2),
 				]
 				lines.push(cells.join(','))
 			}
-			const blob = new Blob([lines.join('\n') + '\n'], {
+			return lines.join('\n') + '\n'
+		},
+
+		/**
+		 * Download CSV text as `segment-pnl-<segment>-<date>.csv`.
+		 *
+		 * @param {string} text The CSV text.
+		 */
+		downloadCsv(text) {
+			const blob = new Blob([text], {
 				type: 'text/csv;charset=utf-8',
 			})
 			const url = URL.createObjectURL(blob)
@@ -506,6 +535,12 @@ export default {
 	display: flex;
 	gap: calc(var(--default-grid-baseline, 4px) * 1);
 	flex-wrap: wrap;
+}
+
+.segment-pnl-dashboard__period {
+	display: flex;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
+	align-items: center;
 }
 
 .segment-pnl-dashboard__table {

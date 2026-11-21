@@ -125,7 +125,7 @@ final class PipelinqConfigTest extends TestCase {
 	public function testSetPipelinqTokenStoresInSecretsStoreNotAppConfig(): void {
 		$this->credentials->expects(self::once())
 			->method('store')
-			->with('', PipelinqConfig::CREDENTIAL_ID_TOKEN, 'secret-token-value');
+			->with('', PipelinqConfig::CREDENTIAL_ID_API, 'secret-token-value');
 
 		// IAppConfig must NOT be called for the token — strict expectation.
 		$this->appConfig->expects(self::never())
@@ -141,7 +141,7 @@ final class PipelinqConfigTest extends TestCase {
 	public function testSetPipelinqTokenEmptyDeletesSecret(): void {
 		$this->credentials->expects(self::once())
 			->method('delete')
-			->with('', PipelinqConfig::CREDENTIAL_ID_TOKEN);
+			->with('', PipelinqConfig::CREDENTIAL_ID_API);
 		$this->credentials->expects(self::never())->method('store');
 
 		$this->config->setPipelinqToken('   ');
@@ -154,7 +154,7 @@ final class PipelinqConfigTest extends TestCase {
 	public function testGetPipelinqTokenReadsFromSecretsStore(): void {
 		$this->credentials->expects(self::once())
 			->method('retrieve')
-			->with('', PipelinqConfig::CREDENTIAL_ID_TOKEN)
+			->with('', PipelinqConfig::CREDENTIAL_ID_API)
 			->willReturn('stored-token');
 
 		self::assertSame('stored-token', $this->config->getPipelinqToken());
@@ -193,7 +193,7 @@ final class PipelinqConfigTest extends TestCase {
 
 		$this->credentials->expects(self::once())
 			->method('store')
-			->with('', PipelinqConfig::CREDENTIAL_ID_TOKEN, 'super-secret');
+			->with('', PipelinqConfig::CREDENTIAL_ID_API, 'super-secret');
 
 		$this->config->setPipelinqToken('super-secret');
 

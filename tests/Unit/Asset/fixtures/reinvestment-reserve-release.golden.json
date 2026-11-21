@@ -1,0 +1,386 @@
+{
+    "configured": {
+        "2027-01-01": {
+            "released": 4,
+            "calls": [
+                [
+                    "records",
+                    "ReinvestmentReserve",
+                    {
+                        "lifecycleState": "open"
+                    }
+                ],
+                [
+                    "postJournal",
+                    {
+                        "journalNumber": "HIR-VRIJ-a5fa777a",
+                        "entryDate": "2026-12-31",
+                        "description": "Vrijval herinvesteringsreserve FA-1",
+                        "lines": [
+                            {
+                                "accountNumber": "0650",
+                                "side": "debit",
+                                "amount": 800.25,
+                                "description": "Vrijval herinvesteringsreserve FA-1"
+                            },
+                            {
+                                "accountNumber": "8100",
+                                "side": "credit",
+                                "amount": 800.25,
+                                "description": "Vrijval herinvesteringsreserve FA-1"
+                            }
+                        ],
+                        "journalType": "manual",
+                        "approvalState": "not-required",
+                        "administrationId": "adm-1",
+                        "state": "draft"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-1",
+                    {
+                        "lifecycleState": "released",
+                        "releaseJournalEntryId": "je-2"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-2",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-4",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "postJournal",
+                    {
+                        "journalNumber": "HIR-VRIJ-1c61c335",
+                        "entryDate": "2026-12-31",
+                        "description": "Vrijval herinvesteringsreserve ",
+                        "lines": [
+                            {
+                                "accountNumber": "0642",
+                                "side": "debit",
+                                "amount": 75.1,
+                                "description": "Vrijval herinvesteringsreserve "
+                            },
+                            {
+                                "accountNumber": "8100",
+                                "side": "credit",
+                                "amount": 75.1,
+                                "description": "Vrijval herinvesteringsreserve "
+                            }
+                        ],
+                        "journalType": "manual",
+                        "approvalState": "not-required",
+                        "administrationId": "adm-2",
+                        "state": "draft"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-5",
+                    {
+                        "lifecycleState": "released",
+                        "releaseJournalEntryId": "je-6"
+                    }
+                ]
+            ]
+        },
+        "2026-12-31": {
+            "released": 2,
+            "calls": [
+                [
+                    "records",
+                    "ReinvestmentReserve",
+                    {
+                        "lifecycleState": "open"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-2",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-4",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ]
+            ]
+        }
+    },
+    "fallbackGain": {
+        "2027-01-01": {
+            "released": 4,
+            "calls": [
+                [
+                    "records",
+                    "ReinvestmentReserve",
+                    {
+                        "lifecycleState": "open"
+                    }
+                ],
+                [
+                    "postJournal",
+                    {
+                        "journalNumber": "HIR-VRIJ-a5fa777a",
+                        "entryDate": "2026-12-31",
+                        "description": "Vrijval herinvesteringsreserve FA-1",
+                        "lines": [
+                            {
+                                "accountNumber": "0640",
+                                "side": "debit",
+                                "amount": 800.25,
+                                "description": "Vrijval herinvesteringsreserve FA-1"
+                            },
+                            {
+                                "accountNumber": "8200",
+                                "side": "credit",
+                                "amount": 800.25,
+                                "description": "Vrijval herinvesteringsreserve FA-1"
+                            }
+                        ],
+                        "journalType": "manual",
+                        "approvalState": "not-required",
+                        "administrationId": "adm-1",
+                        "state": "draft"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-1",
+                    {
+                        "lifecycleState": "released",
+                        "releaseJournalEntryId": "je-2"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-2",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-4",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "postJournal",
+                    {
+                        "journalNumber": "HIR-VRIJ-1c61c335",
+                        "entryDate": "2026-12-31",
+                        "description": "Vrijval herinvesteringsreserve ",
+                        "lines": [
+                            {
+                                "accountNumber": "0642",
+                                "side": "debit",
+                                "amount": 75.1,
+                                "description": "Vrijval herinvesteringsreserve "
+                            },
+                            {
+                                "accountNumber": "8200",
+                                "side": "credit",
+                                "amount": 75.1,
+                                "description": "Vrijval herinvesteringsreserve "
+                            }
+                        ],
+                        "journalType": "manual",
+                        "approvalState": "not-required",
+                        "administrationId": "adm-2",
+                        "state": "draft"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-5",
+                    {
+                        "lifecycleState": "released",
+                        "releaseJournalEntryId": "je-6"
+                    }
+                ]
+            ]
+        },
+        "2026-12-31": {
+            "released": 2,
+            "calls": [
+                [
+                    "records",
+                    "ReinvestmentReserve",
+                    {
+                        "lifecycleState": "open"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-2",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-4",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ]
+            ]
+        }
+    },
+    "defaults": {
+        "2027-01-01": {
+            "released": 4,
+            "calls": [
+                [
+                    "records",
+                    "ReinvestmentReserve",
+                    {
+                        "lifecycleState": "open"
+                    }
+                ],
+                [
+                    "postJournal",
+                    {
+                        "journalNumber": "HIR-VRIJ-a5fa777a",
+                        "entryDate": "2026-12-31",
+                        "description": "Vrijval herinvesteringsreserve FA-1",
+                        "lines": [
+                            {
+                                "accountNumber": "0640",
+                                "side": "debit",
+                                "amount": 800.25,
+                                "description": "Vrijval herinvesteringsreserve FA-1"
+                            },
+                            {
+                                "accountNumber": "8000-fa-gain",
+                                "side": "credit",
+                                "amount": 800.25,
+                                "description": "Vrijval herinvesteringsreserve FA-1"
+                            }
+                        ],
+                        "journalType": "manual",
+                        "approvalState": "not-required",
+                        "administrationId": "adm-1",
+                        "state": "draft"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-1",
+                    {
+                        "lifecycleState": "released",
+                        "releaseJournalEntryId": "je-2"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-2",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-4",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "postJournal",
+                    {
+                        "journalNumber": "HIR-VRIJ-1c61c335",
+                        "entryDate": "2026-12-31",
+                        "description": "Vrijval herinvesteringsreserve ",
+                        "lines": [
+                            {
+                                "accountNumber": "0642",
+                                "side": "debit",
+                                "amount": 75.1,
+                                "description": "Vrijval herinvesteringsreserve "
+                            },
+                            {
+                                "accountNumber": "8000-fa-gain",
+                                "side": "credit",
+                                "amount": 75.1,
+                                "description": "Vrijval herinvesteringsreserve "
+                            }
+                        ],
+                        "journalType": "manual",
+                        "approvalState": "not-required",
+                        "administrationId": "adm-2",
+                        "state": "draft"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-5",
+                    {
+                        "lifecycleState": "released",
+                        "releaseJournalEntryId": "je-6"
+                    }
+                ]
+            ]
+        },
+        "2026-12-31": {
+            "released": 2,
+            "calls": [
+                [
+                    "records",
+                    "ReinvestmentReserve",
+                    {
+                        "lifecycleState": "open"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-2",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ],
+                [
+                    "patch",
+                    "ReinvestmentReserve",
+                    "r-4",
+                    {
+                        "lifecycleState": "released"
+                    }
+                ]
+            ]
+        }
+    }
+}

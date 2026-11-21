@@ -34,6 +34,9 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Service\TenderNedStatusSync;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
@@ -206,19 +209,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 		);
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1201', [
-				'commitmentId' => 'TN-2026-0001',
-				'milestoneId' => 'M-Q1',
-				'deliveryType' => 'tussenoplevering',
-				'approved' => true,
-				'supportingDocuments' => [['documentId' => 'doc-1']],
-			]),
-			'voltooien',
-			'in-progress',
-			'completed',
-			'admin',
-			'shillinq',
-			'OrderFulfilment'
+			object: $this->entity('1201', [
+					'commitmentId' => 'TN-2026-0001',
+					'milestoneId' => 'M-Q1',
+					'deliveryType' => 'tussenoplevering',
+					'approved' => true,
+					'supportingDocuments' => [['documentId' => 'doc-1']],
+				]),
+			move: new TransitionMove(action: 'voltooien', from: 'in-progress', to: 'completed'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'OrderFulfilment'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);
@@ -252,19 +252,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 		);
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1201', [
-				'commitmentId' => 'TN-2026-0001',
-				'milestoneId' => 'M-Q1',
-				'deliveryType' => 'tussenoplevering',
-				'approved' => true,
-				'supportingDocuments' => [['documentId' => 'doc-1']],
-			]),
-			'voltooien',
-			'in-progress',
-			'completed',
-			'admin',
-			'shillinq',
-			'OpdrachtUitvoering'
+			object: $this->entity('1201', [
+					'commitmentId' => 'TN-2026-0001',
+					'milestoneId' => 'M-Q1',
+					'deliveryType' => 'tussenoplevering',
+					'approved' => true,
+					'supportingDocuments' => [['documentId' => 'doc-1']],
+				]),
+			move: new TransitionMove(action: 'voltooien', from: 'in-progress', to: 'completed'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'OpdrachtUitvoering'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);
@@ -291,19 +288,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 		);
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1201', [
-				'commitmentId' => 'TN-2026-0001',
-				'milestoneId' => 'M-EIND',
-				'deliveryType' => 'eindoplevering',
-				'approved' => true,
-				'supportingDocuments' => [['documentId' => 'doc-1']],
-			]),
-			'voltooien',
-			'in-progress',
-			'completed',
-			'admin',
-			'shillinq',
-			'OrderFulfilment'
+			object: $this->entity('1201', [
+					'commitmentId' => 'TN-2026-0001',
+					'milestoneId' => 'M-EIND',
+					'deliveryType' => 'eindoplevering',
+					'approved' => true,
+					'supportingDocuments' => [['documentId' => 'doc-1']],
+				]),
+			move: new TransitionMove(action: 'voltooien', from: 'in-progress', to: 'completed'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'OrderFulfilment'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);
@@ -330,19 +324,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 		);
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1201', [
-				'commitmentId' => 'TN-2026-0001',
-				'milestoneId' => 'M-EIND',
-				'deliveryType' => 'eindoplevering',
-				'approved' => false,
-				'supportingDocuments' => [['documentId' => 'doc-1']],
-			]),
-			'voltooien',
-			'in-progress',
-			'completed',
-			'admin',
-			'shillinq',
-			'OrderFulfilment'
+			object: $this->entity('1201', [
+					'commitmentId' => 'TN-2026-0001',
+					'milestoneId' => 'M-EIND',
+					'deliveryType' => 'eindoplevering',
+					'approved' => false,
+					'supportingDocuments' => [['documentId' => 'doc-1']],
+				]),
+			move: new TransitionMove(action: 'voltooien', from: 'in-progress', to: 'completed'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'OrderFulfilment'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);
@@ -402,18 +393,15 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 
 		$listener->handle(
 			new ObjectTransitionedEvent(
-				$this->entity('1201', [
-					'commitmentId' => 'TN-2026-0001',
-					'milestoneId' => 'M-EIND',
-					'deliveryType' => 'eindoplevering',
-					'approved' => true,
-				]),
-				'afronden',
-				'in-progress',
-				'completed',
-				'admin',
-				'shillinq',
-				'OrderFulfilment'
+				object: $this->entity('1201', [
+						'commitmentId' => 'TN-2026-0001',
+						'milestoneId' => 'M-EIND',
+						'deliveryType' => 'eindoplevering',
+						'approved' => true,
+					]),
+				move: new TransitionMove(action: 'afronden', from: 'in-progress', to: 'completed'),
+				scope: new RegisterSchemaRef(register: 'shillinq', schema: 'OrderFulfilment'),
+				actor: new TransitionActor(userId: 'admin'),
 			)
 		);
 
@@ -437,18 +425,15 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 		);
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1201', [
-				'commitmentId' => 'TN-2026-0001',
-				'milestoneId' => 'M-EIND',
-				'deliveryType' => 'eindoplevering',
-				'approved' => true,
-			]),
-			'starten',
-			'planned',
-			'in-progress',
-			'admin',
-			'shillinq',
-			'OrderFulfilment'
+			object: $this->entity('1201', [
+					'commitmentId' => 'TN-2026-0001',
+					'milestoneId' => 'M-EIND',
+					'deliveryType' => 'eindoplevering',
+					'approved' => true,
+				]),
+			move: new TransitionMove(action: 'starten', from: 'planned', to: 'in-progress'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'OrderFulfilment'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);
@@ -475,13 +460,10 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 		);
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1089', ['status' => 'active']),
-			'activeren',
-			'draft',
-			'completed',
-			'admin',
-			'shillinq',
-			'Commitment'
+			object: $this->entity('1089', ['status' => 'active']),
+			move: new TransitionMove(action: 'activeren', from: 'draft', to: 'completed'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'Commitment'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);

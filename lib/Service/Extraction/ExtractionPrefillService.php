@@ -3,6 +3,9 @@
 /**
  * Extraction Prefill Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-001 / REQ-RXC-004) — maps a
  * docudesk `nl.conduction.docudesk.extraction.completed` payload onto a
  * confidence-scored `SupplierInvoice` (docType supplier-invoice) or `Receipt`
@@ -34,14 +37,13 @@
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @spec openspec/specs/receipt-extraction-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
+
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
 
 /**
  * Maps docudesk extraction payloads onto shillinq drafts and records
@@ -53,20 +55,7 @@ namespace OCA\Shillinq\Service\Extraction;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class ExtractionPrefillService {
-	/**
-	 * The SupplierInvoice schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_SUPPLIER_INVOICE = 'SupplierInvoice';
-
-	/**
-	 * The Receipt schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_RECEIPT = 'Receipt';
+class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 
 	/**
 	 * Extraction status recorded on an uncommitted draft (REQ-RXC-001).
@@ -81,6 +70,42 @@ class ExtractionPrefillService {
 	 * @var string
 	 */
 	public const STATUS_CONFIRMED = 'confirmed';
+
+	/**
+	 * The fields an operator may correct when confirming a draft, per schema.
+	 * Status, administration, provenance and payment fields are never among them.
+	 *
+	 * @var array<string, list<string>>
+	 */
+	public const CORRECTABLE_FIELDS = [
+		self::SCHEMA_SUPPLIER_INVOICE => [
+			'supplierId',
+			'invoiceNumber',
+			'invoiceDate',
+			'dueDate',
+			'glAccount',
+			'glAccountLabel',
+			'totalInclVat',
+			'totalVat',
+			'totalExclVat',
+			'description',
+		],
+		self::SCHEMA_RECEIPT => [
+			'receiptNumber',
+			'amount',
+			'currency',
+			'amountInBaseCurrency',
+			'exchangeRate',
+			'receiptDate',
+			'category',
+			'extractedText',
+			'vendorName',
+			'description',
+			'costCentreCode',
+			'claimId',
+			'glAccount',
+		],
+	];
 
 	/**
 	 * Resolve the shillinq schema slug for a docudesk `docType`.
@@ -262,6 +287,22 @@ class ExtractionPrefillService {
 	}//end composeReceiptSummary()
 
 	/**
+	 * Keep only the fields an operator may correct on this schema.
+	 *
+	 * @param string              $schema         SupplierInvoice or Receipt.
+	 * @param array<string,mixed> $incomingFields The submitted fields.
+	 *
+	 * @return array<string,mixed> The correctable subset.
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
+	 */
+	public function correctableFields(string $schema, array $incomingFields): array {
+		$allowed = (self::CORRECTABLE_FIELDS[$schema] ?? []);
+		return array_intersect_key($incomingFields, array_flip($allowed));
+
+	}//end correctableFields()
+
+	/**
 	 * Record an operator correction on an existing draft (REQ-RXC-004).
 	 *
 	 * Compares every key of `$incomingFields` that is one of the draft's
@@ -269,7 +310,8 @@ class ExtractionPrefillService {
 	 * map) against the draft's CURRENT value; a changed value is merged in
 	 * and its field name added to `humanCorrected` (union, never replacing
 	 * prior entries). The immutable `extractedFieldsOriginal` snapshot is
-	 * left untouched. `extractionStatus` becomes `confirmed`.
+	 * left untouched. `extractionStatus` becomes `confirmed` on a record that
+	 * came from an extraction or an import review; other records keep none.
 	 *
 	 * The comparison — and therefore the provenance record — is computed
 	 * server-side against the persisted draft, not trusted from the client,
@@ -311,7 +353,9 @@ class ExtractionPrefillService {
 		}//end foreach
 
 		$existingDraft['humanCorrected'] = $humanCorrected;
-		$existingDraft['extractionStatus'] = self::STATUS_CONFIRMED;
+		if (($existingDraft['extractionStatus'] ?? null) !== null) {
+			$existingDraft['extractionStatus'] = self::STATUS_CONFIRMED;
+		}
 
 		return $existingDraft;
 	}//end recordCorrection()

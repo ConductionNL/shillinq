@@ -3,6 +3,9 @@
 /**
  * Second-order IDOR guard on InvoiceGenerationService::draftInvoice().
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-001 (security-endpoint-guards): draftInvoice() resolves every id the
  * client supplies on the request (timeEntryIds/expenseIds/meterReadingIds/
  * milestoneId, and the UsageRatePlan a MeterReading points at) through
@@ -33,24 +36,27 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
+use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -62,6 +68,8 @@ use Psr\Log\NullLogger;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class InvoiceGenerationServiceIdorTest extends TestCase {
+	use SeededVatTariffs;
+
 
 	private const ADMIN_ATTACKER = 'adm-attacker';
 
@@ -223,7 +231,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 5.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 				[
 					'id' => 'ure-victim-1',
@@ -231,7 +239,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 8.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 			],
 			'ExpenseClaimEntry' => [
@@ -259,6 +267,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-attacker',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 				[
 					'id' => 'mr-victim-1',
@@ -270,6 +279,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-victim',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 				[
 					// Attacker's OWN reading, but with a ratePlanId that resolves to
@@ -284,6 +294,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-victim',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 			],
 			'UsageRatePlan' => [
@@ -344,9 +355,12 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			new RetainerResolver($container, $appConfig, $logger),
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
-			new VATCalculationService(),
+			$this->seededVat(),
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
+			billedReadings: $this->createMock(BilledReadings::class),
+			passThrough: $this->createMock(PassThroughBilling::class),
+			billableRates: new BillableRateService(new DuckObjectServiceAdapter($this->objectService), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 	}//end setUp()
 
@@ -365,13 +379,12 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			fromDate: '2026-03-01',
 			toDate: '2026-03-31',
 			timeEntryIds: ['ure-attacker-1', 'ure-victim-1'],
-			rateCardId: 'rc-none',
 		);
 
 		$invoice = $this->service->draftInvoice($request);
 
-		// Only the attacker's own 5 hours @ €100/hr (RateCardResolver's
-		// no-match fallback) = €500.00 net. If the victim's 8 hours had
+		// Only the attacker's own 5 hours @ €100/hr (the entry's own rate
+		// override) = €500.00 net. If the victim's 8 hours had
 		// leaked in, this would be €1300.00 (13 hours combined).
 		self::assertSame(500.00, $invoice['netAmount']);
 

@@ -35,6 +35,7 @@ import ArchiveArrowDownOutline from 'vue-material-design-icons/ArchiveArrowDownO
 import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
 import ArrowDecisionOutline from 'vue-material-design-icons/ArrowDecisionOutline.vue'
 import ArrowDownBoldOutline from 'vue-material-design-icons/ArrowDownBoldOutline.vue'
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import ArrowRightBoldOutline from 'vue-material-design-icons/ArrowRightBoldOutline.vue'
 import ArrowUpDown from 'vue-material-design-icons/ArrowUpDown.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
@@ -102,6 +103,7 @@ import CashMinus from 'vue-material-design-icons/CashMinus.vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
 import CashPlus from 'vue-material-design-icons/CashPlus.vue'
 import CashRefund from 'vue-material-design-icons/CashRefund.vue'
+import CashRegister from 'vue-material-design-icons/CashRegister.vue'
 import CashSync from 'vue-material-design-icons/CashSync.vue'
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
@@ -156,6 +158,7 @@ import DeleteSweepOutline from 'vue-material-design-icons/DeleteSweepOutline.vue
 import DesktopTowerMonitor from 'vue-material-design-icons/DesktopTowerMonitor.vue'
 import DiamondStone from 'vue-material-design-icons/DiamondStone.vue'
 import Domain from 'vue-material-design-icons/Domain.vue'
+import Download from 'vue-material-design-icons/Download.vue'
 import DownloadOutline from 'vue-material-design-icons/DownloadOutline.vue'
 import Earth from 'vue-material-design-icons/Earth.vue'
 import EarthArrowRight from 'vue-material-design-icons/EarthArrowRight.vue'
@@ -194,6 +197,7 @@ import FileReplaceOutline from 'vue-material-design-icons/FileReplaceOutline.vue
 import FileSendOutline from 'vue-material-design-icons/FileSendOutline.vue'
 import FileSign from 'vue-material-design-icons/FileSign.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
+import FileUploadOutline from 'vue-material-design-icons/FileUploadOutline.vue'
 import FileXmlBox from 'vue-material-design-icons/FileXmlBox.vue'
 import FilterCogOutline from 'vue-material-design-icons/FilterCogOutline.vue'
 import Finance from 'vue-material-design-icons/Finance.vue'
@@ -229,6 +233,7 @@ import Lightbulb from 'vue-material-design-icons/Lightbulb.vue'
 import LightbulbOnOutline from 'vue-material-design-icons/LightbulbOnOutline.vue'
 import LightbulbOutline from 'vue-material-design-icons/LightbulbOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
+import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import MapMarkerOutline from 'vue-material-design-icons/MapMarkerOutline.vue'
@@ -244,10 +249,12 @@ import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutli
 import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
 import PauseCircleOutline from 'vue-material-design-icons/PauseCircleOutline.vue'
+import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
 import Percent from 'vue-material-design-icons/Percent.vue'
 import PercentOutline from 'vue-material-design-icons/PercentOutline.vue'
 import PiggyBankOutline from 'vue-material-design-icons/PiggyBankOutline.vue'
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 import PlusCircle from 'vue-material-design-icons/PlusCircle.vue'
 import Poll from 'vue-material-design-icons/Poll.vue'
 import Pulse from 'vue-material-design-icons/Pulse.vue'
@@ -271,11 +278,13 @@ import ShieldCheckOutline from 'vue-material-design-icons/ShieldCheckOutline.vue
 import ShieldCrownOutline from 'vue-material-design-icons/ShieldCrownOutline.vue'
 import ShieldEditOutline from 'vue-material-design-icons/ShieldEditOutline.vue'
 import ShieldHalfFull from 'vue-material-design-icons/ShieldHalfFull.vue'
+import ShieldLockOutline from 'vue-material-design-icons/ShieldLockOutline.vue'
 import ShieldOutline from 'vue-material-design-icons/ShieldOutline.vue'
 import ShieldPlusOutline from 'vue-material-design-icons/ShieldPlusOutline.vue'
 import ShieldRemoveOutline from 'vue-material-design-icons/ShieldRemoveOutline.vue'
 import ShieldSearch from 'vue-material-design-icons/ShieldSearch.vue'
 import ShoppingOutline from 'vue-material-design-icons/ShoppingOutline.vue'
+import Shuffle from 'vue-material-design-icons/Shuffle.vue'
 import Sigma from 'vue-material-design-icons/Sigma.vue'
 import SignatureFreehand from 'vue-material-design-icons/SignatureFreehand.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
@@ -285,6 +294,8 @@ import SourceBranch from 'vue-material-design-icons/SourceBranch.vue'
 import SpeedometerSlow from 'vue-material-design-icons/SpeedometerSlow.vue'
 import StairsUp from 'vue-material-design-icons/StairsUp.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
+import Storefront from 'vue-material-design-icons/Storefront.vue'
+import StorefrontOutline from 'vue-material-design-icons/StorefrontOutline.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import SwapHorizontal from 'vue-material-design-icons/SwapHorizontal.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
@@ -353,6 +364,7 @@ export default {
 	ArchiveArrowUpOutline,
 	ArrowDecisionOutline,
 	ArrowDownBoldOutline,
+	ArrowLeft,
 	ArrowRightBoldOutline,
 	ArrowUpDown,
 	AutoFix,
@@ -420,6 +432,7 @@ export default {
 	CashMultiple,
 	CashPlus,
 	CashRefund,
+	CashRegister,
 	CashSync,
 	CertificateOutline,
 	ChartBar,
@@ -474,6 +487,7 @@ export default {
 	DesktopTowerMonitor,
 	DiamondStone,
 	Domain,
+	Download,
 	DownloadOutline,
 	Earth,
 	EarthArrowRight,
@@ -512,6 +526,7 @@ export default {
 	FileSendOutline,
 	FileSign,
 	FileTreeOutline,
+	FileUploadOutline,
 	FileXmlBox,
 	FilterCogOutline,
 	Finance,
@@ -547,6 +562,7 @@ export default {
 	LightbulbOnOutline,
 	LightbulbOutline,
 	LinkVariant,
+	LinkVariantOff,
 	Lock,
 	LockOutline,
 	MapMarkerOutline,
@@ -562,10 +578,12 @@ export default {
 	PackageVariant,
 	PackageVariantClosed,
 	PauseCircleOutline,
+	PencilOutline,
 	Percent,
 	PercentOutline,
 	PiggyBankOutline,
 	PlayCircleOutline,
+	Plus,
 	PlusCircle,
 	Poll,
 	Pulse,
@@ -589,11 +607,13 @@ export default {
 	ShieldCrownOutline,
 	ShieldEditOutline,
 	ShieldHalfFull,
+	ShieldLockOutline,
 	ShieldOutline,
 	ShieldPlusOutline,
 	ShieldRemoveOutline,
 	ShieldSearch,
 	ShoppingOutline,
+	Shuffle,
 	Sigma,
 	SignatureFreehand,
 	Sitemap,
@@ -604,6 +624,8 @@ export default {
 	StairsUp,
 	StarOutline,
 	StoreOutline,
+	Storefront,
+	StorefrontOutline,
 	SwapHorizontal,
 	SwapHorizontalBold,
 	SwapVerticalBold,

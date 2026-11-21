@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\BackgroundJob\FxRateImportJob;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateResult;
@@ -267,7 +268,8 @@ final class FxRateImportJobTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 		$this->adapter->method('isDormant')->willReturn(true);
 		$this->adapter->expects(self::never())->method('fetchFxSpot');
-		$this->container->expects(self::never())->method('get');
+		// The only container lookup is the system-context wrapper's ObjectService.
+		$this->container->expects(self::atMost(1))->method('get')->with('OCA\\OpenRegister\\Service\\ObjectService');
 
 		$job = $this->makeJob();
 		$m = new ReflectionMethod(FxRateImportJob::class, 'run');
@@ -322,6 +324,7 @@ final class FxRateImportJobTest extends TestCase {
 		$objectService = new class {
 			public int $saved = 0;
 			public ?array $lastObject = null;
+			public ?ObjectSaveOptions $lastOptions = null;
 
 			public function setRegister(string $r): self {
 				return $this;
@@ -332,9 +335,10 @@ final class FxRateImportJobTest extends TestCase {
 			public function findAll(array $opts): array {
 				return [];
 			}
-			public function saveObject(array $object, string $register, string $schema, ?string $uuid = null): void {
+			public function saveObject(array $object, ?ObjectSaveOptions $options = null): void {
 				$this->saved++;
 				$this->lastObject = $object;
+				$this->lastOptions = $options;
 			}
 		};
 
@@ -349,6 +353,8 @@ final class FxRateImportJobTest extends TestCase {
 		self::assertSame('USD', $objectService->lastObject['transactionCurrency']);
 		self::assertSame('EUR', $objectService->lastObject['baseCurrency']);
 		self::assertSame('ecb', $objectService->lastObject['source']);
+		self::assertSame('shillinq', $objectService->lastOptions?->target->register);
+		self::assertSame('FxRate', $objectService->lastOptions?->target->schema);
 	}//end testRunWritesOneFxRatePerPair()
 
 	/**
@@ -385,7 +391,7 @@ final class FxRateImportJobTest extends TestCase {
 				// Pretend a duplicate exists.
 				return [['transactionCurrency' => 'USD', 'baseCurrency' => 'EUR']];
 			}
-			public function saveObject(array $object, string $register, string $schema, ?string $uuid = null): void {
+			public function saveObject(array $object, ?ObjectSaveOptions $options = null): void {
 				$this->saved++;
 			}
 		};
@@ -432,7 +438,7 @@ final class FxRateImportJobTest extends TestCase {
 			public function findAll(array $opts): array {
 				return [];
 			}
-			public function saveObject(array $object, string $register, string $schema, ?string $uuid = null): void {
+			public function saveObject(array $object, ?ObjectSaveOptions $options = null): void {
 				$this->saved++;
 			}
 		};

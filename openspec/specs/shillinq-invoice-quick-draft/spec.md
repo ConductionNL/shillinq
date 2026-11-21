@@ -6,7 +6,9 @@ status: done
 
 ## Purpose
 Provides a dashboard-launched modal for quickly drafting an accounts-receivable invoice without leaving the Financial overview. Selecting a customer drives default GL account and due date, line items show live net, VAT, and gross totals, and saving creates a draft ARInvoice through the OpenRegister object API before refreshing the receivables widget; last-used line details are remembered per customer with a 90-day expiry.
+
 ## Requirements
+
 ### Requirement: Quick-draft launch from the Financial overview
 
 The Financial overview dashboard's **Create invoice** action SHALL open
@@ -89,3 +91,62 @@ days.
 - **WHEN** the preferences are loaded for that customer
 - **THEN** nothing is returned and the stale entry is discarded
 
+### Requirement: The quick draft saves its lines as invoiceLines (REQ-IQD-006)
+
+`buildInvoicePayload()` SHALL write the draft's lines to `invoiceLines`, each with
+`lineId` (the position as a string), `itemName` (the trimmed description),
+`quantity`, `unitCode` `C62`, `netPrice` (the unit price), `netAmount` (quantity
+times unit price, rounded to cents), `vatRate` and `vatCategory` (`S` above zero,
+`Z` at zero). It SHALL NOT write `lines`. Empty lines SHALL still be dropped.
+
+#### Scenario: A consultancy drafts two hours of work
+
+- GIVEN a draft line "Consulting", quantity 2, unit price 100, VAT 21, and an empty line
+- WHEN the payload is built
+- THEN `invoiceLines` holds one line with `lineId` "1", `itemName` "Consulting", `netPrice` 100, `netAmount` 200, `vatRate` 21, `vatCategory` S and `unitCode` C62
+- AND the payload has no `lines` key, and the totals are net 200, VAT 42, gross 242
+- @e2e exclude payload builder; covered by `tests/vitest/invoiceQuickDraft.spec.js` "builds a draft ARInvoice whose lines are the declared invoiceLines"
+
+### Requirement: REQ-IQD-007: The quick draft SHALL write only declared fields, its reference and line account included
+
+ARInvoice SHALL declare `customerReference` and a `glAccount` on each
+`invoiceLines` item. The quick draft SHALL write the reference as
+`customerReference` and the default GL account (or a line's own) as each line's
+`glAccount`. Every payload key and line key SHALL be declared on ARInvoice.
+
+#### Scenario: The reference and GL account survive the save
+
+- GIVEN a draft with reference `PO-42` and GL account `8000`
+- WHEN the payload is built
+- THEN `customerReference` is `PO-42`, each line's `glAccount` is `8000`
+- AND every key is declared on the effective ARInvoice register
+- @e2e exclude payload builder; covered by `tests/vitest/invoiceQuickDraft.spec.js`
+
+### Requirement: REQ-IQD-008: Quick drafts saved before ARInvoice 0.16.0 SHALL get their reference and line accounts from their audit trail
+
+For an ARInvoice with a `DRAFT-` number the repair step of REQ-RIN-011 SHALL read
+the invoice's create audit entry and fill a blank `customerReference` from it, and
+each line without a `glAccount` from the account at the same position in the
+entry's `invoiceLines`, or in the older `lines` shape. A value already there SHALL
+NOT be written. An audit trail that cannot be read SHALL skip that draft only.
+
+#### Scenario: A quick draft gets its reference and accounts from its create entry
+
+- GIVEN a quick draft without a reference whose create audit entry holds reference `PO-12` and account 8020 on line 1
+- WHEN the repair step runs
+- THEN the draft carries reference `PO-12` and line 1 account 8020
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testAQuickDraftGetsItsReferenceAndAccountsFromItsAudit`
+
+#### Scenario: The older lines shape is read and a reference is kept
+
+- GIVEN a quick draft with reference `KEEP` whose create entry holds `lines` with account 8030
+- WHEN the repair step runs
+- THEN the reference stays `KEEP` and line 1 gets account 8030
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testTheOlderQuickDraftLinesShapeIsRead`
+
+#### Scenario: An unreadable audit trail skips only that draft
+
+- GIVEN a quick draft whose audit trail cannot be read and a generated invoice that fits its profile
+- WHEN the repair step runs
+- THEN only the generated invoice is saved and no warning is written
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testAnUnreadableAuditSkipsOnlyThatDraft`

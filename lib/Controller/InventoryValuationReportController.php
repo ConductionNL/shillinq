@@ -32,9 +32,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\InventoryValuationReportService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InventoryValuationReportServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -46,33 +46,24 @@ use Psr\Log\LoggerInterface;
  * GET /api/inventory/valuation-report — value-as-of-date (+ optional ageing).
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
- *
- * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
- *     #506): inherent branch complexity in this domain logic; deferred
- *     pending a dedicated refactor.
  */
 class InventoryValuationReportController extends Controller {
-
-	/**
-	 * Identifier validation pattern shared across parameters.
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\\- ]{1,64}$/';
 
 	/**
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param InventoryValuationReportService $report The valuation reporting service.
-	 * @param AdministrationContextService $context Admin-membership / IDOR context.
+	 * @param InventoryValuationReportServiceInterface $report The valuation reporting service.
+	 * @param AdministrationContextServiceInterface $context Admin-membership / IDOR context.
 	 * @param LoggerInterface $logger Logger; never leaks stack traces.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly InventoryValuationReportService $report,
-		private readonly AdministrationContextService $context,
+		private readonly InventoryValuationReportServiceInterface $report,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -106,74 +97,132 @@ class InventoryValuationReportController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$asOf = trim((string)$this->request->getParam('as_of', ''));
-		$sku = trim((string)$this->request->getParam('sku', ''));
-		$warehouse = trim((string)$this->request->getParam('warehouse', ''));
-		$wantAgeing = ((string)$this->request->getParam('ageing', '') === '1');
+		$query = new InventoryValuationQuery(request: $this->request, activeAdministrationId: $this->activeAdministrationId());
+		$refusal = $this->queryRefusal(query: $query);
+		if ($refusal !== null) {
+			return $refusal;
+		}
 
-		if ($administrationId === '' || $asOf === '') {
+		try {
+			return $this->valuationReport(query: $query);
+		} catch (\Throwable $e) {
+			return $this->reportFailure(query: $query, failure: $e);
+		}
+
+	}//end report()
+
+	/**
+	 * A 400 for a missing or malformed input, otherwise null.
+	 *
+	 * @param InventoryValuationQuery $query The query.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function queryRefusal(InventoryValuationQuery $query): ?JSONResponse {
+		if ($query->isComplete() === false) {
 			return new JSONResponse(
 				['error' => 'administration_id and as_of are required'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
-			|| preg_match('/^\d{4}-\d{2}-\d{2}([T ].*)?$/', $asOf) !== 1
-			|| ($sku !== '' && preg_match(self::ID_PATTERN, $sku) !== 1)
-			|| ($warehouse !== '' && preg_match(self::ID_PATTERN, $warehouse) !== 1)
-		) {
+		if ($query->isWellFormed() === false) {
 			return new JSONResponse(
 				['error' => 'Invalid administration_id, as_of, sku or warehouse'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
+		return null;
+
+	}//end queryRefusal()
+
+	/**
+	 * The valuation, plus the ageing when asked for one item, for an
+	 * administration the caller may access; a masked 404 otherwise.
+	 *
+	 * @param InventoryValuationQuery $query The query.
+	 *
+	 * @return JSONResponse
+	 */
+	private function valuationReport(InventoryValuationQuery $query): JSONResponse {
+		if ($this->context->canAccess(administrationId: $query->administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		$payload = ['valuation' => $this->valuation(query: $query)];
+		if ($query->wantsAgeing() === true) {
+			$payload['ageing'] = $this->report->ageing(
+				administrationId: $query->administrationId,
+				asOfDate: $query->asOf,
+				sku: $query->sku,
+				warehouse: $query->warehouse
+			);
+		}
+
+		return new JSONResponse($payload, Http::STATUS_OK);
+
+	}//end valuationReport()
+
+	/**
+	 * The caller's active administration, for a request that names none.
+	 *
+	 * `buildContext()` derives it from the session user's own memberships, so
+	 * no client value reaches it; the report still asks canAccess() for it
+	 * like for a named one. '' when there is none.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
+	 */
+	private function activeAdministrationId(): string {
+		if (trim((string)$this->request->getParam('administration_id', '')) !== '') {
+			return '';
+		}
+
 		try {
-			if ($this->context->canAccess(administrationId: $administrationId) === false) {
-				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$skuFilter = null;
-			if ($sku !== '') {
-				$skuFilter = $sku;
-			}
-
-			$warehouseFilter = null;
-			if ($warehouse !== '') {
-				$warehouseFilter = $warehouse;
-			}
-
-			$valuation = $this->report->valuationAsOf(
-				administrationId: $administrationId,
-				asOfDate: $asOf,
-				sku: $skuFilter,
-				warehouse: $warehouseFilter
-			);
-
-			$payload = ['valuation' => $valuation];
-			if ($wantAgeing === true && $sku !== '' && $warehouse !== '') {
-				$payload['ageing'] = $this->report->ageing(
-					administrationId: $administrationId,
-					asOfDate: $asOf,
-					sku: $sku,
-					warehouse: $warehouse
-				);
-			}
-
-			return new JSONResponse($payload, Http::STATUS_OK);
+			return (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'InventoryValuationReportController: failed to compute valuation report',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
+			return '';
+		}
 
-			return new JSONResponse(
-				['error' => 'Failed to compute inventory valuation report'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+	}//end activeAdministrationId()
 
-	}//end report()
+	/**
+	 * Log a failed report and answer a 500 without the failure's details.
+	 *
+	 * @param InventoryValuationQuery $query The query.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function reportFailure(InventoryValuationQuery $query, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'InventoryValuationReportController: failed to compute valuation report',
+			['administrationId' => $query->administrationId, 'exception' => $failure->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute inventory valuation report'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end reportFailure()
+
+	/**
+	 * The valuation as of the date, filtered by item and warehouse when given.
+	 *
+	 * @param InventoryValuationQuery $query The query.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function valuation(InventoryValuationQuery $query): array {
+		return $this->report->valuationAsOf(
+			administrationId: $query->administrationId,
+			asOfDate: $query->asOf,
+			sku: $query->skuFilter(),
+			warehouse: $query->warehouseFilter()
+		);
+
+	}//end valuation()
 }//end class

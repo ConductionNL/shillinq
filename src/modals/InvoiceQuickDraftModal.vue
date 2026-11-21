@@ -197,16 +197,18 @@ import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import {
-	buildInvoicePayload,
+	applyQuickDraftPrefs,
+	buildQuickDraftRequest,
 	computeTotals,
+	customerTerms,
 	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
 	saveQuickDraftPrefs,
+	startingCustomerOption,
 } from './invoiceQuickDraft.js'
 
 const REGISTER_SLUG = 'shillinq'
-const AR_SCHEMA = 'ARInvoice'
 const CUSTOMER_SCHEMA = 'CustomerMaster'
 
 export default {
@@ -217,6 +219,24 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
+		/**
+		 * Where the dialog was opened from. `customer` on a customer's detail
+		 * page starts the draft with that customer selected (REQ-IQD-009).
+		 */
+		from: {
+			type: String,
+			default: '',
+		},
+
+		/**
+		 * The starting customer's object id. On a customer page the route's
+		 * id is used when it is not given, as AgreePaymentPlanModal does.
+		 */
+		objectId: {
+			type: String,
+			default: '',
+		},
 	},
 
 	emits: ['close', 'created'],
@@ -225,7 +245,6 @@ export default {
 			loadingCustomers: false,
 			customers: [],
 			selectedCustomer: null,
-			administrationId: '',
 			saving: false,
 			error: '',
 			vatOptions: [
@@ -291,7 +310,7 @@ export default {
 			handler(next) {
 				if (next === true) {
 					this.reset()
-					this.fetchCustomers()
+					this.fetchCustomers().then(() => this.selectStartingCustomer())
 				}
 			},
 		},
@@ -360,26 +379,34 @@ export default {
 			} finally {
 				this.loadingCustomers = false
 			}
-			this.fetchAdministrationId()
 		},
 
 		/**
-		 * Load the configured administration id. The ARInvoice schema
-		 * requires administrationId, so the quick draft sources it from the
-		 * app settings rather than asking the operator for it.
+		 * The customer the dialog starts with: the record of the customer page
+		 * it was opened on, else none.
 		 *
-		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
-		 * @return {Promise<void>}
+		 * @return {string} The object id, or ''.
+		 * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
 		 */
-		async fetchAdministrationId() {
-			try {
-				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/settings'),
-				)
-				this.administrationId =
-					data?.administration_id ?? data?.administrationId ?? ''
-			} catch (e) {
-				this.administrationId = ''
+		startingCustomerRef() {
+			if (this.from !== 'customer') {
+				return ''
+			}
+			return String(this.objectId || this.$route?.params?.id || '')
+		},
+
+		/**
+		 * Select the starting customer once the customer list has loaded,
+		 * through the same path as a choice by hand, so its GL account, stored
+		 * preferences and due date follow.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+		 */
+		selectStartingCustomer() {
+			const option = startingCustomerOption(this.customerOptions, this.startingCustomerRef())
+			if (option !== null) {
+				this.onCustomerSelected(option)
 			}
 		},
 
@@ -396,19 +423,7 @@ export default {
 				this.form.glAccount = String(customer.defaultGlAccount)
 			}
 			// Apply last-used per-customer preferences (REQ-IQD-004).
-			const prefs = loadQuickDraftPrefs(option.value)
-			if (prefs) {
-				if (prefs.glAccount) this.form.glAccount = String(prefs.glAccount)
-				const line = this.form.lines[0]
-				if (line) {
-					if (prefs.description && !line.description)
-						line.description = prefs.description
-					if (prefs.unitPrice && !line.unitPrice)
-						line.unitPrice = prefs.unitPrice
-					if (prefs.vatCode !== undefined && prefs.vatCode !== null)
-						line.vatRate = prefs.vatCode
-				}
-			}
+			applyQuickDraftPrefs(this.form, loadQuickDraftPrefs(option.value))
 			this.recomputeDueDate(customer)
 		},
 
@@ -421,8 +436,8 @@ export default {
 				customerOrEvent && customerOrEvent.customerId
 					? customerOrEvent
 					: this.selectedCustomer?.customer
-			const terms = customer?.paymentTerms || 'net30'
-			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, terms)
+			// The customer's own payment term (sales-invoice-sending REQ-SIS-005).
+			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, customerTerms(customer))
 		},
 
 		/**
@@ -460,25 +475,20 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
-				const payload = buildInvoicePayload({
-					customerId: this.selectedCustomer.value,
-					invoiceDate: this.form.invoiceDate,
-					dueDate: this.form.dueDate,
-					reference: this.form.reference,
-					glAccount: this.form.glAccount,
-					administrationId: this.administrationId,
-					lines: this.form.lines,
-				})
 				const response = await axios.post(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/${AR_SCHEMA}`,
-					),
-					payload,
+					generateUrl('/apps/shillinq/api/ar-invoices/quick-drafts'),
+					buildQuickDraftRequest({
+						customerId: this.selectedCustomer.value,
+						invoiceDate: this.form.invoiceDate,
+						dueDate: this.form.dueDate,
+						reference: this.form.reference,
+						glAccount: this.form.glAccount,
+						lines: this.form.lines,
+					}),
 				)
-				const created = response.data?.object ?? response.data ?? {}
-				const invoiceId = created.id ?? created.uuid ?? ''
-				const invoiceNumber =
-					created.invoiceNumber || payload.invoiceNumber || ''
+				const created = response.data ?? {}
+				const invoiceId = created.id ?? ''
+				const invoiceNumber = created.invoiceNumber ?? ''
 
 				// Persist per-customer preferences for next time (REQ-IQD-004).
 				const firstLine = this.form.lines[0] || {}
@@ -500,8 +510,7 @@ export default {
 				this.$emit('close')
 			} catch (e) {
 				this.error =
-					e?.response?.data?.error
-					|| e?.response?.data?.message
+					e?.response?.data?.message
 					|| e?.message
 					|| t('shillinq', 'Failed to create draft invoice.')
 				showError(this.error)

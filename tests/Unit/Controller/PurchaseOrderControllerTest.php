@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PurchaseOrderController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\PurchaseOrderApprovalTiers;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -100,6 +101,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		parent::setUp();
 		$this->request = $this->createMock(IRequest::class);
 		$this->purchaseOrderService = $this->createMock(PurchaseOrderService::class);
+		$this->approvalTiers = new PurchaseOrderApprovalTiers();
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -142,6 +144,13 @@ final class PurchaseOrderControllerTest extends TestCase {
 	}//end anonymous()
 
 	/**
+	 * The approver tiers; a mock when a test sets one, else the shipped declaration.
+	 *
+	 * @var PurchaseOrderApprovalTiers
+	 */
+	private PurchaseOrderApprovalTiers $approvalTiers;
+
+	/**
 	 * Build the controller over the current mocks.
 	 *
 	 * @return PurchaseOrderController
@@ -154,6 +163,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 			$this->userSession,
 			$this->logger,
 			$this->l10n,
+			$this->approvalTiers,
 		);
 
 	}//end controller()
@@ -281,7 +291,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		$this->withParams(['administrationId' => 'adm-1']);
 		$po = ['id' => 'po-1', 'status' => 'sent'];
 		$this->purchaseOrderService->expects($this->once())
-			->method('blockSendUntilApproved')
+			->method('markSent')
 			->willReturnCallback(
 				static function (string $administrationId, string $purchaseOrderId) use ($po): array {
 					self::assertSame('adm-1', $administrationId);
@@ -307,7 +317,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->administrationContext->method('canAccess')->willReturn(false);
 		$this->withParams(['administrationId' => 'adm-other']);
-		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+		$this->purchaseOrderService->expects($this->never())->method('markSent');
 
 		$response = $this->controller()->send('po-1');
 
@@ -323,13 +333,43 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testSendAnonymousReturns401(): void {
 		$this->anonymous();
 		$this->withParams(['administrationId' => 'adm-1']);
-		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+		$this->purchaseOrderService->expects($this->never())->method('markSent');
 
 		$response = $this->controller()->send('po-1');
 
 		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
 	}//end testSendAnonymousReturns401()
+
+	/**
+	 * dispatchChannels() answers the service's channel availability with HTTP 200.
+	 *
+	 * @return void
+	 */
+	public function testDispatchChannelsReturnsTheServiceAnswer(): void {
+		$channels = [
+			'peppol' => ['available' => false, 'reason' => 'Peppol sending is not configured'],
+			'email' => ['available' => true, 'reason' => null],
+		];
+		$this->purchaseOrderService->expects($this->once())->method('dispatchChannels')->willReturn($channels);
+
+		$response = $this->controller()->dispatchChannels();
+
+		self::assertSame(200, $response->getStatus());
+		self::assertSame($channels, $response->getData());
+	}//end testDispatchChannelsReturnsTheServiceAnswer()
+
+	/**
+	 * dispatchChannels() refuses an anonymous caller with 401 and asks the service nothing.
+	 *
+	 * @return void
+	 */
+	public function testDispatchChannelsRefusesAnonymous(): void {
+		$this->anonymous();
+		$this->purchaseOrderService->expects($this->never())->method('dispatchChannels');
+
+		self::assertSame(401, $this->controller()->dispatchChannels()->getStatus());
+	}//end testDispatchChannelsRefusesAnonymous()
 
 	/**
 	 * previewApprovalChain() returns the server-determined chain for the
@@ -340,17 +380,14 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testPreviewApprovalChainReturns200WithChain(): void {
 		$this->withParams(['amount' => '18500']);
 		$chain = [
-			['role' => 'budget_holder', 'threshold' => 5000.0],
-			['role' => 'finance_manager', 'threshold' => 25000.0],
+			['role' => 'teamleider', 'order' => 1],
+			['role' => 'facility_manager', 'order' => 2],
 		];
-		$this->purchaseOrderService->expects($this->once())
-			->method('determineApprovalChain')
-			->willReturnCallback(
-				static function (float $amount) use ($chain): array {
-					self::assertSame(18500.0, $amount);
-					return $chain;
-				}
-			);
+		$this->approvalTiers = $this->createMock(PurchaseOrderApprovalTiers::class);
+		$this->approvalTiers->expects($this->once())
+			->method('rolesFor')
+			->with(1850000)
+			->willReturn($chain);
 
 		$response = $this->controller()->previewApprovalChain();
 
@@ -368,14 +405,11 @@ final class PurchaseOrderControllerTest extends TestCase {
 	 */
 	public function testPreviewApprovalChainClampsNegativeAmount(): void {
 		$this->withParams(['amount' => '-9999']);
-		$this->purchaseOrderService->expects($this->once())
-			->method('determineApprovalChain')
-			->willReturnCallback(
-				static function (float $amount): array {
-					self::assertSame(0.0, $amount);
-					return [];
-				}
-			);
+		$this->approvalTiers = $this->createMock(PurchaseOrderApprovalTiers::class);
+		$this->approvalTiers->expects($this->once())
+			->method('rolesFor')
+			->with(0)
+			->willReturn([]);
 
 		$response = $this->controller()->previewApprovalChain();
 
@@ -392,7 +426,8 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testPreviewApprovalChainAnonymousReturns401(): void {
 		$this->anonymous();
 		$this->withParams(['amount' => '100']);
-		$this->purchaseOrderService->expects($this->never())->method('determineApprovalChain');
+		$this->approvalTiers = $this->createMock(PurchaseOrderApprovalTiers::class);
+		$this->approvalTiers->expects($this->never())->method('rolesFor');
 
 		$response = $this->controller()->previewApprovalChain();
 
@@ -651,4 +686,86 @@ final class PurchaseOrderControllerTest extends TestCase {
 	}//end testTransmitEmailMalformedIdReturns400()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * The create payload, every refusal body, the runtime-exception mapping and
+	 * every failure log line, pinned before the actions share their steps.
+	 *
+	 * @return void
+	 */
+	public function testBodiesPayloadAndLogLines(): void {
+		$this->withParams(
+			[
+				'administrationId' => ' adm-1 ',
+				'supplierId' => ' s-1 ',
+				'lines' => 'one',
+				'notes' => 7,
+				'fallbackReason' => ' no peppol id ',
+			]
+		);
+		$logged = [];
+		$this->logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+		$payload = ['supplierId' => 's-1', 'costCenter' => '', 'projectCode' => '', 'currency' => 'EUR', 'lines' => ['one'], 'notes' => '7'];
+		$this->purchaseOrderService->method('createPurchaseOrder')->with('adm-1', $payload)->willReturnOnConsecutiveCalls(
+			self::throwException(new \RuntimeException('supplierId missing')),
+			self::throwException(new \LogicException('db'))
+		);
+		$this->purchaseOrderService->method('markSent')->with('adm-1', 'po-1')->willReturnOnConsecutiveCalls(
+			self::throwException(new \RuntimeException('Purchase order not found')),
+			self::throwException(new \RuntimeException('chain incomplete')),
+			self::throwException(new \LogicException('db'))
+		);
+		$this->purchaseOrderService->method('sendToPeppol')->willThrowException(new \LogicException('ap down'));
+		$this->purchaseOrderService->method('sendToPDFEmail')->with('adm-1', 'po-1', 'no peppol id')->willThrowException(new \LogicException('smtp down'));
+		$controller = $this->controller();
+
+		$rejected = $controller->create();
+		self::assertSame(
+			[Http::STATUS_BAD_REQUEST, ['message' => 'Unable to create purchase order — check the required fields', 'error' => 'purchase-order-create-invalid']],
+			[$rejected->getStatus(), $rejected->getData()]
+		);
+		$failed = $controller->create();
+		self::assertSame(
+			[Http::STATUS_INTERNAL_SERVER_ERROR, ['message' => 'Unable to create purchase order', 'error' => 'purchase-order-create-failed']],
+			[$failed->getStatus(), $failed->getData()]
+		);
+		$send = [$controller->send('po-1'), $controller->send('po-1'), $controller->send('po-1')];
+		self::assertSame(
+			[[404, ['error' => 'Purchase order not found']], [409, ['error' => 'chain incomplete']], [500, ['error' => 'Could not advance purchase order']]],
+			array_map(static fn ($r): array => [$r->getStatus(), $r->getData()], $send)
+		);
+		self::assertSame(['error' => 'Could not transmit purchase order'], $controller->transmitPeppol('po-1')->getData());
+		self::assertSame(['error' => 'Could not transmit purchase order'], $controller->transmitEmail('po-1')->getData());
+		self::assertSame(['error' => 'Invalid purchase order id'], $controller->send('a/b')->getData());
+
+		$order = static fn (string $e): array => ['purchaseOrderId' => 'po-1', 'administrationId' => 'adm-1', 'exception' => $e];
+		self::assertSame(
+			[
+				['PurchaseOrderController: purchase order creation rejected', ['administrationId' => 'adm-1', 'exception' => 'supplierId missing']],
+				['PurchaseOrderController: failed to create purchase order', ['administrationId' => 'adm-1', 'exception' => 'db']],
+				['PurchaseOrderController: failed to advance purchase order', $order('db')],
+				['PurchaseOrderController: Peppol transmission failed', $order('ap down')],
+				['PurchaseOrderController: PDF+email transmission failed', $order('smtp down')],
+			],
+			$logged
+		);
+
+	}//end testBodiesPayloadAndLogLines()
+
+	/**
+	 * The administration refusal bodies: create names the administration, the
+	 * order actions mask it as the order.
+	 *
+	 * @return void
+	 */
+	public function testAdministrationRefusalBodies(): void {
+		$this->withParams(['administrationId' => 'a b']);
+
+		self::assertSame(['error' => 'administrationId is required'], $this->controller()->create()->getData());
+		self::assertSame(['error' => 'administrationId is required'], $this->controller()->transmitEmail('po-1')->getData());
+
+	}//end testAdministrationRefusalBodies()
 }//end class

@@ -101,6 +101,50 @@ async function gotoRoute(page: Page, route: string): Promise<void> {
 	).toBe(normalisePath(target))
 }
 
+test.describe('budget-known-costs — the operator-triggered run (design.md §12)', () => {
+	test.beforeEach(async ({ page }) => {
+		page.setViewportSize({ width: 1600, height: 1200 })
+	})
+
+	/**
+	 * The writer is reached from the Derivations page: "Regenerate known
+	 * costs" opens a dialog, runs KnownCostBudgetWriter for the active
+	 * administration and shows what it wrote. It runs first in this file, so
+	 * the source rows the tests below look for exist when the administration
+	 * has recurring costs and a default budget.
+	 */
+	test('Regenerate known costs on the Derivations page runs the writer and shows the summary', async ({
+		page,
+	}) => {
+		await gotoRoute(page, BUDGET_LINE_DERIVATIONS_ROUTE)
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
+
+		await page.getByRole('button', { name: 'Regenerate known costs' }).click()
+		const dialog = page.getByTestId('regenerate-known-costs-modal')
+		await expect(dialog).toBeVisible({ timeout: 10_000 })
+
+		const answer = page.waitForResponse(
+			(response) =>
+				response.url().includes('/api/v1/budgets/known-costs/regenerate')
+				&& response.request().method() === 'POST',
+		)
+		await dialog.getByTestId('regenerate-known-costs-submit').click()
+		const response = await answer
+		expect(response.status(), 'the run must be allowed for the signed-in bookkeeper').toBe(200)
+		const summary = await response.json()
+		for (const key of ['created', 'updated', 'overridden']) {
+			expect(typeof summary[key]).toBe('number')
+		}
+		expect(Array.isArray(summary.skippedFiscalYears)).toBe(true)
+
+		await expect(dialog.getByTestId('regenerate-known-costs-summary')).toContainText(
+			`Budget lines created: ${summary.created}. Updated: ${summary.updated}.`,
+		)
+	})
+})
+
 test.describe('budget-known-costs — recurring cost derives a BudgetLine (REQ-BKC-001)', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })

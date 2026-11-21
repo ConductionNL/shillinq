@@ -35,11 +35,13 @@ namespace OCA\Shillinq\Service;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TaxNotificationServiceInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Notification\IManager;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatches Vpb deadline reminders (REQ-VPB-013).
@@ -51,7 +53,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
  */
-class TaxNotificationService {
+class TaxNotificationService implements TaxNotificationServiceInterface {
 	/**
 	 * Reminder windows in days before the deadline (REQ-VPB-013).
 	 *
@@ -150,7 +152,7 @@ class TaxNotificationService {
 
 		try {
 			$notification = $this->notificationMgr->createNotification();
-			$notification->setApp(Application::APP_ID)
+			$notification->setApp(AppIdentity::APP_ID)
 				->setObject('tax-deadline', $objectId)
 				->setSubject(
 					'vpb_deadline_reminder',
@@ -199,11 +201,6 @@ class TaxNotificationService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

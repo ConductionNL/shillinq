@@ -1,0 +1,129 @@
+{
+    "profitFinalized": [
+        {
+            "audit": "IBProfitAttribution.finalized",
+            "context": {
+                "administrationId": "adm-x",
+                "financialYear": 2026,
+                "qualifying_asset_id": "asset-1",
+                "subject_schema": "IBProfitAttribution",
+                "subject_id": "uuid-1",
+                "reason": "vso_signed"
+            }
+        }
+    ],
+    "profitPriorLocked": [
+        {
+            "audit": "IBProfitAttribution.amendment_attempt_blocked",
+            "context": {
+                "administrationId": "adm-x",
+                "financialYear": 2026,
+                "qualifying_asset_id": "asset-1",
+                "subject_schema": "IBProfitAttribution",
+                "subject_id": "uuid-1",
+                "reason": "vso_locked",
+                "details": {
+                    "changed_keys": [
+                        "benefit_innovation_box"
+                    ]
+                }
+            }
+        }
+    ],
+    "profitUnlocking": [
+        {
+            "audit": "IBProfitAttribution.amendment_attempt_blocked",
+            "context": {
+                "administrationId": "adm-x",
+                "financialYear": 2026,
+                "qualifying_asset_id": "asset-1",
+                "subject_schema": "IBProfitAttribution",
+                "subject_id": "uuid-1",
+                "reason": "vso_locked",
+                "details": {
+                    "changed_keys": [
+                        "vso_locked"
+                    ]
+                }
+            }
+        }
+    ],
+    "profitYearLocked": [
+        {
+            "isYearLocked": [
+                "adm-x",
+                2026
+            ]
+        },
+        {
+            "audit": "IBProfitAttribution.amendment_attempt_blocked",
+            "context": {
+                "administrationId": "adm-x",
+                "financialYear": 2026,
+                "qualifying_asset_id": "asset-1",
+                "subject_schema": "IBProfitAttribution",
+                "subject_id": "uuid-1",
+                "reason": "vso_locked",
+                "details": {
+                    "changed_keys": [
+                        "benefit_innovation_box"
+                    ]
+                }
+            }
+        }
+    ],
+    "profitYearOpen": [
+        {
+            "isYearLocked": [
+                "adm-x",
+                2026
+            ]
+        }
+    ],
+    "profitNoAdmin": [],
+    "profitNoYear": [],
+    "profitStringYear": [
+        {
+            "isYearLocked": [
+                "adm-x",
+                2025
+            ]
+        },
+        {
+            "audit": "IBProfitAttribution.amendment_attempt_blocked",
+            "context": {
+                "administrationId": "adm-x",
+                "financialYear": 2025,
+                "qualifying_asset_id": "asset-1",
+                "subject_schema": "IBProfitAttribution",
+                "subject_id": "uuid-1",
+                "reason": "vso_locked",
+                "details": {
+                    "changed_keys": [
+                        "financialYear",
+                        "vso_locked"
+                    ]
+                }
+            }
+        }
+    ],
+    "nexusAmended": [
+        {
+            "audit": "IBProfitAttribution.amendment_attempt_blocked",
+            "context": {
+                "administrationId": "adm-x",
+                "financialYear": 2026,
+                "subject_schema": "NexusCalculation",
+                "subject_id": "uuid-1",
+                "reason": "immutable_schema_violation",
+                "details": {
+                    "changed_keys": [
+                        "nexus_fraction",
+                        "financialYear"
+                    ]
+                }
+            }
+        }
+    ],
+    "otherSchema": []
+}

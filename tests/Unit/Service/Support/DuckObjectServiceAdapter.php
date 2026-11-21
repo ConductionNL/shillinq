@@ -4,6 +4,9 @@
  * Adapter that lets a duck-typed in-memory ObjectService double satisfy the
  * published ADR-084 contract.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## Why this exists
  *
  * Before ADR-083 a service reached OpenRegister through an untyped
@@ -55,9 +58,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -69,6 +69,14 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCP\IUser;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\BulkSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\LockRequest;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\UnlockRequest;
 
 /**
  * Contract-conformant wrapper around a duck-typed ObjectService double.
@@ -222,15 +230,16 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$_render = $options?->render ?? true;
+		$_audit = $options?->audit ?? true;
 		// The scope can arrive EITHER through the fluent setters or as named
 		// arguments on the call itself -- BadoControleprotocolService does the
 		// latter, `find(id: …, register: …, schema: …)`. Honouring only one of
@@ -268,7 +277,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 			$this->unsupported(method: 'find');
 		}
 
-		foreach ($this->findAll() as $row) {
+		foreach ($this->findAll(_rbac: $_rbac, _multitenancy: $_multitenancy) as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
@@ -306,18 +315,19 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$silent = $options->policy->silent ?? false;
+		$_validation = $options->policy->validation ?? true;
+		$uploadedFiles = $options->uploadedFiles;
+		$currentUser = $options->actor->currentUser;
+		$failIfExists = $options->policy->failIfExists ?? false;
 		if ($schema !== null) {
 			$this->setSchema(schema: $schema);
 		}
@@ -399,6 +409,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 			return $this->inner->$method($primary);
 		}
 
+		[$primary, $named] = $this->mainShaped(method: $method, primary: $primary, named: $named);
 		$args = [];
 		foreach ($reflected->getParameters() as $index => $parameter) {
 			if ($index === 0) {
@@ -443,6 +454,45 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		return $reflected->invokeArgs($this->inner, $args);
 
 	}//end invokeInner()
+
+	/**
+	 * The arguments in OpenRegister main's form: option objects carry register, schema and the rest.
+	 *
+	 * @param string               $method  The object-service method.
+	 * @param mixed                $primary The first argument in the release's form.
+	 * @param array<string, mixed> $named   The release's named values.
+	 *
+	 * @return array{0: mixed, 1: array<string, mixed>} The first argument and the named values, options added.
+	 */
+	private function mainShaped(string $method, mixed $primary, array $named): array {
+		$target = new \OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget(register: ($named['register'] ?? null), schema: ($named['schema'] ?? null));
+		if ($method === 'find') {
+			$named['options'] = new \OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions(register: ($named['register'] ?? null), schema: ($named['schema'] ?? null), extend: ($named['_extend'] ?? []), files: ($named['files'] ?? false));
+		}
+
+		if ($method === 'saveObject') {
+			$named['options'] = new \OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions(
+				target: $target,
+				uuid: ($named['uuid'] ?? null),
+				extend: ($named['extend'] ?? []),
+				uploadedFiles: ($named['uploadedFiles'] ?? null),
+				policy: new \OCA\OpenRegister\Kernel\Contracts\Value\SavePolicy(silent: ($named['silent'] ?? false), validation: ($named['_validation'] ?? true), failIfExists: ($named['failIfExists'] ?? false)),
+				actor: new \OCA\OpenRegister\Kernel\Contracts\Value\SaveActor(currentUser: ($named['currentUser'] ?? null))
+			);
+		}
+
+		$first = (new \ReflectionMethod($this->inner, $method))->getParameters()[0] ?? null;
+		$type = (string)$first?->getType();
+		if ($method === 'deleteObject' && str_contains($type, 'ObjectDeletion') === true) {
+			$primary = new \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion(uuid: (string)$primary, target: $target, currentUser: ($named['currentUser'] ?? null));
+		}
+
+		if ($method === 'patchObject' && str_contains($type, 'ObjectPatch') === true) {
+			$primary = new \OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch(objectId: (string)$primary, data: ($named['data'] ?? []), target: $target);
+		}
+
+		return [$primary, $named];
+	}//end mainShaped()
 
 	/**
 	 * Normalise a double's return value to a contract entity.
@@ -589,14 +639,15 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$register = $patch->target->register;
+		$schema = $patch->target->schema;
+		$currentUser = $patch->currentUser;
 		if (method_exists($this->inner, 'patchObject') === true) {
 			return $this->entity(
 				value: $this->invokeInner(
@@ -641,14 +692,15 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 */
 	public function findSilent(
 		string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		$found = $this->find(id: $id, schema: $schema);
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$found = $this->find(id: $id, options: new ObjectFindOptions(schema: $schema));
 		if ($found === null) {
 			throw new RuntimeException('DuckObjectServiceAdapter: no object ' . $id);
 		}
@@ -737,15 +789,16 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return bool
 	 */
 	public function deleteObject(
-		string $uuid,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_retentionSweep = false,
-		?IUser $currentUser = null,
-		bool $permanent = false
+		bool $_retentionSweep = false
 	): bool {
+		$uuid = $deletion->uuid;
+		$register = $deletion->target->register;
+		$schema = $deletion->target->schema;
+		$currentUser = $deletion->currentUser;
+		$permanent = $deletion->permanent ?? false;
 		if ($schema !== null) {
 			$this->setSchema(schema: $schema);
 		}
@@ -830,23 +883,24 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		BulkSaveOptions $options = new BulkSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): array {
+		$register = $options->defaults->register;
+		$schema = $options->defaults->schema;
+		$validation = $options->validation ?? false;
+		$events = $options->events ?? false;
+		$deduplicateIds = true;
+		$enrich = true;
+		$_audit = $options->audit ?? true;
 		if (method_exists($this->inner, 'saveObjects') === true) {
-			return $this->inner->saveObjects($objects);
+			return $this->inner->saveObjects($objects, $options);
 		}
 
 		$out = [];
 		foreach ($objects as $object) {
-			$out[] = $this->saveObject(object: $object, schema: $schema);
+			$out[] = $this->saveObject(object: $object, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: $schema)));
 		}
 
 		return $out;
@@ -897,10 +951,14 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 *
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool       $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(UnlockRequest $request): bool {
+		$identifier = $request->identifier;
+		$advisory = $request->advisory ?? false;
+		$runUuid = $request->runUuid;
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -912,15 +970,20 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @param ?string $process    A label for the holding process.
 	 * @param ?int    $duration   Lock duration in seconds.
 	 * @param bool    $advisory   Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
 	public function lockObject(
-		string $identifier,
-		?string $process = null,
-		?int $duration = null,
+		LockRequest $request,
 		bool $advisory = false
 	): array {
+		$identifier = $request->identifier;
+		$process = $request->process;
+		$duration = $request->duration;
+		$runUuid = $request->runUuid;
+		$nodeId = $request->nodeId;
 		$this->unsupported(method: 'lockObject');
 
 	}//end lockObject()
@@ -940,7 +1003,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	}//end deleteObjects()
 
 	/**
-	 * Not modelled.
+	 * Forwarded when the double models it; refused otherwise.
 	 *
 	 * @param string $uuid          The object UUID.
 	 * @param array  $filters       Equality filters.
@@ -950,7 +1013,15 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function getLogs(string $uuid, array $filters = [], bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->unsupported(method: 'getLogs');
+		return (array)$this->invokeInner(
+			method: 'getLogs',
+			primary: $uuid,
+			named: [
+				'filters'       => $filters,
+				'_rbac'         => $_rbac,
+				'_multitenancy' => $_multitenancy,
+			]
+		);
 
 	}//end getLogs()
 
@@ -1028,4 +1099,11 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		$this->unsupported(method: 'countSearchObjects');
 
 	}//end countSearchObjects()
+	/**
+	 * Not used by this double.
+	 */
+	public function validateObject(array $object, string|int $register, string|int $schema, ?string $id=null): \OCA\OpenRegister\Kernel\Contracts\Value\ObjectValidationVerdict {
+		throw new \LogicException('validateObject() is not modelled by this double');
+	}
+
 }//end class

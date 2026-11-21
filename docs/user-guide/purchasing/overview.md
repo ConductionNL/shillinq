@@ -42,6 +42,26 @@ The **Supplier invoices** (under Purchasing) is a purchasing-centric view of bil
 - Bills linked to a goods receipt
 - Standalone bills (no PO)
 
+#### Booking an invoice without an order
+
+An invoice without a purchase order is booked in one step. Open it and press **Book without order**. Shillinq writes the invoice into Accounts Payable, books it and links the two. The ledger then shows each line on its expense account, the input VAT and the amount owed to the supplier.
+
+Before you book, check three things on the invoice page:
+
+- **Supplier.** A UBL invoice finds its supplier by KvK number, then by VAT number. When no supplier matches, the page shows the supplier as the invoice states it. Pick the supplier in the edit form.
+- **Expense account.** Each line needs one. An empty line takes the supplier's default expense account.
+- **Warnings.** Two warnings need a reason before you can book.
+
+An invoice with a line linked to a purchase order cannot be booked this way. It goes through the 3-way match.
+
+#### Same number as
+
+Shillinq warns when a supplier invoice number was already used for the same supplier. This works however the invoice arrived. A UBL import of a known number is refused. A CSV import skips the row and lists it by number. A typed invoice is saved with the warning, and needs a reason before you book it.
+
+#### IBAN differs from supplier record
+
+Shillinq compares the IBAN on an invoice with the supplier's bank account and qualification. Spaces and case do not count. When they differ, the invoice page shows both. You can still book the invoice with a reason, but its Accounts Payable entry is blocked from payment. No payment run pays it until someone checks the new account and releases the block.
+
 ### 3-way matching
 
 **3-way matching** verifies that what was ordered (PO), what was received (goods receipt), and what was invoiced (supplier invoice) all agree within tolerance. Shillinq flags discrepancies:

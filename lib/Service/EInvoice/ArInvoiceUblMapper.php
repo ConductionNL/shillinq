@@ -3,6 +3,9 @@
 /**
  * NLCIUS UBL 2.1 Invoice Mapper
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure transformation of a persisted `ARInvoice` (plus its EN 16931 seller/buyer
  * identifiers and `invoiceLines`/`vatBreakdown` groups already carried on the
  * schema — see add-shillinq-invoice-lines.json) into a UBL 2.1 `Invoice` XML
@@ -27,15 +30,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\EInvoice;
 
+use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use RuntimeException;
 
 /**
@@ -79,6 +80,7 @@ final class ArInvoiceUblMapper {
 	 *                          lifecycle state — no XML is produced (REQ-EINV-001).
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-einvoicing-ubl-peppol/spec.md (REQ-EINV-010)
 	 */
 	public function toNlciusXml(array $arInvoice): string {
 		$lifecycleState = (string)($arInvoice['lifecycleState'] ?? '');
@@ -108,8 +110,23 @@ final class ArInvoiceUblMapper {
 			name: 'cbc:InvoiceTypeCode',
 			value: (string)($arInvoice['invoiceTypeCode'] ?? '380')
 		);
+		// BT-22 Invoice note: a reverse-charged invoice says so, in UBL order
+		// before the currency (tax-icp-and-reverse-charge REQ-ICR-001).
+		$reverseCharge = (new ReverseChargeNotice())->forInvoice(invoice: $arInvoice);
+		if ($reverseCharge !== null) {
+			$xml .= $this->element(name: 'cbc:Note', value: $reverseCharge['noticeNl']);
+		}
+
 		$xml .= $this->element(name: 'cbc:DocumentCurrencyCode', value: $currency);
 
+		// BT-10 Buyer reference: the reference the customer gave the invoice,
+		// in UBL order after the currency. No reference, no element (REQ-EINV-010).
+		$buyerReference = trim((string)($arInvoice['customerReference'] ?? ''));
+		if ($buyerReference !== '') {
+			$xml .= $this->element(name: 'cbc:BuyerReference', value: $buyerReference);
+		}
+
+		$xml .= $this->billingReferences(arInvoice: $arInvoice);
 		$xml .= $this->supplierParty(arInvoice: $arInvoice);
 		$xml .= $this->customerParty(arInvoice: $arInvoice);
 
@@ -142,6 +159,42 @@ final class ArInvoiceUblMapper {
 
 		return $xml;
 	}//end toNlciusXml()
+
+	/**
+	 * Render one cac:BillingReference per preceding invoice (BG-3): on a final
+	 * invoice, each down-payment invoice it deducts (sales-down-payments
+	 * REQ-SDP-006). In UBL order they follow BuyerReference and precede the seller.
+	 *
+	 * @param array<string,mixed> $arInvoice The ARInvoice record.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private function billingReferences(array $arInvoice): string {
+		$xml = '';
+		foreach ((array)($arInvoice['precedingInvoiceReferences'] ?? []) as $reference) {
+			if (is_array($reference) === false) {
+				continue;
+			}
+
+			$number = trim((string)($reference['reference'] ?? ''));
+			if ($number === '') {
+				continue;
+			}
+
+			$xml .= '<cac:BillingReference><cac:InvoiceDocumentReference>';
+			$xml .= $this->element(name: 'cbc:ID', value: $number);
+			$issueDate = trim((string)($reference['issueDate'] ?? ''));
+			if ($issueDate !== '') {
+				$xml .= $this->element(name: 'cbc:IssueDate', value: $issueDate);
+			}
+
+			$xml .= '</cac:InvoiceDocumentReference></cac:BillingReference>';
+		}
+
+		return $xml;
+	}//end billingReferences()
 
 	/**
 	 * Render the AccountingSupplierParty (seller) block.
@@ -265,6 +318,14 @@ final class ArInvoiceUblMapper {
 			$xml .= $this->element(name: 'cbc:ID', value: $category);
 			if ($rate !== null) {
 				$xml .= $this->element(name: 'cbc:Percent', value: $this->number(value: (float)$rate));
+			}
+
+			// A reverse-charge group names its exemption reason (EN 16931
+			// BR-IC-10, BR-AE-10; tax-icp-and-reverse-charge REQ-ICR-001).
+			$exemption = (ReverseChargeNotice::CATEGORIES[strtoupper($category)] ?? null);
+			if ($exemption !== null) {
+				$xml .= $this->element(name: 'cbc:TaxExemptionReasonCode', value: $exemption['code']);
+				$xml .= $this->element(name: 'cbc:TaxExemptionReason', value: $exemption['reason']);
 			}
 
 			$xml .= '<cac:TaxScheme>' . $this->element(name: 'cbc:ID', value: 'VAT') . '</cac:TaxScheme>';

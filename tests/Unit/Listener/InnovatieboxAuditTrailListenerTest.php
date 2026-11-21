@@ -3,6 +3,9 @@
 /**
  * Unit tests for the InnovatieboxAuditTrailListener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Verifies the listener's contract for the three innovatiebox subject
  * schemas (NexusCalculation, IBProfitAttribution, CarryForwardLoss):
  *
@@ -28,15 +31,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Db\AuditTrail\ObjectAuditEvent;
+use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -80,35 +82,32 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 	}//end recordingLogger()
 
 	/**
-	 * Build a fake InnovatieboxAuditEventLogger that captures every record() call.
+	 * Build a fake OpenRegister AuditTrailMapper that captures every
+	 * recordObjectEvent() call. Each captured call is the context the
+	 * listener handed over, plus `event_type` (the action) and `object` (the
+	 * entity the row was written on), so the assertions read the same
+	 * fields the InnovatieboxAuditEvent rows used to carry.
 	 *
-	 * @return InnovatieboxAuditEventLogger&object{calls: array<int,array<string,mixed>>}
+	 * @return AuditTrailMapper&object{calls: array<int,array<string,mixed>>}
 	 */
-	private function fakeLogger(): InnovatieboxAuditEventLogger {
-		return new class extends InnovatieboxAuditEventLogger {
+	private function fakeLogger(): AuditTrailMapper {
+		return new class extends AuditTrailMapper {
 			/**
 			 * @var array<int, array<string, mixed>>
 			 */
 			public array $calls = [];
 
-			public function __construct() {
-				// Skip parent constructor — we never touch the OR write path.
-
-			}//end __construct()
-
 			/**
-			 * Capture the record call without touching OR.
+			 * Capture the audit row without touching OpenRegister.
 			 *
-			 * @param array<string,mixed> $options Event payload.
-			 *
-			 * @return bool
+			 * @param ObjectAuditEvent $event The object, action and context.
+			 * @return object
 			 */
-			public function record(array $options): bool {
-				$this->calls[] = $options;
-				return true;
-			}//end record()
+			public function recordObjectEvent(ObjectAuditEvent $event): object {
+				$this->calls[] = (['event_type' => $event->action, 'object' => $event->object] + $event->context);
+				return new \stdClass();
+			}//end recordObjectEvent()
 		};
-
 	}//end fakeLogger()
 
 	/**
@@ -376,6 +375,57 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 	}//end testLossOffsetAppliedFiresOnVerrekendGrowth()
 
 	/**
+	 * The audit row is written on OpenRegister's own trail of the subject
+	 * object (REQ-IBA-008: "via OR audit-trail-immutable per ADR-022"), not
+	 * into an app-local schema: the entity handed to the mapper IS the
+	 * entity of the event, and the row carries the administration and year.
+	 *
+	 * @return void
+	 */
+	public function testAuditRowLandsOnTheSubjectObjectsOwnTrail(): void {
+		$trail = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$trail,
+			$this->fakeVsoValidator(false),
+			$this->resolver('CarryForwardLoss'),
+			$this->recordingLogger()
+		);
+		$entity = $this->entity('4103', [
+			'administrationId' => 'adm-x',
+			'origin_boekjaar' => 2024,
+			'oorspronkelijk_bedrag' => 1000,
+		]);
+		$listener->handle(new ObjectCreatedEvent($entity));
+
+		$this->assertCount(1, $trail->calls);
+		$this->assertTrue($trail->calls[0]['object'] === $entity, 'The row is written on the event\'s own entity.');
+		$this->assertSame(InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED, $trail->calls[0]['event_type']);
+		$this->assertSame('adm-x', $trail->calls[0]['administrationId']);
+		$this->assertSame(2024, $trail->calls[0]['financialYear']);
+	}//end testAuditRowLandsOnTheSubjectObjectsOwnTrail()
+
+	/**
+	 * A row without an administration is refused before it is written, as
+	 * the app-local logger refused it: the guard moved with the write.
+	 *
+	 * @return void
+	 */
+	public function testRowWithoutAdministrationIsNotWritten(): void {
+		$trail = $this->fakeLogger();
+		$psr = $this->recordingLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$trail,
+			$this->fakeVsoValidator(false),
+			$this->resolver('NexusCalculation'),
+			$psr
+		);
+		$listener->handle(new ObjectCreatedEvent($this->entity('4101', ['financialYear' => 2026])));
+
+		$this->assertCount(0, $trail->calls);
+		$this->assertNotEmpty($psr->records);
+	}//end testRowWithoutAdministrationIsNotWritten()
+
+	/**
 	 * Non-innovatiebox schemas (e.g. GLLine) are silently skipped.
 	 *
 	 * @return void
@@ -397,4 +447,60 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		$this->assertSame([], $logger->calls);
 
 	}//end testNonInnovatieboxSchemaIsIgnored()
+	/**
+	 * An amended NexusCalculation without a readable prior state is still
+	 * recorded as a blocked amendment, every field counted as changed.
+	 *
+	 * @return void
+	 */
+	public function testANexusAmendmentWithoutPriorStateIsRecorded(): void {
+		$trail = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$trail,
+			$this->fakeVsoValidator(false),
+			$this->resolver('NexusCalculation'),
+			$this->recordingLogger()
+		);
+
+		$next = $this->entity('4101', ['administrationId' => 'adm-x', 'financialYear' => 2026, 'own_rd_cost' => 5]);
+		$listener->handle(new ObjectUpdatedEvent($next, null));
+		$listener->handle(new ObjectUpdatedEvent(null, null));
+
+		$this->assertCount(1, $trail->calls);
+		$this->assertSame(InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED, $trail->calls[0]['event_type']);
+		$this->assertSame('immutable_schema_violation', $trail->calls[0]['reason']);
+		$this->assertSame('NexusCalculation', $trail->calls[0]['subject_schema']);
+		$this->assertSame(['administrationId', 'financialYear', 'own_rd_cost'], $trail->calls[0]['details']['changed_keys']);
+	}//end testANexusAmendmentWithoutPriorStateIsRecorded()
+
+	/**
+	 * A failing audit write and a failing handler are logged, never thrown.
+	 *
+	 * @return void
+	 */
+	public function testFailuresAreLoggedNotThrown(): void {
+		$trail = new class extends AuditTrailMapper {
+			/**
+			 * The write fails.
+			 *
+			 * @param ObjectAuditEvent $event The object, action and context.
+			 * @return object
+			 */
+			public function recordObjectEvent(ObjectAuditEvent $event): object {
+				throw new \RuntimeException('audit table locked');
+			}//end recordObjectEvent()
+		};
+		$psr = $this->recordingLogger();
+		$listener = new InnovatieboxAuditTrailListener($trail, $this->fakeVsoValidator(false), $this->resolver('NexusCalculation'), $psr);
+		$listener->handle(new ObjectCreatedEvent($this->entity('4101', ['administrationId' => 'adm-x', 'financialYear' => 2026])));
+
+		$resolver = $this->createStub(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willThrowException(new \RuntimeException('schema table gone'));
+		$broken = new InnovatieboxAuditTrailListener($this->fakeLogger(), $this->fakeVsoValidator(false), $resolver, $psr);
+		$broken->handle(new ObjectCreatedEvent($this->entity('4101', ['administrationId' => 'adm-x'])));
+
+		$messages = array_column($psr->records, 'message');
+		$this->assertContains('InnovatieboxAuditTrailListener: failed to write the audit row', $messages);
+		$this->assertContains('InnovatieboxAuditTrailListener: handler raised — swallowed to protect write path', $messages);
+	}//end testFailuresAreLoggedNotThrown()
 }//end class

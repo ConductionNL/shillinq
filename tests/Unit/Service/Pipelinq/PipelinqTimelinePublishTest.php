@@ -38,7 +38,7 @@ use DateTimeZone;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
@@ -105,7 +105,7 @@ final class PipelinqTimelinePublishTest extends TestCase {
 					return 'https://pipelinq.test';
 				}
 
-				if ($key === PipelinqContactAdapter::CONFIG_KEY_TOKEN) {
+				if ($key === PipelinqContactAdapter::CONFIG_KEY_BEARER) {
 					return 'NEVER-LOG-ME-1234567890';
 				}
 

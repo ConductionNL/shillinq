@@ -179,7 +179,7 @@
       `CashflowChartWidget` entry's shape and docblock convention.
 
 ## 5. Frontend — `BudgetGrid` placement (REQ-BCH-001)
-- [ ] Edit `src/views/BudgetGrid.vue` (`budget-grid-view`'s own file, per
+- [x] Edit `src/views/BudgetGrid.vue` (`budget-grid-view`'s own file, per
       that change's "reuses, does not redesign" framing): add a "view
       trend" icon-button per row (`LedgerGroup` and resolved `Account` leaf
       rows alike), `tabindex="0"`/`role="button"`/`:aria-expanded`/
@@ -187,10 +187,12 @@
       grid's own existing expand-toggle pattern. Add `openChartRowId`
       state (single ref, closes any previously open chart on a new
       selection).
-- [ ] Mount `BudgetTrendChart` inline beneath the open row, `scope`/`id`
+- [x] Mount `BudgetTrendChart` inline beneath the open row, `scope`/`id`
       derived from the row's own `LedgerGroup`/`Account` data, `range` from
       the grid's own currently-displayed period range.
-- [ ] Add `data-testid="budget-grid-view-trend-toggle"` per row.
+- [x] Add `data-testid="budget-grid-view-trend-toggle"` per row.
+
+  **Built 9 Oct 2026** (BudgetGrid.vue has landed): a real `<button>` per row with `:aria-expanded`, Enter and Space, `openChartRowId` via `nextOpenChartRow`, the chart in a full-width row beneath, props from `trendChartProps` (src/views/budgetGridHelpers.js); tests/vitest/budgetGridTrend.spec.js. The note below is history.
 
   **NOT IMPLEMENTED — hard blocker, not an oversight: `src/views/
   BudgetGrid.vue` does not exist in this worktree/branch.
@@ -285,6 +287,12 @@
       own computed properties bound via the codebase's established
       fake-`this` pattern, `useBudgetChartData` mocked).**
 - [ ] `npx playwright test tests/e2e/budget-charts.spec.ts` — PASS.
+      Live pass 2026-11-17: 1 passed (BudgetGrid inline chart), 3 skipped: ChartOfAccountsDetail's
+      Trend tab is declared under legacy `sidebarProps.tabs` and nc-vue's detail sidebar is off
+      unless `config.sidebar` is set, so the tab never renders (242 detail pages share this; a
+      decision for the boards, not a test fix).
+      Round 2 (17 Nov): the Trend tab now sits under `config.sidebar` with `enabled: true` (the
+      shape Customers uses), so the detail sidebar opens and reaches the chart; re-run to confirm.
       **NOT RUN, per this batch's explicit instruction ("Write the
       Playwright spec, do NOT execute it").**
 - [x] `openspec validate budget-charts --strict` — PASS.

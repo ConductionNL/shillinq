@@ -37,11 +37,22 @@
 					{"key": "iban", "label": "IBAN", "sortable": true},
 					{"key": "bankName", "label": "Bank", "sortable": true},
 					{"key": "primaryCurrency", "label": "Primary Currency", "sortable": true},
+					{"key": "ledgerAccountNumber", "label": "Ledger account", "sortable": true},
+					{"key": "lastSyncAt", "label": "Last sync", "sortable": true},
 					{"key": "lifecycleState", "label": "Status", "sortable": true}
 				],
 				"filters": [
 					{"key": "primaryCurrency", "label": "Currency", "type": "select", "options": ["EUR", "USD", "GBP"]},
 					{"key": "lifecycleState", "label": "Status", "type": "select", "options": ["active", "closed", "frozen"]}
+				],
+				"headerActions": [
+					{
+						"id": "connect-bank",
+						"label": "Connect a bank",
+						"icon": "BankTransfer",
+						"handler": "openIntegriqConnections",
+						"description": "Connect a bank account in integriq so its transactions arrive here on their own."
+					}
 				],
 				"defaultSort": "accountName",
 				"detailRoute": "BankAccountDetail"
@@ -64,6 +75,9 @@
 					{"key": "primaryCurrency", "label": "Primary Currency", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"},
 					{"key": "lifecycleState", "label": "Status", "type": "string"},
+					{"key": "ledgerAccountNumber", "label": "Ledger account", "type": "string"},
+					{"key": "bankConnectionId", "label": "Bank connection", "type": "string"},
+					{"key": "lastSyncAt", "label": "Last sync", "type": "datetime"},
 					{"key": "notes", "label": "Notes", "type": "string"}
 				],
 				"lifecycleActions": true,

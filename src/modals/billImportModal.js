@@ -27,6 +27,18 @@ export const PDF_DEFERRAL_MESSAGE =
 	'PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.'
 
 /**
+ * The import format of each recognised file extension.
+ *
+ * @type {Map<string, string>}
+ */
+const FORMAT_BY_EXTENSION = new Map([
+	['xml', 'ubl'],
+	['ubl', 'ubl'],
+	['csv', 'csv'],
+	['pdf', 'pdf'],
+])
+
+/**
  * Detect the import format from a file name (falling back to a content
  * sniff). Returns 'ubl' | 'csv' | 'pdf' | '' (unknown).
  *
@@ -40,14 +52,21 @@ export function detectFormat(fileName, contents = '') {
 		.split('.')
 		.pop()
 		.toLowerCase()
-	if (ext === 'xml' || ext === 'ubl') return 'ubl'
-	if (ext === 'csv') return 'csv'
-	if (ext === 'pdf') return 'pdf'
+	return FORMAT_BY_EXTENSION.get(ext) ?? sniffFormat(contents)
+}
 
+/**
+ * The import format a file's raw text looks like: a PDF header, XML, or
+ * comma-separated text; '' when it looks like none.
+ *
+ * @param {string} contents The raw text.
+ * @return {string}
+ */
+function sniffFormat(contents) {
 	const trimmed = String(contents || '').replace(/^\s+/, '')
 	if (trimmed.startsWith('%PDF')) return 'pdf'
 	if (trimmed.startsWith('<')) return 'ubl'
-	if (trimmed && trimmed.includes(',')) return 'csv'
+	if (trimmed.includes(',')) return 'csv'
 	return ''
 }
 
@@ -66,7 +85,8 @@ export function isDeferredPdf(format) {
 
 /**
  * Build the multipart FormData posted to the import endpoint. The format
- * is always sent explicitly so the server does not have to re-sniff.
+ * is always sent explicitly so the server does not have to re-sniff, and
+ * `review` asks the server to keep the invoice a draft until it is confirmed.
  *
  * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {File|Blob} file The selected file.
@@ -80,10 +100,11 @@ export function buildImportFormData(file, format, FormDataCtor) {
 		const fd = new Ctor()
 		fd.append('file', file)
 		fd.append('format', format)
+		fd.append('review', 'true')
 		return fd
 	}
 	// Fallback for environments without FormData (kept testable).
-	return { file, format }
+	return { file, format, review: true }
 }
 
 /**
@@ -104,6 +125,26 @@ export function reviewFormFromRecord(record) {
 		amount: centsToEuro(r.totalInclVat),
 		vatAmount: centsToEuro(r.totalVat),
 		glAccount: String(r.glAccount ?? ''),
+	}
+}
+
+/**
+ * The corrected fields sent to the confirm endpoint. Status, administration
+ * and provenance are the server's; amounts go as integer cents.
+ *
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+ * @param {object} form The review form values.
+ * @return {object} The confirm request body.
+ */
+export function confirmPayloadFromForm(form) {
+	const f = form || {}
+	return {
+		supplierId: f.supplier,
+		invoiceNumber: f.invoiceNumber,
+		invoiceDate: f.invoiceDate,
+		glAccount: f.glAccount,
+		totalInclVat: Math.round((Number(f.amount) || 0) * 100),
+		totalVat: Math.round((Number(f.vatAmount) || 0) * 100),
 	}
 }
 

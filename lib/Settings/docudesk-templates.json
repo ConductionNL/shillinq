@@ -667,6 +667,38 @@
       "body": "Geachte {{klantNaam}},\n\nDe vordering met betrekking tot factuur {{factuurNummer}} ter waarde van €{{totaalVerschuldigd}} is per heden overgedragen aan {{incassobureauNaam}}. Alle verdere correspondentie en betaling dient via genoemd bureau te worden afgehandeld.\n\nHoogachtend,\nDe ondernemer"
     },
     {
+      "templateId": "tpl-dunning-voluntary-contribution-nl",
+      "title": "Herinnering vrijwillige bijdrage",
+      "description": "De enige herinnering voor een vrijwillige schoolbijdrage (Wet vrijwillige ouderbijdrage). Toon: vriendelijk. Herhaalt dat de bijdrage vrijwillig is en dat het kind hoe dan ook meedoet. Geen betaaltermijn, geen kosten, geen rente, geen rekeningnummer. Gekozen in plaats van de sjabloon van stap 1 zodra de factuur een vrijwillige bijdrage is.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "language": "nl",
+      "mergeFields": [
+        "description",
+        "amount",
+        "invoiceNumber"
+      ],
+      "tone": "vriendelijk",
+      "subject": "Een herinnering aan de vrijwillige bijdrage",
+      "body": "Beste ouder of verzorger,\n\nDit is een herinnering aan {{description}}: {{amount}}, factuur {{invoiceNumber}}. We sturen deze herinnering één keer.\n\nDeze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.\n\nWilt u betalen? Dat kan in het ouderportaal. Wilt u niet betalen? Kies dan in het ouderportaal 'Ik betaal niet'. Dan vragen we er niet meer om.\n\nMet vriendelijke groet,\nDe school"
+    },
+    {
+      "templateId": "tpl-dunning-voluntary-contribution-en",
+      "title": "Voluntary contribution reminder",
+      "description": "The only reminder for a voluntary school contribution (Wet vrijwillige ouderbijdrage). Tone: friendly. Repeats that the contribution is voluntary and that the child takes part either way. No payment term, no costs, no interest, no bank account. Chosen instead of the stage 1 template whenever the invoice is a voluntary contribution.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "language": "en",
+      "mergeFields": [
+        "description",
+        "amount",
+        "invoiceNumber"
+      ],
+      "tone": "friendly",
+      "subject": "A reminder about the voluntary contribution",
+      "body": "Dear parent or guardian,\n\nThis is a reminder about {{description}}: {{amount}}, invoice {{invoiceNumber}}. We send this reminder once.\n\nThis contribution is voluntary. Your child takes part whether you pay or not.\n\nWould you like to pay? You can do so in the parent portal. Would you rather not pay? Choose 'I will not pay' in the parent portal. We will then not ask again.\n\nKind regards,\nThe school"
+    },
+    {
       "templateId": "vpb-aangifte-voorbereiding",
       "title": "Vpb-aangifte voorbereiding",
       "description": "Vpb-aangifte voorbereidingsdocument per ondernemingsactiviteit (add-shillinq-vpb-corporate-tax). Rendert de Vpb-balans (Activa / Passiva / Resultaat) van de vpbBalansFiltered aggregatie en de bijbehorende SBR-payload binding tegen de Belastingdienst Vpb XSD voor het geselecteerde boekjaar. De daadwerkelijke aangifte-transmissie verloopt via het T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt (Digipoort/SBR) per ADR-019; deze template publiceert uitsluitend het voorbereidingsdocument + payload-binding. Per ADR-031 is er geen PHP Vpb-aangifte service. De template-versie volgt de Vpb XSD-versie per boekjaar; meerdere versies kunnen naast elkaar bestaan.",
@@ -832,6 +864,55 @@
         "table": "Programmaplan programme list (code/naam), Taakvelden overview (code/naam/baten/lasten + totaalrij) -- generic {styleKey, rows: [{cells: [{widthCm, cellStyle, text, textStyle, textOptions}]}]} blocks, not amountTable/detailsTable",
         "note": "empty-state notes for programmes/taakvelden/vaste activa when absent"
       }
+    },
+    {
+      "templateId": "sales-invoice",
+      "title": "Sales invoice",
+      "description": "The sales invoice document (openspec/changes/sales-invoice-document, REQ-SID-002). InvoicePdfGenerator::generatePdf() hands the data of InvoiceDocumentData::assemble() to docudesk's DocumentService::generateDocument() as options.adHocData.invoiceDocument; the template is the one configured as documents_template_sales-invoice, else the single docudesk template with namespace \"shillinq\" and category \"sales-invoice\". Labels arrive already in the document language and amounts already formatted in the invoice currency, so the template holds no language and no number formatting. The variant comes from the administration's InvoiceLayout.variant (classic when unset); the QR codes are mPDF <barcode type=\"QR\"> tags over the EPC and pay link payloads, drawn only when present.",
+      "register": "shillinq",
+      "schema": "ARInvoice",
+      "namespace": "shillinq",
+      "category": "sales-invoice",
+      "format": "pdf",
+      "dataRoot": "invoiceDocument",
+      "dataKeys": [
+        "language",
+        "currency",
+        "labels",
+        "invoice",
+        "creditor",
+        "recipient",
+        "lines",
+        "totals",
+        "qr",
+        "layout"
+      ],
+      "variantField": "layout.variant",
+      "defaultVariant": "classic",
+      "variants": {
+        "classic": {
+          "className": "variant-classic",
+          "fontSize": "10pt",
+          "spacing": "12pt",
+          "cellPadding": "4pt 6pt",
+          "qrSize": "0.9"
+        },
+        "modern": {
+          "className": "variant-modern",
+          "fontSize": "10.5pt",
+          "spacing": "18pt",
+          "cellPadding": "6pt 8pt",
+          "qrSize": "1"
+        },
+        "compact": {
+          "className": "variant-compact",
+          "fontSize": "9pt",
+          "spacing": "6pt",
+          "cellPadding": "2pt 4pt",
+          "qrSize": "0.7"
+        }
+      },
+      "body": "<html lang=\"{{ invoiceDocument.language|e('html_attr') }}\"><head><meta charset=\"utf-8\"><style>\nbody{font-family:sans-serif;font-size:{{ variant.fontSize }};color:#1a1a1a}\nh1{color:{{ (invoiceDocument.layout.primaryColor ?? '#0F4C81')|e('css') }};margin:0 0 {{ variant.spacing }}}\nth{background:{{ (invoiceDocument.layout.primaryColor ?? '#0F4C81')|e('css') }};color:#fff;text-align:left;padding:{{ variant.cellPadding }}}\ntd{padding:{{ variant.cellPadding }};border-bottom:1px solid #ddd}\n.num{text-align:right}.accent{color:{{ (invoiceDocument.layout.accentColor ?? '#B8461B')|e('css') }}}\n</style></head><body class=\"{{ variant.className }}\">\n<h1>{{ invoiceDocument.labels.title }}</h1>\n<table><tr><td>{{ invoiceDocument.labels.invoiceNumber }}</td><td>{{ invoiceDocument.invoice.number }}</td></tr>\n<tr><td>{{ invoiceDocument.labels.invoiceDate }}</td><td>{{ invoiceDocument.invoice.invoiceDate }}</td></tr>\n<tr><td>{{ invoiceDocument.labels.dueDate }}</td><td>{{ invoiceDocument.invoice.dueDate }}</td></tr></table>\n<p><strong>{{ invoiceDocument.creditor.legalName ?? '' }}</strong><br>{{ invoiceDocument.labels.vatNumber }}: {{ invoiceDocument.creditor.vatNumber ?? '' }}<br>{{ invoiceDocument.labels.iban }}: {{ invoiceDocument.creditor.iban ?? '' }}</p>\n<p>{{ invoiceDocument.labels.customer }}: <strong>{{ invoiceDocument.recipient.legalName ?? '' }}</strong><br>{{ invoiceDocument.labels.vatNumber }}: {{ invoiceDocument.recipient.vatNumber ?? '' }}</p>\n<table><thead><tr><th>#</th><th>{{ invoiceDocument.labels.description }}</th><th class=\"num\">{{ invoiceDocument.labels.quantity }}</th><th class=\"num\">{{ invoiceDocument.labels.price }}</th><th class=\"num\">{{ invoiceDocument.labels.amount }}</th><th class=\"num\">{{ invoiceDocument.labels.vatRate }}</th></tr></thead><tbody>\n{% for line in invoiceDocument.lines %}<tr><td>{{ line.number }}</td><td>{{ line.description }}</td><td class=\"num\">{{ line.quantity }}</td><td class=\"num\">{{ line.price }}</td><td class=\"num\">{{ line.amount }}</td><td class=\"num\">{{ line.vatRate }}</td></tr>{% endfor %}\n</tbody></table>\n<table><tr><td>{{ invoiceDocument.labels.totalExclVat }}</td><td class=\"num\">{{ invoiceDocument.totals.net }}</td></tr>\n<tr><td>{{ invoiceDocument.labels.vat }}</td><td class=\"num\">{{ invoiceDocument.totals.vat }}</td></tr>\n<tr><td><strong>{{ invoiceDocument.labels.total }}</strong></td><td class=\"num\"><strong>{{ invoiceDocument.totals.gross }}</strong></td></tr>\n<tr><td class=\"accent\">{{ invoiceDocument.labels.amountDue }}</td><td class=\"num accent\">{{ invoiceDocument.totals.amountDue }}</td></tr></table>\n{% if invoiceDocument.invoice.paymentTerms %}<p>{{ invoiceDocument.labels.paymentTerms }}: {{ invoiceDocument.invoice.paymentTerms }}</p>{% endif %}\n{% if invoiceDocument.qr.epc %}<p>{{ invoiceDocument.labels.scanToPay }}</p><barcode type=\"QR\" code=\"{{ invoiceDocument.qr.epc|e('html_attr') }}\" size=\"{{ variant.qrSize }}\" />{% endif %}\n{% if invoiceDocument.qr.payLink %}<p>{{ invoiceDocument.labels.payOnline }}: {{ invoiceDocument.qr.payLink }}</p><barcode type=\"QR\" code=\"{{ invoiceDocument.qr.payLink|e('html_attr') }}\" size=\"{{ variant.qrSize }}\" />{% endif %}\n{% if invoiceDocument.layout.footerText is defined and invoiceDocument.layout.footerText %}<p style=\"font-size:smaller\">{{ invoiceDocument.layout.footerText }}</p>{% endif %}\n</body></html>"
     }
   ]
 }

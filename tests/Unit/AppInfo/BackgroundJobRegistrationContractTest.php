@@ -191,8 +191,11 @@ final class BackgroundJobRegistrationContractTest extends TestCase {
 		$infoXmlPath = $this->root . '/appinfo/info.xml';
 		$this->assertFileExists($infoXmlPath, 'appinfo/info.xml must exist');
 
+		// Read the bytes, not the path. Nextcloud's lib/base.php installs an external
+		// entity loader that returns null, and libxml routes the primary document
+		// through it too, so simplexml_load_file() returns false for a valid file in CI.
 		$previous = libxml_use_internal_errors(true);
-		$xml = simplexml_load_file($infoXmlPath);
+		$xml = simplexml_load_string((string)file_get_contents($infoXmlPath));
 		libxml_use_internal_errors($previous);
 
 		$this->assertNotFalse($xml, 'appinfo/info.xml must be well-formed XML');

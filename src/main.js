@@ -21,12 +21,18 @@ import { generateUrl } from '@nextcloud/router'
 import { createApp, h, reactive } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
+import AdministrationScopedIndex from './views/AdministrationScopedIndex.vue'
 import appIcons from './icons.js'
+import { registerContractLeaf } from './integrations/registerContractLeaf.js'
+import { registerFinancialDocumentsLeaf } from './integrations/registerFinancialDocumentsLeaf.js'
+import { registerPaymentRequestsLeaf } from './integrations/registerPaymentRequestsLeaf.js'
 import manifestShell from './manifest.d.shell.json'
 import bundledManifest from './manifest.json'
+import { attachManifestActions, manifestActions } from './manifestActions.js'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import { customRecordGuard } from './utils/customRecordTypes.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
@@ -58,6 +64,16 @@ import './assets/app.css'
 installIntegrationRegistry()
 registerBuiltinIntegrations()
 registerLeafIntegrations()
+
+// `registerLeafIntegrations()` above registers the library's OWN 18 built-in
+// leaves from a hardcoded list; it knows nothing about a consuming app's
+// leaves and never reads the server capability. Shillinq's two finance panels
+// are its own, so shillinq registers them, here for its own pages and again in
+// src/integration-init.js for every other app's pages. The second registration
+// is a no-op: first one wins (ADR-019 AD-13).
+registerPaymentRequestsLeaf()
+registerContractLeaf()
+registerFinancialDocumentsLeaf()
 
 // Register the app's MDI icon set + lib translations once at bootstrap.
 // registerIcons() merges the given map into the lib's ICON_MAP registry;
@@ -130,8 +146,12 @@ const RoutePageRenderer = { ...CnPageRenderer }
 // CnPageRenderer's reactive `resolvedProps` computed (it reads
 // `currentPage.config`; Vue 3's Proxy tracks the brand-new key too — see
 // src/utils/mergeFragmentIntoManifest.js for the full contract).
+// `attachManifestActions` puts the handler functions on `manifest.actions`,
+// where a detail page's header actions look them up (live pass S4).
 const mergedManifest = reactive(
-	buildManifest(bundledManifest, manifestShell.fragments, menuLayout),
+	attachManifestActions(
+		buildManifest(bundledManifest, manifestShell.fragments, menuLayout),
+	),
 )
 
 // pageId → fragment filename stem, built once from the shell-derived slim
@@ -267,6 +287,11 @@ router.beforeEach((to, from, next) => {
 	loadFragment(fragmentStem).then(() => next())
 })
 
+// platform-custom-record-types (REQ-CRT-003): the generic /records/:schema
+// pages open only record types an administrator chose to show; any other
+// slug goes to the own records page, which says it is not available.
+router.beforeEach(customRecordGuard())
+
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib exports
@@ -274,7 +299,10 @@ tryLoadTranslations()
 // shapes, and Vue caches resolved component metadata on the object it is
 // handed — which throws against a frozen source map. Cloning yields
 // extensible objects without changing the resolved values.
-const pageTypesProp = { ...defaultPageTypes }
+// ledger-multi-administration REQ-LMA-002: `index` pages over schemas that
+// carry `administrationId` list the active administration only; every other
+// index page renders as the library's.
+const pageTypesProp = { ...defaultPageTypes, index: AdministrationScopedIndex }
 const registryProp = { ...registry }
 
 // Flat `{ name: component }` map of every registry component, derived from
@@ -287,11 +315,19 @@ const registryProp = { ...registry }
 // `actionsComponent: FinancialDashboardActions`) silently disappear. Flatten
 // ALL kinds (page + widget + …) so every name a manifest can reference resolves.
 // Mirrors the procest / docudesk / opencatalogi wiring.
-const customComponentsProp = Object.fromEntries(
-	Object.entries(registry)
-		.filter(([, entry]) => entry && entry.component)
-		.map(([name, entry]) => [name, entry.component]),
-)
+//
+// Function handlers ride the same map: CnIndexPage resolves a header action's
+// named `handler` against `customComponents`.
+const customComponentsProp = {
+	...Object.fromEntries(
+		Object.entries(registry)
+			.filter(([, entry]) => entry && entry.component)
+			.map(([name, entry]) => [name, entry.component]),
+	),
+	// The handlers a manifest action names (src/manifestActions.js): an index
+	// page resolves them here, a detail page on `manifest.actions`.
+	...manifestActions,
+}
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`
 // REPLACED it. The old host was `#content`, which is ALSO the id of

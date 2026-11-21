@@ -25,13 +25,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -77,7 +80,7 @@ class BalanceGuard {
 	public function isBalanced(string $transactionId): bool {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($register === '') {
 				$register = 'shillinq';
 			}
@@ -108,4 +111,81 @@ class BalanceGuard {
 			return false;
 		}//end try
 	}//end isBalanced()
+
+	/**
+	 * Returns true iff an AP invoice's own amounts add up: the sum of
+	 * `lines[].amount` plus `taxAmount` equals `totalAmount`, in integer cents.
+	 *
+	 * This is the guard `APTransaction.issue` declares. It takes the object
+	 * array RegisterRequiresGuardAdapter hands it; isBalanced() cannot serve
+	 * that transition because it takes a GLTransaction id, and an AP invoice
+	 * has no GL lines before it is issued (REQ-BPR-001).
+	 *
+	 * Fail-closed: returns false when the invoice has no lines or a line
+	 * carries no numeric amount.
+	 *
+	 * @param array<string,mixed> $object The APTransaction being issued.
+	 *
+	 * @return bool True when the invoice's amounts add up and it may be issued.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-1.1
+	 */
+	public function isInvoiceBalanced(array $object): bool {
+		$lineCents = self::lineCents(lines: ($object['lines'] ?? []));
+		if ($lineCents === null) {
+			return false;
+		}
+
+		$taxCents = (int)round((float)($object['taxAmount'] ?? 0) * 100);
+		$totalCents = (int)round((float)($object['totalAmount'] ?? 0) * 100);
+
+		if (($lineCents + $taxCents) === $totalCents) {
+			return true;
+		}
+
+		$this->logger->info(
+			'BalanceGuard: AP invoice does not add up, denying issue',
+			[
+				'invoiceNumber' => (string)($object['invoiceNumber'] ?? ''),
+				'linesPlusTax' => sprintf('%.2f', (($lineCents + $taxCents) / 100)),
+				'totalAmount' => sprintf('%.2f', ($totalCents / 100)),
+			]
+		);
+		return false;
+	}//end isInvoiceBalanced()
+
+	/**
+	 * The summed line amounts in cents, or null when there are no lines or a line carries no numeric amount.
+	 *
+	 * @param mixed $lines The invoice's lines.
+	 *
+	 * @return int|null
+	 */
+	private static function lineCents(mixed $lines): int|null {
+		if (is_array($lines) === false || $lines === []) {
+			return null;
+		}
+
+		$lineCents = 0;
+		foreach ($lines as $line) {
+			if (self::hasNumericAmount(line: $line) === false) {
+				return null;
+			}
+
+			$lineCents += (int)round((float)$line['amount'] * 100);
+		}
+
+		return $lineCents;
+	}//end lineCents()
+
+	/**
+	 * Whether a line is an object with a numeric amount.
+	 *
+	 * @param mixed $line One invoice line.
+	 *
+	 * @return bool
+	 */
+	private static function hasNumericAmount(mixed $line): bool {
+		return (is_array($line) === true && is_numeric($line['amount'] ?? null) === true);
+	}//end hasNumericAmount()
 }//end class

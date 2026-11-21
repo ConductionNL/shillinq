@@ -9,6 +9,22 @@
   "components": {
     "schemas": {
       "StandardsPolicy": {
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ],
+          "read": [
+            "authenticated"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
+        },
         "slug": "StandardsPolicy",
         "title": "Standards policy",
         "description": "Per-administration accounting-standards precedence policy. One object per administration declares which frameworks apply and their order of precedence. Consumed by StandardsPolicyService.resolve(topic).",
