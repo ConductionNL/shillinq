@@ -66,3 +66,42 @@ describe('talk tab on curated dossier pages (REQ-CPA-008)', () => {
 		expect(page(manifest, 'ARInvoiceDetail').config.sidebarProps?.tabs).toBeUndefined()
 	})
 })
+
+/**
+ * Every integration leaf a config names, wherever in the config it sits.
+ *
+ * @param {unknown} node A config node.
+ * @param {string[]} found The leaf ids so far.
+ * @return {string[]} The leaf ids.
+ */
+function leaves(node, found = []) {
+	if (Array.isArray(node)) {
+		node.forEach((child) => leaves(child, found))
+	} else if (node && typeof node === 'object') {
+		if (node.type === 'integration' && typeof node.integrationId === 'string') {
+			found.push(node.integrationId)
+		}
+		Object.values(node).forEach((child) => leaves(child, found))
+	}
+	return found
+}
+
+// @spec openspec/changes/integration-leaves-consume/tasks.md
+describe('a detail page without curated tabs is left as it was (diff-check)', () => {
+	it('gives ARInvoiceDetail, which curates no tabs, no talk tab and no tab list of its own', () => {
+		const { config } = page(manifest, 'ARInvoiceDetail')
+		expect(config.sidebarProps?.tabs).toBeUndefined()
+		expect(leaves(config)).not.toContain('talk')
+	})
+
+	it('adds talk only to the two curated pages, nowhere else in the manifests', () => {
+		const sources = [manifest, ...fs.readdirSync(path.join(ROOT, 'src/manifest.d'))
+			.filter((file) => file.endsWith('.json'))
+			.map((file) => read(path.join('src/manifest.d', file)))]
+		const withTalk = sources
+			.flatMap((source) => (source.pages || []).filter((candidate) => (candidate.config?.sidebarProps?.tabs || [])
+				.some((tab) => tab.id === 'talk')))
+			.map((candidate) => candidate.id)
+		expect(withTalk.sort()).toEqual(['ContractDetail', 'ExpenseClaimDetail'])
+	})
+})
