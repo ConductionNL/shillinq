@@ -6017,6 +6017,33 @@
 			]
 		},
 		{
+			"menu": [
+				{
+					"id": "InvoiceLayouts",
+					"label": "Invoice layout",
+					"icon": "FileDocumentEditOutline",
+					"route": "InvoiceLayouts",
+					"order": 45
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-invoice-document",
+					"id": "InvoiceLayouts",
+					"route": "/sales/invoice-layouts",
+					"type": "index",
+					"title": "Invoice layouts"
+				},
+				{
+					"_fragment": "sales-invoice-document",
+					"id": "InvoiceLayoutDetail",
+					"route": "/sales/invoice-layouts/:id",
+					"type": "detail",
+					"title": "Invoice layout"
+				}
+			]
+		},
+		{
 			"menu": [],
 			"pages": [
 				{
