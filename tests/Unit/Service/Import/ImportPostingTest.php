@@ -406,7 +406,12 @@ final class ImportPostingTest extends TestCase {
 			 *
 			 * @return ObjectEntityInterface
 			 */
-			public function saveObject(array $object, ObjectSaveOptions|PublishedObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): ObjectEntityInterface {
+			public function saveObject(
+				array $object,
+				ObjectSaveOptions|PublishedObjectSaveOptions $options = new ObjectSaveOptions(),
+				bool $_rbac = true,
+				bool $_multitenancy = true
+			): ObjectEntityInterface {
 				$extend = $options->extend ?? [];
 				$register = $options->target->register;
 				$schema = $options->target->schema;
