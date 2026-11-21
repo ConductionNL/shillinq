@@ -6021,7 +6021,7 @@
 				{
 					"id": "InvoiceLayouts",
 					"label": "Invoice layout",
-					"icon": "PaletteOutline",
+					"icon": "FileDocumentEditOutline",
 					"route": "InvoiceLayouts",
 					"order": 45
 				}

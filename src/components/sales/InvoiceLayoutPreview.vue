@@ -179,6 +179,7 @@ export default {
 		 * The footer text, '' when none.
 		 *
 		 * @return {string}
+		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
 		 */
 		footerText() {
 			return String(this.objectData?.footerText ?? '')
@@ -188,6 +189,7 @@ export default {
 		 * Whether the QR codes are printed (on unless switched off).
 		 *
 		 * @return {boolean}
+		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
 		 */
 		showQr() {
 			return this.objectData?.showQr !== false
