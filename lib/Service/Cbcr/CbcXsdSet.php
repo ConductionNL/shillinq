@@ -82,7 +82,11 @@ class CbcXsdSet {
 			return '';
 		}
 
-		$files = (glob($this->folder . '/*.xsd') ?: []);
+		$files = glob($this->folder . '/*.xsd');
+		if ($files === false) {
+			$files = [];
+		}
+
 		sort($files);
 		$lines = [];
 		foreach ($files as $file) {
@@ -104,7 +108,13 @@ class CbcXsdSet {
 	public function validate(string $xml): array {
 		if ($this->isBundled() === false) {
 			return self::outcome(
-				errors: [['line' => 0, 'element' => '', 'message' => 'The OECD CbC XML schema set is not in lib/Standards/Xsd/oecd-cbc-v2.0, so the file cannot be validated.']],
+				errors: [
+					[
+						'line' => 0,
+						'element' => '',
+						'message' => 'The OECD CbC XML schema set is not in lib/Standards/Xsd/oecd-cbc-v2.0, so the file cannot be validated.',
+					],
+				],
 				checksum: ''
 			);
 		}

@@ -30,10 +30,11 @@ use OCA\Shillinq\Reporting\Generator\CbcXmlGenerator;
 use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
 use OCA\Shillinq\Service\Cbcr\CbcXmlDocument;
 use OCA\Shillinq\Service\Cbcr\CbcXsdSet;
+use OCA\Shillinq\Service\Sbr\SbrRecords;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Tests\Unit\Service\Cbcr\CbcXsdSetTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -47,6 +48,7 @@ use RuntimeException;
 #[UsesClass(CbcXmlDocument::class)]
 #[UsesClass(CbcXsdSet::class)]
 #[UsesClass(ObjectIdentifier::class)]
+#[UsesClass(SbrRecords::class)]
 final class CbcXmlGeneratorTest extends TestCase {
 
 	private const HOLDING = [
@@ -60,9 +62,18 @@ final class CbcXmlGeneratorTest extends TestCase {
 		'address' => ['city' => 'Berlin', 'country' => 'DE'], 'bizActivities' => ['CBC505'], 'ultimateParentEntity' => 'ge-holding',
 	];
 
-	private const SUMMARY_NL = ['id' => 'sum-nl', 'jurisdiction' => 'NL', 'unrelatedPartyRevenue' => 300000000, 'relatedPartyRevenue' => 40000000, 'totalRevenue' => 340000000, 'employeeMethodologyNote' => 'Full-time equivalents at year end.'];
+	private const SUMMARY_NL = [
+		'id' => 'sum-nl', 'jurisdiction' => 'NL', 'unrelatedPartyRevenue' => 300000000, 'relatedPartyRevenue' => 40000000,
+		'totalRevenue' => 340000000, 'employeeMethodologyNote' => 'Full-time equivalents at year end.',
+	];
 
-	private const SUMMARY_DE = ['id' => 'sum-de', 'jurisdiction' => 'DE', 'unrelatedPartyRevenue' => 60000000, 'relatedPartyRevenue' => 0, 'totalRevenue' => 60000000];
+	private const SUMMARY_DE = [
+		'id' => 'sum-de', 'jurisdiction' => 'DE', 'unrelatedPartyRevenue' => 60000000, 'relatedPartyRevenue' => 0, 'totalRevenue' => 60000000,
+	];
+
+	private const CORRECTION = [
+		'id' => 'cbc-2026-c1', 'period' => 'FY2026', 'reportingEntity' => 'ge-holding', 'reportingRole' => 'CBC701', 'correctsReturn' => 'cbc-2026',
+	];
 
 	/**
 	 * The fixture schema folder.
@@ -95,7 +106,7 @@ final class CbcXmlGeneratorTest extends TestCase {
 	 * @return void
 	 */
 	protected function tearDown(): void {
-		foreach ((glob($this->folder . '/*') ?: []) as $file) {
+		foreach (glob($this->folder . '/*') as $file) {
 			unlink($file);
 		}
 
@@ -112,16 +123,22 @@ final class CbcXmlGeneratorTest extends TestCase {
 	 *
 	 * @return CbcXmlGenerator
 	 */
-	private function generator(array $returns, array $summaries = [self::SUMMARY_NL, self::SUMMARY_DE], array $checks = [], bool $bundled = true): CbcXmlGenerator {
+	private function generator(
+		array $returns,
+		array $summaries = [self::SUMMARY_NL, self::SUMMARY_DE],
+		array $checks = [],
+		bool $bundled = true
+	): CbcXmlGenerator {
 		$this->store = new InMemoryObjectServiceStub(['CbcrReturn' => $returns, 'GroupEntityRegistry' => [self::HOLDING, self::GMBH]]);
-		$appConfig   = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $default);
+		$location    = $this->createMock(RegisterLocationInterface::class);
+		$location->method('getRegisterSlug')->willReturn('shillinq');
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $params = []): string => vsprintf($text, $params));
 
 		$runner = $this->createMock(CbcrCheckRunner::class);
 		$runner->method('runCbc')->willReturn($checks);
 		$runner->method('cbcFingerprint')->willReturn('fp-now');
+		$runner->method('fingerprintOf')->willReturnCallback(static fn (array $records): string => hash('sha256', (string)json_encode($records)));
 		$runner->method('cbcRecords')->willReturn(
 			['reportingEntity' => self::HOLDING, 'upeId' => 'ge-holding', 'entities' => [self::HOLDING, self::GMBH], 'summaries' => $summaries]
 		);
@@ -131,7 +148,7 @@ final class CbcXmlGeneratorTest extends TestCase {
 			$folder .= '/missing';
 		}
 
-		return new CbcXmlGenerator($this->store, $appConfig, $runner, new CbcXmlDocument(), new CbcXsdSet($folder), $l10n);
+		return new CbcXmlGenerator(new SbrRecords($this->store, $location), $runner, new CbcXmlDocument(new CbcXsdSet($folder)), $l10n);
 	}//end generator()
 
 	/**
@@ -219,7 +236,10 @@ final class CbcXmlGeneratorTest extends TestCase {
 	public function testABlockingCheckRefusesTheFileNamingIt(): void {
 		$return = ['id' => 'cbc-2026', 'period' => 'FY2026', 'reportingEntity' => 'ge-holding'];
 		$checks = [
-			['id' => 'cbc-entity-tin', 'severity' => 'mandatory', 'passed' => false, 'source' => '', 'statement' => 'Every constituent entity has a tax identification number.'],
+			[
+				'id' => 'cbc-entity-tin', 'severity' => 'mandatory', 'passed' => false, 'source' => '',
+				'statement' => 'Every constituent entity has a tax identification number.',
+			],
 			['id' => 'cbc-revenue-total', 'severity' => 'mandatory', 'passed' => true, 'source' => '', 'statement' => 'Totals add up.'],
 			['id' => 'cbc-figures-from-books', 'severity' => 'warning', 'passed' => false, 'source' => '', 'statement' => 'Figures come from the books.'],
 		];
@@ -243,7 +263,9 @@ final class CbcXmlGeneratorTest extends TestCase {
 	 */
 	public function testAWarningAloneDoesNotStopTheFile(): void {
 		$return = ['id' => 'cbc-2026', 'period' => 'FY2026', 'reportingEntity' => 'ge-holding'];
-		$checks = [['id' => 'cbc-figures-from-books', 'severity' => 'warning', 'passed' => false, 'source' => '', 'statement' => 'Figures come from the books.']];
+		$checks = [
+			['id' => 'cbc-figures-from-books', 'severity' => 'warning', 'passed' => false, 'source' => '', 'statement' => 'Figures come from the books.'],
+		];
 
 		$file = $this->generator([$return], checks: $checks)->generate(['returnId' => 'cbc-2026'], 'xml');
 
@@ -305,7 +327,12 @@ final class CbcXmlGeneratorTest extends TestCase {
 		$return    = ['id' => 'cbc-2026', 'period' => 'FY2026', 'reportingEntity' => 'ge-holding'];
 		$generator = $this->generator([$return]);
 
-		foreach ([[[], 'xml', 'from its report page'], [['returnId' => 'nope'], 'xml', 'from its report page'], [['returnId' => 'cbc-2026'], 'pdf', 'XML only']] as [$context, $format, $reason]) {
+		$cases = [
+			[[], 'xml', 'from its report page'],
+			[['returnId' => 'nope'], 'xml', 'from its report page'],
+			[['returnId' => 'cbc-2026'], 'pdf', 'XML only'],
+		];
+		foreach ($cases as [$context, $format, $reason]) {
 			try {
 				$generator->generate($context, $format);
 				self::fail('Generated for ' . json_encode($context) . ' in ' . $format);
@@ -331,13 +358,14 @@ final class CbcXmlGeneratorTest extends TestCase {
 		$filed['state'] = 'submitted';
 
 		$changedDe  = ['totalRevenue' => 61000000, 'unrelatedPartyRevenue' => 61000000] + self::SUMMARY_DE;
-		$correction = ['id' => 'cbc-2026-c1', 'period' => 'FY2026', 'reportingEntity' => 'ge-holding', 'reportingRole' => 'CBC701', 'correctsReturn' => 'cbc-2026'];
+		$correction = self::CORRECTION;
 		$file       = $this->generator([$filed, $correction], summaries: [self::SUMMARY_NL, $changedDe])->generate(['returnId' => 'cbc-2026-c1'], 'xml');
 
 		$xpath = self::xpath($file->content);
 		self::assertSame('CBC402', $xpath->query('//cbc:MessageTypeIndic')->item(0)?->textContent);
 		self::assertSame('OECD0', $xpath->query('//cbc:ReportingEntity/stf:DocSpec/stf:DocTypeIndic')->item(0)?->textContent);
-		self::assertSame($filed['docRefIds']['reporting-entity:cbc-2026'], $xpath->query('//cbc:ReportingEntity/stf:DocSpec/stf:CorrDocRefId')->item(0)?->textContent);
+		$corrects = $xpath->query('//cbc:ReportingEntity/stf:DocSpec/stf:CorrDocRefId')->item(0)?->textContent;
+		self::assertSame($filed['docRefIds']['reporting-entity:cbc-2026'], $corrects);
 		self::assertSame(1, $xpath->query('//cbc:CbcReports')->length);
 		self::assertSame('DE', $xpath->query('//cbc:CbcReports/cbc:ResCountryCode')->item(0)?->textContent);
 		self::assertSame('OECD2', $xpath->query('//cbc:CbcReports/stf:DocSpec/stf:DocTypeIndic')->item(0)?->textContent);
@@ -363,7 +391,7 @@ final class CbcXmlGeneratorTest extends TestCase {
 		$this->generator([$first])->generate(['returnId' => 'cbc-2026'], 'xml');
 		$filed = $this->stored('cbc-2026');
 
-		$correction = ['id' => 'cbc-2026-c1', 'period' => 'FY2026', 'reportingEntity' => 'ge-holding', 'reportingRole' => 'CBC701', 'correctsReturn' => 'cbc-2026'];
+		$correction = self::CORRECTION;
 		$cases      = [
 			'nothing to correct' => [$filed, $correction],
 			'no file to correct' => [['id' => 'cbc-2026', 'period' => 'FY2026', 'state' => 'submitted'], $correction],

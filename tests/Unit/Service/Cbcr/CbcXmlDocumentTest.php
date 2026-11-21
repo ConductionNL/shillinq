@@ -27,13 +27,16 @@ namespace OCA\Shillinq\Tests\Unit\Service\Cbcr;
 use DOMDocument;
 use DOMXPath;
 use OCA\Shillinq\Service\Cbcr\CbcXmlDocument;
+use OCA\Shillinq\Service\Cbcr\CbcXsdSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * The Voorbeeld group's 2026 report rendered as a CbC v2.0 file.
  */
 #[CoversClass(CbcXmlDocument::class)]
+#[UsesClass(CbcXsdSet::class)]
 final class CbcXmlDocumentTest extends TestCase {
 
 	/**
@@ -53,7 +56,8 @@ final class CbcXmlDocumentTest extends TestCase {
 			'incorporationCountry' => 'NL', 'bizActivities' => ['CBC504', 'CBC504'], 'ultimateParentEntity' => 'ge-holding',
 		];
 		$gmbh = [
-			'id' => 'ge-gmbh', 'entityName' => 'Voorbeeld GmbH', 'jurisdiction' => 'DE', 'tin' => '', 'address' => ['street' => 'Hauptstrasse 9 Berlin', 'country' => 'DE'],
+			'id' => 'ge-gmbh', 'entityName' => 'Voorbeeld GmbH', 'jurisdiction' => 'DE', 'tin' => '',
+			'address' => ['street' => 'Hauptstrasse 9 Berlin', 'country' => 'DE'],
 			'bizActivities' => ['CBC505'], 'ultimateParentEntity' => 'ge-holding',
 		];
 
@@ -64,15 +68,22 @@ final class CbcXmlDocumentTest extends TestCase {
 			'groupName' => 'Voorbeeld Groep Holding B.V.',
 			'entities' => [$gmbh, $productie, $holding],
 			'summaries' => [
-				['id' => 'sum-nl', 'jurisdiction' => 'NL', 'unrelatedPartyRevenue' => 300000000.4, 'relatedPartyRevenue' => 40000000, 'totalRevenue' => 340000000.4,
-					'profitBeforeTax' => -1250.5, 'incomeTaxPaidCash' => 5000000, 'incomeTaxAccrued' => 5200000, 'statedCapital' => 18000, 'accumulatedEarnings' => 9000000,
-					'numberOfEmployees' => 412, 'tangibleAssetsOtherThanCash' => 75000000],
+				[
+					'id' => 'sum-nl', 'jurisdiction' => 'NL', 'unrelatedPartyRevenue' => 300000000.4, 'relatedPartyRevenue' => 40000000,
+					'totalRevenue' => 340000000.4, 'profitBeforeTax' => -1250.5, 'incomeTaxPaidCash' => 5000000, 'incomeTaxAccrued' => 5200000,
+					'statedCapital' => 18000, 'accumulatedEarnings' => 9000000, 'numberOfEmployees' => 412, 'tangibleAssetsOtherThanCash' => 75000000,
+				],
 				['id' => 'sum-de', 'jurisdiction' => 'DE', 'unrelatedPartyRevenue' => 60000000, 'relatedPartyRevenue' => 0, 'totalRevenue' => 60000000,
 					'numberOfEmployees' => 38],
 			],
 			'messageRefId' => 'NL2026001234567-abc',
 			'timestamp' => '2027-03-01T10:00:00',
-			'docRefIds' => ['reporting-entity:cbc-2026' => 'NL2026001234567-abc-1', 'sum-nl' => 'NL2026001234567-abc-2', 'sum-de' => 'NL2026001234567-abc-3', 'additional-info:cbc-2026' => 'NL2026001234567-abc-4'],
+			'docRefIds' => [
+				'reporting-entity:cbc-2026' => 'NL2026001234567-abc-1',
+				'sum-nl' => 'NL2026001234567-abc-2',
+				'sum-de' => 'NL2026001234567-abc-3',
+				'additional-info:cbc-2026' => 'NL2026001234567-abc-4',
+			],
 			'language' => 'en',
 			'currency' => 'EUR',
 			'additionalInfo' => 'Employees are full-time equivalents at year end.',
@@ -122,12 +133,15 @@ final class CbcXmlDocumentTest extends TestCase {
 
 		self::assertSame('2.0', self::text($xpath, '/cbc:CBC_OECD/@version'));
 		$names = [];
-		foreach ($xpath->query('/cbc:CBC_OECD/cbc:MessageSpec/*') ?: [] as $node) {
+		foreach ($xpath->query('/cbc:CBC_OECD/cbc:MessageSpec/*') as $node) {
 			$names[] = $node->localName;
 		}
 
 		self::assertSame(
-			['SendingEntityIN', 'TransmittingCountry', 'ReceivingCountry', 'MessageType', 'Language', 'MessageRefId', 'MessageTypeIndic', 'ReportingPeriod', 'Timestamp'],
+			[
+				'SendingEntityIN', 'TransmittingCountry', 'ReceivingCountry', 'MessageType', 'Language',
+				'MessageRefId', 'MessageTypeIndic', 'ReportingPeriod', 'Timestamp',
+			],
 			$names
 		);
 		self::assertSame('001234567', self::text($xpath, '//cbc:MessageSpec/cbc:SendingEntityIN'));
@@ -163,7 +177,7 @@ final class CbcXmlDocumentTest extends TestCase {
 		$xpath = self::xpath((new CbcXmlDocument())->render(self::file()));
 
 		$codes = [];
-		foreach ($xpath->query('//cbc:CbcReports/cbc:ResCountryCode') ?: [] as $node) {
+		foreach ($xpath->query('//cbc:CbcReports/cbc:ResCountryCode') as $node) {
 			$codes[] = $node->textContent;
 		}
 
@@ -260,6 +274,21 @@ final class CbcXmlDocumentTest extends TestCase {
 
 		self::assertSame('Smit & Zonen <B.V.>', self::text($xpath, '//cbc:ReportingEntity/cbc:Entity/cbc:Name'));
 	}//end testNamesAreEscaped()
+
+	/**
+	 * The residents of a jurisdiction are its entities by name; validation goes to the schema set.
+	 *
+	 * @return void
+	 */
+	public function testResidentsAndValidation(): void {
+		$document = new CbcXmlDocument(new CbcXsdSet(sys_get_temp_dir() . '/no-cbc-set'));
+		$entities = self::file()['entities'];
+
+		self::assertSame(['ge-holding', 'ge-productie'], array_column($document->residentsOf($entities, 'NL'), 'id'));
+		self::assertSame(['ge-gmbh'], array_column($document->residentsOf($entities, 'DE'), 'id'));
+		self::assertSame([], $document->residentsOf($entities, 'IE'));
+		self::assertFalse($document->validate($document->render(self::file()))['valid']);
+	}//end testResidentsAndValidation()
 
 	/**
 	 * The record keys of the return's own blocks.

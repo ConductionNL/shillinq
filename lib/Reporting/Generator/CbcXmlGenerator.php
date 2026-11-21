@@ -22,16 +22,11 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
 use OCA\Shillinq\Service\Cbcr\CbcXmlDocument;
-use OCA\Shillinq\Service\Cbcr\CbcXsdSet;
-use OCA\Shillinq\Util\ObjectIdentifier;
-use OCP\IAppConfig;
+use OCA\Shillinq\Service\Sbr\SbrRecords;
 use OCP\IL10N;
 use RuntimeException;
 
@@ -56,30 +51,19 @@ use RuntimeException;
 final class CbcXmlGenerator implements ReportGeneratorInterface {
 
 	/**
-	 * Record keys left out of a record fingerprint: they change without the record's content changing.
-	 *
-	 * @var array<int,string>
-	 */
-	private const VOLATILE = ['@self', 'updated', 'created', 'state', 'figures', 'fixedAssetBookValue'];
-
-	/**
 	 * Constructor.
 	 *
-	 * @param ObjectServiceInterface $objects   OpenRegister's object service.
-	 * @param IAppConfig             $appConfig Names the register.
-	 * @param CbcrCheckRunner        $checks    The checks and the records they read.
-	 * @param CbcXmlDocument         $document  Renders the file.
-	 * @param CbcXsdSet              $xsd       The bundled schema set.
-	 * @param IL10N                  $l10n      Translated refusals.
+	 * @param SbrRecords      $records  The register's records.
+	 * @param CbcrCheckRunner $checks   The checks and the records they read.
+	 * @param CbcXmlDocument  $document Renders and validates the file.
+	 * @param IL10N           $l10n     Translated refusals.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 */
 	public function __construct(
-		private readonly ObjectServiceInterface $objects,
-		private readonly IAppConfig $appConfig,
+		private readonly SbrRecords $records,
 		private readonly CbcrCheckRunner $checks,
 		private readonly CbcXmlDocument $document,
-		private readonly CbcXsdSet $xsd,
 		private readonly IL10N $l10n,
 	) {
 	}//end __construct()
@@ -124,7 +108,7 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 			throw new RuntimeException($this->l10n->t('The country-by-country file is XML only.'));
 		}
 
-		$return = $this->record(schema: 'CbcrReturn', id: trim((string)($context['returnId'] ?? '')));
+		$return = $this->records->find(schema: 'CbcrReturn', id: (string)($context['returnId'] ?? ''));
 		if ($return === null) {
 			throw new RuntimeException($this->l10n->t('Generate the country-by-country file from its report page.'));
 		}
@@ -136,28 +120,18 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 			throw new RuntimeException($this->l10n->t('The report names no reporting entity.'));
 		}
 
-		$file = $this->fileParts(return: $return, records: $records);
-		$xml  = $this->document->render(file: $file);
-
-		$validation = $this->xsd->validate(xml: $xml);
-		$checked    = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z');
+		$file       = $this->fileParts(return: $return, records: $records);
+		$xml        = $this->document->render(file: $file);
+		$validation = $this->document->validate(xml: $xml) + ['validatedAt' => self::now()->format('Y-m-d\TH:i:s\Z')];
 		if ($validation['valid'] === false) {
-			$this->update(return: $return, fields: ['lastValidation' => $validation + ['validatedAt' => $checked]]);
+			$this->update(return: $return, fields: ['lastValidation' => $validation]);
 			throw new RuntimeException($this->invalidMessage(errors: $validation['errors']));
 		}
 
-		$this->update(
-			return: $return,
-			fields: [
-				'lastValidation' => $validation + [
-					'validatedAt' => $checked,
-					'fingerprint' => $this->checks->cbcFingerprint(return: $return),
-					'messageRefId' => $file['messageRefId'],
-					'recordFingerprints' => $file['recordFingerprints'],
-				],
-				'docRefIds' => $file['keptDocRefIds'],
-			]
-		);
+		$validation['fingerprint']        = $this->checks->cbcFingerprint(return: $return);
+		$validation['messageRefId']       = $file['messageRefId'];
+		$validation['recordFingerprints'] = $file['recordFingerprints'];
+		$this->update(return: $return, fields: ['lastValidation' => $validation, 'docRefIds' => $file['keptDocRefIds']]);
 
 		return new GeneratedFile(
 			fileName: sprintf('cbc-report-%s-%s.xml', self::yearOf(return: $return), $file['messageRefId']),
@@ -202,42 +176,26 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	 * @return array<string,mixed>
 	 */
 	private function fileParts(array $return, array $records): array {
-		$returnId  = (string)($return['id'] ?? '');
-		$reporting = (array)$records['reportingEntity'];
-		$upe       = $reporting;
-		if ($records['upeId'] !== (string)($reporting['id'] ?? '')) {
-			$upe = ($this->record(schema: 'GroupEntityRegistry', id: $records['upeId']) ?? $reporting);
-		}
-
-		$entityKey    = $this->document->reportingEntityKey(returnId: $returnId);
-		$fingerprints = [$entityKey => self::fingerprint(value: [$reporting, $return['reportingRole'] ?? null, $upe['entityName'] ?? null])];
-		foreach ($records['summaries'] as $summary) {
-			$code = strtoupper((string)($summary['jurisdiction'] ?? ''));
-			$fingerprints[(string)($summary['id'] ?? '')] = self::fingerprint(
-				value: [$summary, array_values(array_filter($records['entities'], static fn (array $entity): bool => self::residenceOf(entity: $entity) === $code))]
-			);
-		}
-
+		$returnId     = (string)($return['id'] ?? '');
+		$reporting    = (array)$records['reportingEntity'];
+		$upe          = $this->upe(reporting: $reporting, upeId: $records['upeId']);
+		$fingerprints = $this->recordFingerprints(return: $return, records: $records, groupName: (string)($upe['entityName'] ?? ''));
 		$messageRefId = self::messageRefId(return: $return, reporting: $reporting);
 		$correction   = $this->correctionPlan(return: $return, fingerprints: $fingerprints);
-		$docRefIds    = [];
-		$sequence     = 0;
-		foreach (array_keys($fingerprints) as $key) {
-			$sequence++;
-			$docRefIds[$key] = $messageRefId . '-' . $sequence;
+
+		$docRefIds = [];
+		foreach (array_keys($fingerprints) as $index => $key) {
+			$docRefIds[$key] = $messageRefId . '-' . ($index + 1);
 		}
 
-		$note = implode(' ', array_values(array_unique(array_filter(array_map(
-			static fn (array $summary): string => trim((string)($summary['employeeMethodologyNote'] ?? '')),
-			$records['summaries']
-		)))));
-		if ($correction !== null) {
-			// A correction resends records only; the explanatory note stays with the first file.
-			$note = '';
+		// A correction resends records only; the explanatory note stays with the first file.
+		$note = '';
+		if ($correction === null) {
+			$note = self::methodologyNote(summaries: $records['summaries']);
 		}
 
 		if ($note !== '') {
-			$docRefIds[$this->document->additionalInfoKey(returnId: $returnId)] = $messageRefId . '-' . ($sequence + 1);
+			$docRefIds[$this->document->additionalInfoKey(returnId: $returnId)] = $messageRefId . '-' . (count($docRefIds) + 1);
 		}
 
 		$file = [
@@ -248,7 +206,7 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 			'entities' => $records['entities'],
 			'summaries' => $records['summaries'],
 			'messageRefId' => $messageRefId,
-			'timestamp' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s'),
+			'timestamp' => self::now()->format('Y-m-d\TH:i:s'),
 			'docRefIds' => $docRefIds,
 			'language' => 'EN',
 			'currency' => strtoupper((string)($return['currency'] ?? 'EUR')),
@@ -265,6 +223,51 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	}//end fileParts()
 
 	/**
+	 * The ultimate parent: the reporting entity itself, or the entity it names.
+	 *
+	 * @param array<string,mixed> $reporting The reporting entity.
+	 * @param string              $upeId     The ultimate parent's id.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function upe(array $reporting, string $upeId): array {
+		if ($upeId === (string)($reporting['id'] ?? '')) {
+			return $reporting;
+		}
+
+		return ($this->records->find(schema: 'GroupEntityRegistry', id: $upeId) ?? $reporting);
+	}//end upe()
+
+	/**
+	 * A fingerprint per block of the file: the reporting entity, and each jurisdiction with its residents.
+	 *
+	 * Entity figures and asset book values are left out: the file shows the summaries, not them.
+	 *
+	 * @param array<string,mixed> $return    The CbcrReturn.
+	 * @param array<string,mixed> $records   The records of CbcrCheckRunner::cbcRecords().
+	 * @param string              $groupName The group's name.
+	 *
+	 * @return array<string,string> Record key => fingerprint, the reporting entity first.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.2
+	 */
+	private function recordFingerprints(array $return, array $records, string $groupName): array {
+		$entities = array_map(
+			static fn (array $entity): array => array_diff_key($entity, ['figures' => true, 'fixedAssetBookValue' => true]),
+			$records['entities']
+		);
+
+		$key          = $this->document->reportingEntityKey(returnId: (string)($return['id'] ?? ''));
+		$fingerprints = [$key => $this->checks->fingerprintOf(records: [(array)$records['reportingEntity'], $return['reportingRole'] ?? null, $groupName])];
+		foreach ($records['summaries'] as $summary) {
+			$residents = $this->document->residentsOf(entities: $entities, code: strtoupper((string)($summary['jurisdiction'] ?? '')));
+			$fingerprints[(string)($summary['id'] ?? '')] = $this->checks->fingerprintOf(records: [$summary, $residents]);
+		}
+
+		return $fingerprints;
+	}//end recordFingerprints()
+
+	/**
 	 * What a correction sends: the corrected file's DocRefIds and the records that changed since.
 	 *
 	 * @param array<string,mixed>  $return       The CbcrReturn.
@@ -272,7 +275,7 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array{previousDocRefIds:array<string,string>,changed:array<int,string>}|null Null for a first file.
 	 *
-	 * @throws RuntimeException When the corrected report has no file to correct.
+	 * @throws RuntimeException When the corrected report has no file, or nothing changed.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.2
 	 */
@@ -282,20 +285,20 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 			return null;
 		}
 
-		$corrected = $this->record(schema: 'CbcrReturn', id: $correctedId);
+		$corrected = $this->records->find(schema: 'CbcrReturn', id: $correctedId);
 		$previous  = array_map('strval', (array)($corrected['docRefIds'] ?? []));
 		if ($corrected === null || $previous === []) {
 			throw new RuntimeException($this->l10n->t('The corrected report has no file to correct.'));
 		}
 
-		// The corrected file's records are keyed by the corrected return; this return carries them on.
-		$oldEntityKey = $this->document->reportingEntityKey(returnId: $correctedId);
-		$newEntityKey = $this->document->reportingEntityKey(returnId: (string)($return['id'] ?? ''));
-		$previous     = self::rekey(keyed: $previous, from: $oldEntityKey, to: $newEntityKey);
-		$before       = self::rekey(
+		// The corrected file's reporting entity is keyed by the corrected return; this return carries it on.
+		$oldKey   = $this->document->reportingEntityKey(returnId: $correctedId);
+		$newKey   = $this->document->reportingEntityKey(returnId: (string)($return['id'] ?? ''));
+		$previous = self::rekey(keyed: $previous, from: $oldKey, to: $newKey);
+		$before   = self::rekey(
 			keyed: array_map('strval', (array)(($corrected['lastValidation'] ?? [])['recordFingerprints'] ?? [])),
-			from: $oldEntityKey,
-			to: $newEntityKey
+			from: $oldKey,
+			to: $newKey
 		);
 
 		$changed = [];
@@ -348,15 +351,36 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 		$kept = [];
 		foreach ($docRefIds as $key => $docRefId) {
 			$previous = ($correction['previousDocRefIds'][$key] ?? '');
-			$sent     = ($previous === '' || in_array($key, $correction['changed'], true) === true || str_starts_with((string)$key, 'reporting-entity:') === true);
+			$resent   = str_starts_with((string)$key, 'reporting-entity:');
+			$changed  = in_array($key, $correction['changed'], true);
+
 			$kept[$key] = $previous;
-			if ($sent === true) {
+			if ($previous === '' || $changed === true || $resent === true) {
 				$kept[$key] = $docRefId;
 			}
 		}
 
 		return $kept;
 	}//end keptDocRefIds()
+
+	/**
+	 * The employee methodology notes of the summaries, each once.
+	 *
+	 * @param array<int,array<string,mixed>> $summaries The summaries.
+	 *
+	 * @return string
+	 */
+	private static function methodologyNote(array $summaries): string {
+		$notes = [];
+		foreach ($summaries as $summary) {
+			$note = trim((string)($summary['employeeMethodologyNote'] ?? ''));
+			if ($note !== '' && in_array($note, $notes, true) === false) {
+				$notes[] = $note;
+			}
+		}
+
+		return implode(' ', $notes);
+	}//end methodologyNote()
 
 	/**
 	 * The refusal for a file that does not pass the schema: its first three errors.
@@ -368,7 +392,12 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	private function invalidMessage(array $errors): string {
 		$lines = [];
 		foreach (array_slice($errors, 0, 3) as $error) {
-			$lines[] = trim(sprintf('%s %s', $error['line'] > 0 ? 'Line ' . $error['line'] . ':' : '', $error['message']));
+			$line = $error['message'];
+			if ($error['line'] > 0) {
+				$line = 'Line ' . $error['line'] . ': ' . $line;
+			}
+
+			$lines[] = $line;
 		}
 
 		return $this->l10n->t('The country-by-country file does not pass the OECD schema, so it was not stored. %s', [implode(' ', $lines)]);
@@ -385,11 +414,7 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	private function update(array $return, array $fields): void {
 		$object = $fields + $return;
 		unset($object['@self']);
-		$id = (string)($return['id'] ?? '');
-		$this->objects->setRegister($this->register())->setSchema('CbcrReturn')->saveObject(
-			object: $object,
-			options: new ObjectSaveOptions(uuid: $id)
-		);
+		$this->records->save(schema: 'CbcrReturn', record: $object);
 	}//end update()
 
 	/**
@@ -410,56 +435,13 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	}//end messageRefId()
 
 	/**
-	 * A stable hash of a record without the keys that change on their own.
+	 * Now, in UTC.
 	 *
-	 * @param mixed $value The record.
-	 *
-	 * @return string
+	 * @return DateTimeImmutable
 	 */
-	private static function fingerprint(mixed $value): string {
-		return hash('sha256', (string)json_encode(self::normalise(value: $value), JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION));
-	}//end fingerprint()
-
-	/**
-	 * A value with volatile keys removed and keys sorted, recursively.
-	 *
-	 * @param mixed $value The value.
-	 *
-	 * @return mixed
-	 */
-	private static function normalise(mixed $value): mixed {
-		if (is_array($value) === false) {
-			return $value;
-		}
-
-		foreach (self::VOLATILE as $key) {
-			unset($value[$key]);
-		}
-
-		if (array_is_list($value) === false) {
-			ksort($value);
-		}
-
-		return array_map(static fn (mixed $item): mixed => self::normalise(value: $item), $value);
-	}//end normalise()
-
-	/**
-	 * The entity's tax residence: tax residency, else jurisdiction.
-	 *
-	 * @param array<string,mixed> $entity The entity.
-	 *
-	 * @return string
-	 */
-	private static function residenceOf(array $entity): string {
-		foreach (['taxResidency', 'jurisdiction'] as $field) {
-			$code = strtoupper(trim((string)($entity[$field] ?? '')));
-			if (preg_match('/^[A-Z]{2}$/', $code) === 1) {
-				return $code;
-			}
-		}
-
-		return '';
-	}//end residenceOf()
+	private static function now(): DateTimeImmutable {
+		return new DateTimeImmutable('now', new DateTimeZone('UTC'));
+	}//end now()
 
 	/**
 	 * The fiscal year of the return.
@@ -475,34 +457,4 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 
 		return '0000';
 	}//end yearOf()
-
-	/**
-	 * A record by id, null when absent.
-	 *
-	 * @param string $schema The schema.
-	 * @param string $id     The id.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function record(string $schema, string $id): ?array {
-		if ($id === '') {
-			return null;
-		}
-
-		return ObjectIdentifier::findOne(scoped: $this->objects->setRegister($this->register())->setSchema($schema), id: $id);
-	}//end record()
-
-	/**
-	 * The register slug.
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 }//end class

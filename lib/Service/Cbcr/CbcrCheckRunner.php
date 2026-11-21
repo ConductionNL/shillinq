@@ -161,6 +161,20 @@ class CbcrCheckRunner {
 	}//end cbcRecords()
 
 	/**
+	 * The fingerprint of any records, by the same rule as the files' fingerprints:
+	 * keys that change on their own are left out, keys are sorted.
+	 *
+	 * @param array<int|string,mixed> $records The records.
+	 *
+	 * @return string SHA-256 hex.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.2
+	 */
+	public function fingerprintOf(array $records): string {
+		return self::fingerprint(records: $records);
+	}//end fingerprintOf()
+
+	/**
 	 * The fingerprint of the records a GIR file is made from: the group's
 	 * safe harbour records and jurisdiction computations for the year.
 	 *

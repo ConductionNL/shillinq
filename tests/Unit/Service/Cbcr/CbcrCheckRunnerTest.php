@@ -181,6 +181,21 @@ final class CbcrCheckRunnerTest extends TestCase {
 	}//end testTheRecordsOfACbcFile()
 
 	/**
+	 * Any records fingerprint by the files' rule: volatile keys and key order do not count.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.2
+	 */
+	public function testAnyRecordsFingerprintByTheSameRule(): void {
+		$runner = $this->runner();
+		$one    = $runner->fingerprintOf([['id' => 's-nl', 'totalRevenue' => 1.0, 'state' => 'draft']]);
+
+		$this->assertSame($one, $runner->fingerprintOf([['state' => 'locked', 'totalRevenue' => 1.0, 'id' => 's-nl', 'updated' => 'now']]));
+		$this->assertNotSame($one, $runner->fingerprintOf([['id' => 's-nl', 'totalRevenue' => 2.0]]));
+	}//end testAnyRecordsFingerprintByTheSameRule()
+
+	/**
 	 * Tangible assets are compared with the register of the entity's own
 	 * administration, counting only assets in use with a book value; a gap
 	 * over 1% warns and does not block.

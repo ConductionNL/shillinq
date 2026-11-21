@@ -65,7 +65,7 @@ final class CbcXsdSetTest extends TestCase {
 	 * @return void
 	 */
 	protected function tearDown(): void {
-		foreach ((glob($this->folder . '/*') ?: []) as $file) {
+		foreach (glob($this->folder . '/*') as $file) {
 			unlink($file);
 		}
 
@@ -80,7 +80,8 @@ final class CbcXsdSetTest extends TestCase {
 	public static function fixtureXsd(): string {
 		return <<<XSD
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:oecd:ties:cbc:v2" xmlns:cbc="urn:oecd:ties:cbc:v2" elementFormDefault="qualified">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:oecd:ties:cbc:v2"
+  xmlns:cbc="urn:oecd:ties:cbc:v2" elementFormDefault="qualified">
   <xs:element name="CBC_OECD">
     <xs:complexType>
       <xs:sequence>
@@ -137,7 +138,8 @@ XSD;
 	public function testAMatchingFileIsValid(): void {
 		$set     = new CbcXsdSet($this->folder);
 		$outcome = $set->validate(
-			'<cbc:CBC_OECD xmlns:cbc="urn:oecd:ties:cbc:v2" version="2.0"><cbc:MessageSpec><cbc:MessageRefId>M-1</cbc:MessageRefId></cbc:MessageSpec></cbc:CBC_OECD>'
+			'<cbc:CBC_OECD xmlns:cbc="urn:oecd:ties:cbc:v2" version="2.0">'
+			. '<cbc:MessageSpec><cbc:MessageRefId>M-1</cbc:MessageRefId></cbc:MessageSpec></cbc:CBC_OECD>'
 		);
 
 		self::assertTrue($outcome['valid']);

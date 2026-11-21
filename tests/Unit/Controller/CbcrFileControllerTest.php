@@ -24,108 +24,68 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use LogicException;
 use OCA\Shillinq\Controller\CbcrFileController;
-use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Cbcr\CbcrFileService;
-use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
-use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Http;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * Generate XML is for members of the group's administration; refusals answer 422.
+ * Generate XML answers 201 with the file, 404 for a report the caller may not see, 422 on a refusal.
  */
 #[CoversClass(CbcrFileController::class)]
-#[UsesClass(ObjectIdentifier::class)]
 final class CbcrFileControllerTest extends TestCase {
-
-	/**
-	 * The calls the file service received: [returnId, administrationId].
-	 *
-	 * @var array<int,array{0:string,1:string}>
-	 */
-	private array $calls = [];
 
 	/**
 	 * A controller whose file service does what the callback does.
 	 *
-	 * @param callable(array<string,mixed>,string):array<string,mixed> $files The file service's answer.
+	 * @param callable(string):(array<string,mixed>|null) $files The file service's answer.
 	 *
 	 * @return CbcrFileController
 	 */
 	private function controller(callable $files): CbcrFileController {
-		$store = new InMemoryObjectServiceStub(
-			[
-				'GroupEntityRegistry' => [
-					['id' => 'ge-holding', 'administrationId' => 'adm-holding'],
-					['id' => 'ge-productie', 'administrationId' => 'adm-productie', 'ultimateParentEntity' => 'ge-holding'],
-					['id' => 'ge-other', 'administrationId' => 'adm-other'],
-				],
-				'CbcrReturn' => [
-					['id' => 'cbc-2026', 'reportingEntity' => 'ge-productie', 'period' => 'FY2026'],
-					['id' => 'cbc-other', 'reportingEntity' => 'ge-other', 'period' => 'FY2026'],
-					['id' => 'cbc-orphan', 'period' => 'FY2026'],
-				],
-			]
-		);
 		$service = $this->createMock(CbcrFileService::class);
-		$service->method('generateCbc')->willReturnCallback(
-			function (array $return, string $administrationId) use ($files): array {
-				$this->calls[] = [(string)$return['id'], $administrationId];
-				return $files($return, $administrationId);
-			}
-		);
-		$context = $this->createMock(AdministrationContextServiceInterface::class);
-		$context->method('canAccess')->willReturnCallback(static fn (string $administrationId): bool => $administrationId === 'adm-holding');
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $default);
+		$service->method('generateCbc')->willReturnCallback($files);
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
-		return new CbcrFileController(
-			$this->createMock(IRequest::class),
-			$service,
-			$store,
-			$context,
-			$appConfig,
-			$l10n,
-			$this->createMock(LoggerInterface::class)
-		);
+		return new CbcrFileController($this->createMock(IRequest::class), $service, $this->createMock(LoggerInterface::class), $l10n);
 	}//end controller()
 
 	/**
-	 * A member of the ultimate parent's administration gets the file, filed under that administration.
+	 * A stored file answers 201 with the report and the return.
 	 *
 	 * @return void
 	 */
-	public function testAMemberOfTheGroupGetsTheFile(): void {
-		$response = $this->controller(static fn (array $return): array => ['report' => ['id' => 'report-7'], 'return' => $return])->generateCbc('cbc-2026');
+	public function testAStoredFileAnswersCreated(): void {
+		$asked    = [];
+		$response = $this->controller(
+			static function (string $returnId) use (&$asked): array {
+				$asked[] = $returnId;
+				return ['report' => ['id' => 'report-7'], 'return' => ['id' => $returnId]];
+			}
+		)->generateCbc('cbc-2026');
 
 		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
 		self::assertSame('report-7', $response->getData()['report']['id']);
-		self::assertSame([['cbc-2026', 'adm-holding']], $this->calls);
-	}//end testAMemberOfTheGroupGetsTheFile()
+		self::assertSame(['cbc-2026'], $asked);
+	}//end testAStoredFileAnswersCreated()
 
 	/**
-	 * Another group's report, an unknown one, one without an entity or a malformed id reads as not found.
+	 * A report the caller may not see answers 404.
 	 *
 	 * @return void
 	 */
-	public function testOtherReportsReadAsNotFound(): void {
-		$controller = $this->controller(static fn (): array => []);
-		foreach (['cbc-other', 'cbc-missing', 'cbc-orphan', '../etc'] as $returnId) {
-			self::assertSame(Http::STATUS_NOT_FOUND, $controller->generateCbc($returnId)->getStatus(), $returnId);
-		}
+	public function testAReportTheCallerMayNotSeeIsNotFound(): void {
+		$response = $this->controller(static fn (): ?array => null)->generateCbc('cbc-other');
 
-		self::assertSame([], $this->calls);
-	}//end testOtherReportsReadAsNotFound()
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testAReportTheCallerMayNotSeeIsNotFound()
 
 	/**
 	 * A refusal answers 422 with its reason; an unexpected failure answers 500 without details.
@@ -133,13 +93,12 @@ final class CbcrFileControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testRefusalsAndFailures(): void {
-		$refused = $this->controller(
-			static fn (): array => throw new RuntimeException('The country-by-country file is not made while a blocking check fails. cbc-entity-tin')
-		)->generateCbc('cbc-2026');
+		$reason  = 'The country-by-country file is not made while a blocking check fails. cbc-entity-tin';
+		$refused = $this->controller(static fn (): array => throw new RuntimeException($reason))->generateCbc('cbc-2026');
 		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $refused->getStatus());
-		self::assertStringContainsString('cbc-entity-tin', $refused->getData()['error']);
+		self::assertSame($reason, $refused->getData()['error']);
 
-		$failed = $this->controller(static fn (): array => throw new \LogicException('database gone'))->generateCbc('cbc-2026');
+		$failed = $this->controller(static fn (): array => throw new LogicException('database gone'))->generateCbc('cbc-2026');
 		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $failed->getStatus());
 		self::assertSame('The action could not be completed.', $failed->getData()['error']);
 	}//end testRefusalsAndFailures()

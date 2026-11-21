@@ -61,6 +61,51 @@ final class CbcXmlDocument {
 	public const NO_TIN = 'NOTIN';
 
 	/**
+	 * The schema set the file is validated against.
+	 *
+	 * @var CbcXsdSet
+	 */
+	private readonly CbcXsdSet $xsd;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param CbcXsdSet|null $xsd The schema set; null for the bundled one.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function __construct(?CbcXsdSet $xsd = null) {
+		$this->xsd = ($xsd ?? new CbcXsdSet());
+	}//end __construct()
+
+	/**
+	 * Validate a rendered file against the schema set.
+	 *
+	 * @param string $xml The file.
+	 *
+	 * @return array{valid:bool,errors:array<int,array{line:int,element:string,message:string}>,schemaVersion:string,xsdChecksum:string}
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function validate(string $xml): array {
+		return $this->xsd->validate(xml: $xml);
+	}//end validate()
+
+	/**
+	 * The entities resident in a jurisdiction, by name: the ConstEntities of its CbcReports.
+	 *
+	 * @param array<int,mixed> $entities The included entities.
+	 * @param string           $code     The jurisdiction.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.2
+	 */
+	public function residentsOf(array $entities, string $code): array {
+		return self::residents(entities: $entities, code: $code);
+	}//end residentsOf()
+
+	/**
 	 * Render the file.
 	 *
 	 * @param array<string,mixed> $file The parts:
@@ -201,9 +246,8 @@ final class CbcXmlDocument {
 		$period->appendChild(self::cbc(doc: $doc, name: 'EndDate', text: self::yearEnd(file: $file)));
 		$block->appendChild($period);
 
-		$block->appendChild(
-			self::docSpec(doc: $doc, file: $file, recordId: self::recordKey(prefix: 'reporting-entity:', returnId: (string)($return['id'] ?? '')), resend: true)
-		);
+		$recordId = self::recordKey(prefix: 'reporting-entity:', returnId: (string)($return['id'] ?? ''));
+		$block->appendChild(self::docSpec(doc: $doc, file: $file, recordId: $recordId, resend: true));
 
 		return $block;
 	}//end reportingEntity()
@@ -246,7 +290,7 @@ final class CbcXmlDocument {
 		$figures->appendChild(self::amount(doc: $doc, name: 'Assets', value: $summary['tangibleAssetsOtherThanCash'] ?? 0, currency: $currency));
 		$reports->appendChild($figures);
 
-		foreach (self::residentsOf(entities: (array)($file['entities'] ?? []), code: $code) as $entity) {
+		foreach (self::residents(entities: (array)($file['entities'] ?? []), code: $code) as $entity) {
 			$reports->appendChild(self::constEntities(doc: $doc, file: $file, entity: $entity));
 		}
 
@@ -295,9 +339,8 @@ final class CbcXmlDocument {
 	private static function additionalInfo(DOMDocument $doc, array $file, string $note): DOMElement {
 		$return = (array)($file['return'] ?? []);
 		$block  = self::cbc(doc: $doc, name: 'AdditionalInfo');
-		$block->appendChild(
-			self::docSpec(doc: $doc, file: $file, recordId: self::recordKey(prefix: 'additional-info:', returnId: (string)($return['id'] ?? '')), resend: false)
-		);
+		$recordId = self::recordKey(prefix: 'additional-info:', returnId: (string)($return['id'] ?? ''));
+		$block->appendChild(self::docSpec(doc: $doc, file: $file, recordId: $recordId, resend: false));
 		$other = self::cbc(doc: $doc, name: 'OtherInfo', text: $note);
 		$other->setAttribute('language', strtoupper((string)($file['language'] ?? 'EN')));
 		$block->appendChild($other);
@@ -464,7 +507,7 @@ final class CbcXmlDocument {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private static function residentsOf(array $entities, string $code): array {
+	private static function residents(array $entities, string $code): array {
 		$rows = [];
 		foreach ($entities as $entity) {
 			if (is_array($entity) === true && self::residenceOf(entity: $entity) === $code) {
@@ -475,7 +518,7 @@ final class CbcXmlDocument {
 		usort($rows, static fn (array $one, array $two): int => strcmp((string)($one['entityName'] ?? ''), (string)($two['entityName'] ?? '')));
 
 		return $rows;
-	}//end residentsOf()
+	}//end residents()
 
 	/**
 	 * The CbC role of a constituent entity: ultimate parent, reporting entity, or both.

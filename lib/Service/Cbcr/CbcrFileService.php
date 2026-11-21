@@ -20,12 +20,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Cbcr;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
-use OCP\IAppConfig;
+use OCA\Shillinq\Service\Sbr\SbrRecords;
 use OCP\IL10N;
 use RuntimeException;
 
@@ -33,11 +30,13 @@ use RuntimeException;
  * "Generate XML" on a country-by-country report: the file through the report
  * pipeline, stored and tagged like every other report, and linked on the return.
  *
- * The `cbc-report` generator refuses on a blocking check or a file that does
- * not pass the schema, and writes the validation on the return; this service
- * stores the file (ReportGenerationService) and puts the GeneratedReport id in
- * `cbcrXmlSubmission`, which the submit guard needs. A file that could not be
- * stored clears the link, so an older file is never taken for this one.
+ * Only a member of the administration of the report's ultimate parent may make
+ * the file, the same rule as the report's checks; for anyone else the report
+ * does not exist. The `cbc-report` generator refuses on a blocking check or a
+ * file that does not pass the schema, and writes the validation on the return;
+ * this service puts the stored GeneratedReport's id in `cbcrXmlSubmission`,
+ * which the submit guard needs. A file that could not be stored clears the
+ * link, so an older file is never taken for this one.
  *
  * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
  */
@@ -46,17 +45,17 @@ class CbcrFileService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ReportGenerationServiceInterface $reports   Renders, stores and records the file.
-	 * @param ObjectServiceInterface           $objects   OpenRegister's object service.
-	 * @param IAppConfig                       $appConfig Names the register.
-	 * @param IL10N                            $l10n      Translated refusals.
+	 * @param ReportGenerationServiceInterface      $reports Renders, stores and records the file.
+	 * @param SbrRecords                            $records The register's records.
+	 * @param AdministrationContextServiceInterface $context Which administrations the caller may use.
+	 * @param IL10N                                 $l10n    Translated refusals.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 */
 	public function __construct(
 		private readonly ReportGenerationServiceInterface $reports,
-		private readonly ObjectServiceInterface $objects,
-		private readonly IAppConfig $appConfig,
+		private readonly SbrRecords $records,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IL10N $l10n,
 	) {
 	}//end __construct()
@@ -64,35 +63,39 @@ class CbcrFileService {
 	/**
 	 * Generate, store and link the return's CbC file.
 	 *
-	 * @param array<string,mixed> $return           The CbcrReturn.
-	 * @param string              $administrationId The administration the file is filed under.
+	 * @param string $returnId The CbcrReturn id.
 	 *
-	 * @return array{report:array<string,mixed>,return:array<string,mixed>} The GeneratedReport and the updated return.
+	 * @return array{report:array<string,mixed>,return:array<string,mixed>}|null The GeneratedReport and
+	 *                                                                          the updated return; null when
+	 *                                                                          the caller may not see the report.
 	 *
 	 * @throws RuntimeException When the file is refused or not stored; the message says why.
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 */
-	public function generateCbc(array $return, string $administrationId): array {
-		$returnId = (string)($return['id'] ?? '');
-		if ($returnId === '') {
-			throw new RuntimeException($this->l10n->t('The country-by-country report was not found.'));
+	public function generateCbc(string $returnId): ?array {
+		$return = null;
+		if (preg_match('/^[A-Za-z0-9_.\-]{1,64}$/', $returnId) === 1) {
+			$return = $this->records->find(schema: 'CbcrReturn', id: $returnId);
+		}
+
+		$administrationId = $this->groupAdministration(return: $return);
+		if ($return === null || $administrationId === null) {
+			return null;
 		}
 
 		if (in_array((string)($return['state'] ?? 'draft'), ['submitted', 'locked'], true) === true) {
 			throw new RuntimeException($this->l10n->t('A filed report keeps its file. Create a correction to send changed figures.'));
 		}
 
-		$report = $this->reports->generate(
+		$report = $this->reports->generateForRecord(
 			reportType: 'cbc-report',
 			period: (string)($return['period'] ?? ''),
 			administrationId: $administrationId,
-			format: 'xml',
-			asUserId: null,
-			subject: ['returnId' => $returnId]
+			subject: ['returnId' => (string)$return['id']]
 		);
 
-		$current = ($this->record(id: $returnId) ?? $return);
+		$current = ($this->records->find(schema: 'CbcrReturn', id: (string)$return['id']) ?? $return);
 		$fileId  = '';
 		if (isset($report['error']) === false) {
 			$fileId = trim((string)($report['id'] ?? ''));
@@ -100,56 +103,49 @@ class CbcrFileService {
 
 		if ($fileId === '') {
 			if (trim((string)($current['cbcrXmlSubmission'] ?? '')) !== '') {
-				$this->save(return: $current, fields: ['cbcrXmlSubmission' => '']);
+				$this->link(return: $current, fileId: '');
 			}
 
 			throw new RuntimeException((string)($report['message'] ?? $this->l10n->t('The country-by-country file could not be stored.')));
 		}
 
-		return ['report' => $report, 'return' => $this->save(return: $current, fields: ['cbcrXmlSubmission' => $fileId])];
+		return ['report' => $report, 'return' => $this->link(return: $current, fileId: $fileId)];
 	}//end generateCbc()
 
 	/**
-	 * Write fields onto the return in place.
+	 * The administration of the report's ultimate parent, when the caller is a member of it.
 	 *
-	 * @param array<string,mixed> $return The CbcrReturn.
-	 * @param array<string,mixed> $fields The fields.
+	 * @param array<string,mixed>|null $return The CbcrReturn.
+	 *
+	 * @return string|null Null when there is none or the caller may not use it.
+	 */
+	private function groupAdministration(?array $return): ?string {
+		$entity = $this->records->find(schema: 'GroupEntityRegistry', id: (string)($return['reportingEntity'] ?? ''));
+		$upeId  = trim((string)($entity['ultimateParentEntity'] ?? ''));
+		if ($entity !== null && $upeId !== '' && $upeId !== (string)($entity['id'] ?? '')) {
+			$entity = $this->records->find(schema: 'GroupEntityRegistry', id: $upeId);
+		}
+
+		$administrationId = trim((string)($entity['administrationId'] ?? ''));
+		if ($administrationId === '' || $this->context->canAccess(administrationId: $administrationId) !== true) {
+			return null;
+		}
+
+		return $administrationId;
+	}//end groupAdministration()
+
+	/**
+	 * Put the file's id on the return.
+	 *
+	 * @param array<string,mixed> $return The CbcrReturn as stored now.
+	 * @param string              $fileId The GeneratedReport id, '' to clear.
 	 *
 	 * @return array<string,mixed> The stored return.
 	 */
-	private function save(array $return, array $fields): array {
-		$object = $fields + $return;
+	private function link(array $return, string $fileId): array {
+		$object = ['cbcrXmlSubmission' => $fileId] + $return;
 		unset($object['@self']);
-		$saved = $this->objects->setRegister($this->register())->setSchema('CbcrReturn')->saveObject(
-			object: $object,
-			options: new ObjectSaveOptions(uuid: (string)($return['id'] ?? ''))
-		);
 
-		return (ObjectIdentifier::recordWithId(candidate: $saved) ?? []) + $object;
-	}//end save()
-
-	/**
-	 * The return as stored now.
-	 *
-	 * @param string $id The id.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function record(string $id): ?array {
-		return ObjectIdentifier::findOne(scoped: $this->objects->setRegister($this->register())->setSchema('CbcrReturn'), id: $id);
-	}//end record()
-
-	/**
-	 * The register slug.
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
+		return $this->records->save(schema: 'CbcrReturn', record: $object);
+	}//end link()
 }//end class

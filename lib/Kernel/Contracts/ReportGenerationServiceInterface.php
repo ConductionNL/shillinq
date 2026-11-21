@@ -59,8 +59,6 @@ interface ReportGenerationServiceInterface {
 	 * @param string $format One of the report's catalogue formats.
 	 * @param string|null $asUserId The user the report is produced for when there
 	 *                              is no session (a scheduled run); null = the session user.
-	 * @param array<string, string> $subject The record the report is made from, passed on to the
-	 *                                       generator (e.g. `['returnId' => ...]`).
 	 *
 	 * @return array<string, mixed> The recorded GeneratedReport (incl. fileId + downloadPath),
 	 *                              or an `{ error: ... }` envelope when generation cannot proceed.
@@ -68,7 +66,21 @@ interface ReportGenerationServiceInterface {
 	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
-	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null, array $subject=[]): array;
+	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array;
+
+	/**
+	 * Generate a report made from one record (e.g. a CbcrReturn), in the report's preferred format.
+	 *
+	 * @param string                $reportType       ReportCatalogue report-type id.
+	 * @param string                $period           Reporting period.
+	 * @param string                $administrationId Administration the report is filed under.
+	 * @param array<string, string> $subject          The record, passed on to the generator.
+	 *
+	 * @return array<string, mixed> As generate().
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function generateForRecord(string $reportType, string $period, string $administrationId, array $subject): array;
 
 	/**
 	 * List recorded GeneratedReport records, optionally filtered.

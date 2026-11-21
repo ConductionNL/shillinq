@@ -236,7 +236,8 @@ final class ReportGenerationServiceTest extends TestCase {
 	public function testTheSubjectReachesTheGenerator(): void {
 		$service = $this->service(new ContextEchoGenerator(), new FakeRgsObjectService());
 
-		$result = $service->generate('balance-sheet', '2026', 'admin-1', 'pdf', null, ['returnId' => 'cbc-2026', 'period' => '1999', 'administrationId' => 'other']);
+		$subject = ['returnId' => 'cbc-2026', 'period' => '1999', 'administrationId' => 'other'];
+		$result  = $service->generateForRecord('balance-sheet', '2026', 'admin-1', $subject);
 
 		$this->assertSame('generation-failed', $result['error']);
 		$this->assertSame(
