@@ -296,18 +296,18 @@ class WidgetApiControllerAppointmentsTest extends TestCase {
 			]
 		);
 
-		$response = $this->book(self::acceptedPayloads()[array_key_first(self::acceptedPayloads())][0]);
+		$response = $this->book(payload: self::acceptedPayloads()[array_key_first(self::acceptedPayloads())][0]);
 
-		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
 		self::assertSame(
-			[
+			expected: [
 				'appointmentId' => 'apt-1',
 				'status' => 'pending_confirmation',
 				'confirmationMessage' => 'Created',
 				'withdrawalLink' => 'https://salon.example.org/withdraw?withdraw=t.s',
 				'withdrawalLastDay' => '2026-12-04',
 			],
-			$response->getData()
+			actual: $response->getData()
 		);
 
 	}//end testTheWithdrawalLinkReachesTheWidget()

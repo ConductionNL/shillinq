@@ -358,7 +358,7 @@ class WidgetServiceTest extends TestCase {
 		);
 		$this->offerCanonicalSlot();
 		$seen = [];
-		$links = $this->createMock(WithdrawalLinkService::class);
+		$links = $this->createMock(originalClassName: WithdrawalLinkService::class);
 		$links->method('forAppointment')->willReturnCallback(
 			static function (array $appointment) use (&$seen): string {
 				$seen = $appointment;
@@ -375,7 +375,10 @@ class WidgetServiceTest extends TestCase {
 			expected: ['https://salon.example.org/withdraw?withdraw=t.s', '2026-12-04'],
 			actual: [$result['withdrawalLink'], $result['withdrawalLastDay']]
 		);
-		self::assertSame(expected: ['apt-new', 'widget', '2026-11-21T10:00:00+00:00'], actual: [$seen['appointmentId'], $seen['source'], $seen['@self']['created']]);
+		self::assertSame(
+			expected: ['apt-new', 'widget', '2026-11-21T10:00:00+00:00'],
+			actual: [$seen['appointmentId'], $seen['source'], $seen['@self']['created']]
+		);
 	}//end testACreatedBookingCarriesItsWithdrawalLink()
 
 	/**
@@ -394,7 +397,7 @@ class WidgetServiceTest extends TestCase {
 			saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation'],
 		);
 		$this->offerCanonicalSlot();
-		$links = $this->createMock(WithdrawalLinkService::class);
+		$links = $this->createMock(originalClassName: WithdrawalLinkService::class);
 		$links->method('forAppointment')->willReturn(null);
 		$links->method('lastDayFor')->willReturn('2026-12-04');
 		$this->resolve(objectService: $objectService, links: $links);

@@ -246,20 +246,14 @@
 			role="status">
 			<strong>{{ t('Booking confirmed') }}</strong>
 			<p>{{ confirmationMessage }}</p>
-			<p v-if="withdrawalLink" class="wsw-widget__withdrawal">
-				{{ t('Changed your mind? You can withdraw from this booking without a fee until') }}
-				<time :datetime="withdrawalLastDay">{{ withdrawalLastDay }}</time>.
-				<a
-					class="wsw-widget__withdrawal-link"
-					:href="withdrawalLink"
-					target="_blank"
-					rel="noopener noreferrer">{{ t('Withdraw from this booking') }}</a>
-			</p>
+			<WithdrawalNotice :link="withdrawalLink" :lastDay="withdrawalLastDay" :t="t" />
 		</section>
 	</div>
 </template>
 
 <script>
+import WithdrawalNotice from './WithdrawalNotice.vue'
+
 const DEFAULT_RESOURCE_ID = 'res-001'
 
 // Walks the customer through the four-step booking flow and submits the
@@ -272,6 +266,7 @@ let nextWidgetId = 1
 
 export default {
 	name: 'SelfServiceWidget',
+	components: { WithdrawalNotice },
 	props: {
 		businessId: {
 			type: String,
@@ -769,26 +764,9 @@ export default {
 				payload && payload.confirmationMessage
 					? payload.confirmationMessage
 					: this.t('Booking confirmed')
-			this.showWithdrawal(payload)
+			this.withdrawalLink = String(payload?.withdrawalLink || '')
+			this.withdrawalLastDay = String(payload?.withdrawalLastDay || '')
 			this.step = 'confirmed'
-		},
-
-		/**
-		 * Keep the signed withdrawal link and its last day the server sent
-		 * for a booking made online; a link that is not https, or one without
-		 * its last day, is not shown.
-		 *
-		 * @param {object|null} payload The confirmation payload.
-		 * @return {void}
-		 *
-		 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
-		 */
-		showWithdrawal(payload) {
-			const link = payload && typeof payload.withdrawalLink === 'string' ? payload.withdrawalLink : ''
-			const lastDay = payload && typeof payload.withdrawalLastDay === 'string' ? payload.withdrawalLastDay : ''
-			const usable = /^https:\/\//i.test(link) && /^\d{4}-\d{2}-\d{2}$/.test(lastDay)
-			this.withdrawalLink = usable ? link : ''
-			this.withdrawalLastDay = usable ? lastDay : ''
 		},
 	},
 }

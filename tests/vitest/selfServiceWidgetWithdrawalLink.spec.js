@@ -5,7 +5,8 @@
  * The booking widget's confirmation step shows the signed withdrawal link
  * and its last day the server sent for a booking made online
  * (sales-cancellation task 3.4, REQ-SCX-004), in the partner's translation
- * table, and shows nothing when there is no usable link.
+ * table, and shows nothing when there is no usable link. The line itself
+ * is `WithdrawalNotice.vue`, which only the widget renders.
  *
  * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
  */
@@ -89,7 +90,6 @@ describe('the withdrawal link on the confirmation step (REQ-SCX-004)', () => {
 	])('shows nothing for %s', async (_name, extra) => {
 		const vm = widget()
 		await vm.confirmBooking(response({ confirmationMessage: 'Created', ...extra }))
-		expect([vm.withdrawalLink, vm.withdrawalLastDay]).toEqual(['', ''])
 
 		const html = await render({ step: 'confirmed', confirmationMessage: 'Created', withdrawalLink: vm.withdrawalLink, withdrawalLastDay: vm.withdrawalLastDay })
 		expect(html).not.toContain('wsw-widget__withdrawal')
