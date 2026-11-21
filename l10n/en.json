@@ -6212,7 +6212,16 @@
         "Ledger lines for an account": "Ledger lines for an account",
         "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.": "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.",
         "Total of the lines": "Total of the lines",
-        "No lines are posted on this account in this range.": "No lines are posted on this account in this range."
+        "No lines are posted on this account in this range.": "No lines are posted on this account in this range.",
+        "Bundle this quarter's declared expenditure that carries certified, complete evidence into a draft declaration with its EU share; the rest is listed as left out with the reason (REQ-EUF-012). Refused while an irregularity on the project is open (REQ-EUF-007).": "Bundle this quarter's declared expenditure that carries certified, complete evidence into a draft declaration with its EU share; the rest is listed as left out with the reason (REQ-EUF-012). Refused while an irregularity on the project is open (REQ-EUF-007).",
+        "Download the SiSa appendix of the grant's administration for its budget year: one row per indicator in the column order of the BZK template (REQ-SISA-013).": "Download the SiSa appendix of the grant's administration for its budget year: one row per indicator in the column order of the BZK template (REQ-SISA-013).",
+        "Provider payouts, their lines matched to what they paid, booked and reconciled with the bank line.": "Provider payouts, their lines matched to what they paid, booked and reconciled with the bank line.",
+        "Store the grant's accountability report, with a pending auditor statement when the grant's amount requires one (REQ-SUBV-012).": "Store the grant's accountability report, with a pending auditor statement when the grant's amount requires one (REQ-SUBV-012).",
+        "Data": "Data",
+        "Fixed asset": "Fixed asset",
+        "Filed return attachment": "Filed return attachment",
+        "Imported statements": "Imported statements",
+        "Receipt evidence": "Receipt evidence"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
