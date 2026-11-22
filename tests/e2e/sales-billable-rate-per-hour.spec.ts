@@ -67,7 +67,12 @@ interface BillableHours {
 	reason?: string
 	month: string
 	rows: HourRow[]
-	totals: { hours: number, unbilledHours: number, unbilledValue: number, unratedHours: number }
+	totals: {
+		hours: number
+		unbilledHours: number
+		unbilledValue: number
+		unratedHours: number
+	}
 }
 
 /**
@@ -85,7 +90,8 @@ async function findProject(request: APIRequestContext): Promise<string | null> {
 		return null
 	}
 	const body = await response.json()
-	const results: Array<{ id?: string, uuid?: string, name?: string }> = body.results ?? []
+	const results: Array<{ id?: string; uuid?: string; name?: string }> =
+		body.results ?? []
 	const project = results.find((candidate) => candidate.name === PROJECT_NAME)
 	return project ? String(project.id ?? project.uuid ?? '') || null : null
 }
@@ -97,11 +103,17 @@ async function findProject(request: APIRequestContext): Promise<string | null> {
  * @param projectId The project.
  * @return The answer.
  */
-async function billableHours(request: APIRequestContext, projectId: string): Promise<BillableHours> {
-	const response = await request.get(`${API}/v1/projects/${encodeURIComponent(projectId)}/billable-hours`, {
-		headers: HEADERS,
-		params: { month: MONTH },
-	})
+async function billableHours(
+	request: APIRequestContext,
+	projectId: string,
+): Promise<BillableHours> {
+	const response = await request.get(
+		`${API}/v1/projects/${encodeURIComponent(projectId)}/billable-hours`,
+		{
+			headers: HEADERS,
+			params: { month: MONTH },
+		},
+	)
 	expect(response.status()).toBe(200)
 	return response.json()
 }
@@ -111,12 +123,21 @@ test.describe('sales-billable-rate-per-hour', () => {
 		resolveBaseURL()
 	})
 
-	test('a project manager sees what October is worth', async ({ page, request }) => {
+	test('a project manager sees what October is worth', async ({
+		page,
+		request,
+	}) => {
 		const projectId = await findProject(request)
-		test.skip(projectId === null, `the seed project ${PROJECT_NAME} is not on this instance`)
+		test.skip(
+			projectId === null,
+			`the seed project ${PROJECT_NAME} is not on this instance`,
+		)
 
 		const answer = await billableHours(request, projectId as string)
-		test.skip(answer.available !== true, 'no hours source is connected on this instance')
+		test.skip(
+			answer.available !== true,
+			'no hours source is connected on this instance',
+		)
 		test.skip(
 			answer.rows.some((row) => row.invoiceNumber),
 			'some October hours are already invoiced, so the unbilled totals differ from the seed',
@@ -127,7 +148,9 @@ test.describe('sales-billable-rate-per-hour', () => {
 		expect(answer.totals.unbilledValue).toBeCloseTo(1510, 2)
 		expect(answer.totals.unratedHours).toBeCloseTo(1, 2)
 
-		await page.goto(`${APP}/bookkeeping/dimensions/projects/${encodeURIComponent(projectId as string)}`)
+		await page.goto(
+			`${APP}/bookkeeping/dimensions/projects/${encodeURIComponent(projectId as string)}`,
+		)
 		const card = page.getByTestId('project-billable-hours')
 		await expect(card).toBeVisible()
 		await card.getByTestId('pbh-month').fill(MONTH)
@@ -135,25 +158,39 @@ test.describe('sales-billable-rate-per-hour', () => {
 		const totals = card.getByTestId('pbh-totals')
 		await expect(totals).toContainText('12.5')
 		await expect(totals).toContainText(/1[.,]?510/)
-		await expect(card.getByTestId('pbh-row').filter({ hasText: 'Dana' })).toContainText('No rate')
+		await expect(
+			card.getByTestId('pbh-row').filter({ hasText: 'Dana' }),
+		).toContainText('No rate')
 	})
 
 	test('without an hours source the card says so', async ({ page, request }) => {
 		const projectId = await findProject(request)
-		test.skip(projectId === null, `the seed project ${PROJECT_NAME} is not on this instance`)
+		test.skip(
+			projectId === null,
+			`the seed project ${PROJECT_NAME} is not on this instance`,
+		)
 
-		await page.route('**/api/v1/projects/*/billable-hours**', (route) => route.fulfill({
-			status: 200,
-			contentType: 'application/json',
-			body: JSON.stringify({
-				available: false,
-				reason: 'hours-source-unavailable',
-				month: MONTH,
-				rows: [],
-				totals: { hours: 0, unbilledHours: 0, unbilledValue: 0, unratedHours: 0 },
+		await page.route('**/api/v1/projects/*/billable-hours**', (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify({
+					available: false,
+					reason: 'hours-source-unavailable',
+					month: MONTH,
+					rows: [],
+					totals: {
+						hours: 0,
+						unbilledHours: 0,
+						unbilledValue: 0,
+						unratedHours: 0,
+					},
+				}),
 			}),
-		}))
-		await page.goto(`${APP}/bookkeeping/dimensions/projects/${encodeURIComponent(projectId as string)}`)
+		)
+		await page.goto(
+			`${APP}/bookkeeping/dimensions/projects/${encodeURIComponent(projectId as string)}`,
+		)
 		const card = page.getByTestId('project-billable-hours')
 		await expect(card.getByTestId('pbh-unavailable')).toBeVisible()
 		await expect(card.getByTestId('pbh-totals')).toHaveCount(0)
@@ -161,14 +198,30 @@ test.describe('sales-billable-rate-per-hour', () => {
 
 	test('two people on one invoice keep their own rates', async ({ request }) => {
 		const projectId = await findProject(request)
-		test.skip(projectId === null, `the seed project ${PROJECT_NAME} is not on this instance`)
+		test.skip(
+			projectId === null,
+			`the seed project ${PROJECT_NAME} is not on this instance`,
+		)
 
 		const answer = await billableHours(request, projectId as string)
-		test.skip(answer.available !== true, 'no hours source is connected on this instance')
-		const chosen = answer.rows.filter((row) => /^(Alice|Bram)\b/.test(row.person))
-		test.skip(chosen.length === 0 || chosen.some((row) => row.invoiceNumber), 'the hours of Alice and Bram are not all unbilled')
+		test.skip(
+			answer.available !== true,
+			'no hours source is connected on this instance',
+		)
+		const chosen = answer.rows.filter((row) =>
+			/^(Alice|Bram)\b/.test(row.person),
+		)
+		test.skip(
+			chosen.length === 0 || chosen.some((row) => row.invoiceNumber),
+			'the hours of Alice and Bram are not all unbilled',
+		)
 
-		const project = await (await request.get(`${OBJECTS}/engagement/${encodeURIComponent(projectId as string)}`, { headers: HEADERS })).json()
+		const project = await (
+			await request.get(
+				`${OBJECTS}/engagement/${encodeURIComponent(projectId as string)}`,
+				{ headers: HEADERS },
+			)
+		).json()
 		const response = await request.post(`${API}/v1/invoices/generate`, {
 			headers: HEADERS,
 			data: {
@@ -184,10 +237,19 @@ test.describe('sales-billable-rate-per-hour', () => {
 		})
 		expect(response.status()).toBeLessThan(300)
 		const draft = await response.json()
-		const lines: Array<{ rateApplied?: number, amount?: number, total?: number }> = draft.lines ?? []
-		const rates = lines.map((line) => Number(line.rateApplied)).sort((a, b) => a - b)
+		const lines: Array<{
+			rateApplied?: number
+			amount?: number
+			total?: number
+		}> = draft.lines ?? []
+		const rates = lines
+			.map((line) => Number(line.rateApplied))
+			.sort((a, b) => a - b)
 		expect(rates).toEqual(expect.arrayContaining([120, 130]))
-		const total = lines.reduce((sum, line) => sum + Number(line.amount ?? line.total ?? 0), 0)
+		const total = lines.reduce(
+			(sum, line) => sum + Number(line.amount ?? line.total ?? 0),
+			0,
+		)
 		expect(total).toBeCloseTo(1320, 2)
 	})
 })
