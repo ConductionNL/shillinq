@@ -26,6 +26,7 @@
 ## 5. Tests and docs
 
 - [ ] 5.1 Playwright: open Renovatie Kade 12, read the October totals (12.5 rated hours, EUR 1,510, 1 hour without a rate), then draft an invoice for Alice and Bram and read EUR 1,320 (REQ-BRPH-003, REQ-BRPH-005). Tag each test with `@e2e` references to the scenarios.
+  - Written: `tests/e2e/sales-billable-rate-per-hour.spec.ts`, the three scenarios tagged (October totals, the not-connected card, two rates on one draft). Not run here, no live instance; tick after a live run.
 - [x] 5.2 Update the rate card and project user guide pages in `docs/` with how a rate is chosen (tier table) and what "no rate" means; English strings with Dutch translations in `l10n/`. Verify: `npm run test:l10n`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `npm run lint` and `npm run format`, `@spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-N` on every new method.
