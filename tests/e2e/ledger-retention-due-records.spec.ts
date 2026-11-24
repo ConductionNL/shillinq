@@ -159,9 +159,46 @@ test.describe('ledger-retention-due-records: the records due for destruction', (
 		expect(held.rows.some((row) => row.recordId === old), 'a held record is not due').toBe(false)
 	})
 
-	// The scenario names an ARInvoice, but RetentionDueService::BINDINGS binds
-	// GLTransaction and APInvoice only: an ARInvoice is never on the list, held
-	// or not, so the scenario as written has nothing to observe. The legal-hold
-	// rule itself is covered on the GLTransaction above.
-	test.fixme('an ARInvoice under a legal hold stays off the list @spec REQ-RET-015', async () => {})
+	test('an ARInvoice under a legal hold stays off the list @spec REQ-RET-015', async () => {
+		const missing = await fx.missingSchema(['ARInvoice', 'RetentionRule', 'DocumentRetention'])
+		test.skip(missing !== null, `the shillinq register lacks ${missing}`)
+		const before = await dueList(ADMINISTRATION_ID)
+		test.skip(before.status === 404, `the administrator holds no membership of ${ADMINISTRATION_ID}; set E2E_ADMINISTRATION_ID`)
+
+		await fx.create('RetentionRule', {
+			selectionListCode: RULE_CODE,
+			description: `${UNIQUE_PREFIX} sales invoices`,
+			recordCategory: 'financial',
+			retentionYears: 7,
+			disposition: 'destroy',
+			legalBasis: 'Archiefwet 1995 art. 5 + BW 2:394',
+			effectiveFrom: '2016-01-01',
+			administrationId: ADMINISTRATION_ID,
+		})
+		// Retention ended on 1 May 2023, so the invoice is due until it is held.
+		const { id: invoice } = await fx.create('ARInvoice', {
+			invoiceNumber: `${UNIQUE_PREFIX}-RET-AR`,
+			invoiceDate: '2016-05-01',
+			dueDate: '2016-05-31',
+			customerId: `${UNIQUE_PREFIX}-customer`,
+			currency: 'EUR',
+			lifecycleState: 'draft',
+			administrationId: ADMINISTRATION_ID,
+		})
+		const listed = await dueList(ADMINISTRATION_ID)
+		const mine = listed.rows.filter((row) => row.recordId === invoice)
+		expect(mine, 'the 2016 sales invoice is listed once').toHaveLength(1)
+		expect(mine[0].register).toBe('ARInvoice')
+		expect(mine[0].endDate).toBe('2023-05-01')
+
+		await fx.create('DocumentRetention', {
+			documentId: invoice,
+			policyId: `${UNIQUE_PREFIX}-policy-ar`,
+			status: 'active',
+			legalHold: true,
+			administrationId: ADMINISTRATION_ID,
+		})
+		const held = await dueList(ADMINISTRATION_ID)
+		expect(held.rows.some((row) => row.recordId === invoice), 'a held invoice is not due').toBe(false)
+	})
 })

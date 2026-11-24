@@ -160,6 +160,7 @@ final class RetentionDueServiceTest extends TestCase {
 
 	/**
 	 * The list reads each bound schema and the holds for the administration only, and sorts by end date.
+	 * Sales invoices are bound too: one under a legal hold stays off (REQ-RET-015).
 	 *
 	 * @return void
 	 */
@@ -172,7 +173,8 @@ final class RetentionDueServiceTest extends TestCase {
 				return match ($schema) {
 					'GLTransaction'     => [['id' => 'tx-2018', 'postingDate' => '2018-03-15'], ['id' => 'tx-held', 'postingDate' => '2016-01-01']],
 					'APInvoice'         => [['id' => 'inv-2017', 'invoiceDate' => '2017-06-30']],
-					'DocumentRetention' => [['documentId' => 'tx-held', 'legalHold' => true]],
+					'ARInvoice'         => [['id' => 'ar-2016', 'invoiceDate' => '2016-05-01'], ['id' => 'ar-held', 'invoiceDate' => '2016-05-01']],
+					'DocumentRetention' => [['documentId' => 'tx-held', 'legalHold' => true], ['documentId' => 'ar-held', 'legalHold' => true]],
 					default             => [],
 				};
 			}
@@ -188,13 +190,14 @@ final class RetentionDueServiceTest extends TestCase {
 
 		$this->assertSame(
 			[
+				['register' => 'ARInvoice', 'recordId' => 'ar-2016', 'ruleCode' => '5.1.2', 'endDate' => '2023-05-01', 'disposition' => 'destroy'],
 				['register' => 'APInvoice', 'recordId' => 'inv-2017', 'ruleCode' => '5.1.2', 'endDate' => '2024-06-30', 'disposition' => 'destroy'],
 				['register' => 'GLTransaction', 'recordId' => 'tx-2018', 'ruleCode' => '5.1.2', 'endDate' => '2025-03-15', 'disposition' => 'destroy'],
 			],
 			$due
 		);
 		$this->assertSame(
-			[['DocumentRetention', 'adm-1', ['legalHold' => true]], ['GLTransaction', 'adm-1', []], ['APInvoice', 'adm-1', []]],
+			[['DocumentRetention', 'adm-1', ['legalHold' => true]], ['GLTransaction', 'adm-1', []], ['APInvoice', 'adm-1', []], ['ARInvoice', 'adm-1', []]],
 			$asked
 		);
 		$this->assertSame([], (new RetentionDueService($records, $objects, $settings))->dueFor('', self::today()));

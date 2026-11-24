@@ -51,6 +51,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	public const BINDINGS = [
 		'GLTransaction' => ['dateField' => 'postingDate', 'ruleCode' => '5.1.2'],
 		'APInvoice'     => ['dateField' => 'invoiceDate', 'ruleCode' => '5.1.2'],
+		'ARInvoice'     => ['dateField' => 'invoiceDate', 'ruleCode' => '5.1.2'],
 	];
 
 	/**
