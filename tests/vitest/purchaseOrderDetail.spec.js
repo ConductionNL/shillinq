@@ -51,18 +51,16 @@ afterEach(() => {
 })
 
 describe('PurchaseOrderDetail canSend', () => {
-	it('is false without an order, once sent, or without an approval chain', () => {
+	it('is false without an order, before approval, or once sent', () => {
 		expect(canSend(null)).toBe(false)
-		expect(canSend({ statusCode: 'sent', approvalChain: [{ decision: 'approved', decidedAt: 'x' }] })).toBe(false)
-		expect(canSend({ statusCode: 'approved' })).toBe(false)
-		expect(canSend({ statusCode: 'approved', approvalChain: [] })).toBe(false)
+		expect(canSend({ statusCode: 'draft' })).toBe(false)
+		expect(canSend({ statusCode: 'pending_approval' })).toBe(false)
+		expect(canSend({ statusCode: 'sent' })).toBe(false)
 	})
 
-	it('is true only when every step is approved and dated', () => {
-		const approved = { decision: 'approved', decidedAt: '2026-01-01T00:00:00Z' }
-		expect(canSend({ statusCode: 'approved', approvalChain: [approved, approved] })).toBe(true)
-		expect(canSend({ statusCode: 'approved', approvalChain: [approved, { decision: 'pending', decidedAt: 'x' }] })).toBe(false)
-		expect(canSend({ statusCode: 'approved', approvalChain: [approved, { decision: 'approved' }] })).toBe(false)
+	it('is true for an approved order, without the old approvalChain history', () => {
+		expect(canSend({ statusCode: 'approved' })).toBe(true)
+		expect(canSend({ statusCode: 'approved', approvalChain: [] })).toBe(true)
 	})
 })
 
