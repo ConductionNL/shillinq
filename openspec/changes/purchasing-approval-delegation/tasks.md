@@ -23,6 +23,7 @@
 
 - [ ] 3.1 Add decider, on-behalf-of and mandate columns to the purchase order audit export (REQ-PAD-003). Verify: PHPUnit on the exporter with a delegated and a direct decision.
   - Left: OpenRegister publishes no PHP contract to read an object's approval tasks (decider, `onBehalfOf`, `mandate`), so the audit export cannot read them server side yet; it still lists the decisions in the order's `approvalChain` history.
+  - Dependency built (24 Nov 2026): ConductionNL/openregister#11045 publishes `ObjectTaskReaderInterface::tasksOnObject()` with `ObjectTaskRecord` (decidedBy, onBehalfOf, mandate), left for the OpenRegister integrator. Left: once it is released, read it in the purchase order audit export and add the PHPUnit test with a delegated and a direct decision.
 
 ## 4. Platform request
 
