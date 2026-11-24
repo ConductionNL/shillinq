@@ -144,4 +144,31 @@ final class HelpArticleSourceTest extends TestCase {
 	public function testNoGuideNoArticles(): void {
 		self::assertSame([], (new HelpArticleSource())->articles($this->root . '/missing', []));
 	}//end testNoGuideNoArticles()
+
+	/**
+	 * The shipped period close guide explains the two period close pages: their
+	 * documentationUrl is the article's URL, so the helper reaches it from
+	 * either page (design D1, REQ-PHA-001).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/platform-help-agent/tasks.md#task-3.2
+	 */
+	public function testTheShippedPeriodCloseGuideExplainsBothPeriodClosePages(): void {
+		$repo = dirname(__DIR__, 4);
+		$fragment = json_decode(
+			json: (string)file_get_contents(filename: $repo . '/src/manifest.d/bookkeeping-period-close.json'),
+			associative: true,
+			flags: JSON_THROW_ON_ERROR
+		);
+		$source = new HelpArticleSource();
+		$article = $source->article(
+			relative: 'user-guide/user/10-period-close.md',
+			content: (string)file_get_contents(filename: $repo . '/docs/user-guide/user/10-period-close.md'),
+			pageIds: $source->pageIdsByUrl(pages: $fragment['pages'])
+		);
+
+		self::assertSame(expected: 'https://shillinq.conduction.nl/user-guide/user/period-close', actual: $article['documentationUrl']);
+		self::assertSame(expected: ['PeriodClose', 'PeriodCloseDetail'], actual: $article['pageIds']);
+	}//end testTheShippedPeriodCloseGuideExplainsBothPeriodClosePages()
 }//end class
