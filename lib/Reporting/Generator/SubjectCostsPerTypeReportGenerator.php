@@ -32,7 +32,7 @@ use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 /**
  * Renders the per-type case cost grouping as CSV.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
  */
 final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterface {
 
@@ -51,7 +51,7 @@ final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @return string The id.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public static function reportType(): string {
 		return 'subject-costs-per-type';
@@ -62,7 +62,7 @@ final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @return array<int, string> The formats.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public static function supportedFormats(): array {
 		return ['csv'];
@@ -76,7 +76,7 @@ final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @return GeneratedFile The CSV.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
 		$period = self::contextValue(context: $context, key: 'period');
@@ -106,7 +106,7 @@ final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @return array<int, array<string, mixed>> The sections.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public function sections(array $context): array {
 		return $this->subjectCosts->perType(

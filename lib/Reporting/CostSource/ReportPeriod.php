@@ -28,7 +28,7 @@ use DateTimeImmutable;
 /**
  * Parses a report period into an inclusive date range.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
  */
 final class ReportPeriod {
 
@@ -39,7 +39,7 @@ final class ReportPeriod {
 	 *
 	 * @return array{0: string, 1: string}|null The inclusive range.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public static function range(string $period): ?array {
 		$period = strtoupper(trim($period));
@@ -70,7 +70,7 @@ final class ReportPeriod {
 	 *
 	 * @return bool True when inside.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public static function contains(mixed $date, array $range): bool {
 		if (is_string($date) === false || preg_match('/^\d{4}-\d{2}-\d{2}/', trim($date)) !== 1) {

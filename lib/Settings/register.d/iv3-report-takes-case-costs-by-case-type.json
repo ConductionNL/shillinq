@@ -5,7 +5,7 @@
     "change": "iv3-report-takes-case-costs-by-case-type",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
     "description": "Declares how a taakveld rolls up: the 2023 Wmo/Jeugd refinement codes (6.71a to 6.82b) name their pre-2023 parent in aggregatesUnder, and those parents (6.71, 6.72, 6.81, 6.82) are marked deprecated but stay usable. Declared on both catalogue schemas, BbvTaakveld and Taakveld, because the municipal seed is imported into Taakveld and OpenRegister discards properties a schema does not declare.",
-    "spec": "openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md"
+    "spec": "openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md"
   },
   "components": {
     "schemas": {

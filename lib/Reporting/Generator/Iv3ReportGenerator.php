@@ -159,7 +159,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The sections, empty without a cost source.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
 	 */
 	public function subjectCostsPerTaskField(array $context): array {
 		if ($this->subjectCosts === null) {

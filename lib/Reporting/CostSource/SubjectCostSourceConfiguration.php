@@ -26,7 +26,7 @@ namespace OCA\Shillinq\Reporting\CostSource;
 /**
  * Reads the cost sources from `lib/Settings/subject-cost-sources.json`.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
  */
 class SubjectCostSourceConfiguration {
 
@@ -64,7 +64,7 @@ class SubjectCostSourceConfiguration {
 	 *
 	 * @return array<int, array<string, string>> The sources.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
 	 */
 	public function sources(): array {
 		$file = ($this->file ?? __DIR__ . '/../../Settings/subject-cost-sources.json');

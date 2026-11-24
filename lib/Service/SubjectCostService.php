@@ -148,7 +148,7 @@ class SubjectCostService implements SubjectCostServiceInterface {
 	 *
 	 * @return array<string, mixed> The aggregate, shaped as costFor() returns it.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
 	 */
 	public function costForHours(
 		array $subject,

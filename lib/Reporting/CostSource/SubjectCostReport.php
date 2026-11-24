@@ -31,7 +31,7 @@ use OCP\IL10N;
  * A source whose app is missing gives its message and no groups and no
  * totals, so nothing renders as EUR 0.00.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
  */
 class SubjectCostReport {
 
@@ -57,7 +57,7 @@ class SubjectCostReport {
 	 *
 	 * @return array<int, array{source: string, message: string|null, groups: array<int, array<string, mixed>>, totals: array<string, int|float>|null}>
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
 	 */
 	public function perTaskField(string $period, string $administrationId = ''): array {
 		return $this->sections(period: $period, administrationId: $administrationId, perType: false);
@@ -71,7 +71,7 @@ class SubjectCostReport {
 	 *
 	 * @return array<int, array{source: string, message: string|null, groups: array<int, array<string, mixed>>, totals: array<string, int|float>|null}>
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public function perType(string $period, string $administrationId = ''): array {
 		return $this->sections(period: $period, administrationId: $administrationId, perType: true);
@@ -84,7 +84,7 @@ class SubjectCostReport {
 	 *
 	 * @return array<int, array<int, string>> The lines.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
 	 */
 	public function taskFieldCsvLines(array $sections): array {
 		$lines = [['subjectCostsPerTaskField', 'objects', 'hours', 'cost', 'incomplete', 'types']];
@@ -122,7 +122,7 @@ class SubjectCostReport {
 	 *
 	 * @return array<int, array<int, string>> The lines.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public function typeCsvLines(array $sections, string $period): array {
 		$lines = [['period', 'type', 'objects', 'hours', 'cost', 'incomplete']];
@@ -173,7 +173,7 @@ class SubjectCostReport {
 	 *
 	 * @return array<int, array<string, mixed>> Rows: label, objects, hours, cost, incomplete, types.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public function tableRows(array $sections, bool $perType): array {
 		$rows = [];
@@ -290,7 +290,7 @@ class SubjectCostReport {
 	 *
 	 * @return string|null The message.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
 	 */
 	private function message(array $read, bool $perType): ?string {
 		if ($read['missingKind'] === 'hours') {
