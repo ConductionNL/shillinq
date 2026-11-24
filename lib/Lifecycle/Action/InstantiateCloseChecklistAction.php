@@ -32,7 +32,7 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  * @link      https://github.com/ConductionNL/shillinq
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Copies the administration's close checklist template onto a period that starts closing.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
  */
 class InstantiateCloseChecklistAction implements LifecycleActionInterface {
 
@@ -83,7 +83,7 @@ class InstantiateCloseChecklistAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed> The period, its checklist filled when it was empty.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;
@@ -109,7 +109,7 @@ class InstantiateCloseChecklistAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed>|null The template.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
 	 */
 	private function templateFor(string $administrationId): ?array {
 		if ($administrationId === '') {
@@ -150,7 +150,7 @@ class InstantiateCloseChecklistAction implements LifecycleActionInterface {
 	 *
 	 * @return list<array<string, mixed>> The items.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
 	 */
 	public static function itemsFrom(array $tasks): array {
 		$items = [];

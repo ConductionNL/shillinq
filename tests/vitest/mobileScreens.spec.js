@@ -9,7 +9,7 @@
  * the queue that falls back to memory, Issue offered only online on a synced
  * draft, and each screen saving into the queue and sending it when online.
  *
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'

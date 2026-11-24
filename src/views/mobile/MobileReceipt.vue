@@ -7,8 +7,8 @@
   category. The receipt is queued on the phone and sent at once when there
   is a connection, else when it returns.
 
-  @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
-  @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+  @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
+  @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 -->
 <template>
 	<section class="mobile-form">
@@ -142,7 +142,7 @@ export default {
 		 *
 		 * @param {Event} event The change event of the file input.
 		 * @return {void}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
 		 */
 		onPhoto(event) {
 			const file = event?.target?.files?.[0] ?? null
@@ -157,7 +157,7 @@ export default {
 		 * Queue the receipt, send it now when online, and go back home.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 		 */
 		async save() {
 			if (!this.complete || this.saving) {

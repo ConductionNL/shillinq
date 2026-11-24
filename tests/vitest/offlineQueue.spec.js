@@ -9,7 +9,7 @@
  * finds the record its client id made, the IndexedDB store, connectivity
  * events, and the transport's calls.
  *
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'

@@ -295,7 +295,7 @@ export default {
 		 * (sales-billable-rate-per-hour REQ-BRPH-005).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.2
 		 */
 		needsRateCard() {
 			return RATE_CARD_MODELS.includes(this.form.billingModel)

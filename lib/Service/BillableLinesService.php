@@ -195,7 +195,7 @@ class BillableLinesService implements BillableLinesServiceInterface {
 	 *
 	 * @return array<string,mixed> The resolution, without its record id.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.2
 	 */
 	private function rateOf(array $entry, string $administrationId, string $customerId): array {
 		$answer = $this->billableRates->preview(

@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Rates a project's hours of one month.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
  */
 class ProjectBillableHours {
 	/**
@@ -82,7 +82,7 @@ class ProjectBillableHours {
 	 *
 	 * @return array<string, mixed>|null The project.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
 	 */
 	public function project(string $projectId, string $administrationId): ?array {
 		if ($projectId === '' || $administrationId === '') {
@@ -109,7 +109,7 @@ class ProjectBillableHours {
 	 *
 	 * @throws InvalidArgumentException When the month is not `YYYY-MM`.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
 	 */
 	public function forMonth(array $project, string $month): array {
 		[$from, $to] = self::monthWindow(month: $month);
@@ -149,7 +149,7 @@ class ProjectBillableHours {
 	 *
 	 * @throws InvalidArgumentException When the month is not `YYYY-MM`.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
 	 */
 	public static function monthWindow(string $month): array {
 		if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) !== 1) {

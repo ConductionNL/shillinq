@@ -9,7 +9,7 @@ and hours without a rate. Without an hours source it says the hours are not
 available instead of showing zero. Rendered on ProjectDetail through the
 slot widget-project-billable-hours.
 
-@spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.2
+@spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.2
 -->
 <template>
 	<section class="pbh" data-testid="project-billable-hours">
@@ -128,7 +128,7 @@ export default {
 	watch: {
 		objectId: {
 			immediate: true,
-			/** @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.2 */
+			/** @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.2 */
 			handler() {
 				this.load()
 			},
@@ -145,7 +145,7 @@ export default {
 		/**
 		 * Read the chosen month of the project's rated hours.
 		 *
-		 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.2
 		 */
 		async load() {
 			if (!this.objectId) {

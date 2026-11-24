@@ -20,7 +20,7 @@
  *
  * @link https://shillinq.app
  *
- * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-issue-is-costed-from-the-receipt-layers-req-ircl-002
+ * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-issue-is-costed-from-the-receipt-layers-req-ircl-002
  */
 
 declare(strict_types=1);

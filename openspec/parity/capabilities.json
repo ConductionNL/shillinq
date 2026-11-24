@@ -1213,8 +1213,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-period-end",
 				"requirement": [
-					"openspec/changes/ledger-period-end/specs/bookkeeping-period-close :: A period that starts closing copies the checklist template (REQ-LPE-001)",
-					"openspec/changes/ledger-period-end/specs/bookkeeping-period-close :: A person resolves, reopens and adds checklist items (REQ-LPE-002)"
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close :: A period that starts closing copies the checklist template (REQ-LPE-001)",
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close :: A person resolves, reopens and adds checklist items (REQ-LPE-002)"
 				]
 			},
 			"screen": {
@@ -1233,7 +1233,7 @@
 			"feature": "period-close",
 			"featureConfidence": "high",
 			"source": "own-code",
-			"note": "The checklist panel always shows 'No checklist items yet.' Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
+			"note": "The checklist panel always shows 'No checklist items yet.' Specified 2026-09-27 in openspec/changes/archive/2026-11-24-ledger-period-end (OpenSpec pass)."
 		},
 		{
 			"id": "led-multi-admin",
@@ -1371,8 +1371,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-period-end",
 				"requirement": [
-					"openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close :: An invoice line spanning several periods is spread over them (REQ-LPE-004)",
-					"openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close :: The nightly close releases each ended period (REQ-LPE-005)"
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close :: An invoice line spanning several periods is spread over them (REQ-LPE-004)",
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close :: The nightly close releases each ended period (REQ-LPE-005)"
 				]
 			},
 			"screen": {
@@ -1391,7 +1391,7 @@
 			"feature": "period-close",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Accrual amounts are computed and recorded; nothing books or releases a deferral. Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
+			"note": "Accrual amounts are computed and recorded; nothing books or releases a deferral. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-ledger-period-end (OpenSpec pass)."
 		},
 		{
 			"id": "led-dual-gaap",
@@ -5113,7 +5113,7 @@
 			"feature": "inventory-fifo-valuation",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "FIFO/average engines and GL posting exist, but goods received through a GRN never reach them; only hand-made draft->posted moves do. Worth a live check. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
+			"note": "FIFO/average engines and GL posting exist, but goods received through a GRN never reach them; only hand-made draft->posted moves do. Worth a live check. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers (OpenSpec pass)."
 		},
 		{
 			"id": "inv-cogs",
@@ -5131,7 +5131,7 @@
 				"reachedOn": "no page of its own: fires when a Delivery is confirmed (Orders /orders, menu Sales) or a pipelinq POS sale posts; GL result on General Ledger",
 				"owner": "ConductionNL/shillinq",
 				"change": "inventory-receipt-cost-layers",
-				"requirement": "openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg :: An issue is costed from the receipt layers (REQ-IRCL-002)",
+				"requirement": "openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg :: An issue is costed from the receipt layers (REQ-IRCL-002)",
 				"plan": "inventory-pos-decrement"
 			},
 			"screen": {
@@ -5150,7 +5150,7 @@
 			"feature": "inventory-fifo-valuation",
 			"featureConfidence": "high",
 			"source": "own-code",
-			"note": "The trigger and posting are wired; the cost figure depends on receipt layers that GRN receipts never create. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
+			"note": "The trigger and posting are wired; the cost figure depends on receipt layers that GRN receipts never create. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers (OpenSpec pass)."
 		},
 		{
 			"id": "inv-catalog",
@@ -5599,8 +5599,8 @@
 				"change": "sales-billable-rate-per-hour",
 				"readOn": "2026-10-07",
 				"requirement": [
-					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: An hour resolves its billable rate by tier from the assignment's rate card (REQ-BRPH-001)",
-					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: The project page shows rated hours and the unbilled value (REQ-BRPH-003)"
+					"openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/specs/rate-card-management :: An hour resolves its billable rate by tier from the assignment's rate card (REQ-BRPH-001)",
+					"openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/specs/rate-card-management :: The project page shows rated hours and the unbilled value (REQ-BRPH-003)"
 				],
 				"plan": "hours-to-humaniq"
 			},
@@ -5710,7 +5710,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-002: IB47Record register",
 					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-005: IB47-formulier docudesk template",
-					"openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie :: The annual IB47 batch is prepared from the payments to third parties (REQ-DPA-021)"
+					"openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie :: The annual IB47 batch is prepared from the payments to third parties (REQ-DPA-021)"
 				],
 				"plan": "people-ib47-statement"
 			},
@@ -5896,8 +5896,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "platform-mobile-pwa",
 				"requirement": [
-					"openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: A receipt is captured with the camera (REQ-PMP-002)",
-					"openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: An invoice is issued from the phone only online (REQ-PMP-004)"
+					"openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile :: A receipt is captured with the camera (REQ-PMP-002)",
+					"openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile :: An invoice is issued from the phone only online (REQ-PMP-004)"
 				]
 			},
 			"screen": {
@@ -5916,7 +5916,7 @@
 			"feature": "mobile-and-interface",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "No iOS or Android app of its own. Specified 2026-09-27 in openspec/changes/platform-mobile-pwa (OpenSpec pass)."
+			"note": "No iOS or Android app of its own. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-platform-mobile-pwa (OpenSpec pass)."
 		},
 		{
 			"id": "plt-kvk",
@@ -6269,8 +6269,8 @@
 				"owner": "ConductionNL/integriq",
 				"change": "adopt-connection-registry",
 				"requirement": [
-					"openspec/changes/adopt-connection-registry/specs/external-connections :: The External Connections page lists shillinq's rows from integriq's registry (REQ-EXTCONN-001)",
-					"openspec/changes/adopt-connection-registry/specs/external-connections :: Shillinq reports the adapter it sees for each called family (REQ-EXTCONN-003)"
+					"openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections :: The External Connections page lists shillinq's rows from integriq's registry (REQ-EXTCONN-001)",
+					"openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections :: Shillinq reports the adapter it sees for each called family (REQ-EXTCONN-003)"
 				],
 				"plan": "integration-config-to-openconnector"
 			},
@@ -8034,7 +8034,7 @@
 				"evidence": "The inventory scanner is an offline-first PWA whose queued scans sync through POST /api/inventory/scan (appinfo/routes.php:628, lib/Controller/InventoryScanController.php:189).",
 				"reachedOn": "inventory mobile scanner (src/registry.js:15)",
 				"change": "platform-mobile-pwa",
-				"requirement": "openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: Work done offline is queued and synced once (REQ-PMP-003)"
+				"requirement": "openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile :: Work done offline is queued and synced once (REQ-PMP-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8054,7 +8054,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-20-release-notes",
-			"note": "Offline only for warehouse scanning. Specified 2026-09-27 in openspec/changes/platform-mobile-pwa (OpenSpec pass)."
+			"note": "Offline only for warehouse scanning. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-platform-mobile-pwa (OpenSpec pass)."
 		},
 		{
 			"id": "sal-tap-to-pay",

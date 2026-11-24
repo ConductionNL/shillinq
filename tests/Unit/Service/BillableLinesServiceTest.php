@@ -124,7 +124,7 @@ final class BillableLinesServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.2
 	 */
 	public function testEachHourCarriesItsRate(): void {
 		$lines = $this->service()->forCustomer(

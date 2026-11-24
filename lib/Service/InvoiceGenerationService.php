@@ -698,7 +698,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
 	private function loadTimeEntries(
 		array $ids,
@@ -758,7 +758,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 *
 	 * @return array<string,mixed> The snapshot (`rateCents`, `currency`, `rateCardVersion`, `effectiveDate`, ...), or `['noRate' => [...]]`.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
 	private function hourRate(array $entry, ?string $rateCardId, array $scope): array {
 		$date = (string)$entry['date'];

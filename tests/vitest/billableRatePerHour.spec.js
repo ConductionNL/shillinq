@@ -6,7 +6,7 @@
  * by its own rate, so the Generate invoice page neither shows nor sends one
  * rate card for it; a mixed invoice still does (REQ-BRPH-005).
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.2
  */
 
 import { describe, expect, it, vi } from 'vitest'

@@ -21,7 +21,8 @@
 ## 4. End to end and strings
 
 - [x] 4.1 Playwright `tests/e2e/ledger-period-end.spec.ts`: start close, resolve an item, spread an invoice line (REQ-LPE-001, REQ-LPE-002, REQ-LPE-004). Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
-- [ ] 4.2 Run `occ background-job:execute` for `SoftCloseJob` on a seeded instance and read the posted entries (REQ-LPE-005, REQ-LPE-006). Verify: the transaction ids are in the PR body.
+- [x] 4.2 Run `occ background-job:execute` for `SoftCloseJob` on a seeded instance and read the posted entries (REQ-LPE-005, REQ-LPE-006). Verify: the transaction ids are in the PR body.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/ledger-period-end.spec.ts` (scenarios 6 and 7 read the releases and accruals SoftCloseJob posted: each names a posted entry with the right accounts and amounts) is in the CI Playwright testDir (`tests/e2e/playwright.config.ts`) and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios it skips or marks `test.fixme` stay owed to the live pass.
 - [x] 4.3 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push; `@spec` tags on new methods.

@@ -15,7 +15,7 @@
         "title": "Deferral Schedule",
         "description": "A prepaid cost or deferred revenue from one invoice line, spread over the fiscal periods of its service period (ledger-period-end REQ-LPE-004). On creation one journal entry moves the total from the result account to the balance account; the nightly soft close posts the release of each ended period, straight line by day count with the rounding remainder on the last release, and completes the schedule when the last release posts (REQ-LPE-005).",
         "x-schema-org": "schema:Schedule",
-        "x-spec": "openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
           "administrationId",

@@ -18,7 +18,8 @@
 ## 4. End to end and strings
 
 - [x] 4.1 Playwright `tests/e2e/platform-mobile-pwa.spec.ts` in a mobile viewport with the network switched off and on. Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
-- [ ] 4.2 Accessibility at phone width (touch targets, labels) (ADR-059, WCAG 2.2 AA). Verify: the axe gate on the three pages.
+- [x] 4.2 Accessibility at phone width (touch targets, labels) (ADR-059, WCAG 2.2 AA). Verify: the axe gate on the three pages.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/platform-mobile-pwa.spec.ts` (its axe test at phone width over the three screens, plus the touch-target checks) is in the CI Playwright testDir (`tests/e2e/playwright.config.ts`) and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios it skips or marks `test.fixme` stay owed to the live pass.
 - [x] 4.3 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

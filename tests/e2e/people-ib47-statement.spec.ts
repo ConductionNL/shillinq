@@ -26,8 +26,8 @@
  * route lets through like a payroll officer. Every object written here, the
  * prepared records and the generated report included, is removed afterwards.
  *
- * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
- * @spec openspec/changes/people-ib47-statement/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/tasks.md
  *
  * @e2e bookkeeping-detachering-payroll-administratie::a-freelancers-payments-land-in-the-2026-batch
  * @e2e bookkeeping-detachering-payroll-administratie::a-second-prepare-writes-no-duplicate

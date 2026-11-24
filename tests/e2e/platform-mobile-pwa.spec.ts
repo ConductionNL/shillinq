@@ -20,7 +20,7 @@
  *   REQ-PMP-003 queued offline, synced once when the connection returns
  *   task 4.1, task 4.2
  *
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md
  */
 import type { Page } from '@playwright/test'
 

@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use OCP\IGroupManager;
 /**
  * Changes the checklist items of a period that is still open or closing.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
  */
 class PeriodChecklistService {
 
@@ -88,7 +88,7 @@ class PeriodChecklistService {
 	 *
 	 * @throws PeriodCloseException On a forbidden / not-found / frozen period or an unknown item.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 	 */
 	public function resolveItem(string $periodId, string $administrationId, string $itemId, string $userId): array {
 		return $this->changeItem(
@@ -115,7 +115,7 @@ class PeriodChecklistService {
 	 *
 	 * @throws PeriodCloseException On a forbidden / not-found / frozen period or an unknown item.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 	 */
 	public function reopenItem(string $periodId, string $administrationId, string $itemId, string $userId): array {
 		return $this->changeItem(
@@ -143,7 +143,7 @@ class PeriodChecklistService {
 	 *
 	 * @throws PeriodCloseException On a forbidden / not-found / frozen period or an invalid item.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 	 */
 	public function addItem(string $periodId, string $administrationId, string $category, string $description, string $userId): array {
 		$description = trim($description);

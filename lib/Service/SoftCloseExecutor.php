@@ -233,7 +233,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
 	 */
 	private function deferralStep(SoftCloseRun $run, array $report): array {
 		if ($this->deferrals === null) {

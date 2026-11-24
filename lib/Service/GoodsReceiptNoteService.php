@@ -746,7 +746,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
 	 */
 	private function draftMoveState(string $administrationId): array {
 		return [
@@ -873,7 +873,7 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 *
 	 * @return StockMovePosting The posting.
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
 	 */
 	private function stockMovePosting(): StockMovePosting {
 		return new StockMovePosting(

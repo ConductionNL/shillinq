@@ -9,9 +9,9 @@
   start and whenever the connection returns, and offers Issue on a synced
   draft only while online.
 
-  @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
-  @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
-  @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
+  @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
+  @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+  @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
 -->
 <template>
 	<section class="mobile-home">
@@ -130,7 +130,7 @@ export default {
 		 * Re-read the queue, newest first.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 		 */
 		async refresh() {
 			this.items = (await listQueue(this.queue.store)).reverse()
@@ -140,7 +140,7 @@ export default {
 		 * Send what is queued, then show the new states.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 		 */
 		async sync() {
 			await syncQueue(this.queue.store, this.queue.transport)
@@ -152,7 +152,7 @@ export default {
 		 *
 		 * @param {boolean} online Whether the phone is online now.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 		 */
 		async onConnectivity(online) {
 			this.online = online
@@ -166,7 +166,7 @@ export default {
 		 *
 		 * @param {object} item The queue item.
 		 * @return {boolean}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
 		 */
 		issuable(item) {
 			return canIssue(item, this.online)
@@ -177,7 +177,7 @@ export default {
 		 *
 		 * @param {object} item The queue item.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
 		 */
 		async issue(item) {
 			this.issuing = item.clientId
@@ -216,7 +216,7 @@ export default {
 		 *
 		 * @param {object} item The queue item.
 		 * @return {string}
-		 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+		 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 		 */
 		stateLabel(item) {
 			if (item.invoiceNumber) {

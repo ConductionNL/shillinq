@@ -7,7 +7,7 @@
  * closed or locked for audit, and the requests each one sends. Only HTTP,
  * the router and the @nextcloud/vue components are replaced.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

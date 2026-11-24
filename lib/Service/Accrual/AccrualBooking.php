@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Writes and posts accrual and reversal journal entries.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
  */
 class AccrualBooking {
 
@@ -82,7 +82,7 @@ class AccrualBooking {
 	 *
 	 * @return bool True when an entry was posted; false when this rule, period and version were booked before.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
 	 */
 	public function book(array $rule, string $periodId, int $amountCents, DateTimeImmutable $asOf, string $journalNumber): bool {
 		$ruleId  = self::ruleId(rule: $rule);
@@ -128,7 +128,7 @@ class AccrualBooking {
 	 *
 	 * @return int The reversals posted.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
 	 */
 	public function reverseDue(string $administrationId, string $periodId, DateTimeImmutable $asOf): int {
 		$reversed = 0;

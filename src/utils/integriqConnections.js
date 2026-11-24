@@ -25,7 +25,7 @@ export const INTEGRIQ_CONNECTIONS_PATH =
  * name inside shillinq's router, which cannot leave the app.
  *
  * @return {void}
- * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+ * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
  */
 export function openIntegriqConnections() {
 	window.location.assign(generateUrl(INTEGRIQ_CONNECTIONS_PATH))

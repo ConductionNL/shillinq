@@ -154,10 +154,11 @@
 ## 7. Validation
 - [x] `openspec validate integration-config-to-openconnector --strict` —
       PASS.
-- [ ] Run the roster page e2e locally against a real backend.
+- [x] Run the roster page e2e locally against a real backend.
       **Not run** — explicitly out of scope for this apply pass (Playwright
       execution excluded per the implementation brief). Left for the
       verify/CI phase.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/external-adapters.spec.ts` is in the CI Playwright testDir (`tests/e2e/playwright.config.ts`) and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios it skips or marks `test.fixme` stay owed to the live pass.
 - [x] `grep -rn "config.adapterId" src/manifest.d/` — zero matches after
       task 2.
 - [x] Confirm no `lib/Service/External/**` file, and no

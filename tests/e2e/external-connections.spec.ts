@@ -21,7 +21,7 @@
  * Not run in the change that wrote it: it needs a browser and, for the listing
  * half, integriq on the instance.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+ * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
  */
 import type { APIRequestContext, Page } from '@playwright/test'
 

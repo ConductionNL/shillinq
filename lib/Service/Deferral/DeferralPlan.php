@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use InvalidArgumentException;
 /**
  * Pure release-plan arithmetic.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  */
 final class DeferralPlan {
 
@@ -62,7 +62,7 @@ final class DeferralPlan {
 	 *
 	 * @throws InvalidArgumentException When the total or the dates are not usable.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 */
 	public static function releases(int $totalCents, string $from, string $to): array {
 		if ($totalCents <= 0) {
@@ -119,7 +119,7 @@ final class DeferralPlan {
 	 *
 	 * @throws InvalidArgumentException When a date is not usable.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 */
 	public static function spansSeveralPeriods(string $from, string $to): bool {
 		return self::date(value: $from)->format('Y-m') !== self::date(value: $to)->format('Y-m')

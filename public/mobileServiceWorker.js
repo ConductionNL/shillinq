@@ -18,7 +18,7 @@
  * Served from /apps/shillinq/public/mobileServiceWorker.js and registered by
  * the MobileHome page through registerMobileServiceWorker().
  *
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
  */
 
 const VERSION = 'mobile-v1'

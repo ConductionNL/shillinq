@@ -242,7 +242,7 @@ class PeriodCloseController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the updated record; 400/401/403/404/409 on refusal.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 	 */
 	#[NoAdminRequired]
 	public function resolveItem(string $periodId, string $itemId): JSONResponse {
@@ -271,7 +271,7 @@ class PeriodCloseController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the updated record; 400/401/403/404/409 on refusal.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 	 */
 	#[NoAdminRequired]
 	public function reopenItem(string $periodId, string $itemId): JSONResponse {
@@ -299,7 +299,7 @@ class PeriodCloseController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the updated record; 400/401/403/404/409/422 on refusal.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
 	 */
 	#[NoAdminRequired]
 	public function addItem(string $periodId): JSONResponse {

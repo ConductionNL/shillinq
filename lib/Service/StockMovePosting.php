@@ -38,7 +38,7 @@ use Throwable;
  * behaviour before this class, and a warning says the transition listeners
  * did not run for it.
  *
- * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
+ * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
  */
 final class StockMovePosting {
 
@@ -64,7 +64,7 @@ final class StockMovePosting {
 	 * @param LoggerInterface         $logger    Logger.
 	 * @param string                  $source    The calling service, named in log lines.
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/tasks.md#1-receipts
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/tasks.md#1-receipts
 	 */
 	public function __construct(
 		private readonly SchemaRecordStore $records,
@@ -81,7 +81,7 @@ final class StockMovePosting {
 	 *
 	 * @return array<string,mixed> The posted StockMove as stored.
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
 	 */
 	public function post(array $move): array {
 		$move['postedAt']       = null;

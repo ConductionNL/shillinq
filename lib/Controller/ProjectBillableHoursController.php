@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Throwable;
 /**
  * Serves a project's rated hours of one month.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
  */
 class ProjectBillableHoursController extends Controller {
 	/**
@@ -83,7 +83,7 @@ class ProjectBillableHoursController extends Controller {
 	 * @return JSONResponse 200 with `available`, `reason`, `month`, `from`, `to`, `rows` and `totals`;
 	 *                      401 anonymous, 403 without an administration, 404 unknown project, 422 bad month.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {

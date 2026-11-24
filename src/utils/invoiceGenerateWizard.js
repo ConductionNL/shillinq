@@ -111,7 +111,7 @@ export function buildGenerateRequest(source, chosen) {
  * The optional references the source sets (a falsy value is left out). A
  * rate card is sent only for a model that takes one.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.2
  *
  * @param {object} source The source step.
  * @return {object} The set references.

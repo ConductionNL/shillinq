@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 /**
  * Registers the assignment rate listener for created and updated objects.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
  */
 final class AssignmentRateRegistration {
 
@@ -44,7 +44,7 @@ final class AssignmentRateRegistration {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
 	 */
 	public function register(IRegistrationContext $context): void {
 		foreach ([ObjectCreatedEvent::class, ObjectUpdatedEvent::class] as $event) {

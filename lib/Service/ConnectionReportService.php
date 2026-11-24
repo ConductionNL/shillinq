@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+ * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Throwable;
 /**
  * Sends one connection report per called adapter family to integriq.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+ * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
  */
 class ConnectionReportService implements ConnectionReportServiceInterface {
 
@@ -109,7 +109,7 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 *
 	 * @return array<string, string> The status sent, keyed by connection key.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
 	 */
 	public function reportAdapterBindings(): array {
 		$eventClass = $this->resolveEventClass(eventClass: self::STATUS_EVENT);
@@ -149,7 +149,7 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 *
 	 * @return array{0: string, 1: string} The status and the message.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
 	 */
 	private function observeBinding(string $interface, string $consequence): array {
 		try {
@@ -180,7 +180,7 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 *
 	 * @return string|null The class name to instantiate, or null when absent.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
 	 */
 	protected function resolveEventClass(string $eventClass): ?string {
 		$qualified = '\\' . $eventClass;

@@ -9,7 +9,7 @@
  * places it after the hours budget and shows each assignment's billing role
  * and rate. Only HTTP is replaced.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.2
  */
 
 import fs from 'fs'

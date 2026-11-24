@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Creates and releases deferral schedules.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  */
 class DeferralService {
 
@@ -88,7 +88,7 @@ class DeferralService {
 	 *
 	 * @throws DeferralRefusedException When the request is not a usable deferral.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) DeferralPlan is the pure spreading arithmetic; it holds no state.
 	 */
@@ -142,7 +142,7 @@ class DeferralService {
 	 *
 	 * @throws DeferralRefusedException When the request is not usable or the line is already spread.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 */
 	public function spread(array $input): array {
 		$schedule = $this->preview(input: $input);
@@ -179,7 +179,7 @@ class DeferralService {
 	 *
 	 * @return int The number of releases posted.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
 	 */
 	public function releaseEnded(string $administrationId, DateTimeImmutable $asOf): int {
 		$filters = ['state' => 'active'];

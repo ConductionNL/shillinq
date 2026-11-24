@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use DateTimeImmutable;
 /**
  * The hours of an invoice draft that have no rate.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
  */
 class UnratedHoursException extends \RuntimeException {
 
@@ -43,7 +43,7 @@ class UnratedHoursException extends \RuntimeException {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
 	public function __construct(private readonly array $hours) {
 		parent::__construct(message: self::sentence(hours: $hours));
@@ -54,7 +54,7 @@ class UnratedHoursException extends \RuntimeException {
 	 *
 	 * @return array<int, array{person: string, date: string, reason: string}> The hours.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
 	public function getHours(): array {
 		return $this->hours;
@@ -67,7 +67,7 @@ class UnratedHoursException extends \RuntimeException {
 	 *
 	 * @return string The sentence, e.g. "No rate for Dana on 14 October 2026."
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
 	public static function sentence(array $hours): string {
 		$named = [];

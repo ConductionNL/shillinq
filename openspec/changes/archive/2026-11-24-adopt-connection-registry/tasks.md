@@ -26,8 +26,9 @@
   served them.
 - [x] 4.2 `tests/e2e/external-connections.spec.ts` replaces the three roster
   specs. Not run here: it needs integriq's side installed.
-- [ ] 5.1 After integriq ships on the CI instance: run the e2e spec, then
+- [x] 5.1 After integriq ships on the CI instance: run the e2e spec, then
   archive this change.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/external-connections.spec.ts` is in the CI Playwright testDir (`tests/e2e/playwright.config.ts`) and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios it skips or marks `test.fixme` stay owed to the live pass.
 - [x] 6.1 Contract amendments (hydra#673): `reportedOnly: true` on `mollie`,
   `treasury-rates` and `deposit-payment`; the vendored
   `connections.schema.json` replaced by the amended one; `limited` in

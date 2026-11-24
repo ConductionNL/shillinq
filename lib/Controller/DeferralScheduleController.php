@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  */
 
 declare(strict_types=1);
@@ -47,7 +47,7 @@ use Throwable;
  * through AdministrationContextService::canAccess(): a foreign administration
  * is answered 404, the same as an unknown one (ADR-005).
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  */
 class DeferralScheduleController extends Controller {
 
@@ -93,7 +93,7 @@ class DeferralScheduleController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the schedule; 401, 404 or 422 with a message.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 */
 	#[NoAdminRequired]
 	public function preview(): JSONResponse {
@@ -106,7 +106,7 @@ class DeferralScheduleController extends Controller {
 	 *
 	 * @return JSONResponse 201 with the schedule; 401, 403, 404, 409 or 422 with a message.
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
