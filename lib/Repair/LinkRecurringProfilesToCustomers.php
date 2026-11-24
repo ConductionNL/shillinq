@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
  */
 
 declare(strict_types=1);
@@ -51,7 +51,7 @@ use Throwable;
 /**
  * Fills `customerMasterId` on recurring profiles that lack it.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
  */
 class LinkRecurringProfilesToCustomers implements IRepairStep {
 	use ReadsSourceRowsInBatches;
@@ -79,7 +79,7 @@ class LinkRecurringProfilesToCustomers implements IRepairStep {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
 	 */
 	public function getName(): string {
 		return 'Shillinq: link recurring profiles to the customer their contact resolves to';
@@ -92,7 +92,7 @@ class LinkRecurringProfilesToCustomers implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
 	 */
 	public function run(IOutput $output): void {
 		try {

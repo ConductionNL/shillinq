@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use OCP\IUserSession;
  * the next run, or today when no later run is planned (design, Open
  * Questions).
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
  */
 class RecordCancellationAction implements LifecycleActionInterface {
 
@@ -68,7 +68,7 @@ class RecordCancellationAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed> The profile to save.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) CancellationReasonGuard::endConditionReached() is the one reading of the end condition.
 	 */
@@ -121,7 +121,7 @@ class RecordCancellationAction implements LifecycleActionInterface {
 	 *
 	 * @return string The quarter.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.3
 	 */
 	public static function quarterOf(string $date): string {
 		$month = (int)substr($date, 5, 2);
@@ -140,7 +140,7 @@ class RecordCancellationAction implements LifecycleActionInterface {
 	 *
 	 * @return float The monthly amount.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.3
 	 */
 	public static function monthlyAmount(array $profile): float {
 		$net = 0.0;
@@ -170,7 +170,7 @@ class RecordCancellationAction implements LifecycleActionInterface {
 	 *
 	 * @return string The effective date, YYYY-MM-DD.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
 	 */
 	public static function effectiveDate(mixed $nextRunDate, DateTimeInterface $today): string {
 		$todayDate = $today->format('Y-m-d');

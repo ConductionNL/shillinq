@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
  */
 
 declare(strict_types=1);

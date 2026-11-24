@@ -45,7 +45,7 @@ interface ObjectRequestReceiptMailerInterface {
 	 * @return bool True when the mailer accepted the mail; false when there was
 	 *              nothing to send or sending failed.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function send(array $request): bool;
 }//end interface

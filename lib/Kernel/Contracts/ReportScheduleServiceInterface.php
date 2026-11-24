@@ -52,7 +52,7 @@ interface ReportScheduleServiceInterface {
 	 * @throws OutOfBoundsException     When the caller has no access to the administration.
 	 * @throws InvalidArgumentException When a field is refused.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function create(string $ownerId, array $input, DateTimeImmutable $now): array;
 
@@ -69,7 +69,7 @@ interface ReportScheduleServiceInterface {
 	 * @throws OutOfBoundsException     When the schedule does not exist or the caller does not own it.
 	 * @throws InvalidArgumentException When a field is refused.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function update(string $ownerId, string $scheduleId, array $input, DateTimeImmutable $now): array;
 }//end interface

@@ -30,8 +30,8 @@
  *
  * Written, runs in nightly; not run here (it needs a live instance).
  *
- * @spec openspec/changes/sales-cancellation/specs/portal-contribution/spec.md
- * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/specs/portal-contribution/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
  */
 
 import type { APIRequestContext } from '@playwright/test'

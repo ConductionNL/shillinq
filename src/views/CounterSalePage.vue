@@ -14,7 +14,7 @@
  nothing is booked. A custom page because it writes a sale and drives a
  payment, which no index, detail or form page type does.
 
- @spec openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
+ @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
 -->
 
 <template>
@@ -205,7 +205,7 @@ export default {
 		 * What the customer pays.
 		 *
 		 * @return {number}
-		 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 		 */
 		total() {
 			return counterSaleTotal(this.lines)
@@ -222,7 +222,7 @@ export default {
 		/**
 		 * The active administration, and its customers for the optional picker.
 		 *
-		 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 		 */
 		async load() {
 			this.administrationId = await fetchActiveAdministrationId()
@@ -269,7 +269,7 @@ export default {
 		/**
 		 * Record the sale and send its payment to the phone, or show the QR code.
 		 *
-		 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 		 */
 		async takePayment() {
 			this.error = ''
@@ -298,7 +298,7 @@ export default {
 		/**
 		 * The customer walked away: cancel the draft, nothing is booked.
 		 *
-		 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 		 */
 		async walkedAway() {
 			this.error = ''

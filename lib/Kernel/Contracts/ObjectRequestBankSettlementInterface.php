@@ -51,7 +51,7 @@ interface ObjectRequestBankSettlementInterface {
 	 *
 	 * @return string What happened: settled, invoice, unbooked, already or missing.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
 	public function settle(array $match): string;
 }//end interface

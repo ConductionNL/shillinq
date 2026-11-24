@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use OCA\Shillinq\Service\PaymentSettlementService;
 /**
  * Bank line to object payment request.
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
  */
 class ObjectRequestBankMatcher implements ObjectRequestBankMatcherInterface {
 
@@ -69,7 +69,7 @@ class ObjectRequestBankMatcher implements ObjectRequestBankMatcherInterface {
 	 *
 	 * @return array{decision: string, requests: array<int, array<string, mixed>>} The decision and the requests it names.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function match(array $line): array {
 		$amount = round((float)($line['amount'] ?? 0), 2);

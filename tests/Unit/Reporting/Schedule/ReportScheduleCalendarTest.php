@@ -8,7 +8,7 @@
  * next and which period a run reports on. The same cases run in
  * tests/vitest/reportingDataDelivery.spec.js against the browser twin.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 declare(strict_types=1);

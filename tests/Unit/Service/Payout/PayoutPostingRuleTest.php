@@ -33,7 +33,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\Shillinq\Service\Payout\PayoutPostingRule
  * @uses   \OCA\Shillinq\Service\PaymentRevenueAccountResolver
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.4
  */
 final class PayoutPostingRuleTest extends TestCase {
 

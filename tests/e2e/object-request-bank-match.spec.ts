@@ -35,8 +35,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md
- * @spec openspec/changes/receivables-object-request-settlement/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/tasks.md#task-2.3
  *
  * @e2e object-payment-requests::larpinq-asks-for-an-event-fee
  * @e2e object-payment-requests::a-reference-in-use-is-refused

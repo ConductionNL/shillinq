@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use OCP\IRequest;
 /**
  * Records a counter sale and takes its payment; cancels one the customer walked away from.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  */
 class CounterSaleController extends Controller {
 
@@ -68,7 +68,7 @@ class CounterSaleController extends Controller {
 	 *
 	 * @return JSONResponse 201 `{invoice, mode, request, checkoutUrl}`, or the refusal's status with `{error}`.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	#[NoAdminRequired]
 	public function create(string $administrationId = '', mixed $lines = null, ?string $customerId = null): JSONResponse {
@@ -105,7 +105,7 @@ class CounterSaleController extends Controller {
 	 *
 	 * @return JSONResponse 200 `{invoice}`, or the refusal's status with `{error}`.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	#[NoAdminRequired]
 	public function cancel(string $id): JSONResponse {

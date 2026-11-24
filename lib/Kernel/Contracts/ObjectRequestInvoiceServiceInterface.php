@@ -52,7 +52,7 @@ interface ObjectRequestInvoiceServiceInterface {
 	 * @throws InvalidArgumentException When the request has no administration, no debtor, or no amount.
 	 * @throws RuntimeException When OpenRegister answers the save without an id.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function issue(array $request, string $administrationId, string $today): string;
 }//end interface

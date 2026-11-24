@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -231,7 +231,7 @@ class ObjectRequestSettledListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function testProviderCaptureMailsTheDebtorOnce(): void {
 		$this->message->expects(self::once())->method('setTo')->with(['anna@example.nl' => 'Anna Jansen']);
@@ -267,7 +267,7 @@ class ObjectRequestSettledListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function testManualSettlementMails(): void {
 		$this->mailer->expects(self::once())->method('send')->willReturn([]);
@@ -292,7 +292,7 @@ class ObjectRequestSettledListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function testNoEmailNoMail(): void {
 		$this->mailer->expects(self::never())->method('send');
@@ -313,7 +313,7 @@ class ObjectRequestSettledListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function testAMailFailureLeavesNoStamp(): void {
 		$this->mailer->method('send')->willThrowException(new RuntimeException('smtp down'));
@@ -330,7 +330,7 @@ class ObjectRequestSettledListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function testTheAppWiresTheListener(): void {
 		$root = __DIR__ . '/../../..';

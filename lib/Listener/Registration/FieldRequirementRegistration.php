@@ -28,7 +28,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 /**
  * Registers the required fields listener on both pre-save events.
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 final class FieldRequirementRegistration {
 
@@ -39,7 +39,7 @@ final class FieldRequirementRegistration {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function register(IRegistrationContext $context): void {
 		foreach ([ObjectCreatingEvent::class, ObjectUpdatingEvent::class] as $event) {

@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Throwable;
 /**
  * POST /api/portal/subscriptions/cancel.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
  */
 class PortalSubscriptionCancelController extends Controller {
 
@@ -78,7 +78,7 @@ class PortalSubscriptionCancelController extends Controller {
 	 *
 	 * @return JSONResponse The outcome.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

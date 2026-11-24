@@ -821,7 +821,7 @@ class WidgetApiController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
 	 */
 	private function appointmentCreated(array $result): JSONResponse {
 		$data = [

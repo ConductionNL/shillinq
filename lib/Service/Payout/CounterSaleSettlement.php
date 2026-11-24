@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Throwable;
  * invoice flagged `counterSale` and still a draft is touched; every other
  * invoice is returned or left exactly as it was.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  */
 class CounterSaleSettlement {
 
@@ -75,7 +75,7 @@ class CounterSaleSettlement {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	public static function isDraftSale(array $invoice): bool {
 		return ($invoice['counterSale'] ?? false) === true
@@ -96,7 +96,7 @@ class CounterSaleSettlement {
 	 *
 	 * @throws RuntimeException When the issue transition does not leave the invoice issued.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	public function issueOnCapture(string $registerSlug, array $invoice): array {
 		if (self::isDraftSale(invoice: $invoice) === false) {
@@ -125,7 +125,7 @@ class CounterSaleSettlement {
 	 *
 	 * @return bool True when a counter sale was cancelled.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	public function cancelOnFailure(string $registerSlug, array $request): bool {
 		$invoiceId = (string)($request['invoiceReference'] ?? '');

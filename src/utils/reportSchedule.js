@@ -14,7 +14,7 @@
  *
  * @param {string} text Comma or space separated recipients.
  * @return {Array<string>} The entries, each once.
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 export function parseRecipients(text) {
 	const entries = String(text || '')
@@ -31,7 +31,7 @@ export function parseRecipients(text) {
  * @param {object} report The catalogue report (id, label).
  * @param {object} form The dialog's fields.
  * @return {object} The schedule fields.
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 export function schedulePayload(report, form) {
 	const runDay = Number(form.runDay) || 1

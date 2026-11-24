@@ -21,8 +21,8 @@
  * Written, runs in nightly; not run here (it needs a live instance with
  * integriq's test source).
  *
- * @spec openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  */
 
 import type { Page } from '@playwright/test'

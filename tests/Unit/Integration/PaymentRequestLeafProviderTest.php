@@ -444,7 +444,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	public function testCreateKeepsReferenceAndInvoiceFlag(): void {
 		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
@@ -937,7 +937,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
 	 */
 	public function testCreditCoveringTheWholeAmountSettlesAtOnce(): void {
 		$runs = [];
@@ -973,7 +973,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
 	 */
 	public function testCreditPaysTheNextRequestFirst(): void {
 		$runs = [];
@@ -1006,7 +1006,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
 	 */
 	public function testOnlyTheSameDebtorsCreditInTheSameAdministrationIsUsed(): void {
 		$runs = [];
@@ -1027,7 +1027,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
 	 */
 	public function testCreditStaysOpenWhenItCannotBeBooked(): void {
 		$runs = [];

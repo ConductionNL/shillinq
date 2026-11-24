@@ -21,7 +21,7 @@
  * without them the server refuses with 409 or 503 and the sale test skips with
  * that reason instead of passing on a payment that never started.
  *
- * @spec openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
  * @e2e ar-invoice-payment-links/requirement-a-counter-sale-is-a-simplified-invoice-issued-on-capture-req-rppo-006/a-market-stall-sells-a-tea-tin
  * @e2e ar-invoice-payment-links/requirement-a-counter-sale-is-a-simplified-invoice-issued-on-capture-req-rppo-006/the-customer-walks-away
  */

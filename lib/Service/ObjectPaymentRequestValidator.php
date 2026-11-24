@@ -109,7 +109,7 @@ final class ObjectPaymentRequestValidator implements ObjectPaymentRequestValidat
 	 * @throws InvalidArgumentException When the shape or the uniqueness is refused.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	public function validate(array $request, array $existing = [], array $referenceHolders = []): void {
 		$subjectKind = (string)($request['subjectKind'] ?? 'invoice');
@@ -196,7 +196,7 @@ final class ObjectPaymentRequestValidator implements ObjectPaymentRequestValidat
 	 *
 	 * @throws InvalidArgumentException When the reference is refused.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	private function assertReference(array $request, array $holders): void {
 		$reference = trim((string)($request['paymentReference'] ?? ''));

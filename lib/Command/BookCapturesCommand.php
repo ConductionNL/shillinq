@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Lists, and on request books, the captures of provider-paid invoices without a booking.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
  */
 class BookCapturesCommand extends Command {
 
@@ -67,7 +67,7 @@ class BookCapturesCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:payments:book-captures')
@@ -88,7 +88,7 @@ class BookCapturesCommand extends Command {
 	 *
 	 * @return int 0 when everything listed is (now) booked or nothing was asked; 1 when a booking failed.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$register = $this->registerLocation->getRegisterSlug();

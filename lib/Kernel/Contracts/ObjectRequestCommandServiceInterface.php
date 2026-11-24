@@ -47,7 +47,7 @@ interface ObjectRequestCommandServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
 	 */
 	public function credit(PaymentCreditRequestedEvent $event): void;
 
@@ -58,7 +58,7 @@ interface ObjectRequestCommandServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function refund(PaymentRefundRequestedEvent $event): void;
 }//end interface

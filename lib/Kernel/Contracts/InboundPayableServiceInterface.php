@@ -50,7 +50,7 @@ interface InboundPayableServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When it is not requested, or an account is missing.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
 	 */
 	public function approve(string $payableId): array;
 
@@ -66,7 +66,7 @@ interface InboundPayableServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	public function cancel(PayableCancelRequestedEvent $event): void;
 
@@ -82,7 +82,7 @@ interface InboundPayableServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When it is not approved, or a value is missing.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	public function markPaid(string $payableId, string $bankReference, string $bankAccount, string $paidOn = ''): array;
 
@@ -93,7 +93,7 @@ interface InboundPayableServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function raise(PayableRaisedEvent $event): void;
 
@@ -107,7 +107,7 @@ interface InboundPayableServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When it is not requested, or no reason is given.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	public function reject(string $payableId, string $reason): array;
 }//end interface

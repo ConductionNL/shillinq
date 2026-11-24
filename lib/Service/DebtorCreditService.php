@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use RuntimeException;
 /**
  * Books a credit and records it per debtor.
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
  */
 class DebtorCreditService implements DebtorCreditServiceInterface {
 
@@ -77,7 +77,7 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 	 *
 	 * @return string The key, or '' when the debtor cannot be recognised again.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
 	 */
 	public static function debtorKey(array $request): string {
 		$debtor = $request['debtor'] ?? [];
@@ -108,7 +108,7 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 	 * @throws InvalidArgumentException When the debtor cannot be recognised, or no account is set.
 	 * @throws RuntimeException When OpenRegister answers a save without an id.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
 	 */
 	public function credit(array $request): array {
 		$key = self::debtorKey(request: $request);
@@ -307,7 +307,7 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 	 *
 	 * @throws RuntimeException When OpenRegister answers a save without an id.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
 	 */
 	public function applyOpenCredit(array $request, string $actor): array {
 		$key = self::debtorKey(request: $request);

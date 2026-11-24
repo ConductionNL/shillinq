@@ -233,7 +233,7 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	public function testPaymentRequestCarriesTheSettlementProperties(): void {
 		$schema = $this->fragment()['components']['schemas']['PaymentRequest'];

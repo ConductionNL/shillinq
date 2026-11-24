@@ -52,7 +52,7 @@ interface ObjectRequestRefundServiceInterface {
 	 * @throws InvalidArgumentException When there is no requested refund, or an account is missing.
 	 * @throws RuntimeException When OpenRegister answers a save without an id.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function approve(string $paymentRequestId): array;
 
@@ -69,7 +69,7 @@ interface ObjectRequestRefundServiceInterface {
 	 * @throws InvalidArgumentException When there is no approved refund, or a value is missing.
 	 * @throws RuntimeException When OpenRegister answers a save without an id.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function markPaid(string $paymentRequestId, string $bankReference, string $bankAccount): array;
 }//end interface

@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * The write path of ReportSchedule.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 class ReportScheduleService implements ReportScheduleServiceInterface {
 
@@ -96,7 +96,7 @@ class ReportScheduleService implements ReportScheduleServiceInterface {
 	 * @throws OutOfBoundsException     When the caller has no access to the administration.
 	 * @throws InvalidArgumentException When a field is refused.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function create(string $ownerId, array $input, DateTimeImmutable $now): array {
 		$administrationId = trim((string)($input['administrationId'] ?? ''));
@@ -153,7 +153,7 @@ class ReportScheduleService implements ReportScheduleServiceInterface {
 	 * @throws OutOfBoundsException     When the schedule does not exist or the caller does not own it.
 	 * @throws InvalidArgumentException When a field is refused.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function update(string $ownerId, string $scheduleId, array $input, DateTimeImmutable $now): array {
 		$found = null;

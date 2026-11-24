@@ -45,7 +45,7 @@ interface ObjectApiRequestInterface {
 	 *
 	 * @return bool True for a person's own save.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function isPersonSaving(array $schemaNames, string $uuid): bool;
 }//end interface

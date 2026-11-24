@@ -15,7 +15,7 @@ import QRCode from 'qrcode'
  * @param {string} invoiceId The invoice's id.
  * @return {Promise<{mode: string, request: object, checkoutUrl: string}>} `device` when the
  *   payment went to the phone, `qr` when it is a checkout to show as a QR code.
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  */
 export async function takePayment(invoiceId) {
 	const response = await axios.post(
@@ -35,7 +35,7 @@ export async function takePayment(invoiceId) {
  * @param {object} error The request error.
  * @param {string} fallback The text when the answer names none.
  * @return {string} The message.
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  */
 export function refusalMessage(error, fallback) {
 	const data = error?.response?.data ?? {}
@@ -47,7 +47,7 @@ export function refusalMessage(error, fallback) {
  *
  * @param {string} checkoutUrl The provider's checkout URL.
  * @return {Promise<string>} A data URL of the image, or '' without a URL.
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  */
 export async function checkoutQrImage(checkoutUrl) {
 	if (!checkoutUrl) {
@@ -66,7 +66,7 @@ export async function checkoutQrImage(checkoutUrl) {
  * @param {string} [sale.customerId] A customer of the administration; empty for the counter-sales debtor.
  * @return {Promise<{invoice: object, mode: string, request: object, checkoutUrl: string}>} The draft
  *   invoice and the started payment, `device` or `qr` as for Take payment now.
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  */
 export async function startCounterSale({ administrationId, lines, customerId = '' }) {
 	const body = { administrationId: String(administrationId || ''), lines }
@@ -88,7 +88,7 @@ export async function startCounterSale({ administrationId, lines, customerId = '
  *
  * @param {string} invoiceId The draft invoice of the sale.
  * @return {Promise<object>} The cancelled invoice.
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  */
 export async function cancelCounterSale(invoiceId) {
 	const response = await axios.post(
@@ -102,7 +102,7 @@ export async function cancelCounterSale(invoiceId) {
  *
  * @param {Array<{quantity: number|string, unitPrice: number|string}>} lines The lines, prices including VAT.
  * @return {number} The total, rounded to the cent.
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  */
 export function counterSaleTotal(lines) {
 	const cents = (lines || []).reduce((sum, line) => {

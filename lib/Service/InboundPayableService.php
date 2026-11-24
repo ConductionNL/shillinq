@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Throwable;
 /**
  * Raises, approves, pays and rejects a payable another app asked for.
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
  */
@@ -107,7 +107,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function raise(PayableRaisedEvent $event): void {
 		$payable = $event->toArray();
@@ -176,7 +176,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When it is not requested, or an account is missing.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
 	 */
 	public function approve(string $payableId): array {
 		$payable = $this->findIn(id: $payableId, state: 'requested');
@@ -209,7 +209,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When it is not approved, or a value is missing.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	public function markPaid(string $payableId, string $bankReference, string $bankAccount, string $paidOn = ''): array {
 		$bankReference = trim($bankReference);
@@ -253,7 +253,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When it is not requested, or no reason is given.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	public function reject(string $payableId, string $reason): array {
 		$reason = trim($reason);
@@ -280,7 +280,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	public function cancel(PayableCancelRequestedEvent $event): void {
 		$app = $event->getSourceApp();
@@ -309,7 +309,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @return array<string, mixed>|null
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	private function payableFor(string $app, string $reference): array|null {
 		$payable = null;
@@ -330,7 +330,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	private function answerCancel(PayableCancelRequestedEvent $event, array $payable, string $reference, string $reason): void {
 		$state = (string)($payable['state'] ?? '');
@@ -358,7 +358,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	private function withdraw(PayableCancelRequestedEvent $event, array $payable, string $reason): void {
 		$payable['state'] = 'cancelled';
@@ -719,7 +719,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @return bool True when valid.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public static function isValidIban(string $iban): bool {
 		if (preg_match('/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/', $iban) !== 1) {

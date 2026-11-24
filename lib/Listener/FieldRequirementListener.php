@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 class FieldRequirementListener implements IEventListener {
 
@@ -71,7 +71,7 @@ class FieldRequirementListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function handle(Event $event): void {
 		$entity = null;

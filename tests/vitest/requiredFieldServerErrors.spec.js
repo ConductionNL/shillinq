@@ -14,7 +14,7 @@
  * form dialog's `setValidationErrors` so the form stays open with each
  * message under its field.
  *
- * @spec openspec/changes/platform-required-fields/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/tasks.md#task-2.2
  */
 
 import { describe, expect, it, vi } from 'vitest'

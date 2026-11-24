@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
  */
 
 // phpcs:disable CustomSniffs.Functions.NamedParameters

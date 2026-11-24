@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use Throwable;
 /**
  * Approves, pays and rejects a payable another app raised.
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
  */
 class InboundPayableController extends Controller {
 
@@ -70,7 +70,7 @@ class InboundPayableController extends Controller {
 	 *
 	 * @return JSONResponse The payable, or the refusal.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
 	 */
 	#[NoAdminRequired]
 	public function approve(string $id): JSONResponse {
@@ -91,7 +91,7 @@ class InboundPayableController extends Controller {
 	 *
 	 * @return JSONResponse The payable, or the refusal.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	#[NoAdminRequired]
 	public function markPaid(string $id, string $bankReference = '', string $bankAccount = '', string $paidOn = ''): JSONResponse {
@@ -112,7 +112,7 @@ class InboundPayableController extends Controller {
 	 *
 	 * @return JSONResponse The payable, or the refusal.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	#[NoAdminRequired]
 	public function reject(string $id, string $reason = ''): JSONResponse {

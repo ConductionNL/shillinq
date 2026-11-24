@@ -417,7 +417,7 @@ export default {
 		/**
 		 * The label of the run-day field: a weekday for a weekly schedule, a day of the month otherwise.
 		 *
-		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 		 */
 		runDayLabel() {
 			return this.schedule.frequency === 'weekly'
@@ -428,7 +428,7 @@ export default {
 		/**
 		 * Whether the schedule form is complete enough to save.
 		 *
-		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 		 */
 		canSchedule() {
 			return (
@@ -494,7 +494,7 @@ export default {
 		/**
 		 * Save the schedule through the report-schedules endpoint and show its first run date.
 		 *
-		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 		 */
 		async onSchedule() {
 			if (!this.canSchedule) {
@@ -560,7 +560,7 @@ export default {
 		 * and the first run.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 		 */
 		scheduleRequest() {
 			return schedulePayload(this.report, {

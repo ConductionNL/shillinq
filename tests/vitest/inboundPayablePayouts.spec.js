@@ -7,7 +7,7 @@
  * helpers' URLs and appinfo/routes.php are held to each other, and the body
  * each step sends is the one InboundPayableController reads.
  *
- * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
  */
 
 import fs from 'fs'

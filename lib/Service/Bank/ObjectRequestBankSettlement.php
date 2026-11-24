@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
 /**
  * A confirmed payment-request match to a settled, booked request.
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
  */
 class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterface {
 
@@ -76,7 +76,7 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 	 *
 	 * @return string What happened: settled, invoice, unbooked, already or missing.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
 	public function settle(array $match): string {
 		$requestId = (string)($match['matchedObjectId'] ?? (((array)($match['targetRefs'] ?? []))[0] ?? ''));
@@ -120,7 +120,7 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 	 *
 	 * @return string The reference.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
 	private static function lineReference(array $line): string {
 		$reference = (string)($line['endToEndRef'] ?? '');
@@ -139,7 +139,7 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 	 *
 	 * @return bool True when it was settled by this payment before.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
 	private static function alreadySettled(array $request, string $reference): bool {
 		foreach ((array)($request['settlements'] ?? []) as $existing) {
@@ -158,7 +158,7 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
 	private static function settledPatch(array $request): array {
 		$patch = ['settlements' => $request['settlements']];

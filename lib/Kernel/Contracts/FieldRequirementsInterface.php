@@ -49,7 +49,7 @@ interface FieldRequirementsInterface {
 	 *
 	 * @return array<string, mixed>|null The requirement.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function find(string $id): ?array;
 
@@ -60,7 +60,7 @@ interface FieldRequirementsInterface {
 	 *
 	 * @return list<array{field: string, title: string, required: string, requiredLabel: string}> The fields.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function formFields(array $requirement): array;
 
@@ -83,7 +83,7 @@ interface FieldRequirementsInterface {
 	 *
 	 * @return list<array{field: string, title: string, reason: string}> The missing fields.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function missing(array $definition, array $object): array;
 
@@ -94,7 +94,7 @@ interface FieldRequirementsInterface {
 	 *
 	 * @return array<string, string> The refusal by field.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function refusal(array $requirement): array;
 }//end interface

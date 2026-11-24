@@ -14,7 +14,7 @@
         "version": "0.2.0",
         "title": "Payable from another app",
         "description": "Money another app owes a payee and asks finance to pay out.",
-        "x-spec": "openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every step of a payout is recorded: who raised it, who approved, paid or rejected it, and whether the app heard back."

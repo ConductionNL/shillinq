@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "receivables-payouts-tab, receivables-provider-payouts",
     "adr": "ADR-037 modular register fragment; ADR-022 apps consume OpenRegister, no own CRUD",
-    "description": "ProviderPayout as designed in openspec/changes/receivables-provider-payouts/design.md (D1, Seed Data): one settlement of a payment provider (Mollie, Stripe) with its amounts and transaction lines, its lifecycle and the notification of unmatched lines; PaymentDevice, the phone a user registered with the provider for payments on the spot (D5); and the provider-payout target of a ReconciliationMatch (D4). The fee, bank and debtors posting accounts are the app setting payoutPostingAccounts read by PayoutPostingRule.",
+    "description": "ProviderPayout as designed in openspec/changes/archive/2026-11-24-receivables-provider-payouts/design.md (D1, Seed Data): one settlement of a payment provider (Mollie, Stripe) with its amounts and transaction lines, its lifecycle and the notification of unmatched lines; PaymentDevice, the phone a user registered with the provider for payments on the spot (D5); and the provider-payout target of a ReconciliationMatch (D4). The fee, bank and debtors posting accounts are the app setting payoutPostingAccounts read by PayoutPostingRule.",
     "spec": "openspec/specs/bookkeeping-bank-reconciliation/spec.md"
   },
   "components": {
@@ -349,7 +349,7 @@
         "title": "Payment device",
         "description": "A phone a user registered with the payment provider, to take card payments on the spot through the provider's point-of-sale method.",
         "x-schema-org": "schema:Product",
-        "x-spec": "openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md",
         "type": "object",
         "required": [
           "userId",

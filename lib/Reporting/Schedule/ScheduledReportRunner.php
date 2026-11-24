@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 declare(strict_types=1);
@@ -86,7 +86,7 @@ class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 	 *
 	 * @return array{ran: int, failed: int} Counts.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function runDue(DateTimeImmutable $now): array {
 		$counts = ['ran' => 0, 'failed' => 0];
@@ -126,7 +126,7 @@ class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 	 *
 	 * @return bool True when the report was produced and delivered.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function runOne(array $schedule, string $ownerId, DateTimeImmutable $now): bool {
 		$runAt     = new DateTimeImmutable((string)$schedule['nextRunAt']);

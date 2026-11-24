@@ -6,7 +6,7 @@
  * with the chosen report and format, and the first run it shows is the one
  * the job will make (the same cases as ReportScheduleCalendarTest).
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 import fs from 'fs'

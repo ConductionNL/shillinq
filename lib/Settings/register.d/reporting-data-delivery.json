@@ -15,7 +15,7 @@
         "title": "Report schedule",
         "description": "A report from the report library that is produced and delivered on its own, weekly, monthly or quarterly.",
         "x-schema-org": "schema:Schedule",
-        "x-spec": "openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md",
         "type": "object",
         "required": [
           "administrationId",

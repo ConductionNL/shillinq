@@ -526,7 +526,7 @@ class WidgetService implements WidgetServiceInterface {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
 	 */
 	private function createdResponse(?array $saved, array $appointment): array {
 		return [
@@ -549,7 +549,7 @@ class WidgetService implements WidgetServiceInterface {
 	 *
 	 * @return array{withdrawalLink?: string, withdrawalLastDay?: string}
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
 	 */
 	private function withdrawal(array $booked): array {
 		try {

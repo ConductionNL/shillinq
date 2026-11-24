@@ -225,7 +225,7 @@ final class RecurringInvoiceGeneratorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
 	 */
 	public function testTheGeneratedInvoiceBillsTheLinkedCustomer(): void {
 		$payload = static fn (array $profile): array => RecurringInvoiceGenerator::buildArInvoicePayload(

@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Throwable;
 /**
  * Creates and changes report schedules.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 class ReportScheduleController extends Controller {
 
@@ -88,7 +88,7 @@ class ReportScheduleController extends Controller {
 	 *
 	 * @return JSONResponse 201 with the schedule, 401, a masked 404, 422 or 500.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -110,7 +110,7 @@ class ReportScheduleController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the schedule, 401, a masked 404, 422 or 500.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	#[NoAdminRequired]
 	public function update(string $id): JSONResponse {

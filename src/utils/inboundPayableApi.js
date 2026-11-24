@@ -31,7 +31,7 @@ export const PAYABLE_STEPS = Object.freeze({
  * @param {string} [fields.reason] Why it is rejected (reject).
  * @return {object} The request body.
  * @throws {Error} When a step's required value is missing or malformed.
- * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
  */
 export function stepBody(step, fields = {}) {
 	if (step === 'approve') {
@@ -66,7 +66,7 @@ export function stepBody(step, fields = {}) {
  * @param {string} step `approve`, `paid` or `reject`.
  * @param {object} body The body from stepBody().
  * @return {Promise<object>} The payable as the server answered it.
- * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
  */
 export async function takePayableStep(payableId, step, body) {
 	const segment = PAYABLE_STEPS[step]

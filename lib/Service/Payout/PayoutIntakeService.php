@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * Records a reported settlement as one matched and booked ProviderPayout.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
  */
 class PayoutIntakeService {
 
@@ -97,7 +97,7 @@ class PayoutIntakeService {
 	 *
 	 * @return array{result: string, payout: array<string, mixed>|null, reason: string}
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
 	 */
 	public function record(array $settlement, string $defaultProvider='mollie'): array {
 		$reference = trim((string)($settlement['settlementReference'] ?? ''));
@@ -131,7 +131,7 @@ class PayoutIntakeService {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
 	 */
 	public function build(array $settlement, string $reference, string $defaultProvider='mollie'): array {
 		$provider = strtolower(trim((string)($settlement['provider'] ?? '')));
@@ -177,7 +177,7 @@ class PayoutIntakeService {
 	 *
 	 * @return array<string, mixed> The payout, `booked` with its journal entry when the posting succeeded.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
 	 */
 	private function book(array $payout): array {
 		if ((string)($payout['state'] ?? '') !== 'matched') {

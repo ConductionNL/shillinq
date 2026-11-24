@@ -8,7 +8,7 @@
  * per step, and the confirm / cancel / closing handlers the template bound,
  * which refuse locally, post the step, or report the server's refusal.
  *
- * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
  */
 
 import axios from '@nextcloud/axios'

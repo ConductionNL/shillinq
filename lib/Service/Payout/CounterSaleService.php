@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * goes to the administration's counter-sales debtor, the CustomerMaster with
  * customerId COUNTER_SALES_CODE, which is created on the first sale.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
  */
 class CounterSaleService {
 
@@ -98,7 +98,7 @@ class CounterSaleService {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller may not, the sale is malformed or the payment cannot start.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	public function start(string $administrationId, array $lines, ?string $customerId, string $today): array {
 		$this->guard->assertMay(action: PaymentActionAuthorizerInterface::ACTION_REQUEST);
@@ -133,7 +133,7 @@ class CounterSaleService {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller may not, or the sale is no longer a draft.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) CounterSaleSettlement::isDraftSale() is a pure check of the invoice record.
 	 */
@@ -160,7 +160,7 @@ class CounterSaleService {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When there is no line, too many, or one is malformed.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	public static function invoiceLines(array $lines): array {
 		if ($lines === [] || count($lines) > self::MAX_LINES) {
@@ -265,7 +265,7 @@ class CounterSaleService {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	public static function draft(array $lines, string $customerId, string $administrationId, string $today): array {
 		$gross = round(array_sum(array_column($lines, 'grossAmount')), 2);
@@ -325,7 +325,7 @@ class CounterSaleService {
 	 *
 	 * @return string The CustomerMaster id.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	public function counterSalesDebtor(string $administrationId): string {
 		$rows = $this->customers()->findAll(

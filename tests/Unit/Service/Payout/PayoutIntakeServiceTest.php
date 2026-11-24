@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use RuntimeException;
  * @uses   \OCA\Shillinq\Service\PaymentRevenueAccountResolver
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
  */
 final class PayoutIntakeServiceTest extends TestCase {
 

@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use OCP\IConfig;
 /**
  * Signed withdrawal links for one appointment.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
  */
 class WithdrawalLinkService {
 
@@ -79,7 +79,7 @@ class WithdrawalLinkService {
 	 *
 	 * @return string|null Null for a malformed id or an instance without a secret.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	public function tokenFor(string $appointmentId, int $expiresAt): ?string {
 		$key = $this->key();
@@ -100,7 +100,7 @@ class WithdrawalLinkService {
 	 * @return string|null Null when the appointment was not booked online, its booking moment is
 	 *                     unknown, or no https guest page is configured.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
 	 */
 	public function forAppointment(array $appointment): ?string {
 		$page = trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::PAGE_KEY, ''));
@@ -132,7 +132,7 @@ class WithdrawalLinkService {
 	 *
 	 * @return string|null Null when its booking moment is unknown.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
 	 */
 	public function lastDayFor(array $appointment): ?string {
 		$periodEnd = $this->withdrawals->periodEndFor(appointment: $appointment);
@@ -151,7 +151,7 @@ class WithdrawalLinkService {
 	 *
 	 * @return string|null The appointment id.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	public function verify(string $token, DateTimeImmutable $now): ?string {
 		$parts = explode('.', trim($token));

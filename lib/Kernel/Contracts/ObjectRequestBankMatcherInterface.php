@@ -58,7 +58,7 @@ interface ObjectRequestBankMatcherInterface {
 	 *
 	 * @return array{decision: string, requests: array<int, array<string, mixed>>} The decision and the requests it names.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function match(array $line): array;
 }//end interface

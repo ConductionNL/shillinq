@@ -99,7 +99,7 @@ interface AdministrationContextServiceInterface {
 	 *
 	 * @return bool True when the user holds a currently valid membership.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function canUserAccess(string $userId, string $administrationId): bool;
 

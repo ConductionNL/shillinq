@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Throwable;
 /**
  * Approves and marks paid a requested refund.
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
  */
 class ObjectRequestRefundController extends Controller {
 
@@ -74,7 +74,7 @@ class ObjectRequestRefundController extends Controller {
 	 *
 	 * @return JSONResponse The request, or the refusal.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	#[NoAdminRequired]
 	public function approve(string $id): JSONResponse {
@@ -94,7 +94,7 @@ class ObjectRequestRefundController extends Controller {
 	 *
 	 * @return JSONResponse The request, or the refusal.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	#[NoAdminRequired]
 	public function markPaid(string $id, string $bankReference = '', string $bankAccount = ''): JSONResponse {

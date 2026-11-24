@@ -8,7 +8,7 @@
  * real schemas and fields and binds every dataset to one administration, and
  * a dataset without that binding is refused.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 declare(strict_types=1);

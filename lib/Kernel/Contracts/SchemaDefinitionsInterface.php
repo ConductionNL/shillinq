@@ -44,7 +44,7 @@ interface SchemaDefinitionsInterface {
 	 *
 	 * @return array{slug: string, title: string, properties: array<string, mixed>, required: list<string>}|null
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function definition(string $schema): ?array;
 }//end interface

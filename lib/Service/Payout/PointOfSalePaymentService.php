@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Takes an open invoice's payment on the user's registered phone, or as a QR checkout.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  */
 class PointOfSalePaymentService {
 
@@ -95,7 +95,7 @@ class PointOfSalePaymentService {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the invoice, the device or the provider refuses it.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
 	 */
 	public function takePayment(string $invoiceId): array {
 		$this->guard->assertMay(action: PaymentActionAuthorizer::ACTION_REQUEST);
@@ -121,7 +121,7 @@ class PointOfSalePaymentService {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When there is nothing to pay, no device, or no provider.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
 	 */
 	public function payInvoice(array $invoice, string $userId): array {
 		$amount = self::amountDue(invoice: $invoice);
@@ -209,7 +209,7 @@ class PointOfSalePaymentService {
 	 *
 	 * @return array<string, mixed>|null
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
 	 */
 	public function deviceOf(string $userId, string $administrationId): ?array {
 		if (trim($userId) === '') {

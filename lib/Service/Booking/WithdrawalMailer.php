@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * The withdrawal acknowledgement mail.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
  */
 class WithdrawalMailer {
 
@@ -66,7 +66,7 @@ class WithdrawalMailer {
 	 *
 	 * @return bool Whether the mail server accepted it.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
 	 */
 	public function acknowledge(array $appointment, DateTimeImmutable $withdrawnAt): bool {
 		$email = trim((string)($appointment['customerEmail'] ?? ''));
@@ -97,7 +97,7 @@ class WithdrawalMailer {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
 	 */
 	public function body(array $appointment, DateTimeImmutable $withdrawnAt): string {
 		$local = $withdrawnAt->setTimezone(self::timezone(name: (string)($appointment['customerTimezone'] ?? '')));

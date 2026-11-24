@@ -116,7 +116,7 @@ interface ManualMatchServiceInterface {
 	 *
 	 * @throws ManualMatchRefusedException When the line cannot be matched.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function matchPaymentRequest(array $line, array $request, string $actor): array;
 
@@ -133,7 +133,7 @@ interface ManualMatchServiceInterface {
 	 *
 	 * @throws ManualMatchRefusedException When the line cannot be matched.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.5
 	 */
 	public function matchProviderPayout(array $line, array $payout, string $actor): array;
 
@@ -149,7 +149,7 @@ interface ManualMatchServiceInterface {
 	 *
 	 * @throws ManualMatchRefusedException When the line cannot be matched.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function proposePaymentRequest(array $line, array $request): array;
 }//end interface

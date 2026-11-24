@@ -33,7 +33,7 @@ use Throwable;
 /**
  * Serves the fields of a requirement's record type, marked always, administration or no.
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 class FieldRequirementController extends Controller {
 
@@ -79,7 +79,7 @@ class FieldRequirementController extends Controller {
 	 *
 	 * @return JSONResponse `{rows}`, 401, or a masked 404 for another administration's requirement.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	#[NoAdminRequired]
 	public function fields(string $id): JSONResponse {

@@ -58,7 +58,7 @@ interface DebtorCreditServiceInterface {
 	 *
 	 * @throws RuntimeException When OpenRegister answers a save without an id.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
 	 */
 	public function applyOpenCredit(array $request, string $actor): array;
 }//end interface

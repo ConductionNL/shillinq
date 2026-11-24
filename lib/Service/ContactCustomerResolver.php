@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/design.md
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/design.md
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * Resolves a contact reference to the id of its CustomerMaster.
  *
- * @spec openspec/changes/sales-cancellation/design.md
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/design.md
  */
 class ContactCustomerResolver implements ContactCustomerResolverInterface {
 
@@ -64,7 +64,7 @@ class ContactCustomerResolver implements ContactCustomerResolverInterface {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
 	 */
 	public function resolve(string $reference, array $customers): ?string {
 		$reference = trim($reference);

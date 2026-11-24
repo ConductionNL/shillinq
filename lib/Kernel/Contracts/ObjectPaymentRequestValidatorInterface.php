@@ -52,7 +52,7 @@ interface ObjectPaymentRequestValidatorInterface {
 	 * @throws InvalidArgumentException When the shape or the uniqueness is refused.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	public function validate(array $request, array $existing = [], array $referenceHolders = []): void;
 
