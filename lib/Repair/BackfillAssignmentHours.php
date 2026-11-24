@@ -30,7 +30,6 @@ namespace OCA\Shillinq\Repair;
 use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -57,7 +56,6 @@ class BackfillAssignmentHours implements IRepairStep {
 	 *
 	 * @return string The name.
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: sum the hours booked on every project assignment';
 
@@ -72,7 +70,6 @@ class BackfillAssignmentHours implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$assignments = 0;

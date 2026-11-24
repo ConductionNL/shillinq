@@ -44,7 +44,6 @@ use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -105,7 +104,6 @@ class DocumentArchiveCron extends TimedJob {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
 	 */
-	#[Override]
 	protected function run($argument): void {
 		$this->asSystem(work: function () use ($argument): void {
 			$this->runAsJob(argument: $argument);

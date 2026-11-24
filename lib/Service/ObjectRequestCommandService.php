@@ -38,7 +38,6 @@ use OCA\Shillinq\Event\PaymentSettlementCommandEvent;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestCommandServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -83,7 +82,6 @@ class ObjectRequestCommandService implements ObjectRequestCommandServiceInterfac
 	 *
 	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
-	#[Override]
 	public function refund(PaymentRefundRequestedEvent $event): void {
 		$this->run(
 			event: $event,
@@ -116,7 +114,6 @@ class ObjectRequestCommandService implements ObjectRequestCommandServiceInterfac
 	 *
 	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
 	 */
-	#[Override]
 	public function credit(PaymentCreditRequestedEvent $event): void {
 		$this->run(
 			event: $event,

@@ -45,7 +45,6 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -82,7 +81,6 @@ class LinkRecurringProfilesToCustomers implements IRepairStep {
 	 *
 	 * @spec openspec/changes/sales-cancellation/tasks.md
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: link recurring profiles to the customer their contact resolves to';
 	}//end getName()
@@ -96,7 +94,6 @@ class LinkRecurringProfilesToCustomers implements IRepairStep {
 	 *
 	 * @spec openspec/changes/sales-cancellation/tasks.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

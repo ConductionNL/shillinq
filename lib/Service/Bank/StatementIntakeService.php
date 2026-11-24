@@ -34,7 +34,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -83,7 +82,6 @@ class StatementIntakeService implements StatementIntakeServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
-	#[Override]
 	public function ingest(string $administrationId, string $iban, array $lines, array $meta): array {
 		$batchUri = trim((string)($meta['sourceBatchUri'] ?? ''));
 		if ($this->batchAlreadyWritten(administrationId: $administrationId, batchUri: $batchUri) === true) {

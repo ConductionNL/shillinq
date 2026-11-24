@@ -31,7 +31,6 @@ use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -72,7 +71,6 @@ class ScheduledReportJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is TimedJob's.
 	 */
-	#[Override]
 	protected function run($argument): void {
 		try {
 			$now    = new DateTimeImmutable('@' . $this->time->getTime());

@@ -42,7 +42,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\BankRulePreviewServiceInterface;
-use Override;
 
 /**
  * Read-only evaluator of MatchingRule predicates against BankStatementLine
@@ -80,7 +79,6 @@ class BankRulePreviewService implements BankRulePreviewServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
 	 */
-	#[Override]
 	public function previewRule(array $rule, array $candidateLines, ?string $anchorDate = null): array {
 		$predicates = $this->rulePredicates(rule: $rule);
 		$tally = new RulePreviewTally();
@@ -112,7 +110,6 @@ class BankRulePreviewService implements BankRulePreviewServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
 	 */
-	#[Override]
 	public function suggestForLine(array $line, array $activeRules): ?array {
 		$best = $this->highestPriorityMatch(
 			rules: $activeRules,

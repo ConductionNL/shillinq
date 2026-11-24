@@ -47,7 +47,6 @@ use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -114,7 +113,6 @@ class ViesService implements ViesServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	public function validate(string $administrationId, string $vatId, string $now = ''): array {
 		$canonical = $this->canonicalVatId(vatId: $vatId);
 		$nowTs = $now;

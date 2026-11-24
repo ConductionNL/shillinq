@@ -71,7 +71,6 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -153,7 +152,6 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 *
 	 * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: rematerialise converted calc fields on existing objects (revive-declarative-calc-layer)';
 	}//end getName()
@@ -170,7 +168,6 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 *
 	 * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		// One full pass per installed version: a repair without an upgrade has nothing new to materialise.
 		$version = $this->appManager->getAppVersion(AppIdentity::APP_ID);

@@ -45,8 +45,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
-use Override;
-
 /**
  * Executable CSRD/ESRS + IFRS-S2 sustainability checks against EsrsStatement.
  *
@@ -253,7 +251,6 @@ final class SustainabilityChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
-	#[Override]
 	public static function checks(): array {
 		return [
 			'EsrsStatement' => [
@@ -1000,7 +997,6 @@ final class SustainabilityChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
-	#[Override]
 	public static function seedSpec(): array {
 		return [];
 	}//end seedSpec()
@@ -1016,7 +1012,6 @@ final class SustainabilityChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
-	#[Override]
 	public static function seedObjects(): array {
 		return [
 			'EsrsStatement' => [self::seedStatement()],

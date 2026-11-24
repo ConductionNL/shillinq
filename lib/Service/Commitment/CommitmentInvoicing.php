@@ -40,7 +40,6 @@ namespace OCA\Shillinq\Service\Commitment;
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\CommitmentInvoicingInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use Override;
 
 /**
  * Invoices against commitments.
@@ -84,7 +83,6 @@ class CommitmentInvoicing implements CommitmentInvoicingInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function book(array $invoice): ?array {
 		$commitment = $this->commitmentFor(invoice: $invoice);
 		if ($commitment === null) {
@@ -120,7 +118,6 @@ class CommitmentInvoicing implements CommitmentInvoicingInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
-	#[Override]
 	public function lastInvoice(string $administrationId, string $invoiceId): array {
 		[$invoice, $commitment] = $this->invoiceAndCommitment(administrationId: $administrationId, invoiceId: $invoiceId);
 		return [
@@ -143,7 +140,6 @@ class CommitmentInvoicing implements CommitmentInvoicingInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
-	#[Override]
 	public function markLast(string $administrationId, string $invoiceId): array {
 		$preview = $this->lastInvoice(administrationId: $administrationId, invoiceId: $invoiceId);
 		[, $commitment] = $this->invoiceAndCommitment(administrationId: $administrationId, invoiceId: $invoiceId);

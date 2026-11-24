@@ -74,7 +74,6 @@ use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\ICache;
-use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
 use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
@@ -277,7 +276,6 @@ class PipelinqContactAdapter implements PipelinqContactAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
 	 */
-	#[Override]
 	public function getContact(string $externalId): PipelinqContact {
 		$id = $this->requireContactId(externalId: $externalId);
 
@@ -483,7 +481,6 @@ class PipelinqContactAdapter implements PipelinqContactAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
 	 */
-	#[Override]
 	public function clearCache(): void {
 		$this->cache->clear(self::CONTACT_CACHE_KEY_PREFIX);
 
@@ -872,7 +869,6 @@ class PipelinqContactAdapter implements PipelinqContactAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
 	 */
-	#[Override]
 	public function fetchKlantbeeld(string $externalId, int $limit = 5, int $offset = 0): KlantbeeldResult {
 		$query         = new KlantbeeldPageQuery(externalId: $externalId);
 		$query->limit  = $this->clampLimit(limit: $limit);
@@ -999,7 +995,6 @@ class PipelinqContactAdapter implements PipelinqContactAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
 	 */
-	#[Override]
 	public function publishTimelineEvent(TimelineEventDto $event): bool {
 		return $this->publishWithOutcome(event: $event)->isSuccess();
 	}//end publishTimelineEvent()
@@ -1030,7 +1025,6 @@ class PipelinqContactAdapter implements PipelinqContactAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
-	#[Override]
 	public function publishWithOutcome(TimelineEventDto $event): TimelinePublishOutcome {
 		$payload = $event->toPayload();
 

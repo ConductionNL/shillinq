@@ -30,7 +30,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ImportBatchStepsInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 
 /**
  * The parse, mapping, validate and dry-run steps of an import batch (REQ-AIW-001).
@@ -71,7 +70,6 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	#[Override]
 	public function parse(array $batch): array {
 		$xaf    = $this->reader->readAuditfile(batch: $batch);
 		$result = $this->pipeline->stageBatch(batch: array_merge($batch, ['sourceXaf' => $xaf]));
@@ -99,7 +97,6 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	#[Override]
 	public function startMapping(array $batch): array {
 		$this->pipeline->resolveBatchMappings(batch: $batch, batchId: $this->idOf(batch: $batch));
 
@@ -116,7 +113,6 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	#[Override]
 	public function validate(array $batch): array {
 		$open   = $this->period->isOpen(
 			administrationId: (string)($batch['administrationId'] ?? ''),
@@ -144,7 +140,6 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	#[Override]
 	public function dryRun(array $batch): array {
 		$batch['dryRunReport'] = $this->pipeline->dryRun(
 			batch: array_merge($batch, ['mappings' => $this->mappingsOf(batch: $batch)])
@@ -165,7 +160,6 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	#[Override]
 	public function post(array $batch): array {
 		$this->refuseAnImportPostedBefore(batch: $batch);
 		$result = $this->pipeline->post(
@@ -191,7 +185,6 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	#[Override]
 	public function reverse(array $batch): array {
 		$open   = $this->period->isOpen(
 			administrationId: (string)($batch['administrationId'] ?? ''),

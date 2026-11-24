@@ -44,7 +44,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RevenueCutoffServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Computes per-contract revenue cut-off balances and waterfall rows.
@@ -91,7 +90,6 @@ class RevenueCutoffService implements RevenueCutoffServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
 	 */
-	#[Override]
 	public function compute(string $administrationId, string $periodEnd, array $billedByContract = []): array {
 		$run = new CutoffRun();
 		$run->administrationId = $administrationId;

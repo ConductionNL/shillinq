@@ -35,7 +35,6 @@ use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
-use Override;
 
 /**
  * Reads the payment requests on one subject across every page.
@@ -98,7 +97,6 @@ final class PaymentRequestFinder implements PaymentRequestFinderInterface {
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Whose rights a read runs under
 	 * is data the caller decides, not a mode that changes what the method does.
 	 */
-	#[Override]
 	public function onSubject(string $register, string $schema, string $objectId, bool $asSystem = false): array {
 		$key = $this->validator->subjectKey(['register' => $register, 'schema' => $schema, 'id' => $objectId]);
 
@@ -124,7 +122,6 @@ final class PaymentRequestFinder implements PaymentRequestFinderInterface {
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Whose rights a read runs under
 	 * is data the caller decides, not a mode that changes what the method does.
 	 */
-	#[Override]
 	public function withReference(string $reference, bool $asSystem = false): array {
 		$wanted = mb_strtolower(trim($reference));
 		if ($wanted === '') {

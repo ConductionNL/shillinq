@@ -31,7 +31,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\Contracts\ImportBatchGuardInterface;
-use Override;
 
 /**
  * Fail-closed guards for the ImportBatch lifecycle (REQ-AIM-002/009).
@@ -95,7 +94,6 @@ class ImportBatchGuard implements ImportBatchGuardInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-3
 	 */
-	#[Override]
 	public function canReverse(array $batch, bool $periodOpen): bool {
 		if (($batch['status'] ?? '') !== 'posted') {
 			return false;

@@ -58,7 +58,6 @@ use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IURLGenerator;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -122,7 +121,6 @@ class DocudeskExtractionClient implements DocudeskExtractionClientInterface {
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */
-	#[Override]
 	public function requestExtraction(string $documentUri, string $docType): array {
 		$url = $this->routeUrl();
 		if ($url === null) {

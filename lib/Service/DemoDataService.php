@@ -43,7 +43,6 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\DemoDataServiceInterface;
 use OCP\App\IAppManager;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -113,7 +112,6 @@ class DemoDataService implements DemoDataServiceInterface {
 	 *
 	 * @spec exclude Demo-data choice list; ADR-111 rule 1 has no per-app behavioural spec.
 	 */
-	#[Override]
 	public function listChoices(): array {
 		$choices = [
 			[
@@ -197,7 +195,6 @@ class DemoDataService implements DemoDataServiceInterface {
 	 *
 	 * @spec exclude Demo-data install action (ADR-111 rule 4); no per-app openspec change yet.
 	 */
-	#[Override]
 	public function install(): array {
 		$data = $this->readDescriptor(path: $this->descriptorPath());
 

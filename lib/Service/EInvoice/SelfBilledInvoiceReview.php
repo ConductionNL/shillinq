@@ -34,7 +34,6 @@ use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceReviewInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use RuntimeException;
 
 /**
@@ -79,7 +78,6 @@ class SelfBilledInvoiceReview implements SelfBilledInvoiceReviewInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) SelfBilledInvoiceIntake::agreementGap() is a pure check of the customer record.
 	 */
-	#[Override]
 	public function requireSelfBillingAgreement(array $invoice): void {
 		if (($invoice['selfBilled'] ?? false) !== true) {
 			return;
@@ -125,7 +123,6 @@ class SelfBilledInvoiceReview implements SelfBilledInvoiceReviewInterface {
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
 	 */
-	#[Override]
 	public function reject(string $administrationId, string $invoiceNumber, string $reason): array {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			throw new RuntimeException('ARInvoice not found');

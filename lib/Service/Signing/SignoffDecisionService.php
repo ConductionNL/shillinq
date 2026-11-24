@@ -37,7 +37,6 @@ use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\IEventDispatcher;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -107,7 +106,6 @@ class SignoffDecisionService implements SignoffDecisionServiceInterface {
 	 *
 	 * @spec openspec/changes/shillinq-delegation-via-events/tasks.md
 	 */
-	#[Override]
 	public function requestSignoff(array $financeObject, string $subjectSchema, string $decisionType = 'sign-off'): array {
 		$currentOutcome = (string)($financeObject['decisionOutcome'] ?? '');
 
@@ -269,7 +267,6 @@ class SignoffDecisionService implements SignoffDecisionServiceInterface {
 	 *
 	 * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
 	 */
-	#[Override]
 	public function onDecisionCallback(
 		array $financeObject,
 		string $outcome,

@@ -56,8 +56,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
-use Override;
-
 /**
  * Remaining EN 16931 / VAT-Directive invoicing checks over the ARInvoice header,
  * invoice lines (BG-25) and VAT breakdown (BG-23) — the corpus "tail".
@@ -138,7 +136,6 @@ final class InvoicingTailChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
-	#[Override]
 	public static function checks(): array {
 		return [
 			'ARInvoice' => [
@@ -413,7 +410,6 @@ final class InvoicingTailChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
-	#[Override]
 	public static function seedSpec(): array {
 		return [
 			'ARInvoice' => [

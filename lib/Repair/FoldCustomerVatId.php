@@ -33,7 +33,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -64,7 +63,6 @@ class FoldCustomerVatId implements IRepairStep {
 	 *
 	 * @return string
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: keep each customer VAT number in one field (vatId)';
 
@@ -79,7 +77,6 @@ class FoldCustomerVatId implements IRepairStep {
 	 *
 	 * @spec openspec/changes/tax-vat-number-check/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$register = $this->settings->getRegisterSlug();

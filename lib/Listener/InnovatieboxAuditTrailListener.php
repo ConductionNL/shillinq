@@ -61,7 +61,6 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\VsoLockingValidatorInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -152,7 +151,6 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		try {
 			if ($event instanceof ObjectCreatedEvent) {

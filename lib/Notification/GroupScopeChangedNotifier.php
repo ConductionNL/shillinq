@@ -28,7 +28,6 @@ namespace OCA\Shillinq\Notification;
 
 use OCA\Shillinq\BackgroundJob\GroupScopeAssessmentJob;
 use OCP\Notification\INotification;
-use Override;
 
 /**
  * Renders the scope-changed notification.
@@ -55,7 +54,6 @@ class GroupScopeChangedNotifier extends AppNotifier {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-3.2
 	 */
-	#[Override]
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$l          = $this->ownedL10n(notification: $notification, languageCode: $languageCode);
 		$parameters = $notification->getSubjectParameters();

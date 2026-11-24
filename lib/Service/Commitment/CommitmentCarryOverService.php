@@ -37,7 +37,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Commitment;
 
 use OCA\Shillinq\Kernel\Contracts\CommitmentCarryOverServiceInterface;
-use Override;
 
 /**
  * The year-end carry-over of open commitments.
@@ -73,7 +72,6 @@ class CommitmentCarryOverService implements CommitmentCarryOverServiceInterface 
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
-	#[Override]
 	public function preview(string $administrationId, int $fromYear): array {
 		$lines = [];
 		$needed = [];
@@ -151,7 +149,6 @@ class CommitmentCarryOverService implements CommitmentCarryOverServiceInterface 
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
-	#[Override]
 	public function execute(string $administrationId, int $fromYear, string $user): array {
 		$preview = $this->preview(administrationId: $administrationId, fromYear: $fromYear);
 		foreach ($this->openLines(administrationId: $administrationId, year: $fromYear) as $line) {

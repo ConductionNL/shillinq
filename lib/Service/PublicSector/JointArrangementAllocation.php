@@ -35,7 +35,6 @@ use DateTimeImmutable;
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\JointArrangementAllocationInterface;
 use OCA\Shillinq\Service\LedgerActuals;
-use Override;
 
 /**
  * Proposes, confirms and invoices a joint arrangement allocation run.
@@ -77,7 +76,6 @@ class JointArrangementAllocation implements JointArrangementAllocationInterface 
 	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
-	#[Override]
 	public function propose(array $run): array {
 		$this->assertComplete(run: $run);
 		$key = $this->records->find(schema: 'GRVerdeelsleutel', id: (string)$run['keyId']);
@@ -120,7 +118,6 @@ class JointArrangementAllocation implements JointArrangementAllocationInterface 
 	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
-	#[Override]
 	public function confirm(array $run): array {
 		$this->assertComplete(run: $run);
 		if (is_array($run['lines'] ?? null) === false || $run['lines'] === []) {
@@ -147,7 +144,6 @@ class JointArrangementAllocation implements JointArrangementAllocationInterface 
 	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
-	#[Override]
 	public function invoice(array $run): array {
 		$lines = array_values((array)($run['lines'] ?? []));
 		$customers = [];

@@ -38,7 +38,6 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\MilestoneTemplateServiceInterface;
-use Override;
 use RuntimeException;
 
 /**
@@ -125,7 +124,6 @@ class MilestoneTemplateService implements MilestoneTemplateServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
 	 */
-	#[Override]
 	public function generatePlan(string $assignmentType, string $termStart, string $termEnd): array {
 		[$start, $end] = self::termBounds(termStart: $termStart, termEnd: $termEnd);
 

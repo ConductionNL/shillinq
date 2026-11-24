@@ -50,7 +50,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\ReportSection;
-use Override;
 
 /**
  * Renders a profit-and-loss account from the statement calculator's figures.
@@ -64,7 +63,6 @@ final class ProfitLossReportGenerator extends AbstractStatementReportGenerator {
 	 *
 	 * @return string
 	 */
-	#[Override]
 	public static function reportType(): string {
 		return 'profit-loss';
 	}//end reportType()
@@ -74,7 +72,6 @@ final class ProfitLossReportGenerator extends AbstractStatementReportGenerator {
 	 *
 	 * @return string
 	 */
-	#[Override]
 	protected function documentTitle(): string {
 		return 'Winst- en verliesrekening';
 	}//end documentTitle()
@@ -89,7 +86,6 @@ final class ProfitLossReportGenerator extends AbstractStatementReportGenerator {
 	 *
 	 * @spec openspec/changes/reporting-financial-statements
 	 */
-	#[Override]
 	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->statement($context);
 		$run = new StatementRun(section: $section, currency: 'EUR');

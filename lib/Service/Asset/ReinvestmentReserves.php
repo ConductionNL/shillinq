@@ -35,7 +35,6 @@ use DomainException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ReinvestmentReservesInterface;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Form, apply and release reinvestment reserves.
@@ -146,7 +145,6 @@ class ReinvestmentReserves implements ReinvestmentReservesInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
-	#[Override]
 	public function apply(array $asset): array {
 		$run = new ReserveApplicationRun(asset: $asset, reserve: $this->openReserveFor(asset: $asset));
 		$this->decideAmount(run: $run);

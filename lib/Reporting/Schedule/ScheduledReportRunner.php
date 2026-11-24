@@ -45,7 +45,6 @@ use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -89,7 +88,6 @@ class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
-	#[Override]
 	public function runDue(DateTimeImmutable $now): array {
 		$counts = ['ran' => 0, 'failed' => 0];
 		$rows   = $this->readAllRows(

@@ -35,8 +35,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Model;
 
-use Override;
-
 /**
  * Immutable value object: one row of klantbeeld history.
  *
@@ -126,7 +124,6 @@ final class KlantbeeldTransaction implements \JsonSerializable {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
 	 */
-	#[Override]
 	public function jsonSerialize(): array {
 		return [
 			'date' => $this->date,

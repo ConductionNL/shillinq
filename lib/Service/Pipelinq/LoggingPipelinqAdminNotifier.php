@@ -36,7 +36,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 
@@ -69,7 +68,6 @@ final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier {
 	 * @return void
 	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
-	#[Override]
 	public function notifyAuthFailure(TimelineEventDto $event): void {
 		$this->logger->error(
 			'Invalid pipelinq API token; check config',

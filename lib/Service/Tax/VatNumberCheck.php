@@ -34,7 +34,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\VatNumberCheckInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\ViesService;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -88,7 +87,6 @@ class VatNumberCheck implements VatNumberCheckInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-number-check/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function checkRecord(string $type, array $record): array {
 		$target = self::RECORDS[$type];
 		$number = trim((string)($record[$target['field']] ?? ''));

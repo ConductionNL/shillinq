@@ -35,7 +35,6 @@ namespace OCA\Shillinq\Service\PublicSector;
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\CrossSubsidyScanInterface;
 use OCA\Shillinq\Service\CrossSubsidyDetector;
-use Override;
 
 /**
  * Runs the cross-subsidy checks and logs one alert per new signal.
@@ -70,7 +69,6 @@ class CrossSubsidyScan implements CrossSubsidyScanInterface {
 	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	#[Override]
 	public function run(string $today): array {
 		$counts = ['activities' => 0, 'alerts' => 0, 'alreadyOpen' => 0];
 		foreach ($this->records->records(schema: 'CommercialActivity', filters: ['state' => 'active']) as $activity) {

@@ -51,7 +51,6 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -82,7 +81,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 *
 	 * @return string The display name.
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: fold Receipt/MileageEntry/PerDiem and UrenRegistratie into Project cost/hours lines';
 	}//end getName()
@@ -97,7 +95,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

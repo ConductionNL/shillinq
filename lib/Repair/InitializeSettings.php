@@ -33,7 +33,6 @@ use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StatementManifestServiceInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -84,7 +83,6 @@ class InitializeSettings implements IRepairStep {
 	 *
 	 * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Initialize Shillinq register and schemas via ConfigurationService';
 	}//end getName()
@@ -135,7 +133,6 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-14
 	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		$output->info('Initializing Shillinq configuration...');
 

@@ -40,7 +40,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use RuntimeException;
 use ZipArchive;
 
@@ -89,7 +88,6 @@ class IcpFilingService implements IcpFilingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	public function createCorrection(
 		string $administrationId,
 		string $correctsPeriod,
@@ -152,7 +150,6 @@ class IcpFilingService implements IcpFilingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	public function exportForInspection(string $administrationId, string $period): array {
 		$supplies = $this->icp->suppliesInPeriod(administrationId: $administrationId, period: $period);
 		$return = $this->findReturn(administrationId: $administrationId, period: $period);
@@ -208,7 +205,6 @@ class IcpFilingService implements IcpFilingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	public function pendingOutages(string $administrationId, string $now = ''): array {
 		$nowTs = time();
 		if ($now !== '') {

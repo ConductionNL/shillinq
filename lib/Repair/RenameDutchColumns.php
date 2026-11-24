@@ -58,7 +58,6 @@ use OCP\DB\IPreparedStatement;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -104,7 +103,6 @@ class RenameDutchColumns implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Move shillinq data from the Dutch columns to the English ones';
 	}//end getName()
@@ -118,7 +116,6 @@ class RenameDutchColumns implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		$tables = $this->shardTables();
 		if ($tables === []) {

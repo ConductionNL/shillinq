@@ -37,7 +37,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Digipoort;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -66,7 +65,6 @@ class LogDigipoortSbrAdapter implements DigipoortSbrAdapterInterface {
 	 *
 	 * @return DigipoortSubmissionResult The dispatch outcome.
 	 */
-	#[Override]
 	public function submit(array $payload): DigipoortSubmissionResult {
 		$sanitised = $payload;
 		// Strip the raw XBRL bytes from the log entry — checksum is enough.
@@ -101,7 +99,6 @@ class LogDigipoortSbrAdapter implements DigipoortSbrAdapterInterface {
 	 *
 	 * @return bool Always true for the log adapter.
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

@@ -35,7 +35,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -67,7 +66,6 @@ class StampGlLineResults implements IRepairStep {
 	 *
 	 * @return string The name.
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: stamp the account class and result inclusion on posted ledger lines';
 
@@ -82,7 +80,6 @@ class StampGlLineResults implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$transactions = 0;

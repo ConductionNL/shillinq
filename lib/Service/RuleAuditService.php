@@ -39,7 +39,6 @@ use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Standards\RuleCatalogue;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
@@ -92,7 +91,6 @@ class RuleAuditService implements RuleAuditServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
-	#[Override]
 	public function audit(array $context = []): array {
 		$run = new RuleAuditRun();
 		$run->context = $context;

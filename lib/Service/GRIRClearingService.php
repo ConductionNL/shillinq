@@ -83,7 +83,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -766,7 +765,6 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
 	 */
-	#[Override]
 	public function reconcileGRIRSaldoForPeriod(string $administrationId, string $periodId): array {
 		$this->assertAccess(administrationId: $administrationId);
 
@@ -820,7 +818,6 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 	 *
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
-	#[Override]
 	public function postGRIRForGoodsReceiptAccept(string $administrationId, array $grn): array {
 		$fanOut = new GRIRReceiptFanOut(
 			administrationId: $administrationId,
@@ -849,7 +846,6 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 	 *
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
-	#[Override]
 	public function postGRIRForServiceReceiptAccept(string $administrationId, array $receipt): array {
 		$fanOut = new GRIRReceiptFanOut(
 			administrationId: $administrationId,
@@ -880,7 +876,6 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 	 *
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
-	#[Override]
 	public function settleGRIRForMatchedInvoice(string $administrationId, string $invoiceId): array {
 		if ($invoiceId === '') {
 			return [

@@ -39,7 +39,6 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OutOfBoundsException;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -90,7 +89,6 @@ class ReconciliationResolutionService implements ReconciliationResolutionService
 	 *
 	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
 	 */
-	#[Override]
 	public function resolveMatch(
 		string $reconId,
 		string $matchId,
@@ -153,7 +151,6 @@ class ReconciliationResolutionService implements ReconciliationResolutionService
 	 *
 	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
 	 */
-	#[Override]
 	public function resolveMatches(array $matchIds, string $resolutionStatus, string $resolutionReason, string $actor): array {
 		$applied = 0;
 		$failed  = [];

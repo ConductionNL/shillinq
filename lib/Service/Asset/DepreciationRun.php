@@ -33,7 +33,6 @@ namespace OCA\Shillinq\Service\Asset;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\DepreciationRunInterface;
-use Override;
 
 /**
  * One pass: post, refresh, release.
@@ -67,7 +66,6 @@ class DepreciationRun implements DepreciationRunInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
-	#[Override]
 	public function run(DateTimeImmutable $today): array {
 		$month = $today->modify('first day of last month')->format('Y-m');
 		$posted = $this->schedules->postMonth(month: $month);

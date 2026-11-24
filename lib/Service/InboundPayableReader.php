@@ -32,7 +32,6 @@ use OCA\Shillinq\Kernel\Contracts\InboundPayableReaderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Reads the payouts one app raised.
@@ -73,7 +72,6 @@ class InboundPayableReader implements InboundPayableReaderInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
 	 */
-	#[Override]
 	public function listFor(PayablesRequestedEvent $event): void {
 		$app = $event->getSourceApp();
 		if ($app === '' || $this->appManager->isInstalled($app) === false) {

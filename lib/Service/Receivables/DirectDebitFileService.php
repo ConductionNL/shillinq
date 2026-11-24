@@ -36,7 +36,6 @@ use OCA\Shillinq\Kernel\Contracts\SepaPain008GeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\SepaPain008ValidatorInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 use RuntimeException;
 
 /**
@@ -81,7 +80,6 @@ class DirectDebitFileService implements DirectDebitFileServiceInterface {
 	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
-	#[Override]
 	public function generate(array $batch): array {
 		$batchId = ObjectIdentifier::resolve(saved: $batch);
 		$administrationId = (string)($batch['administrationId'] ?? '');
@@ -111,7 +109,6 @@ class DirectDebitFileService implements DirectDebitFileServiceInterface {
 	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function storedFile(array $batch): ?RenderedFile {
 		$xml = (string)($batch['pain008Xml'] ?? '');
 		if (trim($xml) === '') {

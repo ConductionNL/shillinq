@@ -44,7 +44,6 @@ use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
 use OCA\Shillinq\Service\Payout\PayoutBankMatcher;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -85,7 +84,6 @@ class BankLineObjectRequestListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		try {
 			if ($event instanceof ObjectCreatedEvent) {

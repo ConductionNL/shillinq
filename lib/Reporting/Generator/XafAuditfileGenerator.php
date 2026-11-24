@@ -55,7 +55,6 @@ namespace OCA\Shillinq\Reporting\Generator;
 use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use XMLWriter;
@@ -96,7 +95,6 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface, XafAuditf
 	 *
 	 * @return string
 	 */
-	#[Override]
 	public static function reportType(): string {
 		return 'xaf';
 	}//end reportType()
@@ -106,7 +104,6 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface, XafAuditf
 	 *
 	 * @return array<int, string>
 	 */
-	#[Override]
 	public static function supportedFormats(): array {
 		return ['xml'];
 	}//end supportedFormats()
@@ -119,7 +116,6 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface, XafAuditf
 	 *
 	 * @return GeneratedFile
 	 */
-	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$data   = $this->loadAuditData(context: $context);
 		$writer = $this->openXmlDocument();

@@ -35,7 +35,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentFinderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Finds the financial documents linked to one object.
@@ -89,7 +88,6 @@ final class FinancialDocumentFinder implements FinancialDocumentFinderInterface 
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
-	#[Override]
 	public function onObject(string $register, string $schema, string $objectId): array {
 		$key = implode('|', [$register, $schema, $objectId]);
 		$filters = [];

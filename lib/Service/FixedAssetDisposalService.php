@@ -61,7 +61,6 @@ use OCA\Shillinq\Kernel\Contracts\FixedAssetDisposalServiceInterface;
 use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -209,7 +208,6 @@ class FixedAssetDisposalService implements FixedAssetDisposalServiceInterface {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
-	#[Override]
 	public function postDisposalJournal(string $administrationId, array $asset): array {
 		$this->assertAccess(administrationId: $administrationId);
 

@@ -46,7 +46,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -91,7 +90,6 @@ class BackfillControlAccountRoles implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: mark the receivables, payables and VAT accounts as control accounts';
 	}//end getName()
@@ -105,7 +103,6 @@ class BackfillControlAccountRoles implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

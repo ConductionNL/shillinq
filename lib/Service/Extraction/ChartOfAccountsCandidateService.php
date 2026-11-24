@@ -34,7 +34,6 @@ namespace OCA\Shillinq\Service\Extraction;
 use OCA\Shillinq\Kernel\Contracts\ChartOfAccountsCandidateServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -95,7 +94,6 @@ class ChartOfAccountsCandidateService implements ChartOfAccountsCandidateService
 	 *
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */
-	#[Override]
 	public function activeCandidates(string $administrationId): array {
 		if ($administrationId === '') {
 			return [];

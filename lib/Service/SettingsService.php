@@ -40,7 +40,6 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUserSession;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -129,7 +128,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
 	 */
-	#[Override]
 	public function isOpenRegisterAvailable(): bool {
 		return $this->registerLocation->isOpenRegisterAvailable();
 	}//end isOpenRegisterAvailable()
@@ -144,7 +142,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
 	 */
-	#[Override]
 	public function getSettings(): array {
 		$settings = [];
 		foreach (self::CONFIG_KEYS as $key) {
@@ -175,7 +172,6 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
 	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
 	 */
-	#[Override]
 	public function updateSettings(array $data): array {
 		// Checked before anything is written, so a refused save stores nothing.
 		if (isset($data[self::PORTAL_REDIRECT_KEY]) === true) {
@@ -227,7 +223,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
 	 */
-	#[Override]
 	public function getRegisterSlug(): string {
 		return $this->registerLocation->getRegisterSlug();
 	}//end getRegisterSlug()
@@ -248,7 +243,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/spec/tasks.md#task-11
 	 */
-	#[Override]
 	public function seedRgsTemplate(string $templateVariant, string $administrationId): array {
 		if ($this->isOpenRegisterAvailable() === false) {
 			return [
@@ -310,7 +304,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
-	#[Override]
 	public function seedLegislationPack(string $country, string $administrationId): array {
 		if ($this->isOpenRegisterAvailable() === false) {
 			return [
@@ -441,7 +434,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
-	#[Override]
 	public function chartTemplateChoices(): array {
 		$choices = [
 			['value' => 'mkb', 'label' => 'MKB'],
@@ -526,7 +518,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
 	 */
-	#[Override]
 	public function seedRj270Stages(): array {
 		return $this->seedGenericFile(seed: 'rj270');
 
@@ -553,7 +544,6 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
 	 */
-	#[Override]
 	public function seedDefaultAdministration(): array {
 		$result = $this->seedGenericFile(seed: 'defaultAdministration');
 
@@ -755,7 +745,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
-	#[Override]
 	public function seedBtwTariffs(): array {
 		return $this->seedGenericFile(seed: 'btw');
 
@@ -771,7 +760,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
 	 */
-	#[Override]
 	public function seedBbvTaakvelden(): array {
 		return $this->seedGenericFile(seed: 'taakvelden');
 
@@ -795,7 +783,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
 	 */
-	#[Override]
 	public function seedFixedAssetsDemo(string $administrationId): array {
 		if ($this->isOpenRegisterAvailable() === false) {
 			return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
@@ -1089,7 +1076,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
-	#[Override]
 	public function seedBbvAccountMappings(string $administrationId, string $administrationType): array {
 		return $this->bbvAdministrationSeeds()->seedBbvAccountMappings(administrationId: $administrationId, administrationType: $administrationType);
 	}//end seedBbvAccountMappings()
@@ -1103,7 +1089,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
 	 */
-	#[Override]
 	public function seedRateCardTemplates(string $administrationId): array {
 		return $this->templateSeeds()->seedRateCardTemplates(administrationId: $administrationId);
 	}//end seedRateCardTemplates()
@@ -1152,7 +1137,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
 	 */
-	#[Override]
 	public function seedSelectielijst(): array {
 		return $this->templateSeeds()->seedSelectielijst();
 	}//end seedSelectielijst()
@@ -1166,7 +1150,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
 	 */
-	#[Override]
 	public function seedAllocationRules(string $administrationId): array {
 		return $this->templateSeeds()->seedAllocationRules(administrationId: $administrationId);
 	}//end seedAllocationRules()
@@ -1181,7 +1164,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
 	 */
-	#[Override]
 	public function loadConfiguration(): array {
 		return $this->runLoadConfiguration(force: false);
 	}//end loadConfiguration()
@@ -1196,7 +1178,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
 	 */
-	#[Override]
 	public function loadConfigurationForced(): array {
 		return $this->runLoadConfiguration(force: true);
 	}//end loadConfigurationForced()
@@ -1582,7 +1563,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-15
 	 */
-	#[Override]
 	public function seedInventoryBarcodes(): array {
 		return $this->inventorySeeds()->seedInventoryBarcodes();
 	}//end seedInventoryBarcodes()
@@ -1594,7 +1574,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
 	 */
-	#[Override]
 	public function seedInventoryLots(): array {
 		return $this->inventorySeeds()->seedInventoryLots();
 	}//end seedInventoryLots()
@@ -1608,7 +1587,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
 	 */
-	#[Override]
 	public function seedInventoryValuationExamples(string $administrationId): array {
 		return $this->inventorySeeds()->seedInventoryValuationExamples(administrationId: $administrationId);
 	}//end seedInventoryValuationExamples()
@@ -1622,7 +1600,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
 	 */
-	#[Override]
 	public function seedInventoryStockExamples(string $administrationId): array {
 		return $this->inventorySeeds()->seedInventoryStockExamples(administrationId: $administrationId);
 	}//end seedInventoryStockExamples()
@@ -1636,7 +1613,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
 	 */
-	#[Override]
 	public function seedInventoryGLConfig(string $administrationId): array {
 		return $this->inventorySeeds()->seedInventoryGLConfig(administrationId: $administrationId);
 	}//end seedInventoryGLConfig()
@@ -1650,7 +1626,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
 	 */
-	#[Override]
 	public function seedBbvProgrammes(string $administrationId): array {
 		return $this->bbvAdministrationSeeds()->seedBbvProgrammes(administrationId: $administrationId);
 	}//end seedBbvProgrammes()
@@ -1664,7 +1639,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
 	 */
-	#[Override]
 	public function seedBudgetBbvMappings(string $administrationId): array {
 		return $this->bbvAdministrationSeeds()->seedBudgetBbvMappings(administrationId: $administrationId);
 	}//end seedBudgetBbvMappings()
@@ -1677,7 +1651,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md (Task 13, REQ-RET-012)
 	 */
-	#[Override]
 	public function seedRetentionPolicies(): array {
 		return $this->templateSeeds()->seedRetentionPolicies();
 	}//end seedRetentionPolicies()
@@ -1691,7 +1664,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.7
 	 */
-	#[Override]
 	public function seedMandateTemplates(string $administrationId): array {
 		return $this->templateSeeds()->seedMandateTemplates(administrationId: $administrationId);
 	}//end seedMandateTemplates()
@@ -1713,7 +1685,6 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-financial-statements/spec.md
 	 */
-	#[Override]
 	public function seedStatementManifests(): array {
 		$files = [
 			'balance-sheet' => 'rj270-balance-sheet.json',
@@ -1848,7 +1819,6 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
 	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-18
 	 */
-	#[Override]
 	public function seedWmoCommercialActivities(string $administrationId): array {
 		if ($this->isOpenRegisterAvailable() === false) {
 			return [

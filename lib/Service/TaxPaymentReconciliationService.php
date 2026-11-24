@@ -33,7 +33,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\TaxPaymentReconciliationServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Reconciles a Vpb payment record against the general ledger (REQ-VPB-008).
@@ -84,7 +83,6 @@ class TaxPaymentReconciliationService implements TaxPaymentReconciliationService
 	 *
 	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
 	 */
-	#[Override]
 	public function reconcile(string $administrationId, string $paymentId): array {
 		$payment = $this->findPayment(administrationId: $administrationId, paymentId: $paymentId);
 		if ($payment === null) {

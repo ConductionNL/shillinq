@@ -32,7 +32,6 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -80,7 +79,6 @@ class SeedHelpArticles implements IRepairStep {
 	 *
 	 * @spec openspec/changes/platform-help-agent/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Seed the user guide as help articles (platform-help-agent)';
 	}//end getName()
@@ -94,7 +92,6 @@ class SeedHelpArticles implements IRepairStep {
 	 *
 	 * @spec openspec/changes/platform-help-agent/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		if ($this->location->isOpenRegisterAvailable() === false) {
 			$output->info('Help articles: OpenRegister is not available; nothing seeded.');

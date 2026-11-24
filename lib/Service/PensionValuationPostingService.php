@@ -41,7 +41,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -99,7 +98,6 @@ class PensionValuationPostingService implements PensionValuationPostingServiceIn
 	 *
 	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
 	 */
-	#[Override]
 	public function postForValuation(array $valuation): array {
 		$valuationId = (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? ''));
 		$plan = (string)($valuation['plan'] ?? '');

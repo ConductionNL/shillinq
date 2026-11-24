@@ -33,7 +33,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\BbvSeedServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -106,7 +105,6 @@ class BbvSeedService implements BbvSeedServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
 	 */
-	#[Override]
 	public function seedAll(): array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

@@ -41,7 +41,6 @@ use OCA\Shillinq\Kernel\Contracts\TaxNotificationServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Notification\IManager;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -87,7 +86,6 @@ class TaxNotificationService implements TaxNotificationServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
 	 */
-	#[Override]
 	public function dispatchDueReminders(?DateTimeInterface $now = null): int {
 		$today = ($now ?? new DateTimeImmutable('today'));
 		$deadlines = $this->fetchPendingDeadlines();

@@ -58,7 +58,6 @@ use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\AccountantDashboardServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -106,7 +105,6 @@ class AccountantDashboardService implements AccountantDashboardServiceInterface 
 	 *
 	 * @spec openspec/specs/accountant-portal/spec.md
 	 */
-	#[Override]
 	public function buildDashboard(): array {
 		$userId = $this->context->currentUserId();
 		if ($userId === null) {

@@ -66,7 +66,6 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\OrderFulfilmentGuardInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -134,7 +133,6 @@ class OrderFulfilmentEvidenceListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		$write = new PreSaveWrite();
 		$entity = $write->incomingEntity(event: $event);

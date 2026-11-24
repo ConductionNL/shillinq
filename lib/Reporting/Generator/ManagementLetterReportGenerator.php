@@ -52,7 +52,6 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Reporting\ReportSection;
-use Override;
 use Throwable;
 
 /**
@@ -68,7 +67,6 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	 *
 	 * @return string
 	 */
-	#[Override]
 	public static function reportType(): string {
 		return 'management-letter';
 	}//end reportType()
@@ -78,7 +76,6 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	 *
 	 * @return string
 	 */
-	#[Override]
 	protected function documentTitle(): string {
 		return 'Management letter';
 	}//end documentTitle()
@@ -91,7 +88,6 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	 *
 	 * @return void
 	 */
-	#[Override]
 	protected function build(ReportSection $section, array $context): void {
 		$audit = $this->runAudit($context);
 

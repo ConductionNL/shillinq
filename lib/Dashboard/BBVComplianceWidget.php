@@ -48,7 +48,6 @@ use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
 use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -117,7 +116,6 @@ final class BBVComplianceWidget implements BBVComplianceWidgetInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
-	#[Override]
 	public function buildEnvelope(?int $fiscalYear = null, ?string $administrationId = null): array {
 		$programmes = $this->loadProgrammes(fiscalYear: $fiscalYear, administrationId: $administrationId);
 		$mappings = $this->loadMappings(fiscalYear: $fiscalYear, administrationId: $administrationId);

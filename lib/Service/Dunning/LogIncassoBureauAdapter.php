@@ -28,7 +28,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
-use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 
@@ -59,7 +58,6 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
-	#[Override]
 	public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
 		$this->logger->info(
 			'Shillinq incasso-bureau transfer deferred (no outbound connector bound)',

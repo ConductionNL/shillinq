@@ -25,7 +25,6 @@ namespace OCA\Shillinq\Listener;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -70,7 +69,6 @@ class OfferHelperAgentTemplate implements IEventListener {
 	 *
 	 * @spec openspec/changes/platform-help-agent/tasks.md#task-3.1
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if (method_exists($event, 'offer') === false) {
 			return;

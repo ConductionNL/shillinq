@@ -38,7 +38,6 @@ use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\IEventDispatcher;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -113,7 +112,6 @@ class SigningDelegationService implements SigningDelegationServiceInterface {
 	 *
 	 * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
 	 */
-	#[Override]
 	public function requestSignature(
 		array $financeObject,
 		string $subjectSchema = 'document',
@@ -332,7 +330,6 @@ class SigningDelegationService implements SigningDelegationServiceInterface {
 	 *
 	 * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
 	 */
-	#[Override]
 	public function onSigningCallback(
 		array $financeObject,
 		string $outcome,

@@ -36,7 +36,6 @@ use OCA\Shillinq\Service\Cbcr\GroupScopeService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\Notification\IManager as INotificationManager;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -87,7 +86,6 @@ class GroupScopeAssessmentJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-3.2
 	 */
-	#[Override]
 	protected function run($argument): void {
 		$now  = (new DateTimeImmutable('@' . $this->time->getTime()))->setTimezone(new DateTimeZone('UTC'));
 		$year = (int)$now->format('Y');

@@ -47,7 +47,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -110,7 +109,6 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 	 *
 	 * @return array{deltas: list<array<string,mixed>>, serverTimestamp: string}
 	 */
-	#[Override]
 	public function downloadDeltas(?string $since, string $administrationId, int $limit = 500): array {
 		$serverTimestamp = $this->nowIso();
 
@@ -210,7 +208,6 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 	 *
 	 * @return array{results: list<array<string,mixed>>, serverTimestamp: string}
 	 */
-	#[Override]
 	public function uploadOperations(
 		array $operations,
 		string $userId,

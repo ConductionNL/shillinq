@@ -30,7 +30,6 @@ namespace OCA\Shillinq\BackgroundJob;
 use OCA\Shillinq\Service\InvoiceBatchSendService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -65,7 +64,6 @@ class SendInvoicesJob extends QueuedJob {
 	 *
 	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.1
 	 */
-	#[Override]
 	protected function run($argument): void {
 		$batchId = '';
 		if (is_array($argument) === true) {

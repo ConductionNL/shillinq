@@ -30,7 +30,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
-use Override;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -57,7 +56,6 @@ class RulesAuditCommand extends Command {
 	 *
 	 * @return void
 	 */
-	#[Override]
 	protected function configure(): void {
 		$this->setName('shillinq:rules:audit')
 			->setDescription('Audit bookkeeping data against the machine-checkable rule corpus.')
@@ -75,7 +73,6 @@ class RulesAuditCommand extends Command {
 	 *
 	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
-	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$report = $this->auditService->audit(['jurisdiction' => (string)$input->getOption('jurisdiction')]);
 

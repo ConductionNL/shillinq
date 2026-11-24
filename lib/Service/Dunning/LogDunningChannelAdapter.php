@@ -34,7 +34,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
-use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 
@@ -64,7 +63,6 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
 	 */
-	#[Override]
 	public function send(string $channel, array $payload): DunningChannelSendResult {
 		$sanitised = $payload;
 		// Redact rendered body in log lines — keep the log focused on metadata.

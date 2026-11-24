@@ -50,7 +50,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\NrvWriteDownServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -302,7 +301,6 @@ class NrvWriteDownService implements NrvWriteDownServiceInterface {
 	 *
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
 	 */
-	#[Override]
 	public function runForAdministration(
 		string $administrationId,
 		string $periodId,

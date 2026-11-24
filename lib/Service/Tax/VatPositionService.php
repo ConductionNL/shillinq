@@ -30,7 +30,6 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\VatPositionServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
-use Override;
 
 /**
  * Reads the VAT position of a period from the posted lines.
@@ -65,7 +64,6 @@ class VatPositionService implements VatPositionServiceInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function positionFor(string $administrationId, string $period): array {
 		[$startDate, $endDate] = $this->periodBounds(period: $period);
 

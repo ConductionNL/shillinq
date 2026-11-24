@@ -37,7 +37,6 @@ use OCA\Shillinq\Service\Booking\AvailabilityWindows;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
 use OCP\ICacheFactory;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -118,7 +117,6 @@ class SlotService implements SlotServiceInterface {
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md#req-wsw-002
 	 */
-	#[Override]
 	public function getAvailableSlots(string $serviceId, string $resourceId, string $date): array {
 		$cacheKey = $this->buildCacheKey(serviceId: $serviceId, resourceId: $resourceId, date: $date);
 		$cache    = $this->getCache();

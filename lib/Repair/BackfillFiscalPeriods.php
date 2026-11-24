@@ -58,7 +58,6 @@ use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Repair\Support\SeedsOpenFiscalPeriods;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -95,7 +94,6 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 *
 	 * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: backfill FiscalPeriod records from historical GLLine.periodId values';
 	}//end getName()
@@ -110,7 +108,6 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 *
 	 * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		// Under a system identity: an upgrade has no session, and OpenRegister
 		// refuses `create` for 'Anonymous' — measured against this register, not

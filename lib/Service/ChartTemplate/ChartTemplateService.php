@@ -33,7 +33,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ChartTemplateServiceInterface;
 use OCA\Shillinq\Service\RegisterBinding;
 use OCP\AppFramework\Utility\ITimeFactory;
-use Override;
 
 /**
  * Copies a chart of accounts and its dimensions between administrations,
@@ -116,7 +115,6 @@ class ChartTemplateService implements ChartTemplateServiceInterface {
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
 	 */
-	#[Override]
 	public function saveAsTemplate(string $administrationId, string $name): array {
 		$name = trim($name);
 		if ($administrationId === '' || $name === '' || mb_strlen($name) > 200) {
@@ -146,7 +144,6 @@ class ChartTemplateService implements ChartTemplateServiceInterface {
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
-	#[Override]
 	public function activeTemplates(): array {
 		$templates = [];
 		foreach ($this->rowsOf(schema: self::TEMPLATE_SCHEMA, filters: ['lifecycleState' => 'active']) as $row) {
@@ -175,7 +172,6 @@ class ChartTemplateService implements ChartTemplateServiceInterface {
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
-	#[Override]
 	public function seedFromTemplate(string $templateId, string $administrationId): array {
 		if ($administrationId === '') {
 			throw new InvalidArgumentException('An administration to seed is required.');
@@ -196,7 +192,6 @@ class ChartTemplateService implements ChartTemplateServiceInterface {
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-followers-receive-template-changes-req-lma-005
 	 */
-	#[Override]
 	public function syncFollowers(string $templateId): array {
 		$template = $this->template(templateId: $templateId);
 		$version = (int)($template['version'] ?? 1);

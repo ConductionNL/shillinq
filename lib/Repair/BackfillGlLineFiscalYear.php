@@ -64,7 +64,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -97,7 +96,6 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: backfill GLLine.fiscalYearId from the parent GLTransaction';
 	}//end getName()
@@ -111,7 +109,6 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		// Under a system identity: an upgrade has no session, and OpenRegister
 		// would otherwise scope the read to nobody.

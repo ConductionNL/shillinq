@@ -49,7 +49,6 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -98,7 +97,6 @@ final class MapExpenseCategories implements IRepairStep {
 	 *
 	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: seed expense categories and map receipt categories to them';
 	}//end getName()
@@ -112,7 +110,6 @@ final class MapExpenseCategories implements IRepairStep {
 	 *
 	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$output->info('Shillinq: OpenRegister is not available; expense categories were not mapped.');

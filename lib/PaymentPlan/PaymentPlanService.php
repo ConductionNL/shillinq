@@ -47,7 +47,6 @@ use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
@@ -106,7 +105,6 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function draft(array $input, string $actor): array {
 		$administrationId = (string)($input['administrationId'] ?? '');
 		$customerId = (string)($input['customerId'] ?? '');
@@ -277,7 +275,6 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function activate(string $planId, string $actor): array {
 		$plan = $this->plan(planId: $planId);
 		if ((string)($plan['lifecycleState'] ?? '') !== 'draft') {
@@ -338,7 +335,6 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function receive(string $planId, float $amount, string $paidDate, string $source): array {
 		$plan = $this->plan(planId: $planId);
 		if ((string)($plan['lifecycleState'] ?? '') !== 'active') {
@@ -369,7 +365,6 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function cancel(string $planId, string $reason): array {
 		$plan = $this->plan(planId: $planId);
 		$this->end(plan: $plan, action: 'cancel', reason: $reason);
@@ -384,7 +379,6 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-3.1
 	 */
-	#[Override]
 	public function monitor(): array {
 		$counts = ['due' => 0, 'missed' => 0, 'broken' => 0, 'completed' => 0];
 		$rows = $this->scoped(schema: 'PaymentPlan')->findAll(['filters' => ['lifecycleState' => 'active'], 'limit' => 10000]);
@@ -416,7 +410,6 @@ class PaymentPlanService implements PaymentPlanServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function plan(string $planId): array {
 		$plan = ObjectIdentifier::findOne(scoped: $this->scoped(schema: 'PaymentPlan'), id: $planId);
 		if ($plan === null) {

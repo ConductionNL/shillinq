@@ -71,7 +71,6 @@ use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -111,7 +110,6 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 *
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: backfill GLLine.administrationId from the parent GLTransaction';
 	}//end getName()
@@ -125,7 +123,6 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 *
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		// FAIL-CLOSED FIRST. Every early return below — and every crash — now
 		// leaves the gate shut, so SpendAnalytics refuses the GL-backed views

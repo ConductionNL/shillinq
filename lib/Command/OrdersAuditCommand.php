@@ -34,7 +34,6 @@ namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
-use Override;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -90,7 +89,6 @@ class OrdersAuditCommand extends Command {
 	 *
 	 * @return void
 	 */
-	#[Override]
 	protected function configure(): void {
 		$this->setName('shillinq:orders:audit')
 			->setDescription('Count-equality audit for the Subsidie/PurchaseOrder/DBAOpdracht -> Order fold (REQ-ORD-003).');
@@ -111,7 +109,6 @@ class OrdersAuditCommand extends Command {
 	 *     Symfony Command::execute()'s signature; this command takes no
 	 *     console input.
 	 */
-	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

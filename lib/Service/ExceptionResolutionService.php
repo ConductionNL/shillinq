@@ -70,7 +70,6 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -285,7 +284,6 @@ class ExceptionResolutionService implements ExceptionResolutionServiceInterface 
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
-	#[Override]
 	public function acceptWithMotivation(
 		string $administrationId,
 		string $matchId,
@@ -337,7 +335,6 @@ class ExceptionResolutionService implements ExceptionResolutionServiceInterface 
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
-	#[Override]
 	public function fileDispute(
 		string $administrationId,
 		string $matchId,
@@ -463,7 +460,6 @@ class ExceptionResolutionService implements ExceptionResolutionServiceInterface 
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
-	#[Override]
 	public function rejectAndBlockPayment(
 		string $administrationId,
 		string $matchId,

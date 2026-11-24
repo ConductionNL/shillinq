@@ -59,7 +59,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\CogsPosterServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -109,7 +108,6 @@ class CogsPosterService implements CogsPosterServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
 	 */
-	#[Override]
 	public function postCogs(array $move, array $valuation, int $cogsCents): array {
 		if ($cogsCents <= 0) {
 			return [

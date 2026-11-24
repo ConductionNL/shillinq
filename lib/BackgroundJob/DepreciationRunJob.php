@@ -31,7 +31,6 @@ use OCA\Shillinq\Kernel\Contracts\DepreciationRunInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -77,7 +76,6 @@ class DepreciationRunJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is TimedJob's.
 	 */
-	#[Override]
 	protected function run($argument): void {
 		try {
 			$counts = $this->pass->run(today: new DateTimeImmutable('@' . $this->time->getTime()));

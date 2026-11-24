@@ -51,7 +51,6 @@ use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -185,7 +184,6 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 	 *
 	 * @throws RuntimeException When [from, to] is invalid.
 	 */
-	#[Override]
 	public function generateExport(
 		string $from,
 		string $to,
@@ -294,7 +292,6 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
 	 */
-	#[Override]
 	public function recordExportRequest(string $scope, string $format, string $uid): void {
 		$registerMapper = $this->container->get(RegisterMapper::class);
 		$auditTrailMapper = $this->container->get(AuditTrailMapper::class);
@@ -318,7 +315,6 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 	 *
 	 * @return string The CSV blob.
 	 */
-	#[Override]
 	public function renderCsv(array $envelope): string {
 		$output = fopen(filename: 'php://temp', mode: 'r+');
 		if ($output === false) {

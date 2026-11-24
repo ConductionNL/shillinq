@@ -56,7 +56,6 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -126,7 +125,6 @@ class ExtractionCompletedListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		// Match against EVERY namespace filinq has shipped this event under,
 		// not one. A hardcoded `instanceof \OCA\DocuDesk\Event\…` was false for

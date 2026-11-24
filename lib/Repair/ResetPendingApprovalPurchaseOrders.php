@@ -45,7 +45,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -90,7 +89,6 @@ class ResetPendingApprovalPurchaseOrders implements IRepairStep {
 	 *
 	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: move purchase orders waiting on the old approval chain back to draft';
 	}//end getName()
@@ -104,7 +102,6 @@ class ResetPendingApprovalPurchaseOrders implements IRepairStep {
 	 *
 	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

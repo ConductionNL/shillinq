@@ -37,7 +37,6 @@ use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\Security\ICredentialsManager;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -123,7 +122,6 @@ class PipelinqConfig implements PipelinqConfigInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[Override]
 	public function getPipelinqEndpoint(): string {
 		return $this->appConfig->getValueString(
 			app: AppIdentity::APP_ID,
@@ -147,7 +145,6 @@ class PipelinqConfig implements PipelinqConfigInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[Override]
 	public function setPipelinqEndpoint(string $url): void {
 		$this->appConfig->setValueString(
 			app: AppIdentity::APP_ID,
@@ -185,7 +182,6 @@ class PipelinqConfig implements PipelinqConfigInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[Override]
 	public function setPipelinqToken(string $token): void {
 		$this->token()->write(value: $token);
 
@@ -211,7 +207,6 @@ class PipelinqConfig implements PipelinqConfigInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[Override]
 	public function hasPipelinqToken(): bool {
 		return $this->getPipelinqToken() !== '';
 	}//end hasPipelinqToken()
@@ -232,7 +227,6 @@ class PipelinqConfig implements PipelinqConfigInterface {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[Override]
 	public function testConnection(): array {
 		$endpoint = $this->getPipelinqEndpoint();
 		if ($endpoint === '') {

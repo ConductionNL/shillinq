@@ -29,7 +29,6 @@ namespace OCA\Shillinq\Listener;
 use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -76,7 +75,6 @@ class BookingEventListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		$eventType = $this->resolveEventType(event: $event);
 		if ($eventType === null) {

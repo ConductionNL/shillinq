@@ -35,7 +35,6 @@ use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -71,7 +70,6 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false) {
 			return;

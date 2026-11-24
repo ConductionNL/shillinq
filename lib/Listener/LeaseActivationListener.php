@@ -52,7 +52,6 @@ use OCA\Shillinq\Kernel\Contracts\LeasePaymentScheduleServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -96,7 +95,6 @@ class LeaseActivationListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectCreatedEvent) === false
 			&& ($event instanceof ObjectUpdatedEvent) === false

@@ -44,7 +44,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Rolls the cost of a contract's linked objects up onto the contract.
@@ -79,7 +78,6 @@ final class ContractCostRollupService implements ContractCostRollupServiceInterf
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
 	 */
-	#[Override]
 	public function rollUp(array $contract): array {
 		$total = 0.0;
 		$unreadable = 0;

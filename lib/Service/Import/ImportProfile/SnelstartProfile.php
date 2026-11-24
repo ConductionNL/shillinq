@@ -30,7 +30,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Import\ImportProfile;
 
 use OCA\Shillinq\Service\Import\ImportProfileInterface;
-use Override;
 
 /**
  * SnelStart import profile (REQ-AIM-003).
@@ -45,7 +44,6 @@ class SnelstartProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function sourceSystem(): string {
 		return 'snelstart';
 	}//end sourceSystem()
@@ -62,7 +60,6 @@ class SnelstartProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function normalizeLedgerAccounts(array $parsed): array {
 		$accounts = ($parsed['ledgerAccounts'] ?? []);
 		foreach ($accounts as &$account) {
@@ -87,7 +84,6 @@ class SnelstartProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function mapCsvColumns(string $artifact): array {
 		if ($artifact === 'open-items') {
 			return [
@@ -125,7 +121,6 @@ class SnelstartProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function applyDialectQuirks(array $parsed): array {
 		$parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts(parsed: $parsed);
 		return $parsed;

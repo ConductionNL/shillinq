@@ -42,7 +42,6 @@ use InvalidArgumentException;
 use LogicException;
 use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -106,7 +105,6 @@ class ConflictDetectionService implements ConflictDetectionServiceInterface {
 	 *
 	 * @spec openspec/specs/bookings/spec.md#req-004
 	 */
-	#[Override]
 	public function checkConflicts(string $resourceId, string $proposedStart, string $proposedEnd, ?string $excludeBookingId = null): array {
 		$resourceId = trim($resourceId);
 		if ($resourceId === '') {
@@ -333,7 +331,6 @@ class ConflictDetectionService implements ConflictDetectionServiceInterface {
 	 *
 	 * @return bool True when a row was locked, false when the resource is unknown.
 	 */
-	#[Override]
 	public function lockResource(string $resourceId): bool {
 		if ($this->guard->inTransaction() === false) {
 			throw new LogicException('lockResource must be called inside a transaction');

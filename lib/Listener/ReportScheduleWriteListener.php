@@ -35,7 +35,6 @@ use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IUserSession;
-use Override;
 
 /**
  * Keeps a report schedule's delivery in its owner's hands.
@@ -90,7 +89,6 @@ class ReportScheduleWriteListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.8
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		$caller = $this->userSession->getUser()?->getUID();
 		if ($caller === null) {

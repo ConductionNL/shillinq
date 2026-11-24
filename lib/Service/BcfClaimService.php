@@ -40,7 +40,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Computes a quarter-scoped, per-account BCF compensable-VAT claim from the GL.
@@ -84,7 +83,6 @@ class BcfClaimService implements BcfClaimServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
 	 */
-	#[Override]
 	public function computeClaim(string $administrationId, string $claimQuarter): array {
 		$amountsByAccount = $this->compensableAmountsByAccount(
 			administrationId: $administrationId,

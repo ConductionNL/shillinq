@@ -26,7 +26,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
-use Override;
 
 /**
  * Reads the active FieldRequirement records of an administration and checks objects and requirements against them.
@@ -70,7 +69,6 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
-	#[Override]
 	public function missing(array $definition, array $object): array {
 		$administrationId = trim((string)($object['administrationId'] ?? ''));
 		if ($administrationId === '') {
@@ -104,7 +102,6 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
-	#[Override]
 	public function refusal(array $requirement): array {
 		$schema = trim((string)($requirement['schema'] ?? ''));
 		$field = trim((string)($requirement['field'] ?? ''));
@@ -139,7 +136,6 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
-	#[Override]
 	public function formFields(array $requirement): array {
 		$definition = $this->schemas->definition(schema: trim((string)($requirement['schema'] ?? '')));
 		if ($definition === null) {
@@ -220,7 +216,6 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
-	#[Override]
 	public function find(string $id): ?array {
 		$found = ObjectIdentifier::findScoped(
 			scoped: $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema(self::SCHEMA),
@@ -244,7 +239,6 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @spec openspec/specs/app-administration/spec.md
 	 */
-	#[Override]
 	public function listed(array $administrationIds): array {
 		$listed = [];
 		foreach (array_unique($administrationIds) as $administrationId) {

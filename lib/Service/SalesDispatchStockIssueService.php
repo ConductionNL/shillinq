@@ -67,7 +67,6 @@ use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -120,7 +119,6 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
 	 * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
 	 */
-	#[Override]
 	public function issueForDelivery(array $delivery): array {
 		$run = new DeliveryIssueRun(delivery: $delivery);
 		$lines = ($delivery['lines'] ?? []);
@@ -389,7 +387,6 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 *
 	 * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
 	 */
-	#[Override]
 	public function reverseForDelivery(array $delivery): array {
 		$deliveryId = (string)($delivery['id'] ?? ($delivery['@self']['id'] ?? ''));
 		$administrationId = trim((string)($delivery['administrationId'] ?? ''));

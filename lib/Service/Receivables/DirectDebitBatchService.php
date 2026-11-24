@@ -33,7 +33,6 @@ use OCA\Shillinq\Kernel\Contracts\DirectDebitBatchServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
-use Override;
 
 /**
  * Selects the open direct debit invoices into draft collections and batches.
@@ -117,7 +116,6 @@ class DirectDebitBatchService implements DirectDebitBatchServiceInterface {
 	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function propose(string $administrationId, string $collectionDate): array {
 		$mandates = $this->byId(rows: $this->read(schema: 'SepaMandate', administrationId: $administrationId));
 		$customers = $this->read(schema: 'CustomerMaster', administrationId: $administrationId);

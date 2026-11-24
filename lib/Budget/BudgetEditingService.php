@@ -46,7 +46,6 @@ use OCA\Shillinq\Kernel\Contracts\BudgetEditingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
-use Override;
 
 /**
  * Budget entry over AnnualBudget, BudgetLine and LedgerGroup.
@@ -96,7 +95,6 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function lines(string $administrationId, string $annualBudgetId): array {
 		$budget = $this->budget(administrationId: $administrationId, annualBudgetId: $annualBudgetId);
 		$linesByGroup = $this->linesByGroup(annualBudgetId: $annualBudgetId);
@@ -181,7 +179,6 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function saveCell(string $administrationId, string $annualBudgetId, string $ledgerGroupId, int $month, int $amount, int $expected): array {
 		if ($month < 1 || $month > 12) {
 			throw new BudgetEditRefusedException(template: 'Choose a month from 1 to 12.');
@@ -217,7 +214,6 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
 	 */
-	#[Override]
 	public function spread(string $administrationId, string $annualBudgetId, string $ledgerGroupId, int $yearly, array $expected): array {
 		$line = $this->writableLine(administrationId: $administrationId, annualBudgetId: $annualBudgetId, ledgerGroupId: $ledgerGroupId);
 		if ($this->months(line: $line) !== array_map('intval', array_values($expected))) {
@@ -260,7 +256,6 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function multiYear(string $administrationId, int $fromYear): array {
 		$budgets = $this->budgets(administrationId: $administrationId);
 		$all = array_map(fn (array $budget): array => $this->budgetChoice(budget: $budget), $budgets);
@@ -398,7 +393,6 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function startNextYear(string $administrationId, string $annualBudgetId, float $percentage): array {
 		if ($percentage < -100.0 || $percentage > 1000.0) {
 			throw new BudgetEditRefusedException(template: 'Enter a percentage from -100 to 1000.');

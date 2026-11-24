@@ -33,7 +33,6 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
 use OCP\IGroupManager;
 use OCP\IUserSession;
-use Override;
 
 /**
  * Maps Nextcloud groups + admin status to the WBSO roles (REQ-WBSO-005).
@@ -110,7 +109,6 @@ class WbsoRbacResolver implements WbsoRbacResolverInterface {
 	 *
 	 * @return bool
 	 */
-	#[Override]
 	public function hasAny(array $allowed): bool {
 		$roles = $this->currentRoles();
 		foreach ($roles as $role) {

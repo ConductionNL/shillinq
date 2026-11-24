@@ -45,7 +45,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\StandardsPolicyServiceInterface;
-use Override;
 use Throwable;
 
 /**
@@ -147,7 +146,6 @@ class StandardsPolicyService implements StandardsPolicyServiceInterface {
 	 *
 	 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
 	 */
-	#[Override]
 	public function policyFor(string $administrationId): array {
 		$policy = $this->findPolicy(administrationId: $administrationId);
 		if ($policy === null) {
@@ -176,7 +174,6 @@ class StandardsPolicyService implements StandardsPolicyServiceInterface {
 	 *
 	 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
 	 */
-	#[Override]
 	public function savePolicy(string $administrationId, array $frameworks): array {
 		$clean = $this->normaliseFrameworks(frameworks: $frameworks);
 		$existing = $this->findPolicy(administrationId: $administrationId);

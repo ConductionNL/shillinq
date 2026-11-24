@@ -44,7 +44,6 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -320,7 +319,6 @@ class AdministrationBackupSchedulerJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	#[Override]
 	protected function run(mixed $argument): void {
 		$this->logger->info('Shillinq: AdministrationBackupSchedulerJob started');
 

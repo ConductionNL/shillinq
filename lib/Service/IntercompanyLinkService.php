@@ -50,7 +50,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\IntercompanyLinkServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -106,7 +105,6 @@ class IntercompanyLinkService implements IntercompanyLinkServiceInterface {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
-	#[Override]
 	public function linkAndReconcile(array $entry): array {
 		$intercompanyNumber = trim((string)($entry['intercompanyNumber'] ?? ''));
 		if ($intercompanyNumber === '') {
@@ -181,7 +179,6 @@ class IntercompanyLinkService implements IntercompanyLinkServiceInterface {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
-	#[Override]
 	public function findCounterSide(array $entry): ?array {
 		$intercompanyNumber = trim((string)($entry['intercompanyNumber'] ?? ''));
 		if ($intercompanyNumber === '') {

@@ -75,7 +75,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\BbvProgrammeBudgetServiceInterface;
-use Override;
 
 /**
  * Assembles the provincies-BBV dashboard envelopes (REQ-BBC-001..003, REQ-BBL-001).
@@ -169,7 +168,6 @@ class BbvProgrammeBudgetService implements BbvProgrammeBudgetServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 	 */
-	#[Override]
 	public function programmeBudgetVsActuals(
 		?int $fiscalYear = null,
 		?array $programmes = null,
@@ -341,7 +339,6 @@ class BbvProgrammeBudgetService implements BbvProgrammeBudgetServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 	 */
-	#[Override]
 	public function glLineFacets(): array {
 		$administrationIds = $this->adminContext->accessibleAdministrationIds();
 		if ($administrationIds === []) {

@@ -35,7 +35,6 @@ namespace OCA\Shillinq\Service\PublicSector;
 
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\ReserveBalancesInterface;
-use Override;
 
 /**
  * Balances, the multi-year overview and the booking of reserve mutations.
@@ -70,7 +69,6 @@ class ReserveBalances implements ReserveBalancesInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
-	#[Override]
 	public function overview(string $administrationId, int $fromYear): array {
 		$mutations = [];
 		foreach ($this->records->records(schema: 'ReserveMutation', filters: ['administrationId' => $administrationId]) as $mutation) {
@@ -196,7 +194,6 @@ class ReserveBalances implements ReserveBalancesInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
-	#[Override]
 	public function realise(array $mutation): array {
 		if ((string)($mutation['journalEntryId'] ?? '') !== '') {
 			return $mutation;

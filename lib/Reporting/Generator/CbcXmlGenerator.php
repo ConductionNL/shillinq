@@ -27,7 +27,6 @@ use OCA\Shillinq\Service\Cbcr\CbcXmlDocument;
 use OCA\Shillinq\Service\Cbcr\OecdFileGeneratorSupport;
 use OCA\Shillinq\Service\Sbr\SbrRecords;
 use OCP\IL10N;
-use Override;
 use RuntimeException;
 
 /**
@@ -76,7 +75,6 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 */
-	#[Override]
 	public static function reportType(): string {
 		return 'cbc-report';
 	}//end reportType()
@@ -88,7 +86,6 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 */
-	#[Override]
 	public static function supportedFormats(): array {
 		return ['xml'];
 	}//end supportedFormats()
@@ -106,7 +103,6 @@ final class CbcXmlGenerator implements ReportGeneratorInterface {
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
 	 */
-	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		if ($format !== 'xml') {
 			throw new RuntimeException($this->l10n->t('The country-by-country file is XML only.'));

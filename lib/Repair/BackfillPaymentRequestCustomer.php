@@ -45,7 +45,6 @@ use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -87,7 +86,6 @@ class BackfillPaymentRequestCustomer implements IRepairStep {
 	 *
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: give payment requests without an invoice their customer, so the portal lists them';
 	}//end getName()
@@ -101,7 +99,6 @@ class BackfillPaymentRequestCustomer implements IRepairStep {
 	 *
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

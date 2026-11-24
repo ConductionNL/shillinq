@@ -37,7 +37,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\NexusCalculationServiceInterface;
-use Override;
 
 /**
  * Side-effect-free modified-nexus arithmetic helper (REQ-IBA-002).
@@ -69,7 +68,6 @@ class NexusCalculationService implements NexusCalculationServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
 	 */
-	#[Override]
 	public function calculateNexusBreak(
 		float $eigenRdCost,
 		float $uitbesteedDerden,

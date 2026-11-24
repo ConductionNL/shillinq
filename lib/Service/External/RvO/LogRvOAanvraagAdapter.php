@@ -35,7 +35,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\RvO;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -62,7 +61,6 @@ class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface {
 	 *
 	 * @return RvORequestResult The dispatch outcome.
 	 */
-	#[Override]
 	public function submit(array $payload): RvORequestResult {
 		$sanitised = $payload;
 		// Strip raw attachment bytes from the log entry — checksum is enough.
@@ -100,7 +98,6 @@ class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface {
 	 *
 	 * @inheritDoc
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

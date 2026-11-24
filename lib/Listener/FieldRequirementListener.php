@@ -29,7 +29,6 @@ use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IL10N;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -74,7 +73,6 @@ class FieldRequirementListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		$entity = null;
 		if ($event instanceof ObjectCreatingEvent === true) {

@@ -39,7 +39,6 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -89,7 +88,6 @@ class ViesOutageRetryJob extends TimedJob {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	protected function run($argument): void {
 		$administrationId = self::administrationOf(argument: $argument);
 		if ($administrationId === '') {

@@ -45,7 +45,6 @@ use OCA\Shillinq\Kernel\Contracts\SisaAppendixInterface;
 use OCA\Shillinq\Service\LedgerActuals;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * The SiSa appendix of one year.
@@ -104,7 +103,6 @@ class SisaAppendix implements SisaAppendixInterface {
 	 *
 	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-indicators-are-computed-per-specific-grant-req-sisa-012
 	 */
-	#[Override]
 	public function forYear(string $administrationId, string $fiscalYear): array {
 		if ($administrationId === '' || preg_match('/^\d{4}$/', $fiscalYear) !== 1) {
 			throw new InvalidArgumentException('A SiSa appendix needs an administration and a year such as 2026.');
@@ -139,7 +137,6 @@ class SisaAppendix implements SisaAppendixInterface {
 	 *
 	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
 	 */
-	#[Override]
 	public function toCsv(array $rows): string {
 		$lines = [self::csvLine(cells: array_values(self::CSV_COLUMNS))];
 		foreach ($rows as $row) {

@@ -62,7 +62,6 @@ use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentLanguage;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentRenderer;
 use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use OCA\Shillinq\Service\Payment\PayLinkService;
-use Override;
 use RuntimeException;
 
 /**
@@ -116,7 +115,6 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 *
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function documentsAvailable(): bool {
 		return $this->documentData !== null && $this->renderer !== null && $this->renderer->available() === true;
 	}//end documentsAvailable()
@@ -142,7 +140,6 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 *
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function generatePdf(array $invoice, array $lines, array $context = []): array {
 		if ($this->documentData === null || $this->renderer === null) {
 			throw new DocudeskUnavailableException(message: self::DOCUDESK_NEEDED);
@@ -179,7 +176,6 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 *
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function generateHtml(
 		array $invoice,
 		array $lines,

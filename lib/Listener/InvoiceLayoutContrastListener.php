@@ -30,7 +30,6 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\ColourContrast;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -74,7 +73,6 @@ class InvoiceLayoutContrastListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		$colour = $this->incomingPrimaryColour(event: $event);
 		if ($colour === null || $this->contrast->passesOnWhite(hex: $colour) === true) {

@@ -52,7 +52,6 @@ use OCP\DB\Exception;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -98,7 +97,6 @@ class RenameCollidingSchemaSlugs implements IRepairStep {
 	 *
 	 * @spec exclude No canonical spec covers the cross-app slug namespacing pass.
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Namespace the shillinq schema slugs that collided with another app';
 	}//end getName()
@@ -112,7 +110,6 @@ class RenameCollidingSchemaSlugs implements IRepairStep {
 	 *
 	 * @spec exclude No canonical spec covers the cross-app slug namespacing pass.
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		foreach (self::RENAMES as $from => $rename) {
 			$this->renameOne(output: $output, from: $from, to: $rename['to'], with: $rename['with']);

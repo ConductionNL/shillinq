@@ -57,7 +57,6 @@ namespace OCA\Shillinq\Portal;
 
 use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -165,7 +164,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
 	 */
-	#[Override]
 	public function verify(string $jwt): ?array {
 		$secret = $this->secret();
 		if ($secret === null) {

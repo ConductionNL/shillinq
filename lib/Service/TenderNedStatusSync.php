@@ -54,7 +54,6 @@ use OCA\Shillinq\Kernel\Contracts\TenderNedStatusSyncInterface;
 use OCA\Shillinq\Support\FleetAppId;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -114,7 +113,6 @@ class TenderNedStatusSync implements TenderNedStatusSyncInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
 	 */
-	#[Override]
 	public function syncCompletion(array $oplevering): bool {
 		try {
 			$commitmentId = trim((string)($oplevering['commitmentId'] ?? ''));

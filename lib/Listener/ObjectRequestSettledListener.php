@@ -37,7 +37,6 @@ use OCA\Shillinq\Kernel\Contracts\ObjectRequestReceiptMailerInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -76,7 +75,6 @@ class ObjectRequestSettledListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectUpdatedEvent) === false) {
 			return;

@@ -42,7 +42,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\BankRuleSuggestionServiceInterface;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -89,7 +88,6 @@ class BankRuleSuggestionService implements BankRuleSuggestionServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
 	 */
-	#[Override]
 	public function suggestRulesFromHistory(array $history, int $k = self::DEFAULT_THRESHOLD, ?object $aiRanker = null): array {
 		$proposals = $this->proposalsAtThreshold(groups: $this->groupHistory(history: $history), threshold: max(1, $k));
 

@@ -36,7 +36,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\IntercompanyJournalServiceInterface;
-use Override;
 
 /**
  * Computes intercompany mirroring + reconciliation and validates the status flow.
@@ -143,7 +142,6 @@ class IntercompanyJournalService implements IntercompanyJournalServiceInterface 
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
 	 */
-	#[Override]
 	public function isBalanced(float|int|string $sourceAmount, float|int|string $destinationAmount): bool {
 		return ($this->toCents(amount: $sourceAmount) === $this->toCents(amount: $destinationAmount));
 	}//end isBalanced()

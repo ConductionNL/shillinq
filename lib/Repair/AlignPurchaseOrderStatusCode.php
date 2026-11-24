@@ -41,7 +41,6 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -81,7 +80,6 @@ class AlignPurchaseOrderStatusCode implements IRepairStep {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: give purchase orders sent under the old state field the declared state sent';
 	}//end getName()
@@ -95,7 +93,6 @@ class AlignPurchaseOrderStatusCode implements IRepairStep {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

@@ -36,7 +36,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -315,7 +314,6 @@ class WidgetService implements WidgetServiceInterface {
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
-	#[Override]
 	public function createAppointment(string $administrationId, array $payload): array {
 		$request  = $this->appointmentRequest(payload: $payload) + ['administrationId' => $administrationId];
 		$rejected = $this->rejectedRequest(request: $request);
@@ -600,7 +598,6 @@ class WidgetService implements WidgetServiceInterface {
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
-	#[Override]
 	public function isPubliclyBookable(string $serviceId, string $administrationId): bool {
 		$objectService = $this->getObjectService();
 		if ($objectService === null) {

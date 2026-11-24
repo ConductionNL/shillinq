@@ -42,7 +42,6 @@ use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -96,7 +95,6 @@ class WebshopOrderInvoicer implements WebshopOrderInvoicerInterface {
 	 *
 	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function handle(array $order, string $orderId, string $today): string {
 		if (self::isWaiting(order: $order) === false || $orderId === '') {
 			return 'skipped';
@@ -168,7 +166,6 @@ class WebshopOrderInvoicer implements WebshopOrderInvoicerInterface {
 	 *
 	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
 	 */
-	#[Override]
 	public function settle(array $order, string $orderId): string {
 		$invoiceId = (string)($order['arInvoiceId'] ?? '');
 		if ($orderId === '' || self::awaitsSettlement(order: $order) === false) {
@@ -258,7 +255,6 @@ class WebshopOrderInvoicer implements WebshopOrderInvoicerInterface {
 	 *
 	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.5
 	 */
-	#[Override]
 	public function credit(array $order, string $orderId, string $today): string {
 		$invoiceId = (string)($order['arInvoiceId'] ?? '');
 		$status    = (string)($order['payment']['status'] ?? '');
@@ -588,7 +584,6 @@ class WebshopOrderInvoicer implements WebshopOrderInvoicerInterface {
 	 *
 	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.1
 	 */
-	#[Override]
 	public static function isWaiting(array $order): bool {
 		return (($order['intakeState'] ?? 'received') === 'received')
 			&& trim((string)($order['arInvoiceId'] ?? '')) === ''

@@ -28,7 +28,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
-use Override;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -87,7 +86,6 @@ class HoursSubjectAuditCommand extends Command {
 	 *
 	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-001-hours-on-a-domain-object-live-in-humaniq
 	 */
-	#[Override]
 	protected function configure(): void {
 		$this->setName('shillinq:hours:subject-audit')
 			->setDescription(
@@ -105,7 +103,6 @@ class HoursSubjectAuditCommand extends Command {
 	 *
 	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-001-hours-on-a-domain-object-live-in-humaniq
 	 */
-	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

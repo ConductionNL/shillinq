@@ -49,7 +49,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StockLedgerServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -89,7 +88,6 @@ class StockLedgerService implements StockLedgerServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
 	 */
-	#[Override]
 	public function quantityForLocation(
 		string $administrationId,
 		string $locationId,
@@ -120,7 +118,6 @@ class StockLedgerService implements StockLedgerServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
 	 */
-	#[Override]
 	public function reservedForLocation(string $administrationId, string $locationId, string $sku): float {
 		$key = new StockLocationKey(administrationId: $administrationId, locationId: $locationId);
 		$key->sku = $sku;
@@ -153,7 +150,6 @@ class StockLedgerService implements StockLedgerServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
 	 */
-	#[Override]
 	public function traceLocation(string $administrationId, string $locationId, string $sku): array {
 		$key = new StockLocationKey(administrationId: $administrationId, locationId: $locationId);
 		$key->sku = $sku;

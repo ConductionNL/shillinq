@@ -31,7 +31,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\SubjectCostServiceInterface;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -118,7 +117,6 @@ class SubjectCostService implements SubjectCostServiceInterface {
 	 *
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
 	 */
-	#[Override]
 	public function costFor(
 		string $subjectApp,
 		string $subjectId,

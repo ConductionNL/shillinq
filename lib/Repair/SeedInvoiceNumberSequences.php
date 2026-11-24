@@ -41,7 +41,6 @@ use OCA\Shillinq\Service\Sales\InvoiceNumberSequenceService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -85,7 +84,6 @@ class SeedInvoiceNumberSequences implements IRepairStep {
 	 *
 	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: start the invoice number series after the numbers already in use';
 	}//end getName()
@@ -99,7 +97,6 @@ class SeedInvoiceNumberSequences implements IRepairStep {
 	 *
 	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		$this->withSystemIdentity(objectService: $this->objectService, work: fn () => $this->seedAll(output: $output));
 	}//end run()

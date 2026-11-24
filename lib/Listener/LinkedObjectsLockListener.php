@@ -37,7 +37,6 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Util\LinkedObjectReferences;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 
 /**
  * Keeps a financial document's linked objects once it is issued.
@@ -101,7 +100,6 @@ class LinkedObjectsLockListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {
 			return;

@@ -41,7 +41,6 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationArchivalServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -181,7 +180,6 @@ class AdministrationArchivalService implements AdministrationArchivalServiceInte
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
 	 */
-	#[Override]
 	public function assertWritableById(string $administrationId): void {
 		if ($administrationId === '') {
 			throw new RuntimeException('administratie ontbreekt');

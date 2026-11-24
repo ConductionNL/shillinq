@@ -77,7 +77,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ProductCatalogServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -207,7 +206,6 @@ class ProductCatalogService implements ProductCatalogServiceInterface {
 	 *
 	 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 	 */
-	#[Override]
 	public function listProducts(): ?array {
 		$administrationIds = $this->administrationContext->accessibleAdministrationIds();
 		if ($administrationIds === []) {
@@ -287,7 +285,6 @@ class ProductCatalogService implements ProductCatalogServiceInterface {
 	 *
 	 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
 	 */
-	#[Override]
 	public function listAttributes(): ?array {
 		if ($this->administrationContext->accessibleAdministrationIds() === []) {
 			return null;

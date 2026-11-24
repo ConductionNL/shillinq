@@ -96,7 +96,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetChartSeriesServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -169,7 +168,6 @@ class BudgetChartSeriesService implements BudgetChartSeriesServiceInterface {
 	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
 	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
 	 */
-	#[Override]
 	public function resolveSeries(string $administrationId, string $from, string $to, ?string $annualBudgetId = null): array {
 		$months = $this->buildMonthRange(from: $from, to: $to);
 

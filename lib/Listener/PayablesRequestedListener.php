@@ -26,7 +26,6 @@ use OCA\Shillinq\Event\PayablesRequestedEvent;
 use OCA\Shillinq\Kernel\Contracts\InboundPayableReaderInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 
 /**
  * Answers PayablesRequestedEvent.
@@ -58,7 +57,6 @@ class PayablesRequestedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof PayablesRequestedEvent === false) {
 			return;

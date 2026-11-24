@@ -31,7 +31,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\OssPaymentReconciliationInterface;
-use Override;
 
 /**
  * Matches OSS payments to returns and surfaces per-country distribution discrepancies.
@@ -91,7 +90,6 @@ class OssPaymentReconciliation implements OssPaymentReconciliationInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
-	#[Override]
 	public function canMarkPaid(array $ossPayment, array $ossReturn): bool {
 		if (empty($ossPayment['bankTransactionId']) === true) {
 			return false;
@@ -115,7 +113,6 @@ class OssPaymentReconciliation implements OssPaymentReconciliationInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
-	#[Override]
 	public function reconcileDistribution(array $ossReturn, array $confirmation): array {
 		$declared = $this->declaredCentsByCountry(ossReturn: $ossReturn);
 

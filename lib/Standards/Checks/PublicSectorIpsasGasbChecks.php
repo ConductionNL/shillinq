@@ -57,8 +57,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
-use Override;
-
 /**
  * Executable IPSAS / GASB public-sector checks against PublicSectorStatement.
  *
@@ -260,7 +258,6 @@ final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
-	#[Override]
 	public static function checks(): array {
 		return [
 			'PublicSectorStatement' => [
@@ -778,7 +775,6 @@ final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
-	#[Override]
 	public static function seedSpec(): array {
 		return [];
 	}//end seedSpec()
@@ -791,7 +787,6 @@ final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
-	#[Override]
 	public static function seedObjects(): array {
 		return [
 			'PublicSectorStatement' => [self::SEED_IPSAS_ENTITY, self::SEED_GASB_GOVERNMENT],

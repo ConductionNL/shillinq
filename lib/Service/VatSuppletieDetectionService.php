@@ -68,7 +68,6 @@ use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -151,7 +150,6 @@ class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterf
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
-	#[Override]
 	public function detect(string $vatReturnId): ?array {
 		$vatReturn = $this->vatReturnService->getReturn(returnId: $vatReturnId);
 		$this->assertFiledReturn(vatReturnId: $vatReturnId, vatReturn: $vatReturn);
@@ -278,7 +276,6 @@ class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterf
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
-	#[Override]
 	public function prepare(string $vatCorrectionId): array {
 		$correction = $this->fetchDetectedCorrection(vatCorrectionId: $vatCorrectionId);
 		$deltas     = $this->snapshotDeltas(correction: $correction);
@@ -962,7 +959,6 @@ class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterf
 	 *
 	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function findCorrection(string $vatCorrectionId): ?array {
 		$correction = ObjectIdentifier::findScoped(
 			scoped: $this->objectService->setRegister($this->register())->setSchema('VatCorrection'),

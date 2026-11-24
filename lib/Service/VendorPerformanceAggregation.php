@@ -89,7 +89,6 @@ use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -1081,7 +1080,6 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
 	 */
-	#[Override]
 	public function aggregateAdministrationForPeriod(string $administrationId, string $period): array {
 		if ($administrationId === '' || $period === '') {
 			return [];

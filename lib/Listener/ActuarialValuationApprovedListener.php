@@ -32,7 +32,6 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PensionValuationPostingServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -66,7 +65,6 @@ class ActuarialValuationApprovedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false || $event->getTo() !== 'approved') {
 			return;

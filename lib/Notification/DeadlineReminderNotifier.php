@@ -34,7 +34,6 @@ namespace OCA\Shillinq\Notification;
 
 use OCP\Notification\INotification;
 use OCP\Notification\UnknownNotificationException;
-use Override;
 
 /**
  * Prepares `deadline_reminder` notifications for display (REQ-CDC-007).
@@ -61,7 +60,6 @@ class DeadlineReminderNotifier extends AppNotifier {
 	 *
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
-	#[Override]
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$l = $this->ownedL10n(notification: $notification, languageCode: $languageCode);
 		$parameters = $notification->getSubjectParameters();

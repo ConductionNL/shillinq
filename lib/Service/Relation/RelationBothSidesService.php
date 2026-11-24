@@ -38,7 +38,6 @@ namespace OCA\Shillinq\Service\Relation;
 
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\RelationBothSidesServiceInterface;
-use Override;
 
 /**
  * Totals both sides of a linked relation.
@@ -110,7 +109,6 @@ class RelationBothSidesService implements RelationBothSidesServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
-	#[Override]
 	public function forCustomer(string $administrationId, string $customerId, string $from, string $to, array $sides): array {
 		$customer = $this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId);
 		if ($customer === null) {
@@ -135,7 +133,6 @@ class RelationBothSidesService implements RelationBothSidesServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
-	#[Override]
 	public function customerOfPayee(string $administrationId, string $payeeId): ?string {
 		if ($payeeId === '') {
 			return null;
@@ -159,7 +156,6 @@ class RelationBothSidesService implements RelationBothSidesServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
-	#[Override]
 	public function forAdministration(string $administrationId, string $from, string $to, array $sides): array {
 		$query           = new RelationReportQuery(administrationId: $administrationId, sides: $sides);
 		$query->from     = $from;
@@ -211,7 +207,6 @@ class RelationBothSidesService implements RelationBothSidesServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
-	#[Override]
 	public function toCsv(array $relations): string {
 		$columns = ['name', 'sales', 'purchases', 'openReceivable', 'openPayable', 'net'];
 		$lines   = [implode(',', $columns)];

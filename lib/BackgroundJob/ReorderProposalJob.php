@@ -34,7 +34,6 @@ use OCA\Shillinq\Service\ReorderProposalService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -81,7 +80,6 @@ class ReorderProposalJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
 	 */
-	#[Override]
 	protected function run($argument): void {
 		try {
 			$now    = DateTimeImmutable::createFromInterface($this->time->now());

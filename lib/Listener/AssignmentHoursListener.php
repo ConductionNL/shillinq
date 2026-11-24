@@ -39,7 +39,6 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -74,7 +73,6 @@ class AssignmentHoursListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		try {
 			if ($event instanceof ObjectCreatedEvent) {

@@ -42,7 +42,6 @@ use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\FinancialDashboardServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -150,7 +149,6 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
-	#[Override]
 	public function series(?string $from, ?string $to, ?DateTimeImmutable $now = null): array {
 		$now = ($now ?? new DateTimeImmutable());
 		$months = $this->resolveMonths(from: (string)$from, to: (string)$to, now: $now);
@@ -207,7 +205,6 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
-	#[Override]
 	public function summary(?string $from, ?string $to, ?DateTimeImmutable $now = null): array {
 		$now = ($now ?? new DateTimeImmutable());
 		$months = $this->resolveMonths(from: (string)$from, to: (string)$to, now: $now);
@@ -318,7 +315,6 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
-	#[Override]
 	public function widgetFigures(string $administrationId, DateTimeImmutable $now): array {
 		$data = $this->fetchScoped(
 			schemas: self::WIDGET_SCHEMAS,
@@ -476,7 +472,6 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
 	 */
-	#[Override]
 	public function cashPosition(string $administrationId): array {
 		$data = $this->fetchScoped(
 			schemas: self::CASH_SCHEMAS,

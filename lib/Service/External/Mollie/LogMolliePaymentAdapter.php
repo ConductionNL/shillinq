@@ -31,7 +31,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Mollie;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -67,7 +66,6 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
-	#[Override]
 	public function createPayment(array $payload): MolliePaymentResult {
 		$sanitised = $payload;
 		unset($sanitised['redirectUrl'], $sanitised['webhookUrl']);
@@ -104,7 +102,6 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface {
 	 *
 	 * @spec openspec/specs/bookings-deposits/spec.md
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

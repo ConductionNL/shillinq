@@ -31,7 +31,6 @@ namespace OCA\Shillinq\Service\Asset;
 
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\FixedAssetDepreciationInterface;
-use Override;
 
 /**
  * Revision, extra depreciation and the derived asset fields.
@@ -61,7 +60,6 @@ class FixedAssetDepreciation implements FixedAssetDepreciationInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
-	#[Override]
 	public function revise(array $asset): array {
 		$date = substr(trim((string)($asset['revisionDate'] ?? '')), 0, 10);
 		$reason = trim((string)($asset['revisionReason'] ?? ''));
@@ -102,7 +100,6 @@ class FixedAssetDepreciation implements FixedAssetDepreciationInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
-	#[Override]
 	public function extra(array $asset): array {
 		$date = substr(trim((string)($asset['extraDepreciationDate'] ?? '')), 0, 10);
 		if ($date === '') {

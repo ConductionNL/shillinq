@@ -38,7 +38,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\CsrdEsrsXbrl;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -69,7 +68,6 @@ class LogCsrdEsrsXbrlAdapter implements CsrdEsrsXbrlAdapterInterface {
 	 *
 	 * @return CsrdEsrsXbrlResult The dispatch outcome.
 	 */
-	#[Override]
 	public function mapTaxonomy(string $taxonomyVersion, array $dataPointIds): CsrdEsrsXbrlResult {
 		$documentId = 'esrs_map_log_' . bin2hex(random_bytes(7));
 		$this->logger->info(
@@ -113,7 +111,6 @@ class LogCsrdEsrsXbrlAdapter implements CsrdEsrsXbrlAdapterInterface {
 	 * @return CsrdEsrsXbrlResult The validation outcome (always
 	 *                            VALIDATION_BLOCKED in dormant mode).
 	 */
-	#[Override]
 	public function validateMandatoryDataPoints(string $reportingPeriod): CsrdEsrsXbrlResult {
 		$documentId = 'esrs_val_log_' . bin2hex(random_bytes(7));
 		$this->logger->info(
@@ -155,7 +152,6 @@ class LogCsrdEsrsXbrlAdapter implements CsrdEsrsXbrlAdapterInterface {
 	 *
 	 * @return CsrdEsrsXbrlResult The build outcome.
 	 */
-	#[Override]
 	public function buildInstance(string $reportingPeriod, array $payload): CsrdEsrsXbrlResult {
 		$documentId = 'esrs_ixbrl_log_' . bin2hex(random_bytes(7));
 		$this->logger->info(
@@ -191,7 +187,6 @@ class LogCsrdEsrsXbrlAdapter implements CsrdEsrsXbrlAdapterInterface {
 	 *
 	 * @inheritDoc
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

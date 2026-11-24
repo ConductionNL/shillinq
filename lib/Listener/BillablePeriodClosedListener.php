@@ -29,7 +29,6 @@ use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use OCA\Shillinq\Kernel\Contracts\BillablePeriodInvoiceServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 
 /**
  * Answers BillablePeriodClosedEvent.
@@ -61,7 +60,6 @@ class BillablePeriodClosedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof BillablePeriodClosedEvent === false) {
 			return;

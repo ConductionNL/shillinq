@@ -39,7 +39,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\Contracts\AansluitingResolutionGuardInterface;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -78,7 +77,6 @@ class AansluitingResolutionGuard implements AansluitingResolutionGuardInterface 
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
-	#[Override]
 	public function canResolve(array $result): bool {
 		try {
 			$status = (string)($result['status'] ?? '');

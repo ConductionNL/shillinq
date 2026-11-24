@@ -50,7 +50,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\LeaseReassessmentServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -122,7 +121,6 @@ class LeaseReassessmentService implements LeaseReassessmentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
-	#[Override]
 	public function recordIndexationEvent(
 		string $leaseContractId,
 		string $administrationId,
@@ -158,7 +156,6 @@ class LeaseReassessmentService implements LeaseReassessmentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
-	#[Override]
 	public function recordExtensionOptionReassessment(
 		string $leaseContractId,
 		string $administrationId,
@@ -196,7 +193,6 @@ class LeaseReassessmentService implements LeaseReassessmentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
-	#[Override]
 	public function recordModification(
 		string $leaseContractId,
 		string $administrationId,
@@ -232,7 +228,6 @@ class LeaseReassessmentService implements LeaseReassessmentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
-	#[Override]
 	public function recordImpairment(
 		string $leaseContractId,
 		string $administrationId,

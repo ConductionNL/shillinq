@@ -29,7 +29,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
-use Override;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -105,7 +104,6 @@ class ReferencesAuditCommand extends Command {
 	 *
 	 * @return void
 	 */
-	#[Override]
 	protected function configure(): void {
 		$this->setName('shillinq:references:audit')
 			->setDescription(
@@ -137,7 +135,6 @@ class ReferencesAuditCommand extends Command {
 	 *   exist would satisfy gate-16 while covering nothing, which the gate
 	 *   cannot tell apart.
 	 */
-	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$write = (bool)$input->getOption('write');
 

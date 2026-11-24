@@ -42,7 +42,6 @@ use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Computes the ICP ledger, periodicity decision, and reconciliation for a period.
@@ -88,7 +87,6 @@ class IcpService implements IcpServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	public function ledger(string $administrationId, string $period): array {
 		$supplies = $this->suppliesForPeriod(administrationId: $administrationId, period: $period);
 		$lines = $this->calculator->aggregateLines(supplies: $supplies);
@@ -116,7 +114,6 @@ class IcpService implements IcpServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	public function periodicityCheck(string $administrationId, string $quarter): array {
 		$supplies = $this->suppliesForPeriod(administrationId: $administrationId, period: $quarter);
 		$decision = $this->calculator->periodicityBreach(quarterSupplies: $supplies);
@@ -144,7 +141,6 @@ class IcpService implements IcpServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
-	#[Override]
 	public function reconcile(string $administrationId, string $period): array {
 		$ledger = $this->ledger(administrationId: $administrationId, period: $period);
 		$rubriek3b = $this->rubriek3bForPeriod(administrationId: $administrationId, period: $period);

@@ -47,7 +47,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -137,7 +136,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 *
 	 * @inheritDoc
 	 */
-	#[Override]
 	public function lookupParticipant(string $administrationId, string $partyId): ?string {
 		if ($administrationId === '' || $partyId === '') {
 			return null;
@@ -167,7 +165,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 *
 	 * @inheritDoc
 	 */
-	#[Override]
 	public function submit(string $participantId, string $documentType, string $payloadFileUri): string {
 		$this->logger->info(
 			'shillinq.peppol.submit',
@@ -197,7 +194,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 *
 	 * @inheritDoc
 	 */
-	#[Override]
 	public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string {
 		// Length only — never log the UBL body (may contain supplier PII).
 		$this->logger->info(

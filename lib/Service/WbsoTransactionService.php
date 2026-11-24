@@ -41,7 +41,6 @@ use OCA\Shillinq\Kernel\Contracts\WbsoTransactionServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Override;
 use RuntimeException;
 
 /**
@@ -87,7 +86,6 @@ class WbsoTransactionService implements WbsoTransactionServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	#[Override]
 	public function listTransactions(string $administrationId, array $filters = []): array {
 		$transactions = $this->objectService
 			->setRegister($this->register())
@@ -171,7 +169,6 @@ class WbsoTransactionService implements WbsoTransactionServiceInterface {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	#[Override]
 	public function getTransaction(string $administrationId, string $transactionId): ?array {
 		$transactions = $this->listTransactions(administrationId: $administrationId);
 		foreach ($transactions as $row) {
@@ -195,7 +192,6 @@ class WbsoTransactionService implements WbsoTransactionServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When validation fails.
 	 */
-	#[Override]
 	public function createTransaction(string $administrationId, array $payload): array {
 		$payload['administrationId'] = $administrationId;
 		$payload['status'] = 'draft';
@@ -227,7 +223,6 @@ class WbsoTransactionService implements WbsoTransactionServiceInterface {
 	 *
 	 * @throws InvalidArgumentException|RuntimeException
 	 */
-	#[Override]
 	public function postTransaction(string $administrationId, string $transactionId): array {
 		$existing = $this->getTransaction(administrationId: $administrationId, transactionId: $transactionId);
 		if ($existing === null) {
@@ -267,7 +262,6 @@ class WbsoTransactionService implements WbsoTransactionServiceInterface {
 	 *
 	 * @throws InvalidArgumentException|RuntimeException
 	 */
-	#[Override]
 	public function reverseTransaction(string $administrationId, string $transactionId, string $reason): array {
 		$existing = $this->getTransaction(administrationId: $administrationId, transactionId: $transactionId);
 		if ($existing === null) {

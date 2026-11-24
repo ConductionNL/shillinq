@@ -54,7 +54,6 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -121,7 +120,6 @@ class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	 *
 	 * @return LoggerInterface
 	 */
-	#[Override]
 	protected function webhookLogger(): LoggerInterface {
 		return $this->logger;
 	}//end webhookLogger()
@@ -139,7 +137,6 @@ class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	 *
 	 * @return string The reconciliation result.
 	 */
-	#[Override]
 	protected function reconcileEvent(string $gateway, array $event): string {
 		$outcome = $this->reconciliation->reconcile(gateway: $gateway, event: $event);
 		return $outcome['result'];

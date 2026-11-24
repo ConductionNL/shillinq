@@ -38,7 +38,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\CcmRuleEngine;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -69,7 +68,6 @@ class LogCcmRuleEngineAdapter implements CcmRuleEngineAdapterInterface {
 	 *
 	 * @return CcmRuleEngineResult The dispatch outcome.
 	 */
-	#[Override]
 	public function compileRule(string $ruleCode, array $ruleLogic): CcmRuleEngineResult {
 		$astHandle = 'ccm_ast_log_' . bin2hex(random_bytes(7));
 		$this->logger->info(
@@ -112,7 +110,6 @@ class LogCcmRuleEngineAdapter implements CcmRuleEngineAdapterInterface {
 	 *
 	 * @return CcmRuleEngineResult Stubbed evaluation record.
 	 */
-	#[Override]
 	public function evaluate(string $astHandle, array $transactionContext): CcmRuleEngineResult {
 		$evaluationId = 'ccm_eval_log_' . bin2hex(random_bytes(7));
 
@@ -153,7 +150,6 @@ class LogCcmRuleEngineAdapter implements CcmRuleEngineAdapterInterface {
 	 *
 	 * @return bool Always true for the dormant log adapter.
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

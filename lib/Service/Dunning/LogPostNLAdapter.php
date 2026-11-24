@@ -27,7 +27,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
-use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 
@@ -56,7 +55,6 @@ class LogPostNLAdapter implements PostNLAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
 	 */
-	#[Override]
 	public function sendRegisteredLetter(array $payload): DunningChannelSendResult {
 		$barcode = '3S' . str_pad((string)random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
 

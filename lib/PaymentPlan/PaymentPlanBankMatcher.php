@@ -39,7 +39,6 @@ use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentPlanBankMatcherInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
@@ -85,7 +84,6 @@ class PaymentPlanBankMatcher implements PaymentPlanBankMatcherInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
 	 */
-	#[Override]
 	public function candidates(array $line): array {
 		$amount = round((float)($line['amount'] ?? 0), 2);
 		if ($amount <= 0) {
@@ -124,7 +122,6 @@ class PaymentPlanBankMatcher implements PaymentPlanBankMatcherInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
 	 */
-	#[Override]
 	public function book(array $line): ?array {
 		$high = array_values(array_filter($this->candidates(line: $line), static fn (array $candidate): bool => $candidate['confidence'] === 'high'));
 		if (count($high) !== 1) {
@@ -155,7 +152,6 @@ class PaymentPlanBankMatcher implements PaymentPlanBankMatcherInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
 	 */
-	#[Override]
 	public function payFromLine(string $planId, array $line, string $actor, string $reason): array {
 		$plan = $this->plans->plan(planId: $planId);
 		if ((string)($plan['lifecycleState'] ?? '') !== 'active') {

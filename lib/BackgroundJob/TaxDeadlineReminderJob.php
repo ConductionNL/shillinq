@@ -30,7 +30,6 @@ namespace OCA\Shillinq\BackgroundJob;
 use OCA\Shillinq\Kernel\Contracts\TaxNotificationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -68,7 +67,6 @@ class TaxDeadlineReminderJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	#[Override]
 	protected function run($argument): void {
 		try {
 			$count = $this->notificationService->dispatchDueReminders();

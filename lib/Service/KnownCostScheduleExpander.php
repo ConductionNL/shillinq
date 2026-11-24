@@ -88,7 +88,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use Override;
 
 /**
  * Pure `CashflowRecurring` -> 12-monthly-cents schedule arithmetic.
@@ -160,7 +159,6 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	 *     unknown-named-parameter error against the very type the caller holds.
 	 *     Psalm reports the divergence as ParamNameMismatch.
 	 */
-	#[Override]
 	public function expand(array $recurring, int $fiscalYear, ?array $contract = null): array {
 		if ($this->needsOperatorInput(recurring: $recurring) === true) {
 			return ['kind' => 'needsOperatorInput'];

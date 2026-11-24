@@ -24,7 +24,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\XbrlTaxonomyLookupInterface;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Finds the XBRLTaxonomy record effective for a reporting period that carries an entry point.
@@ -68,7 +67,6 @@ class XbrlTaxonomyLookup implements XbrlTaxonomyLookupInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-2.1
 	 */
-	#[Override]
 	public function effectiveFor(string $entryPoint, string $start, string $end): ?array {
 		if ($entryPoint === '' || $start === '' || $end === '') {
 			return null;

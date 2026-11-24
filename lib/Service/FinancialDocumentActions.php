@@ -35,7 +35,6 @@ use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
-use Override;
 
 /**
  * Issues an invoice on an object and requests payment of an invoice.
@@ -95,7 +94,6 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	#[Override]
 	public function issueInvoice(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
 		return $this->issueOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
 	}//end issueInvoice()
@@ -180,7 +178,6 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	#[Override]
 	public function requestPayment(string $invoiceId, string $appId = ''): array {
 		$this->guard->assertActorMay(action: PaymentActionAuthorizer::ACTION_REQUEST, appId: $appId);
 

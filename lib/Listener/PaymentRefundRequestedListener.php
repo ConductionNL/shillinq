@@ -29,7 +29,6 @@ use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestCommandServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 
 /**
  * Answers PaymentRefundRequestedEvent.
@@ -61,7 +60,6 @@ class PaymentRefundRequestedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof PaymentRefundRequestedEvent === false) {
 			return;

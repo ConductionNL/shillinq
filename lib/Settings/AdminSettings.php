@@ -31,7 +31,6 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\Settings\IDelegatedSettings;
-use Override;
 
 /**
  * Provides the admin settings form for the Shillinq application.
@@ -54,7 +53,6 @@ class AdminSettings implements IDelegatedSettings {
 	 *
 	 * @return TemplateResponse
 	 */
-	#[Override]
 	public function getForm(): TemplateResponse {
 		$version = $this->appManager->getAppVersion(appId: AppIdentity::APP_ID);
 
@@ -72,7 +70,6 @@ class AdminSettings implements IDelegatedSettings {
 	 *
 	 * @return string
 	 */
-	#[Override]
 	public function getSection(): string {
 		return 'shillinq';
 	}//end getSection()
@@ -82,7 +79,6 @@ class AdminSettings implements IDelegatedSettings {
 	 *
 	 * @return int
 	 */
-	#[Override]
 	public function getPriority(): int {
 		return 10;
 	}//end getPriority()
@@ -92,7 +88,6 @@ class AdminSettings implements IDelegatedSettings {
 	 *
 	 * @return string|null The section name, or null to use the section default.
 	 */
-	#[Override]
 	public function getName(): ?string {
 		return null;
 	}//end getName()
@@ -102,7 +97,6 @@ class AdminSettings implements IDelegatedSettings {
 	 *
 	 * @return array<string,string[]> Map of appId to allowed config keys.
 	 */
-	#[Override]
 	public function getAuthorizedAppConfig(): array {
 		return [];
 	}//end getAuthorizedAppConfig()

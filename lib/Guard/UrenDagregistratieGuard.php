@@ -46,7 +46,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\Kernel\Contracts\UrenDagregistratieGuardInterface;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -127,7 +126,6 @@ class UrenDagregistratieGuard implements UrenDagregistratieGuardInterface {
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
 	 */
-	#[Override]
 	public function pasReistijdCapToe(string $category, float $hours): array {
 		if ($category !== 'TRAVEL_TIME_BUSINESS' || $hours <= self::REISTIJD_CAP_PER_DAY) {
 			return ['countedHours' => $hours, 'capNote' => null];

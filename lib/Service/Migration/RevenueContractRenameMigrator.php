@@ -62,7 +62,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Migration;
 
 use OCA\Shillinq\Kernel\Contracts\RevenueContractRenameMigratorInterface;
-use Override;
 use RuntimeException;
 
 /**
@@ -107,7 +106,6 @@ final class RevenueContractRenameMigrator implements RevenueContractRenameMigrat
 	 *
 	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
 	 */
-	#[Override]
 	public function revenueContractRename(): array {
 		return ['from' => self::REVENUE_CONTRACT_FROM, 'to' => self::REVENUE_CONTRACT_TO];
 	}//end revenueContractRename()
@@ -194,7 +192,6 @@ final class RevenueContractRenameMigrator implements RevenueContractRenameMigrat
 	 *
 	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
 	 */
-	#[Override]
 	public function migrateBatch(array $sourceObjects, string $from, string $to): array {
 		$migrated = [];
 		foreach ($sourceObjects as $object) {

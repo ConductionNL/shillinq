@@ -75,7 +75,6 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use ZipArchive;
@@ -335,7 +334,6 @@ class AccountantsdossierExportService implements AccountantsdossierExportService
 	 *
 	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
 	 */
-	#[Override]
 	public function exportDossier(string $protocolId): array {
 		$envelope = $this->buildDossier(protocolId: $protocolId);
 

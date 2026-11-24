@@ -29,7 +29,6 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -277,7 +276,6 @@ class HrmqCostRateAdapter implements HrmqCostRateAdapterInterface {
 	 *
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md
 	 */
-	#[Override]
 	public function registerSlug(): string {
 		if ($this->resolvedRegister === null) {
 			$this->resolvedRegister = ($this->answeringRegister() ?? self::REGISTERS[0]);

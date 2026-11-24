@@ -53,7 +53,6 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ServiceReceiptServiceInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -156,7 +155,6 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 *
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
-	#[Override]
 	public function createServiceReceipt(string $administrationId, array $payload): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$approver = $this->scope()->requireSessionUser();
@@ -219,7 +217,6 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 *
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
-	#[Override]
 	public function addServiceReceiptLine(string $administrationId, string $receiptId, array $payload): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$approver = $this->scope()->requireSessionUser();
@@ -358,7 +355,6 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 *
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
-	#[Override]
 	public function confirmServiceReceipt(string $administrationId, string $receiptId): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 
@@ -411,7 +407,6 @@ class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	 *
 	 * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
 	 */
-	#[Override]
 	public function acceptServiceReceipt(string $administrationId, string $receiptId): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 

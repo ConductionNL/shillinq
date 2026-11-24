@@ -31,7 +31,6 @@ use OCA\Shillinq\Kernel\Contracts\Ib47BatchServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * The annual IB47 batch, filled from the payments to third parties.
@@ -109,7 +108,6 @@ final class Ib47BatchService implements Ib47BatchServiceInterface {
 	 *
 	 * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#requirement-the-annual-ib47-batch-is-prepared-from-the-payments-to-third-parties-req-dpa-021
 	 */
-	#[Override]
 	public function prepare(string $administrationId, int $taxYear): array {
 		$administrationId = trim($administrationId);
 		if ($administrationId === '') {

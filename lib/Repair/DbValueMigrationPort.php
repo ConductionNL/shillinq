@@ -31,7 +31,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCP\IDBConnection;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -60,7 +59,6 @@ class DbValueMigrationPort implements ValueMigrationPort
      *
      * @spec exclude Database adapter for the Dutch-to-English vocabulary migration.
      */
-    #[Override]
     public function shardTables(): array
     {
         try {
@@ -91,7 +89,6 @@ class DbValueMigrationPort implements ValueMigrationPort
      *
      * @spec exclude Database adapter for the Dutch-to-English vocabulary migration.
      */
-    #[Override]
     public function columnsOf(string $table): array
     {
         try {
@@ -128,7 +125,6 @@ class DbValueMigrationPort implements ValueMigrationPort
      *
      * @spec exclude Database adapter for the Dutch-to-English vocabulary migration.
      */
-    #[Override]
     public function rewrite(string $table, string $column, string $old, string $new): int
     {
         $quote = fn (string $identifier): string => $this->db->getDatabasePlatform()->quoteSingleIdentifier($identifier);

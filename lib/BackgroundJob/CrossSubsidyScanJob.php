@@ -34,7 +34,6 @@ use OCA\Shillinq\Kernel\Contracts\CrossSubsidyScanInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -84,7 +83,6 @@ class CrossSubsidyScanJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	#[Override]
 	protected function run($argument): void {
 		$today = (new DateTimeImmutable('@' . $this->time->getTime()))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d');
 		$this->asSystem(

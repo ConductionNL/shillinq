@@ -32,7 +32,6 @@ use OCA\Shillinq\Kernel\Contracts\MeterReadingImportServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
-use Override;
 use Throwable;
 
 /**
@@ -73,7 +72,6 @@ class MeterReadingImportService implements MeterReadingImportServiceInterface {
 	 *
 	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
-	#[Override]
 	public function import(string $administrationId, array $rows): array {
 		$run = new MeterReadingImportRun(administrationId: $administrationId);
 		foreach ($rows as $row) {

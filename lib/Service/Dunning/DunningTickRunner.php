@@ -40,7 +40,6 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -95,7 +94,6 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
 	 */
-	#[Override]
 	public function runAll(DateTimeImmutable $now): array {
 		$reports = $this->objectService->runAsSystem(
 			function () use ($now): array {
@@ -190,7 +188,6 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
 	 */
-	#[Override]
 	public function lastReportFor(array $administration): ?array {
 		$reports = $this->lastReports();
 		foreach ($this->administrationKeys(administration: $administration) as $key) {
@@ -215,7 +212,6 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
 	 */
-	#[Override]
 	public function previewAdministration(array $administration, DateTimeImmutable $now): array {
 		$rows  = [];
 		foreach ($this->administrationKeys(administration: $administration) as $key) {

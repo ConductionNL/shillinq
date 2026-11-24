@@ -54,7 +54,6 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -107,7 +106,6 @@ class PeppolInboundUblInvoiceListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;

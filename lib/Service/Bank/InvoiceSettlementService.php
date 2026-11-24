@@ -38,7 +38,6 @@ use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -112,7 +111,6 @@ class InvoiceSettlementService implements InvoiceSettlementServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
-	#[Override]
 	public function settle(array $match): array {
 		$type = (string)($match['targetType'] ?? ($match['matchType'] ?? ''));
 		$schema = self::schemaForType(type: $type);

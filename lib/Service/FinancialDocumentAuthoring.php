@@ -37,7 +37,6 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
-use Override;
 
 /**
  * Starts a quote, a credit note or a payout on a host object.
@@ -99,7 +98,6 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	#[Override]
 	public function createQuote(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
 		return $this->createQuoteOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
 	}//end createQuote()
@@ -162,7 +160,6 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	#[Override]
 	public function creditInvoice(string $invoiceId, string $appId = ''): array {
 		$this->guard->assertActorMay(action: self::ACTION_CREDIT_INVOICE, appId: $appId);
 		$invoice = $this->guard->invoiceFor(invoiceId: $invoiceId, appId: $appId);
@@ -214,7 +211,6 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	#[Override]
 	public function raisePayout(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
 		return $this->raisePayoutOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
 	}//end raisePayout()

@@ -75,7 +75,6 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -157,7 +156,6 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 	 * reported as "`.` is not one of the four closed categories" — a note
 	 * explaining why there was no annotation became an invalid one.
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		try {
 			$payload = $this->extractPayload(event: $event);
@@ -392,7 +390,6 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 	 *
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
 	 */
-	#[Override]
 	public function runDeferredPromotion(array $entry): void {
 		$uuid    = (string)($entry['uuid'] ?? '');
 		$schema  = (string)($entry['schema'] ?? '');

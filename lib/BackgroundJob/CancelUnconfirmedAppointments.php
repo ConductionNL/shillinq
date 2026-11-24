@@ -32,7 +32,6 @@ use OCA\Shillinq\Kernel\Contracts\AppointmentConfirmationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -77,7 +76,6 @@ class CancelUnconfirmedAppointments extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	#[Override]
 	protected function run($argument): void {
 		$cancelled = $this->confirmationService->cancelExpired();
 		if ($cancelled > 0) {

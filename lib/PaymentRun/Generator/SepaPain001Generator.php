@@ -36,7 +36,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun\Generator;
 
 use OCA\Shillinq\PaymentRun\RenderedFile;
-use Override;
 use XMLWriter;
 
 /**
@@ -56,7 +55,6 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 	 *
 	 * @return string
 	 */
-	#[Override]
 	public static function format(): string {
 		return 'sepa-pain001';
 	}//end format()
@@ -68,7 +66,6 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 	 *
 	 * @return RenderedFile
 	 */
-	#[Override]
 	public function render(array $paymentRun): RenderedFile {
 		$runNumber = (string)($paymentRun['runNumber'] ?? '');
 		$document = new Pain001Document(

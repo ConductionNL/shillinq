@@ -57,7 +57,6 @@ use OCA\Shillinq\Service\Vat\VatReturnBox;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
@@ -128,7 +127,6 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) VatFiscalUnityResolver's static helpers read the unity record; they hold no state.
 	 */
-	#[Override]
 	public function createReturn(
 		string $administrationId,
 		string $period,
@@ -640,7 +638,6 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
-	#[Override]
 	public function submitReturn(string $returnId, string $userId): array {
 		$vatReturn = $this->fetchReturn(returnId: $returnId);
 		// Submission goes to the Dutch tax authority over SBR (REQ-LFL-004).
@@ -683,7 +680,6 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
-	#[Override]
 	public function rebaseReturn(string $returnId, string $userId): array {
 		$vatReturn = $this->fetchReturn(returnId: $returnId);
 		$status = (string)($vatReturn['statusCode'] ?? '');
@@ -965,7 +961,6 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
-	#[Override]
 	public function findReturn(string $returnId): ?array {
 		$found = ObjectIdentifier::findScoped(
 			scoped: $this->objectService->setRegister($this->register())->setSchema('BtwAangifte'),

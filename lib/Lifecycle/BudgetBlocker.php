@@ -39,7 +39,6 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\Contracts\BudgetBlockerInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -87,7 +86,6 @@ class BudgetBlocker implements BudgetBlockerInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
 	 */
-	#[Override]
 	public function canCommit(string $commitmentNumber, ?array $object = null): bool {
 		try {
 			$commitment = ($object ?? $this->findOne(schema: 'Commitment', filters: ['commitmentNumber' => $commitmentNumber]));

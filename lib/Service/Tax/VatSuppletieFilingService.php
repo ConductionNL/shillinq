@@ -34,7 +34,6 @@ use OCA\Shillinq\Kernel\Contracts\VatSuppletieFilingServiceInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -91,7 +90,6 @@ class VatSuppletieFilingService implements VatSuppletieFilingServiceInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function document(array $correction): array {
 		if (($correction['preparedAt'] ?? null) === null || $correction['preparedAt'] === '') {
 			throw new RuntimeException('Prepare the supplementary return before downloading or filing it.');
@@ -140,7 +138,6 @@ class VatSuppletieFilingService implements VatSuppletieFilingServiceInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function file(array $correction): array {
 		if ((string)($correction['state'] ?? '') !== 'draft') {
 			throw new RuntimeException('Only a supplementary return still in draft can be filed.');

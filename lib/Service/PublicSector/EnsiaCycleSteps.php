@@ -34,7 +34,6 @@ use OCA\Shillinq\Service\ENSIABevindingGenerator;
 use OCA\Shillinq\Service\ENSIAVerklaringGenerator;
 use OCA\Shillinq\Service\ENSIAXmlExporter;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 
 /**
  * Runs the generators of an ENSIA cycle over its stored questions and findings.
@@ -80,7 +79,6 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
-	#[Override]
 	public function createFindings(array $cycle): array {
 		$cycle = self::identified(cycle: $cycle);
 		$known = [];
@@ -112,7 +110,6 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
-	#[Override]
 	public function withStatement(array $cycle): array {
 		$identified = self::identified(cycle: $cycle);
 		$outstanding = array_values(
@@ -147,7 +144,6 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
-	#[Override]
 	public function withSubmission(array $cycle): array {
 		if ($this->exporter->canExport(cyclus: $cycle) === false) {
 			throw new DomainException('Only a cycle approved by the college with its statement can be submitted.');
@@ -172,7 +168,6 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
-	#[Override]
 	public function statementFile(array $cycle): ?RenderedFile {
 		$docx = base64_decode((string)($cycle['declarationDocx'] ?? ''), true);
 		if ($docx === false || $docx === '') {
@@ -196,7 +191,6 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
-	#[Override]
 	public function submissionFile(array $cycle): ?RenderedFile {
 		$xml = (string)($cycle['submissionXml'] ?? '');
 		if (trim($xml) === '') {

@@ -32,7 +32,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -76,7 +75,6 @@ class DBAVbarMonitorService implements DBAVbarMonitorServiceInterface {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	#[Override]
 	public function assess(int $amountCents, float $hours, string $administrationId): array {
 		$vbarGrens = DBAConstants::vbarGrensCents($this->appConfig, AppIdentity::APP_ID, $administrationId);
 		$mode = DBAConstants::complianceMode($this->appConfig, AppIdentity::APP_ID, $administrationId);
@@ -137,7 +135,6 @@ class DBAVbarMonitorService implements DBAVbarMonitorServiceInterface {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	#[Override]
 	public function emitFlag(
 		string $assignmentId,
 		string $administrationId,

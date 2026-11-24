@@ -37,7 +37,6 @@ use DomainException;
 use OCA\Shillinq\Kernel\Contracts\ActivityCostPriceCalculationInterface;
 use OCA\Shillinq\Service\IntegralCostPriceCalculator;
 use OCA\Shillinq\Service\LedgerActuals;
-use Override;
 
 /**
  * Calculates and stores the integral cost price of a commercial activity.
@@ -82,7 +81,6 @@ class ActivityCostPriceCalculation implements ActivityCostPriceCalculationInterf
 	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	#[Override]
 	public function calculate(array $activity): array {
 		$year = (int)($activity['costPriceYear'] ?? 0);
 		if ($year < 1900 || $year > 9999) {

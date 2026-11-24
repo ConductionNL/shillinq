@@ -45,7 +45,6 @@ use OCA\Shillinq\Service\SubsidieVerantwoordingService;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Settles a determined grant and stores its accountability report.
@@ -89,7 +88,6 @@ class GrantSettlement implements GrantSettlementInterface {
 	 *
 	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-determining-a-grant-settles-the-difference-req-subv-011
 	 */
-	#[Override]
 	public function settle(array $grant): array {
 		if (is_numeric($grant['determinedAmount'] ?? null) === false) {
 			throw new DomainException('Enter the determined amount before determining the grant.');
@@ -129,7 +127,6 @@ class GrantSettlement implements GrantSettlementInterface {
 	 *
 	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-the-accountability-report-is-generated-from-the-grant-req-subv-012
 	 */
-	#[Override]
 	public function report(array $grant): array {
 		if ((string)($grant['subsidyNumber'] ?? '') === '') {
 			throw new DomainException('The grant has no grant number, so its report cannot be named.');

@@ -41,7 +41,6 @@ use OCA\Shillinq\Kernel\Contracts\FinancialDocumentLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 
 /**
  * Registers the payment-request leaves on OpenRegister's catalogue.
@@ -113,7 +112,6 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003, REQ-SOPR-004)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof RegisterLeafProvidersEvent === false) {
 			return;

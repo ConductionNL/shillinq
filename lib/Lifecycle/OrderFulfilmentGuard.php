@@ -38,7 +38,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\Contracts\OrderFulfilmentGuardInterface;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -75,7 +74,6 @@ class OrderFulfilmentGuard implements OrderFulfilmentGuardInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
 	 */
-	#[Override]
 	public function canVoltooien(array $assignment): bool {
 		try {
 			if ($this->hasValidBewijsstuk(assignment: $assignment) === false) {

@@ -31,7 +31,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Bunq;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -62,7 +61,6 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface {
 	 *
 	 * @return BunqSyncResult The dispatch outcome.
 	 */
-	#[Override]
 	public function pullTransactions(string $connectionReference, array $context = []): BunqSyncResult {
 		$this->logger->info(
 			'Shillinq Bunq pullTransactions deferred (no outbound connector bound)',
@@ -94,7 +92,6 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface {
 	 *
 	 * @return BunqSyncResult The dispatch outcome.
 	 */
-	#[Override]
 	public function renewConsent(string $connectionReference, array $context = []): BunqSyncResult {
 		$this->logger->info(
 			'Shillinq Bunq renewConsent deferred (no outbound connector bound)',
@@ -125,7 +122,6 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface {
 	 *
 	 * @inheritDoc
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

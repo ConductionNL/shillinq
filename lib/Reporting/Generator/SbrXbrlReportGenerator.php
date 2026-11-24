@@ -24,7 +24,6 @@ use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Kernel\Contracts\AnnualAccountsXbrlBuilderInterface;
 use OCA\Shillinq\Service\Sbr\SbrRecords;
-use Override;
 use RuntimeException;
 
 /**
@@ -61,7 +60,6 @@ final class SbrXbrlReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.3
 	 */
-	#[Override]
 	public static function reportType(): string {
 		return 'sbr-xbrl';
 	}//end reportType()
@@ -73,7 +71,6 @@ final class SbrXbrlReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.3
 	 */
-	#[Override]
 	public static function supportedFormats(): array {
 		return ['xbrl'];
 	}//end supportedFormats()
@@ -90,7 +87,6 @@ final class SbrXbrlReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		if ($format !== 'xbrl') {
 			throw new RuntimeException(sprintf('The SBR filing is XBRL only, not %s.', $format));

@@ -57,7 +57,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -136,7 +135,6 @@ class CBSExportService implements CBSExportServiceInterface {
 	 * @return array<string,mixed> The persisted CBSSubmission (id + fields).
 	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
-	#[Override]
 	public function generateSubmission(
 		string $administrationId,
 		DateTimeInterface $periodStart,
@@ -286,7 +284,6 @@ class CBSExportService implements CBSExportServiceInterface {
 	 * @return array{valid:bool,errors:array<int,string>,warnings:array<int,string>}
 	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
-	#[Override]
 	public function validateSubmission(array $submission): array {
 		$warnings = [];
 

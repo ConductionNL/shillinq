@@ -37,7 +37,6 @@ use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
 use OCP\ICacheFactory;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -104,7 +103,6 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	 *
 	 * @return array{valid: bool, error?: string, key?: array<string,mixed>}
 	 */
-	#[Override]
 	public function validateApiKey(string $businessId, string $apiKey): array {
 		if ($businessId === '' || $apiKey === '') {
 			return ['valid' => false, 'error' => 'Invalid or missing API key'];
@@ -167,7 +165,6 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	 *
 	 * @return array{allowed: bool, remaining: int, retryAfter: int}
 	 */
-	#[Override]
 	public function consumeRateLimit(string $businessId, int $limit = self::DEFAULT_RATE_LIMIT): array {
 		$cache = $this->getRateLimitCache();
 		if ($cache === null) {
@@ -224,7 +221,6 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	 *
 	 * @return array{success: bool, message?: string, businessId?: string, apiKey?: string, record?: array<string,mixed>}
 	 */
-	#[Override]
 	public function createApiKey(string $administrationId, string $businessId, string $actor): array {
 		$refusal = $this->createRefusal(administrationId: $administrationId, businessId: $businessId);
 		if ($refusal !== null) {
@@ -304,7 +300,6 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	 *
 	 * @return array{success: bool, message?: string, apiKey?: string}
 	 */
-	#[Override]
 	public function rotateApiKey(string $businessId, string $actor): array {
 		$existing = $this->findActiveKeyByBusinessId(businessId: $businessId);
 		if ($existing === null) {
@@ -405,7 +400,6 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	 *
 	 * @return array{success: bool, message?: string}
 	 */
-	#[Override]
 	public function revokeApiKey(string $businessId, string $actor): array {
 		$record = $this->findKeyByBusinessId(businessId: $businessId);
 		if ($record === null) {

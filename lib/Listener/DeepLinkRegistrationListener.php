@@ -29,7 +29,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Registers Shillinq's deep link URL patterns with OpenRegister's search provider.
@@ -73,7 +72,6 @@ class DeepLinkRegistrationListener implements IEventListener {
 	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 	 * @spec openspec/changes/shillinq-ap-push-notifications/specs/bookkeeping-accounts-payable-core/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof DeepLinkRegistrationEvent === false) {
 			return;

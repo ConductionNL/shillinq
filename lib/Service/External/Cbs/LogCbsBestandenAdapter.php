@@ -28,7 +28,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Cbs;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -54,7 +53,6 @@ class LogCbsBestandenAdapter implements CbsBestandenAdapterInterface {
 	 *
 	 * @return CbsSubmissionResult The dispatch outcome.
 	 */
-	#[Override]
 	public function submit(array $payload): CbsSubmissionResult {
 		$sanitised = $payload;
 		// Strip the raw bytes from the log entry — checksum is enough.
@@ -88,7 +86,6 @@ class LogCbsBestandenAdapter implements CbsBestandenAdapterInterface {
 	 *
 	 * @return bool Always true for the dormant log adapter.
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

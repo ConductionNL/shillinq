@@ -34,7 +34,6 @@ use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentResult;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -96,7 +95,6 @@ class IntegriqPaymentAdapter implements MolliePaymentAdapterInterface {
 	 *
 	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.2
 	 */
-	#[Override]
 	public function createPayment(array $payload): MolliePaymentResult {
 		if ($this->commandAvailable() === false) {
 			return $this->dormant(reason: 'integriq-absent', detail: 'Integriq is not installed or does not offer the payment command.');
@@ -123,7 +121,6 @@ class IntegriqPaymentAdapter implements MolliePaymentAdapterInterface {
 	 *
 	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.2
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return $this->commandAvailable() === false;
 	}//end isDormant()

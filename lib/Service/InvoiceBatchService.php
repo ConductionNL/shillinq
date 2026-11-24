@@ -42,7 +42,6 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OutOfBoundsException;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -129,7 +128,6 @@ class InvoiceBatchService implements InvoiceBatchServiceInterface {
 	 *
 	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
 	 */
-	#[Override]
 	public function create(string $administrationId, array $request, string $requestedBy = ''): array {
 		$this->assertAccessible(administrationId: $administrationId);
 

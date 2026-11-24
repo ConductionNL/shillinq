@@ -74,7 +74,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -111,7 +110,6 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	 *
 	 * @spec openspec/changes/unify-analytical-dimensions/tasks.md#phase-4
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: fold CostCenter + KostenDrager into unified AnalyticalDimension register (dimensionType discriminator)';
 	}//end getName()
@@ -128,7 +126,6 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		// Under a system identity: an upgrade has no session, and OpenRegister
 		// refuses every write for 'Anonymous'. Without it this migration moves

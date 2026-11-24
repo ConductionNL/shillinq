@@ -59,7 +59,6 @@ use OCA\Shillinq\Kernel\Contracts\BudgetScenarioDefaultPromoterInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -121,7 +120,6 @@ class BudgetScenarioDefaultPromoter implements BudgetScenarioDefaultPromoterInte
 	 *
 	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
-	#[Override]
 	public function promote(string $scenarioId): array {
 		$target = $this->find(id: $scenarioId);
 		if ($target === null) {

@@ -46,7 +46,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\InnovatieboxSbrExportServiceInterface;
-use Override;
 
 /**
  * Pure SBR/XBRL + PDF hand-off renderer for the Vpb innovatiebox-sectie
@@ -93,7 +92,6 @@ class InnovatieboxSbrExportService implements InnovatieboxSbrExportServiceInterf
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
 	 */
-	#[Override]
 	public function toSbrInstancePayload(
 		array $aggregation,
 		string $administrationId,
@@ -153,7 +151,6 @@ class InnovatieboxSbrExportService implements InnovatieboxSbrExportServiceInterf
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
 	 */
-	#[Override]
 	public function toPdfRenderContext(
 		array $aggregation,
 		string $administrationId,

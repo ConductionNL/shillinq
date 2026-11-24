@@ -56,7 +56,6 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GoodsReceiptNoteServiceInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -194,7 +193,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	#[Override]
 	public function createGRN(string $administrationId, array $payload): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$receivedBy = $this->scope()->requireSessionUser();
@@ -254,7 +252,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	#[Override]
 	public function addGRNLine(string $administrationId, string $grnId, array $payload): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$inspector = $this->scope()->requireSessionUser();
@@ -429,7 +426,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	#[Override]
 	public function qualityCheckPass(string $administrationId, string $grnId): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 
@@ -487,7 +483,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	#[Override]
 	public function acceptGRN(string $administrationId, string $grnId): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$grn = $this->findGrn(administrationId: $administrationId, grnId: $grnId);
@@ -615,7 +610,6 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
-	#[Override]
 	public function uploadPhotos(string $administrationId, string $grnId, array $photoFileIds): array {
 		$this->scope()->assertAccess(administrationId: $administrationId);
 		$grn = $this->findGrn(administrationId: $administrationId, grnId: $grnId);

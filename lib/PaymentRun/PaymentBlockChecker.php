@@ -31,7 +31,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentBlockCheckerInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 
 /**
  * Finds the blocked lines of a payment run. Lookups that fail throw, so a
@@ -68,7 +67,6 @@ class PaymentBlockChecker implements PaymentBlockCheckerInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.3
 	 */
-	#[Override]
 	public function blockedLines(array $paymentRun): array {
 		$lines = ($paymentRun['paymentLines'] ?? []);
 		if (is_array($lines) === false) {

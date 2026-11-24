@@ -57,7 +57,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FifoValuationServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -103,7 +102,6 @@ class FifoValuationService implements FifoValuationServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-7
 	 */
-	#[Override]
 	public function processStockMove(array $move): array {
 		$key = new StockMoveValuationKey(move: $move);
 		// Transfer / manufacture / repack don't drive FIFO valuation directly.

@@ -43,7 +43,6 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\VsoLockingValidatorInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -82,7 +81,6 @@ class VsoLockingValidator implements VsoLockingValidatorInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
 	 */
-	#[Override]
 	public function isYearLocked(string $administrationId, int $financialYear): bool {
 		if ($administrationId === '' || $financialYear <= 0) {
 			return false;

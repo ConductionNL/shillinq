@@ -40,7 +40,6 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
 use OutOfBoundsException;
-use Override;
 use Throwable;
 
 /**
@@ -99,7 +98,6 @@ class ReportScheduleService implements ReportScheduleServiceInterface {
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
-	#[Override]
 	public function create(string $ownerId, array $input, DateTimeImmutable $now): array {
 		$administrationId = trim((string)($input['administrationId'] ?? ''));
 		if ($administrationId === '' || $this->administrations->canUserAccess(userId: $ownerId, administrationId: $administrationId) === false) {
@@ -157,7 +155,6 @@ class ReportScheduleService implements ReportScheduleServiceInterface {
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
-	#[Override]
 	public function update(string $ownerId, string $scheduleId, array $input, DateTimeImmutable $now): array {
 		$found = null;
 		try {

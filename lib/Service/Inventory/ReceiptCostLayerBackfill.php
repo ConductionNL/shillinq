@@ -37,7 +37,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\InventoryValuationStore;
 use OCA\Shillinq\Service\StockMoveValuationKey;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 
 /**
  * Replays the stock ledger into the valuation snapshots, once.
@@ -68,7 +67,6 @@ class ReceiptCostLayerBackfill implements ReceiptCostLayerBackfillInterface {
 	 *
 	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
 	 */
-	#[Override]
 	public function run(): array {
 		$result = ['locations' => 0, 'receipts' => 0, 'undercosted' => []];
 		foreach ($this->groups() as $moves) {

@@ -39,7 +39,6 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -79,7 +78,6 @@ class BackfillLinkedObjects implements IRepairStep {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: list the object each payment request is about in its linked objects';
 	}//end getName()
@@ -93,7 +91,6 @@ class BackfillLinkedObjects implements IRepairStep {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

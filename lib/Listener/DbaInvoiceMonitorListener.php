@@ -38,7 +38,6 @@ namespace OCA\Shillinq\Listener;
 use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -72,7 +71,6 @@ class DbaInvoiceMonitorListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		$payload = $this->extractInvoice(event: $event);
 		if ($payload === null) {

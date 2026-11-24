@@ -54,7 +54,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InventoryValuationReportServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -96,7 +95,6 @@ class InventoryValuationReportService implements InventoryValuationReportService
 	 *
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
 	 */
-	#[Override]
 	public function valuationAsOf(
 		string $administrationId,
 		string $asOfDate,
@@ -126,7 +124,6 @@ class InventoryValuationReportService implements InventoryValuationReportService
 	 *
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
 	 */
-	#[Override]
 	public function ageing(string $administrationId, string $asOfDate, string $sku, string $warehouse): array {
 		$location = new StockLocation();
 		$location->administrationId = $administrationId;

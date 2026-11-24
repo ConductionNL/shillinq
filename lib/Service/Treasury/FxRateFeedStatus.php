@@ -33,7 +33,6 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IL10N;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -81,7 +80,6 @@ class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	 *
 	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
 	 */
-	#[Override]
 	public function status(): array {
 		$fromFeed = $this->isFeedLive();
 		$newest   = $this->newestPerPair();

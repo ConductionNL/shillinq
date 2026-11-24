@@ -37,7 +37,6 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -94,7 +93,6 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
-	#[Override]
 	public static function reportType(): string {
 		return 'vat-return';
 	}//end reportType()
@@ -106,7 +104,6 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
-	#[Override]
 	public static function supportedFormats(): array {
 		return ['xml'];
 	}//end supportedFormats()
@@ -123,7 +120,6 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
-	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		if ($format !== 'xml') {
 			throw new RuntimeException(sprintf('The VAT return file is XML only, not %s.', $format));

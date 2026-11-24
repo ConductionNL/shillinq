@@ -30,7 +30,6 @@ namespace OCA\Shillinq\Service\PublicSector;
 
 use OCA\Shillinq\Kernel\Contracts\TaskFieldRealisationInterface;
 use OCA\Shillinq\Service\LedgerActuals;
-use Override;
 
 /**
  * Sums a year's posted lines per BBV task field.
@@ -71,7 +70,6 @@ class TaskFieldRealisation implements TaskFieldRealisationInterface {
 	 *
 	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 	 */
-	#[Override]
 	public function forYear(string $administrationId, string $fiscalYear, string $startDate, string $endDate): array {
 		$result = ['fiscalYear' => $fiscalYear, 'taskFields' => [], 'unmapped' => []];
 		if ($administrationId === '') {

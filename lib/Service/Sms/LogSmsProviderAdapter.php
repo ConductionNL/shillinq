@@ -30,7 +30,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Sms;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -66,7 +65,6 @@ final class LogSmsProviderAdapter implements SmsProviderAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-22
 	 */
-	#[Override]
 	public function send(
 		string $connectorId,
 		string $e164Recipient,

@@ -55,7 +55,6 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\Contracts\LotSellabilityGuardInterface;
 use OCA\Shillinq\Sort\FefoSort;
-use Override;
 
 /**
  * Decides whether the InventoryLot rows for a Delivery line can satisfy the
@@ -136,7 +135,6 @@ class LotSellabilityGuard implements LotSellabilityGuardInterface {
 	 *
 	 * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
 	 */
-	#[Override]
 	public function evaluate(array $lots, float $requiredQuantity, string $today): array {
 		[$sellableLots, $offendingLots] = $this->partitionLots(lots: $lots, today: $today);
 

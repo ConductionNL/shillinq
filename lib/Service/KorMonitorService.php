@@ -35,7 +35,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\KorMonitorServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Computes the KOR threshold-status for one administration + year from the AR ledger.
@@ -78,7 +77,6 @@ class KorMonitorService implements KorMonitorServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	#[Override]
 	public function status(string $administrationId, int $year): array {
 		$thresholdCents = $this->resolveDrempelCents(administrationId: $administrationId);
 		$invoices = $this->fetchKorInvoices(administrationId: $administrationId, year: $year);

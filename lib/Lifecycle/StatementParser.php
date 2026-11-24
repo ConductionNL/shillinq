@@ -42,7 +42,6 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -83,7 +82,6 @@ class StatementParser implements StatementParserInterface {
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md#req-br-003
 	 * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
 	 */
-	#[Override]
 	public function parse(string $contents, string $format): array {
 		try {
 			switch ($format) {

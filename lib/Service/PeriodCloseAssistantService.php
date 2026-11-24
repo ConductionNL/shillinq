@@ -49,7 +49,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Detects incomplete pre-close tasks and formats them as close-assistant flags.
@@ -98,7 +97,6 @@ class PeriodCloseAssistantService implements PeriodCloseAssistantServiceInterfac
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
 	 */
-	#[Override]
 	public function analyse(string $administrationId, string $periodId, string $endDate = ''): array {
 		$detections = [
 			'ap' => $this->detectOpenSubLedger(administrationId: $administrationId, periodId: $periodId, subLedgerType: 'ap'),

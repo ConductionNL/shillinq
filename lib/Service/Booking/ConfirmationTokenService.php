@@ -48,7 +48,6 @@ use OCA\Shillinq\Util\TokenValidator;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IURLGenerator;
 use OCP\Mail\IMailer;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -154,7 +153,6 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 *                                         when openconnector is unavailable (email is logged for
 	 *                                         operator review).
 	 */
-	#[Override]
 	public function issueAndSend(array $appointment, array $customer): array {
 		$appointmentId = (string)($appointment['appointmentId'] ?? '');
 		if ($appointmentId === '') {
@@ -205,7 +203,6 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 *                                                                 encodes the failure mode for the controller to map onto an HTTP
 	 *                                                                 status (REQ-BCF-004 scenarios).
 	 */
-	#[Override]
 	public function validate(string $appointmentId, string $plaintext): array {
 		if ($appointmentId === '' || $plaintext === '') {
 			return [
@@ -281,7 +278,6 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 *
 	 * @return array<string, mixed> The updated record.
 	 */
-	#[Override]
 	public function markRedeemed(array $token): array {
 		$now = $this->nowIso();
 		$token['status'] = 'redeemed';
@@ -319,7 +315,6 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 * @return array{tokenId:string,sent:bool} Outcome — same shape as
 	 *                                         {@see ConfirmationTokenService::issueAndSend()}.
 	 */
-	#[Override]
 	public function resend(array $appointment, array $customer, string $actor = 'system'): array {
 		$appointmentId = (string)($appointment['appointmentId'] ?? '');
 		if ($appointmentId === '') {

@@ -44,7 +44,6 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAppGrantInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Answers whether a named app carries a payment action.
@@ -90,7 +89,6 @@ final class PaymentActionAppGrant implements PaymentActionAppGrantInterface {
 	 *
 	 * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
 	 */
-	#[Override]
 	public function allows(string $appId, string $action): bool {
 		if (preg_match(self::APP_ID, $appId) !== 1) {
 			return false;

@@ -54,7 +54,6 @@ use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -108,7 +107,6 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	 * @return void
 	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectTransitionedEvent) === false) {
 			return;

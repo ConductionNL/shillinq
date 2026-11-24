@@ -33,7 +33,6 @@ namespace OCA\Shillinq\Repair;
 use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -63,7 +62,6 @@ class StampVatReturnBoxes implements IRepairStep {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function getName(): string {
 		return 'Shillinq: stamp the VAT tariff and return box on posted ledger lines';
 	}//end getName()
@@ -77,7 +75,6 @@ class StampVatReturnBoxes implements IRepairStep {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$result = $this->backfill->run();

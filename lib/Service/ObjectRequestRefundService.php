@@ -39,7 +39,6 @@ use OCA\Shillinq\Kernel\Contracts\ObjectRequestRefundServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 use RuntimeException;
 use Throwable;
 use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
@@ -91,7 +90,6 @@ class ObjectRequestRefundService implements ObjectRequestRefundServiceInterface 
 	 *
 	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
-	#[Override]
 	public function approve(string $paymentRequestId): array {
 		$request = $this->find(id: $paymentRequestId);
 		$actor = $this->actorIn(request: $request);
@@ -143,7 +141,6 @@ class ObjectRequestRefundService implements ObjectRequestRefundServiceInterface 
 	 *
 	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
-	#[Override]
 	public function markPaid(string $paymentRequestId, string $bankReference, string $bankAccount): array {
 		$bankReference = trim($bankReference);
 		$bankAccount = trim($bankAccount);

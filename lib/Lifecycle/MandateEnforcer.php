@@ -42,7 +42,6 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\MandateEnforcerInterface;
 use OCP\IAppConfig;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -83,7 +82,6 @@ class MandateEnforcer implements MandateEnforcerInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function hasSufficientMandate(string $commitmentNumber, ?array $object = null): bool {
 		try {
 			$commitment = ($object ?? $this->findOne(schema: 'Commitment', filters: ['commitmentNumber' => $commitmentNumber]));
@@ -139,7 +137,6 @@ class MandateEnforcer implements MandateEnforcerInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
-	#[Override]
 	public function resolveApplicableMandate(array $commitment): ?array {
 		$kind   = (string)($commitment['kind'] ?? '');
 		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);

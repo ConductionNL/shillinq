@@ -33,7 +33,6 @@ use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Security\ISecureRandom;
-use Override;
 use Throwable;
 use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 
@@ -84,7 +83,6 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	 *
 	 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 	 */
-	#[Override]
 	public function draft(string $administrationId, array $request): array {
 		// A draft queued on the phone carries the id the phone gave it, and may
 		// be sent again when a sync was cut off after the save. The second send

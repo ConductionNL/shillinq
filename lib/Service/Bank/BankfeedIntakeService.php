@@ -35,7 +35,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\BankfeedIntakeServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -86,7 +85,6 @@ class BankfeedIntakeService implements BankfeedIntakeServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
-	#[Override]
 	public function ingestSynced(array $data): array {
 		$iban = self::normaliseIban(iban: (string)($data['accountIban'] ?? ''));
 		$batchUri = trim((string)($data['batchUri'] ?? ''));

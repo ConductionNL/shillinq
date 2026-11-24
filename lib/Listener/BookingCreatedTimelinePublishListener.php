@@ -50,7 +50,6 @@ use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -91,7 +90,6 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectCreatedEvent) === false) {
 			return;

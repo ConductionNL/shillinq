@@ -31,7 +31,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Import\ImportProfile;
 
 use OCA\Shillinq\Service\Import\ImportProfileInterface;
-use Override;
 
 /**
  * Import profile for e-Boekhouden.nl (REQ-AIM-003).
@@ -46,7 +45,6 @@ class EBoekhoudenProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function sourceSystem(): string {
 		return 'e-boekhouden';
 	}//end sourceSystem()
@@ -60,7 +58,6 @@ class EBoekhoudenProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function normalizeLedgerAccounts(array $parsed): array {
 		return ($parsed['ledgerAccounts'] ?? []);
 	}//end normalizeLedgerAccounts()
@@ -77,7 +74,6 @@ class EBoekhoudenProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function mapCsvColumns(string $artifact): array {
 		if ($artifact === 'open-items') {
 			return [
@@ -115,7 +111,6 @@ class EBoekhoudenProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
-	#[Override]
 	public function applyDialectQuirks(array $parsed): array {
 		return $parsed;
 	}//end applyDialectQuirks()

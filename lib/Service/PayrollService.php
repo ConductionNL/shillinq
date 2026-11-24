@@ -38,7 +38,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PayrollServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -142,7 +141,6 @@ class PayrollService implements PayrollServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	#[Override]
 	public function berekenLoonStrook(string $administrationId, string $employeeId, string $periodId): array {
 		$period = $this->findOne(schema: 'LoonPeriode', administrationId: $administrationId, filters: ['id' => $periodId]);
 		$employee = $this->findOne(schema: 'Werknemer', administrationId: $administrationId, filters: ['id' => $employeeId]);
@@ -376,7 +374,6 @@ class PayrollService implements PayrollServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	#[Override]
 	public function berekenLHAfdracht(string $administrationId, string $periodId, float $finalLeviesWKR = 0.0): array {
 		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodId' => $periodId]);
 
@@ -436,7 +433,6 @@ class PayrollService implements PayrollServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	#[Override]
 	public function bouwLoonjournaalpost(string $administrationId, string $periodId): array {
 		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodId' => $periodId]);
 

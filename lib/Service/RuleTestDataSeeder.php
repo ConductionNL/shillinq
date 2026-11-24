@@ -41,7 +41,6 @@ use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -81,7 +80,6 @@ class RuleTestDataSeeder implements RuleTestDataSeederInterface {
 	 *
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
-	#[Override]
 	public function seed(): array {
 		$run = new RuleTestDataSeedRun(
 			register: $this->register(),

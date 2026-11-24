@@ -61,7 +61,6 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\BackgroundJob\QueuedJob;
-use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -144,7 +143,6 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 * @return void
 	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
-	#[Override]
 	protected function run($argument): void {
 		$entryId = $this->entryIdFromArgument(argument: $argument);
 		if ($entryId === null || $this->openRegisterAvailable() === false) {

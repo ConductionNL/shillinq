@@ -30,7 +30,6 @@ use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * The IB47 statement: one line per recipient of the year's prepared batch.
@@ -76,7 +75,6 @@ final class Ib47StatementReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec exclude Structural: the catalogue contract every generator answers.
 	 */
-	#[Override]
 	public static function reportType(): string {
 		return 'ib47';
 	}//end reportType()
@@ -88,7 +86,6 @@ final class Ib47StatementReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec exclude Structural: the catalogue contract every generator answers.
 	 */
-	#[Override]
 	public static function supportedFormats(): array {
 		return ['csv'];
 	}//end supportedFormats()
@@ -105,7 +102,6 @@ final class Ib47StatementReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#requirement-the-annual-ib47-batch-is-prepared-from-the-payments-to-third-parties-req-dpa-021
 	 */
-	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$period           = trim((string)($context['period'] ?? ''));
 		$administrationId = trim((string)($context['administrationId'] ?? ''));

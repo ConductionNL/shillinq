@@ -44,7 +44,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Extraction;
 
 use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
-use Override;
 
 /**
  * Maps docudesk extraction payloads onto shillinq drafts and records
@@ -117,7 +116,6 @@ class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
-	#[Override]
 	public function schemaForDocType(string $docType): ?string {
 		return match ($docType) {
 			'supplier-invoice' => self::SCHEMA_SUPPLIER_INVOICE,
@@ -146,7 +144,6 @@ class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
-	#[Override]
 	public function buildDraft(
 		string $docType,
 		string $documentUri,
@@ -299,7 +296,6 @@ class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
-	#[Override]
 	public function correctableFields(string $schema, array $incomingFields): array {
 		$allowed = (self::CORRECTABLE_FIELDS[$schema] ?? []);
 		return array_intersect_key($incomingFields, array_flip($allowed));
@@ -328,7 +324,6 @@ class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
-	#[Override]
 	public function recordCorrection(array $existingDraft, array $incomingFields): array {
 		$confidenceKeys = array_keys((array)($existingDraft['fieldConfidence'] ?? []));
 		$humanCorrected = (array)($existingDraft['humanCorrected'] ?? []);

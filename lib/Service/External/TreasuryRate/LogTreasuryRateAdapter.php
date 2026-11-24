@@ -31,7 +31,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\TreasuryRate;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -68,7 +67,6 @@ class LogTreasuryRateAdapter implements TreasuryRateAdapterInterface {
 	 *
 	 * @return TreasuryRateResult The dispatch outcome.
 	 */
-	#[Override]
 	public function fetchReferenceRate(string $rateCode, string $asOf): TreasuryRateResult {
 		$rateId = 'tr_ref_log_' . bin2hex(random_bytes(7));
 		$this->logger->info(
@@ -107,7 +105,6 @@ class LogTreasuryRateAdapter implements TreasuryRateAdapterInterface {
 	 *
 	 * @return TreasuryRateResult The dispatch outcome.
 	 */
-	#[Override]
 	public function fetchFxSpot(string $baseCurrency, string $quoteCurrency, string $asOf): TreasuryRateResult {
 		$rateId = 'tr_fx_log_' . bin2hex(random_bytes(7));
 		$pair = $baseCurrency . '/' . $quoteCurrency;
@@ -144,7 +141,6 @@ class LogTreasuryRateAdapter implements TreasuryRateAdapterInterface {
 	 *
 	 * @return bool Always true for the log adapter.
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

@@ -26,7 +26,6 @@ use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Override;
 
 /**
  * Answers PayableCancelRequestedEvent.
@@ -58,7 +57,6 @@ class PayableCancelRequestedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof PayableCancelRequestedEvent === false) {
 			return;

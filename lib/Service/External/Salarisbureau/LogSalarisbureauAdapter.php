@@ -31,7 +31,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Salarisbureau;
 
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -63,7 +62,6 @@ class LogSalarisbureauAdapter implements SalarisbureauAdapterInterface {
 	 *
 	 * @return SalarisbureauPayrollRunResult The dispatch outcome.
 	 */
-	#[Override]
 	public function submit(array $payload): SalarisbureauPayrollRunResult {
 		$sanitised = $payload;
 
@@ -115,7 +113,6 @@ class LogSalarisbureauAdapter implements SalarisbureauAdapterInterface {
 	 *
 	 * @inheritDoc
 	 */
-	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

@@ -36,7 +36,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
-use Override;
 
 /**
  * Gives a payment request without an invoice its portal scope.
@@ -54,7 +53,6 @@ final class PaymentRequestPortalScope implements PaymentRequestPortalScopeInterf
 	 *
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	#[Override]
 	public function stamp(array $request): array {
 		if ($this->needsStamp(request: $request) === true) {
 			$request['customerId'] = $this->debtorCustomer(request: $request);
@@ -73,7 +71,6 @@ final class PaymentRequestPortalScope implements PaymentRequestPortalScopeInterf
 	 *
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	#[Override]
 	public function needsStamp(array $request): bool {
 		if ((string)($request['invoiceReference'] ?? '') !== '') {
 			return false;

@@ -34,7 +34,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationMembershipServiceInterface;
 use OCP\IAppConfig;
-use Override;
 
 /**
  * Adds a member to an administration.
@@ -90,7 +89,6 @@ class AdministrationMembershipService implements AdministrationMembershipService
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
 	 */
-	#[Override]
 	public function addMember(string $administrationId, string $userId, string $role, string $grantedBy, array $options=[]): array {
 		if (in_array($role, self::ROLES, true) === false) {
 			throw new InvalidArgumentException('Unknown role.');

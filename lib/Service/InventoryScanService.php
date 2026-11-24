@@ -47,7 +47,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\InventoryScanServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
-use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -99,7 +98,6 @@ class InventoryScanService implements InventoryScanServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T2.4
 	 */
-	#[Override]
 	public function resolveBarcode(string $barcode, string $administrationId): ?array {
 		$barcode = trim($barcode);
 		if ($barcode === '') {
@@ -133,7 +131,6 @@ class InventoryScanService implements InventoryScanServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
 	 */
-	#[Override]
 	public function getStockDelta(?string $since, string $administrationId): array {
 		$records = $this->findMany(
 			schema: 'InventoryStock',
@@ -178,7 +175,6 @@ class InventoryScanService implements InventoryScanServiceInterface {
 	 *
 	 * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.4
 	 */
-	#[Override]
 	public function applyOperation(array $operation, string $userId, string $administrationId): array {
 		$scan = new ScanOperation(
 			payload: $operation,

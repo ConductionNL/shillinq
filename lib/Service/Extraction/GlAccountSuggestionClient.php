@@ -47,7 +47,6 @@ namespace OCA\Shillinq\Service\Extraction;
 use OCA\Shillinq\Kernel\Contracts\GlAccountSuggestionClientInterface;
 use OCP\Http\Client\IClientService;
 use OCP\IURLGenerator;
-use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -114,7 +113,6 @@ class GlAccountSuggestionClient implements GlAccountSuggestionClientInterface {
 	 *
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */
-	#[Override]
 	public function requestSuggestion(string $extractionId, array $candidateAccounts): array {
 		try {
 			$url = $this->urlGenerator->linkToRouteAbsolute(self::SUGGEST_ROUTE_NAME, ['id' => $extractionId]);
@@ -185,7 +183,6 @@ class GlAccountSuggestionClient implements GlAccountSuggestionClientInterface {
 	 *
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */
-	#[Override]
 	public function postCorrection(string $extractionId, string $accountCode, ?string $accountLabel): array {
 		try {
 			$url = $this->urlGenerator->linkToRouteAbsolute(self::CORRECTIONS_ROUTE_NAME, ['id' => $extractionId]);

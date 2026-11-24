@@ -38,7 +38,6 @@ use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Override;
 use RuntimeException;
 
 /**
@@ -93,7 +92,6 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	#[Override]
 	public function getDocumentsByAdministration(string $administrationId): array {
 		return $this->objectService
 			->setRegister($this->register())
@@ -110,7 +108,6 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	#[Override]
 	public function getDocumentsByType(string $administrationId, string $type): array {
 		if (in_array($type, self::ALLOWED_TYPES, true) === false) {
 			throw new InvalidArgumentException('Unknown documentType');
@@ -134,7 +131,6 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	#[Override]
 	public function getDocument(string $administrationId, string $documentId): ?array {
 		$documents = $this->getDocumentsByAdministration(administrationId: $administrationId);
 		foreach ($documents as $row) {
@@ -156,7 +152,6 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 *
 	 * @return array<string,mixed> Persisted record.
 	 */
-	#[Override]
 	public function createDocument(string $administrationId, array $payload): array {
 		$payload['administrationId'] = $administrationId;
 		$payload['status'] = 'draft';
@@ -188,7 +183,6 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 *
 	 * @return array<string,mixed> Updated record.
 	 */
-	#[Override]
 	public function fileDocument(string $administrationId, string $documentId, string $approver): array {
 		$document = $this->getDocument(administrationId: $administrationId, documentId: $documentId);
 		if ($document === null) {
@@ -233,7 +227,6 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 *
 	 * @return array<string,mixed> Updated record.
 	 */
-	#[Override]
 	public function archiveDocument(
 		string $administrationId,
 		string $documentId,
@@ -309,7 +302,6 @@ class WbsoDocumentService implements WbsoDocumentServiceInterface {
 	 *
 	 * @return bool
 	 */
-	#[Override]
 	public function isRetentionElapsed(string $filedAt): bool {
 		if ($filedAt === '') {
 			return false;

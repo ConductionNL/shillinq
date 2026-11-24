@@ -53,7 +53,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\BudgetGridCalculatorInterface;
-use Override;
 
 /**
  * Pure begroting-grid arithmetic: per-column deviation with the
@@ -90,7 +89,6 @@ class BudgetGridCalculator implements BudgetGridCalculatorInterface {
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 	 */
-	#[Override]
 	public function evaluateColumn(
 		string $ledgerGroupKey,
 		array $column,
@@ -140,7 +138,6 @@ class BudgetGridCalculator implements BudgetGridCalculatorInterface {
 	 *
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-005
 	 */
-	#[Override]
 	public function cumulative(
 		string $ledgerGroupKey,
 		array $columns,
@@ -270,7 +267,6 @@ class BudgetGridCalculator implements BudgetGridCalculatorInterface {
 	 *
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-008
 	 */
-	#[Override]
 	public function evaluateComputedRows(array $computedRows, array $rowValuesByCode): array {
 		$values = $rowValuesByCode;
 		$results = [];

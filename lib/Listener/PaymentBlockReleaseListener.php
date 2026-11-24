@@ -36,7 +36,6 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IGroupManager;
 use OCP\IUserSession;
-use Override;
 
 /**
  * Refuses a payment block release without the role, without a reason, or that drops the block reason.
@@ -93,7 +92,6 @@ class PaymentBlockReleaseListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#2-state-guards
 	 */
-	#[Override]
 	public function handle(Event $event): void {
 		$release = $this->release(event: $event);
 		if ($release === null) {
