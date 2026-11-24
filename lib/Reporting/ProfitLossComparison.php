@@ -88,7 +88,11 @@ class ProfitLossComparison {
 	 * @param array<int, array<string, string>>      $columns    The columns.
 	 * @param string                                 $section    revenue or expense.
 	 *
-	 * @return array<int, array<string, mixed>> accountNumber, label, amounts, differences, ranges.
+	 * @return array<int, array<string, mixed>> accountNumber, label, amounts, differences, ranges and the current column's linesKey.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StatementCalculator::accountLinesKey is the one pure key format the lines endpoint parses.
 	 */
 	private function section(array $statements, array $columns, string $section): array {
 		$rows = [];
@@ -111,6 +115,7 @@ class ProfitLossComparison {
 			$rows[$account]['amounts'] = $amounts;
 
 			$rows[$account]['differences'] = $this->differences(amounts: $rows[$account]['amounts']);
+			$rows[$account]['linesKey'] = StatementCalculator::accountLinesKey(account: (string)$account, from: $columns[0]['from'], to: $columns[0]['to']);
 		}
 
 		return array_values($rows);

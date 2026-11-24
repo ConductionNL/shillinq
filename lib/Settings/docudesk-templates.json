@@ -864,6 +864,55 @@
         "table": "Programmaplan programme list (code/naam), Taakvelden overview (code/naam/baten/lasten + totaalrij) -- generic {styleKey, rows: [{cells: [{widthCm, cellStyle, text, textStyle, textOptions}]}]} blocks, not amountTable/detailsTable",
         "note": "empty-state notes for programmes/taakvelden/vaste activa when absent"
       }
+    },
+    {
+      "templateId": "sales-invoice",
+      "title": "Sales invoice",
+      "description": "The sales invoice document (openspec/changes/sales-invoice-document, REQ-SID-002). InvoicePdfGenerator::generatePdf() hands the data of InvoiceDocumentData::assemble() to docudesk's DocumentService::generateDocument() as options.adHocData.invoiceDocument; the template is the one configured as documents_template_sales-invoice, else the single docudesk template with namespace \"shillinq\" and category \"sales-invoice\". Labels arrive already in the document language and amounts already formatted in the invoice currency, so the template holds no language and no number formatting. The variant comes from the administration's InvoiceLayout.variant (classic when unset); the QR codes are mPDF <barcode type=\"QR\"> tags over the EPC and pay link payloads, drawn only when present.",
+      "register": "shillinq",
+      "schema": "ARInvoice",
+      "namespace": "shillinq",
+      "category": "sales-invoice",
+      "format": "pdf",
+      "dataRoot": "invoiceDocument",
+      "dataKeys": [
+        "language",
+        "currency",
+        "labels",
+        "invoice",
+        "creditor",
+        "recipient",
+        "lines",
+        "totals",
+        "qr",
+        "layout"
+      ],
+      "variantField": "layout.variant",
+      "defaultVariant": "classic",
+      "variants": {
+        "classic": {
+          "className": "variant-classic",
+          "fontSize": "10pt",
+          "spacing": "12pt",
+          "cellPadding": "4pt 6pt",
+          "qrSize": "0.9"
+        },
+        "modern": {
+          "className": "variant-modern",
+          "fontSize": "10.5pt",
+          "spacing": "18pt",
+          "cellPadding": "6pt 8pt",
+          "qrSize": "1"
+        },
+        "compact": {
+          "className": "variant-compact",
+          "fontSize": "9pt",
+          "spacing": "6pt",
+          "cellPadding": "2pt 4pt",
+          "qrSize": "0.7"
+        }
+      },
+      "body": "<html lang=\"{{ invoiceDocument.language|e('html_attr') }}\"><head><meta charset=\"utf-8\"><style>\nbody{font-family:sans-serif;font-size:{{ variant.fontSize }};color:#1a1a1a}\nh1{color:{{ (invoiceDocument.layout.primaryColor ?? '#0F4C81')|e('css') }};margin:0 0 {{ variant.spacing }}}\nth{background:{{ (invoiceDocument.layout.primaryColor ?? '#0F4C81')|e('css') }};color:#fff;text-align:left;padding:{{ variant.cellPadding }}}\ntd{padding:{{ variant.cellPadding }};border-bottom:1px solid #ddd}\n.num{text-align:right}.accent{color:{{ (invoiceDocument.layout.accentColor ?? '#B8461B')|e('css') }}}\n</style></head><body class=\"{{ variant.className }}\">\n<h1>{{ invoiceDocument.labels.title }}</h1>\n<table><tr><td>{{ invoiceDocument.labels.invoiceNumber }}</td><td>{{ invoiceDocument.invoice.number }}</td></tr>\n<tr><td>{{ invoiceDocument.labels.invoiceDate }}</td><td>{{ invoiceDocument.invoice.invoiceDate }}</td></tr>\n<tr><td>{{ invoiceDocument.labels.dueDate }}</td><td>{{ invoiceDocument.invoice.dueDate }}</td></tr></table>\n<p><strong>{{ invoiceDocument.creditor.legalName ?? '' }}</strong><br>{{ invoiceDocument.labels.vatNumber }}: {{ invoiceDocument.creditor.vatNumber ?? '' }}<br>{{ invoiceDocument.labels.iban }}: {{ invoiceDocument.creditor.iban ?? '' }}</p>\n<p>{{ invoiceDocument.labels.customer }}: <strong>{{ invoiceDocument.recipient.legalName ?? '' }}</strong><br>{{ invoiceDocument.labels.vatNumber }}: {{ invoiceDocument.recipient.vatNumber ?? '' }}</p>\n<table><thead><tr><th>#</th><th>{{ invoiceDocument.labels.description }}</th><th class=\"num\">{{ invoiceDocument.labels.quantity }}</th><th class=\"num\">{{ invoiceDocument.labels.price }}</th><th class=\"num\">{{ invoiceDocument.labels.amount }}</th><th class=\"num\">{{ invoiceDocument.labels.vatRate }}</th></tr></thead><tbody>\n{% for line in invoiceDocument.lines %}<tr><td>{{ line.number }}</td><td>{{ line.description }}</td><td class=\"num\">{{ line.quantity }}</td><td class=\"num\">{{ line.price }}</td><td class=\"num\">{{ line.amount }}</td><td class=\"num\">{{ line.vatRate }}</td></tr>{% endfor %}\n</tbody></table>\n<table><tr><td>{{ invoiceDocument.labels.totalExclVat }}</td><td class=\"num\">{{ invoiceDocument.totals.net }}</td></tr>\n<tr><td>{{ invoiceDocument.labels.vat }}</td><td class=\"num\">{{ invoiceDocument.totals.vat }}</td></tr>\n<tr><td><strong>{{ invoiceDocument.labels.total }}</strong></td><td class=\"num\"><strong>{{ invoiceDocument.totals.gross }}</strong></td></tr>\n<tr><td class=\"accent\">{{ invoiceDocument.labels.amountDue }}</td><td class=\"num accent\">{{ invoiceDocument.totals.amountDue }}</td></tr></table>\n{% if invoiceDocument.invoice.paymentTerms %}<p>{{ invoiceDocument.labels.paymentTerms }}: {{ invoiceDocument.invoice.paymentTerms }}</p>{% endif %}\n{% if invoiceDocument.qr.epc %}<p>{{ invoiceDocument.labels.scanToPay }}</p><barcode type=\"QR\" code=\"{{ invoiceDocument.qr.epc|e('html_attr') }}\" size=\"{{ variant.qrSize }}\" />{% endif %}\n{% if invoiceDocument.qr.payLink %}<p>{{ invoiceDocument.labels.payOnline }}: {{ invoiceDocument.qr.payLink }}</p><barcode type=\"QR\" code=\"{{ invoiceDocument.qr.payLink|e('html_attr') }}\" size=\"{{ variant.qrSize }}\" />{% endif %}\n{% if invoiceDocument.layout.footerText is defined and invoiceDocument.layout.footerText %}<p style=\"font-size:smaller\">{{ invoiceDocument.layout.footerText }}</p>{% endif %}\n</body></html>"
     }
   ]
 }

@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261117140000</version>
+    <version>0.5.16-unstable.20261123110159</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -205,6 +205,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
              due date move to overdue and each overdue invoice gets the ladder
              stage that is due. Ships off for every administration. -->
         <job>OCA\Shillinq\BackgroundJob\DunningTickJob</job>
+        <!-- purchasing-call-offs-and-reorder-proposals REQ-IRA-011: daily
+             TimedJob comparing every active reorder rule with its stock; low
+             stock raises a ReorderProposal (the alert) and a draft purchase
+             order, one open proposal per rule. The work is
+             ReorderProposalService, run as the system inside each rule's
+             administration. -->
+        <job>OCA\Shillinq\BackgroundJob\ReorderProposalJob</job>
     </background-jobs>
 
     <repair-steps>
@@ -270,6 +277,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  imports PaymentRequest 0.5.0. Idempotent; a fresh install has
                  no such requests, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
+            <!-- purchasing-approval-delegation (REQ-PAD-001): orders the old
+                 in-object approval chain left in the undeclared
+                 lifecycleState pending_approval lose it and start in draft,
+                 so OpenRegister's approval chain takes them on their next
+                 submit. Idempotent; post-migration only. -->
+            <step>OCA\Shillinq\Repair\ResetPendingApprovalPurchaseOrders</step>
+            <!-- purchasing-order-dispatch-and-receipt (REQ-PODR-003). An order
+                 marked sent under the undeclared lifecycleState field gets
+                 statusCode sent where it is still approved. Idempotent. -->
+            <step>OCA\Shillinq\Repair\AlignPurchaseOrderStatusCode</step>
             <step>OCA\Shillinq\Repair\BackfillLinkedObjects</step>
             <!-- reporting-segment-results (REQ-RSR-002, design Migration Plan).
                  Stamps accountClass and countsInResult on the lines of
@@ -280,6 +297,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <!-- people-hours-budget (design Migration Plan). Sums the hours
                  booked before AssignmentHoursListener existed into
                  ProjectAssignment.loggedHours and the project totals; after
+            <step>OCA\Shillinq\Repair\SeedInvoiceNumberSequences</step>
                  InitializeSettings, which imports the fields. Idempotent. -->
             <step>OCA\Shillinq\Repair\BackfillAssignmentHours</step>
             <!-- tax-vat-number-check D3: a customer's VAT number lives in vatId only;
@@ -291,6 +309,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  the recurring profile or the quick draft's create audit entry
                  gives them. After InitializeSettings; never overwrites; idempotent. -->
             <step>OCA\Shillinq\Repair\BackfillArInvoiceProvenance</step>
+            <!-- inventory-receipt-cost-layers D2 (REQ-IRCL-003). Replays the posted
+                 receipts and issues into the valuation snapshots, once, posting
+                 nothing, and logs each issue costed without its receipts'
+                 layers. After InitializeSettings; marked done in app config. -->
+            <step>OCA\Shillinq\Repair\BackfillReceiptCostLayers</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>
@@ -371,10 +394,24 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  InitializeSettings, which imports the fields. Idempotent;
                  a fresh install has no older group entities, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillGroupEntityCbcFields</step>
+            <!-- expenses-category-mapping tasks 1.1 and 2.2: seeds the expense
+                 categories and the mileage, per diem and expense payable
+                 accounts for every administration on the RGS template, then
+                 maps the free text in Receipt.category onto a category code
+                 (exact code, Dutch or English name, known alias). Text that
+                 matches nothing becomes `uncategorised` and is listed for a
+                 bookkeeper. After InitializeSettings, which imports the
+                 ExpenseCategory schema. Idempotent, fail-soft. -->
+            <step>OCA\Shillinq\Repair\MapExpenseCategories</step>
             <!-- platform-help-agent task 2.2 (REQ-PHA-001): upserts one HelpArticle
                  per user-guide page; after InitializeSettings, which imports the
                  HelpArticle schema. Unchanged pages are skipped by hash. -->
             <step>OCA\Shillinq\Repair\SeedHelpArticles</step>
+            <!-- ledger-foreign-legislation task 1.1: an administration that names no
+                 jurisdiction gets NL, the rules it was kept under before jurisdictions
+                 existed. After InitializeSettings (the register must exist);
+                 idempotent, never overwrites a jurisdiction that is set. -->
+            <step>OCA\Shillinq\Repair\BackfillAdministrationJurisdiction</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
@@ -407,6 +444,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Audit the register's bookkeeping objects against the machine-checkable
              rule corpus (lib/Standards/RuleCatalogue + RuleEngine). Read-only. -->
         <command>OCA\Shillinq\Command\RulesAuditCommand</command>
+        <!-- Ledger-sealed-entries: check and genesis-seal the posted-transaction seal chain. -->
+        <command>OCA\Shillinq\Command\LedgerVerifySealCommand</command>
+        <command>OCA\Shillinq\Command\LedgerSealExistingCommand</command>
         <!-- Idempotently backfill local TEST data to satisfy the enforced rules
              (sourceReference + balanced lines on every GL transaction). Test/dev. -->
         <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>

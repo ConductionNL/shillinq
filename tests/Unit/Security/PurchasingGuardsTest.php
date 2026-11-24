@@ -12,7 +12,6 @@ namespace OCA\Shillinq\Tests\Unit\Security;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
 use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
 use OCA\Shillinq\Listener\PurchaseOrderDecisionLockListener;
@@ -34,37 +33,6 @@ final class PurchasingGuardsTest extends TestCase {
 	private const PO = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 
 	private const SIGNED = ['decision' => 'approved', 'decidedAt' => '2026-10-21T10:00:00Z', 'userId' => 'ann'];
-
-	public function testPatchedPurchaseOrderApprovalIsRefused(): void {
-		$guard = new PurchaseOrderApprovalGuard(new ServerWriteAuthority());
-		$result = $guard->check(['id' => self::PO, 'approvalChain' => [self::SIGNED]], 'approve', 'mallory');
-		self::assertFalse($result->isAllowed());
-		self::assertSame(PurchaseOrderApprovalGuard::MESSAGE_NOT_SIGNED, $result->getMessage());
-	}
-
-	public function testApprovalServiceSaveWithFullChainPasses(): void {
-		$authority = new ServerWriteAuthority();
-		$guard = new PurchaseOrderApprovalGuard($authority);
-		$result = $authority->during(
-			PurchaseOrderApprovalGuard::PURPOSE,
-			self::PO,
-			fn () => $guard->check(['id' => self::PO, 'approvalChain' => [self::SIGNED, self::SIGNED]], 'approve', 'ann')
-		);
-		self::assertTrue($result->isAllowed());
-	}
-
-	public function testIncompleteOrEmptyChainIsRefusedEvenWithTheGrant(): void {
-		$authority = new ServerWriteAuthority();
-		$guard = new PurchaseOrderApprovalGuard($authority);
-		foreach ([[], [self::SIGNED, ['decision' => 'pending']], [['decision' => 'approved']]] as $chain) {
-			$result = $authority->during(
-				PurchaseOrderApprovalGuard::PURPOSE,
-				self::PO,
-				fn () => $guard->check(['id' => self::PO, 'approvalChain' => $chain], 'approve', 'ann')
-			);
-			self::assertSame(PurchaseOrderApprovalGuard::MESSAGE_CHAIN_INCOMPLETE, $result->getMessage());
-		}
-	}
 
 	public function testInvoiceLeavesExceptionOnlyUnderTheAcceptanceGrant(): void {
 		$authority = new ServerWriteAuthority();
@@ -132,7 +100,7 @@ final class PurchasingGuardsTest extends TestCase {
 		$resolver->method('matchesSchema')->willReturn(true);
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($withUser === true ? $this->createMock(IUser::class) : null);
-		return new PurchaseOrderDecisionLockListener($resolver, new ServerWriteAuthority(), $session);
+		return new PurchaseOrderDecisionLockListener($resolver, $session);
 	}
 
 	private function po(array $chain): ObjectEntity {
@@ -142,24 +110,30 @@ final class PurchasingGuardsTest extends TestCase {
 		return $entity;
 	}
 
-	public function testCreatingAnOrderWithADecidedEntryIsRefused(): void {
+	public function testCreatingAnOrderWithAnyChainIsRefused(): void {
+		foreach ([[self::SIGNED], [['decision' => 'pending', 'userId' => '']]] as $chain) {
+			$event = new ObjectCreatingEvent($this->po($chain));
+			$this->chainListener()->handle($event);
+			self::assertSame(['message' => PurchaseOrderDecisionLockListener::MESSAGE, 'field' => 'approvalChain'], $event->getErrors());
+		}
+
+		$event = new ObjectCreatingEvent($this->po([]));
+		$this->chainListener()->handle($event);
+		self::assertSame([], $event->getErrors());
+
 		$event = new ObjectCreatingEvent($this->po([self::SIGNED]));
+		$this->chainListener(withUser: false)->handle($event);
+		self::assertSame([], $event->getErrors(), 'a system save is not a user write');
+	}
+
+	public function testChangingTheChainHistoryIsRefusedEvenUnderTheOldGrant(): void {
+		$event = new ObjectUpdatingEvent($this->po([self::SIGNED]), $this->po([['decision' => 'pending']]));
 		$this->chainListener()->handle($event);
 		self::assertSame(PurchaseOrderDecisionLockListener::MESSAGE, $event->getErrors()['message'] ?? null);
 
-		$event = new ObjectCreatingEvent($this->po([['decision' => 'pending', 'userId' => '']]));
-		$this->chainListener()->handle($event);
-		self::assertSame([], $event->getErrors());
-	}
-
-	public function testChangingTheChainOutsideTheServiceIsRefused(): void {
 		$event = new ObjectUpdatingEvent($this->po([self::SIGNED]), $this->po([['decision' => 'pending']]));
-		$this->chainListener()->handle($event);
-		self::assertNotSame([], $event->getErrors());
-
-		$event = new ObjectUpdatingEvent($this->po([self::SIGNED]), $this->po([['decision' => 'pending']]));
-		(new ServerWriteAuthority())->during(PurchaseOrderApprovalGuard::PURPOSE, self::PO, fn () => $this->chainListener()->handle($event));
-		self::assertSame([], $event->getErrors());
+		(new ServerWriteAuthority())->during('purchase-order-approval', self::PO, fn () => $this->chainListener()->handle($event));
+		self::assertNotSame([], $event->getErrors(), 'no grant opens the history any more');
 
 		$event = new ObjectUpdatingEvent($this->po([['decision' => 'pending']]), $this->po([['decision' => 'pending']]));
 		$this->chainListener()->handle($event);

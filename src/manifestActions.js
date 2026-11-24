@@ -24,6 +24,12 @@ import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { downloadEnsiaStatement, downloadEnsiaXml } from './utils/ensiaApi.js'
+import {
+	downloadIcpStatementXml,
+	fileIcpStatement,
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+} from './utils/icpStatementActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import {
 	approvePayable,
@@ -37,6 +43,13 @@ import {
 import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
 import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
+import { openRegenerateKnownCosts } from './utils/knownCostActions.js'
+import { openLedgerSealCheck } from './utils/ledgerSealApi.js'
+import {
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+} from './utils/openItemClearingActions.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -45,6 +58,7 @@ import {
 	openPayeeRelation,
 	openRelationsExport,
 } from './utils/relationActions.js'
+import { createSalesOrderFromQuote, invoiceSalesOrder } from './utils/salesOrderActions.js'
 import {
 	openMeterReadingImport,
 	rateMeterReadings,
@@ -55,6 +69,7 @@ import {
 } from './utils/vatNumberCheck.js'
 import { openPrepareVatReturn } from './utils/vatReturnActions.js'
 import {
+	checkVatFiscalYearCorrections,
 	checkVatReturnForCorrections,
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
@@ -101,6 +116,8 @@ export const manifestActions = Object.freeze({
 	// planning-commitment-year-end: the "Carry open commitments to next year"
 	// header action on Commitments.
 	openCarryOverCommitments,
+	// ledger-sealed-entries: Check ledger seal on the general ledger page.
+	openLedgerSealCheck,
 	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
 	openMissedDepreciation,
 	// tax-vat-number-check: Check VAT number on the customer and supplier pages.
@@ -130,9 +147,26 @@ export const manifestActions = Object.freeze({
 	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// sales-quote-and-order-to-invoice 2.1: Create sales order on a quote,
+	// Invoice order on a sales order.
+	createSalesOrderFromQuote,
+	invoiceSalesOrder,
+	// ledger-open-item-clearing 3.1: Clear on a suggested pair, Clear
+	// selected on Lines to clear, Undo clearing on a group.
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+	// tax-icp-and-reverse-charge: Prepare statement on the ICP page, and
+	// Reconcile, Download XML and File on a statement.
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+	downloadIcpStatementXml,
+	fileIcpStatement,
 	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
 	// Prepare / Download / File on a correction, and the position's lines.
 	checkVatReturnForCorrections,
+	// tax-vat-return-from-books 4.1: Check fiscal year on a broken fiscal year.
+	checkVatFiscalYearCorrections,
 	prepareSupplementaryReturn,
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
@@ -142,6 +176,9 @@ export const manifestActions = Object.freeze({
 	openRepeatAppointment,
 	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
 	openRecalculateInvestmentDeductions,
+	// budget-known-costs design.md §12: "Regenerate known costs" on
+	// Budget Line Derivations.
+	openRegenerateKnownCosts,
 })
 
 /**

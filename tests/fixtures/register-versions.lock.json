@@ -140,6 +140,82 @@
         {
             "appVersion": "0.5.7-unstable.20261117140000",
             "versionsSha256": "9e5dd0ad0834ecf3cf75d29a176cfd50e0bc9d9f52e28568e4091d6db57cb4fc"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261117230000",
+            "versionsSha256": "3e073e193417bcbed3cf7df1ec8c55be9f6781e2235e289742e0afff01b3b6a4"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120071700",
+            "versionsSha256": "6e23e16d5cf410c7b5b5000a1ba4f31101e5ccb183465d5df5dfd18ab9ae74ef"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120071900",
+            "versionsSha256": "4f6661b8e7225390a714041dc653a22607c15a9dcc9ab06a32cd066bba87e823"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120072700",
+            "versionsSha256": "c87c6710af6b6d0029633e1192c82b6e58aa1ade7015b41c000c380f770b59f2"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120074500",
+            "versionsSha256": "4b00a3257d2d66ea837b4ecfd51d0a58f28d7e046385251ba0e434b4be8da0d1"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120074800",
+            "versionsSha256": "b79b96d4c12ebf0cdc3265686ae98b3a5c3ce0e788064340deab91f121e698a7"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120080000",
+            "versionsSha256": "03abdac84634b2b19cae2bff14e5063203268404de759e21fc7c2b864c6d3463"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120081900",
+            "versionsSha256": "4ef1ce1e08ab5a7e9e6b1ea3eeadb19de66bcead9f280f1deb90bfad8c13e7f3"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120095000",
+            "versionsSha256": "a22a7426bb24af1439cc83182bfdd296de6923e07e45681012bbd4a20b2d3cdc"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102100",
+            "versionsSha256": "c92eba6afb234aa4f6c51f99347ba3254b8cb1519ac09044abd9fb20bb4a2e4d"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102200",
+            "versionsSha256": "b34f737c12f6f960742c917b895f250fabc1168031fd0ccc6b67c1baf7dd6438"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102500",
+            "versionsSha256": "3ab98b0be74412361e0a7c966a4677368e683faa56c8a23a3524a697c83f33ff"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102600",
+            "versionsSha256": "0450d0dd94ac92a31b01dffb00832f9825aebb4aee07a6f6c21fa3ef7a082e59"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102700",
+            "versionsSha256": "0b96554ee0ea054552d2246bd5834caa6eddb4f70b85d8a1fec191134f536126"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120102800",
+            "versionsSha256": "e5cb68574ada1f0be8a29d1b1ff2704595bd78f35a074901d3294ff39f85abb0"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120103200",
+            "versionsSha256": "538c0f1b9f0520ea7b605d7e17e75c953e0cc15145aa045f9e8fe99a650b3bcb"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120110000",
+            "versionsSha256": "04a5a0fb971150a830a8a5d4b90894a4bc362f80c00520f63d585d8ea3bdfbda"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261120230000",
+            "versionsSha256": "38a6523ace25f3eaa8cd5b32d1b4b0f499c0e7a1020087ec9bb24cdd17044629"
+        },
+        {
+            "appVersion": "0.5.8-unstable.20261121000000",
+            "versionsSha256": "4e81ddb9a9e0f722085741d2f092240ea41a68dc880cd662b1d44ab4f70af437"
         }
     ],
     "versions": {
@@ -148,10 +224,10 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.4.0",
-        "schema:ARInvoice": "0.18.0",
+        "schema:ARInvoice": "0.20.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
-        "schema:Account": "0.4.0",
+        "schema:Account": "0.5.0",
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
@@ -202,8 +278,8 @@
         "schema:BeleidsIndicator": "0.1.0",
         "schema:Bevinding": "0.1.0",
         "schema:BezwaarBeroep": "0.1.0",
-        "schema:BillableInvoice": "0.1.0",
-        "schema:BillableInvoiceLine": "0.1.0",
+        "schema:BillableInvoice": "0.2.0",
+        "schema:BillableInvoiceLine": "0.2.0",
         "schema:BlanketOrder": "0.1.0",
         "schema:Booking": "0.1.0",
         "schema:BookingCancellation": "0.1.0",
@@ -214,7 +290,7 @@
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",
         "schema:BookingSmsReminderChannel": "0.1.0",
-        "schema:BtwAangifte": "0.2.0",
+        "schema:BtwAangifte": "0.3.0",
         "schema:BudgetBBVMapping": "0.3.0",
         "schema:BudgetLine": "0.1.0",
         "schema:BudgetLineDerivation": "0.1.0",
@@ -252,8 +328,9 @@
         "schema:CddRecord": "0.1.0",
         "schema:ChartOfAccountsMapping": "0.1.0",
         "schema:ClaimsVoorzieningDetail": "0.1.0",
-        "schema:CloseChecklistInstance": "0.1.0",
-        "schema:CloseChecklistTemplate": "0.1.0",
+        "schema:ClearingGroup": "0.1.0",
+        "schema:CloseChecklistInstance": "0.2.0",
+        "schema:CloseChecklistTemplate": "0.2.0",
         "schema:CloseMetrics": "0.1.0",
         "schema:ClosingAccount": "0.1.0",
         "schema:ClosingEntry": "0.1.0",
@@ -271,7 +348,7 @@
         "schema:ConsolidatedReport": "0.1.0",
         "schema:ConsolidationGroup": "0.1.1",
         "schema:ConsolidationMapping": "0.1.0",
-        "schema:ConsolidationPeriod": "0.1.1",
+        "schema:ConsolidationPeriod": "0.2.0",
         "schema:ContingentLiability": "0.1.0",
         "schema:ContinuousCloseAlert": "0.1.0",
         "schema:Contract": "0.1.0",
@@ -286,7 +363,7 @@
         "schema:CreditNote": "0.1.0",
         "schema:CreditScore": "0.1.0",
         "schema:CurrencyBalance": "0.1.0",
-        "schema:CustomerMaster": "0.4.0",
+        "schema:CustomerMaster": "0.5.0",
         "schema:DBAEvidenceDossier": "0.1.0",
         "schema:DBAIntake": "0.1.0",
         "schema:DBAModelovereenkomst": "0.1.0",
@@ -297,6 +374,7 @@
         "schema:DebtorCredit": "0.1.0",
         "schema:Deduction": "0.1.0",
         "schema:Deelneming": "0.1.0",
+        "schema:DeferralSchedule": "0.1.0",
         "schema:DeferredTaxMovement": "0.1.0",
         "schema:DefinitieveAanslag": "0.1.0",
         "schema:Delivery": "0.1.0",
@@ -330,10 +408,12 @@
         "schema:EsrsPolicy": "0.1.0",
         "schema:EsrsStatement": "0.1.0",
         "schema:EsrsTarget": "0.1.0",
+        "schema:EuDeclaration": "0.1.0",
         "schema:EuExpenditure": "0.1.0",
         "schema:EuProject": "0.1.0",
         "schema:EuVatRate": "0.1.0",
         "schema:Evaluatievraag": "0.1.0",
+        "schema:ExpenseCategory": "0.1.0",
         "schema:ExpenseClaimEntry": "0.1.0",
         "schema:ExpiryAlert": "0.1.0",
         "schema:FXContract": "0.1.0",
@@ -341,21 +421,21 @@
         "schema:FeeSchedule": "0.3.0",
         "schema:FieldRequirement": "0.2.0",
         "schema:FinancialStatement": "0.1.0",
-        "schema:FiscalPeriod": "0.3.0",
+        "schema:FiscalPeriod": "0.4.0",
         "schema:FiscalYear": "0.1.0",
         "schema:FiscaleCorrectie": "0.1.0",
         "schema:FiscaleEenheid": "0.1.0",
         "schema:FixedAsset": "0.1.0",
         "schema:FluxAttribution": "0.1.0",
         "schema:FluxItem": "0.1.0",
-        "schema:FluxRun": "0.1.0",
-        "schema:FrameworkAgreement": "0.1.0",
+        "schema:FluxRun": "0.2.0",
+        "schema:FrameworkAgreement": "0.2.0",
         "schema:FrameworkElection": "0.1.0",
         "schema:FundsTransfer": "0.1.0",
         "schema:FxRate": "0.1.0",
         "schema:FxRevaluationPosting": "0.1.0",
-        "schema:GLLine": "0.2.0",
-        "schema:GLTransaction": "0.3.0",
+        "schema:GLLine": "0.3.0",
+        "schema:GLTransaction": "0.7.0",
         "schema:GRAllocationRun": "0.1.0",
         "schema:GRDeelnemer": "0.1.0",
         "schema:GRVerdeelsleutel": "0.1.0",
@@ -425,7 +505,9 @@
         "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
         "schema:InvoiceBatch": "0.1.0",
+        "schema:InvoiceLayout": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
+        "schema:InvoiceNumberSequence": "0.1.0",
         "schema:IossImport": "0.1.0",
         "schema:IroRecord": "0.1.0",
         "schema:IrregularityReport": "0.1.0",
@@ -479,16 +561,16 @@
         "schema:OninbaarAfschrijving": "0.1.0",
         "schema:OpdrachtgeversVerklaring": "0.1.0",
         "schema:OrderFulfilment": "0.1.0",
-        "schema:OrderLine": "0.1.0",
+        "schema:OrderLine": "0.2.0",
         "schema:OrderPick": "0.1.0",
-        "schema:OrderPrimitive": "0.1.0",
+        "schema:OrderPrimitive": "0.2.0",
         "schema:OssPayment": "0.1.0",
         "schema:OssRegistration": "0.1.0",
         "schema:OssReturn": "0.1.0",
         "schema:OssThresholdCounter": "0.1.0",
         "schema:Paragraaf": "0.1.0",
         "schema:PassThroughMarkupRule": "0.1.0",
-        "schema:Payee": "0.2.0",
+        "schema:Payee": "0.3.0",
         "schema:Payment": "0.1.0",
         "schema:PaymentDevice": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
@@ -539,7 +621,7 @@
         "schema:RateRecord": "0.1.0",
         "schema:RateSchedule": "0.1.0",
         "schema:RealisedFxPosting": "0.2.0",
-        "schema:Receipt": "0.1.0",
+        "schema:Receipt": "0.2.0",
         "schema:Rechtmatigheidsbevinding": "0.1.0",
         "schema:Rechtmatigheidsparagraaf": "0.2.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
@@ -550,6 +632,7 @@
         "schema:ReimbursementPolicy": "0.1.0",
         "schema:ReinvestmentReserve": "0.1.0",
         "schema:RenteRisicoNorm": "0.1.0",
+        "schema:ReorderProposal": "0.1.0",
         "schema:RepaymentInstallment": "0.1.0",
         "schema:ReportSchedule": "0.1.0",
         "schema:Requisition": "0.1.0",
@@ -581,10 +664,12 @@
         "schema:SchatkistPosition": "0.1.0",
         "schema:SchatkistbankierenSaldo": "0.1.0",
         "schema:SegregatedLedger": "0.1.0",
+        "schema:SelfBilledInvoiceRefusal": "0.1.0",
         "schema:SepaMandate": "0.1.0",
         "schema:Service": "0.3.0",
         "schema:ServiceCategoryOverride": "0.1.0",
         "schema:SiSaAssurance": "0.1.0",
+        "schema:SisaIndicator": "0.1.0",
         "schema:SisaRegelingIndicator": "0.1.0",
         "schema:SisaReport": "0.1.0",
         "schema:SoProject": "0.1.0",
@@ -641,14 +726,15 @@
         "schema:VATAuditRecord": "0.1.0",
         "schema:VATDeclaration": "0.2.0",
         "schema:VATGLAccounts": "0.1.0",
-        "schema:VATLine": "0.2.0",
+        "schema:VATLine": "0.3.0",
         "schema:ValueChainActor": "0.1.0",
         "schema:VamilDepreciation": "0.1.0",
         "schema:VariableConsiderationAdjustment": "0.1.0",
-        "schema:VatCorrection": "0.1.0",
+        "schema:VatCorrection": "0.2.0",
+        "schema:VatFiscalUnity": "0.1.0",
         "schema:VatReturn": "0.1.0",
         "schema:VatReturnFiling": "0.3.0",
-        "schema:VatTariff": "0.3.0",
+        "schema:VatTariff": "0.5.0",
         "schema:VendorPerformance": "0.1.0",
         "schema:VerklaringDraft": "0.1.0",
         "schema:ViesValidation": "0.1.0",

@@ -310,7 +310,8 @@ class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 	 * map) against the draft's CURRENT value; a changed value is merged in
 	 * and its field name added to `humanCorrected` (union, never replacing
 	 * prior entries). The immutable `extractedFieldsOriginal` snapshot is
-	 * left untouched. `extractionStatus` becomes `confirmed`.
+	 * left untouched. `extractionStatus` becomes `confirmed` on a record that
+	 * came from an extraction or an import review; other records keep none.
 	 *
 	 * The comparison — and therefore the provenance record — is computed
 	 * server-side against the persisted draft, not trusted from the client,
@@ -352,7 +353,9 @@ class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 		}//end foreach
 
 		$existingDraft['humanCorrected'] = $humanCorrected;
-		$existingDraft['extractionStatus'] = self::STATUS_CONFIRMED;
+		if (($existingDraft['extractionStatus'] ?? null) !== null) {
+			$existingDraft['extractionStatus'] = self::STATUS_CONFIRMED;
+		}
 
 		return $existingDraft;
 	}//end recordCorrection()

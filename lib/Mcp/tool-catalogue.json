@@ -1,51 +1,5 @@
 [
     {
-        "id": "shillinq.purchase_order.decide",
-        "name": "Decide on a purchase order",
-        "description": "Approve, reject or delegate a purchase order that waits for your approval, as the signed-in approver. Use it when the user asks to approve or reject a specific purchase order; find the order first with shillinq.PurchaseOrder.search. The decision binds the administration and is recorded in the approval chain; it cannot be taken back with this tool.",
-        "scope": "update",
-        "reach": "instance",
-        "readOnlyHint": false,
-        "destructiveHint": false,
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "administrationId": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
-                    "description": "The administration the order belongs to."
-                },
-                "purchaseOrderId": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
-                    "description": "The purchase order."
-                },
-                "decision": {
-                    "type": "string",
-                    "enum": [
-                        "approved",
-                        "rejected",
-                        "delegated"
-                    ],
-                    "description": "The decision."
-                },
-                "comment": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "maxLength": 2000,
-                    "description": "An optional comment for the approval chain."
-                }
-            },
-            "required": [
-                "administrationId",
-                "purchaseOrderId",
-                "decision"
-            ]
-        }
-    },
-    {
         "id": "shillinq.period_close.status",
         "name": "Read the close status of a period",
         "description": "Read an accounting period of an administration with its close status and the readiness flags the close assistant raises (open items, unposted entries). Use it before starting or finishing a close, or when the user asks whether a month or quarter can be closed. Changes nothing.",
@@ -703,7 +657,7 @@
     {
         "id": "shillinq.requisition.convert",
         "name": "Turn a requisition into a purchase order",
-        "description": "Convert an approved purchase requisition of an administration into a purchase order for its supplier. Use it when the user asks to order what an approved requisition requests; the order then goes through its own approval with shillinq.purchase_order.decide.",
+        "description": "Convert an approved purchase requisition of an administration into a purchase order for its supplier. Use it when the user asks to order what an approved requisition requests; the order then goes through its own approval steps in OpenRegister.",
         "scope": "create",
         "reach": "instance",
         "readOnlyHint": false,

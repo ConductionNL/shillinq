@@ -1,0 +1,651 @@
+{
+ "_meta": {
+  "spdx-license": "EUPL-1.2",
+  "spdx-copyright": "2026 Conduction B.V.",
+  "change": "reporting-financial-statements",
+  "adr": "ADR-037 modular manifest fragment",
+  "description": "The profit and loss over a chosen range with the previous period and the same period last year beside it, each with its difference (REQ-RFS-001), and the balance sheet on the end date of the chosen range with the running result of the open fiscal year in equity (REQ-RFS-002). Both read GET /api/statements/*, the calculator the report documents use, and are opened from their cards on the Reports page (ADR-112). The balance sheet takes the end date of the range as its as-of date. Every account figure opens the posted ledger lines behind it on LedgerLinesForAccount (REQ-RFS-003), through the row's linesKey (account~from~to: the statement's range, for the balance sheet the fiscal year start to the as-of date); the trial balance lines open the same page with their own id, which names the account and the period."
+ },
+ "pages": [
+  {
+   "id": "FinancialStatementProfitLoss",
+   "route": "/reports/profit-and-loss",
+   "type": "dashboard",
+   "title": "Profit and loss",
+   "config": {
+    "description": "The result per account for the chosen period, compared with the previous period and the same period last year.",
+    "dateRange": {
+     "enabled": true,
+     "showHeaderPicker": true,
+     "persistKey": "shillinq-profit-loss-range",
+     "default": {
+      "preset": "year"
+     },
+     "presets": [
+      {
+       "id": "quarter",
+       "label": "Last 3 months",
+       "days": 91
+      },
+      {
+       "id": "year",
+       "label": "Last 12 months",
+       "days": 365
+      },
+      {
+       "id": "two-year",
+       "label": "Last 24 months",
+       "days": 730
+      }
+     ]
+    },
+    "widgets": [
+     {
+      "id": "profit-loss-revenue",
+      "type": "stat",
+      "title": "Revenue",
+      "content": {
+       "label": "Revenue in the period",
+       "icon": "TrendingUp",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/profit-and-loss",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?",
+         "compare": "previous-period,previous-year"
+        }
+       },
+       "valueField": "totals.revenue.amounts.current"
+      }
+     },
+     {
+      "id": "profit-loss-expense",
+      "type": "stat",
+      "title": "Expenses",
+      "content": {
+       "label": "Expenses in the period",
+       "icon": "TrendingDown",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/profit-and-loss",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?",
+         "compare": "previous-period,previous-year"
+        }
+       },
+       "valueField": "totals.expense.amounts.current"
+      }
+     },
+     {
+      "id": "profit-loss-result",
+      "type": "stat",
+      "title": "Result",
+      "content": {
+       "label": "Result in the period",
+       "icon": "ScaleBalance",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/profit-and-loss",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?",
+         "compare": "previous-period,previous-year"
+        }
+       },
+       "valueField": "totals.result.amounts.current"
+      }
+     },
+     {
+      "id": "profit-loss-result-last-year",
+      "type": "stat",
+      "title": "Result last year",
+      "content": {
+       "label": "Result in the same period last year",
+       "icon": "History",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/profit-and-loss",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?",
+         "compare": "previous-period,previous-year"
+        }
+       },
+       "valueField": "totals.result.amounts.previous-year"
+      }
+     },
+     {
+      "id": "profit-loss-revenue-accounts",
+      "type": "object-table",
+      "title": "Revenue",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/profit-and-loss",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?",
+         "compare": "previous-period,previous-year"
+        },
+        "responsePath": "revenue"
+       },
+       "emptyText": "No revenue is posted in this period.",
+       "columns": [
+        {
+         "key": "label",
+         "label": "Account"
+        },
+        {
+         "key": "amounts.current",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "amounts.previous-period",
+         "label": "Previous period",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "differences.previous-period",
+         "label": "Difference with previous period",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "amounts.previous-year",
+         "label": "Same period last year",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "differences.previous-year",
+         "label": "Difference with last year",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
+      }
+     },
+     {
+      "id": "profit-loss-expense-accounts",
+      "type": "object-table",
+      "title": "Expenses",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/profit-and-loss",
+        "params": {
+         "from": "@workspace.dateFrom?",
+         "to": "@workspace.dateTo?",
+         "compare": "previous-period,previous-year"
+        },
+        "responsePath": "expense"
+       },
+       "emptyText": "No expenses are posted in this period.",
+       "columns": [
+        {
+         "key": "label",
+         "label": "Account"
+        },
+        {
+         "key": "amounts.current",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "amounts.previous-period",
+         "label": "Previous period",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "differences.previous-period",
+         "label": "Difference with previous period",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "amounts.previous-year",
+         "label": "Same period last year",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        },
+        {
+         "key": "differences.previous-year",
+         "label": "Difference with last year",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
+      }
+     }
+    ],
+    "layout": [
+     {
+      "id": "1",
+      "widgetId": "profit-loss-revenue",
+      "gridX": 0,
+      "gridY": 0,
+      "gridWidth": 3,
+      "gridHeight": 2
+     },
+     {
+      "id": "2",
+      "widgetId": "profit-loss-expense",
+      "gridX": 3,
+      "gridY": 0,
+      "gridWidth": 3,
+      "gridHeight": 2
+     },
+     {
+      "id": "3",
+      "widgetId": "profit-loss-result",
+      "gridX": 6,
+      "gridY": 0,
+      "gridWidth": 3,
+      "gridHeight": 2
+     },
+     {
+      "id": "4",
+      "widgetId": "profit-loss-result-last-year",
+      "gridX": 9,
+      "gridY": 0,
+      "gridWidth": 3,
+      "gridHeight": 2
+     },
+     {
+      "id": "5",
+      "widgetId": "profit-loss-revenue-accounts",
+      "gridX": 0,
+      "gridY": 2,
+      "gridWidth": 12,
+      "gridHeight": 5
+     },
+     {
+      "id": "6",
+      "widgetId": "profit-loss-expense-accounts",
+      "gridX": 0,
+      "gridY": 7,
+      "gridWidth": 12,
+      "gridHeight": 6
+     }
+    ]
+   }
+  },
+  {
+   "id": "FinancialStatementBalanceSheet",
+   "route": "/reports/balance-sheet",
+   "type": "dashboard",
+   "title": "Balance sheet",
+   "config": {
+    "description": "Balances of the posted lines up to the end date of the chosen range, with the result of the open fiscal year in equity.",
+    "dateRange": {
+     "enabled": true,
+     "showHeaderPicker": true,
+     "persistKey": "shillinq-balance-sheet-range",
+     "default": {
+      "preset": "year"
+     },
+     "presets": [
+      {
+       "id": "quarter",
+       "label": "Last 3 months",
+       "days": 91
+      },
+      {
+       "id": "year",
+       "label": "Last 12 months",
+       "days": 365
+      },
+      {
+       "id": "two-year",
+       "label": "Last 24 months",
+       "days": 730
+      }
+     ]
+    },
+    "widgets": [
+     {
+      "id": "balance-sheet-assets",
+      "type": "stat",
+      "title": "Total assets",
+      "content": {
+       "label": "Assets on the end date",
+       "icon": "Bank",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/balance-sheet",
+        "params": {
+         "asOf": "@workspace.dateTo?"
+        }
+       },
+       "valueField": "totals.assets"
+      }
+     },
+     {
+      "id": "balance-sheet-liabilities-equity",
+      "type": "stat",
+      "title": "Liabilities and equity",
+      "content": {
+       "label": "Liabilities plus equity on the end date",
+       "icon": "ScaleBalance",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/balance-sheet",
+        "params": {
+         "asOf": "@workspace.dateTo?"
+        }
+       },
+       "valueField": "totals.liabilitiesAndEquity"
+      }
+     },
+     {
+      "id": "balance-sheet-assets-accounts",
+      "type": "object-table",
+      "title": "Assets",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/balance-sheet",
+        "params": {
+         "asOf": "@workspace.dateTo?"
+        },
+        "responsePath": "assets"
+       },
+       "emptyText": "No asset balances on this date.",
+       "columns": [
+        {
+         "key": "label",
+         "label": "Account"
+        },
+        {
+         "key": "amount",
+         "label": "Balance",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
+      }
+     },
+     {
+      "id": "balance-sheet-liabilities-accounts",
+      "type": "object-table",
+      "title": "Liabilities",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/balance-sheet",
+        "params": {
+         "asOf": "@workspace.dateTo?"
+        },
+        "responsePath": "liabilities"
+       },
+       "emptyText": "No liability balances on this date.",
+       "columns": [
+        {
+         "key": "label",
+         "label": "Account"
+        },
+        {
+         "key": "amount",
+         "label": "Balance",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
+      }
+     },
+     {
+      "id": "balance-sheet-equity-accounts",
+      "type": "object-table",
+      "title": "Equity",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/balance-sheet",
+        "params": {
+         "asOf": "@workspace.dateTo?"
+        },
+        "responsePath": "equity"
+       },
+       "emptyText": "No equity balances on this date.",
+       "columns": [
+        {
+         "key": "label",
+         "label": "Account"
+        },
+        {
+         "key": "amount",
+         "label": "Balance",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "LedgerLinesForAccount",
+       "rowIdField": "linesKey"
+      }
+     }
+    ],
+    "layout": [
+     {
+      "id": "1",
+      "widgetId": "balance-sheet-assets",
+      "gridX": 0,
+      "gridY": 0,
+      "gridWidth": 6,
+      "gridHeight": 2
+     },
+     {
+      "id": "2",
+      "widgetId": "balance-sheet-liabilities-equity",
+      "gridX": 6,
+      "gridY": 0,
+      "gridWidth": 6,
+      "gridHeight": 2
+     },
+     {
+      "id": "3",
+      "widgetId": "balance-sheet-assets-accounts",
+      "gridX": 0,
+      "gridY": 2,
+      "gridWidth": 6,
+      "gridHeight": 8
+     },
+     {
+      "id": "4",
+      "widgetId": "balance-sheet-liabilities-accounts",
+      "gridX": 6,
+      "gridY": 2,
+      "gridWidth": 6,
+      "gridHeight": 4
+     },
+     {
+      "id": "5",
+      "widgetId": "balance-sheet-equity-accounts",
+      "gridX": 6,
+      "gridY": 6,
+      "gridWidth": 6,
+      "gridHeight": 4
+     }
+    ]
+   }
+  },
+  {
+   "id": "LedgerLinesForAccount",
+   "route": "/ledger/lines/:id",
+   "type": "dashboard",
+   "title": "Ledger lines for an account",
+   "config": {
+    "description": "The posted ledger lines behind one account figure; together they add up to it. Open a line to see its posting.",
+    "headerActions": [
+     {
+      "id": "ledger-lines-profit-loss",
+      "label": "Profit and loss",
+      "type": "open-page",
+      "route": "FinancialStatementProfitLoss",
+      "icon": "ArrowLeft"
+     },
+     {
+      "id": "ledger-lines-balance-sheet",
+      "label": "Balance sheet",
+      "type": "open-page",
+      "route": "FinancialStatementBalanceSheet",
+      "icon": "ArrowLeft"
+     }
+    ],
+    "widgets": [
+     {
+      "id": "ledger-lines-total",
+      "type": "stat",
+      "title": "Total",
+      "content": {
+       "label": "Total of the lines",
+       "icon": "Sigma",
+       "format": {
+        "style": "currency",
+        "currency": "EUR",
+        "decimals": 2
+       },
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/lines",
+        "params": {
+         "key": "@route.id"
+        }
+       },
+       "valueField": "total"
+      }
+     },
+     {
+      "id": "ledger-lines",
+      "type": "object-table",
+      "title": "Ledger lines",
+      "content": {
+       "endpointSource": {
+        "url": "/apps/shillinq/api/statements/lines",
+        "params": {
+         "key": "@route.id"
+        },
+        "responsePath": "lines"
+       },
+       "emptyText": "No lines are posted on this account in this range.",
+       "columns": [
+        {
+         "key": "date",
+         "label": "Date"
+        },
+        {
+         "key": "account",
+         "label": "Account"
+        },
+        {
+         "key": "description",
+         "label": "Description"
+        },
+        {
+         "key": "amount",
+         "label": "Amount",
+         "formatter": "currency",
+         "formatterOptions": {
+          "currency": "EUR",
+          "decimals": 2
+         }
+        }
+       ],
+       "rowRoute": "GeneralLedgerDetail",
+       "rowIdField": "transactionId"
+      }
+     }
+    ],
+    "layout": [
+     {
+      "id": "1",
+      "widgetId": "ledger-lines-total",
+      "gridX": 0,
+      "gridY": 0,
+      "gridWidth": 4,
+      "gridHeight": 2
+     },
+     {
+      "id": "2",
+      "widgetId": "ledger-lines",
+      "gridX": 0,
+      "gridY": 2,
+      "gridWidth": 12,
+      "gridHeight": 8
+     }
+    ]
+   }
+  }
+ ]
+}

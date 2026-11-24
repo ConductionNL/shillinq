@@ -64,6 +64,7 @@ use RuntimeException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Contract\ObjectFindOptions as PublishedObjectFindOptions;
 
 /**
  * The daily dunning pass.
@@ -790,7 +791,7 @@ final class DunningTickRunnerTest extends TestCase {
 			 */
 			public function find(
 				int|string $id,
-				?ObjectFindOptions $options = null,
+				ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 				bool $_rbac = true,
 				bool $_multitenancy = true
 			): ?\OCA\OpenRegister\Contract\ObjectEntityInterface {

@@ -80,6 +80,9 @@ class PlatformPropertiesTest extends TestCase {
 		'PortalPaymentInitiationController::initiate' => ['file' => 'PortalPaymentInitiationController.php', 'check' => '$this->verifier->verify('],
 		'PortalContributionDeclineController::decline' => ['file' => 'PortalContributionDeclineController.php', 'check' => '$this->verifier->verify('],
 		'PortalSubscriptionCancelController::cancel' => ['file' => 'PortalSubscriptionCancelController.php', 'check' => '$this->verifier->verify('],
+		// The withdraw action: the portal's signed assertion, or a guest's signed link token
+		// (WithdrawalLinkService::verify, reached through withdrawByLink).
+		'PortalWithdrawalController::withdraw' => ['file' => 'PortalWithdrawalController.php', 'check' => '$this->verifier->verify('],
 	];
 
 	/**

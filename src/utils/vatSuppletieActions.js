@@ -100,6 +100,57 @@ export async function checkVatReturnForCorrections(scope) {
 }
 
 /**
+ * What a fiscal year check found, as a toast.
+ *
+ * @param {{fiscalYear: string, total: number, thresholdExceeded: boolean, returns: Array}} result The check's answer.
+ * @return {{kind: string, text: string}}
+ * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+ */
+export function fiscalYearMessage(result) {
+	const year = String(result?.fiscalYear || '')
+	const drifted = (Array.isArray(result?.returns) ? result.returns : []).some((row) => row?.drift === true)
+	if (!drifted) {
+		return { kind: 'success', text: t('shillinq', 'Fiscal year {year}: the books still match its returns.', { year }) }
+	}
+	const total = Number(result?.total || 0).toFixed(2)
+	if (result?.thresholdExceeded === true) {
+		return {
+			kind: 'warning',
+			text: t('shillinq', 'Fiscal year {year}: the corrections total EUR {total}, above EUR 1,000. File a supplementary return; the corrections are on the corrections page.', { year, total }),
+		}
+	}
+	return {
+		kind: 'warning',
+		text: t('shillinq', 'Fiscal year {year}: the corrections total EUR {total}, EUR 1,000 or less, so they can go into the next return. The corrections are on the corrections page.', { year, total }),
+	}
+}
+
+/**
+ * Header action on a fiscal year: check every accepted VAT return of a
+ * broken fiscal year for corrections and total them (REQ-TVRB-002).
+ *
+ * @param {{item: object}} scope The page scope.
+ * @return {Promise<object|null>} The check's answer, or null when it failed.
+ * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+ */
+export async function checkVatFiscalYearCorrections(scope) {
+	const id = recordId(scope)
+	if (!id) {
+		return null
+	}
+	try {
+		const { data } = await axios.post(generateUrl('/apps/shillinq/api/fiscal-years/{id}/vat-corrections/check', { id }))
+		const message = fiscalYearMessage(data?.data)
+		TOAST[message.kind](message.text)
+		emit('cn:page:refresh', {})
+		return data?.data ?? null
+	} catch (e) {
+		showError(refusal(e, t('shillinq', 'The fiscal year could not be checked for corrections.')))
+		return null
+	}
+}
+
+/**
  * Header action on a detected correction: prepare its supplementary return.
  *
  * @param {{item: object}} scope The page scope.

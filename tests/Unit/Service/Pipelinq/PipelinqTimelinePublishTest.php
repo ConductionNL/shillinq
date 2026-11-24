@@ -105,7 +105,7 @@ final class PipelinqTimelinePublishTest extends TestCase {
 					return 'https://pipelinq.test';
 				}
 
-				if ($key === PipelinqContactAdapter::CONFIG_KEY_TOKEN) {
+				if ($key === PipelinqContactAdapter::CONFIG_KEY_BEARER) {
 					return 'NEVER-LOG-ME-1234567890';
 				}
 

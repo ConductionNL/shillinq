@@ -1,0 +1,39 @@
+# Shillinq
+
+> Business administration suite for Nextcloud, for freelancers, sole proprietors, SMBs and corporations: integrated financial, procurement and contract management. Requires OpenRegister, which stores its records.
+
+## Start here
+
+- [AGENTS.md](AGENTS.md): setup, build, test and lint commands, OpenSpec flow and conventions
+- [README.md](README.md): overview, installation and the Docker evaluation stack
+- [CONTRIBUTING.md](CONTRIBUTING.md): branches, pull requests and commit format
+
+## Documentation
+
+- [docs/intro.md](docs/intro.md): documentation home
+- [docs/installation.md](docs/installation.md): installation
+- [docs/Features/](docs/Features/): one page per feature
+- [docs/guides/](docs/guides/): task guides (invoices, bank statements, bills)
+- [docs/Technical/architecture.md](docs/Technical/architecture.md): architecture
+- [docs/architecture/integration-points.md](docs/architecture/integration-points.md): integration points shaped but not implemented yet
+- [docs/standards/](docs/standards/): accounting standards and output formats
+- [docs/user-guide/](docs/user-guide/): user guide
+
+## API
+
+- [openapi.json](openapi.json): OpenAPI 3.0 description of the app's JSON API
+- [docs/api/](docs/api/): notes on individual API surfaces
+
+## Specifications and decisions
+
+- [openspec/config.yaml](openspec/config.yaml): OpenSpec project context and rules
+- [openspec/specs/](openspec/specs/): current requirements, one directory per capability
+- [openspec/changes/](openspec/changes/): proposed and in-progress changes; finished ones in `archive/`
+- [openspec/architecture/](openspec/architecture/): architecture decision records
+
+## Code
+
+- [appinfo/info.xml](appinfo/info.xml): app metadata
+- [lib/](lib/): PHP backend
+- [src/](src/): Vue frontend; pages in [src/manifest.json](src/manifest.json) and [src/manifest.d/](src/manifest.d/)
+- [lib/Settings/shillinq_register.json](lib/Settings/shillinq_register.json): OpenRegister register and schemas

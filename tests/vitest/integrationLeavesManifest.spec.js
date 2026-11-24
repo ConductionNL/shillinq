@@ -28,7 +28,9 @@ describe('files widget on pages whose records hold a document (REQ-CPA-005)', ()
 
 	it.each(cases)('%s keeps its data and related body and adds the files leaf below it', (id, schema, title) => {
 		const { config } = page(manifest, id)
-		expect(config.widgets.map((w) => w.type)).toEqual(['data', 'related', 'integration'])
+		// The body is data, related and the files leaf, in that order; a page may
+		// place more below them (ExpenseClaimDetail: the accounts per receipt).
+		expect(config.widgets.slice(0, 3).map((w) => w.type)).toEqual(['data', 'related', 'integration'])
 		expect(config.widgets[0].content).toEqual({ register: 'shillinq', schema, columns: 3 })
 		const files = config.widgets[2]
 		expect(files).toMatchObject({ integrationId: 'files', title })
@@ -62,5 +64,44 @@ describe('talk tab on curated dossier pages (REQ-CPA-008)', () => {
 
 	it('ARInvoiceDetail curates no tabs, so it gets talk from the registry and is not given a list', () => {
 		expect(page(manifest, 'ARInvoiceDetail').config.sidebarProps?.tabs).toBeUndefined()
+	})
+})
+
+/**
+ * Every integration leaf a config names, wherever in the config it sits.
+ *
+ * @param {unknown} node A config node.
+ * @param {string[]} found The leaf ids so far.
+ * @return {string[]} The leaf ids.
+ */
+function leaves(node, found = []) {
+	if (Array.isArray(node)) {
+		node.forEach((child) => leaves(child, found))
+	} else if (node && typeof node === 'object') {
+		if (node.type === 'integration' && typeof node.integrationId === 'string') {
+			found.push(node.integrationId)
+		}
+		Object.values(node).forEach((child) => leaves(child, found))
+	}
+	return found
+}
+
+// @spec openspec/changes/integration-leaves-consume/tasks.md
+describe('a detail page without curated tabs is left as it was (diff-check)', () => {
+	it('gives ARInvoiceDetail, which curates no tabs, no talk tab and no tab list of its own', () => {
+		const { config } = page(manifest, 'ARInvoiceDetail')
+		expect(config.sidebarProps?.tabs).toBeUndefined()
+		expect(leaves(config)).not.toContain('talk')
+	})
+
+	it('adds talk only to the two curated pages, nowhere else in the manifests', () => {
+		const sources = [manifest, ...fs.readdirSync(path.join(ROOT, 'src/manifest.d'))
+			.filter((file) => file.endsWith('.json'))
+			.map((file) => read(path.join('src/manifest.d', file)))]
+		const withTalk = sources
+			.flatMap((source) => (source.pages || []).filter((candidate) => (candidate.config?.sidebarProps?.tabs || [])
+				.some((tab) => tab.id === 'talk')))
+			.map((candidate) => candidate.id)
+		expect(withTalk.sort()).toEqual(['ContractDetail', 'ExpenseClaimDetail'])
 	})
 })

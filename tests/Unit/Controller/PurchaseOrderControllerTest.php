@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PurchaseOrderController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\PurchaseOrderApprovalTiers;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -100,6 +101,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		parent::setUp();
 		$this->request = $this->createMock(IRequest::class);
 		$this->purchaseOrderService = $this->createMock(PurchaseOrderService::class);
+		$this->approvalTiers = new PurchaseOrderApprovalTiers();
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -142,6 +144,13 @@ final class PurchaseOrderControllerTest extends TestCase {
 	}//end anonymous()
 
 	/**
+	 * The approver tiers; a mock when a test sets one, else the shipped declaration.
+	 *
+	 * @var PurchaseOrderApprovalTiers
+	 */
+	private PurchaseOrderApprovalTiers $approvalTiers;
+
+	/**
 	 * Build the controller over the current mocks.
 	 *
 	 * @return PurchaseOrderController
@@ -154,6 +163,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 			$this->userSession,
 			$this->logger,
 			$this->l10n,
+			$this->approvalTiers,
 		);
 
 	}//end controller()
@@ -281,7 +291,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		$this->withParams(['administrationId' => 'adm-1']);
 		$po = ['id' => 'po-1', 'status' => 'sent'];
 		$this->purchaseOrderService->expects($this->once())
-			->method('blockSendUntilApproved')
+			->method('markSent')
 			->willReturnCallback(
 				static function (string $administrationId, string $purchaseOrderId) use ($po): array {
 					self::assertSame('adm-1', $administrationId);
@@ -307,7 +317,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->administrationContext->method('canAccess')->willReturn(false);
 		$this->withParams(['administrationId' => 'adm-other']);
-		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+		$this->purchaseOrderService->expects($this->never())->method('markSent');
 
 		$response = $this->controller()->send('po-1');
 
@@ -323,13 +333,43 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testSendAnonymousReturns401(): void {
 		$this->anonymous();
 		$this->withParams(['administrationId' => 'adm-1']);
-		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+		$this->purchaseOrderService->expects($this->never())->method('markSent');
 
 		$response = $this->controller()->send('po-1');
 
 		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
 	}//end testSendAnonymousReturns401()
+
+	/**
+	 * dispatchChannels() answers the service's channel availability with HTTP 200.
+	 *
+	 * @return void
+	 */
+	public function testDispatchChannelsReturnsTheServiceAnswer(): void {
+		$channels = [
+			'peppol' => ['available' => false, 'reason' => 'Peppol sending is not configured'],
+			'email' => ['available' => true, 'reason' => null],
+		];
+		$this->purchaseOrderService->expects($this->once())->method('dispatchChannels')->willReturn($channels);
+
+		$response = $this->controller()->dispatchChannels();
+
+		self::assertSame(200, $response->getStatus());
+		self::assertSame($channels, $response->getData());
+	}//end testDispatchChannelsReturnsTheServiceAnswer()
+
+	/**
+	 * dispatchChannels() refuses an anonymous caller with 401 and asks the service nothing.
+	 *
+	 * @return void
+	 */
+	public function testDispatchChannelsRefusesAnonymous(): void {
+		$this->anonymous();
+		$this->purchaseOrderService->expects($this->never())->method('dispatchChannels');
+
+		self::assertSame(401, $this->controller()->dispatchChannels()->getStatus());
+	}//end testDispatchChannelsRefusesAnonymous()
 
 	/**
 	 * previewApprovalChain() returns the server-determined chain for the
@@ -340,17 +380,14 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testPreviewApprovalChainReturns200WithChain(): void {
 		$this->withParams(['amount' => '18500']);
 		$chain = [
-			['role' => 'budget_holder', 'threshold' => 5000.0],
-			['role' => 'finance_manager', 'threshold' => 25000.0],
+			['role' => 'teamleider', 'order' => 1],
+			['role' => 'facility_manager', 'order' => 2],
 		];
-		$this->purchaseOrderService->expects($this->once())
-			->method('determineApprovalChain')
-			->willReturnCallback(
-				static function (float $amount) use ($chain): array {
-					self::assertSame(18500.0, $amount);
-					return $chain;
-				}
-			);
+		$this->approvalTiers = $this->createMock(PurchaseOrderApprovalTiers::class);
+		$this->approvalTiers->expects($this->once())
+			->method('rolesFor')
+			->with(1850000)
+			->willReturn($chain);
 
 		$response = $this->controller()->previewApprovalChain();
 
@@ -368,14 +405,11 @@ final class PurchaseOrderControllerTest extends TestCase {
 	 */
 	public function testPreviewApprovalChainClampsNegativeAmount(): void {
 		$this->withParams(['amount' => '-9999']);
-		$this->purchaseOrderService->expects($this->once())
-			->method('determineApprovalChain')
-			->willReturnCallback(
-				static function (float $amount): array {
-					self::assertSame(0.0, $amount);
-					return [];
-				}
-			);
+		$this->approvalTiers = $this->createMock(PurchaseOrderApprovalTiers::class);
+		$this->approvalTiers->expects($this->once())
+			->method('rolesFor')
+			->with(0)
+			->willReturn([]);
 
 		$response = $this->controller()->previewApprovalChain();
 
@@ -392,7 +426,8 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testPreviewApprovalChainAnonymousReturns401(): void {
 		$this->anonymous();
 		$this->withParams(['amount' => '100']);
-		$this->purchaseOrderService->expects($this->never())->method('determineApprovalChain');
+		$this->approvalTiers = $this->createMock(PurchaseOrderApprovalTiers::class);
+		$this->approvalTiers->expects($this->never())->method('rolesFor');
 
 		$response = $this->controller()->previewApprovalChain();
 
@@ -678,7 +713,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 			self::throwException(new \RuntimeException('supplierId missing')),
 			self::throwException(new \LogicException('db'))
 		);
-		$this->purchaseOrderService->method('blockSendUntilApproved')->with('adm-1', 'po-1')->willReturnOnConsecutiveCalls(
+		$this->purchaseOrderService->method('markSent')->with('adm-1', 'po-1')->willReturnOnConsecutiveCalls(
 			self::throwException(new \RuntimeException('Purchase order not found')),
 			self::throwException(new \RuntimeException('chain incomplete')),
 			self::throwException(new \LogicException('db'))

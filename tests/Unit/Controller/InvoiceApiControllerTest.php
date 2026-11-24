@@ -269,14 +269,15 @@ final class InvoiceApiControllerTest extends TestCase {
 
 		$seenInvoice = null;
 		$seenLines = null;
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(true);
 		$this->pdfGenerator->method('generatePdf')->willReturnCallback(
 			static function (array $invoiceArg, array $linesArg) use (&$seenInvoice, &$seenLines): array {
 				$seenInvoice = $invoiceArg;
 				$seenLines = $linesArg;
 				return [
 					'filename' => 'invoice-F-2026-0007.pdf',
-					'html' => '<html><body>F-2026-0007</body></html>',
-					'mimeType' => 'text/html',
+					'pdf' => "%PDF-1.7\nF-2026-0007",
+					'mimeType' => 'application/pdf',
 				];
 			}
 		);
@@ -290,7 +291,8 @@ final class InvoiceApiControllerTest extends TestCase {
 		self::assertSame($lines, $seenLines);
 
 		$headers = $response->getHeaders();
-		self::assertSame('text/html; charset=utf-8', $headers['Content-Type']);
+		self::assertSame('application/pdf', $headers['Content-Type']);
+		self::assertStringStartsWith('%PDF', (string)$response->render());
 		// NOTE: DataDisplayResponse::__construct() re-adds its own
 		// `Content-Disposition: inline; filename=""` AFTER the constructor
 		// headers are applied, so the controller's filename never survives to
@@ -312,11 +314,12 @@ final class InvoiceApiControllerTest extends TestCase {
 			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
 		);
 		$this->objectService->method('findAll')->willReturn([]);
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(true);
 		$this->pdfGenerator->method('generatePdf')->willReturn(
 			[
 				'filename' => "../../etc/pass\"wd\r\nX-Injected: 1",
-				'html' => '<html></html>',
-				'mimeType' => 'text/html',
+				'pdf' => '%PDF-1.7',
+				'mimeType' => 'application/pdf',
 			]
 		);
 
@@ -334,6 +337,33 @@ final class InvoiceApiControllerTest extends TestCase {
 	}//end testPdfHostileFilenameCannotInjectAHeader()
 
 	/**
+	 * Without docudesk the endpoint says it is needed instead of serving a
+	 * file (sales-invoice-document REQ-SID-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 */
+	public function testPdfWithoutDocudeskSaysItIsNeeded(): void {
+		$this->objectService->method('find')->willReturn(
+			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
+		);
+		$this->objectService->method('findAll')->willReturn([]);
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(false);
+		$this->pdfGenerator->expects(self::never())->method('generatePdf');
+
+		$response = $this->controller->pdf('inv-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		self::assertSame(
+			['error' => 'docudesk-unavailable', 'message' => 'Docudesk is needed to produce invoice documents.'],
+			$response->getData()
+		);
+
+	}//end testPdfWithoutDocudeskSaysItIsNeeded()
+
+	/**
 	 * A renderer failure yields HTTP 500 and leaks no stack trace (ADR-005).
 	 *
 	 * @return void
@@ -343,6 +373,7 @@ final class InvoiceApiControllerTest extends TestCase {
 			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
 		);
 		$this->objectService->method('findAll')->willReturn([]);
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(true);
 		$this->pdfGenerator->method('generatePdf')->willThrowException(new \RuntimeException('renderer exploded'));
 		$this->logger->expects($this->once())->method('error');
 

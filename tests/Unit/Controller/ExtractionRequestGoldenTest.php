@@ -168,8 +168,17 @@ final class ExtractionRequestGoldenTest extends TestCase {
 			}
 		);
 
-		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($loggedIn === true ? $this->createMock(IUser::class) : null);
+		// The caller keeps the books of adm-1, so a receipt there is theirs to correct.
+		$context->method('buildContext')->willReturn(['administrations' => [['administrationId' => 'adm-1', 'role' => 'boekhouder']]]);
+
+		$user = null;
+		if ($loggedIn === true) {
+			$user = $this->createMock(originalClassName: IUser::class);
+			$user->method('getUID')->willReturn('bookkeeper');
+		}
+
+		$session = $this->createMock(originalClassName: IUserSession::class);
+		$session->method('getUser')->willReturn($user);
 
 		$params = $this->params;
 		$request = $this->createMock(IRequest::class);

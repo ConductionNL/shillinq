@@ -35,6 +35,7 @@ import ArchiveArrowDownOutline from 'vue-material-design-icons/ArchiveArrowDownO
 import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
 import ArrowDecisionOutline from 'vue-material-design-icons/ArrowDecisionOutline.vue'
 import ArrowDownBoldOutline from 'vue-material-design-icons/ArrowDownBoldOutline.vue'
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import ArrowRightBoldOutline from 'vue-material-design-icons/ArrowRightBoldOutline.vue'
 import ArrowUpDown from 'vue-material-design-icons/ArrowUpDown.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
@@ -232,6 +233,7 @@ import Lightbulb from 'vue-material-design-icons/Lightbulb.vue'
 import LightbulbOnOutline from 'vue-material-design-icons/LightbulbOnOutline.vue'
 import LightbulbOutline from 'vue-material-design-icons/LightbulbOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
+import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import MapMarkerOutline from 'vue-material-design-icons/MapMarkerOutline.vue'
@@ -362,6 +364,7 @@ export default {
 	ArchiveArrowUpOutline,
 	ArrowDecisionOutline,
 	ArrowDownBoldOutline,
+	ArrowLeft,
 	ArrowRightBoldOutline,
 	ArrowUpDown,
 	AutoFix,
@@ -559,6 +562,7 @@ export default {
 	LightbulbOnOutline,
 	LightbulbOutline,
 	LinkVariant,
+	LinkVariantOff,
 	Lock,
 	LockOutline,
 	MapMarkerOutline,

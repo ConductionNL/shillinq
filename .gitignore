@@ -130,5 +130,7 @@ task-audit.json
 .phpunit.result.cache
 
 # Claude Code skills, agents and settings live in the hydra repository and in
-# each developer's own configuration, not in the app.
-/.claude/
+# each developer's own configuration, not in the app. Only the shared
+# commands in .claude/commands/ are committed.
+/.claude/*
+!/.claude/commands/

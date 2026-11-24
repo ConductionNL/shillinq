@@ -40,6 +40,8 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Contract\ObjectDeletion as PublishedObjectDeletion;
+use OCA\OpenRegister\Contract\ObjectSaveOptions as PublishedObjectSaveOptions;
 
 /**
  * The refusals, warnings and unwinding of ImportPosting.
@@ -323,7 +325,7 @@ final class ImportPostingTest extends TestCase {
 			 * @throws RuntimeException Always.
 			 */
 			public function deleteObject(
-				ObjectDeletion $deletion,
+				ObjectDeletion|PublishedObjectDeletion $deletion,
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 				bool $_retentionSweep = false
@@ -404,7 +406,12 @@ final class ImportPostingTest extends TestCase {
 			 *
 			 * @return ObjectEntityInterface
 			 */
-			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): ObjectEntityInterface {
+			public function saveObject(
+				array $object,
+				ObjectSaveOptions|PublishedObjectSaveOptions $options = new ObjectSaveOptions(),
+				bool $_rbac = true,
+				bool $_multitenancy = true
+			): ObjectEntityInterface {
 				$extend = $options->extend ?? [];
 				$register = $options->target->register;
 				$schema = $options->target->schema;

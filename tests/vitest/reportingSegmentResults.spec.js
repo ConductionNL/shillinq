@@ -4,8 +4,7 @@
  *
  * reporting-segment-results: the segment dashboard reads OpenRegister's
  * grouped envelope ({ groups: [{ key, values }] }) into revenue, costs and
- * result per segment, asks for one period, and every segment type it offers
- * names an aggregation the register declares with those three figures.
+ * result per segment and asks the server for one segment and period.
  *
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
@@ -16,21 +15,12 @@ import { describe, expect, it } from 'vitest'
 import {
 	normaliseSegmentRows,
 	periodOptions,
-	SEGMENT_AGGREGATION,
 	segmentQuery,
+	SEGMENTS,
 	segmentTotals,
 } from '../../src/utils/segmentResults.js'
 
 const ROOT = path.resolve(__dirname, '../..')
-const fragment = JSON.parse(
-	fs.readFileSync(
-		path.join(
-			ROOT,
-			'lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json',
-		),
-		'utf8',
-	),
-)
 const dashboard = fs.readFileSync(
 	path.join(ROOT, 'src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue'),
 	'utf8',
@@ -80,13 +70,12 @@ describe('segment results', () => {
 		})
 	})
 
-	it('scopes to the administration and narrows to the chosen period', () => {
-		expect(segmentQuery('adm-1', '')).toEqual({
-			'filter[administrationId]': 'adm-1',
-		})
-		expect(segmentQuery('adm-1', '2026-M09')).toEqual({
-			'filter[administrationId]': 'adm-1',
-			'filter[periodId]': '2026-M09',
+	// The server picks and checks the administration, so the client never names one.
+	it('asks for the segment and narrows to the chosen period', () => {
+		expect(segmentQuery('costCenter', '')).toEqual({ segment: 'costCenter' })
+		expect(segmentQuery('project', '2026-M09')).toEqual({
+			segment: 'project',
+			periodId: '2026-M09',
 		})
 	})
 
@@ -113,29 +102,19 @@ describe('segment results', () => {
 			{ id: '2026-M10', label: 'October 2026' },
 		])
 		expect(periodOptions(null)).toEqual([])
+		expect(periodOptions(payload.results)).toHaveLength(2)
 	})
 
-	it('offers every segment type over a declared aggregation with revenue, costs and result', () => {
-		const declared =
-			fragment.components.schemas.GLLine['x-openregister-aggregations']
-		// byAnalyticalDimension groups by the wildcard dimensions.*, which no
-		// engine key expresses yet (#1261); it stays untranslated and is pinned
-		// that way in CostCentersDimensionsFragmentTest.
-		for (const name of Object.values(SEGMENT_AGGREGATION).filter(
-			(n) => n !== 'byAnalyticalDimension',
-		)) {
-			expect(declared[name], name).toBeDefined()
-			expect(declared[name].filter).toMatchObject({
-				accountClass: 'pnl',
-				countsInResult: true,
-			})
-			expect(declared[name].metrics.map((m) => m.as)).toEqual([
-				'revenue',
-				'costs',
-				'result',
-			])
-		}
-		expect(Object.keys(SEGMENT_AGGREGATION)).toContain('costObject')
+	// The segment to aggregation map lives on the server and is pinned in
+	// AdministrationResultsServiceTest against the declarations.
+	it('offers every segment type the server maps', () => {
+		expect(SEGMENTS).toEqual([
+			'costCenter',
+			'costCenterHierarchy',
+			'costObject',
+			'project',
+			'analyticalDimension',
+		])
 	})
 
 	it('shows the three columns and a period field on the dashboard', () => {

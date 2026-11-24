@@ -28,16 +28,15 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Kernel\PurchaseOrderApprovalEntry;
 use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ApprovalActivity;
 use OCA\Shillinq\Service\ApprovalActivityEmitter;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Activity\IEvent;
@@ -59,8 +58,6 @@ use RuntimeException;
 #[UsesClass(PeppolBisOrderMapper::class)]
 #[UsesClass(SupplierQualificationGuard::class)]
 #[UsesClass(FrameworkAgreementDrawdownGuard::class)]
-#[UsesClass(PurchaseOrderApprovalService::class)]
-#[UsesClass(PurchaseOrderApprovalEntry::class)]
 #[UsesClass(ApprovalActivityEmitter::class)]
 #[UsesClass(ApprovalActivity::class)]
 final class PurchaseOrderServiceEdgesTest extends TestCase {
@@ -91,6 +88,7 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 		?PurchaseOrderMailerInterface $mailer = null,
 		?INotificationManager $notifications = null,
 		?ApprovalActivityEmitter $emitter = null,
+		?ObjectTransitionRunner $runner = null,
 	): PurchaseOrderService {
 		$appConfig = $this->createStub(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -122,6 +120,7 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 			peppolAdapter: ($adapter ?? $this->createStub(PeppolTransmissionAdapterInterface::class)),
 			purchaseOrderMailer: ($mailer ?? $this->createStub(PurchaseOrderMailerInterface::class)),
 			activityEmitter: $emitter,
+			transitionRunner: $runner,
 		);
 
 	}//end buildService()
@@ -139,7 +138,7 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 			'supplierId' => 'sup-1',
 			'currency' => 'EUR',
 			'totalAmount' => 100.0,
-			'statusCode' => 'draft',
+			'statusCode' => 'approved',
 			'lines' => [
 				[
 					'lineNumber' => 1,
@@ -187,27 +186,13 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 	}//end payload()
 
 	/**
-	 * A zero or negative amount needs no approvers.
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainIsEmptyForNonPositiveAmounts(): void {
-		$service = $this->buildService(objectService: new InMemoryObjectServiceStub());
-
-		self::assertSame([], $service->determineApprovalChain(amount: 0.0));
-		self::assertSame([], $service->determineApprovalChain(amount: -12.5));
-		self::assertSame([['role' => 'teamleider', 'order' => 1]], $service->determineApprovalChain(amount: 0.01));
-
-	}//end testDetermineApprovalChainIsEmptyForNonPositiveAmounts()
-
-	/**
 	 * When the Access Point throws, the PO falls back to PDF+email with reason
 	 * `peppol_send_failed`; the UBL carries the administration's own buyer
 	 * participant id.
 	 *
 	 * @return void
 	 */
-	public function testPeppolSubmitFailureFallsBackToPdfEmail(): void {
+	public function testPeppolSubmitFailureIsRecordedAndMailsNothing(): void {
 		$os = new InMemoryObjectServiceStub(
 			data: [
 				'PurchaseOrder' => [$this->approvedPo()],
@@ -232,26 +217,30 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 			)
 			->willThrowException(new RuntimeException('AP down'));
 
+		// A refused hand-off is recorded on the order, its state unchanged, and nothing is mailed:
+		// the page offers email instead (REQ-PODR-001).
 		$mailer = $this->createMock(PurchaseOrderMailerInterface::class);
-		$mailer->expects($this->once())->method('sendPurchaseOrderEmail')
-			->with('adm-1', $this->callback(static fn (array $po): bool => $po['id'] === 'po-1'));
+		$mailer->expects($this->never())->method('sendPurchaseOrderEmail');
 
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->logger->expects($this->once())->method('warning')->with(
-			'PurchaseOrderService: Peppol submission failed, falling back to PDF+email',
+			'PurchaseOrderService: Peppol hand-off failed',
 			['purchaseOrderId' => 'po-1', 'exception' => 'AP down']
 		);
 
 		$service = $this->buildService(objectService: $os, adapter: $adapter, mailer: $mailer);
 		$result = $service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
 
-		self::assertSame('sent', $result['statusCode']);
+		self::assertSame($this->approvedPo()['statusCode'], $result['statusCode']);
+		self::assertSame('peppol', $result['dispatchChannel']);
+		self::assertSame('failed', $result['dispatchStatus']);
+		self::assertSame('The order could not be handed to the Peppol access point.', $result['dispatchError']);
 		self::assertSame('peppol_send_failed', $result['peppolFallbackReason']);
 		self::assertArrayNotHasKey('peppolMessageId', $result);
 		self::assertStringContainsString('12345678', $capturedUbl);
 		self::assertStringNotContainsString('00000000', $capturedUbl);
 
-	}//end testPeppolSubmitFailureFallsBackToPdfEmail()
+	}//end testPeppolSubmitFailureIsRecordedAndMailsNothing()
 
 	/**
 	 * A manual PDF+email send without a reason records the manual default.
@@ -260,13 +249,24 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 	 */
 	public function testSendToPdfEmailWithoutReasonRecordsManualFallback(): void {
 		$os = new InMemoryObjectServiceStub(data: ['PurchaseOrder' => [$this->approvedPo()]]);
-		$service = $this->buildService(objectService: $os);
+		$mailer = $this->createMock(PurchaseOrderMailerInterface::class);
+		$mailer->method('isAvailable')->willReturn(true);
+		$mailer->expects($this->once())->method('sendPurchaseOrderEmail')->willReturn(true);
+		$transitions = [];
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use (&$transitions): void {
+				$transitions[] = [$objectId, $action];
+			}
+		);
+		$service = $this->buildService(objectService: $os, mailer: $mailer, runner: $runner);
 
-		$result = $service->sendToPDFEmail(administrationId: 'adm-1', purchaseOrderId: 'po-1', fallbackReason: '   ');
+		$service->sendToPDFEmail(administrationId: 'adm-1', purchaseOrderId: 'po-1', fallbackReason: '   ');
 
-		self::assertSame('manual_pdf_email_fallback', $result['peppolFallbackReason']);
-		self::assertSame('sent', $result['statusCode']);
 		self::assertSame('manual_pdf_email_fallback', $os->saved[0]['object']['peppolFallbackReason']);
+		self::assertSame('email', $os->saved[0]['object']['dispatchChannel']);
+		// The state moves through the declared `send` transition, not a write.
+		self::assertSame([['po-1', 'send']], $transitions);
 
 	}//end testSendToPdfEmailWithoutReasonRecordsManualFallback()
 

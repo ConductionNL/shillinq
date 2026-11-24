@@ -183,7 +183,7 @@ class McpInvoiceTools {
 			}
 
 			$lines = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoiceLine')->findAll(['filters' => ['invoiceId' => $invoiceId]]);
-			$document = $this->pdf->generatePdf(invoice: $invoice, lines: $lines);
+			$document = $this->pdf->generateHtml(invoice: $invoice, lines: $lines);
 		} catch (Throwable $e) {
 			return $this->failed(action: 'render', exception: $e);
 		}

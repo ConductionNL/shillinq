@@ -410,14 +410,24 @@ class CbcrController extends Controller {
 	}//end failed()
 
 	/**
-	 * The checks answer.
+	 * The checks answer, each check's statement in the caller's language.
+	 *
+	 * The rule catalogue holds the statement in English; the Checks tab shows it
+	 * translated, and an untranslated statement shows as written.
 	 *
 	 * @param array<int,array{id:string,severity:string,passed:bool,source:string,statement:string}> $results The results.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-7.1
 	 */
 	private function checksResponse(array $results): JSONResponse {
-		return new JSONResponse(['checks' => $results, 'blocking' => CbcrCheckRunner::blockingFailures(results: $results)]);
+		$blocking = CbcrCheckRunner::blockingFailures(results: $results);
+		foreach ($results as $index => $result) {
+			$results[$index]['statement'] = $this->l10n->t($result['statement']);
+		}
+
+		return new JSONResponse(['checks' => $results, 'blocking' => $blocking]);
 	}//end checksResponse()
 
 	/**

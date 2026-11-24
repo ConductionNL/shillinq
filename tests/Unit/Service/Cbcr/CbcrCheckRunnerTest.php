@@ -157,6 +157,45 @@ final class CbcrCheckRunnerTest extends TestCase {
 	}//end testTheCbcChecksJudgeTheGroupsRecords()
 
 	/**
+	 * The records of a CbC file: the reporting entity, the ultimate parent, the
+	 * included entities with their figures and the group's summaries.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function testTheRecordsOfACbcFile(): void {
+		$records = $this->runner()->cbcRecords(['id' => 'r-2026', 'reportingEntity' => 'ge-productie', 'period' => 'FY2026']);
+
+		$this->assertSame('ge-productie', $records['reportingEntity']['id']);
+		$this->assertSame('ge-holding', $records['upeId']);
+		$this->assertSame(['ge-holding', 'ge-productie'], array_column($records['entities'], 'id'), 'an excluded entity and another group stay out');
+		$this->assertSame('f-p', $records['entities'][1]['figures']['id']);
+		$this->assertSame(['s-nl'], array_column($records['summaries'], 'id'));
+
+		$upe = $this->runner()->cbcRecords(['id' => 'r-h', 'reportingEntity' => 'ge-holding', 'period' => 'FY2026']);
+		$this->assertSame('ge-holding', $upe['upeId'], 'the ultimate parent reports for itself');
+
+		$none = $this->runner()->cbcRecords(['id' => 'r-x', 'period' => 'FY2026']);
+		$this->assertNull($none['reportingEntity']);
+	}//end testTheRecordsOfACbcFile()
+
+	/**
+	 * Any records fingerprint by the files' rule: volatile keys and key order do not count.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.2
+	 */
+	public function testAnyRecordsFingerprintByTheSameRule(): void {
+		$runner = $this->runner();
+		$one    = $runner->fingerprintOf([['id' => 's-nl', 'totalRevenue' => 1.0, 'state' => 'draft']]);
+
+		$this->assertSame($one, $runner->fingerprintOf([['state' => 'locked', 'totalRevenue' => 1.0, 'id' => 's-nl', 'updated' => 'now']]));
+		$this->assertNotSame($one, $runner->fingerprintOf([['id' => 's-nl', 'totalRevenue' => 2.0]]));
+	}//end testAnyRecordsFingerprintByTheSameRule()
+
+	/**
 	 * Tangible assets are compared with the register of the entity's own
 	 * administration, counting only assets in use with a book value; a gap
 	 * over 1% warns and does not block.
@@ -220,6 +259,34 @@ final class CbcrCheckRunnerTest extends TestCase {
 		]);
 		$this->assertSame([], CbcrCheckRunner::blockingFailures($this->runner()->runGir($return)));
 	}//end testTheGirChecksSeeAnUncoveredJurisdiction()
+
+	/**
+	 * The records of a GIR file: the parent, the group's entities in the minimum tax and every jurisdiction named.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 *
+	 * @return void
+	 */
+	public function testTheRecordsOfAGirFile(): void {
+		$this->store->setSchema('GroupEntityRegistry');
+		$this->store->saveObject(['id' => 'ge-out', 'entityName' => 'Buiten B.V.', 'ultimateParentEntity' => 'ge-holding', 'pillar2Included' => false]);
+		$this->store->setSchema('Pillar2JurisdictionComputation');
+		$this->store->saveObject(
+			['id' => 'c-ie', 'ultimateParentEntity' => 'ge-holding', 'period' => 'FY2026', 'jurisdiction' => 'ie', 'state' => 'draft']
+		);
+
+		$records = $this->runner()->girRecords(['id' => 'g-2026', 'ultimateParent' => 'ge-holding', 'period' => 'FY2026']);
+
+		$this->assertSame('ge-holding', $records['upe']['id']);
+		$this->assertSame(['ge-holding', 'ge-productie', 'ge-dormant'], array_column($records['entities'], 'id'));
+		$this->assertSame(['sh-nl'], array_column($records['safeHarbours'], 'id'));
+		$this->assertSame(['c-ie'], array_column($records['computations'], 'id'));
+		$this->assertSame(['IE', 'NL'], $records['jurisdictions']);
+
+		$none = $this->runner()->girRecords(['id' => 'g-x', 'ultimateParent' => '', 'period' => 'FY2026']);
+		$this->assertNull($none['upe']);
+		$this->assertSame([], $none['entities']);
+	}//end testTheRecordsOfAGirFile()
 
 	/**
 	 * The fingerprint moves with the figures, not with the state or the filing bookkeeping.

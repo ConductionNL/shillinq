@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Controller;
 use Closure;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Reporting\CashFlowCalculator;
 use OCA\Shillinq\Reporting\ProfitLossComparison;
 use OCA\Shillinq\Reporting\StatementCalculator;
 use OCA\Shillinq\Reporting\StatementPeriods;
@@ -42,13 +43,16 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Read endpoints for the profit and loss and the balance sheet pages.
+ * Read endpoints for the profit and loss, the balance sheet and the cash
+ * flow statement pages.
  *
- * Both answer 401 without a user, 400 without an administration or with a
+ * Each answers 401 without a user, 400 without an administration or with a
  * malformed date, and a masked 404 for an administration the caller does not
  * belong to, before anything is read.
  *
  * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+ * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.2
  */
 class FinancialStatementController extends Controller {
 
@@ -59,6 +63,7 @@ class FinancialStatementController extends Controller {
 	 * @param AdministrationContextService $context    Who may read which administration.
 	 * @param StatementCalculator          $calculator The statement figures.
 	 * @param ProfitLossComparison         $comparison The compared profit and loss.
+	 * @param CashFlowCalculator           $cashFlow   The cash flow statement.
 	 * @param LoggerInterface              $logger     PSR logger.
 	 */
 	public function __construct(
@@ -66,6 +71,7 @@ class FinancialStatementController extends Controller {
 		private readonly AdministrationContextService $context,
 		private readonly StatementCalculator $calculator,
 		private readonly ProfitLossComparison $comparison,
+		private readonly CashFlowCalculator $cashFlow,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -115,6 +121,68 @@ class FinancialStatementController extends Controller {
 			}
 		);
 	}//end balanceSheet()
+
+	/**
+	 * The cash flow statement of `from` to `to`, by the indirect method.
+	 *
+	 * @return JSONResponse The statement, or an error.
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.2
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StatementPeriods is pure period arithmetic; it holds no state.
+	 */
+	#[NoAdminRequired]
+	public function cashFlow(): JSONResponse {
+		return $this->answer(
+			compute: function (string $administrationId): array {
+				$from = (string)$this->request->getParam('from', '');
+				$to = (string)$this->request->getParam('to', '');
+				StatementPeriods::assertRange(from: $from, to: $to);
+
+				return $this->cashFlow->between(administrationId: $administrationId, from: $from, to: $to);
+			}
+		);
+	}//end cashFlow()
+
+	/**
+	 * The posted ledger lines behind one cash flow figure.
+	 *
+	 * GET /api/statements/cash-flow/lines?key=<scope~from~to>
+	 * The figure's `linesKey` names its accounts and range; the lines add up
+	 * to the figure.
+	 *
+	 * @return JSONResponse 200 with lines and total; 400 malformed key; 401; 404 no access.
+	 *
+	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 */
+	#[NoAdminRequired]
+	public function cashFlowLines(): JSONResponse {
+		return $this->answer(
+			compute: function (string $administrationId): array {
+				return $this->cashFlow->lines(administrationId: $administrationId, key: (string)$this->request->getParam('key', ''));
+			}
+		);
+	}//end cashFlowLines()
+
+	/**
+	 * The posted ledger lines behind one account figure (REQ-RFS-003).
+	 *
+	 * GET /api/statements/lines?key=<account~from~to | trial balance line id>
+	 * The statement row's `linesKey`, or a trial balance line's id; the lines
+	 * add up to the figure.
+	 *
+	 * @return JSONResponse 200 with lines and total; 400 malformed key; 401; 404 no access.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 */
+	#[NoAdminRequired]
+	public function accountLines(): JSONResponse {
+		return $this->answer(
+			compute: function (string $administrationId): array {
+				return $this->calculator->accountLines(administrationId: $administrationId, key: (string)$this->request->getParam('key', ''));
+			}
+		);
+	}//end accountLines()
 
 	/**
 	 * Check the caller and the administration, then compute.

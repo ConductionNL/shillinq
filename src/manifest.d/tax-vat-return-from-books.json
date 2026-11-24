@@ -1,0 +1,252 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "tax-vat-return-from-books",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Task 5.1 (REQ-TVRB-003): the index and detail page of a VAT fiscal unity. The representative administration prepares one return for the unity on the BTW returns page; that return shows a subtotal per administration, and a member preparing its own return in the unity's period is refused with the unity's name. Task 4.1 (REQ-TVRB-002): FiscalYearDetail and BtwCorrecties are carried whole (a fragment page replaces the base page of the same id) to add Check fiscal year and the grouping of corrections by fiscal year."
+	},
+	"menu": [
+		{
+			"id": "VatFiscalUnities",
+			"label": "VAT fiscal unities",
+			"icon": "OfficeBuildingOutline",
+			"route": "VatFiscalUnities",
+			"order": 72
+		}
+	],
+	"pages": [
+		{
+			"id": "VatFiscalUnities",
+			"route": "/belastingen/btw-fiscale-eenheden",
+			"type": "index",
+			"title": "VAT fiscal unities",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatFiscalUnity",
+				"columns": [
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "vatNumber", "label": "VAT number", "sortable": true},
+					{"key": "administrationId", "label": "Representative administration", "sortable": true},
+					{"key": "startDate", "label": "Start date", "sortable": true},
+					{"key": "endDate", "label": "End date", "sortable": true}
+				],
+				"defaultSort": "startDate",
+				"detailRoute": "VatFiscalUnityDetail"
+			}
+		},
+		{
+			"id": "VatFiscalUnityDetail",
+			"route": "/belastingen/btw-fiscale-eenheden/:id",
+			"type": "detail",
+			"title": "VAT fiscal unity",
+			"config": {
+				"_note": "A VAT fiscal unity: the representative administration files one return for itself and the members while the unity runs; a member's own return in that period is refused. The returns themselves are on the BTW returns page.",
+				"register": "shillinq",
+				"schema": "VatFiscalUnity",
+				"auditTrail": true,
+				"fields": [
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "vatNumber", "label": "VAT number", "type": "string"},
+					{"key": "administrationId", "label": "Representative administration", "type": "string"},
+					{"key": "memberAdministrationIds", "label": "Member administrations", "type": "array"},
+					{"key": "startDate", "label": "Start date", "type": "string"},
+					{"key": "endDate", "label": "End date", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"}
+				]
+			}
+		},
+		{
+			"id": "FiscalYearDetail",
+			"route": "/bookkeeping/fiscal-years/:id",
+			"type": "detail",
+			"title": "Fiscal Year",
+			"config": {
+				"register": "shillinq",
+				"_note": "Fiscal Year detail — a bookyear with its open/close state, opening and closing journals and reopen audit. Closing entries booked at year-end are listed; audit trail evidences the close and any reopen (period-close control). tax-vat-return-from-books overlays this page from its own fragment to add Check fiscal year (REQ-TVRB-002).",
+				"relatedCollections": [
+					{
+						"title": "Closing entries",
+						"register": "shillinq",
+						"schema": "ClosingEntry",
+						"filter": {
+							"fiscalYearId": "@objectId"
+						},
+						"columns": [
+							{
+								"key": "closingEntryNumber",
+								"label": "#"
+							},
+							{
+								"key": "entryType",
+								"label": "Type"
+							},
+							{
+								"key": "entryDate",
+								"label": "Date"
+							},
+							{
+								"key": "amountCents",
+								"label": "Amount"
+							},
+							{
+								"key": "approvalStatus",
+								"label": "Status"
+							}
+						],
+						"rowRoute": "ClosingEntryDetail"
+					}
+				],
+				"auditTrail": true,
+				"schema": "FiscalYear",
+				"fields": [
+					{
+						"key": "yearNumber",
+						"label": "Year",
+						"type": "integer"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "closingJournalId",
+						"label": "Closing Journal",
+						"type": "string"
+					},
+					{
+						"key": "openingJournalId",
+						"label": "Opening Journal",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed At",
+						"type": "date-time"
+					},
+					{
+						"key": "closedBy",
+						"label": "Closed By",
+						"type": "string"
+					},
+					{
+						"key": "reopenedAt",
+						"label": "Reopened At",
+						"type": "date-time"
+					},
+					{
+						"key": "reopenedBy",
+						"label": "Reopened By",
+						"type": "string"
+					},
+					{
+						"key": "reopenReason",
+						"label": "Reopen Reason",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FiscalYears",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end",
+				"actions": [
+					{
+						"id": "check-fiscal-year-vat",
+						"label": "Check fiscal year",
+						"type": "handler",
+						"handler": "checkVatFiscalYearCorrections",
+						"icon": "FileSearchOutline",
+						"description": "For an administration whose fiscal year is not the calendar year: compare every filed BTW return of this fiscal year with the books, write a correction for each one that differs and total them. The EUR 1,000 threshold applies to that total."
+					}
+				]
+			}
+		},
+		{
+			"id": "BtwCorrecties",
+			"route": "/belastingen/btw-correcties",
+			"type": "index",
+			"title": "BTW-correcties",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"columns": [
+					{
+						"key": "fiscalYearLabel",
+						"label": "Fiscal year",
+						"sortable": true
+					},
+					{
+						"key": "periodYear",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reason",
+						"sortable": true
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correction",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearCorrectionTotal",
+						"label": "Fiscal year total",
+						"sortable": true,
+						"type": "money"
+					}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "BtwCorrectieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat",
+				"_note": "tax-vat-return-from-books REQ-TVRB-002 overlays this page: corrections found by Check fiscal year carry their fiscal year (2025/2026 for a broken year) and the year's total, and the folder sidebar groups the list by it.",
+				"folderSidebar": {
+					"source": "field",
+					"field": "fiscalYearLabel",
+					"allLabel": "All fiscal years"
+				}
+			}
+		}
+	]
+}

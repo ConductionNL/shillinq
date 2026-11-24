@@ -31,6 +31,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Contract\ObjectSaveOptions as PublishedObjectSaveOptions;
 
 /**
  * Malformed runs, unknown payees, foreign currency, inactive runs and an id-less save.
@@ -246,7 +247,7 @@ class PaymentRunGuardBranchesTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				ObjectSaveOptions $options = new ObjectSaveOptions(),
+				ObjectSaveOptions|PublishedObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
 				bool $_multitenancy = true
 			): ObjectEntityInterface {

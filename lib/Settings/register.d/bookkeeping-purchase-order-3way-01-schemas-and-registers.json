@@ -127,7 +127,7 @@
           },
           "approvalChain": {
             "type": "array",
-            "description": "Ordered list of approvers traversed for this order. Operator-driven; downstream members 02 wire the routing.",
+            "description": "History only: the approvers an order traversed before purchase order approval moved onto OpenRegister's approval chain (x-openregister-approval-chains `purchase-order-approval`). Nothing writes it any more; it stays readable for orders decided before that change. PurchaseOrderDecisionLockListener refuses a user's write that adds or changes it.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -146,8 +146,7 @@
                   "enum": [
                     "pending",
                     "approved",
-                    "rejected",
-                    "delegated"
+                    "rejected"
                   ],
                   "description": "Decision recorded by the approver.",
                   "title": "Decision"
@@ -191,6 +190,36 @@
             "nullable": true,
             "example": null,
             "title": "Peppol Fallback Reason"
+          },
+          "dispatchChannel": {
+            "type": "string",
+            "enum": [
+              "peppol",
+              "email"
+            ],
+            "description": "How the order was last sent to the supplier: through integriq's Peppol connector or by PDF and email (REQ-PODR-001/002).",
+            "nullable": true,
+            "example": "peppol",
+            "title": "Dispatch Channel"
+          },
+          "dispatchStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "sent",
+              "failed"
+            ],
+            "description": "Whether the last dispatch reached the supplier: pending until integriq reports the Peppol delivery, sent once it did or the mail channel accepted it, failed with dispatchError otherwise.",
+            "nullable": true,
+            "example": "pending",
+            "title": "Dispatch Status"
+          },
+          "dispatchError": {
+            "type": "string",
+            "description": "Why the last dispatch did not reach the supplier, as integriq or the mail channel reported it.",
+            "nullable": true,
+            "example": null,
+            "title": "Dispatch Error"
           },
           "statusCode": {
             "type": "string",
@@ -256,8 +285,7 @@
             "approve": {
               "from": "draft",
               "to": "approved",
-              "label": "Goedkeuren",
-              "requires": "OCA\\Shillinq\\Lifecycle\\PurchaseOrderApprovalGuard"
+              "label": "Goedkeuren"
             },
             "send": {
               "from": "approved",
@@ -307,6 +335,17 @@
           }
         },
         "authorization": {
+          "roles": {
+            "teamleider": [
+              "shillinq_teamleider"
+            ],
+            "facility_manager": [
+              "shillinq_facility_manager"
+            ],
+            "procurement_manager": [
+              "shillinq_procurement_manager"
+            ]
+          },
           "create": [
             "shillinq_procurement_officer",
             "shillinq_bookkeeper",
@@ -317,17 +356,50 @@
             "shillinq_bookkeeper",
             "shillinq_controller",
             "shillinq_approver",
-            "shillinq_auditor"
+            "shillinq_auditor",
+            "shillinq_teamleider",
+            "shillinq_facility_manager",
+            "shillinq_procurement_manager"
           ],
           "update": [
             "shillinq_procurement_officer",
             "shillinq_bookkeeper",
             "shillinq_controller",
-            "shillinq_approver"
+            "shillinq_approver",
+            "shillinq_teamleider",
+            "shillinq_facility_manager",
+            "shillinq_procurement_manager"
           ],
           "delete": [
             "shillinq_controller"
           ]
+        },
+        "x-openregister-approval-chains": {
+          "purchase-order-approval": {
+            "description": "Approval chain that gates the PurchaseOrder draft -> approved `approve` transition (REQ-PAD-001). Cumulative amount tiers on totalExclVat (EUR cents): a teamleider for any amount above zero, a facility manager from EUR 10.000 and a procurement manager from EUR 50.000. Separation of duties: the requester cannot decide a step of their own order. An order of zero has no steps and approves directly. On completion the approve transition advances. Declarative only: OpenRegister provisions the steps as flow tasks, gates the transition and records who decided, including a delegate and the mandate; shillinq keeps no approval engine of its own.",
+            "transition": "approve",
+            "amountField": "totalExclVat",
+            "tiers": "cumulative",
+            "separationOfDuties": true,
+            "approvers": [
+              {
+                "role": "teamleider",
+                "min": 1,
+                "minAmount": 1
+              },
+              {
+                "role": "facility_manager",
+                "min": 1,
+                "minAmount": 1000000
+              },
+              {
+                "role": "procurement_manager",
+                "min": 1,
+                "minAmount": 5000000
+              }
+            ],
+            "onApprove": "advanceTransition"
+          }
         }
       },
       "PurchaseOrderLine": {
@@ -1123,6 +1195,11 @@
           }
         },
         "authorization": {
+          "roles": {
+            "controller": [
+              "shillinq_controller"
+            ]
+          },
           "create": [
             "shillinq_procurement_officer",
             "shillinq_bookkeeper",
@@ -1144,6 +1221,22 @@
           "delete": [
             "shillinq_controller"
           ]
+        },
+        "x-openregister-approval-chains": {
+          "supplier-invoice-approval": {
+            "description": "Approval chain that gates the SupplierInvoice matched -> approved `approveMatched` transition (REQ-PAD-004). A matched invoice of EUR 10.000 or more including VAT (totalInclVat, EUR cents) waits for a controller's approval; below that tier the chain has no steps and the match approves it. Separation of duties: whoever submitted the approval cannot decide it. Declarative only: OpenRegister provisions the step as a flow task and gates the transition, so a payment run, which takes approved invoices only, leaves the invoice out until the controller approves.",
+            "transition": "approveMatched",
+            "amountField": "totalInclVat",
+            "separationOfDuties": true,
+            "approvers": [
+              {
+                "role": "controller",
+                "min": 1,
+                "minAmount": 1000000
+              }
+            ],
+            "onApprove": "advanceTransition"
+          }
         }
       },
       "ThreeWayMatch": {

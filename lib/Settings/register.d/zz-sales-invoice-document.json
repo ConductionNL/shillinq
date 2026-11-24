@@ -1,0 +1,178 @@
+{
+ "_meta": {
+  "spdx-license": "EUPL-1.2",
+  "spdx-copyright": "2026 Conduction B.V.",
+  "change": "sales-invoice-document",
+  "adr": "ADR-037 register fragment",
+  "description": "The invoice layout per administration (REQ-SID-001), the customer's document language (REQ-SID-003) and the language recorded on the invoice for the invoice e-mail. Named zz- so its schema versions are the last ones declared for CustomerMaster and ARInvoice."
+ },
+ "components": {
+  "schemas": {
+   "InvoiceLayout": {
+    "slug": "InvoiceLayout",
+    "version": "0.1.0",
+    "title": "Invoice layout",
+    "description": "How an administration's invoices look: logo, colours, template variant, footer and whether QR codes are printed (sales-invoice-document REQ-SID-001). One per administration.",
+    "type": "object",
+    "required": [
+     "administrationId",
+     "variant"
+    ],
+    "x-openregister-audit-trail": {
+     "enabled": true
+    },
+    "properties": {
+     "administrationId": {
+      "type": "string",
+      "title": "Administration",
+      "description": "The administration this layout belongs to; one layout per administration (ADR-005)."
+     },
+     "logoFileId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Logo",
+      "description": "The Nextcloud file id of the logo printed on the invoice."
+     },
+     "primaryColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$",
+      "default": "#0F4C81",
+      "title": "Primary colour",
+      "description": "Hex colour of headings and the table header; must reach WCAG AA contrast (4.5:1) against white."
+     },
+     "accentColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$",
+      "default": "#B8461B",
+      "title": "Accent colour",
+      "description": "Hex colour of totals and links; must reach WCAG AA contrast (4.5:1) against white."
+     },
+     "variant": {
+      "type": "string",
+      "enum": [
+       "classic",
+       "modern",
+       "compact"
+      ],
+      "default": "classic",
+      "title": "Variant",
+      "description": "Which of the three sales-invoice template variants the invoice uses."
+     },
+     "footerText": {
+      "type": "string",
+      "nullable": true,
+      "title": "Footer text",
+      "description": "Text printed at the foot of every page, for example the chamber of commerce number and the payment terms."
+     },
+     "showQr": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show QR codes",
+      "description": "Whether the invoice carries the SEPA transfer QR and the pay link QR (REQ-SID-005)."
+     }
+    }
+   },
+   "CustomerMaster": {
+    "version": "0.5.0",
+    "properties": {
+     "language": {
+      "type": "string",
+      "enum": [
+       "nl",
+       "en",
+       "de",
+       "fr"
+      ],
+      "nullable": true,
+      "title": "Document language",
+      "description": "The language of this customer's invoices and invoice e-mails; absent means the administration's default language (REQ-SID-003)."
+     }
+    }
+   },
+   "ARInvoice": {
+    "version": "0.20.0",
+    "properties": {
+     "documentLanguage": {
+      "type": "string",
+      "enum": [
+       "nl",
+       "en",
+       "de",
+       "fr"
+      ],
+      "nullable": true,
+      "title": "Document language",
+      "description": "The language the invoice document was written in, taken from the customer when it is made; the invoice e-mail uses it too (REQ-SID-003)."
+     }
+    }
+   }
+  },
+  "objects": [
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "InvoiceLayout",
+     "slug": "invoice-layout-adm-beheer-001"
+    },
+    "administrationId": "adm-beheer-001",
+    "primaryColor": "#0F4C81",
+    "accentColor": "#B8461B",
+    "variant": "classic",
+    "footerText": null,
+    "showQr": true
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "InvoiceLayout",
+     "slug": "invoice-layout-adm-werk-001"
+    },
+    "administrationId": "adm-werk-001",
+    "primaryColor": "#0F4C81",
+    "accentColor": "#B8461B",
+    "variant": "classic",
+    "footerText": null,
+    "showQr": true
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "InvoiceLayout",
+     "slug": "invoice-layout-adm-klant-acme"
+    },
+    "administrationId": "adm-klant-acme",
+    "primaryColor": "#0F4C81",
+    "accentColor": "#B8461B",
+    "variant": "classic",
+    "footerText": null,
+    "showQr": true
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "InvoiceLayout",
+     "slug": "invoice-layout-adm-kapsalon-knip"
+    },
+    "administrationId": "adm-kapsalon-knip",
+    "primaryColor": "#0F4C81",
+    "accentColor": "#B8461B",
+    "variant": "classic",
+    "footerText": null,
+    "showQr": true
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "InvoiceLayout",
+     "slug": "invoice-layout-adm-sportschool-de-kracht"
+    },
+    "administrationId": "adm-sportschool-de-kracht",
+    "primaryColor": "#0F4C81",
+    "accentColor": "#B8461B",
+    "variant": "classic",
+    "footerText": null,
+    "showQr": true
+   }
+  ]
+ }
+}

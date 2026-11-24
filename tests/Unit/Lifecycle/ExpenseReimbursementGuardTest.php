@@ -29,6 +29,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Contract\ObjectFindOptions as PublishedObjectFindOptions;
 
 /**
  * Pins the allowed and refused outcomes, their log lines and the item lookups (REQ-ERP-002/003/006).
@@ -73,7 +74,7 @@ final class ExpenseReimbursementGuardTest extends TestCase {
 
 			public function find(
 				int|string $id,
-				?ObjectFindOptions $options = null,
+				ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 				bool $_rbac = true,
 				bool $_multitenancy = true
 			): ?ObjectEntityInterface {

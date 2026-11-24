@@ -116,6 +116,7 @@
      "markup": 0,
      "costAmount": 500,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 105,
      "modelSpecificFields": {
       "milestoneId": "ms-attacker-1",
@@ -137,6 +138,7 @@
      "markup": 0,
      "costAmount": 50,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 10.5,
      "modelSpecificFields": null,
      "id": "billableinvoiceline-3"
@@ -261,6 +263,7 @@
      "markup": 0,
      "costAmount": 999.99,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 210,
      "modelSpecificFields": {
       "informationalHourCount": 0
@@ -279,6 +282,7 @@
      "markup": 0,
      "costAmount": 50,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 10.5,
      "modelSpecificFields": null,
      "id": "billableinvoiceline-3"
@@ -399,6 +403,7 @@
      "markup": 0,
      "costAmount": 2000,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 420,
      "modelSpecificFields": {
       "retainerMonth": "2026-03"
@@ -417,6 +422,7 @@
      "markup": 0,
      "costAmount": 250,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 52.5,
      "modelSpecificFields": {
       "oneTime": true
@@ -552,6 +558,7 @@
      "markup": 0,
      "costAmount": 500,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 105,
      "modelSpecificFields": {
       "sourceIds": [
@@ -572,6 +579,7 @@
      "markup": 0,
      "costAmount": 50,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 10.5,
      "modelSpecificFields": null,
      "id": "billableinvoiceline-3"
@@ -688,6 +696,7 @@
      "markup": 0,
      "costAmount": 2000,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 420,
      "modelSpecificFields": {
       "retainerMonth": "2026-03"
@@ -810,6 +819,7 @@
      "markup": 0,
      "costAmount": 5,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 1.05,
      "modelSpecificFields": {
       "meterId": "meter-attacker",
@@ -940,6 +950,7 @@
      "markup": 0,
      "costAmount": 2000,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 420,
      "modelSpecificFields": {
       "retainerMonth": "2026-03"
@@ -958,6 +969,7 @@
      "markup": 0,
      "costAmount": 250,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 52.5,
      "modelSpecificFields": {
       "oneTime": true
@@ -1076,6 +1088,7 @@
      "markup": 0,
      "costAmount": 1500,
      "vatRate": 21,
+     "vatTariff": "high",
      "vatAmount": 315,
      "modelSpecificFields": {
       "informationalHourCount": 5

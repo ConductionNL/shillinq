@@ -129,7 +129,7 @@ final class PipelinqContactAdapterTransportTest extends TestCase {
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key): string => match ($key) {
 				PipelinqContactAdapter::CONFIG_KEY_ENDPOINT => $endpoint,
-				PipelinqContactAdapter::CONFIG_KEY_TOKEN => $token,
+				PipelinqContactAdapter::CONFIG_KEY_BEARER => $token,
 				default => '',
 			}
 		);

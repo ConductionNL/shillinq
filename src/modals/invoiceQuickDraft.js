@@ -260,3 +260,29 @@ function fillBlankLineFields(line, prefs) {
 		if (prefs[field] && !line[field]) line[field] = prefs[field]
 	}
 }
+
+/**
+ * The customer option a quick draft starts with: the one whose customer is
+ * the record `ref` names, by its object id, its `@self` id or its customer
+ * number. Null when `ref` is empty or names no listed customer, so the
+ * dialog then starts without a customer as it does elsewhere.
+ *
+ * @param {Array<{value: string, customer: object}>} options The customer options of the dialog.
+ * @param {string} ref The starting customer: an object id or a customer number.
+ * @return {object|null} The matching option, or null.
+ *
+ * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+ */
+export function startingCustomerOption(options, ref) {
+	const wanted = String(ref ?? '').trim()
+	if (wanted === '' || !Array.isArray(options)) {
+		return null
+	}
+	return (
+		options.find((option) => {
+			const customer = option?.customer || {}
+			return [customer.id, customer['@self']?.id, customer.uuid, option?.value]
+				.some((candidate) => candidate !== undefined && candidate !== null && String(candidate) === wanted)
+		}) || null
+	)
+}

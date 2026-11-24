@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Kernel\Exception\UnratedHoursException;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Service\Billing\PassThroughBilling;
 use OCA\Shillinq\Service\BillableRateService;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -40,6 +41,7 @@ use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Support\SeededVatTariffs;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -68,6 +70,8 @@ use Psr\Log\NullLogger;
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  */
 final class InvoiceGenerationBillableRateTest extends TestCase {
+	use SeededVatTariffs;
+
 	/**
 	 * The administration.
 	 *
@@ -149,7 +153,7 @@ final class InvoiceGenerationBillableRateTest extends TestCase {
 			new RetainerResolver($container, $appConfig, $logger),
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
-			new VATCalculationService(),
+			$this->seededVat(),
 			new UsageRatingCalculator(),
 			objectService: $this->store,
 			billedReadings: $this->createMock(BilledReadings::class),
@@ -158,6 +162,7 @@ final class InvoiceGenerationBillableRateTest extends TestCase {
 				$this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 				$this->createMock(ITimeFactory::class)
 			),
+			passThrough: $this->createMock(PassThroughBilling::class),
 		);
 	}//end service()
 

@@ -133,6 +133,48 @@ class CbcrCheckRunner {
 	}//end cbcFingerprint()
 
 	/**
+	 * The records a CbC file is made from: the reporting entity, its ultimate
+	 * parent's id, the group's included entities and the jurisdiction summaries,
+	 * read the same way the checks and the fingerprint read them.
+	 *
+	 * @param array<string,mixed> $return The CbcrReturn.
+	 *
+	 * @return array{reportingEntity:array<string,mixed>|null,upeId:string,entities:array<int,array<string,mixed>>,summaries:array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function cbcRecords(array $return): array {
+		$reporting = $this->one(schema: 'GroupEntityRegistry', id: (string)($return['reportingEntity'] ?? ''));
+		$upeId     = trim((string)($reporting['ultimateParentEntity'] ?? ''));
+		if ($upeId === '') {
+			$upeId = (string)($return['reportingEntity'] ?? '');
+		}
+
+		$joined = $this->joinCbc(return: $return);
+
+		return [
+			'reportingEntity' => $reporting,
+			'upeId' => $upeId,
+			'entities' => $joined['_entities'],
+			'summaries' => $joined['_summaries'],
+		];
+	}//end cbcRecords()
+
+	/**
+	 * The fingerprint of any records, by the same rule as the files' fingerprints:
+	 * keys that change on their own are left out, keys are sorted.
+	 *
+	 * @param array<int|string,mixed> $records The records.
+	 *
+	 * @return string SHA-256 hex.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.2
+	 */
+	public function fingerprintOf(array $records): string {
+		return self::fingerprint(records: $records);
+	}//end fingerprintOf()
+
+	/**
 	 * The fingerprint of the records a GIR file is made from: the group's
 	 * safe harbour records and jurisdiction computations for the year.
 	 *
@@ -154,6 +196,55 @@ class CbcrCheckRunner {
 			]
 		);
 	}//end girFingerprint()
+
+	/**
+	 * The records a GIR file is made from: the ultimate parent, the group's
+	 * entities in the minimum tax, the safe harbour records, the jurisdiction
+	 * computations and every jurisdiction any of them names, read the same way
+	 * the checks and the fingerprint read them (design D5).
+	 *
+	 * @param array<string,mixed> $return The GlobeInformationReturn.
+	 *
+	 * @return array{upe:array<string,mixed>|null,entities:array<int,array<string,mixed>>,safeHarbours:array<int,array<string,mixed>>,computations:array<int,array<string,mixed>>,jurisdictions:array<int,string>}
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.3
+	 */
+	public function girRecords(array $return): array {
+		[$upeId, $period] = self::girScope(return: $return);
+		$filters = ['ultimateParentEntity' => $upeId, 'period' => $period];
+
+		$entities = [];
+		foreach ($this->all(schema: 'GroupEntityRegistry', filters: []) as $member) {
+			$inGroup = ((string)($member['id'] ?? '') === $upeId || (string)($member['ultimateParentEntity'] ?? '') === $upeId);
+			if ($upeId !== '' && $inGroup === true && ($member['pillar2Included'] ?? true) !== false) {
+				$entities[] = $member;
+			}
+		}
+
+		$safeHarbours = $this->all(schema: 'Pillar2SafeHarbour', filters: $filters);
+		$computations = $this->all(schema: 'Pillar2JurisdictionComputation', filters: $filters);
+		$summaries    = $this->all(schema: 'CbcrJurisdictionSummary', filters: $filters);
+
+		$codes = [];
+		foreach ([$summaries, $safeHarbours, $computations] as $rows) {
+			foreach ($rows as $row) {
+				$code = strtoupper(trim((string)($row['jurisdiction'] ?? '')));
+				if ($code !== '') {
+					$codes[$code] = true;
+				}
+			}
+		}
+
+		ksort($codes);
+
+		return [
+			'upe' => $this->one(schema: 'GroupEntityRegistry', id: $upeId),
+			'entities' => $entities,
+			'safeHarbours' => $safeHarbours,
+			'computations' => $computations,
+			'jurisdictions' => array_map('strval', array_keys($codes)),
+		];
+	}//end girRecords()
 
 	/**
 	 * The CbC return joined with its group's entities (and their figures) and summaries.

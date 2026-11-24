@@ -67,7 +67,7 @@ class BarcodeLookupController extends Controller {
 	/**
 	 * App config key holding the shared POS API key (secret, never returned).
 	 */
-	private const API_KEY_CONFIG = 'barcode_lookup_api_key';
+	private const LOOKUP_CREDENTIAL_CONFIG = 'barcode_lookup_api_key';
 
 	/**
 	 * Construct the controller.
@@ -175,7 +175,7 @@ class BarcodeLookupController extends Controller {
 	private function isAuthorized(): bool {
 		$configuredKey = $this->appConfig->getValueString(
 			AppIdentity::APP_ID,
-			self::API_KEY_CONFIG,
+			self::LOOKUP_CREDENTIAL_CONFIG,
 			''
 		);
 

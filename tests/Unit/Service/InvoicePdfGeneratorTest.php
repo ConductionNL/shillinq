@@ -41,14 +41,17 @@ use PHPUnit\Framework\TestCase;
  */
 final class InvoicePdfGeneratorTest extends TestCase {
 	/**
-	 * REQ-EINV-002 scenario 2: the existing generatePdf() call is unaffected
-	 * by the hybrid addition — same {filename, html, mimeType} shape.
+	 * The HTML rendering keeps its {filename, html, mimeType} shape for the
+	 * readers of the text (sales-invoice-document task 2.2 moved it from
+	 * generatePdf(), which now renders through docudesk).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
 	 */
-	public function testPlainPdfPathIsUnaffected(): void {
+	public function testTheHtmlPathKeepsItsShape(): void {
 		$generator = new InvoicePdfGenerator();
-		$result = $generator->generatePdf(
+		$result = $generator->generateHtml(
 			invoice: ['invoiceNumber' => '2026-0042', 'grossAmount' => 1210.0],
 			lines: [],
 			creditor: ['legalName' => 'Shillinq Consultancy B.V.'],
@@ -56,11 +59,11 @@ final class InvoicePdfGeneratorTest extends TestCase {
 		);
 
 		self::assertSame(['filename', 'html', 'mimeType'], array_keys($result));
-		self::assertSame('invoice-2026-0042.pdf', $result['filename']);
-		self::assertSame('application/pdf', $result['mimeType']);
+		self::assertSame('invoice-2026-0042.html', $result['filename']);
+		self::assertSame('text/html', $result['mimeType']);
 		self::assertStringContainsString('Gemeente Zuidoost', $result['html']);
 
-	}//end testPlainPdfPathIsUnaffected()
+	}//end testTheHtmlPathKeepsItsShape()
 
 	/**
 	 * REQ-EINV-002 scenario 1: the hybrid export embeds the XML as
@@ -173,7 +176,7 @@ final class InvoicePdfGeneratorTest extends TestCase {
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
 	 */
 	public function testTheHtmlRowReadsEitherLineShape(): void {
-		$html = (new InvoicePdfGenerator())->generatePdf(
+		$html = (new InvoicePdfGenerator())->generateHtml(
 			invoice: ['invoiceNumber' => '2026-0042'],
 			lines: [
 				['lineId' => '1', 'itemName' => 'Consulting', 'quantity' => 2, 'netPrice' => 100.0, 'netAmount' => 200.0, 'vatRate' => 21],

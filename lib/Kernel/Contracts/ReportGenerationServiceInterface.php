@@ -69,6 +69,20 @@ interface ReportGenerationServiceInterface {
 	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array;
 
 	/**
+	 * Generate a report made from one record (e.g. a CbcrReturn), in the report's preferred format.
+	 *
+	 * @param string                $reportType       ReportCatalogue report-type id.
+	 * @param string                $period           Reporting period.
+	 * @param string                $administrationId Administration the report is filed under.
+	 * @param array<string, string> $subject          The record, passed on to the generator.
+	 *
+	 * @return array<string, mixed> As generate().
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function generateForRecord(string $reportType, string $period, string $administrationId, array $subject): array;
+
+	/**
 	 * List recorded GeneratedReport records, optionally filtered.
 	 *
 	 * @param array<string, mixed> $filters Optional filters: reportType, period,

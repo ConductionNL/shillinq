@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Booking\WithdrawalLinkService;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -524,6 +525,8 @@ class WidgetService implements WidgetServiceInterface {
 	 * @param array<string,mixed> $appointment The object that was saved.
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
 	 */
 	private function createdResponse(?array $saved, array $appointment): array {
 		return [
@@ -533,8 +536,40 @@ class WidgetService implements WidgetServiceInterface {
 			'startTime' => $appointment['startTime'],
 			'endTime' => $appointment['endTime'],
 			'confirmationMessage' => 'Your appointment was created. You will receive a confirmation email shortly.',
-		];
+		] + $this->withdrawal(booked: (($saved ?? []) + $appointment));
 	}//end createdResponse()
+
+	/**
+	 * The signed withdrawal link and its last day, for the widget's
+	 * confirmation step (sales-cancellation REQ-SCX-004); nothing when the
+	 * booking has no link, as in the confirmation mail, so the answer stays
+	 * what it was.
+	 *
+	 * @param array<string,mixed> $booked The saved appointment, with its id and creation moment.
+	 *
+	 * @return array{withdrawalLink?: string, withdrawalLastDay?: string}
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 */
+	private function withdrawal(array $booked): array {
+		try {
+			$links = $this->container->get(WithdrawalLinkService::class);
+		} catch (\Throwable $e) {
+			return [];
+		}
+
+		if (($links instanceof WithdrawalLinkService) === false) {
+			return [];
+		}
+
+		$link = $links->forAppointment(appointment: $booked);
+		$lastDay = $links->lastDayFor(appointment: $booked);
+		if ($link === null || $lastDay === null) {
+			return [];
+		}
+
+		return ['withdrawalLink' => $link, 'withdrawalLastDay' => $lastDay];
+	}//end withdrawal()
 
 	/**
 	 * Whether a serviceId names a service the business actually published.

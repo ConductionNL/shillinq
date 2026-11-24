@@ -31,7 +31,11 @@ namespace OCA\Shillinq\Tests\Unit\Reporting;
 use OCA\Shillinq\Reporting\Generator\AnnualAccountsReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BalanceSheetReportGenerator;
 use OCA\Shillinq\Reporting\Generator\BbvJaarstukkenReportGenerator;
+use OCA\Shillinq\Reporting\Generator\CbcXmlGenerator;
 use OCA\Shillinq\Reporting\Generator\GeneralLedgerReportGenerator;
+use OCA\Shillinq\Reporting\Generator\GirXmlGenerator;
+use OCA\Shillinq\Reporting\Generator\Ib47StatementReportGenerator;
+use OCA\Shillinq\Reporting\Generator\IcpReportGenerator;
 use OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator;
 use OCA\Shillinq\Reporting\Generator\ManagementLetterReportGenerator;
 use OCA\Shillinq\Reporting\Generator\ProfitLossReportGenerator;
@@ -54,6 +58,8 @@ use ReflectionClass;
  * @covers \OCA\Shillinq\Reporting\Generator\BalanceSheetReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\BbvJaarstukkenReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\GeneralLedgerReportGenerator
+ * @covers \OCA\Shillinq\Reporting\Generator\GirXmlGenerator
+ * @covers \OCA\Shillinq\Reporting\Generator\IcpReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\ManagementLetterReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\ProfitLossReportGenerator
@@ -78,7 +84,11 @@ class ReportGeneratorCatalogueContractTest extends TestCase {
 		AnnualAccountsReportGenerator::class,
 		BalanceSheetReportGenerator::class,
 		BbvJaarstukkenReportGenerator::class,
+		CbcXmlGenerator::class,
 		GeneralLedgerReportGenerator::class,
+		GirXmlGenerator::class,
+		Ib47StatementReportGenerator::class,
+		IcpReportGenerator::class,
 		Iv3ReportGenerator::class,
 		ManagementLetterReportGenerator::class,
 		ProfitLossReportGenerator::class,

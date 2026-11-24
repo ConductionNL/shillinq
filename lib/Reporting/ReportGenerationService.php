@@ -157,19 +157,53 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array {
 		$userId = ($asUserId ?? ($this->userSession->getUser()?->getUID() ?? ''));
 
-		$prepared = $this->prepareGeneration(reportType: $reportType, administrationId: $administrationId, format: $format);
+		return $this->produce(
+			context: ['reportType' => $reportType, 'period' => $period, 'administrationId' => $administrationId],
+			format: $format,
+			userId: $userId
+		);
+	}//end generate()
+
+	/**
+	 * Generate a report made from one record, for the session user, in the report's preferred format.
+	 *
+	 * @param string                $reportType       ReportCatalogue report-type id (e.g. 'cbc-report').
+	 * @param string                $period           Reporting period.
+	 * @param string                $administrationId Administration the report is filed under.
+	 * @param array<string, string> $subject          The record, passed on to the generator
+	 *                                                (e.g. `['returnId' => ...]`); it never overrides
+	 *                                                reportType, period or administrationId.
+	 *
+	 * @return array<string, mixed> As generate().
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function generateForRecord(string $reportType, string $period, string $administrationId, array $subject): array {
+		return $this->produce(
+			context: ['reportType' => $reportType, 'period' => $period, 'administrationId' => $administrationId] + $subject,
+			format: '',
+			userId: ($this->userSession->getUser()?->getUID() ?? '')
+		);
+	}//end generateForRecord()
+
+	/**
+	 * Render the report the context names, then store and record it.
+	 *
+	 * @param array<string, string> $context The reportType, period and administrationId, plus any subject keys.
+	 * @param string                $format  The requested format; the generator's preferred one when it supports not this.
+	 * @param string                $userId  The user the report is produced for.
+	 *
+	 * @return array<string, mixed> The recorded GeneratedReport, or an `{ error: ... }` envelope.
+	 */
+	private function produce(array $context, string $format, string $userId): array {
+		$reportType = $context['reportType'];
+		$prepared   = $this->prepareGeneration(reportType: $reportType, administrationId: $context['administrationId'], format: $format);
 		if (isset($prepared['error']) === true) {
 			return $prepared;
 		}
 
 		$generator = $prepared['generator'];
 		$useFormat = $prepared['format'];
-
-		$context = [
-			'reportType' => $reportType,
-			'period' => $period,
-			'administrationId' => $administrationId,
-		];
 
 		try {
 			$rendered = $generator->generate($context, $useFormat);
@@ -184,7 +218,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 		}
 
 		return $this->storeAndRecord(rendered: $rendered, catalogue: $prepared['catalogue'], context: $context, userId: $userId);
-	}//end generate()
+	}//end produce()
 
 	/**
 	 * Validate the request and resolve the catalogue entry, generator and format to render with.

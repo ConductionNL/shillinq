@@ -43,7 +43,8 @@ final class SalesInvoiceSendingFragmentTest extends TestCase {
 		$schema = RegisterSchema::schema(slug: 'CustomerMaster');
 		$properties = $schema['properties'];
 
-		self::assertSame('0.4.0', $schema['version']);
+		// A later change may move the version further up; this one moved it to 0.4.0.
+		self::assertTrue(condition: version_compare((string)$schema['version'], '0.4.0', '>='), message: 'CustomerMaster version ' . $schema['version']);
 		self::assertSame(['type' => 'integer', 'minimum' => 0, 'maximum' => 365, 'default' => 30], array_intersect_key($properties['paymentTermDays'], array_flip(['type', 'minimum', 'maximum', 'default'])));
 		self::assertSame(['email', 'peppol', 'post', 'none'], $properties['deliveryMethod']['enum']);
 		self::assertSame('email', $properties['deliveryMethod']['default']);

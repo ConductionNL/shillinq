@@ -276,6 +276,43 @@ class WidgetApiControllerAppointmentsTest extends TestCase {
 	}//end testAcceptedPayloadIsForwarded()
 
 	/**
+	 * A booking with a withdrawal link passes the link and its last day to
+	 * the widget's confirmation step (sales-cancellation REQ-SCX-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 */
+	public function testTheWithdrawalLinkReachesTheWidget(): void {
+		$this->authorise();
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->widgetService->method('createAppointment')->willReturn(
+			[
+				'code' => 201,
+				'appointmentId' => 'apt-1',
+				'confirmationMessage' => 'Created',
+				'withdrawalLink' => 'https://salon.example.org/withdraw?withdraw=t.s',
+				'withdrawalLastDay' => '2026-12-04',
+			]
+		);
+
+		$response = $this->book(payload: self::acceptedPayloads()[array_key_first(self::acceptedPayloads())][0]);
+
+		self::assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
+		self::assertSame(
+			expected: [
+				'appointmentId' => 'apt-1',
+				'status' => 'pending_confirmation',
+				'confirmationMessage' => 'Created',
+				'withdrawalLink' => 'https://salon.example.org/withdraw?withdraw=t.s',
+				'withdrawalLastDay' => '2026-12-04',
+			],
+			actual: $response->getData()
+		);
+
+	}//end testTheWithdrawalLinkReachesTheWidget()
+
+	/**
 	 * The guard runs before the payload is looked at.
 	 *
 	 * @return void
