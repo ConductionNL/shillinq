@@ -1,0 +1,11 @@
+{
+	"app": "shillinq",
+	"pages": [
+		{"name": "Dashboard", "path": "/index.php/apps/shillinq/"},
+		{"name": "General Ledger", "path": "/index.php/apps/shillinq/general-ledger"},
+		{"name": "Sales invoices", "path": "/index.php/apps/shillinq/bookkeeping/accounts-receivable"},
+		{"name": "Purchase invoices", "path": "/index.php/apps/shillinq/inkoop/supplier-invoices"},
+		{"name": "Liquidity", "path": "/index.php/apps/shillinq/cashflow/dashboard"},
+		{"name": "BTW returns", "path": "/index.php/apps/shillinq/belastingen/btw-aangiften"}
+	]
+}
