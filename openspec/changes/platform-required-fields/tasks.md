@@ -15,7 +15,7 @@
 
 ## 3. End to end and strings
 
-- [ ] 3.1 Playwright `tests/e2e/platform-required-fields.spec.ts`. Verify: passes locally.
+- [x] 3.1 Playwright `tests/e2e/platform-required-fields.spec.ts`. Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 - [x] 3.2 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

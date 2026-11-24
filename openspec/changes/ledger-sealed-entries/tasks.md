@@ -15,7 +15,7 @@
 
 ## 3. End to end and strings
 
-- [ ] 3.1 Playwright `tests/e2e/ledger-sealed-entries.spec.ts`: post, check intact (REQ-LSE-001, REQ-LSE-002). Verify: passes locally.
+- [x] 3.1 Playwright `tests/e2e/ledger-sealed-entries.spec.ts`: post, check intact (REQ-LSE-001, REQ-LSE-002). Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 - [x] 3.2 (the action, the dialog and the controller's answers in `l10n/en.json` and `l10n/nl.json`, with the `.js` files rebuilt; `test:l10n` and `test:l10n-parity` OK) Dutch and English strings for the action and results. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push; the check endpoint is admin or controller only (ADR-005).

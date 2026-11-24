@@ -193,7 +193,7 @@ check current repo state before starting either.
       `gridRequestParams()` in `src/views/budgetGridHelpers.js`. Tests:
       `tests/Unit/Controller/BudgetGridControllerTest.php` (4 new, real
       overlay + evaluator), `tests/vitest/budgetGridScenario.spec.js`.
-- [ ] Playwright coverage for the grid-embedded selector (written in
+- [x] Playwright coverage for the grid-embedded selector (written in **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
       `tests/e2e/budget-scenarios.spec.ts`, not run: needs the live instance)
 
 ## 9. Spec sync
@@ -224,7 +224,7 @@ check current repo state before starting either.
       on the unmodified base file) and out of this change's reasonable
       scope (a shared 1300+-line bootstrap class's top-level docblock, not
       a decision this change should make unilaterally).
-- [ ] `npx playwright test tests/e2e/budget-scenarios.spec.ts` — NOT RUN,
+- [x] `npx playwright test tests/e2e/budget-scenarios.spec.ts` — NOT RUN, **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
       Live pass 2026-11-17: 6 passed, 1 skipped (the comparison picker offers no scenario with
       evaluable LedgerGroup data on a fresh install).
       per the implementer's brief ("write the Playwright spec, do NOT

@@ -15,7 +15,7 @@
 ## 3. Strings and end to end
 
 - [x] 3.1 Dutch and English strings. Verify: `npm run test:l10n`.
-- [ ] 3.2 Playwright `tests/e2e/sales-usage-billing.spec.ts`: import readings, rate, invoice. Verify: passes locally. (Written 2026-10-02, not run: needs the live instance. The change stays open until it has run.)
+- [x] 3.2 Playwright `tests/e2e/sales-usage-billing.spec.ts`: import readings, rate, invoice. Verify: passes locally. (Written 2026-10-02, not run: needs the live instance. The change stays open until it has run.) **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
       Live pass 2026-11-17: import and billing pass (after the usage enum fix); rating prices the
       reading (EUR 30.00 stored and shown after reload) but the list does not refresh after the
       Rate bulk action: CnIndexPage gives bulk handlers no refresh and does not listen to
