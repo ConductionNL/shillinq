@@ -230,6 +230,20 @@ CPI-applicable-to-annual-only) is unchanged.
 - **THEN** projected amount SHALL be €620 × 1.032 = €639.84
 - **AND** amount for July 2024 shall remain €620 (no retroactive reindex)
 
+#### Scenario: An existing `CashflowRecurring` row with no `contractReference`/`cpiRatePercent` remains valid unchanged
+
+- **GIVEN** a `CashflowRecurring` row seeded before this delta, carrying no
+  `contractReference` or `cpiRatePercent` value
+- **WHEN** the schema is re-validated after this delta lands
+- **THEN** the row remains valid — both new fields are absent/null and
+  neither is required, and every existing `CashflowRecurringGuard` check
+  behaves exactly as before
+
+@e2e exclude backend schema-compatibility check, no browser-visible
+behaviour — verified by re-running `node tests/validate-registers.js`
+against the amended fragment and confirming existing seed objects still
+validate
+
 #### Scenario: A recurring cost tagged to a Contract must stay within that Contract's dates
 
 - **GIVEN** a `Contract` with `startDate: "2027-01-01"`, `endDate` null
