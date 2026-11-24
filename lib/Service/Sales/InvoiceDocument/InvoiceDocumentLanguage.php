@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use OCP\L10N\IFactory;
 /**
  * Labels and amount formatting per document language.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
  */
 class InvoiceDocumentLanguage {
 
@@ -97,7 +97,7 @@ class InvoiceDocumentLanguage {
 	 *
 	 * @return string One of the keys of LOCALES.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
 	 */
 	public function resolve(string $customerLanguage, string $fallback = self::DEFAULT_LANGUAGE): string {
 		foreach ([$customerLanguage, $fallback] as $candidate) {
@@ -117,7 +117,7 @@ class InvoiceDocumentLanguage {
 	 *
 	 * @return array<string, string> The label per key.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
 	 */
 	public function labels(string $language): array {
 		$l10n = $this->l10nFactory->get(AppIdentity::APP_ID, $this->resolve(customerLanguage: $language));
@@ -138,7 +138,7 @@ class InvoiceDocumentLanguage {
 	 *
 	 * @return string For example `£4,800.00` (en, GBP) or `€ 24.200,00` (nl, EUR).
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
 	 */
 	public function money(float $amount, string $currency, string $language): string {
 		$formatter = new NumberFormatter(self::LOCALES[$this->resolve(customerLanguage: $language)], NumberFormatter::CURRENCY);
@@ -158,7 +158,7 @@ class InvoiceDocumentLanguage {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
 	 */
 	public function number(float $value, string $language): string {
 		$formatter = new NumberFormatter(self::LOCALES[$this->resolve(customerLanguage: $language)], NumberFormatter::DECIMAL);

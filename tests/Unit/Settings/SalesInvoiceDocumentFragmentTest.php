@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-1.2
  */
 
 // phpcs:disable CustomSniffs.Functions.NamedParameters

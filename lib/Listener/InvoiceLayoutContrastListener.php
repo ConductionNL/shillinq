@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
  */
 class InvoiceLayoutContrastListener implements IEventListener {
 
@@ -71,7 +71,7 @@ class InvoiceLayoutContrastListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 	 */
 	public function handle(Event $event): void {
 		$colour = $this->incomingPrimaryColour(event: $event);

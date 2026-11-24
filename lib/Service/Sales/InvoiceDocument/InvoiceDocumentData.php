@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
  */
 
 declare(strict_types=1);
@@ -33,7 +33,7 @@ use OCA\Shillinq\Service\Payment\PayLinkService;
 /**
  * The template data of one invoice document.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
  */
 class InvoiceDocumentData {
 
@@ -59,7 +59,7 @@ class InvoiceDocumentData {
 	 *
 	 * @return array<string, mixed> language, currency, labels, invoice, creditor, recipient, lines, totals, qr, layout.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
 	 */
 	public function assemble(array $invoice, array $lines, array $parties, string $fallback = InvoiceDocumentLanguage::DEFAULT_LANGUAGE): array {
 		$creditor = (array)($parties['creditor'] ?? []);
@@ -98,7 +98,7 @@ class InvoiceDocumentData {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.3
 	 */
 	public static function currencyOf(array $invoice): string {
 		$currency = strtoupper(trim((string)($invoice['currency'] ?? '')));
@@ -116,7 +116,7 @@ class InvoiceDocumentData {
 	 *
 	 * @return float
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.4
 	 */
 	public static function openAmount(array $invoice): float {
 		if (is_numeric($invoice['amountDue'] ?? null) === true) {
@@ -187,7 +187,7 @@ class InvoiceDocumentData {
 	 *
 	 * @return array{epc: string|null, payLink: string|null}
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.4
 	 */
 	private function scanToPay(array $invoice, array $creditor, array $layout, string $currency): array {
 		if (($layout['showQr'] ?? true) === false) {

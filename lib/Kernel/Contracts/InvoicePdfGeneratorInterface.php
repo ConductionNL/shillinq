@@ -47,7 +47,7 @@ interface InvoicePdfGeneratorInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function documentsAvailable(): bool;
 
@@ -63,7 +63,7 @@ interface InvoicePdfGeneratorInterface {
 	 *
 	 * @throws \OCA\Shillinq\Reporting\DocudeskUnavailableException When docudesk is not installed.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function generatePdf(array $invoice, array $lines, array $context = []): array;
 
@@ -77,7 +77,7 @@ interface InvoicePdfGeneratorInterface {
 	 *
 	 * @return array{filename:string,html:string,mimeType:string}
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function generateHtml(
 		array $invoice,

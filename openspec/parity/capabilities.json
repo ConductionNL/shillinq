@@ -1602,7 +1602,7 @@
 				"reachedOn": "BillableInvoiceDetail /invoice/:invoiceId (via menu Sales > Invoices > All invoices), PDF button calls /api/v1/invoices/{id}/pdf",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document",
-				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: An administration sets its invoice layout (REQ-SID-001)"
+				"requirement": "openspec/changes/archive/2026-11-24-sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: An administration sets its invoice layout (REQ-SID-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1620,7 +1620,7 @@
 			"feature": "sales-invoicing",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "An invoice and its PDF exist, but the layout is hard-coded: no logo, colours or layout choice, and no docudesk template is used for invoices. Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
+			"note": "An invoice and its PDF exist, but the layout is hard-coded: no logo, colours or layout choice, and no docudesk template is used for invoices. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-numbering",
@@ -1789,7 +1789,7 @@
 				"reachedOn": "nothing reaches it: no QR on any invoice output",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document",
-				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice carries a scan-to-pay code (REQ-SID-005)"
+				"requirement": "openspec/changes/archive/2026-11-24-sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice carries a scan-to-pay code (REQ-SID-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1807,7 +1807,7 @@
 			"feature": "online-payments",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
+			"note": "Specified 2026-09-27 in openspec/changes/archive/2026-11-24-sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-peppol-send",
@@ -1862,7 +1862,7 @@
 				"reachedOn": "nothing reaches it: no language field on customer or invoice",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document",
-				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice speaks the customer's language (REQ-SID-003)"
+				"requirement": "openspec/changes/archive/2026-11-24-sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice speaks the customer's language (REQ-SID-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1880,7 +1880,7 @@
 			"feature": "sales-invoicing",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
+			"note": "Specified 2026-09-27 in openspec/changes/archive/2026-11-24-sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-time-to-invoice",
@@ -2242,7 +2242,7 @@
 				"reachedOn": "AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable), FX Rates pages under Banking & Cashflow",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document",
-				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice shows its own currency (REQ-SID-004)"
+				"requirement": "openspec/changes/archive/2026-11-24-sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice shows its own currency (REQ-SID-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2260,7 +2260,7 @@
 			"feature": "multi-administration-currency",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "The AR record and e-invoice honour the currency, the PDF and the time-and-expense generator do not. Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
+			"note": "The AR record and e-invoice honour the currency, the PDF and the time-and-expense generator do not. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-quick-draft",

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use Throwable;
 /**
  * Resolves the creditor, recipient, layout and language of an invoice document.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
  */
 class InvoiceDocumentParties {
 
@@ -65,7 +65,7 @@ class InvoiceDocumentParties {
 	 *
 	 * @return array{creditor: array<string, string>, recipient: array<string, string>, layout: array<string, mixed>, language: string}
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
 	 */
 	public function forInvoice(array $invoice): array {
 		$administrationId = trim((string)($invoice['administrationId'] ?? ''));
@@ -104,7 +104,7 @@ class InvoiceDocumentParties {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
 	 */
 	private function layout(string $administrationId): array {
 		if ($administrationId === '') {

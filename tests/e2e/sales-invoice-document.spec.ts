@@ -40,8 +40,8 @@
  * Written 24 Nov 2026, runs in the nightly; not run in the build sandbox (no
  * live instance).
  *
- * @spec openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core/spec.md
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
  *
  * @e2e bookkeeping-accounts-receivable-core::an-office-sets-its-house-style
  * @e2e bookkeeping-accounts-receivable-core::docudesk-is-not-installed

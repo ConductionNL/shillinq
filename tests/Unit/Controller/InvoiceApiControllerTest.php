@@ -309,7 +309,7 @@ final class InvoiceApiControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
 	 */
 	public function testPdfHandsTheDocumentItsParties(): void {
 		$invoice = ['invoiceNumber' => 'F-2026-0009', 'administrationId' => 'adm-1', 'customerId' => 'C-1'];
@@ -394,7 +394,7 @@ final class InvoiceApiControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function testPdfWithoutDocudeskSaysItIsNeeded(): void {
 		$this->objectService->method('find')->willReturn(

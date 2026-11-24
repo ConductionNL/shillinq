@@ -113,7 +113,7 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function documentsAvailable(): bool {
 		return $this->documentData !== null && $this->renderer !== null && $this->renderer->available() === true;
@@ -138,7 +138,7 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 * @throws DocudeskUnavailableException When docudesk is not installed.
 	 * @throws RuntimeException             When docudesk renders no PDF.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function generatePdf(array $invoice, array $lines, array $context = []): array {
 		if ($this->documentData === null || $this->renderer === null) {
@@ -174,7 +174,7 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 *
 	 * @return array{filename:string,html:string,mimeType:string}
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function generateHtml(
 		array $invoice,

@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -53,7 +53,7 @@ use Throwable;
 /**
  * The docudesk hand-off of the sales invoice document.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
  */
 class InvoiceDocumentRenderer {
 
@@ -104,7 +104,7 @@ class InvoiceDocumentRenderer {
 	 * @throws DocudeskUnavailableException When docudesk is not installed or cannot be resolved.
 	 * @throws RuntimeException             When no single template is found or docudesk renders no PDF.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function render(array $data, string $userId): string {
 		if ($this->available() === false) {
@@ -157,7 +157,7 @@ class InvoiceDocumentRenderer {
 	 *
 	 * @throws RuntimeException When the registry has no sales-invoice template or no default variant.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.1
 	 */
 	public function variant(string $name): array {
 		$registry = [];
@@ -190,7 +190,7 @@ class InvoiceDocumentRenderer {
 	 *
 	 * @return bool True when an invoice document can be rendered.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) FleetAppId is the one pure resolver of the document app's names.
 	 */
@@ -207,7 +207,7 @@ class InvoiceDocumentRenderer {
 	 *
 	 * @return mixed The row as an array, or the row unchanged.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	private static function plainRow(mixed $row): mixed {
 		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
@@ -226,7 +226,7 @@ class InvoiceDocumentRenderer {
 	 *
 	 * @throws RuntimeException When none or several templates match.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	private function templateId(object $templates): string {
 		$configured = trim($this->appConfig->getValueString('shillinq', 'documents_template_'.self::TEMPLATE_ID, ''));
@@ -261,7 +261,7 @@ class InvoiceDocumentRenderer {
 	 *
 	 * @return object|null The service.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) FleetAppId is the one pure resolver of the document app's names.
 	 */

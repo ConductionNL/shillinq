@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
  */
 
 declare(strict_types=1);
@@ -33,7 +33,7 @@ use RuntimeException;
 /**
  * The parties an invoice document is rendered with.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
  */
 class InvoiceDocumentPartiesTest extends TestCase {
 

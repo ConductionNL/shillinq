@@ -477,8 +477,8 @@ class InvoiceApiController extends Controller {
 	 *
 	 * @return DataDisplayResponse|JSONResponse
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
 	 */
 	private function renderPdf(string $invoiceId): DataDisplayResponse|JSONResponse {
 		$invoice = $this->ownInvoice(invoiceId: $invoiceId);

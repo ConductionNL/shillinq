@@ -28,7 +28,7 @@ function channel(hex) {
  *
  * @param {string} hex The colour.
  * @return {number|null}
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
  */
 export function ratioAgainstWhite(hex) {
 	const match = /^#([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})$/.exec(
@@ -52,7 +52,7 @@ export function ratioAgainstWhite(hex) {
  * @param {string} label The colour's name, already translated.
  * @param {string} hex The colour.
  * @return {{ratio: number|null, passes: boolean, text: string}}
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
  */
 export function contrastVerdict(label, hex) {
 	const ratio = ratioAgainstWhite(hex)

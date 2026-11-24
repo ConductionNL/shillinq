@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.4
  */
 
 declare(strict_types=1);
@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service\Sales\InvoiceDocument;
 /**
  * Builds the EPC069-12 payload.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.4
  */
 class EpcQrPayload {
 
@@ -65,7 +65,7 @@ class EpcQrPayload {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.4
 	 */
 	public function forTransfer(array $creditor, string $currency, float $amount, string $reference): ?string {
 		$iban = strtoupper(str_replace(' ', '', (string)($creditor['iban'] ?? '')));
