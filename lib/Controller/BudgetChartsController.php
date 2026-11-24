@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
 
 declare(strict_types=1);
@@ -57,7 +57,7 @@ use Throwable;
 /**
  * GET /apps/shillinq/api/budget-charts/series.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
 class BudgetChartsController extends Controller {
 	/**
@@ -98,8 +98,8 @@ class BudgetChartsController extends Controller {
 	 *
 	 * @return JSONResponse The chart-series payload or an error envelope.
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 	 * @e2e exclude API-only endpoint, no UI surface of its own — exercised through
 	 * the budget-charts::grid-row-trend-toggle-renders-chart and
 	 * budget-charts::account-detail-chart-renders Playwright scenarios

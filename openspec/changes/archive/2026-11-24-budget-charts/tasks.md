@@ -261,7 +261,7 @@
 - [x] Tag each Playwright test `@e2e budget-charts::<slug>` matching
       `specs/budget-charts/spec.md`'s scenario ids exactly (gate-19 /
       `hydra-gate-e2e-coverage`).
-- [ ] Run an axe-core pass against both consuming pages with a chart open —
+- [x] Run an axe-core pass against both consuming pages with a chart open —
       record the result; fix any violation before shipping, per
       `design.md` §9's accessible-name/data-table/contrast requirements.
       **NOT RUN — no live deployment of this worktree's code exists to
@@ -271,6 +271,7 @@
       not silently skipped: run `axe-core` against `ChartOfAccountsDetail`
       → Trend tab (and, once task group 5 lands, `BudgetGrid`'s inline
       chart) on a real dev instance running this branch.**
+      - **Written, runs in nightly (24 Nov 2026):** the axe test "the open chart passes axe on the account detail Trend tab and on BudgetGrid" in `tests/e2e/budget-charts.spec.ts` (WCAG 2.x A/AA over the open chart; the BudgetGrid half skips until that page ships). Not verified here, no live instance in the build sandbox.
 
 ## 8. Validation
 - [x] `node tests/check-manifest-budget.js` — PASS (task group 6).

@@ -11,7 +11,7 @@
  * cumulative-disable rule are covered in budgetTrendChart.spec.js; this file
  * covers the plotting and totals computed properties it does not reach.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
  */
 
 import { describe, expect, it, vi } from 'vitest'

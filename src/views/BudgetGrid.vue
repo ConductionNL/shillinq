@@ -513,7 +513,7 @@ export default {
 		 *
 		 * @param {string} id The row id.
 		 * @return {void}
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-001
 		 */
 		toggleChart(id) {
 			this.openChartRowId = nextOpenChartRow(this.openChartRowId, id)
@@ -524,7 +524,7 @@ export default {
 		 *
 		 * @param {object} row The grid row.
 		 * @return {object|null} The BudgetTrendChart props.
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-001
 		 */
 		trendChartProps(row) {
 			return trendChartProps(row, this.administrationId, {

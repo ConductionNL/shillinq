@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  *
  * @covers \OCA\Shillinq\Controller\ChartSeriesQuery
  *

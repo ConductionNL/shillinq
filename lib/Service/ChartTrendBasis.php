@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Service;
  * month, its last actual month, growth rate and base value. Built and used
  * only by BudgetChartSeriesService.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
 final class ChartTrendBasis {
 	/**

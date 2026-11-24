@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use OCP\IRequest;
 /**
  * The trimmed chart-series parameters and their shape checks.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
 final class ChartSeriesQuery {
 	/**
@@ -93,7 +93,7 @@ final class ChartSeriesQuery {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
 	 */
 	public function administrationValid(): bool {
 		return $this->administrationId !== '' && preg_match(self::ID_PATTERN, $this->administrationId) === 1;
@@ -104,7 +104,7 @@ final class ChartSeriesQuery {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
 	 */
 	public function monthsValid(): bool {
 		return preg_match(self::MONTH_PATTERN, $this->from) === 1 && preg_match(self::MONTH_PATTERN, $this->to) === 1;
@@ -115,7 +115,7 @@ final class ChartSeriesQuery {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
 	 */
 	public function budgetValid(): bool {
 		return $this->annualBudgetId === '' || preg_match(self::ID_PATTERN, $this->annualBudgetId) === 1;
@@ -126,7 +126,7 @@ final class ChartSeriesQuery {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
 	 */
 	public function annualBudget(): ?string {
 		if ($this->annualBudgetId === '') {
