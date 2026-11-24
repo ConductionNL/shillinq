@@ -325,7 +325,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testIssueForDeliveryCreatesPostedIssueMoveForStockTrackedLine(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 20, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 20, 'quantityReserved' => 0],
 			]
 		);
 
@@ -381,7 +381,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testIssueForDeliveryIsIdempotentOnReprocess(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 20, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 20, 'quantityReserved' => 0],
 			]
 		);
 
@@ -411,7 +411,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testReverseForDeliveryCancelsIssuedMoves(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 20, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 20, 'quantityReserved' => 0],
 			]
 		);
 
@@ -440,7 +440,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testIssueForDeliveryBlocksQuarantinedLot(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 50, 'quantityReserved' => 0],
 			],
 			inventoryLot: [
 				['id' => 'lot-q', 'lotNumber' => 'LOT-Q-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'quarantined', 'expiryDate' => '2027-01-15'],
@@ -475,7 +475,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testIssueForDeliveryBlocksLotMarkedExpired(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 50, 'quantityReserved' => 0],
 			],
 			inventoryLot: [
 				['id' => 'lot-e', 'lotNumber' => 'LOT-E-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'expired', 'expiryDate' => '2026-06-15'],
@@ -509,7 +509,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testIssueForDeliveryBlocksActiveLotPastExpiryDate(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 50, 'quantityReserved' => 0],
 			],
 			inventoryLot: [
 				['id' => 'lot-pastexp', 'lotNumber' => 'LOT-PX-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'active', 'expiryDate' => '2026-06-15'],
@@ -543,7 +543,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testIssueForDeliveryDispatchesFromSellableLot(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 50, 'quantityReserved' => 0],
 			],
 			inventoryLot: [
 				['id' => 'lot-ok', 'lotNumber' => 'LOT-OK-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'active', 'expiryDate' => '2027-01-15'],
@@ -580,7 +580,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 	public function testIssueForDeliveryPrefersSellableLotOverQuarantinedSibling(): void {
 		$this->setUpService(
 			inventoryStock: [
-				['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+				['productSku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 50, 'quantityReserved' => 0],
 			],
 			inventoryLot: [
 				['id' => 'lot-bad', 'lotNumber' => 'LOT-BAD-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 100, 'lotStatus' => 'quarantined', 'expiryDate' => '2027-01-15'],

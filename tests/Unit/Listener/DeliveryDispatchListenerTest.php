@@ -247,11 +247,11 @@ class DeliveryDispatchListenerTest extends TestCase {
 			'postedAt' => '2026-07-01T09:00:00Z',
 		];
 		$store->objects['InventoryStock'][] = [
-			'sku' => 'sku-a',
+			'productSku' => 'sku-a',
 			'administrationId' => 'adm-1',
-			'locationId' => 'loc-1',
-			'quantity' => 10,
-			'reservedQuantity' => 0,
+			'locationCode' => 'loc-1',
+			'quantityOnHand' => 10,
+			'quantityReserved' => 0,
 		];
 
 		$fakeObjectService = new class($store) {
