@@ -11,7 +11,7 @@
  payment.administer action and books the step. Opened with spawnDialog from
  src/utils/inboundPayableActions.js, so it lives in its own file (hydra gate-13).
 
- @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
 -->
 
 <template>
@@ -120,7 +120,7 @@ export default {
 		/**
 		 * The dialog title for the step.
 		 *
-		 * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+		 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
 		 */
 		title() {
 			return (
@@ -135,7 +135,7 @@ export default {
 		/**
 		 * The confirm button's label for the step.
 		 *
-		 * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+		 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
 		 */
 		confirmLabel() {
 			return (
@@ -150,7 +150,7 @@ export default {
 		/**
 		 * Who gets how much, when the row carries it.
 		 *
-		 * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+		 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
 		 */
 		summary() {
 			const name = this.payable?.payee?.name
@@ -187,7 +187,7 @@ export default {
 		/**
 		 * Take the step and close with the payable the server answered.
 		 *
-		 * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+		 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
 		 */
 		async confirm() {
 			this.error = ''
@@ -222,7 +222,7 @@ export default {
 		/**
 		 * Close without taking the step.
 		 *
-		 * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+		 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
 		 */
 		close() {
 			this.$emit('close', null)

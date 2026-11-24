@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
  * - a signed-in user ends it: staff, who must choose a reason other than
  *   `not-given`.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
  */
 class CancellationReasonGuard implements LifecycleGuardInterface {
 
@@ -83,7 +83,7 @@ class CancellationReasonGuard implements LifecycleGuardInterface {
 	 *
 	 * @return GuardResult Allowed, or refused with the reason.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
 	 */
@@ -104,7 +104,7 @@ class CancellationReasonGuard implements LifecycleGuardInterface {
 	 *
 	 * @return bool True when the end may proceed.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
 	 */
 	public function requireReason(array $profile, string $userId, ?DateTimeImmutable $today = null): bool {
 		if ($userId === '' || self::endConditionReached(profile: $profile, today: ($today ?? new DateTimeImmutable('today'))) === true) {
@@ -124,7 +124,7 @@ class CancellationReasonGuard implements LifecycleGuardInterface {
 	 *
 	 * @return bool True when the profile ends by itself.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-1.1
 	 */
 	public static function endConditionReached(array $profile, DateTimeImmutable $today): bool {
 		if (array_key_exists('remainingOccurrences', $profile) === true

@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ class FeedDeclarationValidator {
 	 *
 	 * @return array<int, string> One sentence per problem.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function problems(array $declaration, array $schemaFields): array {
 		$problems = [];

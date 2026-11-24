@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCP\IRequest;
 /**
  * Takes an open invoice's payment on the caller's registered phone, or as a QR checkout.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
  */
 class PointOfSalePaymentController extends Controller {
 
@@ -63,7 +63,7 @@ class PointOfSalePaymentController extends Controller {
 	 *
 	 * @return JSONResponse The mode (device or qr), the pending payment request and the checkout URL, or the refusal.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
 	 */
 	#[NoAdminRequired]
 	public function takePayment(string $id): JSONResponse {

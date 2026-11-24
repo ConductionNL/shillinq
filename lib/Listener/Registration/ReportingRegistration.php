@@ -51,7 +51,7 @@ final class ReportingRegistration {
 	 * @return void
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(

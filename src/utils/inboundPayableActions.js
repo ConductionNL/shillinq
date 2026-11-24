@@ -27,7 +27,7 @@ function openStep(step, scope) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<unknown>|undefined}
- * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
  */
 export function approvePayable(scope) {
 	return openStep('approve', scope)
@@ -38,7 +38,7 @@ export function approvePayable(scope) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<unknown>|undefined}
- * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
  */
 export function markPayablePaid(scope) {
 	return openStep('paid', scope)
@@ -49,7 +49,7 @@ export function markPayablePaid(scope) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<unknown>|undefined}
- * @spec openspec/changes/inbound-payable-from-another-app/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/tasks.md
  */
 export function rejectPayable(scope) {
 	return openStep('reject', scope)

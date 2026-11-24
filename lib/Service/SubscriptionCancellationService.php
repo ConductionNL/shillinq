@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Throwable;
  * signed in, so CancellationReasonGuard lets the reason be left out and
  * RecordCancellationAction records the customer as the one who cancelled.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
  */
 class SubscriptionCancellationService implements SubscriptionCancellationServiceInterface {
 
@@ -111,7 +111,7 @@ class SubscriptionCancellationService implements SubscriptionCancellationService
 	 *
 	 * @return string CANCELLED, FORBIDDEN or DOWNSTREAM_ERROR.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
 	 */
 	public function cancel(array $claims, string $profileId, string $reasonCode = '', string $reasonText = ''): string {
 		$profileId = trim($profileId);
@@ -167,7 +167,7 @@ class SubscriptionCancellationService implements SubscriptionCancellationService
 	 *
 	 * @return array{cancellationReasonCode: string, cancellationReasonText: string|null} The inputs.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
 	 */
 	public static function inputs(string $reasonCode, string $reasonText): array {
 		$code = trim($reasonCode);

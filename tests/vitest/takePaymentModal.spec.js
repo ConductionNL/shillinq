@@ -9,7 +9,7 @@
  * components are replaced; src/utils/pointOfSaleApi.js and the qrcode
  * library run.
  *
- * @spec openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
  */
 
 import { readFileSync } from 'node:fs'

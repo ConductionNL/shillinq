@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use OCP\EventDispatcher\Event;
  *
  * @SuppressWarnings(PHPMD.ExcessiveParameterList) The command carries the payout's fields as named arguments.
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
  */
 final class PayableRaisedEvent extends Event {
 
@@ -103,7 +103,7 @@ final class PayableRaisedEvent extends Event {
 	 *
 	 * @return array<string, mixed> The fields.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function toArray(): array {
 		return [
@@ -136,7 +136,7 @@ final class PayableRaisedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function accept(string $payableId, string $state): void {
 		$this->error = null;
@@ -154,7 +154,7 @@ final class PayableRaisedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function refuse(string $error): void {
 		$this->result = null;
@@ -166,7 +166,7 @@ final class PayableRaisedEvent extends Event {
 	 *
 	 * @return bool True when accepted.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function isHandled(): bool {
 		return $this->result !== null;
@@ -177,7 +177,7 @@ final class PayableRaisedEvent extends Event {
 	 *
 	 * @return array<string, mixed>|null The answer, or null when not accepted.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function getResult(): ?array {
 		return $this->result;
@@ -188,7 +188,7 @@ final class PayableRaisedEvent extends Event {
 	 *
 	 * @return string|null The reason, or null when not refused.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function getError(): ?string {
 		return $this->error;

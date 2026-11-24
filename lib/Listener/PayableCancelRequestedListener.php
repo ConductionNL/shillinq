@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use OCP\EventDispatcher\IEventListener;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
  */
 class PayableCancelRequestedListener implements IEventListener {
 
@@ -55,7 +55,7 @@ class PayableCancelRequestedListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof PayableCancelRequestedEvent === false) {

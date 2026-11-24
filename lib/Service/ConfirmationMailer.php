@@ -196,7 +196,7 @@ class ConfirmationMailer {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
 	 */
 	private function confirmLink(array $appointment, string $rawToken): string {
 		$appointmentId = (string)($appointment['id'] ?? ($appointment['appointmentId'] ?? ''));
@@ -213,7 +213,7 @@ class ConfirmationMailer {
 	 *
 	 * @return string|null Null when the booking has no withdrawal link.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
 	 */
 	private function withdrawalLine(array $appointment): ?string {
 		if ($this->withdrawalLinks === null) {

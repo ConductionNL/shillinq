@@ -11,7 +11,7 @@
  * ReportSchedule fragment, and the owner check runs through the real
  * AdministrationContextService over AdministrationMembership rows.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 declare(strict_types=1);

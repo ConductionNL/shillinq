@@ -198,7 +198,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testApproveBooksTheReversal(): void {
 		$refunds = $this->refundRequested();
@@ -230,7 +230,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testMarkPaidMovesToRefunded(): void {
 		$refunds = $this->refundRequested();
@@ -266,7 +266,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testMarkPaidBeforeApprovalIsRefused(): void {
 		$refunds = $this->refundRequested();
@@ -288,7 +288,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testApproveWithoutARefundAccountIsRefused(): void {
 		$refunds = $this->refundRequested(refundAccount: '');
@@ -308,7 +308,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testApprovingTwiceIsRefused(): void {
 		$refunds = $this->refundRequested();
@@ -325,7 +325,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testAUserOutsideTheAdministrationIsRefused(): void {
 		$refunds = $this->refundRequested();
@@ -358,7 +358,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testTheApproverCannotAlsoPay(): void {
 		$refunds = $this->refundRequested();
@@ -382,7 +382,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testTheControllerAnswersFourEyesAs403(): void {
 		$refunds = $this->refundRequested();
@@ -399,7 +399,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
 	 */
 	public function testOnlyFinancePaysARefundThroughTheController(): void {
 		$refunds = $this->refundRequested();

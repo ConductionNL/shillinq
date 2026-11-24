@@ -64,7 +64,7 @@ interface ReportGenerationServiceInterface {
 	 *                              or an `{ error: ... }` envelope when generation cannot proceed.
 	 *
 	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array;
 

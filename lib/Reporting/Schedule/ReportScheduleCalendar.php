@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ class ReportScheduleCalendar {
 	 *
 	 * @throws InvalidArgumentException For an unknown frequency.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function nextRunAfter(string $frequency, int $runDay, DateTimeImmutable $after): DateTimeImmutable {
 		$after = $after->setTimezone(new DateTimeZone('UTC'));
@@ -101,7 +101,7 @@ class ReportScheduleCalendar {
 	 *
 	 * @return string 2026-09 for a month, 2026-Q3 for a quarter, 2026 for a year.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function periodFor(string $frequency, string $periodRule, DateTimeImmutable $runAt): string {
 		$day = $runAt->setTimezone(new DateTimeZone('UTC'))->setTime(0, 0)->modify('-1 day');

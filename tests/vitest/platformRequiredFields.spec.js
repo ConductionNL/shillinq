@@ -11,7 +11,7 @@
  * nextcloud-vue's own parseResponseError over that exact body, so a change on
  * either side shows here.
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 
 import { parseResponseError } from '@conduction/nextcloud-vue/src/utils/errors.js'

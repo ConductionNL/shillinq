@@ -32,7 +32,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @covers \OCA\Shillinq\Service\Payout\PayoutMatchingService
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.2
  */
 final class PayoutMatchingServiceTest extends TestCase {
 

@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
  */
 class BankLineObjectRequestListener implements IEventListener {
 	/**
@@ -82,7 +82,7 @@ class BankLineObjectRequestListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function handle(Event $event): void {
 		try {

@@ -30,7 +30,7 @@ use OCP\IL10N;
 /**
  * Reads the active FieldRequirement records of an administration and checks objects and requirements against them.
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 class FieldRequirements implements FieldRequirementsInterface {
 	use ReadsSourceRowsInBatches;
@@ -67,7 +67,7 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @return list<array{field: string, title: string, reason: string}> The missing fields.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function missing(array $definition, array $object): array {
 		$administrationId = trim((string)($object['administrationId'] ?? ''));
@@ -100,7 +100,7 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @return array<string, string> The refusal by field.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function refusal(array $requirement): array {
 		$schema = trim((string)($requirement['schema'] ?? ''));
@@ -134,7 +134,7 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @return list<array{field: string, title: string, required: string, requiredLabel: string}> The fields.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function formFields(array $requirement): array {
 		$definition = $this->schemas->definition(schema: trim((string)($requirement['schema'] ?? '')));
@@ -214,7 +214,7 @@ class FieldRequirements implements FieldRequirementsInterface {
 	 *
 	 * @return array<string, mixed>|null The requirement.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function find(string $id): ?array {
 		$found = ObjectIdentifier::findScoped(

@@ -32,7 +32,7 @@ use Throwable;
  * which answers the raw schema id while `listener_slug_contract` is off (the default), so a
  * check built on it would never run on a default instance.
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 class SchemaDefinitions implements SchemaDefinitionsInterface {
 
@@ -68,7 +68,7 @@ class SchemaDefinitions implements SchemaDefinitionsInterface {
 	 *
 	 * @return array{slug: string, title: string, properties: array<string, mixed>, required: list<string>}|null
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function definition(string $schema): ?array {
 		if ($schema === '') {

@@ -14,7 +14,7 @@
         "version": "0.1.0",
         "title": "Debtor credit",
         "description": "Money kept for a payer from a settled request, to pay their next request first.",
-        "x-spec": "openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every credit and every spend of it is recorded, so the balance can be traced back to the request it came from."

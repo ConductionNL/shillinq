@@ -221,7 +221,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	 *
 	 * @return CaptureBookingService The service.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
 	 */
 	private function captureBooking(): CaptureBookingService {
 		return ($this->captureBooking ?? new CaptureBookingService(
@@ -238,7 +238,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	 *
 	 * @return CounterSaleSettlement
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.2
 	 */
 	private function counterSales(): CounterSaleSettlement {
 		return ($this->counterSales ?? new CounterSaleSettlement(

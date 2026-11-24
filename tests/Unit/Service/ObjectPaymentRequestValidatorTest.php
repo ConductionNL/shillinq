@@ -230,7 +230,7 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
 	 */
 	public function testAnEventFeeIsAnObjectRequestType(): void {
 		$request = $this->objectRequest(
@@ -256,7 +256,7 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
 	 */
 	public function testASecondPendingEventFeeIsRefused(): void {
 		$fee = ['subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'], 'requestType' => 'event-fee'];
@@ -364,7 +364,7 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	public function testShortReferenceIsRefused(): void {
 		$this->expectException(InvalidArgumentException::class);
@@ -378,7 +378,7 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	public function testDuplicateOpenReferenceIsRefused(): void {
 		$other = ['subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-7']];
@@ -398,7 +398,7 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
 	public function testARequestWithAReferenceFitsTheSchema(): void {
 		$request = $this->objectRequest(

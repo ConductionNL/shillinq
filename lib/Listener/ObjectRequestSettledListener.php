@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
  */
 class ObjectRequestSettledListener implements IEventListener {
 	/**
@@ -73,7 +73,7 @@ class ObjectRequestSettledListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectUpdatedEvent) === false) {
@@ -105,7 +105,7 @@ class ObjectRequestSettledListener implements IEventListener {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	private function oldData(ObjectUpdatedEvent $event): array {
 		return ($event->getOldObject()?->getObject() ?? []);
@@ -119,7 +119,7 @@ class ObjectRequestSettledListener implements IEventListener {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	private function settledWithoutReceipt(array $old, array $new): bool {
 		$settledNow = (string)($old['settledAt'] ?? '') === '' && (string)($new['settledAt'] ?? '') !== '';
@@ -136,7 +136,7 @@ class ObjectRequestSettledListener implements IEventListener {
 	 *
 	 * @throws Throwable When the mail or the patch fails.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	private function sendReceipt(mixed $entity, array $new): void {
 		$id = (string)($new['id'] ?? ($entity->getUuid() ?? ''));

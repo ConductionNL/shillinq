@@ -23,7 +23,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use OCP\IAppConfig;
 /**
  * Matches the lines of a provider payout to what they paid.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.2
  */
 class PayoutMatchingService {
 
@@ -59,7 +59,7 @@ class PayoutMatchingService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param IAppConfig             $appConfig     App config for the register slug.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.2
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -79,7 +79,7 @@ class PayoutMatchingService {
 	 *
 	 * @return array<string, mixed> The payout as matched.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.2
 	 */
 	public function match(array $payout): array {
 		$administrationId = (string)($payout['administrationId'] ?? '');
@@ -121,7 +121,7 @@ class PayoutMatchingService {
 	 *
 	 * @return list<array<string, mixed>>
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.2
 	 */
 	public static function unmatched(array $payout): array {
 		return array_values(

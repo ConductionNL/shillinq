@@ -161,7 +161,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testInvoiceStandsBehindTheRequest(): void {
 		$created = $this->leaf()->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload());
@@ -194,7 +194,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testANamedCustomerIsBilledAsIs(): void {
 		$seed = ['CustomerMaster' => [['id' => 'cm-7', 'customerId' => 'G-7', 'email' => 'sanne@example.nl', 'administrationId' => 'adm-larp-1']]];
@@ -210,7 +210,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testAMappedVatRateSplitsTheGross(): void {
 		$this->leaf(vatRates: ['event-fee' => 21])->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload());
@@ -228,7 +228,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testNoFlagNoInvoice(): void {
 		$created = $this->leaf()->create(new ObjectRef(register: 'larpinq', schema: 'Registration', id: 'reg-42'), $this->payload(['invoiceRequested' => false]));
@@ -242,7 +242,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testAnInvoiceWithoutAnAdministrationWritesNothing(): void {
 		$leaf = $this->leaf();

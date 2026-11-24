@@ -35,7 +35,7 @@ use Throwable;
  * listener booking a transaction, a lifecycle action), in a shillinq controller, in a
  * background job or on the command line is a system write.
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 class ObjectApiRequest implements ObjectApiRequestInterface {
 
@@ -63,7 +63,7 @@ class ObjectApiRequest implements ObjectApiRequestInterface {
 	 *
 	 * @return bool True for a person's own save.
 	 *
-	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function isPersonSaving(array $schemaNames, string $uuid): bool {
 		$parts = $this->savePathParts();

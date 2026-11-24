@@ -46,7 +46,7 @@ interface ScheduledReportRunnerInterface {
 	 *
 	 * @return array{ran: int, failed: int} Counts.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function runDue(DateTimeImmutable $now): array;
 }//end interface

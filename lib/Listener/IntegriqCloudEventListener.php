@@ -260,7 +260,7 @@ class IntegriqCloudEventListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.1
 	 */
 	private function recordSettlement(mixed $data): void {
 		if (is_array($data) === false) {

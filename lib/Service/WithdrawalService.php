@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Throwable;
  * A widget booking carries a name, an e-mail address and a phone number and no
  * company or VAT number, so a booking through the widget is a consumer's.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.1
  */
 class WithdrawalService {
 
@@ -172,7 +172,7 @@ class WithdrawalService {
 	 *
 	 * @throws RuntimeException When OpenRegister cannot be reached.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.2
 	 */
 	public function withdraw(string $appointmentId, string $channel, DateTimeImmutable $now): array {
 		if ($this->container === null || $this->cancellation === null || $this->deposits === null) {
@@ -215,7 +215,7 @@ class WithdrawalService {
 	 *
 	 * @return array<string, mixed> The withdrawal, with `acknowledgedAt` when the mail went out.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.3
 	 */
 	private function acknowledge(object $objects, array $appointment, array $withdrawal, DateTimeImmutable $now): array {
 		if ($this->mailer === null || $this->mailer->acknowledge(appointment: $appointment, withdrawnAt: $now) === false) {
@@ -417,7 +417,7 @@ class WithdrawalService {
 	 * @return array{withdrawable: bool, code: string, reason: string|null, periodEndsOn: string|null}
 	 *         The answer; `periodEndsOn` is the last day a withdrawal is accepted, when the booking moment is known.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.1
 	 */
 	public function isWithdrawable(array $appointment, ?array $service, DateTimeImmutable $now): array {
 		$bookedAt = self::bookedAt(appointment: $appointment);
@@ -478,7 +478,7 @@ class WithdrawalService {
 	 *
 	 * @return DateTimeImmutable|null The first moment a withdrawal is no longer accepted.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	public function periodEndFor(array $appointment): ?DateTimeImmutable {
 		$bookedAt = self::bookedAt(appointment: $appointment);
@@ -496,7 +496,7 @@ class WithdrawalService {
 	 *
 	 * @return DateTimeImmutable The first moment a withdrawal is no longer accepted.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.1
 	 */
 	public static function periodEnd(DateTimeImmutable $bookedAt): DateTimeImmutable {
 		return $bookedAt->modify('+'.self::PERIOD_DAYS.' days');
@@ -509,7 +509,7 @@ class WithdrawalService {
 	 *
 	 * @return DateTimeImmutable|null The moment, or null when unknown.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.1
 	 */
 	public static function bookedAt(array $appointment): ?DateTimeImmutable {
 		$self = $appointment['@self'] ?? [];

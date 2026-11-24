@@ -15,7 +15,7 @@
  (src/utils/refundActions.js) through spawnDialog. Its own file for hydra
  gate-13.
 
- @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
+ @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
 -->
 
 <template>
@@ -105,7 +105,7 @@ export default {
 		 * The ledger accounts as select options.
 		 *
 		 * @return {Array<{value: string, label: string}>}
-		 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
 		 */
 		accountOptions() {
 			return this.accounts
@@ -127,7 +127,7 @@ export default {
 		/**
 		 * Read the ledger accounts of the request's administration.
 		 *
-		 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
 		 */
 		async loadAccounts() {
 			this.loadingAccounts = true
@@ -156,7 +156,7 @@ export default {
 		/**
 		 * Post the bank payment and close with the server's answer.
 		 *
-		 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
 		 */
 		async submit() {
 			this.error = ''
@@ -207,7 +207,7 @@ export default {
 		/**
 		 * Close without recording anything.
 		 *
-		 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
 		 */
 		onClose() {
 			this.$emit('close')

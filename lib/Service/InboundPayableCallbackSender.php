@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use Throwable;
 /**
  * Posts one signed step to the raising app.
  *
- * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
+ * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
  */
 class InboundPayableCallbackSender {
 
@@ -74,7 +74,7 @@ class InboundPayableCallbackSender {
 	 *
 	 * @return array<string, mixed> The payable with callbackDeliveredAt or callbackError set.
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
 	 */
 	public function send(array $payable): array {
 		$url = (string)($payable['callbackUrl'] ?? '');

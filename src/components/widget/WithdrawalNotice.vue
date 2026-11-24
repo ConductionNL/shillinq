@@ -7,7 +7,7 @@
   be withdrawn without a fee and the signed link to do it. Renders nothing
   unless the link is https and the day is a date.
 
-  @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+  @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
 -->
 <template>
 	<p v-if="usable" class="wsw-widget__withdrawal">
@@ -39,7 +39,7 @@ export default {
 		 *
 		 * @return {boolean}
 		 *
-		 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+		 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
 		 */
 		usable() {
 			return /^https:\/\//i.test(this.link) && /^\d{4}-\d{2}-\d{2}$/.test(this.lastDay)

@@ -9,7 +9,7 @@
  * recipient, a group expanded to its members, gets one notification with a
  * link; a failed run tells the owner why. The notifier renders both.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 declare(strict_types=1);

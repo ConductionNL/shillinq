@@ -577,7 +577,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
 	 */
 	public function testACapturedEventFeeBooksOnItsOwnAccount(): void {
 		$saved = [];
@@ -725,7 +725,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function testCaptureSettlesTheInvoiceAndBooksNoObjectReceipt(): void {
 		$saved = [];

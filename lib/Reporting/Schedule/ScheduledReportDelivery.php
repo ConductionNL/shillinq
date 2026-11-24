@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -85,7 +85,7 @@ class ScheduledReportDelivery implements ScheduledReportDeliveryInterface {
 	 *
 	 * @throws \RuntimeException When the produced file cannot be found or filed.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function file(string $ownerId, int $fileId, string $folderPath, array $recipients): array {
 		$userFolder = $this->rootFolder->getUserFolder($ownerId);
@@ -119,7 +119,7 @@ class ScheduledReportDelivery implements ScheduledReportDeliveryInterface {
 	 *
 	 * @return int The number of users notified.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function notifyReady(array $recipients, array $schedule, string $period, int $fileId): int {
 		$link = $this->urlGenerator->linkToRouteAbsolute('files.viewcontroller.showFile', ['fileid' => $fileId]);
@@ -150,7 +150,7 @@ class ScheduledReportDelivery implements ScheduledReportDeliveryInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function notifyFailed(string $ownerId, array $schedule, string $reason): void {
 		if ($ownerId === '') {
@@ -176,7 +176,7 @@ class ScheduledReportDelivery implements ScheduledReportDeliveryInterface {
 	 *
 	 * @return array<string> The user ids.
 	 *
-	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function users(array $recipients): array {
 		$users = [];

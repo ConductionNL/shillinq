@@ -22,7 +22,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.4
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use OCP\IAppConfig;
 /**
  * Builds the journal entry of a provider payout.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.4
  */
 class PayoutPostingRule {
 
@@ -63,7 +63,7 @@ class PayoutPostingRule {
 	 *
 	 * @param IAppConfig $appConfig App config for the posting accounts.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.4
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -80,7 +80,7 @@ class PayoutPostingRule {
 	 *
 	 * @return array{bank: string, fees: string, debtors: string, clearing: string}
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.4
 	 */
 	public function accounts(string $provider): array {
 		$configured = [];
@@ -111,7 +111,7 @@ class PayoutPostingRule {
 	 *
 	 * @throws InvalidArgumentException When the payout's amounts do not add up: net + fees + refunds + chargebacks must be gross.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.4
 	 */
 	public function journal(array $payout): array {
 		$reference = (string)($payout['settlementReference'] ?? '');

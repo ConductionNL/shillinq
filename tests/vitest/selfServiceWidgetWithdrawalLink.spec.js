@@ -8,7 +8,7 @@
  * table, and shows nothing when there is no usable link. The line itself
  * is `WithdrawalNotice.vue`, which only the widget renders.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
  */
 
 import { describe, expect, it } from 'vitest'

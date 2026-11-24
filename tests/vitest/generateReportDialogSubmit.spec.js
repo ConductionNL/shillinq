@@ -6,7 +6,7 @@
  * actions: the requests, the events, the scheduled message and the error
  * texts. Methods run bound to a fake `this` seeded from the real `data()`.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 import axios from '@nextcloud/axios'

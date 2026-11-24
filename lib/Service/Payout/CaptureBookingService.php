@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * Posts clearing-to-debtors for a captured, invoice-backed payment request.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
  */
 class CaptureBookingService {
 
@@ -103,7 +103,7 @@ class CaptureBookingService {
 	 *
 	 * @return array<string, mixed>|null A draft JournalEntry: debit clearing, credit debtors, for the captured amount.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
 	 */
 	public function journal(array $request, array $invoice): ?array {
 		$paymentId = $this->paymentId(request: $request);
@@ -144,7 +144,7 @@ class CaptureBookingService {
 	 *
 	 * @return string|null The journal entry id, or null when nothing was booked.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
 	 */
 	public function book(string $registerSlug, array $request, array $invoice): ?string {
 		$journal = $this->journal(request: $request, invoice: $invoice);
@@ -190,7 +190,7 @@ class CaptureBookingService {
 	 *
 	 * @return list<array{requestId: string, paymentId: string, invoiceReference: string, amount: float, capturedAt: string}>
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
 	 */
 	public function unbooked(string $registerSlug): array {
 		$rows = $this->objectService
@@ -238,7 +238,7 @@ class CaptureBookingService {
 	 *
 	 * @return string|null The journal entry id, or null when nothing was booked.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.3
 	 */
 	public function bookRequest(string $registerSlug, string $requestId): ?string {
 		$request = ObjectIdentifier::findOne(

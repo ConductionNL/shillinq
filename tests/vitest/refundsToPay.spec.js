@@ -15,7 +15,7 @@
  * (`customComponents`, spread from manifestActions). A handler missing from
  * that map is stripped by the library, so the menu entry would do nothing.
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
  */
 
 import fs from 'fs'

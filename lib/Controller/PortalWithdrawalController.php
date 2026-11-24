@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use OCP\IRequest;
 /**
  * POST /api/portal/withdrawals.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
  */
 class PortalWithdrawalController extends Controller {
 
@@ -77,7 +77,7 @@ class PortalWithdrawalController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -108,7 +108,7 @@ class PortalWithdrawalController extends Controller {
 	 *
 	 * @return array{status: string, reason?: string|null, acknowledgedAt?: string|null}|null Null without a valid credential.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	private function entitledWithdrawal(DateTimeImmutable $now): ?array {
 		$assertion = trim((string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER));

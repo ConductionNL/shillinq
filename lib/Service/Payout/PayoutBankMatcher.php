@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.5
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Bank statement line to the booked provider payout it brought in.
  *
- * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+ * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.5
  */
 class PayoutBankMatcher {
 
@@ -76,7 +76,7 @@ class PayoutBankMatcher {
 	 *
 	 * @return array<string, mixed>|null The payout, with its id.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.5
 	 */
 	public function find(array $line): ?array {
 		$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
@@ -118,7 +118,7 @@ class PayoutBankMatcher {
 	 *
 	 * @return array<string, mixed>|null The confirmed match, or null when the line brought in no payout.
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.5
 	 */
 	public function reconcile(array $line): ?array {
 		$payout = $this->find(line: $line);

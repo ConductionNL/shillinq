@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Throwable;
 /**
  * Checks and carries out a refund or credit command.
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
  */
 class ObjectRequestCommandService implements ObjectRequestCommandServiceInterface {
 
@@ -80,7 +80,7 @@ class ObjectRequestCommandService implements ObjectRequestCommandServiceInterfac
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function refund(PaymentRefundRequestedEvent $event): void {
 		$this->run(
@@ -112,7 +112,7 @@ class ObjectRequestCommandService implements ObjectRequestCommandServiceInterfac
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
 	 */
 	public function credit(PaymentCreditRequestedEvent $event): void {
 		$this->run(
@@ -129,7 +129,7 @@ class ObjectRequestCommandService implements ObjectRequestCommandServiceInterfac
 	 *
 	 * @return string|null The refusal, or null when the command may go ahead.
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public static function refusal(array $request, string $sourceApp): ?string {
 		if ((string)($request['subjectKind'] ?? '') !== 'object') {

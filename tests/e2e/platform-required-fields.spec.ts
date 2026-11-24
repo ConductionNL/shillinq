@@ -13,7 +13,7 @@
  * screens; who is refused and who is not (another administration, a system
  * write) is proven by FieldRequirementListenerTest.
  *
- * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-required-fields/specs/app-administration/spec.md
  */
 
 import type { Page } from '@playwright/test'

@@ -9,7 +9,7 @@
  * runs into a file, malformed recipients, and a share the share manager
  * refuses, which is logged without losing the filed copy.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 declare(strict_types=1);

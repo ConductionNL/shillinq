@@ -51,7 +51,7 @@ export const INTEGRIQ_STORE_PATH = '/apps/integriq/store'
  *
  * @param {object} [payload] The dispatch payload `{ item }`, or the row itself.
  * @return {void}
- * @spec openspec/changes/platform-integration-catalogue/specs/integration-catalogue/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-integration-catalogue/specs/integration-catalogue/spec.md
  */
 export function openIntegriqStore(payload = {}) {
 	const row = (payload && typeof payload.item === 'object' && payload.item !== null) ? payload.item : (payload || {})

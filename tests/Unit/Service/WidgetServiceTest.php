@@ -348,7 +348,7 @@ class WidgetServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
 	 */
 	public function testACreatedBookingCarriesItsWithdrawalLink(): void {
 		$objectService = $this->buildObjectService(
@@ -388,7 +388,7 @@ class WidgetServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-3.4
 	 */
 	public function testACreatedBookingWithoutALinkSaysNone(): void {
 		$objectService = $this->buildObjectService(

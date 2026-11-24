@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -269,7 +269,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
 	public function testConfirmedMatchSettlesAndBooksOnce(): void {
 		$this->given([self::request('pr-1', 'WC26-0042')]);
@@ -315,7 +315,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function testAPartialAmountWaitsForTheBookkeeper(): void {
 		$this->given([self::request('pr-1', 'WC26-0042')]);
@@ -339,7 +339,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function testTwoRequestsOrNoWholeReference(): void {
 		$this->given([self::request('pr-1', 'WC26-0042'), self::request('pr-2', 'WC26-0043')]);
@@ -359,7 +359,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
 	public function testARequestWithAnInvoiceSettlesTheInvoice(): void {
 		$this->given(
@@ -398,7 +398,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.5
 	 */
 	public function testThePayoutsBankLineIsReconciledToThePayoutAndBooksNothing(): void {
 		$this->given(
@@ -433,7 +433,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+	 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-2.5
 	 */
 	public function testOnlyOneBookedPayoutWithTheNetAndReferenceIsMatched(): void {
 		$cases = [
@@ -462,7 +462,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function testTheAppWiresTheListener(): void {
 		$registration = (string)file_get_contents(__DIR__ . '/../../../../lib/Listener/Registration/ObjectRequestSettlementRegistration.php');

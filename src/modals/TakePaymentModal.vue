@@ -12,7 +12,7 @@
  settles the invoice like any provider payment. Its own file for hydra
  gate-13.
 
- @spec openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
+ @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md
 -->
 
 <template>
@@ -131,7 +131,7 @@ export default {
 		 * The invoice: the prop, else the route's id.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
 		 */
 		invoiceId() {
 			return String(this.objectId || this.$route?.params?.id || '')
@@ -144,7 +144,7 @@ export default {
 		/**
 		 * Ask for the payment on the phone; show the QR code when the server answers a checkout.
 		 *
-		 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
 		 */
 		async start() {
 			this.error = ''
@@ -168,7 +168,7 @@ export default {
 		/**
 		 * Close, and refresh the invoice page once a payment was started.
 		 *
-		 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-3.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-provider-payouts/tasks.md#task-3.1
 		 */
 		onClose() {
 			if (this.result) {

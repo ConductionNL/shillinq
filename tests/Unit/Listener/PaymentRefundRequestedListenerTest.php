@@ -168,7 +168,7 @@ final class PaymentRefundRequestedListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function testARefundIsAcceptedForItsOwnSubject(): void {
 		$event = $this->refund(commands: $this->commands(request: $this->request()));
@@ -191,7 +191,7 @@ final class PaymentRefundRequestedListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function testRefusedForAnotherAppBeforeSettlementAndTwice(): void {
 		$cases = [
@@ -216,7 +216,7 @@ final class PaymentRefundRequestedListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
 	 */
 	public function testCreditIsKeyedByCustomerMasterOrEmail(): void {
 		$commands = $this->commands(request: $this->request());
@@ -253,7 +253,7 @@ final class PaymentRefundRequestedListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
 	 */
 	public function testDebtorWithoutKeyGetsNoCredit(): void {
 		$commands = $this->commands(request: $this->request(['debtor' => ['name' => 'Joris Bakker']]));
@@ -271,7 +271,7 @@ final class PaymentRefundRequestedListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function testTheAppWiresBothListeners(): void {
 		$registration = (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ObjectRequestSettlementRegistration.php');

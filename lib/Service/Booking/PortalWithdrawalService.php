@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * Entitlement check and hand-off for the portal's withdraw action.
  *
- * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
  */
 class PortalWithdrawalService {
 
@@ -100,7 +100,7 @@ class PortalWithdrawalService {
 	 *
 	 * @return array{status: string, reason?: string|null, acknowledgedAt?: string|null}
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	public function withdrawForSubject(array $claims, string $appointmentId, DateTimeImmutable $now): array {
 		$appointmentId = trim($appointmentId);
@@ -141,7 +141,7 @@ class PortalWithdrawalService {
 	 *
 	 * @return array{status: string, reason?: string|null, acknowledgedAt?: string|null}
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	public function withdrawByLink(string $token, DateTimeImmutable $now): array {
 		$appointmentId = $this->links->verify(token: $token, now: $now);
@@ -161,7 +161,7 @@ class PortalWithdrawalService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.2
 	 */
 	public static function owns(string $customerMasterId, ?array $customer, array $appointment): bool {
 		if ($customerMasterId !== '' && (string)($appointment['customerId'] ?? '') === $customerMasterId) {

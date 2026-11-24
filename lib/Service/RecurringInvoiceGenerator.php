@@ -473,7 +473,7 @@ class RecurringInvoiceGenerator implements RecurringInvoiceGeneratorInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md
 	 */
 	private static function customerIdOf(array $profile): string {
 		$customerMasterId = trim((string)($profile['customerMasterId'] ?? ''));

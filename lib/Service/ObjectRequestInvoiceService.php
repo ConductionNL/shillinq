@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use RuntimeException;
 /**
  * Builds and saves the issued invoice behind an object payment request.
  *
- * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
  */
 class ObjectRequestInvoiceService implements ObjectRequestInvoiceServiceInterface {
 
@@ -89,7 +89,7 @@ class ObjectRequestInvoiceService implements ObjectRequestInvoiceServiceInterfac
 	 * @throws InvalidArgumentException When the request has no administration, no debtor, or no amount.
 	 * @throws RuntimeException When OpenRegister answers the save without an id.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function issue(array $request, string $administrationId, string $today): string {
 		$debtor = self::validatedDebtor(request: $request, administrationId: $administrationId);
@@ -154,7 +154,7 @@ class ObjectRequestInvoiceService implements ObjectRequestInvoiceServiceInterfac
 	 *
 	 * @return array<string, mixed> The ARInvoice payload.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
 	public function buildInvoice(array $request, string $customerMasterId, string $administrationId, string $today): array {
 		$gross = round((float)($request['amount'] ?? 0), 2);

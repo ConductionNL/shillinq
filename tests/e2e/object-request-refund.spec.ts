@@ -31,8 +31,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
- * @spec openspec/changes/receivables-object-request-refund-and-credit/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-object-request-refund-and-credit/tasks.md#task-3.2
  *
  * @e2e object-payment-refunds-and-credit::larpinq-asks-for-a-refund-of-mila-s-paid-registration
  * @e2e object-payment-refunds-and-credit::another-app-cannot-refund-larpinq-s-request

@@ -206,7 +206,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * Dossiq raises a payout: it is stored as requested with the payee, the
 	 * reference and the callback, and the answer names the new payable (REQ-IPY-001).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function testAnAppRaisesAPayable(): void {
 		$service = $this->service();
@@ -346,7 +346,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * A command with a bad amount, IBAN, payee, reference or callback, or from
 	 * an app that is not installed, is refused and writes nothing (REQ-IPY-001).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function testABadCommandIsRefusedAndWritesNothing(): void {
 		$cases = [
@@ -371,7 +371,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * The same reference raised twice with the same amount and payee answers the
 	 * first payable (a retry); with another amount it is refused (REQ-IPY-001).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
 	public function testARetryAnswersTheFirstPayableAndAClashIsRefused(): void {
 		$service = $this->service();
@@ -389,7 +389,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * Finance approves: the expense of the category is booked against the
 	 * payables account, and the app hears `approved` on its signed callback (REQ-IPY-002, REQ-IPY-004).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
 	 */
 	public function testApproveBooksTheExpenseAndCallsBack(): void {
 		$service = $this->service();
@@ -428,7 +428,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * Marking it paid clears the payables account against the bank, records the
 	 * bank reference and the date, and calls back `paid` (REQ-IPY-003).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	public function testMarkPaidClearsAgainstTheBankAndCallsBack(): void {
 		$service = $this->service();
@@ -459,7 +459,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * Finance rejects a requested payable: nothing is booked and the app hears
 	 * `rejected` with the reason (REQ-IPY-003).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
 	public function testRejectBooksNothingAndCallsBackWithTheReason(): void {
 		$service = $this->service();
@@ -478,7 +478,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * Without a secret for the app the callback is not sent unsigned: the step
 	 * still succeeds and the payable records why (REQ-IPY-004).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
 	 */
 	public function testNoSecretMeansNoUnsignedCallback(): void {
 		$service = $this->service(config: [InboundPayableCallbackSender::CONFIG_CALLBACK_SIGNING => '{}']);
@@ -495,7 +495,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * The expense account falls back from the category to the app, and with
 	 * neither the approval is refused before anything is booked (REQ-IPY-002).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
 	 */
 	public function testTheExpenseAccountFallsBackToTheAppThenRefuses(): void {
 		$service = $this->service();
@@ -519,7 +519,7 @@ final class InboundPayableServiceTest extends TestCase {
 	/**
 	 * The steps need payment.administer, and the listener is wired (REQ-IPY-002).
 	 * @return void
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
 	 */
 	public function testStepsNeedTheAdministerActionAndTheListenerIsWired(): void {
 		$user = $this->createMock(IUser::class);
@@ -577,7 +577,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	public function testTheAppWithdrawsARequestedPayable(): void {
 		$service = $this->service();
@@ -607,7 +607,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	public function testWithdrawingIsRefusedOnceFinanceActed(): void {
 		$service = $this->service();
@@ -635,7 +635,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	public function testAWithdrawalTheRegisterRefusesIsAnsweredAsRefused(): void {
 		$service = $this->service();
@@ -659,7 +659,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 * @spec openspec/changes/archive/2026-11-24-inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
 	public function testTheWithdrawalListenerLeavesOtherEventsAlone(): void {
 		$service = $this->service();

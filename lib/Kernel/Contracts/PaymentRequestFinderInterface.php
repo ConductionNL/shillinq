@@ -47,7 +47,7 @@ interface PaymentRequestFinderInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The requests.
 	 *
-	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 * @spec openspec/changes/archive/2026-11-24-receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Whose rights a read runs under
 	 * is data the caller decides, not a mode that changes what the method does.

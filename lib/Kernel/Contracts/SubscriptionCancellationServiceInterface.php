@@ -68,7 +68,7 @@ interface SubscriptionCancellationServiceInterface {
 	 *
 	 * @return string One of the constants above.
 	 *
-	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-cancellation/tasks.md#task-2.1
 	 */
 	public function cancel(array $claims, string $profileId, string $reasonCode = '', string $reasonText = ''): string;
 }//end interface

@@ -21,7 +21,7 @@
  *
  * Not run in the change that wrote it (decision 139): the live pass runs it.
  *
- * @spec openspec/changes/platform-integration-catalogue/specs/integration-catalogue/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-integration-catalogue/specs/integration-catalogue/spec.md
  */
 import type { APIRequestContext, Page } from '@playwright/test'
 
@@ -114,7 +114,7 @@ async function connectionRows(request: APIRequestContext): Promise<any[]> {
 
 test.describe('Shillinq: Integrations', () => {
 	/**
-	 * @e2e openspec/changes/platform-integration-catalogue/specs/integration-catalogue/spec.md#scenario-an-instance-without-integriq
+	 * @e2e openspec/changes/archive/2026-11-24-platform-integration-catalogue/specs/integration-catalogue/spec.md#scenario-an-instance-without-integriq
 	 */
 	test('without integriq, the page says integrations come from Integriq', async ({ page }) => {
 		const state = await openIntegrations(page)
@@ -125,7 +125,7 @@ test.describe('Shillinq: Integrations', () => {
 	})
 
 	/**
-	 * @e2e openspec/changes/platform-integration-catalogue/specs/integration-catalogue/spec.md#scenario-an-administrator-looks-for-a-payment-provider
+	 * @e2e openspec/changes/archive/2026-11-24-platform-integration-catalogue/specs/integration-catalogue/spec.md#scenario-an-administrator-looks-for-a-payment-provider
 	 */
 	test('a bookkeeping catalogue item shows as a card with its status and opens in integriq', async ({
 		page,
@@ -169,7 +169,7 @@ test.describe('Shillinq: Integrations', () => {
 	})
 
 	/**
-	 * @e2e openspec/changes/platform-integration-catalogue/specs/integration-catalogue/spec.md#scenario-digipoort-is-not-in-the-catalogue
+	 * @e2e openspec/changes/archive/2026-11-24-platform-integration-catalogue/specs/integration-catalogue/spec.md#scenario-digipoort-is-not-in-the-catalogue
 	 */
 	test('a connection family without a catalogue item is listed as not available yet, with its reason', async ({
 		page,

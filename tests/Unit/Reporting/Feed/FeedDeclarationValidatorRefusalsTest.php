@@ -7,7 +7,7 @@
  * Reporting-data-delivery REQ-RDD-003: every way a feed declaration can be
  * malformed is named, one sentence per problem, without stopping at the first.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 declare(strict_types=1);

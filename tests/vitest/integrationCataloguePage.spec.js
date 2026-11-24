@@ -11,7 +11,7 @@
  * when clicked, and a menu id missing from `settingsSection` lands in the main
  * navigation.
  *
- * @spec openspec/changes/platform-integration-catalogue/specs/integration-catalogue/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-integration-catalogue/specs/integration-catalogue/spec.md
  */
 
 import fs from 'fs'

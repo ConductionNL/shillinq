@@ -11,7 +11,7 @@
  * is proven by ReportSchedulePayloadTest; the run itself by
  * ScheduledReportRunnerTest.
  *
- * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-data-delivery/specs/report-delivery/spec.md
  */
 
 import { expect, test } from '@playwright/test'
