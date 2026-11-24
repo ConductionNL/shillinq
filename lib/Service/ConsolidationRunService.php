@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
+ * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
  */
 
 declare(strict_types=1);
@@ -94,7 +94,7 @@ class ConsolidationRunService {
 	 *
 	 * @throws InvalidArgumentException When the period names no group or no period end, the group is unknown, or a report is no longer a draft.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
 	 */
 	public function run(array $period, DateTimeImmutable $asOf): array {
 		$periodRecordId = self::idOf(record: $period);
@@ -155,7 +155,7 @@ class ConsolidationRunService {
 	 *
 	 * @return array<string,float> Share per administration id.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
 	 */
 	public static function members(string $parentId, string $defaultMethod, array $entities): array {
 		$members = [$parentId => 1.0];
@@ -187,7 +187,7 @@ class ConsolidationRunService {
 	 *
 	 * @return string|null The month, or null when the date is not yyyy-mm-dd.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
 	 */
 	public static function monthOf(string $date): ?string {
 		if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $date, $parts) !== 1 || checkdate((int)$parts[2], (int)$parts[3], (int)$parts[1]) === false) {
@@ -207,7 +207,7 @@ class ConsolidationRunService {
 	 *
 	 * @return array{cents: array<string,int>, sources: array<string,string[]>, debitCents: int}
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
 	 */
 	public static function adjustments(array $eliminations): array {
 		$cents = [];
@@ -246,7 +246,7 @@ class ConsolidationRunService {
 	 *
 	 * @return array{totalAssets: float, totalLiabilities: float, totalEquity: float, totalRevenue: float, totalExpenses: float, netProfitTotal: float}
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial/spec.md#requirement-a-consolidation-run-sums-the-subsidiaries-and-applies-the-eliminations-req-cons-011
 	 */
 	public static function totals(array $balances, array $types): array {
 		$sums = ['assets' => 0, 'liabilities' => 0, 'equity' => 0, 'revenue' => 0, 'expenses' => 0];

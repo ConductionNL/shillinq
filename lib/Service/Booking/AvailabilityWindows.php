@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Throwable;
  *   the minimum notice (hours, and days counted in calendar days), and no
  *   slot lies beyond the maximum days ahead.
  *
- * @spec openspec/changes/bookings-slots-follow-availability/specs/bookings-availability-rules/spec.md
+ * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/specs/bookings-availability-rules/spec.md
  */
 final class AvailabilityWindows {
 
@@ -68,7 +68,7 @@ final class AvailabilityWindows {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.1
 	 */
 	public function hasActiveRule(array $rules): bool {
 		foreach ($rules as $rule) {
@@ -88,7 +88,7 @@ final class AvailabilityWindows {
 	 *
 	 * @return array<int,array{0:string,1:string}> The windows; none when no rule applies.
 	 *
-	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.1
 	 */
 	public function windowsOn(array $rules, string $date): array {
 		$weekday = self::weekdayOf(date: $date);
@@ -122,7 +122,7 @@ final class AvailabilityWindows {
 	 *
 	 * @return array<int,array{0:string,1:string}> The breaks.
 	 *
-	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.1
 	 */
 	public function breaksOn(array $breaks, string $date): array {
 		$weekday = self::weekdayOf(date: $date);
@@ -147,7 +147,7 @@ final class AvailabilityWindows {
 	 *
 	 * @return array{minHours:int,minDays:int,maxDays:int|null} The limits; no limit is 0, 0 and null.
 	 *
-	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.2
 	 */
 	public function noticeLimits(array $constraints): array {
 		$limits = ['minHours' => 0, 'minDays' => 0, 'maxDays' => null];
@@ -178,7 +178,7 @@ final class AvailabilityWindows {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.2
 	 */
 	public function admits(DateTimeImmutable $start, DateTimeImmutable $end, array $breaks, array $limits, DateTimeImmutable $now): bool {
 		$date = $start->format('Y-m-d');

@@ -54,8 +54,8 @@
 
 import type { Page } from '@playwright/test'
 
-import path from 'node:path'
 import { expect, test } from '@playwright/test'
+import path from 'node:path'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'

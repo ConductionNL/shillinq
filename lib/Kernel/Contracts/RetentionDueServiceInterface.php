@@ -47,7 +47,7 @@ interface RetentionDueServiceInterface {
 	 *
 	 * @return array<int, array{register: string, recordId: string, ruleCode: string, endDate: string, disposition: string}>
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	public function dueFor(string $administrationId, DateTimeImmutable $today): array;
 }//end interface

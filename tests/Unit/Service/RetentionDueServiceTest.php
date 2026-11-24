@@ -17,7 +17,7 @@
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  *
- * @spec openspec/changes/ledger-retention-due-records/tasks.md#1-retention-end-date
+ * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/tasks.md#1-retention-end-date
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @covers \OCA\Shillinq\Service\RetentionDueService
  *
- * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+ * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
  */
 final class RetentionDueServiceTest extends TestCase {
 

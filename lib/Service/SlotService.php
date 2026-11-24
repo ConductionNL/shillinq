@@ -200,7 +200,7 @@ class SlotService implements SlotServiceInterface {
 	 *
 	 * @return array<int,array<string,string>> The slots.
 	 *
-	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.1
 	 */
 	private function slotsOfResource(array $request, array $resource): array {
 		$rules = $this->rowsOf(schema: 'AvailabilityRule', filters: ['resource' => $request['resourceId']]);
@@ -231,7 +231,7 @@ class SlotService implements SlotServiceInterface {
 	 *
 	 * @return array<int,array<string,string>> The slots, by start time.
 	 *
-	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/tasks.md#task-1.2
 	 */
 	private function ruledSlots(array $request, array $resource, array $rules): array {
 		$linked = $this->rowsLinkedTo(rules: $rules);

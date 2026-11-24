@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
+ * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
  */
 
 declare(strict_types=1);
@@ -84,7 +84,7 @@ class SoftCloseSwingCheck {
 	 *
 	 * @return array<string,mixed>|null FluxService::run()'s summary, or null when the period is not yyyy-mm.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
 	 */
 	public function run(string $administrationId, string $periodId, DateTimeImmutable $asOf): ?array {
 		$priorPeriodId = self::priorPeriod(periodId: $periodId);
@@ -115,7 +115,7 @@ class SoftCloseSwingCheck {
 	 *
 	 * @return string|null The prior period, or null when the input is not yyyy-mm.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
 	 */
 	public static function priorPeriod(string $periodId): ?string {
 		if (preg_match('/^(\d{4})-(\d{2})$/', $periodId, $parts) !== 1) {
@@ -146,7 +146,7 @@ class SoftCloseSwingCheck {
 	 *
 	 * @return array<int,array<string,mixed>> The accounts, by account number.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
 	 */
 	public static function accountPairs(array $actual, array $basis): array {
 		$numbers = array_map('strval', array_unique(array_merge(array_keys($actual), array_keys($basis))));

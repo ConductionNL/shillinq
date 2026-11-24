@@ -1332,7 +1332,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-002: Auto-detectie intercompany-transacties",
 					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-006: Eliminatie-journaalpost generatie",
-					"openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination :: The nightly soft close writes the elimination entries of each intercompany relation (REQ-ICE-011)"
+					"openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-intercompany-elimination :: The nightly soft close writes the elimination entries of each intercompany relation (REQ-ICE-011)"
 				],
 				"plan": "ledger-group-close"
 			},
@@ -1452,7 +1452,7 @@
 				"change": "2026-06-14-bookkeeping-archiefwet-retention",
 				"requirement": [
 					"openspec/specs/bookkeeping-archiefwet-retention :: REQ-ARC-003: Retention rule mapping",
-					"openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention :: A list shows the records whose retention period has ended (REQ-RET-015)"
+					"openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention :: A list shows the records whose retention period has ended (REQ-RET-015)"
 				],
 				"plan": "ledger-retention-due-records"
 			},
@@ -1493,7 +1493,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-002: Nightly soft-close job SHALL execute per administratie and complete by 07:00 local with full trial balance",
 					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-005: Flux analysis SHALL run post-soft-close, computing variance vs budget/PY/PP/forecast with materiality-driven routing",
-					"openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close :: The nightly soft close flags the swings per account (REQ-CLS-011)"
+					"openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close :: The nightly soft close flags the swings per account (REQ-CLS-011)"
 				],
 				"plan": "ledger-group-close"
 			},
@@ -4547,7 +4547,7 @@
 					"openspec/specs/bookkeeping-consolidation-commercial :: Detect and eliminate intercompany trade transactions with a matching tolerance (REQ-CONS-003)",
 					"openspec/specs/bookkeeping-consolidation-commercial :: Eliminate intercompany receivables, payables, loans and dividends (REQ-CONS-004)",
 					"openspec/specs/bookkeeping-consolidation-commercial :: Translate foreign-currency administrations by the current-rate method with CTA (REQ-CONS-005)",
-					"openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial :: A consolidation run sums the subsidiaries and applies the eliminations (REQ-CONS-011)"
+					"openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial :: A consolidation run sums the subsidiaries and applies the eliminations (REQ-CONS-011)"
 				],
 				"plan": "ledger-group-close"
 			},
@@ -5327,7 +5327,7 @@
 				"spec": "openspec/specs/bookings-availability-rules",
 				"requirement": [
 					"openspec/specs/bookings-availability-rules :: REQ-BAR-001 AvailabilityRule Register Definition",
-					"openspec/changes/bookings-slots-follow-availability/specs/bookings-availability-rules :: Offered slots follow the availability rules, breaks and constraints (REQ-BAR-011)"
+					"openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/specs/bookings-availability-rules :: Offered slots follow the availability rules, breaks and constraints (REQ-BAR-011)"
 				],
 				"plan": "bookings-slots-follow-availability"
 			},
