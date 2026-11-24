@@ -296,7 +296,7 @@ final class ListenerRegistrarTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 	 */
 	public function testInvoiceLayoutContrastRuleIsRegisteredOnBothPreSaveEvents(): void {
 		(new ListenerRegistrar())->register($this->recordingContext());

@@ -319,7 +319,7 @@ final class BillableInvoiceRecords {
 	 *
 	 * @return array{netAmount: float, vatAmount: float, grossAmount: float, currency: string}
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-3.1
 	 */
 	private function amountsInEuros(array $totals, string $currency = 'EUR'): array {
 		return [

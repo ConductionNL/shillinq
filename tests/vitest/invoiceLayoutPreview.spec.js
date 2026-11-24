@@ -8,7 +8,7 @@
  * variant and footer and writes out each colour's verdict; the manifest
  * pages, the registry widget and the settings foldout are held together.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
  */
 
 import fs from 'fs'

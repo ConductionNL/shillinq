@@ -14,7 +14,7 @@
  Rendered in InvoiceLayoutDetail's sidebar tab "Preview" (sidebar widgets get
  the loaded layout as `objectData`).
 
- @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+ @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 -->
 
 <template>
@@ -105,7 +105,7 @@ export default {
 		 * The primary colour, or the default when none is set.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		primaryColor() {
 			return this.objectData?.primaryColor || DEFAULT_PRIMARY
@@ -115,7 +115,7 @@ export default {
 		 * The accent colour, or the default when none is set.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		accentColor() {
 			return this.objectData?.accentColor || DEFAULT_ACCENT
@@ -125,7 +125,7 @@ export default {
 		 * The template variant, classic when unknown.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		variant() {
 			const variant = this.objectData?.variant
@@ -136,7 +136,7 @@ export default {
 		 * The variant's name.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		variantLabel() {
 			return {
@@ -150,7 +150,7 @@ export default {
 		 * The colours as CSS variables of the sample page.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		pageStyle() {
 			return {
@@ -163,7 +163,7 @@ export default {
 		 * The logo's preview URL, or '' when the layout has no logo.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		logoUrl() {
 			const fileId = String(this.objectData?.logoFileId ?? '').trim()
@@ -179,7 +179,7 @@ export default {
 		 * The footer text, '' when none.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		footerText() {
 			return String(this.objectData?.footerText ?? '')
@@ -189,7 +189,7 @@ export default {
 		 * Whether the QR codes are printed (on unless switched off).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		showQr() {
 			return this.objectData?.showQr !== false
@@ -199,7 +199,7 @@ export default {
 		 * The contrast verdicts on both colours.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 		 */
 		checks() {
 			return [

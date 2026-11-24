@@ -342,7 +342,7 @@ final class InvoiceApiControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function testPdfWithoutDocudeskSaysItIsNeeded(): void {
 		$this->objectService->method('find')->willReturn(

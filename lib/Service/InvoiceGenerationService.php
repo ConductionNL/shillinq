@@ -697,7 +697,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @throws UnratedHoursException When an hour has no rate.
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-3.1
 	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
 	private function loadTimeEntries(
@@ -830,7 +830,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 *
 	 * @return string The resource type, `consultant` when the entry names none.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-3.1
 	 */
 	private function resourceTypeOf(array $loaded): string {
 		return (string)($loaded['resourceType'] ?? ($loaded['role'] ?? 'consultant'));
@@ -1106,7 +1106,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 *
 	 * @return string ISO 4217 code, upper case.
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-3.1
 	 */
 	private function invoiceCurrency(InvoiceGenerationRequest $request): string {
 		$customer = $this->findScoped(schema: 'CustomerMaster', id: $request->customerId, administrationId: $request->administrationId);

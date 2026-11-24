@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Service\Sales\InvoiceDocument;
 /**
  * Contrast of a `#RRGGBB` colour against white.
  *
- * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
  */
 final class ColourContrast {
 
@@ -48,7 +48,7 @@ final class ColourContrast {
 	 *
 	 * @return float|null
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 	 */
 	public function ratioAgainstWhite(string $hex): float|null {
 		if (preg_match('/^#([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})$/', $hex, $match) !== 1) {
@@ -71,7 +71,7 @@ final class ColourContrast {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.1
 	 */
 	public function passesOnWhite(string $hex): bool {
 		$ratio = $this->ratioAgainstWhite(hex: $hex);
