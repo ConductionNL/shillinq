@@ -242,7 +242,7 @@ describe('PurchaseOrderDetail renders', () => {
 	})
 
 	it('an unsigned order without related records, and the busy channel', async () => {
-		const unsigned = { ...order, projectCode: '', approvalChain: [{ order: 1, role: 'teamleider', decision: 'pending' }], peppolMessageId: '', peppolSentAt: '', peppolFallbackReason: '' }
+		const unsigned = { ...order, statusCode: 'pending_approval', projectCode: '', approvalChain: [{ order: 1, role: 'teamleider', decision: 'pending' }], peppolMessageId: '', peppolSentAt: '', peppolFallbackReason: '' }
 		const html = await render(PurchaseOrderDetail, { loading: false, purchaseOrder: unsigned, sending: true, sendingChannel: 'email' }, { id: 'po-1' })
 		expect(html).toContain('No goods receipt notes yet')
 		expect(html).toContain('No matches yet')
