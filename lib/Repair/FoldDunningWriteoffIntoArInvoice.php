@@ -62,6 +62,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -93,6 +94,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 *
 	 * @return string The display name.
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: fold DunningRun + OninbaarAfschrijving onto ARInvoice (dunning / writeOff groups)';
 	}//end getName()
@@ -106,6 +108,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$this->fold(output: $output);

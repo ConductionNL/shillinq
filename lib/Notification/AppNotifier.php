@@ -33,6 +33,7 @@ use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
 use OCP\Notification\UnknownNotificationException;
+use Override;
 
 /**
  * The shared identity and ownership check of a one-subject Shillinq notifier.
@@ -65,6 +66,7 @@ abstract class AppNotifier implements INotifier {
 	 *
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
+	#[Override]
 	public function getID(): string {
 		return AppIdentity::APP_ID;
 	}//end getID()
@@ -76,6 +78,7 @@ abstract class AppNotifier implements INotifier {
 	 *
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
+	#[Override]
 	public function getName(): string {
 		return $this->l10nFactory->get(AppIdentity::APP_ID)->t('Shillinq');
 	}//end getName()

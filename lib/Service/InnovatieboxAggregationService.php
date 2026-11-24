@@ -38,6 +38,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InnovatieboxAggregationServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Computes the per-asset innovatiebox Vpb roll-up (REQ-IBA-006).
@@ -74,6 +75,7 @@ class InnovatieboxAggregationService implements InnovatieboxAggregationServiceIn
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
 	 */
+	#[Override]
 	public function aggregate(string $administrationId, int $financialYear): array {
 		$assets = $this->fetchValidAssets(administrationId: $administrationId);
 		$attributions = $this->indexBy(

@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\WidgetCorsPolicyInterface;
+use Override;
 
 /**
  * Resolves and stores the browser origins a widget key allows.
@@ -106,6 +107,7 @@ class WidgetCorsPolicy implements WidgetCorsPolicyInterface {
 	 *
 	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md#requirement-the-widget-books-from-another-website-req-wsw-011
 	 */
+	#[Override]
 	public function allowedOrigin(string $businessId, string $origin): ?string {
 		$wanted = self::normaliseOrigin(origin: $origin);
 		if ($wanted === null || trim($businessId) === '') {
@@ -137,6 +139,7 @@ class WidgetCorsPolicy implements WidgetCorsPolicyInterface {
 	 *
 	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
 	 */
+	#[Override]
 	public function setAllowedOrigins(string $businessId, array $origins, string $actor): array {
 		if (count($origins) > self::MAX_ORIGINS) {
 			return ['success' => false, 'message' => 'A widget key allows at most ' . self::MAX_ORIGINS . ' origins.'];

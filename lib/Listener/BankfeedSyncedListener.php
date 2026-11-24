@@ -34,6 +34,7 @@ use OCA\Shillinq\Kernel\Contracts\BankfeedIntakeServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -76,6 +77,7 @@ class BankfeedSyncedListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;

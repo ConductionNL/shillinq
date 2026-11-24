@@ -28,6 +28,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ImportPeriodInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 
 /**
  * Whether a migration date falls in an open fiscal year of its administration.
@@ -61,6 +62,7 @@ class ImportPeriod implements ImportPeriodInterface {
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
+	#[Override]
 	public function isOpen(string $administrationId, string $date): bool {
 		$years = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('FiscalYear')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

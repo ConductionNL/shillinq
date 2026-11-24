@@ -51,6 +51,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use SimpleXMLElement;
 use Throwable;
@@ -136,6 +137,7 @@ class SelfBilledInvoiceIntake implements SelfBilledInvoiceIntakeInterface {
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
 	 */
+	#[Override]
 	public function receive(array $data): array {
 		$received = new InboundDocument(
 			senderPeppolId: trim((string)($data['senderPeppolId'] ?? '')),

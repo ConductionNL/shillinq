@@ -39,6 +39,7 @@ use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\SuspenseAgeingServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -126,6 +127,7 @@ class SuspenseAgeingService implements SuspenseAgeingServiceInterface {
 	 *
 	 * @spec openspec/specs/payment-control-guards/spec.md (REQ-PCG-003)
 	 */
+	#[Override]
 	public function hasUnresolvedItems(string $administrationId, string $asOf = ''): bool {
 		return ($this->computeWorklist(administrationId: $administrationId, asOf: $asOf)['count'] > 0);
 	}//end hasUnresolvedItems()

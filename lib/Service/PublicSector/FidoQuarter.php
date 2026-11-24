@@ -39,6 +39,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\FidoQuarterInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * The Wet Fido figures of one quarter.
@@ -87,6 +88,7 @@ class FidoQuarter implements FidoQuarterInterface {
 	 *
 	 * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
 	 */
+	#[Override]
 	public function compute(string $organisationId, string $year, int $quarter): array {
 		$auditYear = (int)$year;
 		if ($quarter < 1 || $quarter > 4 || $auditYear < 1900 || $organisationId === '') {

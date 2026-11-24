@@ -51,6 +51,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\ReportSection;
 use OCA\Shillinq\Reporting\StatementPeriods;
+use Override;
 use Throwable;
 
 /**
@@ -65,6 +66,7 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'balance-sheet';
 	}//end reportType()
@@ -74,6 +76,7 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	 *
 	 * @return string
 	 */
+	#[Override]
 	protected function documentTitle(): string {
 		return 'Balans';
 	}//end documentTitle()
@@ -88,6 +91,7 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	 *
 	 * @spec openspec/changes/reporting-financial-statements
 	 */
+	#[Override]
 	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->statement($context);
 		$run = new StatementRun(section: $section, currency: 'EUR');
@@ -107,6 +111,7 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	 *
 	 * @return string
 	 */
+	#[Override]
 	protected function accountAmountHead(): string {
 		return 'Saldo';
 	}//end accountAmountHead()

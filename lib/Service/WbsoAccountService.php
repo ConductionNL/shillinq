@@ -33,6 +33,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WbsoAccountServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Account-register helper service (REQ-WBSO-001 / REQ-WBSO-006).
@@ -72,6 +73,7 @@ class WbsoAccountService implements WbsoAccountServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
+	#[Override]
 	public function getAccountsByAdministration(string $administrationId): array {
 		return $this->objectService
 			->setRegister($this->register())
@@ -87,6 +89,7 @@ class WbsoAccountService implements WbsoAccountServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>> Root accounts, each carrying a recursive `children` array.
 	 */
+	#[Override]
 	public function getAccountHierarchy(string $administrationId): array {
 		$accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
 
@@ -137,6 +140,7 @@ class WbsoAccountService implements WbsoAccountServiceInterface {
 	 *
 	 * @return array<string,mixed>|null The account with `parent` + `children`, or null when missing.
 	 */
+	#[Override]
 	public function getAccountByNumber(string $administrationId, string $accountNumber): ?array {
 		$accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
 		$byNumber = [];
@@ -173,6 +177,7 @@ class WbsoAccountService implements WbsoAccountServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When validation fails.
 	 */
+	#[Override]
 	public function createAccount(string $administrationId, array $payload): array {
 		$payload['administrationId'] = $administrationId;
 		$this->validatePayload(payload: $payload);
@@ -207,6 +212,7 @@ class WbsoAccountService implements WbsoAccountServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When validation fails.
 	 */
+	#[Override]
 	public function updateAccount(string $administrationId, string $accountNumber, array $payload): array {
 		$existing = $this->getAccountByNumber(
 			administrationId: $administrationId,

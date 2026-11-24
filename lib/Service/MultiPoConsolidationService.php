@@ -64,6 +64,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\MultiPoConsolidationServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -236,6 +237,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 */
+	#[Override]
 	public function enumerateCandidateTuples(
 		string $administrationId,
 		array $invoice,
@@ -434,6 +436,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 */
+	#[Override]
 	public function disambiguateAmbiguousMatches(
 		string $administrationId,
 		string $invoiceId,
@@ -605,6 +608,7 @@ class MultiPoConsolidationService implements MultiPoConsolidationServiceInterfac
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 */
+	#[Override]
 	public function consolidateInvoice(string $administrationId, string $invoiceId): array {
 		$this->assertAccess(administrationId: $administrationId);
 

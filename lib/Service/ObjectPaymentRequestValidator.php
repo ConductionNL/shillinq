@@ -37,6 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
+use Override;
 
 /**
  * Validates the conditional shape and the uniqueness of a PaymentRequest.
@@ -111,6 +112,7 @@ final class ObjectPaymentRequestValidator implements ObjectPaymentRequestValidat
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
+	#[Override]
 	public function validate(array $request, array $existing = [], array $referenceHolders = []): void {
 		$subjectKind = (string)($request['subjectKind'] ?? 'invoice');
 		if (in_array($subjectKind, self::SUBJECT_KINDS, true) === false) {
@@ -256,6 +258,7 @@ final class ObjectPaymentRequestValidator implements ObjectPaymentRequestValidat
 	 *
 	 * @return string The key, over register, schema and id in a fixed order.
 	 */
+	#[Override]
 	public function subjectKey(array $subject): string {
 		$parts = [];
 		foreach (self::IDENTITY_PARTS as $part) {

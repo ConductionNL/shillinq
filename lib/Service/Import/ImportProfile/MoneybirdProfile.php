@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Import\ImportProfile;
 
 use OCA\Shillinq\Service\Import\ImportProfileInterface;
+use Override;
 
 /**
  * Moneybird import profile (REQ-AIM-003).
@@ -45,6 +46,7 @@ class MoneybirdProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function sourceSystem(): string {
 		return 'moneybird';
 	}//end sourceSystem()
@@ -58,6 +60,7 @@ class MoneybirdProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function normalizeLedgerAccounts(array $parsed): array {
 		return ($parsed['ledgerAccounts'] ?? []);
 	}//end normalizeLedgerAccounts()
@@ -74,6 +77,7 @@ class MoneybirdProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function mapCsvColumns(string $artifact): array {
 		if ($artifact === 'open-items') {
 			return [
@@ -111,6 +115,7 @@ class MoneybirdProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function applyDialectQuirks(array $parsed): array {
 		return $parsed;
 	}//end applyDialectQuirks()

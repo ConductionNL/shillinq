@@ -46,6 +46,7 @@ use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
 use OCP\IL10N;
+use Override;
 
 /**
  * Renders the ICP overlay of an AR invoice as HTML for downstream PDF conversion.
@@ -89,6 +90,7 @@ class ArInvoiceIcpPdfRenderer implements ArInvoiceIcpPdfRendererInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
+	#[Override]
 	public function render(array $invoice, array $customer, array $seller): array {
 		$icpContext = $this->extractIcpContext(invoice: $invoice);
 		$treatAsIcp = (bool)($icpContext['treatAsIcp'] ?? false);

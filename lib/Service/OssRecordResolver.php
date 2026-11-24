@@ -40,6 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\OssRecordResolverInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -88,6 +89,7 @@ class OssRecordResolver implements OssRecordResolverInterface {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
+	#[Override]
 	public function findReturnForPayment(array $ossPayment): ?array {
 		$returnId = trim((string)($ossPayment['ossReturnId'] ?? ''));
 		if ($returnId === '') {
@@ -115,6 +117,7 @@ class OssRecordResolver implements OssRecordResolverInterface {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
+	#[Override]
 	public function findPaymentForReturn(array $ossReturn): ?array {
 		$returnId = trim((string)($ossReturn['id'] ?? ((($ossReturn['@self'] ?? [])['id']) ?? '')));
 		if ($returnId === '') {
@@ -144,6 +147,7 @@ class OssRecordResolver implements OssRecordResolverInterface {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
+	#[Override]
 	public function savePayment(array $data): array {
 		$saved = $this->objectService
 			->setRegister($this->register())

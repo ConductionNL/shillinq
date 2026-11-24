@@ -70,6 +70,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
@@ -125,6 +126,7 @@ class CommitmentMaterialisationService implements CommitmentMaterialisationServi
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
+	#[Override]
 	public function materialiseFromPurchaseOrder(array $purchaseOrder): ?array {
 		$sourceReference = trim((string)($purchaseOrder['poNumber'] ?? ''));
 		if ($sourceReference === '') {
@@ -149,6 +151,7 @@ class CommitmentMaterialisationService implements CommitmentMaterialisationServi
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
+	#[Override]
 	public function materialiseFromContract(array $contract): ?array {
 		$sourceReference = trim((string)($contract['contractNumber'] ?? ''));
 		if ($sourceReference === '') {

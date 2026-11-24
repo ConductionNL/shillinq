@@ -42,6 +42,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\RecurringSeriesServiceInterface;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -178,6 +179,7 @@ class RecurringSeriesService implements RecurringSeriesServiceInterface {
 	 *
 	 * @spec openspec/specs/bookings-recurring-series/spec.md
 	 */
+	#[Override]
 	public function planSeries(array $seriesDef): array {
 		$plan = $this->planFor(seriesDef: $seriesDef);
 		foreach ($this->expandRule(rrule: (string)$seriesDef['recurrenceRule'], seriesStart: $this->seriesStartOf(plan: $plan)) as $occStart) {

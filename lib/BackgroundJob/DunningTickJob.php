@@ -33,6 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\DunningTickRunnerInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -79,6 +80,7 @@ class DunningTickJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
 	 */
+	#[Override]
 	protected function run($argument): void {
 		try {
 			$now = DateTimeImmutable::createFromInterface($this->time->now());

@@ -46,6 +46,7 @@ use OCA\Shillinq\Kernel\Contracts\BadoControleprotocolServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -156,6 +157,7 @@ class BadoControleprotocolService implements BadoControleprotocolServiceInterfac
 	 *
 	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
 	 */
+	#[Override]
 	public function computeAggregation(string $protocolId): array {
 		$materialityAmount = $this->materialityAmount(protocolId: $protocolId);
 		$toleranceByTopic = $this->toleranceRowsByTopic(protocolId: $protocolId);
@@ -560,6 +562,7 @@ class BadoControleprotocolService implements BadoControleprotocolServiceInterfac
 	 *
 	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
 	 */
+	#[Override]
 	public function organisationIdFor(string $protocolId): ?string {
 		if ($protocolId === '') {
 			return null;

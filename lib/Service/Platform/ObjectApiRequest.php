@@ -22,6 +22,7 @@ namespace OCA\Shillinq\Service\Platform;
 
 use OCA\Shillinq\Kernel\Contracts\ObjectApiRequestInterface;
 use OCP\IRequest;
+use Override;
 use Throwable;
 
 /**
@@ -65,6 +66,7 @@ class ObjectApiRequest implements ObjectApiRequestInterface {
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
+	#[Override]
 	public function isPersonSaving(array $schemaNames, string $uuid): bool {
 		$parts = $this->savePathParts();
 		if ($parts === null) {

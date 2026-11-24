@@ -45,6 +45,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\RevenueRecognitionServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -106,6 +107,7 @@ class RevenueRecognitionService implements RevenueRecognitionServiceInterface {
 	 *
 	 * @spec openspec/changes/order-revenue-recognition-engine/tasks.md#task-1
 	 */
+	#[Override]
 	public function computeRecurring(string $administrationId, string $from, string $to): array {
 		$run = new RecognitionRun();
 		$run->period = $this->term(start: $from, end: $to);

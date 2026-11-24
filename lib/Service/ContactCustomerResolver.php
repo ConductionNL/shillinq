@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\ContactCustomerResolverInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Contacts\IManager as IContactsManager;
+use Override;
 use Throwable;
 
 /**
@@ -66,6 +67,7 @@ class ContactCustomerResolver implements ContactCustomerResolverInterface {
 	 *
 	 * @spec openspec/changes/sales-cancellation/tasks.md
 	 */
+	#[Override]
 	public function resolve(string $reference, array $customers): ?string {
 		$reference = trim($reference);
 		if ($reference === '') {

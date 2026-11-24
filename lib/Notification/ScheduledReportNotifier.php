@@ -32,6 +32,7 @@ use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
 use OCP\Notification\UnknownNotificationException;
+use Override;
 
 /**
  * Renders scheduled report notifications.
@@ -56,6 +57,7 @@ class ScheduledReportNotifier implements INotifier {
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
+	#[Override]
 	public function getID(): string {
 		return AppIdentity::APP_ID . '-scheduled-reports';
 
@@ -68,6 +70,7 @@ class ScheduledReportNotifier implements INotifier {
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
+	#[Override]
 	public function getName(): string {
 		return $this->l10nFactory->get(AppIdentity::APP_ID)->t('Scheduled reports');
 
@@ -85,6 +88,7 @@ class ScheduledReportNotifier implements INotifier {
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
+	#[Override]
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$subject = $notification->getSubject();
 		if ($notification->getApp() !== AppIdentity::APP_ID

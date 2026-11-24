@@ -40,6 +40,7 @@ use OCA\Shillinq\Util\LinkedObjectReferences;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -109,6 +110,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
+	#[Override]
 	public function raise(PayableRaisedEvent $event): void {
 		$payable = $event->toArray();
 		$refusal = $this->refusal(payable: $payable);
@@ -178,6 +180,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-002)
 	 */
+	#[Override]
 	public function approve(string $payableId): array {
 		$payable = $this->findIn(id: $payableId, state: 'requested');
 		$payableAccount = $this->payableAccount();
@@ -211,6 +214,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
+	#[Override]
 	public function markPaid(string $payableId, string $bankReference, string $bankAccount, string $paidOn = ''): array {
 		$bankReference = trim($bankReference);
 		$bankAccount = trim($bankAccount);
@@ -255,6 +259,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-003)
 	 */
+	#[Override]
 	public function reject(string $payableId, string $reason): array {
 		$reason = trim($reason);
 		if ($reason === '') {
@@ -282,6 +287,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
 	 */
+	#[Override]
 	public function cancel(PayableCancelRequestedEvent $event): void {
 		$app = $event->getSourceApp();
 		$reference = $event->getReference();

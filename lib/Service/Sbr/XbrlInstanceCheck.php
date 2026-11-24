@@ -24,6 +24,7 @@ use DOMDocument;
 use DOMElement;
 use OCA\Shillinq\Kernel\Contracts\XbrlInstanceCheckInterface;
 use OCP\IL10N;
+use Override;
 
 /**
  * What stands between an XBRL instance and validation, item by item.
@@ -71,6 +72,7 @@ class XbrlInstanceCheck implements XbrlInstanceCheckInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function problems(array $instance, ?array $taxonomy): array {
 		$problems   = [];
 		$entryPoint = trim((string) ($instance['entryPoint'] ?? ''));

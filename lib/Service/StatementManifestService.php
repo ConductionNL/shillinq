@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\StatementManifestServiceInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -75,6 +76,7 @@ class StatementManifestService implements StatementManifestServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-financial-statements/spec.md
 	 */
+	#[Override]
 	public function import(): array {
 		return $this->run(force: false);
 	}//end import()

@@ -35,6 +35,7 @@ use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 
 /**
  * Record access for the depreciation run, the revision and the reserve.
@@ -67,6 +68,7 @@ class AssetRecords implements AssetRecordsInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
+	#[Override]
 	public function find(string $schema, string $id): ?array {
 		if ($id === '') {
 			return null;

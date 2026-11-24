@@ -48,6 +48,7 @@ use OCA\Shillinq\Kernel\Contracts\SignoffDecisionServiceInterface;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -112,6 +113,7 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		// Match against EVERY namespace decidiq has shipped this event under.
 		// Pinned to \OCA\Decidesk alone, this listener stopped receiving

@@ -47,6 +47,7 @@ use OCA\Shillinq\Service\SchemaRecordStore;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -152,6 +153,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 	 */
+	#[Override]
 	public function sendEInvoice(string $administrationId, string $invoiceNumber): array {
 		$invoice    = $this->sendableInvoice(administrationId: $administrationId, invoiceNumber: $invoiceNumber);
 		$validation = $this->validateForSend(administrationId: $administrationId, invoice: $invoice);
@@ -187,6 +189,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
 	 */
+	#[Override]
 	public function queuedByTheOldPath(): array {
 		$stuck = [];
 		foreach ($this->findAll(schema: 'ARInvoice', filters: ['deliveryStatus' => 'queued']) as $invoice) {
@@ -216,6 +219,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
 	 */
+	#[Override]
 	public function requeue(array $invoice): array {
 		$administrationId = trim((string)($invoice['administrationId'] ?? ''));
 		$invoiceNumber    = trim((string)($invoice['invoiceNumber'] ?? ''));

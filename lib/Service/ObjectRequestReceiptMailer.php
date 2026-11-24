@@ -36,6 +36,7 @@ use OCA\Shillinq\Kernel\Contracts\ObjectRequestReceiptMailerInterface;
 use OCP\IL10N;
 use OCP\L10N\IFactory;
 use OCP\Mail\IMailer;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -69,6 +70,7 @@ class ObjectRequestReceiptMailer implements ObjectRequestReceiptMailerInterface 
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
+	#[Override]
 	public function send(array $request): bool {
 		$email = $this->recipientOf(request: $request);
 		if ($email === '') {

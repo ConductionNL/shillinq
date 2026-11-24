@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\BIKStaffelCalculatorInterface;
+use Override;
 
 /**
  * Pure BIK staffel + wettelijke rente calculator — no DI, fully unit-testable.
@@ -529,6 +530,7 @@ class BIKStaffelCalculator implements BIKStaffelCalculatorInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
+	#[Override]
 	public function isCalculationPermitted(string $partyType, int $daysInArrears): bool {
 		if ($partyType !== 'B2C') {
 			return true;
@@ -555,6 +557,7 @@ class BIKStaffelCalculator implements BIKStaffelCalculatorInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
+	#[Override]
 	public function compose(
 		string $invoiceId,
 		string $administrationId,

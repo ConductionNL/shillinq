@@ -60,6 +60,7 @@ use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -287,6 +288,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
+	#[Override]
 	public function createPurchaseOrder(string $administrationId, array $payload): array {
 		$order              = $this->checkedOrder(administrationId: $administrationId, payload: $payload);
 		$frameworkAgreement = $this->assertCreationPolicies(order: $order);
@@ -516,6 +518,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
+	#[Override]
 	public function markSent(string $administrationId, string $purchaseOrderId): array {
 		$po = $this->loadPurchaseOrderForTransmission(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId);
 
@@ -538,6 +541,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 	 */
+	#[Override]
 	public function dispatchChannels(): array {
 		$channels = [
 			'peppol' => ['available' => true, 'reason' => null],
@@ -576,6 +580,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function sendToPeppol(string $administrationId, string $purchaseOrderId): array {
 		$po = $this->loadPurchaseOrderForTransmission(
 			administrationId: $administrationId,
@@ -682,6 +687,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function sendToPDFEmail(
 		string $administrationId,
 		string $purchaseOrderId,
@@ -738,6 +744,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
 	 */
+	#[Override]
 	public function applyPeppolDeliveryStatus(string $purchaseOrderId, string $status, string $detail): bool {
 		$po = $this->findOne(schema: 'PurchaseOrder', filters: ['id' => $purchaseOrderId]);
 		if ($po === null || ($po['dispatchChannel'] ?? null) !== self::CHANNEL_PEPPOL

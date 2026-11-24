@@ -39,6 +39,7 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
 use OutOfBoundsException;
+use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 
@@ -93,6 +94,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
+	#[Override]
 	public function findInvoice(string $invoiceId): array {
 		$invoice = ObjectIdentifier::findOne(scoped: $this->scoped(schema: 'ARInvoice'), id: $invoiceId, fallbackProperty: 'invoiceNumber');
 		if ($invoice === null) {
@@ -116,6 +118,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
+	#[Override]
 	public function raise(array $request): array {
 		$administrationId = trim((string)($request['administrationId'] ?? ''));
 		$customerId = trim((string)($request['customerId'] ?? ''));
@@ -261,6 +264,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
+	#[Override]
 	public function openDownPayments(array $invoice, string $orderReference = ''): array {
 		$ownId = (string)($invoice['id'] ?? '');
 		$open = [];
@@ -299,6 +303,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
+	#[Override]
 	public function deductOnto(array $invoice, string $orderReference): array {
 		self::requireDeductingDraft(invoice: $invoice);
 
@@ -414,6 +419,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
+	#[Override]
 	public function requireOpenDeductions(array $invoice): void {
 		$deductions = self::deductionsOf(invoice: $invoice);
 		if ($deductions === []) {
@@ -472,6 +478,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
+	#[Override]
 	public function stampDeductions(array $invoice): void {
 		foreach (array_unique(array_column(self::deductionsOf(invoice: $invoice), 'invoiceId')) as $downPaymentId) {
 			$downPayment = $this->findDownPayment(downPaymentId: (string)$downPaymentId);
@@ -493,6 +500,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
+	#[Override]
 	public function position(array $invoice): array {
 		$orderReference = (string)(($invoice['downPayment'] ?? [])['orderReference'] ?? '');
 		if ($orderReference === '') {

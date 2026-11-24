@@ -32,6 +32,7 @@ use OCA\Shillinq\Kernel\Contracts\MeterReadingRatingInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 
 /**
  * Rates a reading against the rate plan of its own administration.
@@ -65,6 +66,7 @@ class MeterReadingRating implements MeterReadingRatingInterface {
 	 *
 	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
+	#[Override]
 	public function rate(array $reading): array {
 		$plan = $this->planFor(reading: $reading);
 		if ($plan === null) {

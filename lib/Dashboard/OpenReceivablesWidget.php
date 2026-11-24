@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Dashboard;
 
+use Override;
+
 /**
  * The invoices customers still have to pay, and the overdue part.
  *
@@ -38,6 +40,7 @@ class OpenReceivablesWidget extends FinancialWidget {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getId(): string {
 		return 'shillinq-open-receivables';
 
@@ -50,6 +53,7 @@ class OpenReceivablesWidget extends FinancialWidget {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getTitle(): string {
 		return $this->l10n->t('Open receivables');
 
@@ -62,6 +66,7 @@ class OpenReceivablesWidget extends FinancialWidget {
 	 *
 	 * @return array<int, \OCP\Dashboard\Model\WidgetItem> The items.
 	 */
+	#[Override]
 	protected function items(array $figures): array {
 		$open = $figures['receivables'];
 

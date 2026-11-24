@@ -73,6 +73,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -137,6 +138,7 @@ class RetireSubsidieSchema implements IRepairStep {
 	 *
 	 * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: retire the legacy Subsidie schema (after FoldIntoOrder has folded every Subsidie onto an Order)';
 	}//end getName()
@@ -150,6 +152,7 @@ class RetireSubsidieSchema implements IRepairStep {
 	 *
 	 * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

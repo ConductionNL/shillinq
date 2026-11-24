@@ -49,6 +49,7 @@ use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -127,6 +128,7 @@ final class ContributionRaiseService implements ContributionRaiseServiceInterfac
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-002)
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-003)
 	 */
+	#[Override]
 	public function raise(array $payload): array {
 		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_REQUEST) === false) {
 			throw new RuntimeException('403 Raising school contributions needs the payment.request action.');

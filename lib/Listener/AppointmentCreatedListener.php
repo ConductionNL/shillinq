@@ -38,6 +38,7 @@ use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -71,6 +72,7 @@ class AppointmentCreatedListener implements IEventListener {
 	 *
 	 * @return void
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;

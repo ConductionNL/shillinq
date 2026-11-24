@@ -39,6 +39,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Conditional invoice-mention + scheme-identifier code-list checks on ARInvoice.
  */
@@ -59,6 +61,7 @@ final class InvoiceMentionsTailChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'ARInvoice' => self::arInvoiceChecks(),
@@ -232,6 +235,7 @@ final class InvoiceMentionsTailChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return [];
 	}//end seedSpec()

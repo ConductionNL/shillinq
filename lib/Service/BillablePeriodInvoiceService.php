@@ -45,6 +45,7 @@ use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use OCA\Shillinq\Kernel\Contracts\BillablePeriodInvoiceServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -87,6 +88,7 @@ class BillablePeriodInvoiceService implements BillablePeriodInvoiceServiceInterf
 	 *
 	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
+	#[Override]
 	public function invoicePeriod(BillablePeriodClosedEvent $event): void {
 		try {
 			$this->answer(event: $event);

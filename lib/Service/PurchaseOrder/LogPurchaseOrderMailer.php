@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\PurchaseOrder;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -67,6 +68,7 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool {
 		$this->logger->info(
 			'shillinq.purchase_order.mailer.dispatch',
@@ -87,6 +89,7 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function isAvailable(): bool {
 		return true;
 	}//end isAvailable()

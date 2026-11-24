@@ -34,6 +34,7 @@ use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 
 /**
  * Refuses a change to the AP binding of a supplier invoice handed to accounts payable.
@@ -85,6 +86,7 @@ class SupplierInvoiceApBindingLockListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.5
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {
 			return;

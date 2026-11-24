@@ -40,6 +40,7 @@ use OCA\Shillinq\Kernel\Contracts\GlLineResultStampsInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 
 /**
  * Stamps accountClass and countsInResult on the lines of a transaction.
@@ -84,6 +85,7 @@ class GlLineResultStamps implements GlLineResultStampsInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
+	#[Override]
 	public function stampTransaction(string $transactionId): int {
 		$transaction = $this->transaction(transactionId: $transactionId);
 		if ($transaction === null || (string)($transaction['state'] ?? '') === 'draft') {
@@ -111,6 +113,7 @@ class GlLineResultStamps implements GlLineResultStampsInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
+	#[Override]
 	public function stampReversal(string $transactionId): int {
 		$ids = [$transactionId];
 		$transaction = $this->transaction(transactionId: $transactionId);
@@ -144,6 +147,7 @@ class GlLineResultStamps implements GlLineResultStampsInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
+	#[Override]
 	public function stampLine(array $line): bool {
 		$transaction = $this->transaction(transactionId: (string)($line['transactionId'] ?? ''));
 		if ($transaction === null || (string)($transaction['state'] ?? '') === 'draft') {

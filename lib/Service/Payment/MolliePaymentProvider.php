@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Payment;
 
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use Override;
 
 /**
  * Delegates to MolliePaymentAdapterInterface, projecting its result onto
@@ -66,6 +67,7 @@ class MolliePaymentProvider implements PaymentProviderInterface {
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
 	 */
+	#[Override]
 	public function createSession(PaymentSessionRequest $request): PaymentSessionResult {
 		$result = $this->mollie->createPayment(
 			[
@@ -97,6 +99,7 @@ class MolliePaymentProvider implements PaymentProviderInterface {
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
 	 */
+	#[Override]
 	public function isDormant(): bool {
 		return $this->mollie->isDormant();
 	}//end isDormant()

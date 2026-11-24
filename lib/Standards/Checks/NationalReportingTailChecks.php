@@ -57,6 +57,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Standards\Checks;
 
 use OCA\Shillinq\Standards\Support\ChecksStatementLayout;
+use Override;
 
 /**
  * Executable tail national-reporting checks over the FinancialStatement object.
@@ -196,6 +197,7 @@ class NationalReportingTailChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'FinancialStatement' => [
@@ -629,6 +631,7 @@ class NationalReportingTailChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return self::SEED_SPEC;
 

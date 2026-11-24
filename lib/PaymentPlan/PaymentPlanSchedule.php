@@ -30,6 +30,7 @@ namespace OCA\Shillinq\PaymentPlan;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\PaymentPlanScheduleInterface;
+use Override;
 
 /**
  * Pure schedule arithmetic, in cents.
@@ -94,6 +95,7 @@ class PaymentPlanSchedule implements PaymentPlanScheduleInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-1.1
 	 */
+	#[Override]
 	public function balances(float $total, array $amounts): bool {
 		if ($amounts === []) {
 			return false;

@@ -66,6 +66,7 @@ use OCA\Shillinq\Kernel\Contracts\AansluitingServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -144,6 +145,7 @@ class AansluitingService implements AansluitingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
+	#[Override]
 	public function compute(string $reconciliationId, string $periodId): array {
 		$run = new AansluitingComputeRun(
 			reconciliationId: $reconciliationId,
@@ -307,6 +309,7 @@ class AansluitingService implements AansluitingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
+	#[Override]
 	public function explain(string $resultId, string $reasonCode, string $reasonText, string $actor): array {
 		if (trim($reasonText) === '') {
 			throw new RuntimeException('explanationReasonText is required to explain an AansluitingResult.');
@@ -340,6 +343,7 @@ class AansluitingService implements AansluitingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
+	#[Override]
 	public function resolve(string $resultId, string $actor): array {
 		$result = $this->fetchResult(resultId: $resultId);
 		if ((string)($result['status'] ?? '') !== 'explained') {
@@ -373,6 +377,7 @@ class AansluitingService implements AansluitingServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
+	#[Override]
 	public function reopen(string $resultId, string $actor, string $reason): array {
 		$result = $this->fetchResult(resultId: $resultId);
 		$status = (string)($result['status'] ?? '');

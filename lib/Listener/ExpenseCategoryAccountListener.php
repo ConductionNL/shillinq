@@ -33,6 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\ExpenseCategoryAccountCheck;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -76,6 +77,7 @@ class ExpenseCategoryAccountListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-1.1
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$write = new PreSaveWrite();
 		$entity = $write->incomingEntity(event: $event);

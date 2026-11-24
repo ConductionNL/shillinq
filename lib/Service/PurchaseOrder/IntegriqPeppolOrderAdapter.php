@@ -34,6 +34,7 @@ use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -105,6 +106,7 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function lookupParticipant(string $administrationId, string $partyId): ?string {
 		$peppolId = $this->partyDirectory->lookupParticipant(administrationId: $administrationId, partyId: $partyId);
 		if ($peppolId === null || trim($peppolId) === '') {
@@ -138,6 +140,7 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function submit(string $participantId, string $documentType, string $payloadFileUri): string {
 		$this->emit(
 			data: [
@@ -166,6 +169,7 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string {
 		$orderId = $this->orderId(purchaseOrder: $purchaseOrder);
 		if ($orderId === '') {

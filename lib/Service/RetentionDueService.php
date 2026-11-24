@@ -33,6 +33,7 @@ use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RetentionDueServiceInterface;
 use OCA\Shillinq\Service\Relation\RelationRecords;
+use Override;
 use Throwable;
 
 /**
@@ -89,6 +90,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	 *
 	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
+	#[Override]
 	public function dueFor(string $administrationId, DateTimeImmutable $today): array {
 		if ($administrationId === '') {
 			return [];

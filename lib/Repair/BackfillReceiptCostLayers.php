@@ -33,6 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\ReceiptCostLayerBackfillInterface;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -70,6 +71,7 @@ class BackfillReceiptCostLayers implements IRepairStep {
 	 *
 	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: give receipts posted before cost layers their layers';
 
@@ -84,6 +86,7 @@ class BackfillReceiptCostLayers implements IRepairStep {
 	 *
 	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		if ($this->appConfig->getValueString(AppIdentity::APP_ID, self::DONE_KEY, '') === '1') {
 			return;

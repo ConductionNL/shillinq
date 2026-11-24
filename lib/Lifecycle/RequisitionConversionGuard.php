@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\Shillinq\Kernel\Contracts\RequisitionConversionGuardInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -73,6 +74,7 @@ class RequisitionConversionGuard implements RequisitionConversionGuardInterface 
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
+	#[Override]
 	public function canConvert(string $requisitionId, ?array $object = null): bool {
 		try {
 			$requisition = ($object ?? $this->findOne(schema: 'Requisition', filters: ['id' => $requisitionId]));

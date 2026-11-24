@@ -33,6 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -79,6 +80,7 @@ class PaymentPlanMonitorJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-3.1
 	 */
+	#[Override]
 	protected function run($argument): void {
 		try {
 			$counts = $this->plans->monitor();

@@ -51,6 +51,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\TenderNedStatusSyncInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -89,6 +90,7 @@ class OrderFulfilmentTransitionListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false) {
 			return;

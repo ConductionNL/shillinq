@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Service\Payout\CaptureBookingService;
+use Override;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -69,6 +70,7 @@ class BookCapturesCommand extends Command {
 	 *
 	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
 	 */
+	#[Override]
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:payments:book-captures')
 			->setDescription(description: 'List the provider-paid invoices whose capture has no booking yet; book them with --book.')
@@ -90,6 +92,7 @@ class BookCapturesCommand extends Command {
 	 *
 	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
 	 */
+	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$register = $this->registerLocation->getRegisterSlug();
 		$unbooked = $this->captureBooking->unbooked(registerSlug: $register);

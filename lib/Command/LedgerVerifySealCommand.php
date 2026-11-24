@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Service\Ledger\LedgerSealService;
+use Override;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -55,6 +56,7 @@ class LedgerVerifySealCommand extends Command {
 	 *
 	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
 	 */
+	#[Override]
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:ledger:verify-seal')
 			->setDescription(description: 'Check that no posted transaction of an administration changed since it was sealed.')
@@ -71,6 +73,7 @@ class LedgerVerifySealCommand extends Command {
 	 *
 	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
 	 */
+	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$result = $this->seals->verify(administrationId: (string)$input->getArgument('administrationId'));
 		if ($result['intact'] === true) {

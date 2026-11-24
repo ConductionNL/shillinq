@@ -34,6 +34,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -104,6 +105,7 @@ class BookingReminderJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
+	#[Override]
 	protected function run(mixed $argument): void {
 		$this->logger->info('Shillinq: BookingReminderJob starting');
 

@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Sisa;
 
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -52,6 +53,7 @@ class LogBzkSisaUploadAdapter implements BzkSisaUploadAdapterInterface {
 	 *
 	 * @return BzkSisaUploadResult The dispatch outcome.
 	 */
+	#[Override]
 	public function upload(array $payload): BzkSisaUploadResult {
 		$sanitised = $payload;
 		unset($sanitised['reportXmlBytes']);
@@ -85,6 +87,7 @@ class LogBzkSisaUploadAdapter implements BzkSisaUploadAdapterInterface {
 	 *
 	 * @return bool Always true for the dormant log adapter.
 	 */
+	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

@@ -98,6 +98,7 @@ use OCA\Shillinq\Kernel\Contracts\SpendAnalyticsServiceInterface;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -188,6 +189,7 @@ class SpendAnalyticsService implements SpendAnalyticsServiceInterface {
 	 *
 	 * @spec openspec/specs/spend-analytics/spec.md
 	 */
+	#[Override]
 	public function spendBySupplier(string $administrationId): array {
 		$aggregation = new SpendAggregation(dimension: 'supplier', schema: self::SCHEMA_AP_TRANSACTION);
 		$aggregation->metricField = 'totalAmount';
@@ -218,6 +220,7 @@ class SpendAnalyticsService implements SpendAnalyticsServiceInterface {
 	 * @spec openspec/specs/spend-analytics/spec.md
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
+	#[Override]
 	public function spendByCategory(string $administrationId): array {
 		return $this->aggregate(aggregation: $this->apExpenseAggregation(dimension: 'category', administrationId: $administrationId));
 
@@ -236,6 +239,7 @@ class SpendAnalyticsService implements SpendAnalyticsServiceInterface {
 	 * @spec openspec/specs/spend-analytics/spec.md
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
+	#[Override]
 	public function spendByCostCentre(string $administrationId): array {
 		return $this->aggregate(aggregation: $this->apExpenseAggregation(dimension: 'costCentre', administrationId: $administrationId));
 
@@ -254,6 +258,7 @@ class SpendAnalyticsService implements SpendAnalyticsServiceInterface {
 	 * @spec openspec/specs/spend-analytics/spec.md
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
+	#[Override]
 	public function spendByPeriod(string $administrationId): array {
 		return $this->aggregate(aggregation: $this->apExpenseAggregation(dimension: 'period', administrationId: $administrationId));
 

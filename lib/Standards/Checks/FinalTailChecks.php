@@ -40,6 +40,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Enforces the final in-scope tail (invoicing periods, PCG class 8, IOSS, margin).
  */
@@ -77,6 +79,7 @@ final class FinalTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'ARInvoice' => self::arInvoiceChecks(),
@@ -159,6 +162,7 @@ final class FinalTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return [
 			'ARInvoice' => [
@@ -175,6 +179,7 @@ final class FinalTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
+	#[Override]
 	public static function seedObjects(): array {
 		return self::SEED_OBJECTS;
 

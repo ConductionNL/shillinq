@@ -35,6 +35,7 @@ use OCA\Shillinq\PaymentRun\PaymentBlockWriteScope;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -71,6 +72,7 @@ class PaymentBlockLockListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/payment-control-guards/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false || $this->scope->isOpen() === true) {
 			return;

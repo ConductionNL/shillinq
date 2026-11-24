@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
 use OCP\IGroupManager;
+use Override;
 
 /**
  * Decides whether the signed-in user manages an administration.
@@ -61,6 +62,7 @@ class AdministrationManagementAccess implements AdministrationManagementAccessIn
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
 	 */
+	#[Override]
 	public function canManage(string $administrationId): bool {
 		$userId = $this->administrationContext->currentUserId();
 		if ($userId === null) {

@@ -67,6 +67,7 @@ use OCA\Shillinq\Service\Payout\CounterSaleSettlement;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -281,6 +282,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005, REQ-APL-006)
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-005)
 	 */
+	#[Override]
 	public function reconcile(string $gateway, array $event): array {
 		$paymentIntentId = (string)($event['paymentIntentId'] ?? '');
 		$outcome = (string)($event['outcome'] ?? '');

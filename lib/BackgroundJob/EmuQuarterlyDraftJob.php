@@ -39,6 +39,7 @@ use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\EmuReportingServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -148,6 +149,7 @@ class EmuQuarterlyDraftJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
+	#[Override]
 	protected function run($argument): void {
 		try {
 			$this->logQuarterWindow();

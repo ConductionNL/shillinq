@@ -31,6 +31,7 @@ use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Throwable;
 
 /**
@@ -79,6 +80,7 @@ class BillableLinesService implements BillableLinesServiceInterface {
 	 *
 	 * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
 	 */
+	#[Override]
 	public function forCustomer(string $administrationId, string $customerId, string $projectId, string $fromDate, string $toDate): array {
 		if ($administrationId === '' || $customerId === '') {
 			return ['timeEntries' => [], 'expenses' => []];
@@ -165,6 +167,7 @@ class BillableLinesService implements BillableLinesServiceInterface {
 	 *
 	 * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
 	 */
+	#[Override]
 	public function foreignLineIds(string $administrationId, string $customerId, array $timeEntryIds, array $expenseIds): array {
 		$projects = $this->customerProjectIds(administrationId: $administrationId, customerId: $customerId);
 

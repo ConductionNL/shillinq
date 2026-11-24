@@ -45,6 +45,7 @@ namespace OCA\Shillinq\PaymentRun;
 use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
 use OCA\Shillinq\Lifecycle\PaymentRunReconcileGuard;
 use OCA\Shillinq\Service\ServerWriteAuthority;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -97,6 +98,7 @@ class PaymentRunReconciliationService implements PaymentRunReconciliationService
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.3
 	 */
+	#[Override]
 	public function reconcile(array $paymentRun, string $contents): array {
 		$state = (string)($paymentRun['lifecycleState'] ?? $paymentRun['status'] ?? '');
 		if ($state !== 'exported') {

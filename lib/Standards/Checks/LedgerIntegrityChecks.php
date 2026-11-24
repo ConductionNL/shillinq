@@ -44,6 +44,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Executable ledger-integrity, immutability and retention checks.
  *
@@ -59,6 +61,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'GLTransaction' => [
@@ -872,6 +875,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return [
 			'GLTransaction' => [

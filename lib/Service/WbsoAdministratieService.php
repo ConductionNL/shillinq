@@ -39,6 +39,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WbsoAdministratieServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Computes a per-beschikking realisatie summary from the S&O hour administration.
@@ -74,6 +75,7 @@ class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
 	 */
+	#[Override]
 	public function realisatieSummary(string $administrationId): array {
 		$beschikkingen = $this->fetchBeschikkingen(administrationId: $administrationId);
 		$realisedTenths = $this->realisedHoursByDecision(administrationId: $administrationId);

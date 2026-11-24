@@ -34,6 +34,7 @@ use OCA\Shillinq\Service\Ledger\LedgerSealService;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -72,6 +73,7 @@ class GLTransactionSealListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false || $event->getTo() !== 'posted') {
 			return;

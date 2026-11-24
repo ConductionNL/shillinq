@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Kvk;
 
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -64,6 +65,7 @@ class LogKvkHandelsregisterAdapter implements KvkHandelsregisterAdapterInterface
 	 *
 	 * @return KvkLookupResult The dispatch outcome.
 	 */
+	#[Override]
 	public function lookup(string $kvkNumber, array $context = []): KvkLookupResult {
 		$this->logger->info(
 			'Shillinq KvK Handelsregister lookup deferred (no outbound connector bound)',
@@ -95,6 +97,7 @@ class LogKvkHandelsregisterAdapter implements KvkHandelsregisterAdapterInterface
 	 *
 	 * @inheritDoc
 	 */
+	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

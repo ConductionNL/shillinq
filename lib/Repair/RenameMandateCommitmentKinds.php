@@ -75,6 +75,7 @@ use OCP\DB\IPreparedStatement;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -139,6 +140,7 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: translate the Dutch kinds inside Mandate.kind_commitment';
 	}//end getName()
@@ -152,6 +154,7 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$this->rewriteAll(output: $output);

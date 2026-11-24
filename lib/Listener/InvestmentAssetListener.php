@@ -33,6 +33,7 @@ use OCA\Shillinq\Service\InvestmentDeduction\InvestmentDeductionService;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -68,6 +69,7 @@ class InvestmentAssetListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$entity = null;
 		if ($event instanceof ObjectCreatedEvent) {

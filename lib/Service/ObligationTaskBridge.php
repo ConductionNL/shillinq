@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObligationTaskBridgeInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -94,6 +95,7 @@ class ObligationTaskBridge implements ObligationTaskBridgeInterface {
 	 *
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
+	#[Override]
 	public function createTaskForObligation(array $obligation): array {
 		try {
 			return $this->createTask(obligation: $obligation);

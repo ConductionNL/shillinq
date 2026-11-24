@@ -39,6 +39,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -389,6 +390,7 @@ class AppointmentConfirmationService implements AppointmentConfirmationServiceIn
 	 *
 	 * @return int The count of appointments cancelled.
 	 */
+	#[Override]
 	public function cancelExpired(): int {
 		$objectService = $this->getObjectService();
 		if ($objectService === null) {

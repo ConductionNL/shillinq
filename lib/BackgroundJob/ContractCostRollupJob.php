@@ -44,6 +44,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -95,6 +96,7 @@ class ContractCostRollupJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 * TimedJob's run() signature; this job takes no argument.
 	 */
+	#[Override]
 	protected function run($argument): void {
 		$contracts = $this->contracts();
 		if ($contracts === null) {

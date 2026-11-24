@@ -32,6 +32,7 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -89,6 +90,7 @@ class AdministrationManagedWriteListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/accounting-standards-policy/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$entities = $this->entitiesOf(event: $event);
 		if ($entities === [] || $this->isChecked(entity: $entities[0]) === false) {

@@ -44,6 +44,7 @@ use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -223,6 +224,7 @@ final class FeeScheduleService implements FeeScheduleServiceInterface {
 	 *
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-008)
 	 */
+	#[Override]
 	public function resolveForObject(
 		string $register,
 		string $schema,
@@ -374,6 +376,7 @@ final class FeeScheduleService implements FeeScheduleServiceInterface {
 	 *
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
 	 */
+	#[Override]
 	public function assertNoOverlap(array $schedule, ?array $existing = null): void {
 		$this->assertLegalBasis(schedule: $schedule);
 		(new FeeCalculation())->assertValid(schedule: $schedule);
@@ -503,6 +506,7 @@ final class FeeScheduleService implements FeeScheduleServiceInterface {
 	 *
 	 * @return string The citation, or an empty string when there is none.
 	 */
+	#[Override]
 	public function citation(array $schedule): string {
 		$basis = ($schedule['legalBasis'] ?? null);
 		if (is_array($basis) === false) {

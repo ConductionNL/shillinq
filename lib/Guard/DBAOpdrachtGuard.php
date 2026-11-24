@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Guard;
 use DateTimeImmutable;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Kernel\Contracts\DBAOpdrachtGuardInterface;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -188,6 +189,7 @@ class DBAOpdrachtGuard implements DBAOpdrachtGuardInterface {
 	 *
 	 * @return string|null The deadline Y-m-d, or null when input cannot be parsed.
 	 */
+	#[Override]
 	public function computeRetentieDeadline(string $feitelijkeEindDatum): ?string {
 		try {
 			$date = new DateTimeImmutable($feitelijkeEindDatum);

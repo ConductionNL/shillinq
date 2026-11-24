@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Service\Asset;
 use DateTimeImmutable;
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\DepreciationScheduleServiceInterface;
+use Override;
 
 /**
  * Plans, replans and posts depreciation schedule lines.
@@ -469,6 +470,7 @@ class DepreciationScheduleService implements DepreciationScheduleServiceInterfac
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
+	#[Override]
 	public function missed(array $asset, string $beforeMonth): array {
 		$rows = [];
 		foreach ($this->ensureSchedule(asset: $asset) as $line) {
@@ -495,6 +497,7 @@ class DepreciationScheduleService implements DepreciationScheduleServiceInterfac
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
+	#[Override]
 	public function postMissed(array $asset, string $beforeMonth): array {
 		$figures = $this->figures(asset: $asset);
 		$missed = $this->missed(asset: $asset, beforeMonth: $beforeMonth);

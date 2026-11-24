@@ -53,6 +53,7 @@ use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -104,6 +105,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
+	#[Override]
 	public function enqueue(TimelineEventDto $event): void {
 		try {
 			$this->enqueueEntry(event: $event);

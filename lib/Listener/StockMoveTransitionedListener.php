@@ -51,6 +51,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -99,6 +100,7 @@ class StockMoveTransitionedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false) {
 			return;

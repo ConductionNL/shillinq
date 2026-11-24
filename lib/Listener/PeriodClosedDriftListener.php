@@ -31,6 +31,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\FiledReturnDriftCheckInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -77,6 +78,7 @@ class PeriodClosedDriftListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectUpdatedEvent) === false) {
 			return;

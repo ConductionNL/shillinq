@@ -44,6 +44,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetBlockerInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -103,6 +104,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
+	#[Override]
 	public function createRequisition(string $administrationId, array $payload): array {
 		$requester = $this->authorisedRequester(administrationId: $administrationId);
 		$fields    = $this->requisitionFields(payload: $payload);
@@ -231,6 +233,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
+	#[Override]
 	public function submitRequisition(string $administrationId, string $requisitionId): array {
 		$requisition = $this->loadRequisition(administrationId: $administrationId, requisitionId: $requisitionId);
 
@@ -269,6 +272,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
+	#[Override]
 	public function approveRequisition(string $administrationId, string $requisitionId, string $approverId): array {
 		$requisition = $this->loadRequisition(administrationId: $administrationId, requisitionId: $requisitionId);
 
@@ -305,6 +309,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
+	#[Override]
 	public function rejectRequisition(
 		string $administrationId,
 		string $requisitionId,

@@ -25,6 +25,7 @@ use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
+use Override;
 use RuntimeException;
 
 /**
@@ -68,6 +69,7 @@ class SbrFilingFileStore implements SbrFilingFileStoreInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.2
 	 */
+	#[Override]
 	public function store(string $administrationId, string $fileName, string $content): string {
 		$userId = (string) $this->userSession->getUser()?->getUID();
 		if ($userId === '') {

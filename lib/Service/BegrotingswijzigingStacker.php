@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\BegrotingswijzigingStackerInterface;
+use Override;
 
 /**
  * Pure calculator that stacks vastgestelde wijzigingen onto the basis taakvelden.
@@ -161,6 +162,7 @@ class BegrotingswijzigingStacker implements BegrotingswijzigingStackerInterface 
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
 	 */
+	#[Override]
 	public function authorizedLasten(string $taskFieldCode, array $basisTaskFields, array $wijzigingen): float {
 		$position = $this->currentStand(basisTaskFields: $basisTaskFields, wijzigingen: $wijzigingen);
 		return ($position[$taskFieldCode]['expenses'] ?? 0.0);

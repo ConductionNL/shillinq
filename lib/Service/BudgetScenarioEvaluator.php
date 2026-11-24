@@ -71,6 +71,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\BudgetScenarioEvaluatorInterface;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -134,6 +135,7 @@ class BudgetScenarioEvaluator implements BudgetScenarioEvaluatorInterface {
 	 *
 	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
 	 */
+	#[Override]
 	public function evaluate(
 		array $baseBudgetLines,
 		array $ledgerGroups,

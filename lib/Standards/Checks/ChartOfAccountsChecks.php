@@ -54,6 +54,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Executable national chart-of-accounts checks against Account.accountNumber /
  * Account.accountType.
@@ -118,6 +120,7 @@ class ChartOfAccountsChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'Account' => [
@@ -352,6 +355,7 @@ class ChartOfAccountsChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return self::SEED_SPEC;
 

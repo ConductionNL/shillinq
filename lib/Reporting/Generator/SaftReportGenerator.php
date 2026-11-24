@@ -51,6 +51,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use XMLWriter;
@@ -91,6 +92,7 @@ final class SaftReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'saft';
 	}//end reportType()
@@ -100,6 +102,7 @@ final class SaftReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<int, string>
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return ['xml'];
 	}//end supportedFormats()
@@ -112,6 +115,7 @@ final class SaftReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return GeneratedFile
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$data   = $this->loadSaftData(context: $context);
 		$writer = $this->openXmlDocument();

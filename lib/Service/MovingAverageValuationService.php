@@ -52,6 +52,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\MovingAverageValuationServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -96,6 +97,7 @@ class MovingAverageValuationService implements MovingAverageValuationServiceInte
 	 *
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
 	 */
+	#[Override]
 	public function processStockMove(array $move): array {
 		$key = new StockMoveValuationKey(move: $move);
 		$refusal = $key->refusal(triggerLabel: 'an average trigger');

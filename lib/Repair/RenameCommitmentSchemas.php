@@ -71,6 +71,7 @@ use OCP\DB\Exception;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -139,6 +140,7 @@ class RenameCommitmentSchemas implements IRepairStep {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: rename the Dutch commitment schema slugs to English';
 	}//end getName()
@@ -152,6 +154,7 @@ class RenameCommitmentSchemas implements IRepairStep {
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			if ($this->db->tableExists('openregister_schemas') === false) {

@@ -57,6 +57,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Migration;
 
 use OCA\Shillinq\Kernel\Contracts\GlLineFiscalYearBackfillMigratorInterface;
+use Override;
 use RuntimeException;
 
 /**
@@ -228,6 +229,7 @@ class GlLineFiscalYearBackfillMigrator implements GlLineFiscalYearBackfillMigrat
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
+	#[Override]
 	public function backfillBatch(array $glLines, array $glTransactions): array {
 		$index = $this->indexFiscalYearsByTransaction(glTransactions: $glTransactions);
 
@@ -326,6 +328,7 @@ class GlLineFiscalYearBackfillMigrator implements GlLineFiscalYearBackfillMigrat
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
+	#[Override]
 	public function countMissingFiscalYearId(array $glLines): int {
 		$missing = 0;
 

@@ -33,6 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IUserSession;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -79,6 +80,7 @@ class PaymentRunLockListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/payment-run-four-eyes/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatingEvent === true) {
 			$this->handleCreate(event: $event);

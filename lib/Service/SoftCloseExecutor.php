@@ -52,6 +52,7 @@ use OCA\Shillinq\Service\Deferral\DeferralService;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -152,6 +153,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
 	 */
+	#[Override]
 	public function execute(string $administrationId, string $periodId, DateTimeImmutable $asOf): array {
 		$run = new SoftCloseRun(administrationId: $administrationId, periodId: $periodId, asOf: $asOf);
 		$report = $this->startedReport(run: $run);

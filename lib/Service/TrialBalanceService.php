@@ -48,6 +48,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Computes a period-scoped, per-account trial balance from the general ledger.
@@ -112,6 +113,7 @@ class TrialBalanceService implements TrialBalanceServiceInterface {
 	 * requirement the code violates reports conformance; a dangling one reports
 	 * work to do.
 	 */
+	#[Override]
 	public function compute(string $administrationId, string $periodId, array $filters = []): array {
 		$accounts = $this->fetchAccounts(administrationId: $administrationId);
 

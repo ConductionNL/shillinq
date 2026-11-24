@@ -49,6 +49,7 @@ use OCA\Shillinq\Kernel\Contracts\SigningDelegationServiceInterface;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -117,6 +118,7 @@ final class SigningConcludedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		// Match against EVERY namespace filinq has shipped this event under.
 		// Pinned to \OCA\DocuDesk alone, this listener stopped receiving

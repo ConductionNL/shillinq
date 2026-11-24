@@ -56,6 +56,7 @@ use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -91,6 +92,7 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 	 *
 	 * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-14
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: backfill signing-delegation consumer fields on legacy ACMReport objects (REQ-SIGN-009)';
 	}//end getName()
@@ -107,6 +109,7 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

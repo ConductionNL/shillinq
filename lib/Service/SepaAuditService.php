@@ -37,6 +37,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SepaAuditServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use ZipArchive;
 
@@ -89,6 +90,7 @@ class SepaAuditService implements SepaAuditServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
 	 */
+	#[Override]
 	public function buildMandateDossier(string $mandateId): ?array {
 		if ($mandateId === '') {
 			return null;

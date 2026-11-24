@@ -71,6 +71,7 @@ use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ThreeWayMatchingEngineInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -339,6 +340,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
+	#[Override]
 	public function evaluateMatch(string $administrationId, string $invoiceId): array {
 		$run = $this->openRun(administrationId: $administrationId, invoiceId: $invoiceId);
 

@@ -43,6 +43,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUserSession;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -131,6 +132,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
 	 */
+	#[Override]
 	public function currentUserId(): ?string {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -152,6 +154,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
 	 */
+	#[Override]
 	public function buildContext(): array {
 		$userId = $this->currentUserId();
 		if ($userId === null) {
@@ -221,6 +224,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
 	 */
+	#[Override]
 	public function accessibleAdministrationIds(): array {
 		// Access is granted by a valid AdministrationMembership (REQ-MA-001) — the
 		// membership IS the access grant. Derive the accessible ids directly from
@@ -249,6 +253,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
+	#[Override]
 	public function canUserAccess(string $userId, string $administrationId): bool {
 		if ($userId === '' || $administrationId === '') {
 			return false;
@@ -269,6 +274,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function defaultAdministrationIdForUser(string $userId): ?string {
 		if ($userId === '') {
 			return null;
@@ -315,6 +321,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
 	 */
+	#[Override]
 	public function canAccess(string $administrationId): bool {
 		if ($administrationId === '') {
 			return false;
@@ -335,6 +342,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-21
 	 */
+	#[Override]
 	public function canPostJournalEntry(string $administrationId): bool {
 		foreach ($this->buildContext()['administrations'] as $administration) {
 			if ((string)$administration['administrationId'] === $administrationId) {
@@ -386,6 +394,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
 	 */
+	#[Override]
 	public function rememberActiveAdministration(string $administrationId): void {
 		$userId = $this->currentUserId();
 		if ($userId === null || $administrationId === '') {
@@ -434,6 +443,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
 	 */
+	#[Override]
 	public function resolveSwitchTarget(string $targetId): ?string {
 		if ($this->canAccess(administrationId: $targetId) === false) {
 			return null;

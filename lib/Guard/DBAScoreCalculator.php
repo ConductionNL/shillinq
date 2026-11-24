@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\Kernel\Contracts\DBAScoreCalculatorInterface;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -95,6 +96,7 @@ class DBAScoreCalculator implements DBAScoreCalculatorInterface {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
+	#[Override]
 	public function computeTotal(array $intake): int {
 		$subtotals = [
 			'gezag' => $this->subtotalGezag(intake: $intake),
@@ -166,6 +168,7 @@ class DBAScoreCalculator implements DBAScoreCalculatorInterface {
 	 *
 	 * @return int The subtotal in [0, 20].
 	 */
+	#[Override]
 	public function subtotalGezag(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['authorityRelationship'] ?? []));
 		$instructies = (int)($block['kwaInstructiesScore'] ?? 0);
@@ -182,6 +185,7 @@ class DBAScoreCalculator implements DBAScoreCalculatorInterface {
 	 *
 	 * @return int The subtotal in [0, 20].
 	 */
+	#[Override]
 	public function subtotalArbeid(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['personalLabour'] ?? []));
 		$value = (int)($block['replaceableScore'] ?? 0) + (int)($block['replacementActualScore'] ?? 0);
@@ -195,6 +199,7 @@ class DBAScoreCalculator implements DBAScoreCalculatorInterface {
 	 *
 	 * @return int The subtotal in [0, 20].
 	 */
+	#[Override]
 	public function subtotalFinancieel(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['financialRisk'] ?? []));
 		$frequency = (int)($block['invoiceFrequencyScore'] ?? 0);
@@ -215,6 +220,7 @@ class DBAScoreCalculator implements DBAScoreCalculatorInterface {
 	 *
 	 * @return int The subtotal in [0, 40].
 	 */
+	#[Override]
 	public function subtotalDeliveroo(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
 

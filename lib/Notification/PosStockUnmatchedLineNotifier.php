@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Notification;
 use OCA\Shillinq\Kernel\Contracts\PosStockDecrementListenerInterface;
 use OCP\Notification\INotification;
 use OCP\Notification\UnknownNotificationException;
+use Override;
 
 /**
  * Prepares `pos_stock_unmatched_line` notifications for display.
@@ -62,6 +63,7 @@ class PosStockUnmatchedLineNotifier extends AppNotifier {
 	 *
 	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
+	#[Override]
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$l = $this->ownedL10n(notification: $notification, languageCode: $languageCode);
 		$parameters = $notification->getSubjectParameters();

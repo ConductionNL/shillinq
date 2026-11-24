@@ -65,6 +65,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -121,6 +122,7 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 	 *
 	 * @return void
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		try {
 			$payload = $this->extractEventPayload(event: $event);

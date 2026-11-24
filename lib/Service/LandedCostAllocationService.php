@@ -54,6 +54,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\LandedCostAllocationServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -116,6 +117,7 @@ class LandedCostAllocationService implements LandedCostAllocationServiceInterfac
 	 *
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
 	 */
+	#[Override]
 	public function allocate(
 		string $administrationId,
 		string $receiptReference,

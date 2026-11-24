@@ -62,6 +62,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -175,6 +176,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003, REQ-SPPI-004)
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
+	#[Override]
 	public function initiate(array $claims, string $target): PortalPaymentSessionResult {
 		return $this->openSession(claims: $claims, target: new PortalPaymentTarget(id: $target, kind: PortalPaymentTarget::INVOICE));
 	}//end initiate()
@@ -191,6 +193,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	 *
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
+	#[Override]
 	public function initiateForRequest(array $claims, string $target): PortalPaymentSessionResult {
 		return $this->openSession(claims: $claims, target: new PortalPaymentTarget(id: $target, kind: PortalPaymentTarget::REQUEST));
 	}//end initiateForRequest()
@@ -211,6 +214,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
 	 * @spec openspec/changes/receivables-payment-links/specs/portal-payment-initiation/spec.md#requirement-a-signed-pay-link-is-accepted-from-the-portals-guest-page-req-rpl-006
 	 */
+	#[Override]
 	public function initiateForPayToken(string $token): PortalPaymentSessionResult {
 		$signed = null;
 		if ($this->payLinks !== null) {

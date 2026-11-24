@@ -60,6 +60,7 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -171,6 +172,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 *   administration's ar-controller memberships, and one invoice save, and
 	 *   the write it runs inside is integriq's own event record, not a user's.
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;

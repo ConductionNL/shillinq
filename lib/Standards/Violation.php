@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Standards;
 
 use JsonSerializable;
+use Override;
 
 /**
  * Immutable value object describing one violated rule.
@@ -56,6 +57,7 @@ final class Violation implements JsonSerializable {
 	 *
 	 * @return array<string, string>
 	 */
+	#[Override]
 	public function jsonSerialize(): array {
 		return [
 			'ruleId' => $this->ruleId,

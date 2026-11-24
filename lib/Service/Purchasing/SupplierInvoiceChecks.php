@@ -31,6 +31,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 use Throwable;
 
 /**
@@ -88,6 +89,7 @@ class SupplierInvoiceChecks implements SupplierInvoiceChecksInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
+	#[Override]
 	public function resolvePayee(string $administrationId, string $kvkNumber, string $vatNumber): ?array {
 		$payees = $this->read(schema: 'Payee', administrationId: $administrationId);
 		$wanted = [
@@ -119,6 +121,7 @@ class SupplierInvoiceChecks implements SupplierInvoiceChecksInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.2
 	 */
+	#[Override]
 	public function payee(string $supplierId): ?array {
 		if (trim($supplierId) === '') {
 			return null;
@@ -140,6 +143,7 @@ class SupplierInvoiceChecks implements SupplierInvoiceChecksInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function duplicateOf(string $administrationId, string $supplierId, string $invoiceNumber, array $ignoreIds=[]): ?string {
 		$number = trim($invoiceNumber);
 		if ($number === '' || $supplierId === '') {
@@ -190,6 +194,7 @@ class SupplierInvoiceChecks implements SupplierInvoiceChecksInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function duplicateOfUnresolved(string $administrationId, string $supplierIdentifier, string $invoiceNumber): ?string {
 		if (trim($invoiceNumber) === '' || trim($supplierIdentifier) === '') {
 			return null;
@@ -269,6 +274,7 @@ class SupplierInvoiceChecks implements SupplierInvoiceChecksInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function warnings(array $invoice): array {
 		$administrationId = (string)($invoice['administrationId'] ?? '');
 		$supplierId = (string)($invoice['supplierId'] ?? '');

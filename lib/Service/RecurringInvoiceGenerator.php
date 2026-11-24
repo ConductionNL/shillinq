@@ -57,6 +57,7 @@ use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\RecurringInvoiceGeneratorInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -152,6 +153,7 @@ class RecurringInvoiceGenerator implements RecurringInvoiceGeneratorInterface {
 	 * @spec openspec/specs/recurring-invoicing/spec.md
 	 * @spec openspec/changes/billing-inherited-defects/specs/recurring-invoicing/spec.md (REQ-RIN-010)
 	 */
+	#[Override]
 	public function generateForProfile(array $profile): array {
 		$profileId = (string)($profile['id'] ?? $profile['uuid'] ?? '');
 		if ($profileId === '') {

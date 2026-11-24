@@ -48,6 +48,7 @@ use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -100,6 +101,7 @@ final class GLTransactionComplianceCacheListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectCreatedEvent) === false
 			&& ($event instanceof ObjectUpdatedEvent) === false

@@ -47,6 +47,7 @@ use OCA\Shillinq\Kernel\Contracts\OssPaymentReconciliationInterface;
 use OCA\Shillinq\Kernel\Contracts\OssRecordResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -99,6 +100,7 @@ class OssPaymentReconciliationListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;

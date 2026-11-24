@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
+use Override;
 
 /**
  * Appends settlements and derives the state a human reads.
@@ -127,6 +128,7 @@ final class PaymentSettlementService implements PaymentSettlementServiceInterfac
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
+	#[Override]
 	public function build(array $input, string $actor, string $settledAt = ''): array {
 		$method = (string)($input['method'] ?? '');
 		$this->assertKnownMethod(method: $method);
@@ -240,6 +242,7 @@ final class PaymentSettlementService implements PaymentSettlementServiceInterfac
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-009)
 	 */
+	#[Override]
 	public function stampSettled(array $request, string $settledAt, string $via): array {
 		if ((string)($request['settledAt'] ?? '') !== '') {
 			return $request;
@@ -270,6 +273,7 @@ final class PaymentSettlementService implements PaymentSettlementServiceInterfac
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
+	#[Override]
 	public function append(array $request, array $settlement): array {
 		$settlements = ($request['settlements'] ?? []);
 		if (is_array($settlements) === false) {
@@ -314,6 +318,7 @@ final class PaymentSettlementService implements PaymentSettlementServiceInterfac
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
+	#[Override]
 	public function amountOf(array $request): ?float {
 		$cents = $this->cents(value: ($request['amount'] ?? null));
 		if ($cents === null) {
@@ -410,6 +415,7 @@ final class PaymentSettlementService implements PaymentSettlementServiceInterfac
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
+	#[Override]
 	public function report(array $request): array {
 		$dueCents      = $this->cents(value: ($request['amount'] ?? null));
 		$settledCents  = $this->settledCents(request: $request);

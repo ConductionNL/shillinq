@@ -39,6 +39,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\PurchaseOrder;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -78,6 +79,7 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
+	#[Override]
 	public function submitDisputeCreditNote(array $payload): array {
 		$envelope   = $this->envelope(payload: $payload);
 		$dispatchId = 'urn:uuid:cn-' . bin2hex(random_bytes(8));

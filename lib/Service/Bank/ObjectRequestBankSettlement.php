@@ -38,6 +38,7 @@ use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -78,6 +79,7 @@ class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterfac
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
+	#[Override]
 	public function settle(array $match): string {
 		$requestId = (string)($match['matchedObjectId'] ?? (((array)($match['targetRefs'] ?? []))[0] ?? ''));
 		$request = ObjectIdentifier::findOne(scoped: $this->scoped(schema: 'PaymentRequest'), id: $requestId);

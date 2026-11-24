@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Platform;
 
 use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -70,6 +71,7 @@ class SchemaDefinitions implements SchemaDefinitionsInterface {
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
+	#[Override]
 	public function definition(string $schema): ?array {
 		if ($schema === '') {
 			return null;

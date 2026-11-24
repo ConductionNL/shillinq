@@ -29,6 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * The CbC report checks.
  *
@@ -56,6 +58,7 @@ final class CbcrChecks implements CheckProvider {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'CbcrReturn' => [
@@ -91,6 +94,7 @@ final class CbcrChecks implements CheckProvider {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.1
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return [];
 	}//end seedSpec()

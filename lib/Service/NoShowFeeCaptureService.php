@@ -42,6 +42,7 @@ use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\NoShowFeeCaptureServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -166,6 +167,7 @@ class NoShowFeeCaptureService implements NoShowFeeCaptureServiceInterface {
 	 *
 	 * @spec openspec/specs/bookings-cancellation-rules/spec.md
 	 */
+	#[Override]
 	public function captureNoShowFee(array $appointment, ?DateTimeImmutable $capturedAt = null): array {
 		$feeCents = $this->computeNoShowFeeCents(appointment: $appointment);
 		if ($feeCents <= 0) {

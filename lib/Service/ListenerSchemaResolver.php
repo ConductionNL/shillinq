@@ -56,6 +56,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -119,6 +120,7 @@ class ListenerSchemaResolver implements ListenerSchemaResolverInterface {
 	 *
 	 * @spec openspec/specs/missing-lifecycle-guards/spec.md
 	 */
+	#[Override]
 	public function schemaSlug(?object $entity): string {
 		$rawSchema = $this->readAccessor(entity: $entity, getter: 'getSchema');
 		if ($rawSchema === '') {
@@ -199,6 +201,7 @@ class ListenerSchemaResolver implements ListenerSchemaResolverInterface {
 	 *
 	 * @spec openspec/specs/missing-lifecycle-guards/spec.md
 	 */
+	#[Override]
 	public function matchesSchema(?object $entity, string $expectedSlug): bool {
 		if ($expectedSlug === '') {
 			return false;
@@ -246,6 +249,7 @@ class ListenerSchemaResolver implements ListenerSchemaResolverInterface {
 	 *
 	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function matchesRegisterAndSchema(?object $entity, string $registerSlug, string $schemaSlug): bool {
 		return $this->matchesSlug(entity: $entity, getter: 'getRegister', mapper: self::REGISTER_MAPPER, expected: $registerSlug) === true
 			&& $this->matchesSlug(entity: $entity, getter: 'getSchema', mapper: self::SCHEMA_MAPPER, expected: $schemaSlug) === true;
@@ -293,6 +297,7 @@ class ListenerSchemaResolver implements ListenerSchemaResolverInterface {
 	 *
 	 * @spec openspec/specs/missing-lifecycle-guards/spec.md
 	 */
+	#[Override]
 	public function isOwnRegister(?object $entity): bool {
 		$rawRegister = $this->readAccessor(entity: $entity, getter: 'getRegister');
 		if ($rawRegister === '') {

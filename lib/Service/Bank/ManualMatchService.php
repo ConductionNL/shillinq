@@ -46,6 +46,7 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OutOfBoundsException;
+use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 
@@ -109,6 +110,7 @@ class ManualMatchService implements ManualMatchServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
+	#[Override]
 	public function findLine(string $lineId): array {
 		$line = ObjectIdentifier::findOne(scoped: $this->scoped(schema: 'BankStatementLine'), id: $lineId, fallbackProperty: 'lineId');
 		if ($line === null) {
@@ -134,6 +136,7 @@ class ManualMatchService implements ManualMatchServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
+	#[Override]
 	public function matchInvoices(array $line, array $targetIds, string $actor, string $reason = ''): array {
 		$this->assertMatchable(line: $line);
 		$targetIds = array_values(array_unique(array_filter(array_map('strval', $targetIds), static fn (string $id): bool => $id !== '')));
@@ -266,6 +269,7 @@ class ManualMatchService implements ManualMatchServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
 	 */
+	#[Override]
 	public function matchPaymentPlan(array $line, array $plan, string $actor, string $reason): array {
 		$this->assertMatchable(line: $line);
 		if ((float)($line['amount'] ?? 0) <= 0) {
@@ -309,6 +313,7 @@ class ManualMatchService implements ManualMatchServiceInterface {
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
+	#[Override]
 	public function matchPaymentRequest(array $line, array $request, string $actor): array {
 		$this->assertMatchable(line: $line);
 
@@ -340,6 +345,7 @@ class ManualMatchService implements ManualMatchServiceInterface {
 	 *
 	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
 	 */
+	#[Override]
 	public function matchProviderPayout(array $line, array $payout, string $actor): array {
 		$this->assertMatchable(line: $line);
 
@@ -372,6 +378,7 @@ class ManualMatchService implements ManualMatchServiceInterface {
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
+	#[Override]
 	public function proposePaymentRequest(array $line, array $request): array {
 		$this->assertMatchable(line: $line);
 
@@ -425,6 +432,7 @@ class ManualMatchService implements ManualMatchServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
+	#[Override]
 	public function bookToLedger(array $line, array $ledger, string $actor): array {
 		$this->assertMatchable(line: $line);
 		$account = trim((string)($ledger['accountNumber'] ?? ''));

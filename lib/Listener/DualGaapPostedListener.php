@@ -32,6 +32,7 @@ use OCA\Shillinq\Kernel\Contracts\DualGaapDerivationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -65,6 +66,7 @@ class DualGaapPostedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$transaction = $this->divergentPosting(event: $event);
 		if ($transaction === null) {

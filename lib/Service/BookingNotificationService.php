@@ -36,6 +36,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -102,6 +103,7 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
 	 */
+	#[Override]
 	public function evaluateEventTrigger(string $eventType, array $booking): void {
 		$triggers = $this->loadActiveTriggers(eventType: $eventType, bookingId: ($booking['id'] ?? null));
 

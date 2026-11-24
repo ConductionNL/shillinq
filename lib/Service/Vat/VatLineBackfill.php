@@ -50,6 +50,7 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -100,6 +101,7 @@ class VatLineBackfill implements VatLineBackfillInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
 	 */
+	#[Override]
 	public function run(): array {
 		$register = $this->registerLocation->getRegisterSlug();
 		$stamper  = new VatLineStamper(objectService: $this->objectService, register: $register);

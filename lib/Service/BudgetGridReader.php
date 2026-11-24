@@ -73,6 +73,7 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetGridReaderInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -168,6 +169,7 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
 	 */
+	#[Override]
 	public function loadGrid(string $administrationId, string $startPeriod, string $endPeriod, string $granularity): array {
 		$rowTree = $this->rowsFor(administrationId: $administrationId);
 		$columns = $this->columnsFor(range: ['start' => $startPeriod, 'end' => $endPeriod], granularity: $granularity);

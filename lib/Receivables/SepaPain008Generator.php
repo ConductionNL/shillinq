@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Receivables;
 
 use OCA\Shillinq\Kernel\Contracts\SepaPain008GeneratorInterface;
 use OCA\Shillinq\PaymentRun\RenderedFile;
+use Override;
 use XMLWriter;
 
 /**
@@ -87,6 +88,7 @@ final class SepaPain008Generator implements SepaPain008GeneratorInterface {
 	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
+	#[Override]
 	public function render(array $batch, array $collections, array $creditor): RenderedFile {
 		$writer = new XMLWriter();
 		$writer->openMemory();
@@ -123,6 +125,7 @@ final class SepaPain008Generator implements SepaPain008GeneratorInterface {
 	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
+	#[Override]
 	public function controlSum(array $collections): float {
 		$sum = 0.0;
 		foreach ($collections as $collection) {

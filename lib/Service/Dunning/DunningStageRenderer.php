@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Service\Dunning;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\DunningStageRendererInterface;
+use Override;
 
 /**
  * Fills a ladder stage's text with DunningTemplateRegistry's merge fields
@@ -143,6 +144,7 @@ final class DunningStageRenderer implements DunningStageRendererInterface {
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
 	 */
+	#[Override]
 	public function textFor(array $stage, string $language): array {
 		$other = 'en';
 		if ($language === 'en') {

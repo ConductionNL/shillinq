@@ -55,6 +55,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -83,6 +84,7 @@ final class TrialBalanceReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'trial-balance';
 	}//end reportType()
@@ -92,6 +94,7 @@ final class TrialBalanceReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<int, string>
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return ['csv'];
 	}//end supportedFormats()
@@ -104,6 +107,7 @@ final class TrialBalanceReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return GeneratedFile
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$filters = $this->lineFilters($context);
 		$lines = $this->loadAll('GLLine', $filters);

@@ -39,6 +39,7 @@ use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -111,6 +112,7 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
 	 */
+	#[Override]
 	public function reportAdapterBindings(): array {
 		$eventClass = $this->resolveEventClass(eventClass: self::STATUS_EVENT);
 		if ($eventClass === null) {

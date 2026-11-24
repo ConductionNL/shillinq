@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\Dunning;
 use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -68,6 +69,7 @@ class IncassoDossierComposer implements IncassoDossierComposerInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
+	#[Override]
 	public function compose(string $administrationId, string $invoiceId, string $customerId): array {
 		$invoice = [
 			'invoiceId' => $invoiceId,

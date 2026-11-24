@@ -27,6 +27,7 @@ use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Resolves the OpenRegister register Shillinq reads and writes.
@@ -56,6 +57,7 @@ class RegisterLocation implements RegisterLocationInterface {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
 	 */
+	#[Override]
 	public function isOpenRegisterAvailable(): bool {
 		return $this->appManager->isInstalled('openregister');
 	}//end isOpenRegisterAvailable()
@@ -70,6 +72,7 @@ class RegisterLocation implements RegisterLocationInterface {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
 	 */
+	#[Override]
 	public function getRegisterSlug(): string {
 		return RegisterSlug::of(config: $this->appConfig);
 	}//end getRegisterSlug()

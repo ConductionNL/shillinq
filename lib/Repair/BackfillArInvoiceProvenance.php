@@ -45,6 +45,7 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -93,6 +94,7 @@ class BackfillArInvoiceProvenance implements IRepairStep {
 	 *
 	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/recurring-invoicing/spec.md (REQ-RIN-011)
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: give invoices saved before ARInvoice 0.16.0 the profile, period, reference and line accounts that can be derived';
 	}//end getName()
@@ -107,6 +109,7 @@ class BackfillArInvoiceProvenance implements IRepairStep {
 	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/recurring-invoicing/spec.md (REQ-RIN-011)
 	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/shillinq-invoice-quick-draft/spec.md (REQ-IQD-008)
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		$this->counts = ['filled' => 0, 'ambiguous' => 0];
 

@@ -34,6 +34,7 @@ use OCA\Shillinq\Service\Billing\AssignmentRateRefresher;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -85,6 +86,7 @@ class AssignmentRateListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		try {
 			if ($event instanceof ObjectCreatedEvent) {

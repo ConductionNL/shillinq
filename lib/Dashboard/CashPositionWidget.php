@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Dashboard;
 
+use Override;
+
 /**
  * The balance of the liquid accounts.
  *
@@ -38,6 +40,7 @@ class CashPositionWidget extends FinancialWidget {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getId(): string {
 		return 'shillinq-cash-position';
 
@@ -50,6 +53,7 @@ class CashPositionWidget extends FinancialWidget {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getTitle(): string {
 		return $this->l10n->t('Cash position');
 
@@ -62,6 +66,7 @@ class CashPositionWidget extends FinancialWidget {
 	 *
 	 * @return array<int, \OCP\Dashboard\Model\WidgetItem> The items.
 	 */
+	#[Override]
 	protected function items(array $figures): array {
 		return [
 			$this->item(

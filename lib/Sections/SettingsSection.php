@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Sections;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Settings\IIconSection;
+use Override;
 
 /**
  * Defines the Shillinq section in the Nextcloud admin settings.
@@ -50,6 +51,7 @@ class SettingsSection implements IIconSection {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getID(): string {
 		return 'shillinq';
 	}//end getID()
@@ -59,6 +61,7 @@ class SettingsSection implements IIconSection {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getName(): string {
 		return $this->l->t('Shillinq');
 	}//end getName()
@@ -68,6 +71,7 @@ class SettingsSection implements IIconSection {
 	 *
 	 * @return int
 	 */
+	#[Override]
 	public function getPriority(): int {
 		return 75;
 	}//end getPriority()
@@ -77,6 +81,7 @@ class SettingsSection implements IIconSection {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getIcon(): string {
 		return $this->urlGenerator->imagePath(appName: 'shillinq', file: 'app-dark.svg');
 	}//end getIcon()

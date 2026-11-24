@@ -70,6 +70,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Executable VAT-tail, NL-BBV and ledger-integrity-tail checks.
  *
@@ -243,6 +245,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'ARInvoice' => self::arInvoiceChecks(),
@@ -580,6 +583,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return self::SEED_SPEC;
 
@@ -592,6 +596,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
+	#[Override]
 	public static function seedObjects(): array {
 		return [
 			'BbvStatement' => [

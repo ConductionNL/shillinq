@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Reporting\Schedule;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
 use OCP\IGroupManager;
+use Override;
 
 /**
  * Splits a schedule's recipients into those the owner may share with and the rest.
@@ -62,6 +63,7 @@ class ReportRecipientPolicy implements ReportRecipientPolicyInterface {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.8
 	 */
+	#[Override]
 	public function refused(string $ownerId, string $administrationId, array $recipients): array {
 		$refused = [];
 		foreach ($recipients as $recipient) {

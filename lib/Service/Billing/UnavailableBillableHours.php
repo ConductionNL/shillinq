@@ -27,6 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Billing;
 
+use Override;
+
 /**
  * Answers every request with "hours unavailable".
  *
@@ -52,6 +54,7 @@ class UnavailableBillableHours implements BillableHoursSource {
 	 *
 	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function unbilled(string $projectId, string $from, string $to): array {
 		return ['available' => false, 'reason' => self::REASON, 'hours' => []];
 	}//end unbilled()
@@ -69,6 +72,7 @@ class UnavailableBillableHours implements BillableHoursSource {
 	 *
 	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
 	 */
+	#[Override]
 	public function forProject(string $projectId, string $from, string $to): array {
 		return ['available' => false, 'reason' => self::REASON, 'hours' => []];
 	}//end forProject()

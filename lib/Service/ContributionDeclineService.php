@@ -46,6 +46,7 @@ use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -119,6 +120,7 @@ class ContributionDeclineService implements ContributionDeclineServiceInterface 
 	 *
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
 	 */
+	#[Override]
 	public function decline(array $claims, string $target, ?DateTimeImmutable $now = null): string {
 		$target = trim($target);
 		$audience = (string)($claims['audience'] ?? '');

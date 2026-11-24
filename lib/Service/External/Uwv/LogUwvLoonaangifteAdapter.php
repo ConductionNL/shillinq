@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Uwv;
 
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -63,6 +64,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 	 *
 	 * @return UwvStatusResult The dispatch outcome.
 	 */
+	#[Override]
 	public function pullStatus(array $payload): UwvStatusResult {
 		$reference = 'uwv-pull-log-' . bin2hex(random_bytes(8));
 		$this->logger->info(
@@ -96,6 +98,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 	 *
 	 * @return UwvStatusResult The lookup outcome.
 	 */
+	#[Override]
 	public function lookupSector(string $sectorCode, int $peiljaar, array $context = []): UwvStatusResult {
 		$reference = 'uwv-sector-log-' . bin2hex(random_bytes(6));
 		$this->logger->info(
@@ -128,6 +131,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 	 *
 	 * @return bool Always true for the log adapter.
 	 */
+	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

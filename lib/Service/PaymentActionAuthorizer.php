@@ -36,6 +36,7 @@ use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUserSession;
+use Override;
 
 /**
  * Answers whether the calling user carries a named payment action.
@@ -76,6 +77,7 @@ final class PaymentActionAuthorizer implements PaymentActionAuthorizerInterface 
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
 	 */
+	#[Override]
 	public function may(string $action): bool {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -135,6 +137,7 @@ final class PaymentActionAuthorizer implements PaymentActionAuthorizerInterface 
 	 *
 	 * @return string The user id.
 	 */
+	#[Override]
 	public function callerId(): string {
 		$user = $this->userSession->getUser();
 

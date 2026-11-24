@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -79,6 +80,7 @@ class AccountDeductibleShareListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$reason = $this->violationOf(event: $event);
 		if ($reason === null) {

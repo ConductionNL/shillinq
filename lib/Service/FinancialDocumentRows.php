@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentRowsInterface;
+use Override;
 
 /**
  * The row shape of the financial documents leaf.
@@ -93,6 +94,7 @@ final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
+	#[Override]
 	public function kindOf(string $schema, array $document): string {
 		$kinds = ['Quote' => 'quote', 'PaymentRequest' => 'payment-request', 'InboundPayable' => 'payout'];
 		if (isset($kinds[$schema]) === true) {
@@ -116,6 +118,7 @@ final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
+	#[Override]
 	public function row(string $schema, array $document): array {
 		$fields = self::FIELDS[$schema];
 		$kind = $this->kindOf(schema: $schema, document: $document);
@@ -153,6 +156,7 @@ final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
+	#[Override]
 	public function restricted(array $row): array {
 		return array_merge(
 			$row,

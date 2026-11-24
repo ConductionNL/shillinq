@@ -33,6 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\SuggestedMappingConfirmationInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 
 /**
  * Confirms the suggested mappings of a batch the caller may work on.
@@ -69,6 +70,7 @@ class SuggestedMappingConfirmation implements SuggestedMappingConfirmationInterf
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
+	#[Override]
 	public function confirm(string $batchId): int {
 		$register = $this->settings->getRegisterSlug();
 		$entity = null;

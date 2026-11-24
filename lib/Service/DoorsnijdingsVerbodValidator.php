@@ -39,6 +39,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DoorsnijdingsVerbodValidatorInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Detects innovatiebox/GL cost duplication (doorsnijdingsverbod, REQ-IBA-004).
@@ -93,6 +94,7 @@ class DoorsnijdingsVerbodValidator implements DoorsnijdingsVerbodValidatorInterf
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
 	 */
+	#[Override]
 	public function validateNoDuplication(string $administrationId, int $financialYear): array {
 		$allocations = $this->fetchExclusiveAllocations(administrationId: $administrationId, financialYear: $financialYear);
 		$glLines = $this->fetchGlDeductions(administrationId: $administrationId, financialYear: $financialYear);

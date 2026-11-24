@@ -33,6 +33,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\RelationLinkServiceInterface;
+use Override;
 
 /**
  * Suggests, confirms, dismisses and removes customer-supplier links.
@@ -79,6 +80,7 @@ class RelationLinkService implements RelationLinkServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
+	#[Override]
 	public function suggestions(string $administrationId): array {
 		$customers = $this->records->rows(schema: 'CustomerMaster', administrationId: $administrationId);
 		$linked    = array_filter(array_map(static fn (array $customer): string => (string)($customer['payeeId'] ?? ''), $customers));
@@ -126,6 +128,7 @@ class RelationLinkService implements RelationLinkServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
+	#[Override]
 	public function link(string $administrationId, string $customerId, string $payeeId, string $userId, string $matchedOn): array {
 		$customer = $this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId);
 		$payee    = $this->records->one(schema: 'Payee', administrationId: $administrationId, id: $payeeId);
@@ -222,6 +225,7 @@ class RelationLinkService implements RelationLinkServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
+	#[Override]
 	public function dismiss(string $administrationId, string $customerId, string $payeeId): void {
 		$customer = $this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId);
 		if ($customer === null || $payeeId === '') {
@@ -245,6 +249,7 @@ class RelationLinkService implements RelationLinkServiceInterface {
 	 *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
+	#[Override]
 	public function unlink(string $administrationId, string $customerId): void {
 		if ($this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId) === null) {
 			throw new DomainException('Not found');

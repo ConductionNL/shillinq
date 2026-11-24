@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\Ib47;
 
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -63,6 +64,7 @@ class LogIb47Adapter implements Ib47AdapterInterface {
 	 *
 	 * @return Ib47SubmissionResult The dispatch outcome.
 	 */
+	#[Override]
 	public function submit(array $payload): Ib47SubmissionResult {
 		$sanitised = $payload;
 
@@ -121,6 +123,7 @@ class LogIb47Adapter implements Ib47AdapterInterface {
 	 *
 	 * @inheritDoc
 	 */
+	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

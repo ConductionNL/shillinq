@@ -56,6 +56,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\CostSource\SubjectCostReport;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use XMLWriter;
@@ -91,6 +92,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'iv3';
 	}//end reportType()
@@ -100,6 +102,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<int, string>
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return ['xml', 'csv'];
 	}//end supportedFormats()
@@ -112,6 +115,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return GeneratedFile
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$totals = $this->aggregateByTaskField($context);
 		ksort($totals);

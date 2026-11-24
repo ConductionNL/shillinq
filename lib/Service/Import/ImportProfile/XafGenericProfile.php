@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Import\ImportProfile;
 
 use OCA\Shillinq\Service\Import\ImportProfileInterface;
+use Override;
 
 /**
  * Standard XAF 3.2 pass-through profile (REQ-AIM-003).
@@ -43,6 +44,7 @@ class XafGenericProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function sourceSystem(): string {
 		return 'xaf-generic';
 	}//end sourceSystem()
@@ -56,6 +58,7 @@ class XafGenericProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function normalizeLedgerAccounts(array $parsed): array {
 		return ($parsed['ledgerAccounts'] ?? []);
 	}//end normalizeLedgerAccounts()
@@ -72,6 +75,7 @@ class XafGenericProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function mapCsvColumns(string $artifact): array {
 		unset($artifact);
 		return [];
@@ -86,6 +90,7 @@ class XafGenericProfile implements ImportProfileInterface {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
 	 */
+	#[Override]
 	public function applyDialectQuirks(array $parsed): array {
 		return $parsed;
 	}//end applyDialectQuirks()

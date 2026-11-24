@@ -23,6 +23,7 @@ namespace OCA\Shillinq\Service\External\Digipoort;
 use InvalidArgumentException;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
+use Override;
 
 /**
  * The Digipoort port bound when integriq is installed: hands the filing to
@@ -78,6 +79,7 @@ class IntegriqSbrHandoffAdapter implements DigipoortSbrAdapterInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function submit(array $payload): DigipoortSubmissionResult {
 		$event = [
 			'sourceApp'      => 'shillinq',
@@ -118,6 +120,7 @@ class IntegriqSbrHandoffAdapter implements DigipoortSbrAdapterInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function isDormant(): bool {
 		return false;
 	}//end isDormant()

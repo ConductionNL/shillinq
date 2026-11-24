@@ -62,6 +62,7 @@ use OCA\Shillinq\Kernel\Contracts\AuditExportServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\IUserSession;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -227,6 +228,7 @@ HTML;
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
 	 */
+	#[Override]
 	public function generateAuditPackage(string $administrationId, string $invoiceId): array {
 		$this->assertAccess(administrationId: $administrationId);
 		$run = new AuditPackageRun(administrationId: $administrationId, invoiceId: $invoiceId);
@@ -364,6 +366,7 @@ HTML;
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
 	 */
+	#[Override]
 	public function buildLedger(array $bundle): array {
 		$events = $this->bundleEvents(bundle: $bundle);
 		usort($events, self::eventOrder(...));

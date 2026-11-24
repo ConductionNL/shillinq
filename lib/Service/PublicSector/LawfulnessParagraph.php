@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\PublicSector;
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\LawfulnessParagraphInterface;
 use OCA\Shillinq\Service\LedgerActuals;
+use Override;
 
 /**
  * The totals of a lawfulness paragraph, computed from the posted ledger.
@@ -76,6 +77,7 @@ class LawfulnessParagraph implements LawfulnessParagraphInterface {
 	 *
 	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
+	#[Override]
 	public function compute(string $administrationId, int $financialYear): array {
 		if ($administrationId === '' || $financialYear < 1900) {
 			throw new DomainException('A lawfulness paragraph needs an administration and a financial year before it can be computed.');

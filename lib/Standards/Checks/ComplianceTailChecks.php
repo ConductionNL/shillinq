@@ -66,6 +66,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Executable tail checks: EN 16931 special VAT categories + margin scheme over
  * ARInvoice, and OECD SAF-T file structure over a new SaftFile object.
@@ -200,6 +202,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'ARInvoice' => self::arInvoiceChecks(),
@@ -485,6 +488,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return self::SEED_SPEC;
 
@@ -499,6 +503,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
+	#[Override]
 	public static function seedObjects(): array {
 		return self::SEED_OBJECTS;
 

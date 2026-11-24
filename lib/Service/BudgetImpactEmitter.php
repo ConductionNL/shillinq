@@ -51,6 +51,7 @@ use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -103,6 +104,7 @@ class BudgetImpactEmitter implements BudgetImpactEmitterInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-007
 	 */
+	#[Override]
 	public function emitActivated(array $commitment, array $source = []): void {
 		$payload = [
 			'eventName' => self::EVENT_OBLIGATION_ACTIVATED,
@@ -134,6 +136,7 @@ class BudgetImpactEmitter implements BudgetImpactEmitterInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-005
 	 */
+	#[Override]
 	public function emitMilestoneCompleted(array $oplevering): void {
 		$supportingDocuments = ($oplevering['supportingDocuments'] ?? []);
 		if (is_array($supportingDocuments) === false) {

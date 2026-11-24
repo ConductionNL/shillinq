@@ -44,6 +44,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -89,6 +90,7 @@ class LoadCbsSeedsStep implements IRepairStep {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Seed CBS Submissions example records (bookkeeping-cbs-bestanden-extended)';
 	}//end getName()
@@ -108,6 +110,7 @@ class LoadCbsSeedsStep implements IRepairStep {
 	 *
 	 * @spec openspec/specs/app-administration/spec.md
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		$output->info('Seeding CBSSubmission + CBSLine example records...');
 

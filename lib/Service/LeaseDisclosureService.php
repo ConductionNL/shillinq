@@ -38,6 +38,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\LeaseDisclosureServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -166,6 +167,7 @@ class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
+	#[Override]
 	public function generateForPeriod(string $administrationId, string $fiscalPeriod): array {
 		try {
 			$leases = $this->objectService()
@@ -536,6 +538,7 @@ class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
+	#[Override]
 	public function exportToCSV(array $disclosure): string {
 		return $this->joinCsv(
 			rows: array_merge(
@@ -733,6 +736,7 @@ class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
+	#[Override]
 	public function exportDisclosureNoteToPDF(array $disclosure, string $language = 'en'): array {
 		return [
 			'kind' => 'lease-disclosure-note',
@@ -764,6 +768,7 @@ class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
+	#[Override]
 	public function exportToXBRL(array $disclosure): array {
 		$period = (string)($disclosure['fiscalPeriod'] ?? '');
 		$periodSegment = 'period';

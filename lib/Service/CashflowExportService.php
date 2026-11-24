@@ -55,6 +55,7 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CashflowExportServiceInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -129,6 +130,7 @@ class CashflowExportService implements CashflowExportServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
 	 */
+	#[Override]
 	public function buildHorizonExport(): ?array {
 		$administrationIds = $this->administrationContext->accessibleAdministrationIds();
 		if ($administrationIds === []) {

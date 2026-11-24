@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
+use Override;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -68,6 +69,7 @@ class EInvoiceRequeueCommand extends Command {
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
 	 */
+	#[Override]
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:einvoice:requeue')
 			->setDescription(description: 'List e-invoices the old send path left at queued and, when confirmed, send them again through integriq.')
@@ -90,6 +92,7 @@ class EInvoiceRequeueCommand extends Command {
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
 	 */
+	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$stuck = $this->eInvoiceService->queuedByTheOldPath();
 		if ($stuck === []) {

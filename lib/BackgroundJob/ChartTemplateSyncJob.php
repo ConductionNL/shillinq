@@ -30,6 +30,7 @@ namespace OCA\Shillinq\BackgroundJob;
 use OCA\Shillinq\Kernel\Contracts\ChartTemplateServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -64,6 +65,7 @@ class ChartTemplateSyncJob extends QueuedJob {
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-followers-receive-template-changes-req-lma-005
 	 */
+	#[Override]
 	protected function run($argument): void {
 		$templateId = '';
 		if (is_array($argument) === true) {

@@ -65,6 +65,7 @@ use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Reporting\ReportSection;
 use OCA\Shillinq\Support\FleetAppId;
+use Override;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Throwable;
@@ -160,6 +161,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @return array<int, string>
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return self::FORMATS;
 	}//end supportedFormats()
@@ -181,6 +183,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 * @throws DocudeskUnavailableException When docudesk is not installed or unreachable.
 	 * @throws RuntimeException When template selection or docudesk rendering fails.
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$useFormat = in_array($format, self::FORMATS, true) === true ? $format : self::FORMATS[0];
 

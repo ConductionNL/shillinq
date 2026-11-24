@@ -51,6 +51,7 @@ use OCA\Shillinq\Service\Ledger\OpenItemClearingService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -91,6 +92,7 @@ class GLLineResultStampListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		try {
 			if ($event instanceof ObjectTransitionedEvent) {

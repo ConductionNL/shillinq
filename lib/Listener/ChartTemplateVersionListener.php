@@ -33,6 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\BackgroundJob\IJobList;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 
 /**
  * A template update whose version rose queues one sync of its followers.
@@ -64,6 +65,7 @@ class ChartTemplateVersionListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-followers-receive-template-changes-req-lma-005
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectUpdatedEvent) === false) {
 			return;

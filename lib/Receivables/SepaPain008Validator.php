@@ -32,6 +32,7 @@ use DOMDocument;
 use LibXMLError;
 use OCA\Shillinq\Kernel\Contracts\SepaPain008ValidatorInterface;
 use OCA\Shillinq\Validation\IbanValidator;
+use Override;
 
 /**
  * The errors that keep a pain.008 file from being stored.
@@ -69,6 +70,7 @@ final class SepaPain008Validator implements SepaPain008ValidatorInterface {
 	 *
 	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
+	#[Override]
 	public function errors(string $xml, array $collections, array $creditor): array {
 		$errors = $this->creditorErrors(creditor: $creditor);
 		if ($collections === []) {

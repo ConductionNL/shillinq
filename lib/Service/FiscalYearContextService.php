@@ -55,6 +55,7 @@ use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -104,6 +105,7 @@ class FiscalYearContextService implements FiscalYearContextServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
+	#[Override]
 	public function resolveActiveWindow(string $administrationId, ?DateTimeInterface $now = null): ?array {
 		if ($this->isReadable(administrationId: $administrationId) === false) {
 			return null;

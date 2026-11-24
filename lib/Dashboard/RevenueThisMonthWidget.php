@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Dashboard;
 
+use Override;
+
 /**
  * Revenue booked this month, against the same month last year.
  *
@@ -38,6 +40,7 @@ class RevenueThisMonthWidget extends FinancialWidget {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getId(): string {
 		return 'shillinq-revenue-this-month';
 
@@ -50,6 +53,7 @@ class RevenueThisMonthWidget extends FinancialWidget {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getTitle(): string {
 		return $this->l10n->t('Revenue this month');
 
@@ -62,6 +66,7 @@ class RevenueThisMonthWidget extends FinancialWidget {
 	 *
 	 * @return array<int, \OCP\Dashboard\Model\WidgetItem> The items.
 	 */
+	#[Override]
 	protected function items(array $figures): array {
 		$revenue = $figures['revenue'];
 

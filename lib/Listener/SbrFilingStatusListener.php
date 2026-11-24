@@ -26,6 +26,7 @@ use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\Sbr\SbrRecords;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -95,6 +96,7 @@ class SbrFilingStatusListener implements IEventListener {
 	 *   and save, at most three of its transitions, and the same for its VAT
 	 *   return.
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;

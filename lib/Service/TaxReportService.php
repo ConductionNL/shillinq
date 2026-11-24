@@ -38,6 +38,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\TaxReportServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Computes a period-scoped Vpb quarterly tax statement from the general ledger.
@@ -82,6 +83,7 @@ class TaxReportService implements TaxReportServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-22
 	 */
+	#[Override]
 	public function computeQuarter(string $administrationId, int $fiscalYear, int $quarter): array {
 		$periodId = $fiscalYear . '-Q' . $quarter;
 		$rows = $this->fetchTaxRows(administrationId: $administrationId, periodId: $periodId);
@@ -117,6 +119,7 @@ class TaxReportService implements TaxReportServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-25
 	 */
+	#[Override]
 	public function computeAnnual(string $administrationId, int $fiscalYear): array {
 		$quarters = $this->quarterStatements(administrationId: $administrationId, fiscalYear: $fiscalYear);
 		$totals = $this->annualTotals(quarters: $quarters);

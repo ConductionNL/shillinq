@@ -71,6 +71,7 @@ use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -149,6 +150,7 @@ class TimeIntakeService implements TimeIntakeServiceInterface {
 	 *
 	 * @spec openspec/specs/time-expense-invoice-intake/spec.md
 	 */
+	#[Override]
 	public function ingest(string $administrationId, string $personId, array $body): array {
 		$batch = $this->intakeBatch(body: $body, scope: ['administrationId' => $administrationId, 'personId' => $personId]);
 

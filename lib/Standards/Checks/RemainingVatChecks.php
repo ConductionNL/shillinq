@@ -60,6 +60,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Executable remaining VAT-Directive checks over ARInvoice / APTransaction content
  * and the periodic VatReturn / recapitulative-statement object.
@@ -166,6 +168,7 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'ARInvoice' => [
@@ -671,6 +674,7 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return self::SEED_SPEC;
 
@@ -685,6 +689,7 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
+	#[Override]
 	public static function seedObjects(): array {
 		return self::SEED_OBJECTS;
 

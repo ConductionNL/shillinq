@@ -38,6 +38,7 @@ use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -91,6 +92,7 @@ class BackfillGroupEntityCbcFields implements IRepairStep {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-1.2
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: fill the country-by-country activity codes and TIN of group entities';
 
@@ -105,6 +107,7 @@ class BackfillGroupEntityCbcFields implements IRepairStep {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-1.2
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		$this->withSystemIdentity(
 			objectService: $this->objectService,

@@ -45,6 +45,7 @@ namespace OCA\Shillinq\Lifecycle;
 use DateInterval;
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\MandateGuardInterface;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -156,6 +157,7 @@ class MandateGuard implements MandateGuardInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
 	 */
+	#[Override]
 	public function canExpire(string $mandateId, ?array $object = null): bool {
 		try {
 			if ($object === null) {

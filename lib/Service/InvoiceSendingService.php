@@ -42,6 +42,7 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\Mail\IMailer;
 use OutOfBoundsException;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -148,6 +149,7 @@ class InvoiceSendingService implements InvoiceSendingServiceInterface {
 	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.1
 	 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-an-issued-invoice-is-sent-by-email-with-its-pdf-attached-req-sis-001
 	 */
+	#[Override]
 	public function send(string $administrationId, string $invoiceId, string $via = '', bool $mailOnFallback = false): array {
 		if ($administrationId === '' || $this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			// Masked as not found (ADR-005): another administration's invoice does not exist for this user.

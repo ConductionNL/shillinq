@@ -35,6 +35,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\OssReturnGeneratorInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Generates draft OssReturn line items by aggregating OSS-eligible documents.
@@ -215,6 +216,7 @@ class OssReturnGenerator implements OssReturnGeneratorInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
+	#[Override]
 	public function generateDraft(string $administrationId, int $periodYear, string $periodQuarter, string $registrationId): array {
 		$period = $periodYear . '-' . $periodQuarter;
 		$register = $this->register();

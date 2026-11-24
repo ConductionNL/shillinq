@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service\Bank;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankMatcherInterface;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentSettlementService;
+use Override;
 
 /**
  * Bank line to object payment request.
@@ -71,6 +72,7 @@ class ObjectRequestBankMatcher implements ObjectRequestBankMatcherInterface {
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
+	#[Override]
 	public function match(array $line): array {
 		$amount = round((float)($line['amount'] ?? 0), 2);
 		$text = mb_strtolower(

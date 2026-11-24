@@ -32,6 +32,7 @@ use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 
 /**
  * Refuses changes to an approved, exported or reconciled run's lines and amounts.
@@ -75,6 +76,7 @@ class PaymentRunLineLockListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {
 			return;

@@ -31,6 +31,7 @@ use DateTimeImmutable;
 use OCA\Shillinq\Kernel\Contracts\SmsReminderRunnerInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -75,6 +76,7 @@ class SmsReminderJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
+	#[Override]
 	protected function run(mixed $argument): void {
 		try {
 			$report = $this->runner->run(now: new DateTimeImmutable('@' . $this->time->getTime()));

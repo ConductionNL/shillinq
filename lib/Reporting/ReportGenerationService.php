@@ -78,6 +78,7 @@ use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\SystemTag\ISystemTagManager;
 use OCP\SystemTag\ISystemTagObjectMapper;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -154,6 +155,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
+	#[Override]
 	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array {
 		$userId = ($asUserId ?? ($this->userSession->getUser()?->getUID() ?? ''));
 
@@ -178,6 +180,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	 *
 	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
 	 */
+	#[Override]
 	public function generateForRecord(string $reportType, string $period, string $administrationId, array $subject): array {
 		return $this->produce(
 			context: ['reportType' => $reportType, 'period' => $period, 'administrationId' => $administrationId] + $subject,
@@ -384,6 +387,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	 *
 	 * @return array<int, mixed> The matching GeneratedReport records (empty on failure).
 	 */
+	#[Override]
 	public function listGenerated(array $filters): array {
 		$allowed = [];
 		foreach (['reportType', 'period', 'administrationId', 'category'] as $key) {
@@ -419,6 +423,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	 *
 	 * @return File|null The stored file, or null when the record/file is not resolvable.
 	 */
+	#[Override]
 	public function resolveFile(string $id): ?File {
 		$record = $this->findRecord($id);
 		if ($record === null) {
@@ -453,6 +458,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	 *
 	 * @return File|null The stored file, or null when the record/file is not resolvable.
 	 */
+	#[Override]
 	public function resolveRecordFile(array $record): ?File {
 		$fileId = ($record['fileId'] ?? null);
 		$path = ($record['filePath'] ?? null);
@@ -555,6 +561,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 	 *
 	 * @return array<string, mixed>|null The record, or null when missing.
 	 */
+	#[Override]
 	public function findRecord(string $id): ?array {
 		if (trim($id) === '') {
 			return null;

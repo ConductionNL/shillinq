@@ -47,6 +47,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
+use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 
@@ -94,6 +95,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
 	 */
+	#[Override]
 	public function getPeriodForClose(string $periodId, string $administrationId): ?array {
 		$record = $this->find(periodId: $periodId, administrationId: $administrationId);
 		if ($record === null) {
@@ -116,6 +118,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
 	 */
+	#[Override]
 	public function startClose(string $periodId, string $administrationId, string $userId): array {
 		$record = $this->requirePeriod(periodId: $periodId, administrationId: $administrationId);
 		$this->requireRole(userId: $userId, role: 'period-closer');
@@ -142,6 +145,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
 	 */
+	#[Override]
 	public function closePeriod(string $periodId, string $administrationId, string $userId): array {
 		$record = $this->requirePeriod(periodId: $periodId, administrationId: $administrationId);
 		$this->requireRole(userId: $userId, role: 'period-closer');
@@ -319,6 +323,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
 	 */
+	#[Override]
 	public function reopenPeriod(string $periodId, string $administrationId, string $closeReason, string $userId): array {
 		$record = $this->requirePeriod(periodId: $periodId, administrationId: $administrationId);
 		$this->requireRole(userId: $userId, role: 'period-closer');
@@ -375,6 +380,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
 	 */
+	#[Override]
 	public function lockForAudit(string $periodId, string $administrationId, string $userId): array {
 		$record = $this->requirePeriod(periodId: $periodId, administrationId: $administrationId);
 		$this->requireRole(userId: $userId, role: 'auditor');

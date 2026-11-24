@@ -38,6 +38,7 @@ use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\Contracts\IntercompanyLinkServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -80,6 +81,7 @@ class IntercompanyLinkListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false) {
 			return;

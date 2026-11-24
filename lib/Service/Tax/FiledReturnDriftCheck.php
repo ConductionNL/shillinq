@@ -32,6 +32,7 @@ use OCA\Shillinq\Kernel\Contracts\VatSuppletieDetectionServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -88,6 +89,7 @@ class FiledReturnDriftCheck implements FiledReturnDriftCheckInterface {
 	 *
 	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
 	 */
+	#[Override]
 	public function checkFiscalYear(string $administrationId, int $fiscalYear): array {
 		$outcome = ['checked' => 0, 'corrections' => 0];
 		if ($administrationId === '' || $fiscalYear <= 0) {

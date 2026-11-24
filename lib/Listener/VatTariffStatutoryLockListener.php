@@ -34,6 +34,7 @@ use OCP\IUserSession;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 
 /**
  * Refuse a person's write to a statutory VAT tariff.
@@ -93,6 +94,7 @@ class VatTariffStatutoryLockListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-1.3
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$reason = $this->refusal(event: $event);
 		if ($reason === null) {

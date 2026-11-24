@@ -40,6 +40,7 @@ use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -137,6 +138,7 @@ class DepositReconciliationService implements DepositReconciliationServiceInterf
 	 *
 	 * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-011)
 	 */
+	#[Override]
 	public function reconcile(
 		string $paymentIntentId,
 		string $outcome,

@@ -42,6 +42,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -85,6 +86,7 @@ class InitializeBbvAdministration implements IRepairStep {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Bootstrap BBV-administraties with algemene reserve and taakveld 0.10';
 	}//end getName()
@@ -107,6 +109,7 @@ class InitializeBbvAdministration implements IRepairStep {
 	 *
 	 * @spec openspec/specs/app-administration/spec.md
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

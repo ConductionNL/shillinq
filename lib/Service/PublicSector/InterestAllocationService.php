@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service\PublicSector;
 use DomainException;
 use OCA\Shillinq\Kernel\Contracts\InterestAllocationServiceInterface;
 use OCA\Shillinq\Service\KapitaallastenCalculator;
+use Override;
 
 /**
  * Calculates and posts a yearly interest allocation run.
@@ -68,6 +69,7 @@ class InterestAllocationService implements InterestAllocationServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
+	#[Override]
 	public function calculate(array $run): array {
 		$year = (int)($run['year'] ?? 0);
 		$rate = (float)($run['omslagrentePercentage'] ?? 0);
@@ -164,6 +166,7 @@ class InterestAllocationService implements InterestAllocationServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
+	#[Override]
 	public function post(array $run): array {
 		if ((string)($run['journalEntryId'] ?? '') !== '') {
 			return $run;

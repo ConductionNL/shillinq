@@ -43,6 +43,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\FluxServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -274,6 +275,7 @@ class FluxService implements FluxServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
 	 */
+	#[Override]
 	public function run(array $inputs): array {
 		$administrationId = (string)($inputs['administrationId'] ?? '');
 		$periodId = (string)($inputs['periodId'] ?? '');
@@ -450,6 +452,7 @@ class FluxService implements FluxServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
 	 */
+	#[Override]
 	public function buildNarrative(array $items, string $periodId): array {
 		$material = array_values(
 			array_filter(
@@ -500,6 +503,7 @@ class FluxService implements FluxServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
 	 */
+	#[Override]
 	public function renderNarrativeMarkdown(array $narrative): string {
 		$periodId = (string)($narrative['periodId'] ?? '');
 		$rows = (array)($narrative['rows'] ?? []);
@@ -553,6 +557,7 @@ class FluxService implements FluxServiceInterface {
 	 *
 	 * @return string Plain-text PDF-layout body.
 	 */
+	#[Override]
 	public function renderNarrativePdfBody(array $narrative): string {
 		$periodId = (string)($narrative['periodId'] ?? '');
 		$out = "Shillinq Continuous Close — Flux Narrative\n";

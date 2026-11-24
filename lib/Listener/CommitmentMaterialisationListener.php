@@ -51,6 +51,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -111,6 +112,7 @@ class CommitmentMaterialisationListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$entity = $this->resolveEntity(event: $event);
 		if ($entity === null) {

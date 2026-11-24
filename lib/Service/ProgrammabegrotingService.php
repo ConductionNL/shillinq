@@ -36,6 +36,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ProgrammabegrotingServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Reads programmabegroting data and produces sluitend-status and exports.
@@ -73,6 +74,7 @@ class ProgrammabegrotingService implements ProgrammabegrotingServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
+	#[Override]
 	public function sluitendStatus(string $administrationId, string $budgetId): array {
 		$budget = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $budgetId, 'administrationId' => $administrationId]);
 		$nominale = (float)($budget['nominalDevelopment'] ?? 2.0);
@@ -116,6 +118,7 @@ class ProgrammabegrotingService implements ProgrammabegrotingServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
 	 */
+	#[Override]
 	public function jsonExport(string $administrationId, string $budgetId): array {
 		$budget = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $budgetId, 'administrationId' => $administrationId]);
 		$programmas = $this->fetchMany(schema: 'Programma', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
@@ -141,6 +144,7 @@ class ProgrammabegrotingService implements ProgrammabegrotingServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
 	 */
+	#[Override]
 	public function iv3Export(string $administrationId, string $budgetId): array {
 		$taskFields = $this->fetchMany(schema: 'Taakveld', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
 		return $this->exporter->iv3Rows(taskFields: $taskFields);

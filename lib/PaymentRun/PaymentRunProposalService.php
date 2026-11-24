@@ -30,6 +30,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRunProposalServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 
 /**
  * Selects the payable invoices due by a date into one draft PaymentRun.
@@ -98,6 +99,7 @@ class PaymentRunProposalService implements PaymentRunProposalServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function propose(
 		string $administrationId,
 		string $dueOnOrBefore,

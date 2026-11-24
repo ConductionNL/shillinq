@@ -26,6 +26,7 @@ use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Service\Icp\IcpStatementFiler;
 use OCA\Shillinq\Service\Icp\IcpStatementPreparer;
+use Override;
 use RuntimeException;
 
 /**
@@ -57,6 +58,7 @@ final class IcpReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'icp-opgaaf';
 	}//end reportType()
@@ -68,6 +70,7 @@ final class IcpReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return ['xml', 'csv'];
 	}//end supportedFormats()
@@ -84,6 +87,7 @@ final class IcpReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		if (in_array($format, self::supportedFormats(), true) === false) {
 			throw new RuntimeException(sprintf('The ICP statement is XML or CSV, not %s.', $format));

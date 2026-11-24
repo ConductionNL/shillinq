@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\Lifecycle;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 
@@ -71,6 +72,7 @@ class ObjectTransitionRunner implements ObjectTransitionRunnerInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
+	#[Override]
 	public function run(string $objectId, string $action, array $data = []): void {
 		if ($this->container->has(self::ENGINE_CLASS) === false) {
 			throw new RuntimeException('OpenRegister TransitionEngine is not available');
@@ -99,6 +101,7 @@ class ObjectTransitionRunner implements ObjectTransitionRunnerInterface {
 	 *
 	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
 	 */
+	#[Override]
 	public function runAsSystem(string $objectId, string $action, array $data = []): mixed {
 		if ($this->container->has(self::ENGINE_CLASS) === false) {
 			throw new RuntimeException('OpenRegister TransitionEngine is not available');

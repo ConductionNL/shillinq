@@ -26,6 +26,7 @@ use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 
 /**
  * Answers PayableRaisedEvent.
@@ -57,6 +58,7 @@ class PayableRaisedListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof PayableRaisedEvent === false) {
 			return;

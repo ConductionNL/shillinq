@@ -40,6 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\LedgerPivotServiceInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
+use Override;
 
 /**
  * Pivots posted result lines on two axes.
@@ -109,6 +110,7 @@ class LedgerPivotService implements LedgerPivotServiceInterface {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function pivot(string $administrationId, string $rowAxis, string $columnAxis, string $from, string $to): array {
 		$run       = new LedgerPivotRun(rowAxis: $rowAxis, columnAxis: $columnAxis);
 		$run->from = $from;

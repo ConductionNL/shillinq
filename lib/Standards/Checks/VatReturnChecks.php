@@ -43,6 +43,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Executable checks on a BtwAangifte, over the facts of its period.
  *
@@ -86,6 +88,7 @@ final class VatReturnChecks implements CheckProvider {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.1
 	 */
+	#[Override]
 	public static function checks(): array {
 		$checks = [];
 		foreach (self::RULE_IDS as $ruleId) {
@@ -109,6 +112,7 @@ final class VatReturnChecks implements CheckProvider {
 	 *
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.1
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return [];
 	}//end seedSpec()

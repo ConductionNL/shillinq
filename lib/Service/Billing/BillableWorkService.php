@@ -34,6 +34,7 @@ use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Throwable;
 
 /**
@@ -101,6 +102,7 @@ class BillableWorkService implements BillableWorkServiceInterface {
 	 *
 	 * @spec openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense/spec.md#requirement-the-generate-page-lists-unbilled-hours-to-tick-req-steb-001
 	 */
+	#[Override]
 	public function billableWork(
 		string $administrationId,
 		string $customerId,

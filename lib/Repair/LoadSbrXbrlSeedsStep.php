@@ -46,6 +46,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -100,6 +101,7 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	 *
 	 * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Seed SBR / XBRL example records (bookkeeping-sbr-xbrl-reporting)';
 	}//end getName()
@@ -119,6 +121,7 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	 *
 	 * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		$output->info('Seeding XBRLTaxonomy / SBRDocumentType / XBRLMapping example records...');
 

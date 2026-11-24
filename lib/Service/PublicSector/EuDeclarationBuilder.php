@@ -48,6 +48,7 @@ use OCA\Shillinq\Lifecycle\EuExpenditureGuard;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Proposes and submits the declaration of an EU project's expenditure.
@@ -95,6 +96,7 @@ class EuDeclarationBuilder implements EuDeclarationBuilderInterface {
 	 *
 	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
 	 */
+	#[Override]
 	public function propose(array $project, string $periodFrom, string $periodTo): array {
 		$projectId = (string)($project['id'] ?? '');
 		if ($projectId === '' || self::isDate(day: $periodFrom) === false || self::isDate(day: $periodTo) === false || $periodFrom > $periodTo) {
@@ -163,6 +165,7 @@ class EuDeclarationBuilder implements EuDeclarationBuilderInterface {
 	 *
 	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-submitting-a-declaration-submits-its-expenditures-req-euf-013
 	 */
+	#[Override]
 	public function submit(array $declaration): array {
 		$ids = array_values(array_filter(array_map('strval', (array)($declaration['expenditureIds'] ?? [])), static fn (string $id): bool => $id !== ''));
 		if ($ids === []) {

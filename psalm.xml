@@ -7,7 +7,13 @@
     findUnusedBaselineEntry="true"
     findUnusedCode="true"
     findUnusedVariablesAndParams="true"
+    strictBinaryOperands="false"
 >
+    <!--
+        strictBinaryOperands: psalm 7 turned this on by default; psalm 5 ran
+        with it off. Kept off so the upgrade does not change what is checked.
+        Moving the money arithmetic to explicit casts is its own change.
+    -->
     <projectFiles>
         <directory name="lib" />
         <ignoreFiles>
@@ -231,6 +237,19 @@
              Event class after an earlier UndefinedClass suppression; the method calls ARE valid
              at runtime on the concrete cross-app event type. -->
         <UndefinedMethod errorLevel="suppress"/>
+        <!--
+            MissingOverrideAttribute (psalm 7): every other class carries
+            #[Override]. These three sit at phpmd's coupling limit of 19, and
+            phpmd counts the Override attribute as one more dependency, so the
+            marker would push them over it. Remove an entry once its class is split.
+        -->
+        <MissingOverrideAttribute>
+            <errorLevel type="suppress">
+                <file name="lib/PaymentRun/PaymentRunExportService.php"/>
+                <file name="lib/Service/ComplianceDeadlineCalendarService.php"/>
+                <file name="lib/Service/DunningRunService.php"/>
+            </errorLevel>
+        </MissingOverrideAttribute>
     </issueHandlers>
     <extraFiles>
         <directory name="vendor/nextcloud/ocp" />

@@ -38,6 +38,7 @@ use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -90,6 +91,7 @@ class LoadDbaSeedsStep implements IRepairStep {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Seed DBAModelovereenkomst Belastingdienst-templates (dba-compliance-marker)';
 	}//end getName()
@@ -103,6 +105,7 @@ class LoadDbaSeedsStep implements IRepairStep {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		$output->info('Seeding DBAModelovereenkomst Belastingdienst-templates...');
 

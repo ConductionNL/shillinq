@@ -31,6 +31,7 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -86,6 +87,7 @@ class AdministrationMembershipWriteListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-3
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$entity = $this->writtenEntity(event: $event);
 

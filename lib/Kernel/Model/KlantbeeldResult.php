@@ -41,6 +41,7 @@ namespace OCA\Shillinq\Kernel\Model;
 
 use OCA\Shillinq\Kernel\Contracts\KlantbeeldResultInterface;
 use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
+use Override;
 
 /**
  * Immutable envelope: page of {@see KlantbeeldTransaction} + meta.
@@ -132,6 +133,7 @@ final class KlantbeeldResult implements \JsonSerializable, KlantbeeldResultInter
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
 	 */
+	#[Override]
 	public function isEmpty(): bool {
 		return $this->unavailable === false && $this->transactions === [];
 	}//end isEmpty()
@@ -143,6 +145,7 @@ final class KlantbeeldResult implements \JsonSerializable, KlantbeeldResultInter
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
 	 */
+	#[Override]
 	public function jsonSerialize(): array {
 		return [
 			'transactions' => array_map(

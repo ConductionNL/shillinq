@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -57,6 +58,7 @@ class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
 	 */
+	#[Override]
 	public function fetch(string $administrationId, string $customerId, string $provider): ?array {
 		$this->logger->info(
 			'Shillinq credit-score fetch deferred (no outbound connector bound)',

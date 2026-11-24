@@ -58,6 +58,7 @@ use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\SeedsOpenFiscalPeriods;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -100,6 +101,7 @@ class PeriodCloseBackfill implements IRepairStep {
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: backfill open FiscalPeriod records for every Administration (current month + next twelve months)';
 	}//end getName()
@@ -114,6 +116,7 @@ class PeriodCloseBackfill implements IRepairStep {
 	 *
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

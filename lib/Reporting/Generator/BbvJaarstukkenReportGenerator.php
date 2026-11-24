@@ -52,6 +52,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\ReportSection;
 use OCA\Shillinq\Reporting\ReportTable;
+use Override;
 
 /**
  * Renders BBV jaarstukken / programmaverantwoording from a BbvStatement object.
@@ -66,6 +67,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'bbv-jaarstukken';
 	}//end reportType()
@@ -75,6 +77,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return string
 	 */
+	#[Override]
 	protected function documentTitle(): string {
 		return 'BBV-jaarstukken';
 	}//end documentTitle()
@@ -87,6 +90,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return void
 	 */
+	#[Override]
 	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->resolveStatement($context);
 		$currency = $this->str($statement, 'currency');

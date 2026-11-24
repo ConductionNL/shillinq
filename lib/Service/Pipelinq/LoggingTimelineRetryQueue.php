@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 
@@ -76,6 +77,7 @@ final class LoggingTimelineRetryQueue implements TimelineRetryQueue {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
 	 */
+	#[Override]
 	public function enqueue(TimelineEventDto $event): void {
 		$this->deferrals += 1;
 

@@ -38,6 +38,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -112,6 +113,7 @@ class BbvAllocationValidationListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.7
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$entity = $this->writtenEntity(event: $event);
 

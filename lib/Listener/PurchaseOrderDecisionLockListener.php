@@ -36,6 +36,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IUserSession;
+use Override;
 
 /**
  * Refuses a user's write of a purchase order's approval-chain history.
@@ -74,6 +75,7 @@ class PurchaseOrderDecisionLockListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($this->userSession->getUser() === null) {
 			return;

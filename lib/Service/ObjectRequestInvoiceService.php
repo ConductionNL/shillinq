@@ -36,6 +36,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use RuntimeException;
 
 /**
@@ -91,6 +92,7 @@ class ObjectRequestInvoiceService implements ObjectRequestInvoiceServiceInterfac
 	 *
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
 	 */
+	#[Override]
 	public function issue(array $request, string $administrationId, string $today): string {
 		$debtor = self::validatedDebtor(request: $request, administrationId: $administrationId);
 

@@ -45,6 +45,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\Kernel\Contracts\UrencriteriumYearGuardInterface;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -150,6 +151,7 @@ class UrencriteriumYearGuard implements UrencriteriumYearGuardInterface {
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
 	 */
+	#[Override]
 	public function bepaalDoelNorm(array $profiel): int {
 		if (($profiel['arbeidsongeschikt'] ?? false) === true) {
 			return self::NORM_AO;
@@ -171,6 +173,7 @@ class UrencriteriumYearGuard implements UrencriteriumYearGuardInterface {
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
 	 */
+	#[Override]
 	public function bepaalNormGrondslag(int $purposeNorm): string {
 		return match ($purposeNorm) {
 			self::NORM_AO => 'art. 3.6 lid 5 Wet IB 2001',
@@ -228,6 +231,7 @@ class UrencriteriumYearGuard implements UrencriteriumYearGuardInterface {
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
 	 */
+	#[Override]
 	public function bepaalGrotendeelsCriterium(float $enterpriseHours, float $employmentHours): string {
 		if ($employmentHours <= 0.0) {
 			return 'NON_APPLICABLE';

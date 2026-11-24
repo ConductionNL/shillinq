@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Service\Ledger\LedgerSealService;
+use Override;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -58,6 +59,7 @@ class LedgerSealExistingCommand extends Command {
 	 *
 	 * @spec openspec/changes/ledger-sealed-entries/design.md
 	 */
+	#[Override]
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:ledger:seal-existing')
 			->setDescription(description: 'Seal the posted transactions of an administration that has no seals yet, in posting order.')
@@ -74,6 +76,7 @@ class LedgerSealExistingCommand extends Command {
 	 *
 	 * @spec openspec/changes/ledger-sealed-entries/design.md
 	 */
+	#[Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
 			$count = $this->seals->sealExisting(administrationId: (string)$input->getArgument('administrationId'));

@@ -64,6 +64,7 @@ namespace OCA\Shillinq\Standards\Checks;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Standards\Support\ChecksStatementLayout;
+use Override;
 
 /**
  * Executable national extra-tail checks over FinancialStatement, EInvoiceMandate and
@@ -172,6 +173,7 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'FinancialStatement' => [
@@ -830,6 +832,7 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return self::SEED_SPEC;
 
@@ -843,6 +846,7 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
+	#[Override]
 	public static function seedObjects(): array {
 		return self::SEED_OBJECTS;
 

@@ -49,6 +49,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCP\ICache;
 use OCP\ICacheFactory;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -136,6 +137,7 @@ final class ComplianceService implements ComplianceServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
+	#[Override]
 	public function computeComplianceStatus(array|string $programme, ?int $fiscalYear = null): array {
 		$programmeCode = $this->resolveProgrammeCode(programme: $programme);
 		if ($programmeCode === '') {
@@ -276,6 +278,7 @@ final class ComplianceService implements ComplianceServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
+	#[Override]
 	public function invalidateAll(): void {
 		$cache = $this->getCache();
 		if ($cache === null) {

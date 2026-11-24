@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\Booking;
 use LogicException;
 use OCA\Shillinq\Kernel\Contracts\TransactionalGuardInterface;
 use OCP\IDBConnection;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -68,6 +69,7 @@ class TransactionalGuard implements TransactionalGuardInterface {
 	 *
 	 * @return void
 	 */
+	#[Override]
 	public function beginTransaction(): void {
 		if ($this->db !== null) {
 			$this->db->beginTransaction();
@@ -82,6 +84,7 @@ class TransactionalGuard implements TransactionalGuardInterface {
 	 *
 	 * @return void
 	 */
+	#[Override]
 	public function commit(): void {
 		if ($this->db !== null) {
 			if ($this->db->inTransaction() === true) {
@@ -99,6 +102,7 @@ class TransactionalGuard implements TransactionalGuardInterface {
 	 *
 	 * @return void
 	 */
+	#[Override]
 	public function rollBack(): void {
 		if ($this->db !== null) {
 			if ($this->db->inTransaction() === true) {
@@ -116,6 +120,7 @@ class TransactionalGuard implements TransactionalGuardInterface {
 	 *
 	 * @return bool
 	 */
+	#[Override]
 	public function inTransaction(): bool {
 		if ($this->db !== null) {
 			return $this->db->inTransaction();

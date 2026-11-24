@@ -31,6 +31,7 @@ use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
+use Override;
 
 /**
  * Daily connection report to integriq.
@@ -72,6 +73,7 @@ class ConnectionReportJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
 	 */
+	#[Override]
 	protected function run(mixed $argument): void {
 		$this->reporter->reportAdapterBindings();
 	}//end run()

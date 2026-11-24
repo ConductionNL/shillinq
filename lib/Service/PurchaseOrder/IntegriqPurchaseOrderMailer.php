@@ -31,6 +31,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -76,6 +77,7 @@ class IntegriqPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function isAvailable(): bool {
 		return $this->dispatcher() !== null;
 	}//end isAvailable()
@@ -91,6 +93,7 @@ class IntegriqPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool {
 		$dispatcher = $this->dispatcher();
 		if ($dispatcher === null) {

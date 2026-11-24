@@ -39,6 +39,7 @@ use OCP\Dashboard\Model\WidgetItem;
 use OCP\Dashboard\Model\WidgetItems;
 use OCP\IL10N;
 use OCP\IURLGenerator;
+use Override;
 
 /**
  * Base class of the five financial widgets.
@@ -80,6 +81,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getOrder(): int {
 		return 40;
 
@@ -92,6 +94,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getIconClass(): string {
 		return 'icon-shillinq-widget';
 
@@ -104,6 +107,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getUrl(): ?string {
 		return $this->urls->linkToRouteAbsolute(AppIdentity::APP_ID . '.dashboard.page');
 
@@ -116,6 +120,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function load(): void {
 		// The items come from getItemsV2(); the dashboard draws them, so no script is added.
 		return;
@@ -135,6 +140,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
+	#[Override]
 	public function getItemsV2(string $userId, ?string $since = null, int $limit = 7): WidgetItems {
 		$administrationId = $this->context->defaultAdministrationIdForUser(userId: $userId);
 		if ($administrationId === null) {

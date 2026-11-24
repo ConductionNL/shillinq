@@ -43,6 +43,7 @@ use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 
 /**
  * Sums the hours booked on an assignment and writes its hours budget.
@@ -88,6 +89,7 @@ class AssignmentHours implements AssignmentHoursInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
+	#[Override]
 	public function rearm(string $assignmentId): bool {
 		$assignment = $this->assignment(assignmentId: $assignmentId);
 		if ($assignment === null) {
@@ -116,6 +118,7 @@ class AssignmentHours implements AssignmentHoursInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
+	#[Override]
 	public function recalculate(string $assignmentId, ?string $ignoreHourId = null): bool {
 		$assignment = $this->assignment(assignmentId: $assignmentId);
 		if ($assignment === null) {
@@ -194,6 +197,7 @@ class AssignmentHours implements AssignmentHoursInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
+	#[Override]
 	public function assignmentIds(): array {
 		$ids = [];
 		foreach ($this->rows(schema: self::ASSIGNMENT_SCHEMA, filters: []) as $row) {

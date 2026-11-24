@@ -38,6 +38,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use Override;
+
 /**
  * Executable EU VAT Directive checks against ARInvoice / APTransaction content.
  *
@@ -89,6 +91,7 @@ class VatChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
+	#[Override]
 	public static function checks(): array {
 		return [
 			'ARInvoice' => [
@@ -451,6 +454,7 @@ class VatChecks implements CheckProvider {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
+	#[Override]
 	public static function seedSpec(): array {
 		return [
 			'ARInvoice' => [

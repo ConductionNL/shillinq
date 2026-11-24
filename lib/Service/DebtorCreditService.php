@@ -36,6 +36,7 @@ use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use RuntimeException;
 
 /**
@@ -309,6 +310,7 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 	 *
 	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
 	 */
+	#[Override]
 	public function applyOpenCredit(array $request, string $actor): array {
 		$key = self::debtorKey(request: $request);
 		$due = round((float)($request['amount'] ?? 0), 2);

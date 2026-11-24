@@ -36,6 +36,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\LeasePaymentScheduleServiceInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -79,6 +80,7 @@ class LeasePaymentScheduleService implements LeasePaymentScheduleServiceInterfac
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
 	 */
+	#[Override]
 	public function buildSchedule(string $leaseContractId, string $administrationId): array {
 		$lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
 		if ($lease === null) {
@@ -103,6 +105,7 @@ class LeasePaymentScheduleService implements LeasePaymentScheduleServiceInterfac
 	 *
 	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
 	 */
+	#[Override]
 	public function generateSchedule(string $leaseContractId, string $administrationId, int $fromSequence = 1): int {
 		$rows = $this->scheduleRows(leaseContractId: $leaseContractId, administrationId: $administrationId);
 		if ($rows === []) {

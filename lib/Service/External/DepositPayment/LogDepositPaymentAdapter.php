@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\DepositPayment;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 
@@ -73,6 +74,7 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface {
 	 *
 	 * @return DepositPaymentResult The dispatch outcome.
 	 */
+	#[Override]
 	public function requestPayment(array $payload): DepositPaymentResult {
 		$sanitised = $payload;
 		unset($sanitised['redirectUrl'], $sanitised['webhookUrl']);
@@ -119,6 +121,7 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface {
 	 *
 	 * @spec openspec/specs/bookings-cancellation-rules/spec.md
 	 */
+	#[Override]
 	public function capturePayment(string $paymentIntentId, array $payload): DepositPaymentResult {
 		$this->logger->info(
 			'Shillinq DepositPayment capturePayment deferred (no outbound PSP binding bound)',
@@ -159,6 +162,7 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface {
 	 *
 	 * @return DepositPaymentResult The status outcome.
 	 */
+	#[Override]
 	public function fetchStatus(string $paymentIntentId, string $depositPaymentId): DepositPaymentResult {
 		$this->logger->info(
 			'Shillinq DepositPayment fetchStatus deferred (no outbound PSP binding bound)',
@@ -198,6 +202,7 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface {
 	 *
 	 * @return DepositPaymentResult The refund outcome.
 	 */
+	#[Override]
 	public function initiateRefund(string $paymentIntentId, array $payload): DepositPaymentResult {
 		$this->logger->info(
 			'Shillinq DepositPayment initiateRefund deferred (no outbound PSP binding bound)',
@@ -230,6 +235,7 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface {
 	 *
 	 * @return bool Always true for the dormant log adapter.
 	 */
+	#[Override]
 	public function isDormant(): bool {
 		return true;
 	}//end isDormant()

@@ -34,6 +34,7 @@ use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -67,6 +68,7 @@ class BackfillAdministrationJurisdiction implements IRepairStep {
 	 *
 	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Shillinq: give every administration a jurisdiction (NL when it names none)';
 	}//end getName()
@@ -80,6 +82,7 @@ class BackfillAdministrationJurisdiction implements IRepairStep {
 	 *
 	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		try {
 			$register = $this->settings->getRegisterSlug();

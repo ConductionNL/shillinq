@@ -42,6 +42,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionConversionGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -97,6 +98,7 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
+	#[Override]
 	public function convertToPurchaseOrder(string $administrationId, string $requisitionId): array {
 		$requisition = $this->convertibleRequisition(administrationId: $administrationId, requisitionId: $requisitionId);
 		$supplierId  = $this->preferredSupplierId(requisition: $requisition);

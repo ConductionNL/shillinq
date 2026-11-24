@@ -80,6 +80,7 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\Notification\IManager;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -137,6 +138,7 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 	 *
 	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if (class_exists(\OCA\Pipelinq\Event\PosStockMovedEvent::class) === false
 			|| ($event instanceof \OCA\Pipelinq\Event\PosStockMovedEvent) === false

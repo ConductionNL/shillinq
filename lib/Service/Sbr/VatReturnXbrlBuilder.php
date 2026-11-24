@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Sbr;
 
 use OCA\Shillinq\Kernel\Contracts\VatReturnXbrlBuilderInterface;
+use Override;
 use RuntimeException;
 
 /**
@@ -143,6 +144,7 @@ class VatReturnXbrlBuilder implements VatReturnXbrlBuilderInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.4
 	 */
+	#[Override]
 	public function instanceFor(array $vatReturn): array {
 		$returnId = trim((string) ($vatReturn['id'] ?? ($vatReturn['@self']['id'] ?? '')));
 		if ($returnId === '') {

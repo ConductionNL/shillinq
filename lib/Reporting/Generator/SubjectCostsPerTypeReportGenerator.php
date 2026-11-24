@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\CostSource\SubjectCostReport;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
+use Override;
 
 /**
  * Renders the per-type case cost grouping as CSV.
@@ -53,6 +54,7 @@ final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'subject-costs-per-type';
 	}//end reportType()
@@ -64,6 +66,7 @@ final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return ['csv'];
 	}//end supportedFormats()
@@ -78,6 +81,7 @@ final class SubjectCostsPerTypeReportGenerator implements ReportGeneratorInterfa
 	 *
 	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$period = self::contextValue(context: $context, key: 'period');
 		$sections = $this->sections(context: $context);

@@ -52,6 +52,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -80,6 +81,7 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'rule-audit';
 	}//end reportType()
@@ -89,6 +91,7 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<int, string>
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return ['csv'];
 	}//end supportedFormats()
@@ -101,6 +104,7 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return GeneratedFile
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$report = $this->runAudit($context);
 

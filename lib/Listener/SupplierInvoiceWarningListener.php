@@ -39,6 +39,7 @@ use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -79,6 +80,7 @@ class SupplierInvoiceWarningListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$entity = $this->writtenInvoice(event: $event);
 		if ($entity === null) {

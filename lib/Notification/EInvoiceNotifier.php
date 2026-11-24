@@ -39,6 +39,7 @@ use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\UnknownNotificationException;
+use Override;
 
 /**
  * Prepares `einvoice_delivery_rejected` notifications for display.
@@ -85,6 +86,7 @@ class EInvoiceNotifier extends AppNotifier {
 	 *
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$l = $this->ownedL10n(notification: $notification, languageCode: $languageCode);
 		$parameters = $notification->getSubjectParameters();

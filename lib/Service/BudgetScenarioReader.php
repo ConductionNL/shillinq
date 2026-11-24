@@ -47,6 +47,7 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetScenarioReaderInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -122,6 +123,7 @@ class BudgetScenarioReader implements BudgetScenarioReaderInterface {
 	 *
 	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
 	 */
+	#[Override]
 	public function loadContext(string $administrationId, array $annualBudgetIds): array {
 		$scenarios = $this->query(schema: self::SCHEMA_SCENARIO, filters: ['administrationId' => $administrationId]);
 		$modifiersByScenarioId = $this->modifiersByScenarioId(scenarioIds: self::scenarioIds(scenarios: $scenarios));
@@ -214,6 +216,7 @@ class BudgetScenarioReader implements BudgetScenarioReaderInterface {
 	 *
 	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 	 */
+	#[Override]
 	public function resolveAnnualBudgetIds(string $administrationId, int $fiscalYear): array {
 		$rows = $this->query(
 			schema: 'AnnualBudget',

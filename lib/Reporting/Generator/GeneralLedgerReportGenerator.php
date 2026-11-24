@@ -47,6 +47,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -92,6 +93,7 @@ final class GeneralLedgerReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'general-ledger';
 	}//end reportType()
@@ -101,6 +103,7 @@ final class GeneralLedgerReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<int, string>
 	 */
+	#[Override]
 	public static function supportedFormats(): array {
 		return ['csv'];
 	}//end supportedFormats()
@@ -113,6 +116,7 @@ final class GeneralLedgerReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return GeneratedFile
 	 */
+	#[Override]
 	public function generate(array $context, string $format): GeneratedFile {
 		$lines = $this->loadAll('GLLine', $this->lineFilters($context));
 		$accounts = $this->indexAccountsByNumber($this->loadAll('Account', $this->administrationFilter($context)));

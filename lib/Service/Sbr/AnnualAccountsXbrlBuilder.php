@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Sbr;
 
 use OCA\Shillinq\Kernel\Contracts\AnnualAccountsXbrlBuilderInterface;
+use Override;
 use RuntimeException;
 
 /**
@@ -112,6 +113,7 @@ class AnnualAccountsXbrlBuilder implements AnnualAccountsXbrlBuilderInterface {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.3
 	 */
+	#[Override]
 	public function build(array $statement, string $administrationId): array {
 		$statementId = trim((string) ($statement['id'] ?? ($statement['@self']['id'] ?? '')));
 		if ($statementId === '') {

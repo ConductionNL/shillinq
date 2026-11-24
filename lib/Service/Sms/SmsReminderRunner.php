@@ -40,6 +40,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SmsReminderRunnerInterface;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -112,6 +113,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
+	#[Override]
 	public function run(DateTimeImmutable $now): array {
 		$report = ['channels' => 0, 'notConnected' => 0, 'sent' => 0, 'pending' => 0, 'failed' => 0, 'skipped' => 0];
 		$state = self::NOT_CONNECTED;

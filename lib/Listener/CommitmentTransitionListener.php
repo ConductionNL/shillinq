@@ -53,6 +53,7 @@ use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -90,6 +91,7 @@ class CommitmentTransitionListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		try {
 			$payload = $this->extractActivatedCommitment(event: $event);

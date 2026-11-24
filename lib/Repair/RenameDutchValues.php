@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Repair;
 
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 
 /**
  * Rewrites stored Dutch enum values to their English replacements.
@@ -56,6 +57,7 @@ class RenameDutchValues implements IRepairStep
      *
      * @spec exclude Data migration for the Dutch-to-English vocabulary change.
      */
+    #[Override]
     public function getName(): string
     {
         return 'Translate stored shillinq Dutch enum values to English';
@@ -71,6 +73,7 @@ class RenameDutchValues implements IRepairStep
      *
      * @spec exclude Data migration for the Dutch-to-English vocabulary change.
      */
+    #[Override]
     public function run(IOutput $output): void
     {
         $tables = $this->gateway->shardTables();

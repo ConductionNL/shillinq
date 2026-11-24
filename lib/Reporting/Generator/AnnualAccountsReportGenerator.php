@@ -52,6 +52,7 @@ namespace OCA\Shillinq\Reporting\Generator;
 use OCA\Shillinq\Reporting\CashFlowCalculator;
 use OCA\Shillinq\Reporting\CashFlowStatementRecord;
 use OCA\Shillinq\Reporting\ReportSection;
+use Override;
 use Throwable;
 
 /**
@@ -63,6 +64,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function reportType(): string {
 		return 'annual-accounts';
 	}//end reportType()
@@ -72,6 +74,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return string
 	 */
+	#[Override]
 	protected function documentTitle(): string {
 		return 'Jaarrekening';
 	}//end documentTitle()
@@ -84,6 +87,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return void
 	 */
+	#[Override]
 	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->resolveStatement($context);
 		$currency = $this->str($statement, 'currency');

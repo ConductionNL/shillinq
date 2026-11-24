@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun\Generator;
 
 use OCA\Shillinq\PaymentRun\RenderedFile;
+use Override;
 
 /**
  * Native fputcsv CSV-fallback generator for a PaymentRun.
@@ -54,6 +55,7 @@ final class PaymentRunCsvGenerator implements PaymentRunGeneratorInterface {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public static function format(): string {
 		return 'csv';
 	}//end format()
@@ -65,6 +67,7 @@ final class PaymentRunCsvGenerator implements PaymentRunGeneratorInterface {
 	 *
 	 * @return RenderedFile
 	 */
+	#[Override]
 	public function render(array $paymentRun): RenderedFile {
 		$runNumber = (string)($paymentRun['runNumber'] ?? '');
 		$stem = 'payment-run';

@@ -37,6 +37,7 @@ use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -106,6 +107,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @spec openspec/specs/usage-metered-billing/spec.md
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
+	#[Override]
 	public function draftInvoice(InvoiceGenerationRequest $request): array {
 		$this->assertNoInvoicedSources(request: $request);
 
@@ -392,6 +394,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 *
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
 	 */
+	#[Override]
 	public function postInvoice(array $invoice): array {
 		$this->assertPostable(invoice: $invoice);
 

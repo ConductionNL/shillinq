@@ -40,6 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\OssRateResolverInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 
 /**
  * Resolves destination-country VAT rates from the seeded EuVatRate (TEDB) table.
@@ -109,6 +110,7 @@ class OssRateResolver implements OssRateResolverInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
+	#[Override]
 	public function isOssDestination(string $countryCode): bool {
 		$code = strtoupper(trim($countryCode));
 		if ($code === 'NL' || $code === '') {
@@ -198,6 +200,7 @@ class OssRateResolver implements OssRateResolverInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
+	#[Override]
 	public function resolve(string $countryCode, string $rateCategory, string $invoiceDate): ?array {
 		$row = $this->selectRateInForce(rates: $this->ratesFor(countryCode: $countryCode, rateCategory: $rateCategory), invoiceDate: $invoiceDate);
 		if ($row === null) {

@@ -34,6 +34,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Middleware;
 use OCP\IRequest;
+use Override;
 
 /**
  * Stamps `API-Version` on API responses, marks an unversioned path deprecated
@@ -127,6 +128,7 @@ class ApiContractMiddleware extends Middleware {
 	 *
 	 * @spec openspec/specs/api-contract/spec.md
 	 */
+	#[Override]
 	public function afterController($controller, $methodName, Response $response): Response {
 		return $this->decorate(response: $response);
 	}//end afterController()

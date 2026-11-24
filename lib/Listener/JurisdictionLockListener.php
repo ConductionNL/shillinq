@@ -33,6 +33,7 @@ use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -78,6 +79,7 @@ class JurisdictionLockListener implements IEventListener {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) AdministrationJurisdiction reads the jurisdiction field; it holds no state.
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {
 			return;

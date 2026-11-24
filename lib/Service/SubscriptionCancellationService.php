@@ -30,6 +30,7 @@ use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Lifecycle\CancellationReasonGuard;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -113,6 +114,7 @@ class SubscriptionCancellationService implements SubscriptionCancellationService
 	 *
 	 * @spec openspec/changes/sales-cancellation/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function cancel(array $claims, string $profileId, string $reasonCode = '', string $reasonText = ''): string {
 		$profileId = trim($profileId);
 		if ((string)($claims['audience'] ?? '') !== 'customer' || $this->subjects->isOpaqueId(target: $profileId) === false) {

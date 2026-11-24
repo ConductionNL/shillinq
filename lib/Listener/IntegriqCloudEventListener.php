@@ -58,6 +58,7 @@ use OCA\Shillinq\Kernel\Contracts\SelfBilledInvoiceIntakeInterface;
 use OCA\Shillinq\Service\Payout\PayoutIntakeService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -153,6 +154,7 @@ class IntegriqCloudEventListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;

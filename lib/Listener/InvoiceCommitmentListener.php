@@ -40,6 +40,7 @@ use OCA\Shillinq\Kernel\Contracts\CommitmentInvoicingInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -76,6 +77,7 @@ class InvoiceCommitmentListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectTransitionedEvent) === false || $event->getTo() !== 'approved') {
 			return;

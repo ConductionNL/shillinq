@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\Contracts\BcfCompensationCalculatorInterface;
+use Override;
 
 /**
  * Side-effect-free BCF compensable-VAT arithmetic helper.
@@ -239,6 +240,7 @@ class BcfCompensationCalculator implements BcfCompensationCalculatorInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-006
 	 */
+	#[Override]
 	public function canSubmit(mixed $compensableTotal, bool $quarterClosed): bool {
 		if ($quarterClosed === false) {
 			return false;

@@ -45,6 +45,7 @@ use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -112,6 +113,7 @@ class LotExpiryAlertJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
 	 */
+	#[Override]
 	protected function run($argument): void {
 		$this->asSystem(work: function () use ($argument): void {
 			$this->runAsJob(argument: $argument);

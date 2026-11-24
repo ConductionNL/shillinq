@@ -34,6 +34,7 @@ use OCP\Contacts\IManager as IContactsManager;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -93,6 +94,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 	 *
 	 * @return string
 	 */
+	#[Override]
 	public function getName(): string {
 		return 'Export shillinq Product/VendorMaster to pipelinq ingest payload (shillinq-product-vendor-to-pipelinq)';
 	}//end getName()
@@ -109,6 +111,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
+	#[Override]
 	public function run(IOutput $output): void {
 		$appId = 'shillinq';
 

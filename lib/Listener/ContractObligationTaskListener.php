@@ -63,6 +63,7 @@ use OCA\Shillinq\Kernel\Contracts\ObligationTaskBridgeInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -121,6 +122,7 @@ class ContractObligationTaskListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectCreatedEvent) === false
 			&& ($event instanceof ObjectUpdatedEvent) === false

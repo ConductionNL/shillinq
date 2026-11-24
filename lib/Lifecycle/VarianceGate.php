@@ -53,6 +53,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\VarianceGateInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -304,6 +305,7 @@ class VarianceGate implements VarianceGateInterface {
 	 *
 	 * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
 	 */
+	#[Override]
 	public function recalculateLine(
 		array $line,
 		?float $qtyThresholdPct = null,

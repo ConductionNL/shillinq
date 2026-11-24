@@ -82,6 +82,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Migration;
 
 use OCA\Shillinq\Kernel\Contracts\GlLineAdministrationBackfillMigratorInterface;
+use Override;
 use RuntimeException;
 
 /**
@@ -250,6 +251,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
+	#[Override]
 	public function backfillBatch(array $glLines, array $glTransactions): array {
 		$index = $this->indexAdministrationsByTransaction(glTransactions: $glTransactions);
 
@@ -316,6 +318,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
+	#[Override]
 	public function countMissingAdministrationId(array $glLines): int {
 		$missing = 0;
 

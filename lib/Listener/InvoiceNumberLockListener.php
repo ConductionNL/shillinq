@@ -32,6 +32,7 @@ use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 
 /**
  * Refuses a change of an assigned AR invoice number.
@@ -75,6 +76,7 @@ class InvoiceNumberLockListener implements IEventListener {
 	 *
 	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.3
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {
 			return;

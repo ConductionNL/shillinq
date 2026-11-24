@@ -40,6 +40,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
 use OCP\Util;
+use Override;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Guard\GuardRegistrar;
@@ -96,6 +97,7 @@ class Application extends App implements IBootstrap {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
+	#[Override]
 	public function register(IRegistrationContext $context): void {
 		// The API contract (version header, deprecation of unversioned paths,
 		// problem details). Registered first: Nextcloud runs afterController in
@@ -404,6 +406,7 @@ class Application extends App implements IBootstrap {
 	 * be registered, so a seam class would relocate the identical static call
 	 * rather than remove it. Verified against nextcloud lib/public/Util.php.
 	 */
+	#[Override]
 	public function boot(IBootContext $context): void {
 		$dispatcher = $context->getServerContainer()->get(IEventDispatcher::class);
 

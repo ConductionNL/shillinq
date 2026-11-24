@@ -43,6 +43,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\RevenueTaskFieldLookup;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Override;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -88,6 +89,7 @@ class FeeScheduleValidationListener implements IEventListener {
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md#req-sopr-011
 	 */
+	#[Override]
 	public function handle(Event $event): void {
 		$write = new PreSaveWrite();
 		$entity = $write->incomingEntity(event: $event);

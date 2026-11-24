@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Service\Dunning;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCP\Mail\IMailer;
+use Override;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
@@ -85,6 +86,7 @@ final class MailDunningChannelAdapter implements DunningChannelAdapterInterface 
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.2
 	 */
+	#[Override]
 	public function send(string $channel, array $payload): DunningChannelSendResult {
 		if ($channel !== self::CHANNEL_EMAIL && $channel !== self::CHANNEL_EMAIL_AND_POST) {
 			return new DunningChannelSendResult(

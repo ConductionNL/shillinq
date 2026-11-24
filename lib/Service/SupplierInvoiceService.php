@@ -50,6 +50,7 @@ use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCP\IAppConfig;
+use Override;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
@@ -196,6 +197,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
+	#[Override]
 	public function ingestUBLInvoice(string $administrationId, string $ublXml, array $context = []): array {
 		$this->requireAccessibleAdministration(administrationId: $administrationId, deniedMessage: 'Administration not found');
 
@@ -267,6 +269,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
+	#[Override]
 	public function resolveSupplier(string $administrationId, array $parsed): array {
 		$identifier = (string)($parsed['supplierId'] ?? '');
 		$payee = $this->checks->payee(supplierId: $identifier);
@@ -783,6 +786,7 @@ class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
+	#[Override]
 	public function parseUblInvoice(string $ublXml): array {
 		$xml = $this->loadUblXml(ublXml: $ublXml);
 		$invoiceNumber = $this->requireUblInvoiceNumber(xml: $xml);

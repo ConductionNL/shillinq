@@ -43,6 +43,7 @@ use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
+use Override;
 
 /**
  * Movements, line amounts and budget figures of commitments.
@@ -75,6 +76,7 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-1.2
 	 */
+	#[Override]
 	public function committed(array $commitment, string $user): int {
 		$number = (string)($commitment['commitmentNumber'] ?? '');
 		if ($number === '' || $this->hasMovement(commitmentNumber: $number, kind: 'committed') === true) {
@@ -159,6 +161,7 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.1
 	 */
+	#[Override]
 	public function closed(array $commitment, string $user): int {
 		$number = (string)($commitment['commitmentNumber'] ?? '');
 		if ($number === '' || $this->hasMovement(commitmentNumber: $number, kind: 'closed') === true) {
@@ -201,6 +204,7 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function openLines(string $commitmentNumber): array {
 		$lines = $this->lines(commitmentNumber: $commitmentNumber);
 		return array_values(array_filter($lines, static fn (array $line): bool => ($line['afgesloten'] ?? false) !== true));
@@ -234,6 +238,7 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function budget(string $administrationId, string $programme, int $year): ?array {
 		$rows = $this->records(
 			schema: 'CommitmentBudget',
@@ -252,6 +257,7 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
+	#[Override]
 	public function free(array $budget): int {
 		return ((int)($budget['authorised_amount'] ?? 0) - (int)($budget['realised_amount'] ?? 0) - (int)($budget['outstanding_commitments'] ?? 0));
 
