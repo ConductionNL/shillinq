@@ -25,6 +25,7 @@
 ## 4. End to end
 
 - [ ] 4.1 Live check with integriq's Mollie test source: portal Pay now, a case leges request and an invoice pay link each reach a checkout and end paid (REQ-RPL-003, REQ-RPL-005). Verify: the three payment ids and end states in the PR body.
-- [ ] 4.2 Open the portaliq issue for the guest pay page of a signed link and add a release note naming the integriq source setup. Verify: the issue link and the note in the PR body.
+- [x] 4.2 Open the portaliq issue for the guest pay page of a signed link and add a release note naming the integriq source setup. Verify: the issue link and the note in the PR body.
+  - Filed: ConductionNL/portaliq#2667 (guest pay page for `?pay=<token>`, forwarding `{payToken}` to `portalPaymentInitiation#initiate`); the release note naming the integriq source setup is in `CHANGELOG.md` under Unreleased.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/receivables-payment-links/tasks.md#task-N` on every new method, English source strings with Dutch translations.

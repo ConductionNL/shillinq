@@ -23,4 +23,5 @@
 ## 5. Close
 
 - [x] 5.1 English and Dutch strings, docs on refunds and credit for other apps; run `openspec validate receivables-object-request-refund-and-credit --strict`. (5 Oct 2026: English and Dutch strings for the page and dialog in `l10n/en.json` and `l10n/nl.json`; other apps read `docs/api/payment-request-leaf.md` "Refund or credit a settled request", which now names the page; finance reads `docs/user-guide/bookkeeping/refunds-to-pay.md`. `openspec validate --strict` valid.)
-- [ ] 5.2 Tell larpinq to dispatch these two events from `registration-cancel-transfer-refund` and to read `refunded` and `credited` from the object event.
+- [x] 5.2 Tell larpinq to dispatch these two events from `registration-cancel-transfer-refund` and to read `refunded` and `credited` from the object event.
+  - Filed: ConductionNL/larpinq#1163.
