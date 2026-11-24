@@ -154,7 +154,7 @@ class SoftCloseJob extends TimedJob {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
 	 */
 	private function checkSwings(string $administrationId, string $periodId): void {
 		$scope = ['administrationId' => $administrationId, 'periodId' => $periodId];

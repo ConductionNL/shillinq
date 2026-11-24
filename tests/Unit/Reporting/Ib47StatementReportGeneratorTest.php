@@ -21,7 +21,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use PHPUnit\Framework\TestCase;
  * @uses   \OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter
  * @uses   \OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub
  *
- * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
 final class Ib47StatementReportGeneratorTest extends TestCase {
 
@@ -166,7 +166,7 @@ final class Ib47StatementReportGeneratorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#scenario-a-freelancers-payments-land-in-the-2026-batch
+	 * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#scenario-a-freelancers-payments-land-in-the-2026-batch
 	 */
 	public function testTheStatementNamesWhatThePrepareWrote(): void {
 		$this->store->rows['Payee']['payee-jdeboer'] = [

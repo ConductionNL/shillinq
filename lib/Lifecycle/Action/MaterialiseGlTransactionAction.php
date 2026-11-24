@@ -465,7 +465,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @return list<array<string,mixed>> The posting lines; the mapped line alone at 100 percent.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-3.2
 	 */
 	private function splitJournalLine(array $mapped, array $line, DeductibleShareSplitter $shares): array {
 		$percentage = $shares->percentage(line: $line);

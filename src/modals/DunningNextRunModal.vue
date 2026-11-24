@@ -15,7 +15,7 @@
  Opened through spawnDialog from src/utils/dunningActions.js. Its own file
  for hydra gate-13.
 
- @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 -->
 
 <template>
@@ -162,7 +162,7 @@ export default {
 		 * The dialog title.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 		 */
 		title() {
 			return this.switchOn
@@ -174,7 +174,7 @@ export default {
 		 * The administration Switch on reminders acts on.
 		 *
 		 * @return {object|null}
-		 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 		 */
 		target() {
 			return this.administrations[0] ?? null
@@ -193,7 +193,7 @@ export default {
 		/**
 		 * Read the preview and the last run.
 		 *
-		 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 		 */
 		async load() {
 			this.loading = true
@@ -213,7 +213,7 @@ export default {
 		/**
 		 * Switch reminders on for the administration shown.
 		 *
-		 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 		 */
 		async submit() {
 			if (!this.target) {
@@ -243,7 +243,7 @@ export default {
 		/**
 		 * Close without switching anything on.
 		 *
-		 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 		 */
 		onClose() {
 			this.$emit('close', false)

@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
  */
 
 declare(strict_types=1);
@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Derives the second framework's entry and the bridge line on post.
  *
- * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
  */
 class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 
@@ -83,7 +83,7 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 *
 	 * @return array{derived: bool, message: string, differenceCents?: int, dualTransaction?: array<string, mixed>, bridge?: array<string, mixed>}
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public function deriveOnPost(array $transaction): array {
 		$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
@@ -129,7 +129,7 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public static function frameworkOf(array $transaction): string {
 		if ((string)($transaction['reportingFramework'] ?? '') === self::FRAMEWORK_IFRS) {
@@ -147,7 +147,7 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 *
 	 * @return int|null Null when the outputs carry no such amount.
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public static function otherAmountCents(array $calculation, string $postedFramework): ?int {
 		$outputs = (array)($calculation['outputs'] ?? []);
@@ -171,7 +171,7 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public static function debitCents(array $lines): int {
 		$total = 0;
@@ -196,7 +196,7 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 *
 	 * @return array<int, array{accountNumber: string, side: string, amount: float}>
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public static function scaleLines(array $lines, int $fromCents, int $targetCents): array {
 		$scaled = [];
@@ -241,7 +241,7 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public static function withAdjustment(array $bridge, array $adjustment): array {
 		$adjustments = array_values((array)($bridge['adjustments'] ?? []));
@@ -265,7 +265,7 @@ class DualGaapDerivationService implements DualGaapDerivationServiceInterface {
 	 *
 	 * @return array{rjLines: array<int, array<string, mixed>>, ifrsLines: array<int, array<string, mixed>>, rjCents: int, ifrsCents: int}
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public static function entriesByFramework(array $lines, array $amounts): array {
 		$posted = array_values(

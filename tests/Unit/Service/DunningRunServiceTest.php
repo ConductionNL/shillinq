@@ -305,7 +305,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
 	 */
 	public function testExecuteStageDispatchesThroughTheChannelAdapterAndRecordsItsOutcome(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -352,7 +352,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
 	 */
 	public function testExecuteStageRecordsTheAdaptersDeliveredStatusAndPostageEvidence(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -389,7 +389,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
 	 */
 	public function testExecuteStageRecordsFailedWhenTheAdapterThrows(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -417,7 +417,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
 	 */
 	public function testExecuteStageDispatchesNothingWhilePaused(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -440,7 +440,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
 	 */
 	public function testTheLogOnlyChannelAdapterNeverRecordsDelivered(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -814,7 +814,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function testALongOverdueInvoiceStartsAtTheFriendlyReminder(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -839,7 +839,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function testTheSecondStageWaitsForTheGapSinceTheFirst(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -881,7 +881,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function testAFailedStageIsTriedAgain(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -915,7 +915,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function testADryRunWritesNothing(): void {
 		$os = new OpenRegisterFaithfulObjectService();
@@ -944,7 +944,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.2
 	 */
 	public function testTheLadderComesFromTheCustomerThenTheAdministration(): void {
 		$gentle = $this->standaardLadder(id: 'ladder-gentle', customerGroup: 'GOVERNMENT');
@@ -992,7 +992,7 @@ final class DunningRunServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.3
 	 */
 	public function testAnInvoiceSettledSinceItWasListedIsNotChased(): void {
 		foreach (['paid', 'written-off', 'disputed'] as $state) {

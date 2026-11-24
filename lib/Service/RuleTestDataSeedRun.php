@@ -80,7 +80,7 @@ final class RuleTestDataSeedRun {
 	 *
 	 * @return array<string, int> Counts per kind of backfill, and alreadyCompliant.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function run(): array {
 		$ledger    = $this->seedTransactions();

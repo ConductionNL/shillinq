@@ -124,7 +124,7 @@ class AppointmentCreatedListener implements IEventListener {
 	 *
 	 * @return array<string,mixed> The appointment, with `id` set when it had none.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
 	 */
 	private static function withStoredId(array $appointment, mixed $uuid): array {
 		if (isset($appointment['id']) === false && is_string($uuid) === true && $uuid !== '') {

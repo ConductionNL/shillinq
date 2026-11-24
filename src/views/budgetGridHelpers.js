@@ -111,7 +111,7 @@ export function favorableState(cell) {
  * @param {string|null} openId The row whose chart is open now, or null.
  * @param {string} rowId The row whose button was pressed.
  * @return {string|null} The row whose chart is open next, or null.
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-001
  */
 export function nextOpenChartRow(openId, rowId) {
 	return openId === rowId ? null : rowId
@@ -126,7 +126,7 @@ export function nextOpenChartRow(openId, rowId) {
  * @param {string|null} administrationId The active administration.
  * @param {{startPeriod: string, endPeriod: string}} range The grid's period range.
  * @return {object|null} The chart props, or null for a row without a chart.
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-001
  */
 export function trendChartProps(row, administrationId, range) {
 	if (row?.kind !== 'ledgerGroup' && row?.kind !== 'account') {

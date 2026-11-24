@@ -157,7 +157,7 @@ class WidgetSettingsController extends Controller {
 	 *
 	 * @return JSONResponse HTTP 200 with the stored origins, or 400.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.5
 	 */
 	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function origins(): JSONResponse {

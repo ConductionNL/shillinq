@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 /**
  * Resolves the billable rate of an hour and records the resolution.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.1
  */
 final class BillableRateService {
 	/**
@@ -153,7 +153,7 @@ final class BillableRateService {
 	 *                              `scheduleId`, `value` and `recordId`; or
 	 *                              `status` no-rate with `reason` and `message`.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.1
 	 */
 	public function resolve(array $hour): array {
 		return $this->answer(hour: $hour, record: true);
@@ -170,7 +170,7 @@ final class BillableRateService {
 	 *
 	 * @return array<string, mixed> The answer, as for {@see resolve()}.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
 	 */
 	public function preview(array $hour): array {
 		return $this->answer(hour: $hour, record: false);
@@ -238,7 +238,7 @@ final class BillableRateService {
 	 *
 	 * @return string The person label.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.1
 	 */
 	private function personLabel(array $hour, string $personId): string {
 		$person = trim((string)($hour['personName'] ?? ''));
@@ -259,7 +259,7 @@ final class BillableRateService {
 	 *
 	 * @return array<string, mixed> The rated result.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.1
 	 */
 	private function rated(array $hour, array $assignment, array $tierSchedule): array {
 		[$tier, $schedule] = $tierSchedule;

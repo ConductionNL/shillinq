@@ -5,7 +5,7 @@
  * useBudgetChartData: one series request per administration, period range
  * and budget on a page visit, shared by every chart opened for that key.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

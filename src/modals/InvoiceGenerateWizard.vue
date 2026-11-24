@@ -344,7 +344,7 @@ export default {
 		 * and material invoice prices each hour by its own rate.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.2
 		 */
 		needsRateCard() {
 			return RATE_CARD_MODELS.includes(this.source.billingModel)

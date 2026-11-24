@@ -7,7 +7,7 @@
  * a time; the chart reads the row's own group or account and the grid's
  * own period range.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-001
  */
 
 import fs from 'fs'

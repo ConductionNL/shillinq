@@ -44,7 +44,7 @@ interface CrossSubsidyScanInterface {
 	 *
 	 * @return array{activities: int, alerts: int, alreadyOpen: int}
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
 	public function run(string $today): array;
 }//end interface

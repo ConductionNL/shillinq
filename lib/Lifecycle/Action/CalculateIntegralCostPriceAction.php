@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use OCA\Shillinq\Kernel\Contracts\ActivityCostPriceCalculationInterface;
 /**
  * Calculates a commercial activity's integral cost price.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  */
 class CalculateIntegralCostPriceAction implements LifecycleActionInterface {
 
@@ -56,7 +56,7 @@ class CalculateIntegralCostPriceAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string,mixed> The activity with integralCostPriceId.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		return $this->costPrice->calculate(activity: $context->objectData);

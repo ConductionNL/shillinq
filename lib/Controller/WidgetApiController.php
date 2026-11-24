@@ -466,7 +466,7 @@ class WidgetApiController extends Controller {
 	 *
 	 * @return Response
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md#requirement-the-widget-books-from-another-website-req-wsw-011
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md#requirement-the-widget-books-from-another-website-req-wsw-011
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -494,7 +494,7 @@ class WidgetApiController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.5
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
 		$origin = $this->allowedOrigin();
@@ -512,7 +512,7 @@ class WidgetApiController extends Controller {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.5
 	 */
 	private function allowedOrigin(): ?string {
 		if ($this->corsPolicy === null) {

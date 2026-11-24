@@ -6,7 +6,7 @@
  * and the treasury dashboard reads the computed cash limit and interest risk
  * norm of the latest year instead of a fixed zero (REQ-FDO-011).
  *
- * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
  */
 
 import fs from 'fs'

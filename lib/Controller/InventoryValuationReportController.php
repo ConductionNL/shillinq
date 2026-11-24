@@ -173,7 +173,7 @@ class InventoryValuationReportController extends Controller {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
 	 */
 	private function activeAdministrationId(): string {
 		if (trim((string)$this->request->getParam('administration_id', '')) !== '') {

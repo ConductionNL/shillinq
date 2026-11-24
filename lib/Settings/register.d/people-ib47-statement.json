@@ -5,7 +5,7 @@
     "change": "people-ib47-statement",
     "adr": "ADR-037 modular register fragment; ADR-031 declarative fields, the yearly sum stays imperative in Ib47BatchService",
     "description": "A payee can be marked as an IB47 recipient and carries what the statement asks of it (BSN and the payment type code); an IB47 record names the payee it was prepared from, so preparing a year again updates that record instead of adding a second.",
-    "spec": "openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md"
+    "spec": "openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md"
   },
   "components": {
     "schemas": {

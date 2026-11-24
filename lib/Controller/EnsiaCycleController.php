@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Throwable;
 /**
  * Serves the files an ENSIA cycle's transitions stored.
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 class EnsiaCycleController extends Controller {
 
@@ -85,7 +85,7 @@ class EnsiaCycleController extends Controller {
 	 *
 	 * @return DataDownloadResponse|JSONResponse
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	#[NoAdminRequired]
 	public function xml(string $id): DataDownloadResponse|JSONResponse {
@@ -102,7 +102,7 @@ class EnsiaCycleController extends Controller {
 	 *
 	 * @return DataDownloadResponse|JSONResponse
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	#[NoAdminRequired]
 	public function statement(string $id): DataDownloadResponse|JSONResponse {

@@ -339,3 +339,13 @@ CREATE TABLE oc_bookings_widget_access_keys (
   - Embed all 4 methods (iframe, script, npm, web component) on test sites
   - Verify styling in different browsers (Chrome, Firefox, Safari)
   - Test on mobile (iOS Safari, Chrome Android)
+
+### Requirement: The widget books from another website (REQ-WSW-011)
+
+The widget API SHALL answer the CORS preflight and SHALL allow the origins registered on the widget key, so the embedded widget books from that website.
+
+#### Scenario: A booking from the customer website
+
+- **GIVEN** a widget key registered for https://kapsalon.example
+- **WHEN** a visitor on that site picks a slot and books
+- **THEN** the appointment is created and the visitor sees the confirmation

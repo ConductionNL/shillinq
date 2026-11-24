@@ -81,8 +81,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -105,7 +105,7 @@ use Throwable;
  * trend+cumulative actual/projected/begroot envelope (REQ-BCH-003,
  * REQ-BCH-008).
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
 class BudgetChartSeriesService implements BudgetChartSeriesServiceInterface {
 	/**
@@ -165,8 +165,8 @@ class BudgetChartSeriesService implements BudgetChartSeriesServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When `$from`/`$to` are malformed or `$from` is after `$to`.
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 	 */
 	public function resolveSeries(string $administrationId, string $from, string $to, ?string $annualBudgetId = null): array {
 		$months = $this->buildMonthRange(from: $from, to: $to);

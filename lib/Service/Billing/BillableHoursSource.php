@@ -65,7 +65,7 @@ interface BillableHoursSource {
 	 *
 	 * @return array{available: bool, reason: string, hours: list<array{id: string, person: string, date: string, hours: float, description: string}>}
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
 	 */
 	public function forProject(string $projectId, string $from, string $to): array;
 }//end interface

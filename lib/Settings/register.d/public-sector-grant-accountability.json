@@ -61,7 +61,7 @@
                 "title": "SiSa indicator",
                 "description": "One indicator of a specific grant in the SiSa appendix for a year. Output indicators are entered here and kept as entered; spending and income are computed from the books, and a record of that kind only names the regulation's own indicator code and description (REQ-SISA-012).",
                 "x-schema-org": "schema:PropertyValue",
-                "x-spec": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md",
+                "x-spec": "openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md",
                 "type": "object",
                 "required": [
                     "administrationId",
@@ -164,7 +164,7 @@
                 "title": "EU declaration",
                 "description": "A declaration (betaalaanvraag) of one EU project for a period: the declared expenditure that carries certified, complete evidence, with the eligible total and the EU share, and the project's other expenditure of the period listed as left out with the reason. Submitting it submits each expenditure it holds (REQ-EUF-012, REQ-EUF-013).",
                 "x-schema-org": "schema:Invoice",
-                "x-spec": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md",
+                "x-spec": "openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md",
                 "type": "object",
                 "required": [
                     "administrationId",

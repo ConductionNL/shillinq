@@ -46,7 +46,7 @@ interface SmsReminderRunnerInterface {
 	 *
 	 * @return array<string, int> Counts: channels, notConnected, and one per send status.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
 	public function run(DateTimeImmutable $now): array;
 

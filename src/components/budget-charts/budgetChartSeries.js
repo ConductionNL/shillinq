@@ -10,8 +10,8 @@
 // them (that stays BudgetProjectionCalculator's own, already-tested,
 // territory, per design.md §11).
 //
-// @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
-// @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+// @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-004
+// @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
 
 /** Account types whose cumulative series equals their trend (REQ-BPE-008). */
 export const STOCK_ACCOUNT_TYPES = ['assets', 'liabilities', 'equity']

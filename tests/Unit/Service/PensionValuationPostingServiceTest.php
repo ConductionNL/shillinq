@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
  */
 
 declare(strict_types=1);

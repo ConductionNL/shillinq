@@ -13,7 +13,7 @@
 // reuses the already-resolved cache — zero additional network requests
 // (design.md §8b).
 //
-// @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+// @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -67,7 +67,7 @@ async function fetchSeries(administrationId, from, to, annualBudgetId) {
  * for a given key triggers the fetch, later callers for the SAME key
  * piggyback on it. A DIFFERENT key drops the cache and refetches.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
  * @param {string} administrationId The administration id.
  * @param {{from: string, to: string}} range The `YYYY-MM` period range.
  * @param {string|null} [annualBudgetId] Optional AnnualBudget override.

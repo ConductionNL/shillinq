@@ -13,7 +13,7 @@
  * @version   GIT: <git_id>
  * @link      https://github.com/ConductionNL/shillinq
  *
- * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use OCP\IAppConfig;
  * @license  EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  * @link     https://github.com/ConductionNL/shillinq
  *
- * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
 final class Ib47BatchService implements Ib47BatchServiceInterface {
 
@@ -106,7 +106,7 @@ final class Ib47BatchService implements Ib47BatchServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the administration is empty or the year is out of range.
 	 *
-	 * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#requirement-the-annual-ib47-batch-is-prepared-from-the-payments-to-third-parties-req-dpa-021
+	 * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#requirement-the-annual-ib47-batch-is-prepared-from-the-payments-to-third-parties-req-dpa-021
 	 */
 	public function prepare(string $administrationId, int $taxYear): array {
 		$administrationId = trim($administrationId);

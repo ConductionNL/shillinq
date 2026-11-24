@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Service;
  * year and — once built — every account envelope, shared by the steps of one
  * chart-series request. Built and used only by BudgetChartSeriesService.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
 final class ChartSeriesRun {
 	/**
@@ -56,7 +56,7 @@ final class ChartSeriesRun {
 	 *
 	 * @return self
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
 	 */
 	public function withAccountEnvelopes(array $envelopesByAccount): self {
 		return new self(

@@ -43,7 +43,7 @@ interface GrantSettlementInterface {
 	 *
 	 * @throws DomainException When the grant has no determined amount, or a reclaim has no counterparty.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-determining-a-grant-settles-the-difference-req-subv-011
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-determining-a-grant-settles-the-difference-req-subv-011
 	 */
 	public function settle(array $grant): array;
 
@@ -55,7 +55,7 @@ interface GrantSettlementInterface {
 	 *
 	 * @return array{verantwoordingId: string, auditorStatementRequired: bool, auditorStatementId: string|null}
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-the-accountability-report-is-generated-from-the-grant-req-subv-012
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-the-accountability-report-is-generated-from-the-grant-req-subv-012
 	 */
 	public function report(array $grant): array;
 }//end interface

@@ -44,9 +44,9 @@
  * PeriodCloseController requires, so the page tests below fail until the
  * page sends it.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md
- * @spec openspec/changes/ledger-period-end/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/tasks.md#task-4.1
  *
  * @e2e bookkeeping-period-close::a-controller-starts-closing-september
  * @e2e bookkeeping-period-close::a-bookkeeper-resolves-the-bank-item

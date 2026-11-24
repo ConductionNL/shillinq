@@ -93,7 +93,7 @@ class ENSIABevindingGenerator {
 	 *
 	 * @return list<array<string, mixed>> Bevinding payloads (status open, type tekortkoming).
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function fromAnswers(array $cyclus, array $vragen): array {
 		$findings = [];

@@ -305,7 +305,7 @@
             "default": false,
             "example": false,
             "title": "Automatic payment reminders",
-            "x-spec": "openspec/changes/receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning/spec.md (REQ-RAD-001)"
+            "x-spec": "openspec/changes/archive/2026-11-24-receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning/spec.md (REQ-RAD-001)"
           },
           "followsTemplateId": {
             "type": "string",

@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use OCA\Shillinq\Kernel\Contracts\FidoQuarterInterface;
 /**
  * The `compute` transition's executor.
  *
- * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
  */
 class ComputeFidoQuarterAction implements LifecycleActionInterface {
 
@@ -57,7 +57,7 @@ class ComputeFidoQuarterAction implements LifecycleActionInterface {
 	 *
 	 * @throws InvalidArgumentException When the report names no quarter Q1 to Q4.
 	 *
-	 * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

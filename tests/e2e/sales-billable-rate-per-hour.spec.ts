@@ -27,8 +27,8 @@
  *
  * Written, not run: it needs a live instance with an hours source.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management/spec.md
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-5.1
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/specs/rate-card-management/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-5.1
  *
  * @e2e rate-card-management::a-project-manager-sees-what-october-is-worth
  * @e2e rate-card-management::without-an-hours-source-the-card-says-so

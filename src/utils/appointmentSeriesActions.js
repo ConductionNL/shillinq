@@ -13,7 +13,7 @@ import RepeatAppointmentModal from '../modals/RepeatAppointmentModal.vue'
  * Header action: open the repeating appointment dialog.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
  */
 export function openRepeatAppointment() {
 	return spawnDialog(RepeatAppointmentModal, {})

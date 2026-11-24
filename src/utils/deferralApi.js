@@ -6,7 +6,7 @@
  * REQ-LPE-004): load the invoice, turn its lines into spreadable lines,
  * preview the releases and create the deferral schedule.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  */
 
 import axios from '@nextcloud/axios'
@@ -23,7 +23,7 @@ export const SIDES = {
 /**
  * Load an invoice of a side.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  *
  * @param {string} side ap or ar.
  * @param {string} id The invoice id.
@@ -39,7 +39,7 @@ export async function loadInvoice(side, id) {
  * The lines of an invoice as spreadable lines: a key, a label, the amount in
  * cents and the account it was booked on.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  *
  * @param {string} side ap or ar.
  * @param {object} invoice The invoice.
@@ -74,7 +74,7 @@ export function spreadableLines(side, invoice) {
 /**
  * Preview the releases of a schedule.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  *
  * @param {object} body The schedule fields.
  * @return {Promise<object>} The schedule with its releases.
@@ -87,7 +87,7 @@ export async function previewSchedule(body) {
 /**
  * Create the schedule and post its opening entry.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  *
  * @param {object} body The schedule fields.
  * @return {Promise<object>} The stored schedule.
@@ -100,7 +100,7 @@ export async function createSchedule(body) {
 /**
  * Cents as euros with two decimals.
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-an-invoice-line-spanning-several-periods-is-spread-over-them-req-lpe-004
  *
  * @param {number} cents The amount in cents.
  * @return {string} The amount.

@@ -50,7 +50,7 @@ interface FidoQuarterInterface {
 	 *
 	 * @throws InvalidArgumentException When the quarter is invalid or the year has no cash limit record.
 	 *
-	 * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
 	 */
 	public function compute(string $organisationId, string $year, int $quarter): array;
 }//end interface

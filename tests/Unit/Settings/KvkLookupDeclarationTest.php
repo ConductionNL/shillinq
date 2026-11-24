@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/contacts-kvk-lookup/tasks.md#1-declarations
+ * @spec openspec/changes/archive/2026-11-24-contacts-kvk-lookup/tasks.md#1-declarations
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

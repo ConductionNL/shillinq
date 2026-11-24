@@ -79,7 +79,7 @@ final class InventoryValuationQuery {
 	 * @param IRequest $request                The request.
 	 * @param string   $activeAdministrationId The caller's active administration, used when the request names none.
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
 	 */
 	public function __construct(IRequest $request, string $activeAdministrationId = '') {
 		$administrationId = trim((string)$request->getParam('administration_id', ''));

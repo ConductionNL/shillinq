@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 /**
  * Writes an assignment's current rate.
  *
- * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
  */
 class AssignmentRateRefresher {
 	/**
@@ -84,7 +84,7 @@ class AssignmentRateRefresher {
 	 *
 	 * @return array<string, mixed> The resolver's answer, with `written` true when the rate was saved.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
 	 */
 	public function refresh(array $assignment): array {
 		$id = (string)($assignment['id'] ?? '');
@@ -129,7 +129,7 @@ class AssignmentRateRefresher {
 	 *
 	 * @return int The number of assignments whose rate was written.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.3
 	 */
 	public function refreshForVersion(array $version): int {
 		$administrationId = (string)($version['administrationId'] ?? '');

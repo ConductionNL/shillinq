@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Throwable;
 /**
  * Runs the cross-subsidy scan once a day.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  */
 class CrossSubsidyScanJob extends TimedJob {
 	use RunsJobAsSystem;
@@ -81,7 +81,7 @@ class CrossSubsidyScanJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is TimedJob's.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
 	protected function run($argument): void {
 		$today = (new DateTimeImmutable('@' . $this->time->getTime()))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d');

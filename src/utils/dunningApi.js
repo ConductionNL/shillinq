@@ -18,7 +18,7 @@ const REGISTER_SLUG = 'shillinq'
  *
  * @param {string} administrationId The administration, or '' for all of them.
  * @return {Promise<Array<object>>} One entry per administration: name, enabled, lastRun, rows.
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 export async function fetchNextRun(administrationId) {
 	const params = {}
@@ -38,7 +38,7 @@ export async function fetchNextRun(administrationId) {
  *
  * @param {string} id The Administration record id.
  * @return {Promise<object>} The saved administration.
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 export async function switchOnDunning(id) {
 	const response = await axios.patch(
@@ -63,7 +63,7 @@ const CHANNEL_LABELS = {
  *
  * @param {string} channel The channel code.
  * @return {string} The translated name.
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 export function channelLabel(channel) {
 	return Object.hasOwn(CHANNEL_LABELS, channel)
@@ -76,7 +76,7 @@ export function channelLabel(channel) {
  *
  * @param {object|null} report The stored run report, or null.
  * @return {string} The line.
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 export function reportLine(report) {
 	if (!report) {
@@ -132,7 +132,7 @@ function count(value) {
  * @param {unknown} error The axios error.
  * @param {string} fallback The text when the server gave none.
  * @return {string} The reason.
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 export function dunningError(error, fallback) {
 	const data = error?.response?.data

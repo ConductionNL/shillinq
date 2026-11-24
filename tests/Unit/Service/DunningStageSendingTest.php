@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -524,7 +524,7 @@ final class DunningStageSendingTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
 	 */
 	public function testAConsumerIsNotChargedCostsTenDaysAfterTheLetter(): void {
 		$run = $this->costsAfterLetter(daysAgo: 10);
@@ -540,7 +540,7 @@ final class DunningStageSendingTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
 	 */
 	public function testAConsumerIsChargedCostsSixteenDaysAfterTheLetter(): void {
 		$run = $this->costsAfterLetter(daysAgo: 16);
@@ -554,7 +554,7 @@ final class DunningStageSendingTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
 	 */
 	public function testAFailedLetterDoesNotStartTheConsumersPeriod(): void {
 		$run = $this->costsAfterLetter(daysAgo: 30, status: 'FAILED');
@@ -568,7 +568,7 @@ final class DunningStageSendingTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
 	 */
 	public function testABusinessIsChargedCostsWithoutTheWait(): void {
 		$run = $this->costsAfterLetter(daysAgo: 10, customer: ['kvkNumber' => '12345678']);

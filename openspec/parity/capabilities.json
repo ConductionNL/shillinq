@@ -1213,8 +1213,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-period-end",
 				"requirement": [
-					"openspec/changes/ledger-period-end/specs/bookkeeping-period-close :: A period that starts closing copies the checklist template (REQ-LPE-001)",
-					"openspec/changes/ledger-period-end/specs/bookkeeping-period-close :: A person resolves, reopens and adds checklist items (REQ-LPE-002)"
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close :: A period that starts closing copies the checklist template (REQ-LPE-001)",
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close :: A person resolves, reopens and adds checklist items (REQ-LPE-002)"
 				]
 			},
 			"screen": {
@@ -1233,7 +1233,7 @@
 			"feature": "period-close",
 			"featureConfidence": "high",
 			"source": "own-code",
-			"note": "The checklist panel always shows 'No checklist items yet.' Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
+			"note": "The checklist panel always shows 'No checklist items yet.' Specified 2026-09-27 in openspec/changes/archive/2026-11-24-ledger-period-end (OpenSpec pass)."
 		},
 		{
 			"id": "led-multi-admin",
@@ -1332,7 +1332,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-002: Auto-detectie intercompany-transacties",
 					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-006: Eliminatie-journaalpost generatie",
-					"openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination :: The nightly soft close writes the elimination entries of each intercompany relation (REQ-ICE-011)"
+					"openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-intercompany-elimination :: The nightly soft close writes the elimination entries of each intercompany relation (REQ-ICE-011)"
 				],
 				"plan": "ledger-group-close"
 			},
@@ -1371,8 +1371,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-period-end",
 				"requirement": [
-					"openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close :: An invoice line spanning several periods is spread over them (REQ-LPE-004)",
-					"openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close :: The nightly close releases each ended period (REQ-LPE-005)"
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close :: An invoice line spanning several periods is spread over them (REQ-LPE-004)",
+					"openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close :: The nightly close releases each ended period (REQ-LPE-005)"
 				]
 			},
 			"screen": {
@@ -1391,7 +1391,7 @@
 			"feature": "period-close",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Accrual amounts are computed and recorded; nothing books or releases a deferral. Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
+			"note": "Accrual amounts are computed and recorded; nothing books or releases a deferral. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-ledger-period-end (OpenSpec pass)."
 		},
 		{
 			"id": "led-dual-gaap",
@@ -1412,7 +1412,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-ifrs-rj-dual-gaap :: REQ-DGAAP-001: Dual GAAP reporting SHALL be declared via six register schemas and parallel GL materialisation",
 					"openspec/specs/bookkeeping-ifrs-rj-dual-gaap :: REQ-DGAAP-005: IFRS 9 expected credit loss vs. RJ 290 incurred loss SHALL be calculated separately",
-					"openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-ifrs-rj-dual-gaap :: Posting under one framework derives the other and the reconciling difference (REQ-DGAAP-011)"
+					"openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-ifrs-rj-dual-gaap :: Posting under one framework derives the other and the reconciling difference (REQ-DGAAP-011)"
 				],
 				"plan": "reporting-ifrs-calculations"
 			},
@@ -1452,7 +1452,7 @@
 				"change": "2026-06-14-bookkeeping-archiefwet-retention",
 				"requirement": [
 					"openspec/specs/bookkeeping-archiefwet-retention :: REQ-ARC-003: Retention rule mapping",
-					"openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention :: A list shows the records whose retention period has ended (REQ-RET-015)"
+					"openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention :: A list shows the records whose retention period has ended (REQ-RET-015)"
 				],
 				"plan": "ledger-retention-due-records"
 			},
@@ -1493,7 +1493,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-002: Nightly soft-close job SHALL execute per administratie and complete by 07:00 local with full trial balance",
 					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-005: Flux analysis SHALL run post-soft-close, computing variance vs budget/PY/PP/forecast with materiality-driven routing",
-					"openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close :: The nightly soft close flags the swings per account (REQ-CLS-011)"
+					"openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close :: The nightly soft close flags the swings per account (REQ-CLS-011)"
 				],
 				"plan": "ledger-group-close"
 			},
@@ -2316,7 +2316,7 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
 				"change": "receivables-automatic-dunning",
-				"requirement": "openspec/changes/receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning :: A reminder mail carries the stage's wording and the invoice (REQ-RAD-003)"
+				"requirement": "openspec/changes/archive/2026-11-24-receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning :: A reminder mail carries the stage's wording and the invoice (REQ-RAD-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2334,7 +2334,7 @@
 			"feature": "credit-control",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Escalating ladders can be defined and runs listed, but nothing sends a reminder automatically: no job, no page calling the run endpoint, log-only channel. Specified 2026-09-27 in openspec/changes/receivables-automatic-dunning (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the channel adapter is never called, not only log-only."
+			"note": "Escalating ladders can be defined and runs listed, but nothing sends a reminder automatically: no job, no page calling the run endpoint, log-only channel. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-receivables-automatic-dunning (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the channel adapter is never called, not only log-only."
 		},
 		{
 			"id": "rec-ladder-per-customer",
@@ -2352,7 +2352,7 @@
 				"reachedOn": "DunningKlantOverrides /bookkeeping/dunning/overrides (settings gear)",
 				"owner": "ConductionNL/shillinq",
 				"change": "receivables-automatic-dunning",
-				"requirement": "openspec/changes/receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning :: Each customer is chased on its own ladder (REQ-RAD-004)"
+				"requirement": "openspec/changes/archive/2026-11-24-receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning :: Each customer is chased on its own ladder (REQ-RAD-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2370,7 +2370,7 @@
 			"feature": "credit-control",
 			"featureConfidence": "high",
 			"source": "own-code",
-			"note": "The per-customer override can be kept; it only matters once dunning actually runs, which nothing triggers. Specified 2026-09-27 in openspec/changes/receivables-automatic-dunning (OpenSpec pass)."
+			"note": "The per-customer override can be kept; it only matters once dunning actually runs, which nothing triggers. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-receivables-automatic-dunning (OpenSpec pass)."
 		},
 		{
 			"id": "rec-direct-debit",
@@ -3577,8 +3577,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-vat-rates-and-deductibility",
 				"requirement": [
-					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-vat-btw-filing :: VAT is calculated per line from the tariff valid on the document date (REQ-TVRD-002)",
-					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-vat-btw-filing :: The VAT tariffs are seeded and can be extended (REQ-TVRD-001)"
+					"openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/specs/bookkeeping-vat-btw-filing :: VAT is calculated per line from the tariff valid on the document date (REQ-TVRD-002)",
+					"openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/specs/bookkeeping-vat-btw-filing :: The VAT tariffs are seeded and can be extended (REQ-TVRD-001)"
 				]
 			},
 			"screen": {
@@ -3597,7 +3597,7 @@
 			"feature": "vat-filing",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Per-line VAT works on the generated invoice, but the rates are a code constant, not configurable. Specified 2026-09-27 in openspec/changes/tax-vat-rates-and-deductibility (OpenSpec pass)."
+			"note": "Per-line VAT works on the generated invoice, but the rates are a code constant, not configurable. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility (OpenSpec pass)."
 		},
 		{
 			"id": "tax-vat-prepare",
@@ -4547,7 +4547,7 @@
 					"openspec/specs/bookkeeping-consolidation-commercial :: Detect and eliminate intercompany trade transactions with a matching tolerance (REQ-CONS-003)",
 					"openspec/specs/bookkeeping-consolidation-commercial :: Eliminate intercompany receivables, payables, loans and dividends (REQ-CONS-004)",
 					"openspec/specs/bookkeeping-consolidation-commercial :: Translate foreign-currency administrations by the current-rate method with CTA (REQ-CONS-005)",
-					"openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial :: A consolidation run sums the subsidiaries and applies the eliminations (REQ-CONS-011)"
+					"openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-consolidation-commercial :: A consolidation run sums the subsidiaries and applies the eliminations (REQ-CONS-011)"
 				],
 				"plan": "ledger-group-close"
 			},
@@ -4740,7 +4740,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-lease-contracts :: REQ-LC-001: The system SHALL store lease contracts as an OpenRegister-managed `lease-contract` register",
 					"openspec/specs/bookkeeping-lease-disclosures :: REQ-LD-001: The system SHALL generate a `lease-disclosure-table` snapshot at period close",
-					"openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures :: Closing a period fills the lease disclosure table (REQ-LD-008)"
+					"openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures :: Closing a period fills the lease disclosure table (REQ-LD-008)"
 				],
 				"plan": "reporting-ifrs-calculations"
 			},
@@ -4934,7 +4934,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-pension-ias19 :: REQ-PEN-001 PUC method enforced for DB plans",
 					"openspec/specs/bookkeeping-pension-ias19 :: REQ-PEN-003 Three-bucket movement: P&L (service/interest) vs OCI (remeasurement)",
-					"openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19 :: An actuarial valuation books service cost, net interest and remeasurement (REQ-PEN-011)"
+					"openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19 :: An actuarial valuation books service cost, net interest and remeasurement (REQ-PEN-011)"
 				],
 				"plan": "reporting-ifrs-calculations"
 			},
@@ -5113,7 +5113,7 @@
 			"feature": "inventory-fifo-valuation",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "FIFO/average engines and GL posting exist, but goods received through a GRN never reach them; only hand-made draft->posted moves do. Worth a live check. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
+			"note": "FIFO/average engines and GL posting exist, but goods received through a GRN never reach them; only hand-made draft->posted moves do. Worth a live check. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers (OpenSpec pass)."
 		},
 		{
 			"id": "inv-cogs",
@@ -5131,7 +5131,7 @@
 				"reachedOn": "no page of its own: fires when a Delivery is confirmed (Orders /orders, menu Sales) or a pipelinq POS sale posts; GL result on General Ledger",
 				"owner": "ConductionNL/shillinq",
 				"change": "inventory-receipt-cost-layers",
-				"requirement": "openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg :: An issue is costed from the receipt layers (REQ-IRCL-002)",
+				"requirement": "openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg :: An issue is costed from the receipt layers (REQ-IRCL-002)",
 				"plan": "inventory-pos-decrement"
 			},
 			"screen": {
@@ -5150,7 +5150,7 @@
 			"feature": "inventory-fifo-valuation",
 			"featureConfidence": "high",
 			"source": "own-code",
-			"note": "The trigger and posting are wired; the cost figure depends on receipt layers that GRN receipts never create. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
+			"note": "The trigger and posting are wired; the cost figure depends on receipt layers that GRN receipts never create. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers (OpenSpec pass)."
 		},
 		{
 			"id": "inv-catalog",
@@ -5248,7 +5248,7 @@
 				"requirement": [
 					"openspec/specs/bookings-self-service-widget :: REQ-WSW-003: Widget frontend component SHALL support service and resource selection with time slot picker",
 					"openspec/specs/bookings-self-service-widget :: REQ-WSW-001: Widget API SHALL expose public endpoints for service list, slot availability, and appointment creation",
-					"openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget :: The widget books from another website (REQ-WSW-011)"
+					"openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-self-service-widget :: The widget books from another website (REQ-WSW-011)"
 				],
 				"plan": "bookings-messages-and-embedding"
 			},
@@ -5327,7 +5327,7 @@
 				"spec": "openspec/specs/bookings-availability-rules",
 				"requirement": [
 					"openspec/specs/bookings-availability-rules :: REQ-BAR-001 AvailabilityRule Register Definition",
-					"openspec/changes/bookings-slots-follow-availability/specs/bookings-availability-rules :: Offered slots follow the availability rules, breaks and constraints (REQ-BAR-011)"
+					"openspec/changes/archive/2026-11-24-bookings-slots-follow-availability/specs/bookings-availability-rules :: Offered slots follow the availability rules, breaks and constraints (REQ-BAR-011)"
 				],
 				"plan": "bookings-slots-follow-availability"
 			},
@@ -5368,7 +5368,7 @@
 				"requirement": [
 					"openspec/specs/bookings-confirm-flow :: REQ-BCF-004: Appointment SHALL transition from `pending_confirmation` to `confirmed` on token validation",
 					"openspec/specs/bookings-confirm-flow :: REQ-BCF-005: Appointment SHALL auto-cancel if confirmation deadline passes",
-					"openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow :: The confirmation request reaches the customer by email (REQ-BCF-013)"
+					"openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-confirm-flow :: The confirmation request reaches the customer by email (REQ-BCF-013)"
 				],
 				"plan": "bookings-messages-and-embedding"
 			},
@@ -5409,7 +5409,7 @@
 				"requirement": [
 					"openspec/specs/notification-booking-email-templates :: REQ-BET-001: Template CRUD operations",
 					"openspec/specs/notification-booking-email-templates :: REQ-BET-005: Reminder template timing configuration",
-					"openspec/changes/bookings-messages-and-embedding/specs/notification-booking-email-templates :: A booking reminder mail leaves at its configured time (REQ-BET-011)"
+					"openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-email-templates :: A booking reminder mail leaves at its configured time (REQ-BET-011)"
 				],
 				"plan": "bookings-messages-and-embedding"
 			},
@@ -5450,7 +5450,7 @@
 				"requirement": [
 					"openspec/specs/notification-booking-sms-reminders :: REQ-SMS-001: Channel CRUD operations",
 					"openspec/specs/notification-booking-sms-reminders :: REQ-SMS-005: Delivery scheduling with send time",
-					"openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders :: A reminder SMS goes to the configured provider at its send time (REQ-SMS-021)"
+					"openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-sms-reminders :: A reminder SMS goes to the configured provider at its send time (REQ-SMS-021)"
 				],
 				"plan": "bookings-messages-and-embedding"
 			},
@@ -5490,7 +5490,7 @@
 				"change": "2026-07-14-bookings-depth",
 				"requirement": [
 					"openspec/specs/bookings-recurring-series :: REQ-BRS-001 AppointmentSeries register + Appointment recurrence overlay",
-					"openspec/changes/bookings-messages-and-embedding/specs/bookings-recurring-series :: The booking form offers a repeat option that creates the series (REQ-BRS-004)"
+					"openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-recurring-series :: The booking form offers a repeat option that creates the series (REQ-BRS-004)"
 				],
 				"plan": "bookings-messages-and-embedding"
 			},
@@ -5599,8 +5599,8 @@
 				"change": "sales-billable-rate-per-hour",
 				"readOn": "2026-10-07",
 				"requirement": [
-					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: An hour resolves its billable rate by tier from the assignment's rate card (REQ-BRPH-001)",
-					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: The project page shows rated hours and the unbilled value (REQ-BRPH-003)"
+					"openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/specs/rate-card-management :: An hour resolves its billable rate by tier from the assignment's rate card (REQ-BRPH-001)",
+					"openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/specs/rate-card-management :: The project page shows rated hours and the unbilled value (REQ-BRPH-003)"
 				],
 				"plan": "hours-to-humaniq"
 			},
@@ -5710,7 +5710,7 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-002: IB47Record register",
 					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-005: IB47-formulier docudesk template",
-					"openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie :: The annual IB47 batch is prepared from the payments to third parties (REQ-DPA-021)"
+					"openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie :: The annual IB47 batch is prepared from the payments to third parties (REQ-DPA-021)"
 				],
 				"plan": "people-ib47-statement"
 			},
@@ -5896,8 +5896,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "platform-mobile-pwa",
 				"requirement": [
-					"openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: A receipt is captured with the camera (REQ-PMP-002)",
-					"openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: An invoice is issued from the phone only online (REQ-PMP-004)"
+					"openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile :: A receipt is captured with the camera (REQ-PMP-002)",
+					"openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile :: An invoice is issued from the phone only online (REQ-PMP-004)"
 				]
 			},
 			"screen": {
@@ -5916,7 +5916,7 @@
 			"feature": "mobile-and-interface",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "No iOS or Android app of its own. Specified 2026-09-27 in openspec/changes/platform-mobile-pwa (OpenSpec pass)."
+			"note": "No iOS or Android app of its own. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-platform-mobile-pwa (OpenSpec pass)."
 		},
 		{
 			"id": "plt-kvk",
@@ -5935,7 +5935,7 @@
 				"owner": "ConductionNL/integriq",
 				"change": "contacts-kvk-lookup",
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/contacts-kvk-lookup/specs/contact-kvk-lookup :: Picking a company fills the empty details (REQ-KVKL-002)"
+				"requirement": "openspec/changes/archive/2026-11-24-contacts-kvk-lookup/specs/contact-kvk-lookup :: Picking a company fills the empty details (REQ-KVKL-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6269,8 +6269,8 @@
 				"owner": "ConductionNL/integriq",
 				"change": "adopt-connection-registry",
 				"requirement": [
-					"openspec/changes/adopt-connection-registry/specs/external-connections :: The External Connections page lists shillinq's rows from integriq's registry (REQ-EXTCONN-001)",
-					"openspec/changes/adopt-connection-registry/specs/external-connections :: Shillinq reports the adapter it sees for each called family (REQ-EXTCONN-003)"
+					"openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections :: The External Connections page lists shillinq's rows from integriq's registry (REQ-EXTCONN-001)",
+					"openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections :: Shillinq reports the adapter it sees for each called family (REQ-EXTCONN-003)"
 				],
 				"plan": "integration-config-to-openconnector"
 			},
@@ -6307,7 +6307,7 @@
 				"reachedOn": "BbvMapping /overheid/bbv-mapping (settings gear); BBVComplianceDashboard /bbv-dashboard",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-task-field-allocation",
-				"requirement": "openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance :: Realisation is shown per task field (REQ-BBV-012)"
+				"requirement": "openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance :: Realisation is shown per task field (REQ-BBV-012)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6415,8 +6415,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability",
 				"requirement": [
-					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)",
-					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: The appendix is exported for the annual accounts (REQ-SISA-013)"
+					"openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)",
+					"openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: The appendix is exported for the annual accounts (REQ-SISA-013)"
 				]
 			},
 			"screen": {
@@ -6490,7 +6490,7 @@
 				"reachedOn": "BcfClaims /overheid/bcf-claims lists claims",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-quarterly-returns",
-				"requirement": "openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation :: A claim is computed for its quarter (REQ-BCF-010)"
+				"requirement": "openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation :: A claim is computed for its quarter (REQ-BCF-010)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6526,8 +6526,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-quarterly-returns",
 				"requirement": [
-					"openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury :: The cash limit is computed (REQ-FDO-010)",
-					"openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury :: The interest risk norm is shown on the dashboard (REQ-FDO-011)"
+					"openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury :: The cash limit is computed (REQ-FDO-010)",
+					"openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury :: The interest risk norm is shown on the dashboard (REQ-FDO-011)"
 				]
 			},
 			"screen": {
@@ -6601,8 +6601,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-task-field-allocation",
 				"requirement": [
-					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation :: An allocation run splits a key's costs over the participants (REQ-GRC-007)",
-					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation :: A confirmed run invoices the participants (REQ-GRC-008)"
+					"openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation :: An allocation run splits a key's costs over the participants (REQ-GRC-007)",
+					"openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation :: A confirmed run invoices the participants (REQ-GRC-008)"
 				]
 			},
 			"screen": {
@@ -6640,8 +6640,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-task-field-allocation",
 				"requirement": [
-					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation :: A cost price is calculated from the books (REQ-WMO-013)",
-					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation :: Cross subsidy signals are logged (REQ-WMO-014)"
+					"openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation :: A cost price is calculated from the books (REQ-WMO-013)",
+					"openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation :: Cross subsidy signals are logged (REQ-WMO-014)"
 				]
 			},
 			"screen": {
@@ -6678,8 +6678,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-council-and-auditor-statements",
 				"requirement": [
-					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie :: Transitions produce the findings and the statement (REQ-ENSIA-011)",
-					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie :: The submission XML is downloaded (REQ-ENSIA-012)"
+					"openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie :: Transitions produce the findings and the statement (REQ-ENSIA-011)",
+					"openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie :: The submission XML is downloaded (REQ-ENSIA-012)"
 				]
 			},
 			"screen": {
@@ -6752,8 +6752,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability",
 				"requirement": [
-					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording :: Determining a grant settles the difference (REQ-SUBV-011)",
-					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)"
+					"openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording :: Determining a grant settles the difference (REQ-SUBV-011)",
+					"openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)"
 				]
 			},
 			"screen": {
@@ -6790,8 +6790,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability",
 				"requirement": [
-					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen :: A declaration bundles eligible expenditure with evidence (REQ-EUF-012)",
-					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen :: An irregularity at or above the reporting threshold needs an external reference (REQ-EUF-007)"
+					"openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen :: A declaration bundles eligible expenditure with evidence (REQ-EUF-012)",
+					"openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen :: An irregularity at or above the reporting threshold needs an external reference (REQ-EUF-007)"
 				]
 			},
 			"screen": {
@@ -6828,8 +6828,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-council-and-auditor-statements",
 				"requirement": [
-					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol :: A sample is drawn reproducibly (REQ-011)",
-					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol :: The protocol page shows the aggregation (REQ-012)"
+					"openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol :: A sample is drawn reproducibly (REQ-011)",
+					"openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol :: The protocol page shows the aggregation (REQ-012)"
 				]
 			},
 			"screen": {
@@ -7951,8 +7951,8 @@
 				"reachedOn": "nothing",
 				"change": "tax-vat-rates-and-deductibility",
 				"requirement": [
-					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-journal-entries :: A cost line with a deductible share posts in two parts (REQ-TVRD-004)",
-					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-chart-of-accounts :: A ledger account carries a deductible share and a private-share account (REQ-TVRD-003)"
+					"openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/specs/bookkeeping-journal-entries :: A cost line with a deductible share posts in two parts (REQ-TVRD-004)",
+					"openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/specs/bookkeeping-chart-of-accounts :: A ledger account carries a deductible share and a private-share account (REQ-TVRD-003)"
 				]
 			},
 			"screen": {
@@ -7973,7 +7973,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "lib/Service/TaxReportCalculator.php:202 adds nonDeductible expense back on the income tax return, but no booking splits a mixed cost into a deductible share with its VAT. Specified 2026-09-27 in openspec/changes/tax-vat-rates-and-deductibility (OpenSpec pass)."
+			"note": "lib/Service/TaxReportCalculator.php:202 adds nonDeductible expense back on the income tax return, but no booking splits a mixed cost into a deductible share with its VAT. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility (OpenSpec pass)."
 		},
 		{
 			"id": "plt-ai-fill",
@@ -8034,7 +8034,7 @@
 				"evidence": "The inventory scanner is an offline-first PWA whose queued scans sync through POST /api/inventory/scan (appinfo/routes.php:628, lib/Controller/InventoryScanController.php:189).",
 				"reachedOn": "inventory mobile scanner (src/registry.js:15)",
 				"change": "platform-mobile-pwa",
-				"requirement": "openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: Work done offline is queued and synced once (REQ-PMP-003)"
+				"requirement": "openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile :: Work done offline is queued and synced once (REQ-PMP-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8054,7 +8054,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-20-release-notes",
-			"note": "Offline only for warehouse scanning. Specified 2026-09-27 in openspec/changes/platform-mobile-pwa (OpenSpec pass)."
+			"note": "Offline only for warehouse scanning. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-platform-mobile-pwa (OpenSpec pass)."
 		},
 		{
 			"id": "sal-tap-to-pay",

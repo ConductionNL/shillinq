@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 
 declare(strict_types=1);
@@ -60,7 +60,7 @@ use Throwable;
 /**
  * The Next run preview, the last run report and a ladder's stage texts.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 class DunningPreviewController extends Controller {
 	/**
@@ -109,7 +109,7 @@ class DunningPreviewController extends Controller {
 	 * @return JSONResponse 200 {administrations: [{administrationId, id, name, enabled, lastRun, rows}]};
 	 *                      401 without a user; 400 on a malformed id; 404 outside the caller's scope.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	#[NoAdminRequired]
 	public function nextRun(): JSONResponse {
@@ -216,7 +216,7 @@ class DunningPreviewController extends Controller {
 	 * @return JSONResponse 200 {rows: [{nr, days, channel, channelLabel, subject, body}]};
 	 *                      401 without a user; 404 when the caller cannot see the ladder.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	#[NoAdminRequired]
 	public function ladderStages(string $id): JSONResponse {

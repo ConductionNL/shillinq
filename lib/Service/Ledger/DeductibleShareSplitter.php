@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-3.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -87,7 +87,7 @@ class DeductibleShareSplitter {
 	 *
 	 * @throws RuntimeException When the percentage is not a number from 0 to 100.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-3.2
 	 */
 	public function percentage(array $line): float {
 		$accountNumber = (string)($line['accountNumber'] ?? '');
@@ -128,7 +128,7 @@ class DeductibleShareSplitter {
 	 *
 	 * @throws RuntimeException When the account has no private-share account.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-3.2
 	 */
 	public function split(array $costLine, float $percentage, ?float $vatCents): array {
 		$cents = (int)$costLine['cents'];

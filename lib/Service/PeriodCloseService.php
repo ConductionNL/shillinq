@@ -282,7 +282,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures/spec.md
 	 */
 	private function storeLeaseDisclosures(array $record, string $administrationId, string $periodId): void {
 		if ($this->leaseDisclosures === null) {

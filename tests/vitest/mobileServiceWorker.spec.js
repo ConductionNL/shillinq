@@ -8,7 +8,7 @@
  * without service workers or IndexedDB, and a failed registration; and the
  * web app manifest the worker's shell serves.
  *
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
  */
 
 import { readFileSync } from 'node:fs'

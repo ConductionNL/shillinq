@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Service\Dunning;
  *
  * Placeholders are DunningTemplateRegistry's merge fields, written `{name}`.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.1
  */
 final class DunningStageDefaultTexts {
 
@@ -145,7 +145,7 @@ final class DunningStageDefaultTexts {
 	 *
 	 * @return array{subject: string, body: string} The text, placeholders unfilled.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.1
 	 */
 	public function for(int $stageNr, string $language): array {
 		$stageNr = max(1, min($stageNr, count(self::TEXTS)));

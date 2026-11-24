@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCA\Shillinq\Kernel\Contracts\JointArrangementAllocationInterface;
 /**
  * Proposes, confirms or invoices an allocation run.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
  */
 class JointArrangementAllocationAction implements LifecycleActionInterface {
 
@@ -60,7 +60,7 @@ class JointArrangementAllocationAction implements LifecycleActionInterface {
 	 *
 	 * @throws DomainException When the step is unknown or refuses the run.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		return match ((string)($context->parameters['step'] ?? '')) {

@@ -213,7 +213,7 @@ class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 	 *
 	 * @return array<string,mixed> The stored table.
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures/spec.md
 	 */
 	public function materialiseForPeriod(string $administrationId, string $fiscalPeriod): array {
 		$table = $this->generateForPeriod(administrationId: $administrationId, fiscalPeriod: $fiscalPeriod);

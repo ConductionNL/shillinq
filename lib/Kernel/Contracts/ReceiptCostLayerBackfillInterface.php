@@ -42,7 +42,7 @@ interface ReceiptCostLayerBackfillInterface {
 	 *
 	 * @return array{locations: int, receipts: int, undercosted: array<int, array<string, mixed>>}
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
 	 */
 	public function run(): array;
 }//end interface

@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ use OCA\Shillinq\Kernel\Contracts\EnsiaCycleStepsInterface;
 /**
  * Creates the findings of an ENSIA cycle from its answers when it moves to peer review (REQ-ENSIA-011).
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 class CreateEnsiaFindingsAction implements LifecycleActionInterface {
 
@@ -52,7 +52,7 @@ class CreateEnsiaFindingsAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed> The cycle, unchanged.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

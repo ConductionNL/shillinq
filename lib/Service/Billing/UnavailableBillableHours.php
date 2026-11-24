@@ -67,7 +67,7 @@ class UnavailableBillableHours implements BillableHoursSource {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The interface's arguments; this source reads nothing.
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-4.1
 	 */
 	public function forProject(string $projectId, string $from, string $to): array {
 		return ['available' => false, 'reason' => self::REASON, 'hours' => []];

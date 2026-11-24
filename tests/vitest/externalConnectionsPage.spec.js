@@ -19,7 +19,7 @@
  * `{ ...BUILT_IN_FORMATTERS, ...formatters }`, so an app formatter of the same
  * name would shadow the library's. Shillinq passes none.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+ * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
  */
 
 import fs from 'fs'

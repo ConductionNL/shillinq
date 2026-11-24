@@ -6,7 +6,7 @@
  *
  * SHILLINQ_GOLDEN_RECORD=1 rewrites the record.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 
 import { describe, it } from 'vitest'

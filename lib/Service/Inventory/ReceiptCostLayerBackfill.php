@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
+ * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Replays the stock ledger into the valuation snapshots, once.
  *
- * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
+ * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
  */
 class ReceiptCostLayerBackfill implements ReceiptCostLayerBackfillInterface {
 	use ReadsSourceRowsInBatches;
@@ -65,7 +65,7 @@ class ReceiptCostLayerBackfill implements ReceiptCostLayerBackfillInterface {
 	 *         `undercosted` lists each issue whose posted COGS differs from the
 	 *         layer-based one: move, movementNumber, postedCogs, layerCogs (EUR).
 	 *
-	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
+	 * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-past-receipts-get-their-layers-once-req-ircl-003
 	 */
 	public function run(): array {
 		$result = ['locations' => 0, 'receipts' => 0, 'undercosted' => []];

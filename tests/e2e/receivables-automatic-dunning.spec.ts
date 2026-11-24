@@ -16,16 +16,46 @@
  *      letter uses, read from `GET /api/dunning/ladders/{id}/stages`. An
  *      instance without a ladder skips this step and says so.
  *
- * The caller is the suite's administrator (globalSetup's storage state). The
- * spec writes nothing. Written 24 Nov 2026, runs in the nightly; not run in
- * the build sandbox (no live instance).
+ * The live check of the job (task 5.1, REQ-RAD-001, REQ-RAD-003,
+ * REQ-RAD-006), through the HTTP surface the change has:
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md
+ *   4. dunning is switched on for a seeded administration the way the
+ *      administration page's Switch on reminders action does it (a PATCH of
+ *      `dunningEnabled` on the Administration object), and the Next run
+ *      answer then shows it on, with the stage and channel each invoice would
+ *      get; the rows are recorded in the report;
+ *   5. running `DunningTickJob` with `occ background-job:execute` is not
+ *      reachable from Playwright: test.fixme with that reason;
+ *   6. once the job has run for an administration with reminders on (that
+ *      occ step, or the instance's daily cron), its stored run report, read
+ *      from the Next run answer, counts at least one sent and one manual
+ *      stage, and the DunningRun objects of that run hold a stage-1 EMAIL run
+ *      DELIVERED and a stage-4 run MANUAL; their ids go in the report for the
+ *      PR body. When no administration with reminders on has a run report
+ *      yet, the test skips and says so;
+ *   7. the mail arriving in the customer's mailbox has no surface in the
+ *      suite (no mail catcher; DELIVERED means the mail server accepted it):
+ *      test.fixme with that reason.
+ *
+ * The administration of step 4 is `E2E_ADMINISTRATION_ID` when set, else the
+ * first one the Next run answer lists with invoices to chase, else the first.
+ * Step 4 puts the switch back as it found it afterwards, unless
+ * `E2E_DUNNING_KEEP_ENABLED=1`, which leaves reminders on for the occ step
+ * of the live pass.
+ *
+ * The caller is the suite's administrator (globalSetup's storage state).
+ * Steps 1 to 3 and 6 write nothing. Written 24 Nov 2026, runs in the
+ * nightly; not run in the build sandbox (no live instance).
+ *
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md
  *
  * @e2e bookkeeping-credit-control-dunning::a-bookkeeper-checks-before-switching-dunning-on
+ * @e2e bookkeeping-credit-control-dunning::the-first-reminder-goes-out-without-anyone-acting
+ * @e2e bookkeeping-credit-control-dunning::the-notice-of-default-must-be-posted
  */
 
-import type { Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
 
@@ -44,6 +74,31 @@ interface NextRunEntry {
 	rows: Array<Record<string, unknown>>
 }
 
+/** The stored report of one job run (DunningTickRunner::runAdministration). */
+interface RunReport {
+	administrationId: string
+	ranAt: string
+	markedOverdue: number
+	sent: number
+	failed: number
+	manual: number
+	skipped: number
+	errors: number
+	locked: boolean
+}
+
+/** One DunningRun object as the object API answers it. */
+interface DunningRunRow {
+	id?: string
+	'@self'?: { id?: string }
+	invoiceId?: string
+	stageNr?: number | string
+	channel?: string
+	deliveryStatus?: string
+	deliveryNote?: string
+	executedOn?: string
+}
+
 /** One stage row of a ladder (DunningPreviewController::ladderStages). */
 interface StageRow {
 	nr: number
@@ -53,6 +108,11 @@ interface StageRow {
 	body?: string
 }
 
+/**
+ * Close the first-run wizard when Nextcloud shows it over the page.
+ *
+ * @param page The page.
+ */
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
@@ -126,5 +186,126 @@ test.describe('receivables-automatic-dunning: the Next run preview', () => {
 	test('an unknown ladder is answered not found @spec REQ-RAD-008', async ({ request }) => {
 		const res = await request.get(`${API}/dunning/ladders/00000000-0000-0000-0000-000000000000/stages`, { headers: HEADERS })
 		expect(res.status()).toBe(404)
+	})
+})
+
+test.describe('receivables-automatic-dunning: the daily job on a seeded administration', () => {
+	let switched: { id: string, before: boolean } | null = null
+
+	/**
+	 * The Next run answer, for one administration or all of them.
+	 *
+	 * @param request          The request context.
+	 * @param administrationId The administration, or '' for every one the caller holds.
+	 * @return The entries.
+	 */
+	async function nextRun(request: APIRequestContext, administrationId = ''): Promise<NextRunEntry[]> {
+		const query = administrationId === '' ? '' : `?administrationId=${encodeURIComponent(administrationId)}`
+		const res = await request.get(`${API}/dunning/next-run${query}`, { headers: HEADERS })
+		expect(res.status(), await res.text()).toBe(200)
+		return ((await res.json()) as { administrations: NextRunEntry[] }).administrations
+	}
+
+	/**
+	 * Set `dunningEnabled` on an Administration, as the Switch on reminders action does.
+	 *
+	 * @param request The request context.
+	 * @param id      The Administration record id.
+	 * @param enabled The value.
+	 */
+	async function setEnabled(request: APIRequestContext, id: string, enabled: boolean): Promise<void> {
+		const html = await (await request.get('/index.php/apps/shillinq/')).text()
+		const token = html.match(/data-requesttoken="([^"]+)"/)?.[1] ?? ''
+		const res = await request.patch(`${OBJECTS}/Administration/${encodeURIComponent(id)}`, {
+			headers: { ...HEADERS, requesttoken: token, 'Content-Type': 'application/json' },
+			data: { dunningEnabled: enabled },
+		})
+		expect(res.ok(), await res.text()).toBe(true)
+	}
+
+	/**
+	 * The DunningRun objects filed under one administration key.
+	 *
+	 * @param request The request context.
+	 * @param key     The administration code or record id.
+	 * @return The runs.
+	 */
+	async function runsOf(request: APIRequestContext, key: string): Promise<DunningRunRow[]> {
+		const res = await request.get(`${OBJECTS}/DunningRun?administrationId=${encodeURIComponent(key)}&_limit=500`, { headers: HEADERS })
+		expect(res.ok(), await res.text()).toBe(true)
+		const body = await res.json()
+		return (body.results ?? body.items ?? []) as DunningRunRow[]
+	}
+
+	test.afterAll(async ({ playwright, baseURL }) => {
+		if (switched === null || process.env.E2E_DUNNING_KEEP_ENABLED === '1') {
+			return
+		}
+		const api = await playwright.request.newContext({ baseURL, storageState: 'tests/e2e/.auth/admin.json' })
+		await setEnabled(api, switched.id, switched.before).catch(() => undefined)
+		await api.dispose()
+	})
+
+	test('dunning is switched on for a seeded administration and the next run shows what the job will send @spec REQ-RAD-001', async ({ request }) => {
+		const entries = await nextRun(request)
+		const wanted = process.env.E2E_ADMINISTRATION_ID ?? ''
+		const entry = wanted !== ''
+			? entries.find((e) => e.administrationId === wanted || e.id === wanted)
+			: (entries.find((e) => e.rows.length > 0) ?? entries[0])
+		test.skip(entry === undefined, wanted !== '' ? `the administrator holds no membership of ${wanted}` : 'the administrator holds no administration')
+
+		switched = { id: String(entry?.id), before: entry?.enabled === true }
+		await setEnabled(request, switched.id, true)
+
+		const [after] = await nextRun(request, switched.id)
+		expect(after.enabled, 'reminders are on').toBe(true)
+		for (const row of after.rows) {
+			expect(Number(row.stageNr)).toBeGreaterThanOrEqual(1)
+			expect(typeof row.channel).toBe('string')
+		}
+		test.info().annotations.push({
+			type: 'next run',
+			description: `${after.administrationId}: ${after.rows.map((row) => `${String(row.invoiceNumber ?? row.invoiceId)} stage ${String(row.stageNr)} ${String(row.channel)}`).join(', ') || 'nothing due'}`,
+		})
+	})
+
+	test('the job runs with occ background-job:execute @spec REQ-RAD-001', async () => {
+		test.fixme(true, 'DunningTickJob runs from cron or `occ background-job:execute <job id>` on the instance; no HTTP route starts it, so Playwright cannot run it. The test below reads what the run left behind.')
+	})
+
+	test('after the job ran, its report and runs show a delivered stage-1 mail and a manual stage-4 run @spec REQ-RAD-001 @spec REQ-RAD-003 @spec REQ-RAD-006', async ({ request }) => {
+		const wanted = process.env.E2E_ADMINISTRATION_ID ?? ''
+		const entry = (await nextRun(request))
+			.filter((e) => wanted === '' || e.administrationId === wanted || e.id === wanted)
+			.find((e) => e.enabled && e.lastRun !== null && typeof e.lastRun === 'object')
+		test.skip(entry === undefined, 'no administration with reminders on has a job run report yet; run `occ background-job:execute` for DunningTickJob after the switch-on test (with E2E_DUNNING_KEEP_ENABLED=1), or wait for the daily cron')
+
+		const report = entry?.lastRun as RunReport
+		expect(report.locked, 'the run was not blocked by another one').toBe(false)
+		test.skip(
+			report.sent + report.manual + report.failed === 0,
+			`the last run (${report.ranAt}) had nothing to send: the administration holds no overdue invoice due for a stage`,
+		)
+		expect(report.sent, 'the run sent at least one stage').toBeGreaterThanOrEqual(1)
+		expect(report.manual, 'the run handed at least one stage to a person').toBeGreaterThanOrEqual(1)
+
+		const day = String(report.ranAt).slice(0, 10)
+		const keys = [...new Set([entry?.administrationId ?? '', entry?.id ?? ''].filter((key) => key !== ''))]
+		const runs = (await Promise.all(keys.map((key) => runsOf(request, key)))).flat()
+			.filter((run) => String(run.executedOn ?? '').slice(0, 10) === day)
+
+		const delivered = runs.find((run) => Number(run.stageNr) === 1 && run.channel === 'EMAIL' && run.deliveryStatus === 'DELIVERED')
+		const manual = runs.find((run) => Number(run.stageNr) === 4 && run.deliveryStatus === 'MANUAL')
+		expect(delivered, `a stage-1 EMAIL run DELIVERED on ${day}`).toBeDefined()
+		expect(manual, `a stage-4 run MANUAL on ${day}`).toBeDefined()
+		expect(runs.some((run) => run.deliveryStatus === 'DELIVERED' && run.channel !== 'EMAIL' && run.channel !== 'eMAILPostRegistration'), 'no non-mail stage is recorded delivered').toBe(false)
+
+		for (const [label, run] of [['stage 1 delivered', delivered], ['stage 4 manual', manual]] as const) {
+			test.info().annotations.push({ type: 'DunningRun', description: `${label}: ${String(run?.id ?? run?.['@self']?.id ?? '')} (invoice ${String(run?.invoiceId ?? '')})` })
+		}
+	})
+
+	test('the stage-1 mail arrives in the customer\'s mailbox @spec REQ-RAD-003', async () => {
+		test.fixme(true, 'the suite has no mail catcher, and DELIVERED only records that the mail server accepted the message; the arrival is checked by hand in the live pass')
 	})
 })

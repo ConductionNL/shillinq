@@ -31,8 +31,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
- * @spec openspec/changes/integration-config-to-openconnector/tasks.md#task-6
+ * @spec openspec/changes/archive/2026-11-24-integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
+ * @spec openspec/changes/archive/2026-11-24-integration-config-to-openconnector/tasks.md#task-6
  *
  * @e2e integration-config-to-openconnector::the-roster-page-lists-all-15-declared-families
  * @e2e integration-config-to-openconnector::no-per-adapter-detail-route-exists-any-more

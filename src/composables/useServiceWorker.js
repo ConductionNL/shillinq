@@ -67,7 +67,7 @@ const MOBILE_SW_SCOPE = '/apps/shillinq/mobile/'
  * online only.
  *
  * @return {Promise<ServiceWorkerRegistration|null>} The registration or null.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-shillinq-mobile-is-installable-on-a-phone-req-pmp-001
  */
 export async function registerMobileServiceWorker() {
 	if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
@@ -87,7 +87,7 @@ export async function registerMobileServiceWorker() {
  * service worker for the shell and IndexedDB for the queue.
  *
  * @return {boolean} True when both are available.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export function supportsOfflineMobile() {
 	return typeof navigator !== 'undefined'

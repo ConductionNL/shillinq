@@ -6,7 +6,7 @@
 // POST /api/v1/appointment-series expands (FREQ DAILY|WEEKLY|MONTHLY,
 // INTERVAL, COUNT or UNTIL), and sends the series.
 //
-// @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md
+// @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -28,7 +28,7 @@ const FREQUENCIES = Object.freeze({ daily: 'DAILY', weekly: 'WEEKLY', monthly: '
  * @param {number} [repeat.count] How many times in all, for count.
  * @param {string} [repeat.until] The last date, YYYY-MM-DD, for until.
  * @return {string} The RRULE.
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
  */
 export function recurrenceRule(repeat) {
 	const freq = FREQUENCIES[repeat?.frequency]
@@ -66,7 +66,7 @@ export function recurrenceRule(repeat) {
  * @param {object} form The form.
  * @param {(app: string, text: string, vars?: object) => string} translate The t() of the caller, so the sentence is translated.
  * @return {string} The reason.
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
  */
 export function seriesProblem(form, translate) {
 	if (!form.serviceId || !form.resourceId) {
@@ -98,7 +98,7 @@ export function seriesProblem(form, translate) {
  * A new series id.
  *
  * @return {string} The id.
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
  */
 export function newSeriesId() {
 	if (globalThis.crypto?.randomUUID) {
@@ -114,7 +114,7 @@ export function newSeriesId() {
  * @param {string} administrationId The active administration.
  * @param {string} seriesId The series id.
  * @return {object} The body.
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
  */
 export function seriesPayload(form, administrationId, seriesId) {
 	const payload = {
@@ -137,7 +137,7 @@ export function seriesPayload(form, administrationId, seriesId) {
  *
  * @param {object} payload The body from seriesPayload().
  * @return {Promise<{seriesId: string, generated: number, skipped: number}>} The answer.
- * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
  */
 export async function createAppointmentSeries(payload) {
 	const response = await axios.post(generateUrl('/apps/shillinq/api/v1/appointment-series'), payload)
@@ -151,7 +151,7 @@ export async function createAppointmentSeries(payload) {
  * @param {string} administrationId The administration.
  * @param {string} idField serviceId or resourceId.
  * @return {Promise<Array<{id: string, label: string, duration: number}>>} The options.
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
  */
 export async function loadOptions(schema, administrationId, idField) {
 	const response = await axios.get(generateUrl('/apps/openregister/api/objects/shillinq/' + schema), {

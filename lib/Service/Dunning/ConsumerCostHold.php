@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use Throwable;
 /**
  * Holds collection costs back for a consumer until the 14-day letter period passed.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
  */
 final class ConsumerCostHold {
 
@@ -63,7 +63,7 @@ final class ConsumerCostHold {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
 	 */
 	public function isConsumer(array $customer, array $invoice): bool {
 		foreach ([$customer['kvkNumber'] ?? null, $customer['vatId'] ?? null, $invoice['buyerVatId'] ?? null] as $identifier) {
@@ -83,7 +83,7 @@ final class ConsumerCostHold {
 	 *
 	 * @return array<string,mixed> The params.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
 	 */
 	public function apply(CostHoldRequest $request): array {
 		$params = $request->params;

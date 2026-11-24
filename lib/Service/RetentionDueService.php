@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-retention-due-records/tasks.md#1-retention-end-date
+ * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/tasks.md#1-retention-end-date
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use Throwable;
 /**
  * Lists the records whose retention end date lies before today.
  *
- * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+ * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
  */
 class RetentionDueService implements RetentionDueServiceInterface {
 
@@ -87,7 +87,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	 *
 	 * @return array<int, array{register: string, recordId: string, ruleCode: string, endDate: string, disposition: string}>
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	public function dueFor(string $administrationId, DateTimeImmutable $today): array {
 		if ($administrationId === '') {
@@ -131,7 +131,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	 *
 	 * @return array<int, array{register: string, recordId: string, ruleCode: string, endDate: string, disposition: string}>
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	public static function due(array $records, string $schema, string $dateField, array $rule, array $heldIds, DateTimeImmutable $today): array {
 		$years       = self::years(rule: $rule);
@@ -173,7 +173,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	 *
 	 * @return bool True when nothing under the rule is ever due.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	private static function isNeverDue(int|null $years, string $disposition): bool {
 		return $years === null || in_array($disposition, self::NEVER_DUE, true) === true;
@@ -188,7 +188,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	 *
 	 * @return bool True when the record is not due.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	private static function hasNotEnded(string $id, string|null $end, string $day): bool {
 		return $id === '' || $end === null || $end >= $day;
@@ -203,7 +203,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	 *
 	 * @return bool True when held.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	private static function isHeld(array $record, string $id, array $heldIds): bool {
 		return ($record['legalHold'] ?? false) === true || in_array($id, $heldIds, true) === true;
@@ -220,7 +220,7 @@ class RetentionDueService implements RetentionDueServiceInterface {
 	 *
 	 * @return array<string, mixed>|null The rule, or null.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	public static function ruleFor(array $rules, string $code, string $administrationId): ?array {
 		$found = null;

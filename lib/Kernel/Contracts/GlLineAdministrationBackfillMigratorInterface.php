@@ -101,7 +101,7 @@ interface GlLineAdministrationBackfillMigratorInterface {
 	 *
 	 * @throws RuntimeException When any row is unclassifiable (count guard).
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function backfillBatch(array $glLines, array $glTransactions): array;
 
@@ -118,7 +118,7 @@ interface GlLineAdministrationBackfillMigratorInterface {
 	 *
 	 * @return int How many rows lack a non-empty `administrationId`.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function countMissingAdministrationId(array $glLines): int;
 }//end interface

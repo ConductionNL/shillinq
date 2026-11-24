@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-email-templates/spec.md
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-email-templates/spec.md
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use Throwable;
 /**
  * Mails a rendered notification through Nextcloud's mailer.
  *
- * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-email-templates/spec.md
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-email-templates/spec.md
  */
 class NotificationMailer {
 	/**
@@ -62,7 +62,7 @@ class NotificationMailer {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.2
 	 */
 	public function send(string $address, string $subject, string $body): bool {
 		if ($this->mailer->validateMailAddress($address) === false) {

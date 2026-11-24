@@ -78,7 +78,7 @@ class RateCardResolver {
 	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}|null Null when no rate resolves.
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.2
 	 */
 	public function resolveRate(string $rateCardId, string $resourceType, string $date, string $administrationId): ?array {
 		$query = new RateQuery();
@@ -209,7 +209,7 @@ class RateCardResolver {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.2
 	 */
 	private function logNoRate(RateQuery $query, string $reason): void {
 		$this->logger->warning(

@@ -42,7 +42,7 @@ interface RuleTestDataSeederInterface {
 	 *
 	 * @return array<string, int> Counts: sourceReferencesAdded, linesAdded, alreadyCompliant.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function seed(): array;
 }//end interface

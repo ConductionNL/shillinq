@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * Sends the due booking SMS reminders.
  *
- * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
  */
 class SmsReminderJob extends TimedJob {
 	/**
@@ -73,7 +73,7 @@ class SmsReminderJob extends TimedJob {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
 	protected function run(mixed $argument): void {
 		try {

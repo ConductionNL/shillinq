@@ -48,7 +48,7 @@ interface JointArrangementAllocationInterface {
 	 *
 	 * @throws DomainException When the run cannot be proposed.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
 	public function propose(array $run): array;
 
@@ -61,7 +61,7 @@ interface JointArrangementAllocationInterface {
 	 *
 	 * @throws DomainException When the run has no lines or its key and period already have a confirmed run.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
 	public function confirm(array $run): array;
 
@@ -74,7 +74,7 @@ interface JointArrangementAllocationInterface {
 	 *
 	 * @throws DomainException When a participant to invoice has no customer.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
 	public function invoice(array $run): array;
 }//end interface

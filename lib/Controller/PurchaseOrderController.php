@@ -143,9 +143,12 @@ class PurchaseOrderController extends Controller {
 	}//end created()
 
 	/**
-	 * The posted purchase order form.
+	 * The posted purchase order form, with the framework agreement a call-off
+	 * draws on and the requisition it fulfils.
 	 *
 	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function orderPayload(): array {
 		return [
@@ -155,6 +158,8 @@ class PurchaseOrderController extends Controller {
 			'currency' => trim((string)$this->request->getParam('currency', 'EUR')),
 			'lines' => (array)$this->request->getParam('lines', []),
 			'notes' => (string)$this->request->getParam('notes', ''),
+			'frameworkAgreementId' => trim((string)$this->request->getParam('frameworkAgreementId', '')),
+			'requisitionId' => trim((string)$this->request->getParam('requisitionId', '')),
 		];
 	}//end orderPayload()
 

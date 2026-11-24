@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use OCP\IAppConfig;
 /**
  * Proposes and submits the declaration of an EU project's expenditure.
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  */
 class EuDeclarationBuilder implements EuDeclarationBuilderInterface {
 
@@ -93,7 +93,7 @@ class EuDeclarationBuilder implements EuDeclarationBuilderInterface {
 	 *
 	 * @throws DomainException When the period is invalid or an open irregularity blocks the project.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
 	 */
 	public function propose(array $project, string $periodFrom, string $periodTo): array {
 		$projectId = (string)($project['id'] ?? '');
@@ -161,7 +161,7 @@ class EuDeclarationBuilder implements EuDeclarationBuilderInterface {
 	 *
 	 * @throws DomainException When an expenditure of the declaration can no longer be submitted.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-submitting-a-declaration-submits-its-expenditures-req-euf-013
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-submitting-a-declaration-submits-its-expenditures-req-euf-013
 	 */
 	public function submit(array $declaration): array {
 		$ids = array_values(array_filter(array_map('strval', (array)($declaration['expenditureIds'] ?? [])), static fn (string $id): bool => $id !== ''));

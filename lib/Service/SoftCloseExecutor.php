@@ -233,7 +233,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
+	 * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
 	 */
 	private function deferralStep(SoftCloseRun $run, array $report): array {
 		if ($this->deferrals === null) {
@@ -687,7 +687,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *
 	 * @return int The relations eliminated for the period.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
 	 */
 	private function runIntercompanyMatching(string $administrationId, string $periodId): int {
 		if ($this->container->has(IntercompanyMatchingService::class) === false) {
@@ -718,7 +718,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *
 	 * @return array<int,string> The distinct, non-empty relation ids.
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
 	 */
 	private function intercompanyRelationIds(string $administrationId): array {
 		$filters = [];
@@ -750,7 +750,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
 	 */
 	private function isEliminated(string $relationId, string $periodId): bool {
 		$found = $this->objectService

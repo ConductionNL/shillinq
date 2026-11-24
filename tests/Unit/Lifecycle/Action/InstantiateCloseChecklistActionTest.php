@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-period-that-starts-closing-copies-the-checklist-template-req-lpe-001
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

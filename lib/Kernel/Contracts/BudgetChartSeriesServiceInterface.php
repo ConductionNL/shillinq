@@ -57,8 +57,8 @@ interface BudgetChartSeriesServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When `$from`/`$to` are malformed or `$from` is after `$to`.
 	 *
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
-	 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 	 */
 	public function resolveSeries(string $administrationId, string $from, string $to, ?string $annualBudgetId = null): array;
 }//end interface

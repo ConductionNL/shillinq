@@ -16,7 +16,7 @@ import { generateUrl } from '@nextcloud/router'
  * @param {object} headers The response headers.
  * @param {string} fallback The fallback name.
  * @return {string}
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 export function ensiaFileName(headers, fallback) {
 	const match = String(headers?.['content-disposition'] || '').match(/filename="?([^";]+)"?/)
@@ -71,7 +71,7 @@ async function downloadCycleFile(scope, file) {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {Promise<string|null>} The file name, or null when it failed.
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 export function downloadEnsiaXml(scope) {
 	return downloadCycleFile(scope, {
@@ -87,7 +87,7 @@ export function downloadEnsiaXml(scope) {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {Promise<string|null>} The file name, or null when it failed.
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 export function downloadEnsiaStatement(scope) {
 	return downloadCycleFile(scope, {

@@ -52,7 +52,7 @@ interface Ib47BatchServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the administration is empty or the year is out of range.
 	 *
-	 * @spec openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#requirement-the-annual-ib47-batch-is-prepared-from-the-payments-to-third-parties-req-dpa-021
+	 * @spec openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md#requirement-the-annual-ib47-batch-is-prepared-from-the-payments-to-third-parties-req-dpa-021
 	 */
 	public function prepare(string $administrationId, int $taxYear): array;
 }//end interface

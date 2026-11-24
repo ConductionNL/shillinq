@@ -39,7 +39,7 @@ interface SisaAppendixInterface {
 	 *
 	 * @return list<array<string,mixed>> One row per indicator.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-indicators-are-computed-per-specific-grant-req-sisa-012
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-indicators-are-computed-per-specific-grant-req-sisa-012
 	 */
 	public function forYear(string $administrationId, string $fiscalYear): array;
 
@@ -50,7 +50,7 @@ interface SisaAppendixInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
 	 */
 	public function toCsv(array $rows): string;
 }//end interface

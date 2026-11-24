@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use OCA\Shillinq\Service\LedgerActuals;
 /**
  * Proposes, confirms and invoices a joint arrangement allocation run.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
  */
 class JointArrangementAllocation implements JointArrangementAllocationInterface {
 
@@ -74,7 +74,7 @@ class JointArrangementAllocation implements JointArrangementAllocationInterface 
 	 *                         key and period already have a confirmed run, or
 	 *                         there is no active participant with a share.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
 	public function propose(array $run): array {
 		$this->assertComplete(run: $run);
@@ -116,7 +116,7 @@ class JointArrangementAllocation implements JointArrangementAllocationInterface 
 	 * @throws DomainException When the run has no lines or the key and period
 	 *                         already have a confirmed run.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
 	public function confirm(array $run): array {
 		$this->assertComplete(run: $run);
@@ -142,7 +142,7 @@ class JointArrangementAllocation implements JointArrangementAllocationInterface 
 	 *
 	 * @throws DomainException When a participant to invoice has no customer.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
 	 */
 	public function invoice(array $run): array {
 		$lines = array_values((array)($run['lines'] ?? []));

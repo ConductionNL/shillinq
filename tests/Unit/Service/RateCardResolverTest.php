@@ -247,7 +247,7 @@ final class RateCardResolverTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.2
 	 */
 	public function testAnUnknownCardHasNoRate(): void {
 		$this->logger->expects(self::once())->method('warning')
@@ -264,7 +264,7 @@ final class RateCardResolverTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-2.2
 	 */
 	public function testACardWithoutARateHasNoRate(): void {
 		$rows = [

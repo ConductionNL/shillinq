@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use OCA\Shillinq\Service\LedgerActuals;
 /**
  * Sums a year's posted lines per BBV task field.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
  */
 class TaskFieldRealisation implements TaskFieldRealisationInterface {
 
@@ -68,7 +68,7 @@ class TaskFieldRealisation implements TaskFieldRealisationInterface {
 	 *     unmapped: list<array{accountNumber: string, amount: float, mappingPage: string}>
 	 * }
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	public function forYear(string $administrationId, string $fiscalYear, string $startDate, string $endDate): array {
 		$result = ['fiscalYear' => $fiscalYear, 'taskFields' => [], 'unmapped' => []];
@@ -95,7 +95,7 @@ class TaskFieldRealisation implements TaskFieldRealisationInterface {
 	 *
 	 * @return array{0: array<string,array{expenses:int,income:int}>, 1: array<string,int>} The sums per task field and the unmapped cents.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	private function splitByTaskField(array $byAccount, array $taskFieldOf): array {
 		$fields = [];
@@ -126,7 +126,7 @@ class TaskFieldRealisation implements TaskFieldRealisationInterface {
 	 *
 	 * @return list<array{taskField: string, expenses: float, income: float}>
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	private function taskFieldRows(array $fields): array {
 		$rows = [];
@@ -149,7 +149,7 @@ class TaskFieldRealisation implements TaskFieldRealisationInterface {
 	 *
 	 * @return list<array{accountNumber: string, amount: float, mappingPage: string}>
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	private function unmappedRows(array $unmapped): array {
 		$rows = [];
@@ -209,7 +209,7 @@ class TaskFieldRealisation implements TaskFieldRealisationInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	private function isPostedInWindow(array $transaction, string $administrationId, string $startDate, string $endDate): bool {
 		$day = substr((string)($transaction['postingDate'] ?? ''), 0, 10);

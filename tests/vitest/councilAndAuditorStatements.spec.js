@@ -8,8 +8,8 @@
  * the controllers read, the manifest names handlers that exist and URLs the
  * routes serve, and the dialog sends what it was given.
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 
 import fs from 'fs'

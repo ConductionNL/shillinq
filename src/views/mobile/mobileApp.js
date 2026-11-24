@@ -7,7 +7,7 @@
  * page's form into the record the queue sends; issuing a synced draft runs
  * ARInvoice's normal issue transition and is only offered online.
  *
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md
  */
 
 import { getCurrentUser } from '@nextcloud/auth'
@@ -38,7 +38,7 @@ let queue = null
  * @param {Function} [deps.open] Opens the IndexedDB queue.
  * @param {Function} [deps.user] The signed-in user.
  * @return {Promise<{store: object, transport: object, persistent: boolean}>} The queue.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export async function mobileQueue({ open = openQueueStore, user = getCurrentUser } = {}) {
 	if (queue !== null) {
@@ -85,7 +85,7 @@ export function today(now = new Date()) {
  * @param {object} form { amount, receiptDate, category, description }.
  * @param {string} suffix A short random suffix for the number.
  * @return {object} The payload.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
  */
 export function buildReceiptPayload(form, suffix) {
 	const amount = Math.round(Number(form.amount) * 100) / 100
@@ -106,7 +106,7 @@ export function buildReceiptPayload(form, suffix) {
  * @param {object} form The form.
  * @param {Blob|null} photo The photo.
  * @return {boolean} True when complete.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
  */
 export function receiptComplete(form, photo) {
 	const amount = Number(form.amount)
@@ -123,7 +123,7 @@ export function receiptComplete(form, photo) {
  *
  * @param {object} form { customerId, invoiceDate, reference, lines }.
  * @return {object} The payload.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export function buildInvoicePayload(form) {
 	return buildQuickDraftRequest({
@@ -154,7 +154,7 @@ export function invoiceComplete(form) {
  * @param {object} item The queue item.
  * @param {boolean} online Whether the phone is online.
  * @return {boolean} True when Issue is offered.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
  */
 export function canIssue(item, online) {
 	return online === true
@@ -171,7 +171,7 @@ export function canIssue(item, online) {
  * @param {string} recordId The ARInvoice id.
  * @param {object} [http] The HTTP client.
  * @return {Promise<{invoiceNumber: string, lifecycleState: string}>} The issued invoice.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
  */
 export async function issueInvoice(recordId, http = axios) {
 	const id = encodeURIComponent(recordId)
@@ -196,7 +196,7 @@ export const CUSTOMER_CACHE_KEY = 'shillinq-mobile-customers'
  * @param {Storage} [deps.storage] Where the list is remembered.
  * @param {boolean} [deps.online] Whether the phone is online.
  * @return {Promise<Array<{value: string, label: string}>>} The options.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export async function loadCustomers({ http = axios, storage = globalThis.localStorage, online = true } = {}) {
 	const remembered = () => {

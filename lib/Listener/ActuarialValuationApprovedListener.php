@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
  */
 class ActuarialValuationApprovedListener implements IEventListener {
 
@@ -63,7 +63,7 @@ class ActuarialValuationApprovedListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false || $event->getTo() !== 'approved') {

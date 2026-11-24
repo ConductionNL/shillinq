@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -29,7 +29,7 @@ use InvalidArgumentException;
 /**
  * Names the tariff code and the date, so the refusal can be shown as is.
  *
- * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
  */
 class VatTariffRefusedException extends InvalidArgumentException {
 
@@ -40,7 +40,7 @@ class VatTariffRefusedException extends InvalidArgumentException {
 	 * @param string $date The document date, Y-m-d.
 	 * @param string $why  `unknown` or `expired`.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public function __construct(
 		public readonly string $tariffCode,

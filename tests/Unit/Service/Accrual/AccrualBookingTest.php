@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
+ * @spec openspec/changes/archive/2026-11-24-ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-a-computed-accrual-is-booked-and-reversed-req-lpe-006
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

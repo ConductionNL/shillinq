@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+ * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Throwable;
  * does not exist. Without `administrationId` the caller's active
  * administration is used.
  *
- * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+ * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
  */
 class RetentionDueController extends Controller {
 
@@ -64,7 +64,7 @@ class RetentionDueController extends Controller {
 	 * @param ITimeFactory                          $time    Today.
 	 * @param LoggerInterface                       $logger  Where a failed read is reported.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	public function __construct(
 		IRequest $request,
@@ -83,7 +83,7 @@ class RetentionDueController extends Controller {
 	 *                      401 anonymous; 404 for an administration the caller may not read
 	 *                      or that does not exist; 500 without detail.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -109,7 +109,7 @@ class RetentionDueController extends Controller {
 	 *
 	 * @return string The administration id, '' when there is none.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	private function requestedAdministrationId(): string {
 		$administrationId = trim((string) $this->request->getParam('administrationId', ''));
@@ -127,7 +127,7 @@ class RetentionDueController extends Controller {
 	 *
 	 * @return JSONResponse|null The refusal, or null when the caller may read it.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	private function refusalFor(string $administrationId): ?JSONResponse {
 		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
@@ -149,7 +149,7 @@ class RetentionDueController extends Controller {
 	 *
 	 * @return JSONResponse 200 `{administrationId, results, total}`, or 500.
 	 *
-	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 * @spec openspec/changes/archive/2026-11-24-ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
 	 */
 	private function listDue(string $administrationId): JSONResponse {
 		try {

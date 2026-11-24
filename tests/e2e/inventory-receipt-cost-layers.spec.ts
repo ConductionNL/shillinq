@@ -30,8 +30,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md
- * @spec openspec/changes/inventory-receipt-cost-layers/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md
+ * @spec openspec/changes/archive/2026-11-24-inventory-receipt-cost-layers/tasks.md#task-3.2
  *
  * @e2e inventory-valuation-fifo-avg::flour-is-received
  * @e2e inventory-valuation-fifo-avg::selling-50-bags-across-two-layers

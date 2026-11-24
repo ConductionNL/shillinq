@@ -131,7 +131,7 @@ class PublicSectorRecords {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
 	public function update(string $schema, string $id, array $object): string {
 		$object['id'] = $id;

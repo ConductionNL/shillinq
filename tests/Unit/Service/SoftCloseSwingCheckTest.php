@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
+ * @spec openspec/changes/archive/2026-11-24-ledger-group-close/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-soft-close-flags-the-swings-per-account-req-cls-011
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

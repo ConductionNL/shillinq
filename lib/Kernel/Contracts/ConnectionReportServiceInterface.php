@@ -45,7 +45,7 @@ interface ConnectionReportServiceInterface {
 	 *
 	 * @return array<string, string> The status sent, keyed by connection key.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-adopt-connection-registry/specs/external-connections/spec.md
 	 */
 	public function reportAdapterBindings(): array;
 }//end interface

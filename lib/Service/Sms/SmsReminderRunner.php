@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use Throwable;
 /**
  * Sends the due SMS reminders of every active channel and records each outcome.
  *
- * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md
  */
 class SmsReminderRunner implements SmsReminderRunnerInterface {
 	/**
@@ -97,7 +97,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
 	public function isConnected(): bool {
 		return ($this->adapter instanceof LogSmsProviderAdapter) === false;
@@ -110,7 +110,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @return array<string, int> Counts: channels, notConnected, and one per send status.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
 	public function run(DateTimeImmutable $now): array {
 		$report = ['channels' => 0, 'notConnected' => 0, 'sent' => 0, 'pending' => 0, 'failed' => 0, 'skipped' => 0];
@@ -145,7 +145,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @return string The outcome status.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md#requirement-a-reminder-sms-goes-to-the-configured-provider-at-its-send-time-req-sms-021
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md#requirement-a-reminder-sms-goes-to-the-configured-provider-at-its-send-time-req-sms-021
 	 */
 	private function remind(array $channel, array $appointment, DateTimeImmutable $now): string {
 		$result = $this->dispatcher->dispatch(
@@ -172,7 +172,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @return array<string, string>
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
 	private static function variables(array $appointment): array {
 		$variables = [
@@ -201,7 +201,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
 	private function dueAppointments(array $channel, DateTimeImmutable $now): array {
 		$minutes = (int)($channel['sendMinutesBefore'] ?? self::DEFAULT_MINUTES_BEFORE);
@@ -232,7 +232,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
 	 */
 	private function activeChannels(): array {
 		return $this->findAll(schema: 'BookingSmsReminderChannel', filters: ['status' => 'active']);
@@ -246,7 +246,7 @@ class SmsReminderRunner implements SmsReminderRunnerInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md#requirement-a-reminder-sms-goes-to-the-configured-provider-at-its-send-time-req-sms-021
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-sms-reminders/spec.md#requirement-a-reminder-sms-goes-to-the-configured-provider-at-its-send-time-req-sms-021
 	 */
 	private function markConnection(array $channel, string $state): void {
 		if (($channel['connectionState'] ?? null) === $state) {

@@ -487,7 +487,7 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	 *
 	 * @return string|null The client id, lower case, or null.
 	 *
-	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 	 */
 	private static function clientId(mixed $value): ?string {
 		if (is_string($value) === false) {
@@ -510,7 +510,7 @@ class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 	 *
 	 * @return array<string,mixed>|null The stored draft, with its id.
 	 *
-	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 	 */
 	private function draftWithClientId(string $administrationId, string $clientId): ?array {
 		$matches = $this->scoped(schema: 'ARInvoice')->findAll(

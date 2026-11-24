@@ -44,7 +44,7 @@ interface PensionValuationPostingServiceInterface {
 	 *
 	 * @return array{posted: bool, message: string, plCents?: int, ociCents?: int, transaction?: array<string, mixed>}
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
 	 */
 	public function postForValuation(array $valuation): array;
 }//end interface

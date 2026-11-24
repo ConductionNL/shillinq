@@ -74,7 +74,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+ * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
  */
 
 declare(strict_types=1);
@@ -127,7 +127,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @return array<string, string> Identity → administrationId.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function indexAdministrationsByTransaction(array $glTransactions): array {
 		$index = [];
@@ -156,7 +156,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @return string|null The parent's administrationId, or null when unresolvable.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function resolveAdministrationId(array $glLine, array $index): ?string {
 		$transactionId = trim((string)($glLine['transactionId'] ?? ''));
@@ -180,7 +180,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @return string One of the `CLASS_*` constants.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function classify(array $glLine, array $index): string {
 		if (trim((string)($glLine[self::SCOPE_PROPERTY] ?? '')) !== '') {
@@ -210,7 +210,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @return array<string, mixed> The stamped (or unchanged) line.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function stampAdministrationId(array $glLine, string $administrationId): array {
 		if (trim((string)($glLine[self::SCOPE_PROPERTY] ?? '')) !== '') {
@@ -248,7 +248,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @throws RuntimeException When any row is unclassifiable (count guard).
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function backfillBatch(array $glLines, array $glTransactions): array {
 		$index = $this->indexAdministrationsByTransaction(glTransactions: $glTransactions);
@@ -314,7 +314,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @return int How many rows lack a non-empty `administrationId`.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function countMissingAdministrationId(array $glLines): int {
 		$missing = 0;
@@ -343,7 +343,7 @@ final class GlLineAdministrationBackfillMigrator implements GlLineAdministration
 	 *
 	 * @throws RuntimeException When the counts differ (no-row-loss guard).
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function assertCountsMatch(int $sourceCount, int $classifiedCount): void {
 		if ($sourceCount !== $classifiedCount) {

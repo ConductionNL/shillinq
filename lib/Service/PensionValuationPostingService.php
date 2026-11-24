@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
  */
 
 declare(strict_types=1);
@@ -47,7 +47,7 @@ use Throwable;
 /**
  * Posts the IAS 19 journal entry of an approved actuarial valuation.
  *
- * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
  */
 class PensionValuationPostingService implements PensionValuationPostingServiceInterface {
 
@@ -96,7 +96,7 @@ class PensionValuationPostingService implements PensionValuationPostingServiceIn
 	 *
 	 * @return array{posted: bool, message: string, plCents?: int, ociCents?: int, transaction?: array<string, mixed>}
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
 	 */
 	public function postForValuation(array $valuation): array {
 		$valuationId = (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? ''));
@@ -135,7 +135,7 @@ class PensionValuationPostingService implements PensionValuationPostingServiceIn
 	 *
 	 * @return array{plCents: int, ociCents: int, netInterest: float, assetRemeasurement: float}
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
 	 */
 	public static function figures(array $movement, array $valuation): array {
 		$netInterest = self::number(value: ($movement['netInterestCost'] ?? null));
@@ -181,7 +181,7 @@ class PensionValuationPostingService implements PensionValuationPostingServiceIn
 	 *
 	 * @return array<int, array{accountNumber: string, side: string, cents: int}>
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/specs/bookkeeping-pension-ias19/spec.md
 	 */
 	public static function lines(int $plCents, int $ociCents, array $accounts): array {
 		$legs = [

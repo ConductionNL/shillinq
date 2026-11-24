@@ -21,7 +21,7 @@
  * The sync itself takes the store and a transport as arguments, so it runs
  * against an in-memory store where IndexedDB is missing and in tests.
  *
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 
 import axios from '@nextcloud/axios'
@@ -50,7 +50,7 @@ export const RECEIPT_PHOTO_FOLDER = 'Shillinq/Receipts'
  * A new client id: a random UUID.
  *
  * @return {string} The id.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export function newClientId() {
 	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -81,7 +81,7 @@ function promisify(req) {
  *
  * @param {IDBFactory} [factory] The IndexedDB factory; the browser's by default.
  * @return {Promise<object>} A store with all(), get(clientId) and put(item).
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export function openQueueStore(factory = globalThis.indexedDB) {
 	return new Promise((resolve, reject) => {
@@ -123,7 +123,7 @@ function idbStore(db) {
  *
  * @param {Array<object>} [items] Items to start with.
  * @return {object} The store.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export function memoryQueueStore(items = []) {
 	const rows = new Map(items.map((item) => [item.clientId, { ...item }]))
@@ -146,7 +146,7 @@ export function memoryQueueStore(items = []) {
  * @param {Blob} [entry.image] A receipt's photo.
  * @param {Function} [now] The clock, for ordering.
  * @return {Promise<object>} The queued item.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export async function enqueue(store, { kind, payload, image }, now = () => new Date().toISOString()) {
 	if (!Object.values(QUEUE_KINDS).includes(kind)) {
@@ -170,7 +170,7 @@ export async function enqueue(store, { kind, payload, image }, now = () => new D
  *
  * @param {object} store The queue.
  * @return {Promise<Array<object>>} The items.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export async function listQueue(store) {
 	const items = await store.all()
@@ -189,7 +189,7 @@ const running = new WeakSet()
  * @param {object} store The queue.
  * @param {object} transport { uploadImage(item): path, send(item): record }.
  * @return {Promise<{synced: number, failed: number}>} The counts of this run.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export async function syncQueue(store, transport) {
 	const counts = { synced: 0, failed: 0 }
@@ -254,7 +254,7 @@ async function syncItem(store, transport, item) {
  *
  * @param {object} [nav] The navigator.
  * @return {boolean} True when online, or when the browser cannot tell.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-an-invoice-is-issued-from-the-phone-only-online-req-pmp-004
  */
 export function isOnline(nav = globalThis.navigator) {
 	return !nav || nav.onLine !== false
@@ -266,7 +266,7 @@ export function isOnline(nav = globalThis.navigator) {
  * @param {Function} onChange Called with true when online, false when offline.
  * @param {EventTarget} [target] The window.
  * @return {Function} Stops listening.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
  */
 export function watchConnectivity(onChange, target = globalThis.window) {
 	if (!target || typeof target.addEventListener !== 'function') {
@@ -293,7 +293,7 @@ export function watchConnectivity(onChange, target = globalThis.window) {
  * @param {string} options.userId The signed-in user, for the photo path.
  * @param {object} [options.http] The HTTP client; @nextcloud/axios by default.
  * @return {object} The transport.
- * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
+ * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-a-receipt-is-captured-with-the-camera-req-pmp-002
  */
 export function nextcloudTransport({ userId, http = axios }) {
 	const receiptsUrl = generateUrl('/apps/openregister/api/objects/shillinq/Receipt')

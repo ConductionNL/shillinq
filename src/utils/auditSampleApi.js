@@ -17,7 +17,7 @@ import AuditSampleDrawModal from '../modals/AuditSampleDrawModal.vue'
  *
  * @param {{size: string|number, seed: string|number, accountPrefix: string}} input The form.
  * @return {{size: number, seed?: number, account_prefix?: string}|null} The request fields.
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 export function drawFields(input) {
 	const size = String(input?.size ?? '').trim()
@@ -42,7 +42,7 @@ export function drawFields(input) {
  * @param {string} protocolId The Controleprotocol id.
  * @param {object} fields The request fields from drawFields().
  * @return {Promise<object>} The stored sample.
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 export async function drawAuditSample(protocolId, fields) {
 	const response = await axios.post(
@@ -57,7 +57,7 @@ export async function drawAuditSample(protocolId, fields) {
  *
  * @param {unknown} error The axios error.
  * @return {string}
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 export function sampleError(error) {
 	const status = error?.response?.status
@@ -76,7 +76,7 @@ export function sampleError(error) {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {Promise<unknown>|null} The dialog's close payload.
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 export function openAuditSampleDraw(scope) {
 	const protocolId = String(scope?.item?.id || window.location.pathname.split('/').pop() || '')

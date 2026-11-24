@@ -9,9 +9,9 @@
  * not-yet-ready state before the sidebar's object has loaded. The shared
  * fetch-once composable is mocked with a controllable payload; no network.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-004
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'

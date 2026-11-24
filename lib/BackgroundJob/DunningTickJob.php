@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Throwable;
 /**
  * Daily dunning pass.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
  */
 class DunningTickJob extends TimedJob {
 	/**
@@ -77,7 +77,7 @@ class DunningTickJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The TimedJob contract passes an argument this job does not use.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
 	 */
 	protected function run($argument): void {
 		try {

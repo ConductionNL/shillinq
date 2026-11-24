@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use OCA\Shillinq\Kernel\Contracts\EuDeclarationBuilderInterface;
 /**
  * The EU declaration's submit transition executor.
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  */
 class SubmitEuDeclarationAction implements ContextLifecycleActionInterface {
 
@@ -57,7 +57,7 @@ class SubmitEuDeclarationAction implements ContextLifecycleActionInterface {
 	 *
 	 * @throws DomainException When an expenditure can no longer be submitted.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-submitting-a-declaration-submits-its-expenditures-req-euf-013
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-submitting-a-declaration-submits-its-expenditures-req-euf-013
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		return $this->declarations->submit(declaration: $context->objectData);

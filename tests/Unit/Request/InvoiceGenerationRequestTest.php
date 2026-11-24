@@ -38,7 +38,7 @@ final class InvoiceGenerationRequestTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
 	public function testTAndMNeedsNoRateCard(): void {
 		$request = new InvoiceGenerationRequest(

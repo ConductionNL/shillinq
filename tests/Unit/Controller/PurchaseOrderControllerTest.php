@@ -202,6 +202,43 @@ final class PurchaseOrderControllerTest extends TestCase {
 	}//end testCreateReturns201WithPersistedOrder()
 
 	/**
+	 * create() hands the framework agreement and the requisition of the form to
+	 * the service, so a call-off takes the agreed price and draws on the
+	 * ceiling (REQ-PG-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function testCreatePassesTheFrameworkAgreementAndRequisition(): void {
+		$this->withParams(
+			[
+				'administrationId' => 'adm-1',
+				'supplierId' => 'sup-1',
+				'frameworkAgreementId' => ' fa-7 ',
+				'requisitionId' => 'req-3',
+				'lines' => [['productCode' => 'PAPER-A4-BOX', 'quantity' => 20, 'unitPrice' => 50.0]],
+			]
+		);
+		$seen = [];
+		$this->purchaseOrderService->expects($this->once())
+			->method('createPurchaseOrder')
+			->willReturnCallback(
+				static function (string $administrationId, array $payload) use (&$seen): array {
+					$seen = $payload;
+					return ['id' => 'po-2', 'administrationId' => $administrationId];
+				}
+			);
+
+		$response = $this->controller()->create();
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame('fa-7', $seen['frameworkAgreementId']);
+		self::assertSame('req-3', $seen['requisitionId']);
+
+	}//end testCreatePassesTheFrameworkAgreementAndRequisition()
+
+	/**
 	 * create() rejects an anonymous caller with HTTP 401 (REQ-001 negative
 	 * direction — no session at all).
 	 *
@@ -708,7 +745,16 @@ final class PurchaseOrderControllerTest extends TestCase {
 				$logged[] = [$message, $context];
 			}
 		);
-		$payload = ['supplierId' => 's-1', 'costCenter' => '', 'projectCode' => '', 'currency' => 'EUR', 'lines' => ['one'], 'notes' => '7'];
+		$payload = [
+			'supplierId' => 's-1',
+			'costCenter' => '',
+			'projectCode' => '',
+			'currency' => 'EUR',
+			'lines' => ['one'],
+			'notes' => '7',
+			'frameworkAgreementId' => '',
+			'requisitionId' => '',
+		];
 		$this->purchaseOrderService->method('createPurchaseOrder')->with('adm-1', $payload)->willReturnOnConsecutiveCalls(
 			self::throwException(new \RuntimeException('supplierId missing')),
 			self::throwException(new \LogicException('db'))

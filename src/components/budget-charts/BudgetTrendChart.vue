@@ -19,10 +19,10 @@
   information reachable without a mouse or a screen reader that can parse
   an SVG.
 
-  @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
-  @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
-  @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
-  @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+  @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-004
+  @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
+  @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
+  @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 -->
 <template>
 	<div
@@ -205,7 +205,7 @@ export default {
 
 	computed: {
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-007
 		 * @return {string|null} The effective entity id — the `id` prop, falling back to `objectData.accountNumber` (the sidebar-tab placement, §1b).
 		 */
 		effectiveId() {
@@ -213,7 +213,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-007
 		 * @return {string} The effective accessible-name source — `name`, falling back to `objectData.name`/`accountNumber`.
 		 */
 		effectiveName() {
@@ -226,7 +226,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-007
 		 * @return {string|null} The effective administration id — `administrationId`, falling back to `objectData.administrationId`.
 		 */
 		effectiveAdministrationId() {
@@ -234,7 +234,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-007
 		 * @return {{from: string, to: string}} The effective period range — `range`, falling back to a trailing-12-months + 3-months default (no page-level range exists on the sidebar-tab placement).
 		 */
 		effectiveRange() {
@@ -247,7 +247,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 		 * @return {boolean} Whether the shared fetch-once request is in flight.
 		 */
 		loading() {
@@ -260,7 +260,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 		 * @return {object|null} The shared `{ months, accounts, ledgerGroups }` payload.
 		 */
 		chartData() {
@@ -273,7 +273,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 		 * @return {string[]} The requested months, chronological.
 		 */
 		months() {
@@ -281,7 +281,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 		 * @return {object|null} This chart's own entry (account or LedgerGroup) from the shared payload.
 		 */
 		entry() {
@@ -298,7 +298,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
 		 * @return {string[]} The account type(s) in scope (one for an account, the resolved set for a LedgerGroup).
 		 */
 		accountTypes() {
@@ -309,7 +309,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
 		 * @return {boolean} REQ-BCH-005: disable the Cumulative toggle when every in-scope account type is stock-typed.
 		 */
 		cumulativeDisabled() {
@@ -317,7 +317,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
 		 * @return {string} The effective mode, falling back to trend when cumulative is disabled.
 		 */
 		effectiveMode() {
@@ -327,7 +327,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
 		 * @return {{[month: string]: object}} Month => typed trend result (REQ-BPE-006's combined actual/projected/unprojectable series).
 		 */
 		trend() {
@@ -335,7 +335,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
 		 * @return {{actual: (number|null)[], projected: (number|null)[]}} The Actual/Projected gap-series pair for the TREND view.
 		 */
 		trendSplit() {
@@ -343,7 +343,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
 		 * @return {{actual: (number|null)[], projected: (number|null)[]}} The Actual/Projected gap-series pair for the CUMULATIVE view — same seam, cumulative amounts.
 		 */
 		cumulativeSplit() {
@@ -364,7 +364,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-003
 		 * @return {(number|null)[]} The Begroot series for the active mode.
 		 */
 		budgetedPoints() {
@@ -376,7 +376,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
 		 * @return {(number|null)[]} The Actual series for the active mode.
 		 */
 		actualPoints() {
@@ -388,7 +388,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
 		 * @return {(number|null)[]} The Projected series for the active mode.
 		 */
 		projectedPoints() {
@@ -400,7 +400,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-004
 		 * @return {string[]} Months whose typed result is `unprojectable` — REQ-BCH-004's marker+tooltip months.
 		 */
 		unprojectableMonthsList() {
@@ -408,7 +408,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-004
 		 * @return {string[]} Months carrying a `partial` group roll-up tag (REQ-BPE-007).
 		 */
 		partialMonthsList() {
@@ -416,7 +416,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @return {string[]} Localised month labels for the chart x-axis and table header.
 		 */
 		categories() {
@@ -424,7 +424,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
 		 * @return {Array<object>} The three named ApexCharts series for the active mode (REQ-BCH-006).
 		 */
 		series() {
@@ -448,7 +448,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
 		 * @return {object} ApexCharts options: colors (ADR-053 `var(--token, fallback)`), dashed Projected stroke, unprojectable-aware tooltip + annotations.
 		 */
 		chartOptions() {
@@ -512,7 +512,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @return {string} The chart's accessible group name (REQ-BCH-009).
 		 */
 		accessibleLabel() {
@@ -524,7 +524,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @return {number} Sum of the plotted Actual series, in EUR cents, for the TOTAAL column.
 		 */
 		actualTotal() {
@@ -536,7 +536,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @return {number} Sum of the plotted Projected series, in EUR cents (unprojectable months contribute nothing, never a fabricated amount).
 		 */
 		projectedTotal() {
@@ -550,7 +550,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @return {number} Sum of the Begroot series, in EUR cents.
 		 */
 		budgetedTotal() {
@@ -581,7 +581,7 @@ export default {
 		 * Trigger the shared fetch-once load (no-op if already cached for
 		 * this key, and a no-op entirely until `isReady`).
 		 *
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-008
 		 * @return {Promise<object>|undefined}
 		 */
 		load() {
@@ -597,7 +597,7 @@ export default {
 		 * Set the Trend/Cumulative mode, ignoring an attempt to switch to
 		 * Cumulative when it is disabled (REQ-BCH-005).
 		 *
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
 		 * @param {string} next The requested mode.
 		 * @return {void}
 		 */
@@ -609,7 +609,7 @@ export default {
 		/**
 		 * Accessible data-table cell text for the Actual row.
 		 *
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {string} month The `YYYY-MM` month.
 		 * @return {string}
 		 */
@@ -624,7 +624,7 @@ export default {
 		 * `unprojectable` renders the literal localised "Cannot project
 		 * yet" text, never a blank cell and never "€0" (REQ-BCH-004).
 		 *
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-004
 		 * @param {string} month The `YYYY-MM` month.
 		 * @return {string}
 		 */
@@ -639,7 +639,7 @@ export default {
 		/**
 		 * Accessible data-table cell text for the Begroot row.
 		 *
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {string} month The `YYYY-MM` month.
 		 * @return {string}
 		 */
@@ -664,7 +664,7 @@ export default {
 		 * value, mirroring BudgetProjectionCalculator's own "unprojectable
 		 * contributes 0" cumulative rule for the TOTAAL column).
 		 *
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {(number|null)[]} amounts The amounts to sum, in EUR cents.
 		 * @return {number} The total, in EUR cents.
 		 */
@@ -675,7 +675,7 @@ export default {
 		/**
 		 * Format a EUR-cents total for the TOTAAL column.
 		 *
-		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {number} cents The total, in EUR cents.
 		 * @return {string}
 		 */

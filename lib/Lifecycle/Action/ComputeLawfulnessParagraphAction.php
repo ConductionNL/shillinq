@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use OCA\Shillinq\Kernel\Contracts\LawfulnessParagraphInterface;
 /**
  * Keeps the computed totals on the paragraph.
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  */
 class ComputeLawfulnessParagraphAction implements LifecycleActionInterface {
 
@@ -54,7 +54,7 @@ class ComputeLawfulnessParagraphAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed> The paragraph with its totals.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

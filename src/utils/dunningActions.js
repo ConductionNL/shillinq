@@ -15,7 +15,7 @@ import DunningNextRunModal from '../modals/DunningNextRunModal.vue'
  * every administration, and how the last run went.
  *
  * @return {Promise<unknown>|undefined} The dialog's close payload.
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 export function openDunningNextRun() {
 	return spawnDialog(DunningNextRunModal, {
@@ -30,7 +30,7 @@ export function openDunningNextRun() {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {Promise<unknown>|undefined} The dialog's close payload.
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 export function openDunningSwitchOn(scope) {
 	const id = scope?.item?.id || window.location.pathname.split('/').pop() || ''

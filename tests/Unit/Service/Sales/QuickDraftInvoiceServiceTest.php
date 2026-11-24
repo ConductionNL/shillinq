@@ -230,7 +230,7 @@ final class QuickDraftInvoiceServiceTest extends TestCase {
 	 * A draft sent with a client id stores it; the same client id sent again
 	 * is answered with that draft and nothing new is saved (REQ-PMP-003).
 	 *
-	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 	 *
 	 * @return void
 	 */
@@ -255,7 +255,7 @@ final class QuickDraftInvoiceServiceTest extends TestCase {
 	 * The same client id in another administration is a new draft there, and a
 	 * value that is not a client id is ignored, as on a desktop draft.
 	 *
-	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 * @spec openspec/changes/archive/2026-11-24-platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
 	 *
 	 * @return void
 	 */

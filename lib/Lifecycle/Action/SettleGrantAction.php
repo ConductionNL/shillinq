@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use OCA\Shillinq\Kernel\Contracts\GrantSettlementInterface;
 /**
  * The determine transition's executor.
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 class SettleGrantAction implements ContextLifecycleActionInterface {
 
@@ -58,7 +58,7 @@ class SettleGrantAction implements ContextLifecycleActionInterface {
 	 *
 	 * @throws DomainException When the grant cannot be settled.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-determining-a-grant-settles-the-difference-req-subv-011
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-determining-a-grant-settles-the-difference-req-subv-011
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		return $this->settlement->settle(grant: $context->objectData);
