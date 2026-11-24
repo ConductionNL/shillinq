@@ -11,7 +11,8 @@
 ## 2. Feed
 
 - [x] 2.1 `lib/Settings/feeds.json` with the four datasets and a validator refusing an unbound dataset (REQ-RDD-003). Verify: a unit test on the validator.
-- [ ] 2.2 Hand the declaration to integriq's owner as an issue describing the endpoints it needs (REQ-RDD-003). Verify: issue link in the PR body. Drafted 30 Sep to `~/memcap-work/build-all/for-ruben/integriq-shillinq-financial-feed.md` (lanes file nothing on sibling repos); open until filed, so the change stays unarchived.
+- [x] 2.2 Hand the declaration to integriq's owner as an issue describing the endpoints it needs (REQ-RDD-003). Verify: issue link in the PR body. Drafted 30 Sep to `~/memcap-work/build-all/for-ruben/integriq-shillinq-financial-feed.md` (lanes file nothing on sibling repos); open until filed, so the change stays unarchived.
+  - Filed: ConductionNL/integriq#3867 (the four datasets of `lib/Settings/feeds.json` and the endpoints, credential binding and acceptance it needs).
 
 ## 3. End to end and strings
 

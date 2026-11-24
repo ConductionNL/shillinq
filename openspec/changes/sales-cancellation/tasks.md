@@ -23,7 +23,8 @@
 
 ## 4. Cross-project and docs
 
-- [ ] 4.1 Open the portaliq issue for rendering `cancel-subscription` and `withdraw` and for the guest page of a signed link, with the label text of design.md D3 (REQ-SCX-003, REQ-SCX-004). Verify: the issue link in the PR body.
+- [x] 4.1 Open the portaliq issue for rendering `cancel-subscription` and `withdraw` and for the guest page of a signed link, with the label text of design.md D3 (REQ-SCX-003, REQ-SCX-004). Verify: the issue link in the PR body.
+  - Filed: ConductionNL/portaliq#2668 (`cancel-subscription` and `withdraw`, the label "Withdraw from contract here" / "Herroep de overeenkomst hier", and the guest page of `?withdraw=<token>`).
 - [x] 4.2 User guide pages on cancellation reasons and withdrawals, including how to mark a service exempt, and a release note. Verify: the pages are in `docs/` and the note in the PR body. Written: `docs/user-guide/reporting/cancellation-reasons.md` and `docs/user-guide/bookings/withdrawals.md` (including marking a service exempt); the release note is in the PR body.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/sales-cancellation/tasks.md#task-N` on every new method, English source strings with Dutch translations for every label, mail and message.
