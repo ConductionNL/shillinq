@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Service\EInvoice;
 /**
  * Who sent it, where the received UBL is, and when it was taken in.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
  */
 final class InboundDocument {
 	/**

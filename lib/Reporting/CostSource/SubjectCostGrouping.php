@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Reporting\CostSource;
  * incomplete; its cost is never added, so a total is never a partial sum
  * passed off as a whole one.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
  */
 final class SubjectCostGrouping {
 
@@ -45,7 +45,7 @@ final class SubjectCostGrouping {
 	 * @return array<int, array<string, mixed>> Per taakveld: taskField, objects, hours, costCents,
 	 *     incomplete (object ids) and types (titles, for the group without a taakveld).
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
 	 */
 	public static function perTaskField(array $rows, TaskFieldRollup $rollup): array {
 		$groups = [];
@@ -76,7 +76,7 @@ final class SubjectCostGrouping {
 	 *
 	 * @return array<int, array{typeId: string, typeTitle: string, objects: int, hours: float, costCents: int, incomplete: array<int, string>}>
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public static function perType(array $rows): array {
 		$groups = [];
@@ -104,7 +104,7 @@ final class SubjectCostGrouping {
 	 *
 	 * @return array{objects: int, hours: float, costCents: int, incomplete: int}
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
 	 */
 	public static function totals(array $groups): array {
 		$totals = ['objects' => 0, 'hours' => 0.0, 'costCents' => 0, 'incomplete' => 0];

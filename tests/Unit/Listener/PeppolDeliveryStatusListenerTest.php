@@ -21,7 +21,7 @@
  *
  * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
  * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-accounts-receivable-core/spec.md#req-ar-011
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -200,7 +200,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.1
 	 */
 	public function testQueuedToSentTakesIntegriqsTransmissionId(): void {
 		$this->seedInvoice(deliveryStatus: 'queued');
@@ -277,7 +277,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 	 */
 	public function testRejectedNotifiesEveryReceivablesRoleTheSchemaAllows(): void {
 		$this->seedInvoice(deliveryStatus: 'sent', invoiceNumber: '2026-0420');
@@ -313,7 +313,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 	 */
 	public function testRejectedNotifiesWhenFindAllAnswersEntities(): void {
 		$membership = ['id' => 'm-1', 'administrationId' => 'adm-1', 'role' => 'eigenaar', 'userId' => 'admin'];

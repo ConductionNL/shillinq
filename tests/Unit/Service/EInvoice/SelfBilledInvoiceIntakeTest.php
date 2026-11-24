@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -413,7 +413,7 @@ final class SelfBilledInvoiceIntakeTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.3
 	 */
 	public function testAnOrdinaryInvoiceGoesToTheSupplierIntake(): void {
 		$this->payload = self::fixture(name: 'ordinary-invoice.xml');
@@ -434,7 +434,7 @@ final class SelfBilledInvoiceIntakeTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.3
 	 */
 	public function testAnOrdinaryInvoiceForNoAdministrationIsSkipped(): void {
 		$this->payload = self::fixture(name: 'ordinary-invoice.xml');

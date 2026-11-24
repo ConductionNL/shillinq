@@ -38,7 +38,7 @@ use Throwable;
  * Each object is costed through SubjectCostService over the period's hours
  * only. Shillinq sums the money; the source app only classifies its types.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
  */
 class ClassifiedSubjectCostSource {
 
@@ -91,7 +91,7 @@ class ClassifiedSubjectCostSource {
 	 *
 	 * @return array<int, array<string, mixed>> Per source: source, missingApp, missingKind ('source', 'hours' or null) and rows.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-a-cost-source-is-configuration-and-an-absent-app-is-shown-not-zero-req-iv3-011
 	 */
 	public function read(string $period, ?array $administrationIds = null): array {
 		$sections = [];
@@ -111,7 +111,7 @@ class ClassifiedSubjectCostSource {
 	 *
 	 * @return array{source: array<string, string>, missingApp: string|null, missingKind: string|null, rows: array<int, array<string, mixed>>}
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
 	 */
 	public function readSource(array $source, string $period, ?array $administrationIds = null): array {
 		$section = ['source' => $source, 'missingApp' => null, 'missingKind' => null, 'rows' => []];

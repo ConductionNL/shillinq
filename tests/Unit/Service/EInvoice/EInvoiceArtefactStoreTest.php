@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */

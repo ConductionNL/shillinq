@@ -20,7 +20,7 @@ export const CONFIRMATION_MODES = ['percentageComplete', 'quantityConfirmed', 'a
  *
  * @param {object} line A PurchaseOrderLine.
  * @return {boolean}
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
  */
 export function isServiceLine(line) {
 	return SERVICE_UNITS.includes(String(line?.unitOfMeasure || '').toUpperCase())
@@ -37,7 +37,7 @@ export function isServiceLine(line) {
  * @param {object} period { periodStart, periodEnd } of the receipt.
  * @param {string} administrationId The administration.
  * @return {object|null}
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
  */
 export function linePayload(entry, period, administrationId) {
 	const value = confirmedValue(entry)
@@ -59,7 +59,7 @@ export function linePayload(entry, period, administrationId) {
  *
  * @param {object} entry { mode, value } as the form holds it.
  * @return {number|null}
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
  */
 function confirmedValue(entry) {
 	if (!entry || !CONFIRMATION_MODES.includes(entry.mode) || [ '', null, undefined ].includes(entry.value)) {

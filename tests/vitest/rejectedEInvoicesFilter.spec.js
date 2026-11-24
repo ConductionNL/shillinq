@@ -8,7 +8,7 @@
  * bookkeeper finds those invoices. A filter on a field the schema does not
  * declare, or on a value outside its enum, lists nothing without an error.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.3
  */
 
 import fs from 'fs'

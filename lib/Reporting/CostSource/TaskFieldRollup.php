@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Reporting\CostSource;
 /**
  * Reads `aggregatesUnder` from the municipal taakveld catalogue seed.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md#requirement-the-taakveld-catalogue-holds-the-2023-refinement-codes-and-their-parent-req-bbv-013
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md#requirement-the-taakveld-catalogue-holds-the-2023-refinement-codes-and-their-parent-req-bbv-013
  */
 class TaskFieldRollup {
 
@@ -53,7 +53,7 @@ class TaskFieldRollup {
 	 *
 	 * @return string The code to report under.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
 	 */
 	public function reportedUnder(string $code): string {
 		$code = trim($code);
@@ -66,7 +66,7 @@ class TaskFieldRollup {
 	 *
 	 * @return array<string, string> Code => parent.
 	 *
-	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md#requirement-the-taakveld-catalogue-holds-the-2023-refinement-codes-and-their-parent-req-bbv-013
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md#requirement-the-taakveld-catalogue-holds-the-2023-refinement-codes-and-their-parent-req-bbv-013
 	 */
 	public function parents(): array {
 		if ($this->parents !== null) {

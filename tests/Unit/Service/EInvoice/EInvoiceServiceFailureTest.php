@@ -5,7 +5,7 @@
  * paths: integriq absent, a failed event save, an unstored payload, a failed
  * invoice save and query, and the object URI it announces.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

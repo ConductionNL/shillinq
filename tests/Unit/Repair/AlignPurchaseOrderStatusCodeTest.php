@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -121,7 +121,7 @@ final class AlignPurchaseOrderStore {
  * @uses \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
  * @uses \OCA\Shillinq\Util\ObjectIdentifier
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
  */
 final class AlignPurchaseOrderStatusCodeTest extends TestCase {
 

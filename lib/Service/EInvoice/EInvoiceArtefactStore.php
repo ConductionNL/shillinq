@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use Throwable;
  * Stores the files of one e-invoice under
  * `Shillinq/<administration>/e-invoices/<year>/` of the sending user.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
  */
 class EInvoiceArtefactStore {
 
@@ -81,7 +81,7 @@ class EInvoiceArtefactStore {
 	 *
 	 * @return string|null The Files path of the stored XML, or null when nothing could be stored.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
 	 */
 	public function store(string $administrationId, array $invoice, string $pdf, string $ublXml): ?string {
 		$userId = (string)($this->userSession->getUser()?->getUID() ?? '');
@@ -126,7 +126,7 @@ class EInvoiceArtefactStore {
 	 *
 	 * @throws RuntimeException When a segment exists as a file.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
 	 */
 	private function folder(Folder $base, array $segments): Folder {
 		$folder = $base;
@@ -159,7 +159,7 @@ class EInvoiceArtefactStore {
 	 *
 	 * @throws RuntimeException When the name exists as a folder.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
 	 */
 	private function write(Folder $folder, string $name, string $content): File {
 		if ($folder->nodeExists($name) === false) {
@@ -184,7 +184,7 @@ class EInvoiceArtefactStore {
 	 *
 	 * @return string The year.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
 	 */
 	private function year(array $invoice): string {
 		$date = (string)($invoice['invoiceDate'] ?? '');
@@ -204,7 +204,7 @@ class EInvoiceArtefactStore {
 	 *
 	 * @return string The segment.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.1
 	 */
 	private function segment(string $value, string $fallback): string {
 		$safe = trim((string)preg_replace('/[^A-Za-z0-9._-]+/', '-', $value), '.-');

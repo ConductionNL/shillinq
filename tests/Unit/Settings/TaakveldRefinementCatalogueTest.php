@@ -15,7 +15,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md#requirement-the-taakveld-catalogue-holds-the-2023-refinement-codes-and-their-parent-req-bbv-013
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-bbv-compliance/spec.md#requirement-the-taakveld-catalogue-holds-the-2023-refinement-codes-and-their-parent-req-bbv-013
  */
 
 declare(strict_types=1);

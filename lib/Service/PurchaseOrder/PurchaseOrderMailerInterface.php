@@ -51,7 +51,7 @@ interface PurchaseOrderMailerInterface {
 	 *
 	 * @throws \RuntimeException When the mailer cannot dispatch.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool;
 
@@ -60,7 +60,7 @@ interface PurchaseOrderMailerInterface {
 	 *
 	 * @return bool False when sending would only be logged, so nothing may be claimed.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function isAvailable(): bool;
 }//end interface

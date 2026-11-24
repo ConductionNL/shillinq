@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
 /**
  * The purchase order as a PDF attachment.
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
  */
 class PurchaseOrderPdfRenderer {
 
@@ -60,7 +60,7 @@ class PurchaseOrderPdfRenderer {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function lines(array $purchaseOrder, string $supplierName): array {
 		$currency = (string)($purchaseOrder['currency'] ?? 'EUR');
@@ -115,7 +115,7 @@ class PurchaseOrderPdfRenderer {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function render(array $purchaseOrder, string $supplierName): string {
 		$pages = array_chunk($this->lines(purchaseOrder: $purchaseOrder, supplierName: $supplierName), self::LINES_PER_PAGE);

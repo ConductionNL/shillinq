@@ -7,7 +7,7 @@
  * with a CSV export, over the route SubjectCostReportController answers, and
  * every label it draws is in the Dutch catalogue.
  *
- * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+ * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
  */
 
 import fs from 'fs'

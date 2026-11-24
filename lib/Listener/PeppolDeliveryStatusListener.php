@@ -162,7 +162,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 * @return void
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.1
 	 *
 	 * @listener-placement inline cheap-bounded — every object that is not an
 	 *   integriq delivery-status CloudEvent returns on an in-memory type check
@@ -349,7 +349,7 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.1
 	 */
 	private function findByIdOrInvoiceNumber(string $id): ?array {
 		try {

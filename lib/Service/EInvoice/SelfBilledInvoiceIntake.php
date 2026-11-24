@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
  */
 
 declare(strict_types=1);
@@ -58,7 +58,7 @@ use Throwable;
 /**
  * Turns a received self-billed invoice into a draft sales invoice, or refuses it.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
  */
 class SelfBilledInvoiceIntake implements SelfBilledInvoiceIntakeInterface {
 	/**
@@ -134,7 +134,7 @@ class SelfBilledInvoiceIntake implements SelfBilledInvoiceIntakeInterface {
 	 *                                                        `supplier` or `skipped` (not an
 	 *                                                        invoice, or no administration).
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
 	 */
 	public function receive(array $data): array {
 		$received = new InboundDocument(
@@ -177,7 +177,7 @@ class SelfBilledInvoiceIntake implements SelfBilledInvoiceIntakeInterface {
 	 *
 	 * @return string|null Null when it covers the date, else the refusal reason key.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
 	 */
 	public static function agreementGap(mixed $agreement, string $date): ?string {
 		if (is_array($agreement) === false) {
@@ -377,7 +377,7 @@ class SelfBilledInvoiceIntake implements SelfBilledInvoiceIntakeInterface {
 	 *
 	 * @return array{result:string,reason?:string,id?:string}
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.3
 	 */
 	private function toSupplierIntake(InboundDocument $received, array $document, string $ublXml): array {
 		$administration = $this->administrationFor(party: $document['buyer']);

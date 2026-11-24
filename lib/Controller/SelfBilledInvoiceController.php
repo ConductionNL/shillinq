@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use Throwable;
  * AdministrationContextService::canAccess(), answering 404 for another
  * administration's invoice (ADR-005).
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
  */
 class SelfBilledInvoiceController extends Controller {
 	/**
@@ -80,7 +80,7 @@ class SelfBilledInvoiceController extends Controller {
 	 * @return JSONResponse 200 with the invoice; 400 for a refusal; 401 anonymous;
 	 *                      404 for a missing or inaccessible invoice; 500 otherwise.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
 	 */
 	#[NoAdminRequired]
 	public function reject(string $invoiceNumber): JSONResponse {

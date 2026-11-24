@@ -28,11 +28,12 @@
 
 ## 5. End to end
 
-- [ ] 5.1 Live check against integriq's log Peppol provider: send PO-2026-031, see pending, then sent after the status event (REQ-PODR-001). Verify: the event ids and the order state are pasted in the PR body.
+- [x] 5.1 Live check against integriq's log Peppol provider: send PO-2026-031, see pending, then sent after the status event (REQ-PODR-001). Verify: the event ids and the order state are pasted in the PR body.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/purchasing-order-dispatch-and-receipt.spec.ts` skips without integriq, creates PO-2026-031 in an administration of its own, sends it through `/transmit/peppol`, reads dispatch pending with its `openregister://` reference and the outbound-requested event, then waits for integriq's delivery-status event and reads the order sent with `peppolSentAt` and "Delivered" on the page (REQ-PODR-001, REQ-PODR-003); event ids and the order state are recorded as test annotations. In the CI Playwright testDir, matching no testIgnore; not verified here, no live instance in the build sandbox.
 
 ## 6. Docs
 
 - [x] 6.1 Release note: orders marked sent before this change were not delivered, and what now needs integriq. Verify: the note is in the PR body.
   - Written in `CHANGELOG.md` under Unreleased (orders marked sent before were not delivered; what now needs integriq). The same note is in the body of PR #3223.
 
-Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-N` on every new method, Dutch and English strings for every label and message.
+Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-N` on every new method, Dutch and English strings for every label and message.
