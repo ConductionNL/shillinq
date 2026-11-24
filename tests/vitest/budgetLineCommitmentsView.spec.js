@@ -6,8 +6,8 @@
  * the dash for a missing coding dimension, the negative-available accent, the
  * drilldown beneath an expanded row, and the loading, empty and failed
  * states. Plus the behaviour not already pinned by
- * budgetLineCommitmentsLoad.spec.js: resolving the administration, the
- * drilldown request and the wording of each failure.
+ * budgetLineCommitmentsLoad.spec.js: leaving the administration to the
+ * server, the drilldown request and the wording of each failure.
  *
  * The template is rendered with Vue's server renderer, so no DOM is needed.
  *
@@ -179,29 +179,30 @@ describe('BudgetLineCommitments rendering', () => {
 })
 
 describe('BudgetLineCommitments administration', () => {
-	it('takes the active administration from the session context', async () => {
-		http.get.mockResolvedValue({ data: { activeAdministrationId: 'adm-1' } })
+	it('asks the server for the active administration\'s lines, naming none itself', async () => {
+		http.get.mockResolvedValue({ data: [] })
 
-		await expect(context().resolveAdministrationId()).resolves.toBe('adm-1')
-		expect(http.get).toHaveBeenCalledWith(
+		await context().loadRows()
+
+		expect(http.get.mock.calls).toEqual([
+			['/index.php/apps/shillinq/api/v1/budget-line-commitments'],
+		])
+		expect(http.get).not.toHaveBeenCalledWith(
 			'/index.php/apps/shillinq/api/administrations/context',
 		)
 	})
 
-	it('falls back to the first accessible administration', async () => {
-		http.get.mockResolvedValue({
-			data: { administrations: [{ administrationId: 'adm-9' }] },
-		})
+	it('shows nothing when the server finds no administration to scope to', async () => {
+		http.get.mockRejectedValue({ response: { status: 400 } })
+		const vm = context({ rows: [ROW] })
 
-		await expect(context().resolveAdministrationId()).resolves.toBe('adm-9')
-	})
+		await vm.loadRows()
 
-	it('resolves to none when the context is empty or unreadable', async () => {
-		http.get.mockResolvedValue({ data: {} })
-		await expect(context().resolveAdministrationId()).resolves.toBe('')
-
-		http.get.mockRejectedValue(new Error('no session'))
-		await expect(context().resolveAdministrationId()).resolves.toBe('')
+		expect([vm.rows, vm.errorMessage, vm.loading]).toEqual([
+			[],
+			'No active administration, so the budget lines cannot be shown.',
+			false,
+		])
 	})
 
 	it('loads the rows on mount', () => {
@@ -215,14 +216,17 @@ describe('BudgetLineCommitments administration', () => {
 })
 
 describe('BudgetLineCommitments failures', () => {
-	it('words a missing aggregation endpoint, a refusal and anything else', () => {
+	it('words a missing administration, a refusal and anything else', () => {
 		const vm = context()
 
+		expect(vm.rowsLoadError({ response: { status: 400 } })).toBe(
+			'No active administration, so the budget lines cannot be shown.',
+		)
 		expect(vm.rowsLoadError({ response: { status: 404 } })).toBe(
-			'Aggregation endpoint unavailable on this OpenRegister build.',
+			'Permission required to read budget-line data.',
 		)
 		expect(vm.rowsLoadError({ response: { status: 501 } })).toBe(
-			'Aggregation endpoint unavailable on this OpenRegister build.',
+			'Failed to load budget lines.',
 		)
 		expect(vm.rowsLoadError({ response: { status: 401 } })).toBe(
 			'Permission required to read budget-line data.',
@@ -245,14 +249,13 @@ describe('BudgetLineCommitments drilldown', () => {
 		await vm.toggleDrilldown(ROW)
 
 		expect(http.get).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/CommitmentLine',
+			'/index.php/apps/shillinq/api/v1/budget-line-commitments/lines',
 			{
 				params: {
 					programme: '5.1',
 					costCentre: 'FAC-2026',
 					financialYear: 2026,
 					generalLedgerAccount: '4000',
-					_limit: 100,
 				},
 			},
 		)
@@ -263,7 +266,11 @@ describe('BudgetLineCommitments drilldown', () => {
 		])
 	})
 
-	it('reads a bare list body and nothing from any other shape', async () => {
+	it('reads the results envelope and nothing from any other shape', async () => {
+		http.get.mockResolvedValue({ data: { results: [{ id: 'c1' }], total: 1 } })
+		const listed = context()
+		await listed.toggleDrilldown(ROW)
+
 		http.get.mockResolvedValue({ data: [{ id: 'c1' }] })
 		const bare = context()
 		await bare.toggleDrilldown(ROW)
@@ -272,7 +279,8 @@ describe('BudgetLineCommitments drilldown', () => {
 		const other = context()
 		await other.toggleDrilldown(ROW)
 
-		expect(bare.drilldownItems).toEqual([{ id: 'c1' }])
+		expect(listed.drilldownItems).toEqual([{ id: 'c1' }])
+		expect(bare.drilldownItems).toEqual([])
 		expect(other.drilldownItems).toEqual([])
 	})
 

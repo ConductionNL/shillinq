@@ -488,16 +488,17 @@ describe('ReceiptCapture saving', () => {
 		expect(toast.showSuccess).toHaveBeenCalledWith('Receipt saved.')
 	})
 
-	it('updates a confirmed receipt through the object endpoint, merged over the record', async () => {
-		http.put.mockResolvedValue({ data: { object: { id: 'rec-1', amount: 12.5 } } })
+	it('updates a confirmed receipt through the confirm endpoint too, sending only the correctable fields', async () => {
+		http.put.mockResolvedValue({ data: { record: { id: 'rec-1', amount: 12.5 } } })
 		const vm = context({ record: { id: 'rec-1', amount: 1, vendorName: 'Taxi' }, form })
 
 		await vm.onSave()
 
 		expect(http.put).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/Receipt/rec-1',
-			expect.objectContaining({ id: 'rec-1', amount: 12.5, vendorName: '' }),
+			'/index.php/apps/shillinq/api/v1/extraction/drafts/rec-1?schema=Receipt',
+			expect.objectContaining({ amount: 12.5, vendorName: '' }),
 		)
+		expect(http.put.mock.calls[0][1]).not.toHaveProperty('id')
 		expect(vm.record).toEqual({ id: 'rec-1', amount: 12.5 })
 	})
 

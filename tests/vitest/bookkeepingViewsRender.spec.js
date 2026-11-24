@@ -246,7 +246,7 @@ describe('SegmentPnLDashboard', () => {
 		axios.get.mockReset()
 	})
 
-	const state = (over) => ({ loading: false, errorMessage: '', activeSegment: 'costCenter', rows: [], analyticalDimensions: [], administrationId: 'adm-1', periodId: '', periods: [{ id: 'p1', label: '2026-01' }], ...over })
+	const state = (over) => ({ loading: false, errorMessage: '', activeSegment: 'costCenter', rows: [], analyticalDimensions: [], periodId: '', periods: [{ id: 'p1', label: '2026-01' }], ...over })
 	const row = (key, over = {}) => ({ key, name: '', parent: '', revenue: 0, costs: 0, result: 0, depth: 0, ...over })
 
 	it('renders the segment chips, the active one primary, and the periods', async () => {
@@ -332,31 +332,31 @@ describe('SegmentPnLDashboard', () => {
 	it('words a failed load by its status', () => {
 		const view = dashboard()
 		const message = (status) => view.segmentLoadError({ response: { status } })
-		expect(message(404)).toBe(message(501))
-		expect(message(404)).toContain('Aggregation endpoint unavailable')
+		expect(message(400)).toBe('No active administration, so the segment P&L cannot be scoped.')
 		expect(message(403)).toBe('Permission required to read segment P&L data.')
 		expect(message(401)).toBe(message(403))
+		expect(message(404)).toBe(message(403))
+		expect(message(500)).toBe('Failed to load segment P&L.')
 		expect(view.segmentLoadError(new Error('x'))).toBe('Failed to load segment P&L.')
 	})
 
-	it('refuses an unknown segment and reads the administration context', async () => {
+	it('refuses an unknown segment and leaves the administration to the server', async () => {
 		const view = dashboard()
 		await view.loadSegment('nope')
 		expect([view.errorMessage, view.loading]).toEqual(['Unknown segment selected.', false])
 		expect(axios.get).not.toHaveBeenCalled()
 
-		axios.get.mockResolvedValueOnce({ data: { administrations: [{ administrationId: 'adm-9' }] } })
-		expect(await view.resolveAdministrationId()).toBe('adm-9')
-		axios.get.mockResolvedValueOnce({ data: {} })
-		expect(await view.resolveAdministrationId()).toBe('')
-		axios.get.mockRejectedValueOnce(new Error('down'))
-		expect(await view.resolveAdministrationId()).toBe('')
+		axios.get.mockResolvedValueOnce({ data: { groups: [], periods: [{ periodId: '2026-M01' }] } })
+		await view.loadSegment('project')
+		expect(axios.get).toHaveBeenCalledWith('/index.php/apps/shillinq/api/v1/segment-results', { params: { segment: 'project' } })
+		expect(axios.get.mock.calls[0][1].params).not.toHaveProperty('administrationId')
+		expect(view.periods).toEqual([{ id: '2026-M01', label: '2026-M01' }])
 	})
 
 	it('treats unreadable periods as none and formats non-numbers as zero', async () => {
 		const view = dashboard({ periods: [{ id: 'old' }] })
-		axios.get.mockRejectedValueOnce(new Error('down'))
-		await view.loadPeriods()
+		axios.get.mockResolvedValueOnce({ data: { groups: [], periods: 'unreadable' } })
+		await view.loadSegment('costCenter')
 		expect(view.periods).toEqual([])
 		expect(view.formatAmount('n/a')).toBe(view.formatAmount(0))
 	})
