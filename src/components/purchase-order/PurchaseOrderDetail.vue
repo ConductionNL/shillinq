@@ -340,27 +340,19 @@ export default {
 		},
 
 		/**
-		 * Whether the "Send" action is allowed from the client. The server
-		 * re-checks (ADR-005 server-authoritative) so this only governs the
-		 * button's disabled state, never permission.
+		 * Whether the "Send" action is allowed from the client: the order is
+		 * approved. OpenRegister's approval chain moves it to `approved` once
+		 * every step is decided (`onApprove: advanceTransition`), and the
+		 * `send` transition starts from there. The old `approvalChain` history
+		 * is written by nothing any more, so it cannot gate the button. The
+		 * server re-checks (ADR-005 server-authoritative) so this only governs
+		 * the button's disabled state, never permission.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/changes/purchasing-approval-delegation/tasks.md
 		 */
 		canSend() {
-			if (!this.purchaseOrder) {
-				return false
-			}
-			if (this.purchaseOrder.statusCode === 'sent') {
-				return false
-			}
-			const chain = this.purchaseOrder.approvalChain || []
-			if (chain.length === 0) {
-				return false
-			}
-			return chain.every(
-				(entry) => entry.decision === 'approved' && !!entry.decidedAt,
-			)
+			return this.purchaseOrder?.statusCode === 'approved'
 		},
 	},
 
