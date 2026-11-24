@@ -5935,7 +5935,7 @@
 				"owner": "ConductionNL/integriq",
 				"change": "contacts-kvk-lookup",
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/contacts-kvk-lookup/specs/contact-kvk-lookup :: Picking a company fills the empty details (REQ-KVKL-002)"
+				"requirement": "openspec/changes/archive/2026-11-24-contacts-kvk-lookup/specs/contact-kvk-lookup :: Picking a company fills the empty details (REQ-KVKL-002)"
 			},
 			"screen": {
 				"canvas": "design-system",

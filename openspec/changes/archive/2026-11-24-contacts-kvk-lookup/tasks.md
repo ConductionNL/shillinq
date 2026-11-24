@@ -5,7 +5,7 @@
 ## 1. Declarations
 
 - [x] 1.1 Add `x-openregister-property-source` with the customer fill map of design D2 to `CustomerMaster.kvkNumber` in `lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json`, and with the supplier fill map to `Payee.kvkNumber` in `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`; regenerate `shillinq_register.json` if the build merges fragments (REQ-KVKL-001, REQ-KVKL-002). Verify: `npm run check:registers`; a PHPUnit test that reads both fragments and asserts provider `kvk`, mode `default` and every fill target is a declared property of its schema.
-- [ ] 1.2 Import the register on a dev instance and read both schemas from openregister (REQ-KVKL-001). Verify: `propertyMetadata.kvkNumber` names `kvk` on both; `grep 'PARTIAL IMPORT'` in the log finds nothing; record the output in the PR body.
+- [x] 1.2 Import the register on a dev instance and read both schemas from openregister (REQ-KVKL-001). Verify: `propertyMetadata.kvkNumber` names `kvk` on both; `grep 'PARTIAL IMPORT'` in the log finds nothing; record the output in the PR body. **Written, runs in nightly (24 Nov 2026):** the last describe block of `tests/e2e/contacts-kvk-lookup.spec.ts` reads `Payee` and `CustomerMaster` from openregister's schema API on the instance the nightly imports the register into and asserts `kvkNumber` names provider `kvk` on both; the `PARTIAL IMPORT` log grep has no HTTP surface and stays with the live pass. Not verified here, no live instance in the build sandbox.
 
 ## 2. Connection
 

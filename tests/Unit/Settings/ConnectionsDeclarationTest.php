@@ -339,7 +339,7 @@ final class ConnectionsDeclarationTest extends TestCase {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/contacts-kvk-lookup/tasks.md#2-connection
+	 * @spec openspec/changes/archive/2026-11-24-contacts-kvk-lookup/tasks.md#2-connection
 	 */
 	private function isLinkedInIntegriq(array $connection): bool {
 		return ($connection['available'] ?? true) === true
@@ -353,7 +353,7 @@ final class ConnectionsDeclarationTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/contacts-kvk-lookup/tasks.md#2-connection
+	 * @spec openspec/changes/archive/2026-11-24-contacts-kvk-lookup/tasks.md#2-connection
 	 */
 	public function testTheKvkIsAvailableThroughItsIntegriqSource(): void {
 		$kvk = array_values(array_filter($this->declaration()['connections'], static fn (array $c): bool => $c['key'] === 'kvk'))[0];

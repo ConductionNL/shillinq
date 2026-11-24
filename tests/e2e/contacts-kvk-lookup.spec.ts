@@ -24,7 +24,16 @@
  * The save is answered here too, so no supplier or customer is left behind;
  * the assertion is on the body the form posts.
  *
- * @spec openspec/changes/contacts-kvk-lookup/specs/contact-kvk-lookup/spec.md
+ * THE IMPORTED DECLARATION (task 1.2)
+ * ----------------------------------
+ * The last describe block reads `Payee` and `CustomerMaster` back from
+ * openregister's schema API on the instance under test, so a register import
+ * that dropped the declaration fails here rather than as a field that quietly
+ * stays plain text. Written 24 Nov 2026, runs in the nightly; not run in the
+ * build sandbox (no live instance).
+ *
+ * @spec openspec/changes/archive/2026-11-24-contacts-kvk-lookup/specs/contact-kvk-lookup/spec.md
+ * @spec openspec/changes/archive/2026-11-24-contacts-kvk-lookup/tasks.md
  * @e2e contact-kvk-lookup/requirement-picking-a-company-fills-the-empty-details-req-kvkl-002/adding-a-supplier-from-the-kvk
  * @e2e contact-kvk-lookup/requirement-picking-a-company-fills-the-empty-details-req-kvkl-002/a-typed-name-is-not-overwritten-without-asking
  * @e2e contact-kvk-lookup/requirement-the-kvk-connection-is-on-and-says-what-it-needs-req-kvkl-003/without-a-source-the-field-still-works
@@ -226,5 +235,26 @@ test.describe('contacts-kvk-lookup — without a KvK source', () => {
 
 		await expect.poll(() => posted.length, { timeout: 15_000 }).toBeGreaterThan(0)
 		expect(posted[posted.length - 1].kvkNumber).toBe('12345678')
+	})
+})
+
+test.describe('contacts-kvk-lookup — the imported register declares the lookup', () => {
+	test('Payee and CustomerMaster carry the kvk property source on kvkNumber @spec REQ-KVKL-001', async ({ request }) => {
+		const res = await request.get('/index.php/apps/openregister/api/schemas?_limit=1000', {
+			headers: { 'OCS-APIRequest': 'true' },
+		})
+		expect(res.status(), await res.text()).toBe(200)
+		const body = await res.json()
+		const schemas: Array<Record<string, unknown>> = body.results ?? body ?? []
+		for (const slug of ['Payee', 'CustomerMaster']) {
+			const schema = schemas.find((s) => s.slug === slug || s.title === slug)
+			expect(schema, `schema ${slug} is imported`).toBeTruthy()
+			const properties = (schema?.properties ?? {}) as Record<string, Record<string, unknown>>
+			const metadata = (schema?.propertyMetadata ?? {}) as Record<string, Record<string, unknown>>
+			const source = (properties.kvkNumber?.['x-openregister-property-source']
+				?? metadata.kvkNumber?.['x-openregister-property-source']
+				?? metadata.kvkNumber?.propertySource) as { provider?: string } | undefined
+			expect(source?.provider, `${slug}.kvkNumber names the kvk provider`).toBe('kvk')
+		}
 	})
 })
