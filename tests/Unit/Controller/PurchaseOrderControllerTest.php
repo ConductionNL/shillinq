@@ -745,7 +745,16 @@ final class PurchaseOrderControllerTest extends TestCase {
 				$logged[] = [$message, $context];
 			}
 		);
-		$payload = ['supplierId' => 's-1', 'costCenter' => '', 'projectCode' => '', 'currency' => 'EUR', 'lines' => ['one'], 'notes' => '7', 'frameworkAgreementId' => '', 'requisitionId' => ''];
+		$payload = [
+			'supplierId' => 's-1',
+			'costCenter' => '',
+			'projectCode' => '',
+			'currency' => 'EUR',
+			'lines' => ['one'],
+			'notes' => '7',
+			'frameworkAgreementId' => '',
+			'requisitionId' => '',
+		];
 		$this->purchaseOrderService->method('createPurchaseOrder')->with('adm-1', $payload)->willReturnOnConsecutiveCalls(
 			self::throwException(new \RuntimeException('supplierId missing')),
 			self::throwException(new \LogicException('db'))
