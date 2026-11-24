@@ -11,6 +11,7 @@
 - [x] 2.1 Generate the list of index pages whose schema declares `administrationId`, and add the scoped wrapper `AdministrationScopedIndex.vue` for them (REQ-LMA-002). Verify: vitest for the wrapper; the generated list in the PR body.
 - [ ] 2.2 Raise the `@context.<key>` sentinel request on nextcloud-vue with this change as the consumer, and switch the pages to it when it ships (REQ-LMA-002). Verify: issue link in the PR body.
   - Raised: ConductionNL/nextcloud-vue#2310. Left: switch the pages to the sentinel when the library ships it.
+  - Found (24 Nov 2026): the library already resolves an app-provided value in an index page's fixed `filter`: `@config.<key>` reads the injected `cnAppConfig` and the list re-fetches when that bag changes (`useSelfFetchList.js` `tokenCtx()` / `appConfigSignature`, nextcloud-vue 2.209). No new `@context` sentinel is needed (`@context.` already means a detail page's side records). The switch: `main.js` provides `cnAppConfig` with `activeAdministrationId` from `GET /api/administrations/context`; `scripts/generate-administration-scoped-pages.js` writes `"filter": {"administrationId": "@config.activeAdministrationId"}` into the 214 generated pages' config instead of the JSON list (a required token left unresolved filters on the literal and shows nothing, which fails closed); the wrapper goes. Not switched in the build sandbox: it changes every list page and needs a live pass.
 
 ## 3. Templates
 
