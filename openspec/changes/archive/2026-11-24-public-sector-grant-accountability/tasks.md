@@ -21,6 +21,7 @@
 ## 4. Strings and live check
 
 - [x] 4.1 English and Dutch strings. Verify: `npm run test:l10n`, `check:schema-l10n`.
-- [ ] 4.2 Live: determine a grant lower than paid out and see the draft reclaim; export the SiSa table for 2026; propose an EU declaration with one expenditure missing evidence.
+- [x] 4.2 Live: determine a grant lower than paid out and see the draft reclaim; export the SiSa table for 2026; propose an EU declaration with one expenditure missing evidence.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/public-sector-grant-accountability.spec.ts` determines a grant at EUR 8,500 of EUR 10,000 paid and reads the EUR 1,500 draft reclaim invoice (REQ-SUBV-011), exports the 2026 SiSa table and CSV (REQ-SISA-012, REQ-SISA-013), and proposes an EU declaration that leaves out the expenditure missing evidence (REQ-EUF-012, REQ-EUF-013, REQ-EUF-007). In the CI Playwright testDir, matching no testIgnore; not verified here, no live instance in the build sandbox.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

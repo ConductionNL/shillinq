@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Throwable;
 /**
  * The grant accountability endpoints.
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 class GrantAccountabilityController extends Controller {
 
@@ -97,7 +97,7 @@ class GrantAccountabilityController extends Controller {
 	 *
 	 * @return JSONResponse The stored report's id and whether an auditor statement is required.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-the-accountability-report-is-generated-from-the-grant-req-subv-012
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording/spec.md#requirement-the-accountability-report-is-generated-from-the-grant-req-subv-012
 	 */
 	#[NoAdminRequired]
 	public function report(string $id): JSONResponse {
@@ -129,7 +129,7 @@ class GrantAccountabilityController extends Controller {
 	 *
 	 * @return JSONResponse|DataDownloadResponse The rows and columns, or the CSV.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
 	 */
 	#[NoAdminRequired]
 	public function sisa(): JSONResponse|DataDownloadResponse {
@@ -176,7 +176,7 @@ class GrantAccountabilityController extends Controller {
 	 *
 	 * @return JSONResponse The stored draft declaration.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
 	 */
 	#[NoAdminRequired]
 	public function proposeEuDeclaration(string $id): JSONResponse {

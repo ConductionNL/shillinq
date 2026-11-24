@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.5
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use ReflectionMethod;
 /**
  * The admin sets the websites that may embed a widget.
  *
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.5
  */
 #[CoversClass(WidgetSettingsController::class)]
 #[UsesClass(WidgetCorsPolicy::class)]

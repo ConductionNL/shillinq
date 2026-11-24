@@ -16,7 +16,7 @@
  Appointments (src/utils/appointmentSeriesActions.js), so it lives in its own
  file (hydra gate-13).
 
- @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
+ @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
 -->
 
 <template>
@@ -191,7 +191,7 @@ export default {
 		 * The frequency choices.
 		 *
 		 * @return {Array<{id: string, label: string}>}
-		 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+		 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
 		 */
 		frequencyOptions() {
 			return [
@@ -205,7 +205,7 @@ export default {
 		 * The end choices.
 		 *
 		 * @return {Array<{id: string, label: string}>}
-		 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+		 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
 		 */
 		endOptions() {
 			return [
@@ -218,7 +218,7 @@ export default {
 		 * The form as the series helpers read it.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+		 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
 		 */
 		form() {
 			return {
@@ -240,7 +240,7 @@ export default {
 	/**
 	 * Load the active administration, its services and its resources.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
 	 */
 	async mounted() {
 		this.loading = true
@@ -266,7 +266,7 @@ export default {
 		 * Take the chosen service's duration as the appointment's.
 		 *
 		 * @param {object|null} service The chosen service.
-		 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+		 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
 		 */
 		takeServiceDuration(service) {
 			if (Number(service?.duration) > 0) {
@@ -277,7 +277,7 @@ export default {
 		/**
 		 * Check the form and create the series.
 		 *
-		 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
+		 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
 		 */
 		async submit() {
 			this.error = seriesProblem(this.form, t)
@@ -298,7 +298,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.4
+		 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.4
 		 */
 		close() {
 			this.$emit('close', this.result)

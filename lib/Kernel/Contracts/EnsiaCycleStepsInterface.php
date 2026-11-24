@@ -47,7 +47,7 @@ interface EnsiaCycleStepsInterface {
 	 *
 	 * @return list<string> The ids of the findings created.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function createFindings(array $cycle): array;
 
@@ -58,7 +58,7 @@ interface EnsiaCycleStepsInterface {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function withStatement(array $cycle): array;
 
@@ -71,7 +71,7 @@ interface EnsiaCycleStepsInterface {
 	 *
 	 * @throws DomainException When the cycle is not approved or has no statement.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function withSubmission(array $cycle): array;
 
@@ -82,7 +82,7 @@ interface EnsiaCycleStepsInterface {
 	 *
 	 * @return RenderedFile|null
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function statementFile(array $cycle): ?RenderedFile;
 
@@ -93,7 +93,7 @@ interface EnsiaCycleStepsInterface {
 	 *
 	 * @return RenderedFile|null
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function submissionFile(array $cycle): ?RenderedFile;
 }//end interface

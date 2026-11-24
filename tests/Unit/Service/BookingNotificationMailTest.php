@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use RuntimeException;
 /**
  * The email channel goes through IMailer, per template type.
  *
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.2
  */
 #[CoversClass(BookingNotificationService::class)]
 #[UsesClass(NotificationMailer::class)]

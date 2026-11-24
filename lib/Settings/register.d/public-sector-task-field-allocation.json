@@ -15,7 +15,7 @@
         "title": "GR allocation run",
         "description": "The costs posted on a joint arrangement allocation key's cost clusters over a period, split over the active participants by share. One line per participant; the lines add up to the total to the cent. A confirmed run is locked and can invoice each participant with a draft contribution invoice.",
         "x-schema-org": "schema:MonetaryAmount",
-        "x-spec": "openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md",
         "type": "object",
         "required": [
           "administrationId",

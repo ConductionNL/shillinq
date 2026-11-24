@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use RuntimeException;
 /**
  * Due reminders reach the provider; without one the channel shows not connected.
  *
- * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.3
  */
 #[CoversClass(SmsReminderRunner::class)]
 #[UsesClass(SmsReminderDispatcher::class)]

@@ -366,7 +366,7 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	 *
 	 * @return array{success: bool, message?: string, businessId?: string, allowedOrigins?: array<int, string>}
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.5
 	 */
 	public function updateAllowedOrigins(string $businessId, array $origins, string $actor): array {
 		$existing = $this->findActiveKeyByBusinessId(businessId: $businessId);

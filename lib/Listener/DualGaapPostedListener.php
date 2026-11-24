@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
  */
 class DualGaapPostedListener implements IEventListener {
 
@@ -63,7 +63,7 @@ class DualGaapPostedListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public function handle(Event $event): void {
 		$transaction = $this->divergentPosting(event: $event);
@@ -90,7 +90,7 @@ class DualGaapPostedListener implements IEventListener {
 	 *
 	 * @return array<string, mixed>|null The transaction with its `id`.
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	private function divergentPosting(Event $event): ?array {
 		if (($event instanceof ObjectTransitionedEvent) === false) {

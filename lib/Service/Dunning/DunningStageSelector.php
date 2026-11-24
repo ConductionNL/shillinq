@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Throwable;
 /**
  * The stage the next dunning tick sends.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
  */
 class DunningStageSelector {
 
@@ -63,7 +63,7 @@ class DunningStageSelector {
 	 *
 	 * @return int|null The days overdue.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function daysOverdue(array $invoice, DateTimeImmutable $now): ?int {
 		$dueDateRaw = (string)($invoice['dueDate'] ?? '');
@@ -157,7 +157,7 @@ class DunningStageSelector {
 	 *
 	 * @return array<string, mixed>|null The stage.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function next(array $stages, array $runs, int $daysInArrears, DateTimeImmutable $now): ?array {
 		$sorted = array_values(array_filter($stages, 'is_array'));
@@ -194,7 +194,7 @@ class DunningStageSelector {
 	 *
 	 * @return array<int, string> Stage number => executedOn ('' when unknown).
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function sentOn(array $runs): array {
 		$sent = [];

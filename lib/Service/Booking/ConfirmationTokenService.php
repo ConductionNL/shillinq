@@ -459,7 +459,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
 	 */
 	private function recordRequest(array $appointment, bool $sent): void {
 		$id = (string)($appointment['id'] ?? ($appointment['uuid'] ?? ''));
@@ -485,7 +485,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
 	 */
 	private function saveRequestStatus(array $appointment): void {
 		try {
@@ -516,7 +516,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 *
 	 * @return bool TRUE when the mailer accepted the email, FALSE when nothing was sent.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.1
 	 */
 	private function dispatchEmail(array $customer, array $appointment, string $confirmUrl, string $ics): bool {
 		$email = (string)($customer['email'] ?? '');
@@ -567,7 +567,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 *
 	 * @return string The subject.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.1
 	 */
 	private function requestSubject(array $appointment): string {
 		$serviceName = (string)($appointment['serviceName'] ?? '');

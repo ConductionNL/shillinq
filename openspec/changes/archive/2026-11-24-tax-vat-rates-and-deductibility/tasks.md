@@ -56,7 +56,8 @@
 
 ## 4. End to end
 
-- [ ] 4.1 Live check with `ledger-posting-path` merged: post the seed fuel invoice and read the four ledger lines (REQ-TVRD-004). Verify: transaction id and lines in the PR body.
+- [x] 4.1 Live check with `ledger-posting-path` merged: post the seed fuel invoice and read the four ledger lines (REQ-TVRD-004). Verify: transaction id and lines in the PR body.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/tax-vat-rates-and-deductibility.spec.ts` posts the fuel invoice (EUR 100 + EUR 21) in an administration and chart of its own and reads the four GL lines: 4520 debit 70.00, input VAT 14.70, 1810 debit 36.30 non-deductible, creditors credit 121.00; a 100% line override posts three (REQ-TVRD-004). Each transaction id is recorded as a test annotation. In the CI Playwright testDir, matching no testIgnore; not verified here, no live instance in the build sandbox.
 
 ## 5. Docs
 
@@ -64,4 +65,4 @@
       DONE: the note is in `CHANGELOG.md` under Unreleased; the PR body is not edited by this build, so the note is
       quoted in the build's last commit message for the reviewer to carry over.
 
-Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-N` on every new method, Dutch and English strings for every label and message.
+Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-N` on every new method, Dutch and English strings for every label and message.

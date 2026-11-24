@@ -12,7 +12,7 @@
  mapping page. Amounts arrive in euros, already summed server-side; this
  component only formats them (ADR-031).
 
- @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+ @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 -->
 <template>
 	<div class="bbv-task-fields" data-testid="bbv-task-fields">

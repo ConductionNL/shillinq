@@ -49,7 +49,7 @@ interface LawfulnessParagraphInterface {
 	 *
 	 * @throws DomainException When the year has no tolerance.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
 	public function compute(string $administrationId, int $financialYear): array;
 }//end interface

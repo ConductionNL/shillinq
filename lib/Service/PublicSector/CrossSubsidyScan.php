@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use OCA\Shillinq\Service\CrossSubsidyDetector;
 /**
  * Runs the cross-subsidy checks and logs one alert per new signal.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  */
 class CrossSubsidyScan implements CrossSubsidyScanInterface {
 
@@ -67,7 +67,7 @@ class CrossSubsidyScan implements CrossSubsidyScanInterface {
 	 *
 	 * @return array{activities: int, alerts: int, alreadyOpen: int}
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
 	public function run(string $today): array {
 		$counts = ['activities' => 0, 'alerts' => 0, 'alreadyOpen' => 0];

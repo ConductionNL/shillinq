@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use OCP\IAppConfig;
 /**
  * The SiSa appendix of one year.
  *
- * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md
  */
 class SisaAppendix implements SisaAppendixInterface {
 
@@ -101,7 +101,7 @@ class SisaAppendix implements SisaAppendixInterface {
 	 *
 	 * @throws InvalidArgumentException When the administration or the year is missing.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-indicators-are-computed-per-specific-grant-req-sisa-012
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-indicators-are-computed-per-specific-grant-req-sisa-012
 	 */
 	public function forYear(string $administrationId, string $fiscalYear): array {
 		if ($administrationId === '' || preg_match('/^\d{4}$/', $fiscalYear) !== 1) {
@@ -135,7 +135,7 @@ class SisaAppendix implements SisaAppendixInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-sisa-reporting/spec.md#requirement-the-appendix-is-exported-for-the-annual-accounts-req-sisa-013
 	 */
 	public function toCsv(array $rows): string {
 		$lines = [self::csvLine(cells: array_values(self::CSV_COLUMNS))];

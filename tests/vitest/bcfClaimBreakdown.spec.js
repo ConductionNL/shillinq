@@ -6,7 +6,7 @@
  * quarter, the computed compensable VAT and the breakdown per account, and
  * offers the compute action (REQ-BCF-010).
  *
- * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
  */
 
 import fs from 'fs'

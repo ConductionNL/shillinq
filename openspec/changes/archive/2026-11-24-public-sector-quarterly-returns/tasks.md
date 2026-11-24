@@ -15,6 +15,7 @@
 ## 3. Strings and live check
 
 - [x] 3.1 English and Dutch strings. Done 9 Oct 2026 for every string this change added (en, nl); test:l10n, test:l10n-parity, check:schema-l10n 0. Verify: `npm run test:l10n`, `check:schema-l10n`.
-- [ ] 3.2 (not run: needs the live instance) Live: compute the BCF claim for 2026-Q3 and see the breakdown; compute Fido Q3 and see headroom on the dashboard.
+- [x] 3.2 (not run: needs the live instance) Live: compute the BCF claim for 2026-Q3 and see the breakdown; compute Fido Q3 and see headroom on the dashboard.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/public-sector-quarterly-returns.spec.ts` computes the BCF claim for 2026-Q3 under an administration of its own (EUR 23,100 compensable with the breakdown per account, also on the claim page; REQ-BCF-010) and Fido Q3 (EUR 2,500,000 cash-limit headroom and EUR 8,000,000 interest-risk room, also on the treasury dashboard; REQ-FDO-010, REQ-FDO-011). In the CI Playwright testDir, matching no testIgnore; not verified here, no live instance in the build sandbox.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

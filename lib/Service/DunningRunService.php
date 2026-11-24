@@ -163,9 +163,9 @@ class DunningRunService implements DunningRunServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.2
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.3
 	 */
 	public function tickInvoice(
 		string $administrationId,
@@ -203,7 +203,7 @@ class DunningRunService implements DunningRunServiceInterface {
 	 *
 	 * @return array<string,mixed>|null {dryRun, invoiceId, ladderId, stageNr, channel, templateId}, or null.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function previewInvoice(string $administrationId, array $invoice, string $baseLadderId = '', ?DateTimeImmutable $now = null): ?array {
 		$selection = new DunningStageChoice(administrationId: $administrationId, invoice: $invoice);
@@ -310,7 +310,7 @@ class DunningRunService implements DunningRunServiceInterface {
 	 *
 	 * @return string The ladder id, or '' when there is none.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.2
 	 */
 	public function baseLadderFor(string $administrationId, string $customerId): string {
 		$customer = null;
@@ -342,7 +342,7 @@ class DunningRunService implements DunningRunServiceInterface {
 	 *
 	 * @return bool True when no stage may go out for it.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.3
 	 */
 	private function settledSinceListed(array $invoice, string $invoiceId): bool {
 		$current = ($this->fetchById(schema: 'ARInvoice', id: $invoiceId) ?? $invoice);
@@ -436,7 +436,7 @@ class DunningRunService implements DunningRunServiceInterface {
 	 * @return array<string,mixed> The executed DunningRun record.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
 	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-017)

@@ -73,8 +73,8 @@ final class DunningLetterComposer {
 	 *
 	 * @return array<string,mixed> The params with recipient and rendered text.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.4
 	 */
 	public function address(array $params, array $invoice, callable $find, callable $findAll): array {
 		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));

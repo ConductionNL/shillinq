@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use OCA\Shillinq\Service\LedgerActuals;
 /**
  * The population of posted lines a protocol samples from, and the draw over it.
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 class LedgerSampling {
 
@@ -61,7 +61,7 @@ class LedgerSampling {
 	 *
 	 * @throws DomainException When the protocol does not exist or the size does not fit the population.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
 	 */
 	public function draw(string $protocolId, array $request): array {
 		$protocol = $this->records->find(schema: 'Controleprotocol', id: $protocolId);

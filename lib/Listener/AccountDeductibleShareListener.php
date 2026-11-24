@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-3.1
  */
 
 declare(strict_types=1);
@@ -77,7 +77,7 @@ class AccountDeductibleShareListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-3.1
 	 */
 	public function handle(Event $event): void {
 		$reason = $this->violationOf(event: $event);
@@ -119,7 +119,7 @@ class AccountDeductibleShareListener implements IEventListener {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-3.1
 	 */
 	public static function violation(array $account): string|null {
 		$percentage = ($account['deductiblePercentage'] ?? null);

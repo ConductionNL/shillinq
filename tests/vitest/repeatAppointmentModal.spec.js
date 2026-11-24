@@ -6,7 +6,7 @@
  * The RRULE the choice becomes, the checks before saving, what the dialog
  * sends to /api/v1/appointment-series and what it renders after.
  *
- * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
+ * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-recurring-series/spec.md#requirement-the-booking-form-offers-a-repeat-option-that-creates-the-series-req-brs-004
  */
 
 import axios from '@nextcloud/axios'

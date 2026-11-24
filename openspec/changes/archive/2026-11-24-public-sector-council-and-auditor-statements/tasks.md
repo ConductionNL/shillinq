@@ -19,6 +19,7 @@
 ## 4. Strings and live check
 
 - [x] 4.1 English and Dutch strings. Verify: `npm run test:l10n`, `check:schema-l10n`.
-- [ ] 4.2 Live: compute the 2026 paragraph with one finding; draw a sample of 25 twice with the same seed; move an ENSIA cycle to college approval and download the statement.
+- [x] 4.2 Live: compute the 2026 paragraph with one finding; draw a sample of 25 twice with the same seed; move an ENSIA cycle to college approval and download the statement.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/public-sector-council-and-auditor-statements.spec.ts` computes the paragraph with one EUR 2.5M finding against a EUR 2M tolerance (REQ-RV-011), draws a sample of 25 twice with seed 20261 and gets the same lines (REQ-011; the population is 30 seeded lines, not 4,000), and moves an ENSIA cycle through peer review to college approval, downloading the statement and, after submission, the XML (REQ-ENSIA-011, REQ-ENSIA-012). In the CI Playwright testDir, matching no testIgnore; not verified here, no live instance in the build sandbox.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

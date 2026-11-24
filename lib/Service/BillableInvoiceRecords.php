@@ -65,7 +65,7 @@ final class BillableInvoiceRecords {
 	 *
 	 * @throws VatTariffRefusedException When a line has no tariff valid on the date.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.2
 	 */
 	public function withVatTariffs(array $lineDrafts, string $documentDate): array {
 		foreach ($lineDrafts as $index => $line) {
@@ -90,7 +90,7 @@ final class BillableInvoiceRecords {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.2
 	 */
 	private static function tariffOf(array $line): ?string {
 		$code = trim((string)($line['vatTariff'] ?? ''));
@@ -111,7 +111,7 @@ final class BillableInvoiceRecords {
 	 *
 	 * @throws VatTariffRefusedException When no seeded tariff has that rate.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.2
 	 */
 	private static function tariffForRate(array $line, string $documentDate): string {
 		$rate = (float)($line['vatRate'] ?? BillingModelEngine::DEFAULT_VAT_RATE);

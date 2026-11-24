@@ -45,7 +45,7 @@ interface WidgetCorsPolicyInterface {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md#requirement-the-widget-books-from-another-website-req-wsw-011
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md#requirement-the-widget-books-from-another-website-req-wsw-011
 	 */
 	public function allowedOrigin(string $businessId, string $origin): ?string;
 
@@ -58,7 +58,7 @@ interface WidgetCorsPolicyInterface {
 	 *
 	 * @return array{success: bool, message?: string, allowedOrigins?: array<int, string>}
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.5
 	 */
 	public function setAllowedOrigins(string $businessId, array $origins, string $actor): array;
 

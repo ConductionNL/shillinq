@@ -48,7 +48,7 @@ interface ActivityCostPriceCalculationInterface {
 	 *
 	 * @throws DomainException When the activity cannot be calculated.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
 	public function calculate(array $activity): array;
 }//end interface

@@ -40,7 +40,7 @@ class VATCalculationService {
 	 * @param VatTariffResolver|null $tariffs Resolves a line's `vatTariff` code on its document date;
 	 *                                        without it a line naming a tariff is refused.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public function __construct(
 		private readonly ?VatTariffResolver $tariffs = null,
@@ -116,7 +116,7 @@ class VATCalculationService {
 	 *
 	 * @throws VatTariffRefusedException When the line names a tariff that cannot be resolved.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public function lineRate(array $line): float {
 		$code = trim((string)($line['vatTariff'] ?? ''));

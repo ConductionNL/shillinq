@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Runs the generators of an ENSIA cycle over its stored questions and findings.
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 
@@ -77,7 +77,7 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @return list<string> The ids of the findings created.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function createFindings(array $cycle): array {
 		$cycle = self::identified(cycle: $cycle);
@@ -108,7 +108,7 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function withStatement(array $cycle): array {
 		$identified = self::identified(cycle: $cycle);
@@ -142,7 +142,7 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @throws DomainException When the cycle is not approved or has no statement.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function withSubmission(array $cycle): array {
 		if ($this->exporter->canExport(cyclus: $cycle) === false) {
@@ -166,7 +166,7 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @return RenderedFile|null
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function statementFile(array $cycle): ?RenderedFile {
 		$docx = base64_decode((string)($cycle['declarationDocx'] ?? ''), true);
@@ -189,7 +189,7 @@ class EnsiaCycleSteps implements EnsiaCycleStepsInterface {
 	 *
 	 * @return RenderedFile|null
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function submissionFile(array $cycle): ?RenderedFile {
 		$xml = (string)($cycle['submissionXml'] ?? '');

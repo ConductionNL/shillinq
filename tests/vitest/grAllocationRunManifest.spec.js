@@ -9,7 +9,7 @@
  * GRAllocationRun declares and is shown only in the state it leaves, and the
  * widgets show fields the schema has.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md
  */
 
 import fs from 'fs'

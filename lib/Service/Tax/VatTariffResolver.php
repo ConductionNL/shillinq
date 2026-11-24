@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * line codes BTW21, BTW9, BTW0 and VERLEGD resolve to the seeded high, low,
  * zero and reverse-charge tariffs.
  *
- * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
  */
 class VatTariffResolver {
 
@@ -70,7 +70,7 @@ class VatTariffResolver {
 	 * @param ObjectServiceInterface $objectService    OpenRegister's object surface.
 	 * @param RegisterLocation       $registerLocation Where the register lives.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -86,7 +86,7 @@ class VatTariffResolver {
 	 *
 	 * @return string The tariff code.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public static function canonicalCode(string $code): string {
 		$code = trim($code);
@@ -105,7 +105,7 @@ class VatTariffResolver {
 	 *
 	 * @throws VatTariffRefusedException When the code is unknown or no record of it is valid on the date.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public function forCode(string $code, DateTimeInterface|string $date): array {
 		$day       = self::day(date: $date);
@@ -141,7 +141,7 @@ class VatTariffResolver {
 	 *
 	 * @throws VatTariffRefusedException When the code is unknown or not valid on the date.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public function rateFor(string $code, DateTimeInterface|string $date): float {
 		return self::percentageOf(tariff: $this->forCode(code: $code, date: $date));
@@ -155,7 +155,7 @@ class VatTariffResolver {
 	 *
 	 * @return float The percentage.
 	 *
-	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-rates-and-deductibility/tasks.md#task-2.1
 	 */
 	public static function percentageOf(array $tariff): float {
 		if (is_numeric($tariff['ratePercentage'] ?? null) === true) {

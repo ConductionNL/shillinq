@@ -13,7 +13,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
  * MANUAL: a person sends them. Email plus registered post sends the mail and
  * leaves the letter MANUAL. No channel but a mail ever reads DELIVERED.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.2
  */
 final class MailDunningChannelAdapter implements DunningChannelAdapterInterface {
 
@@ -83,7 +83,7 @@ final class MailDunningChannelAdapter implements DunningChannelAdapterInterface 
 	 *
 	 * @return DunningChannelSendResult The outcome.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.2
 	 */
 	public function send(string $channel, array $payload): DunningChannelSendResult {
 		if ($channel !== self::CHANNEL_EMAIL && $channel !== self::CHANNEL_EMAIL_AND_POST) {

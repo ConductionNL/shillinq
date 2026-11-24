@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Throwable;
 /**
  * Runs the daily dunning pass over every administration that switched it on.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
  */
 class DunningTickRunner implements DunningTickRunnerInterface {
 	/**
@@ -92,7 +92,7 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @return array<int,array<string,mixed>> One report per administration that was enabled.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
 	 */
 	public function runAll(DateTimeImmutable $now): array {
 		$reports = $this->objectService->runAsSystem(
@@ -122,7 +122,7 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @return array<string,mixed> The run report: markedOverdue, sent, failed, manual, skipped, errors, locked.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
 	 */
 	public function runAdministration(array $administration, DateTimeImmutable $now): array {
 		$keys   = $this->administrationKeys(administration: $administration);
@@ -167,7 +167,7 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @return array<string,array<string,mixed>> Reports keyed by administration.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
 	 */
 	public function lastReports(): array {
 		$stored = json_decode($this->appConfig->getValueString(AppIdentity::APP_ID, self::REPORT_KEY, '{}', lazy: true), true);
@@ -186,7 +186,7 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @return array<string,mixed>|null The report, or null when the job never ran it.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	public function lastReportFor(array $administration): ?array {
 		$reports = $this->lastReports();
@@ -210,7 +210,7 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @return array<int,array<string,mixed>> invoiceId, invoiceNumber, customer, dueDate, amount, stageNr, channel, ladderId.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	public function previewAdministration(array $administration, DateTimeImmutable $now): array {
 		$rows  = [];
@@ -232,7 +232,7 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	private function previewRows(string $key, string $state, DateTimeImmutable $now): array {
 		$rows = [];
@@ -256,7 +256,7 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	private function previewRow(string $key, string $state, array $invoice, DateTimeImmutable $now): array|null {
 		$today = $now->format('Y-m-d');

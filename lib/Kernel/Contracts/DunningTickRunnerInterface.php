@@ -52,7 +52,7 @@ interface DunningTickRunnerInterface {
 	 *
 	 * @return array<string,mixed>|null The report, or null when the job never ran it.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	public function lastReportFor(array $administration): ?array;
 
@@ -67,7 +67,7 @@ interface DunningTickRunnerInterface {
 	 *
 	 * @return array<int,array<string,mixed>> invoiceId, invoiceNumber, customer, dueDate, amount, stageNr, channel, ladderId.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	public function previewAdministration(array $administration, DateTimeImmutable $now): array;
 
@@ -84,7 +84,7 @@ interface DunningTickRunnerInterface {
 	 *
 	 * @return array<int,array<string,mixed>> One report per administration that was enabled.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-3.1
 	 */
 	public function runAll(DateTimeImmutable $now): array;
 }//end interface

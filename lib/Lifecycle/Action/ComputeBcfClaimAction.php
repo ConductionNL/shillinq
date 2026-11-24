@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
 /**
  * The `compute` transition's executor.
  *
- * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
  */
 class ComputeBcfClaimAction implements LifecycleActionInterface {
 
@@ -57,7 +57,7 @@ class ComputeBcfClaimAction implements LifecycleActionInterface {
 	 *
 	 * @throws InvalidArgumentException When the claim names no administration or quarter.
 	 *
-	 * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation/spec.md
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

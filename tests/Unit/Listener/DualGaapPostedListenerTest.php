@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
  */
 
 // phpcs:disable CustomSniffs.Functions.NamedParameters

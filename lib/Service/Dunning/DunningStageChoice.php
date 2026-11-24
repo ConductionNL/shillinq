@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use DateTimeImmutable;
 /**
  * Progress of choosing the next dunning stage for one invoice.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
  */
 final class DunningStageChoice {
 	/**
@@ -123,7 +123,7 @@ final class DunningStageChoice {
 	 *
 	 * @return bool Whether the invoice is overdue.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function isOverdue(): bool {
 		$this->invoiceId = (string)($this->invoice['id'] ?? ($this->invoice['@self']['id'] ?? ''));
@@ -137,7 +137,7 @@ final class DunningStageChoice {
 	 *
 	 * @return bool Whether a stage is due.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function chooseDueStage(): bool {
 		$this->stage = $this->selector->next(stages: $this->ladder['stages'], runs: $this->runs, daysInArrears: (int)$this->daysInArrears, now: $this->now);
@@ -152,7 +152,7 @@ final class DunningStageChoice {
 	 *
 	 * @return bool False when the reminder was already sent.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function useOnlyStageOnce(array $costFreeParams): bool {
 		if ($this->runs !== []) {
@@ -171,7 +171,7 @@ final class DunningStageChoice {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function useOnlyStage(): void {
 		$stage = ($this->selector->definition(stages: $this->ladder['stages'], stageNr: VoluntaryContributionPolicy::ONLY_STAGE) ?? $this->stage);
@@ -186,7 +186,7 @@ final class DunningStageChoice {
 	 *
 	 * @return array<string,mixed> The executeStage() params.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function stageParams(int $stageNr): array {
 		$params = $this->params;

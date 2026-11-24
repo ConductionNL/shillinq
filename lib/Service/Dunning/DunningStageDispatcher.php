@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 /**
  * Dispatches a DunningRun through the channel adapter and records the truth.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
  */
 class DunningStageDispatcher {
 	/**
@@ -64,8 +64,8 @@ class DunningStageDispatcher {
 	 *
 	 * @return array<string,mixed> The run with deliveryStatus, deliveryNote (and postageStatus) from the adapter.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.2
 	 */
 	public function dispatch(array $record, array $invoice = []): array {
 		$channel = (string)($record['channel'] ?? 'EMAIL');

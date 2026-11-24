@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use OCP\IUserSession;
 /**
  * Draws and stores a seeded audit sample (REQ-011).
  *
- * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 class AuditSampleDrawer {
 
@@ -67,7 +67,7 @@ class AuditSampleDrawer {
 	 *
 	 * @throws DomainException When the protocol does not exist, or the size is not between 1 and the population size.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/tasks.md#task-2.1
 	 */
 	public function draw(string $protocolId, array $population, int $size, ?int $seed = null, string $description = ''): array {
 		if ($this->records->find(schema: 'Controleprotocol', id: $protocolId) === null) {
@@ -110,7 +110,7 @@ class AuditSampleDrawer {
 	 *
 	 * @throws DomainException When the size is out of range.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/tasks.md#task-2.1
 	 */
 	private static function requireSampleSize(int $size, array $ids): void {
 		if ($size < 1 || $size > count($ids)) {
@@ -125,7 +125,7 @@ class AuditSampleDrawer {
 	 *
 	 * @return int The seed to draw with.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/tasks.md#task-2.1
 	 */
 	private static function seedOrNew(int|null $seed): int {
 		if ($seed === null) {
@@ -143,7 +143,7 @@ class AuditSampleDrawer {
 	 *
 	 * @return string The description.
 	 *
-	 * @spec openspec/changes/public-sector-council-and-auditor-statements/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/tasks.md#task-2.1
 	 */
 	private static function populationDescription(string $description, array $ids): string {
 		if ($description === '') {

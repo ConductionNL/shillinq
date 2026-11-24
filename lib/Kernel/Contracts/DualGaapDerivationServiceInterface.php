@@ -32,7 +32,7 @@ interface DualGaapDerivationServiceInterface {
 	 *
 	 * @return array{derived: bool, message: string, differenceCents?: int, dualTransaction?: array<string, mixed>, bridge?: array<string, mixed>}
 	 *
-	 * @spec openspec/changes/reporting-ifrs-calculations/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-ifrs-calculations/tasks.md#task-1.1
 	 */
 	public function deriveOnPost(array $transaction): array;
 }//end interface

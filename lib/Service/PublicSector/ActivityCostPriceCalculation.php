@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use OCA\Shillinq\Service\LedgerActuals;
 /**
  * Calculates and stores the integral cost price of a commercial activity.
  *
- * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
  */
 class ActivityCostPriceCalculation implements ActivityCostPriceCalculationInterface {
 
@@ -79,7 +79,7 @@ class ActivityCostPriceCalculation implements ActivityCostPriceCalculationInterf
 	 * @throws DomainException When the year, the cost centre or the cost object is
 	 *                         missing, or the year's cost price is already final.
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
 	 */
 	public function calculate(array $activity): array {
 		$year = (int)($activity['costPriceYear'] ?? 0);

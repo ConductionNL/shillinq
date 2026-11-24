@@ -44,7 +44,7 @@ interface EuDeclarationBuilderInterface {
 	 *
 	 * @throws DomainException When the period is invalid or an open irregularity blocks the project.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-a-declaration-bundles-eligible-expenditure-with-evidence-req-euf-012
 	 */
 	public function propose(array $project, string $periodFrom, string $periodTo): array;
 
@@ -57,7 +57,7 @@ interface EuDeclarationBuilderInterface {
 	 *
 	 * @throws DomainException When an expenditure of the declaration can no longer be submitted.
 	 *
-	 * @spec openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-submitting-a-declaration-submits-its-expenditures-req-euf-013
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen/spec.md#requirement-submitting-a-declaration-submits-its-expenditures-req-euf-013
 	 */
 	public function submit(array $declaration): array;
 }//end interface

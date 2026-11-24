@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use OCA\Shillinq\Kernel\Contracts\DunningStageRendererInterface;
  * The renderer does no I/O: the caller hands it the invoice, the customer and
  * the values it worked out (bank account, collection costs, interest).
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.1
  */
 final class DunningStageRenderer implements DunningStageRendererInterface {
 
@@ -76,7 +76,7 @@ final class DunningStageRenderer implements DunningStageRendererInterface {
 	 *
 	 * @return array{language: string, subject: string, body: string} The rendered text.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.1
 	 */
 	public function render(array $stage, array $invoice, array $customer = [], array $values = []): array {
 		$language = $this->languageFor(invoice: $invoice, customer: $customer);
@@ -100,7 +100,7 @@ final class DunningStageRenderer implements DunningStageRendererInterface {
 	 *
 	 * @return string `nl` or `en`.
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-2.1
 	 */
 	public function languageFor(array $invoice, array $customer = []): string {
 		$explicit = strtolower((string)($customer['language'] ?? ($invoice['language'] ?? '')));
@@ -141,7 +141,7 @@ final class DunningStageRenderer implements DunningStageRendererInterface {
 	 *
 	 * @return array{subject: string, body: string}
 	 *
-	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	public function textFor(array $stage, string $language): array {
 		$other = 'en';

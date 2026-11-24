@@ -274,7 +274,7 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 	 *
 	 * @return bool True when the channel accepted the notification.
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/tasks.md#task-1.2
 	 */
 	private function deliver(string $channel, NotificationDispatch $dispatch, array $rendered): bool {
 		if ($channel === 'email' && $this->mailer !== null) {
@@ -298,7 +298,7 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-email-templates/spec.md#requirement-a-booking-reminder-mail-leaves-at-its-configured-time-req-bet-011
+	 * @spec openspec/changes/archive/2026-11-24-bookings-messages-and-embedding/specs/notification-booking-email-templates/spec.md#requirement-a-booking-reminder-mail-leaves-at-its-configured-time-req-bet-011
 	 */
 	private function recordReminderSent(NotificationDispatch $dispatch, string $channel): void {
 		$booking = $dispatch->booking;

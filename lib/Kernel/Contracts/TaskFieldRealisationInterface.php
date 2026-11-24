@@ -52,7 +52,7 @@ interface TaskFieldRealisationInterface {
 	 *     unmapped: list<array{accountNumber: string, amount: float, mappingPage: string}>
 	 * }
 	 *
-	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	public function forYear(string $administrationId, string $fiscalYear, string $startDate, string $endDate): array;
 }//end interface

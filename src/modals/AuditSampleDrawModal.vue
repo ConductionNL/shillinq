@@ -14,7 +14,7 @@
  (src/utils/auditSampleApi.js) through spawnDialog. Its own file for hydra
  gate-13.
 
- @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+ @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
 -->
 
 <template>
@@ -107,7 +107,7 @@ export default {
 		 * What the draw stored: the number of lines, the population and the seed.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
 		 */
 		resultText() {
 			if (!this.drawn) {
@@ -127,7 +127,7 @@ export default {
 		/**
 		 * Post the draw and show what was stored.
 		 *
-		 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
 		 */
 		async submit() {
 			this.error = ''
@@ -150,7 +150,7 @@ export default {
 		/**
 		 * Close, with the sample when one was drawn.
 		 *
-		 * @spec openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol/spec.md
 		 */
 		onClose() {
 			this.$emit('close', this.drawn)

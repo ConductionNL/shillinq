@@ -12,7 +12,7 @@
  * CnPageRenderer `cnDispatchAction`, which reads `manifest.actions`. A
  * handler missing from either map makes the button do nothing.
  *
- * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-automatic-dunning/tasks.md#task-4.1
  */
 
 import fs from 'fs'

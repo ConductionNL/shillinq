@@ -21,6 +21,7 @@
 ## 4. Strings and live check
 
 - [x] 4.1 English and Dutch strings. Verify: `npm run test:l10n`, `check:schema-l10n`. — every new UI and schema string in `l10n/en.json` and `l10n/nl.json`, catalogues rebuilt; `test:l10n` and `test:l10n-parity` pass, `check:schema-l10n` adds no uncovered string (it stands above its baseline on development already).
-- [ ] 4.2 Live: post a line on an unmapped account in a municipal administration, see it listed; run an allocation over three participants; calculate a cost price.
+- [x] 4.2 Live: post a line on an unmapped account in a municipal administration, see it listed; run an allocation over three participants; calculate a cost price.
+  - **Written, runs in nightly (24 Nov 2026):** `tests/e2e/public-sector-task-field-allocation.spec.ts` posts a line on unmapped account 6999 in an administration of its own and reads it on the BBV dashboard with its mapping link (REQ-BBV-012), proposes, confirms and invoices an allocation over three participants to the cent (REQ-GRC-007, REQ-GRC-008), and calculates a cost price of EUR 22 per unit (REQ-WMO-013). In the CI Playwright testDir, matching no testIgnore; not verified here, no live instance in the build sandbox.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
