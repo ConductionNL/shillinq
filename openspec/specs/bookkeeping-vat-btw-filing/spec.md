@@ -21,7 +21,6 @@ This specification defines the requirements for bookkeeping vat btw filing in th
 
 @e2e exclude unbuilt UI: BTW filing index page not yet implemented
 
-
 ### Requirement: REQ-VBTW-001 — The system SHALL store BTW returns as an OpenRegister-managed `VatReturn` register
 
 BTW (omzetbelasting) periodic returns MUST be declared as a register
@@ -550,6 +549,50 @@ name the unity.
 - WHEN the bookkeeper of the holding prepares the Q3 2026 return
 - THEN the return shows subtotals for the holding and both members and one total
 - AND preparing a Q3 2026 return in Voorbeeld Bouw B.V. is refused naming the unity
+
+### Requirement: The VAT position of the open period is shown per box (REQ-VPS-001)
+
+The VAT reports page SHALL show, for the open period, the base and VAT per
+return box from the posted lines so far and the amount payable or
+refundable, SHALL list the lines behind a box, and SHALL give for a closed
+period the same figures as its prepared return.
+
+#### Scenario: A bookkeeper checks the position mid-quarter
+
+- GIVEN posted sales in Q4 2026 so far of EUR 20,000 at 21% and purchases with EUR 1,500 input VAT
+- WHEN the bookkeeper opens the VAT reports page for 2026-Q4
+- THEN box 1a shows base EUR 20,000 and VAT EUR 4,200
+- AND box 5b shows EUR 1,500 and the payable amount shows EUR 2,700
+
+#### Scenario: The lines behind a box
+
+- GIVEN the same position
+- WHEN the bookkeeper clicks box 1a
+- THEN the posted lines that make up EUR 4,200 are listed with their entries
+
+### Requirement: A filed period is corrected with a supplementary return (REQ-VPS-002)
+
+The app SHALL let a user check a filed return for drift against the books,
+SHALL let a user prepare a supplementary return from a detected correction
+with the per-box differences, and SHALL file it or offer it for download.
+
+#### Scenario: A late purchase invoice for a filed quarter
+
+- GIVEN the Q2 2026 return was filed and a purchase invoice dated June with EUR 1,800 input VAT was posted afterwards
+- WHEN the bookkeeper chooses "Check for corrections" on the Q2 return
+- THEN a correction shows on the corrections page with box 5b EUR 1,800
+- AND "Prepare supplementary return" shows it above the EUR 1,000 threshold with the correction posting staged
+
+### Requirement: Drift is looked for after a period close (REQ-VPS-003)
+
+The app SHALL check the filed returns of the fiscal year for drift when a
+period of that year is closed.
+
+#### Scenario: Closing September finds a Q2 drift
+
+- GIVEN the late June invoice above
+- WHEN the bookkeeper closes September 2026
+- THEN the corrections page lists the Q2 correction without anyone running a check
 
 ## Notes
 
