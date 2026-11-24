@@ -15,9 +15,10 @@
 
 ## 2. Delegation
 
-- [ ] 2.1 After OpenRegister's `flow-approval-consolidation` is on the instance, add "Hand to a colleague" with a mandate to the approval panel, calling the task `delegate` verb, and show "on behalf of" on decided steps (REQ-PAD-002). Verify: Playwright hands the step to Karin de Wit and sees the on-behalf-of line; an empty mandate is refused.
+- [x] 2.1 After OpenRegister's `flow-approval-consolidation` is on the instance, add "Hand to a colleague" with a mandate to the approval panel, calling the task `delegate` verb, and show "on behalf of" on decided steps (REQ-PAD-002). Verify: Playwright hands the step to Karin de Wit and sees the on-behalf-of line; an empty mandate is refused.
   - Left: OpenRegister has `POST /api/flow-tasks/{uuid}/delegate` with a mandate and `on_behalf_of`, but the shared `tasks` widget of @conduction/nextcloud-vue offers no delegate verb; the hand-over belongs in that widget (a library change), not in a hand-built shillinq panel. The Playwright scenario is in `tests/e2e/purchasing-approval-delegation.spec.ts` as a `fixme` until the widget has the verb.
   - Dependency built (24 Nov 2026): ConductionNL/nextcloud-vue#2314 adds `content.delegate` to the `tasks` widget (Hand to a colleague with a mandate, on behalf of shown in the table). Left: once a release carries it, raise the dependency, set `delegate: true` on the Approval tabs and turn the `fixme` in `tests/e2e/purchasing-approval-delegation.spec.ts` into a test.
+  - Built (24 Nov 2026): `@conduction/nextcloud-vue` raised to ^2.213.0 (the first release with the widget's delegate verb), `delegate: true` on the Approval tabs of `PurchaseOrderDetail` and `SupplierInvoiceDetail` (Vitest `tests/vitest/approvalTabDelegate.spec.js`), and the `fixme` turned into the Playwright scenario (hand-over waits for a mandate, the colleague approves, on behalf of shown): written, runs in nightly, not verified here (no live instance).
 
 ## 3. Audit
 
