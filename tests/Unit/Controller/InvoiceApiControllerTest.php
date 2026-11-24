@@ -29,6 +29,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BillableLinesService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentParties;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -301,6 +302,57 @@ final class InvoiceApiControllerTest extends TestCase {
 		self::assertSame('inline; filename=""', $headers['Content-Disposition']);
 
 	}//end testPdfValidReturnsRenderedDocument()
+
+	/**
+	 * The document gets the invoice's creditor, recipient, layout and language
+	 * beside the caller, so the EPC QR has an IBAN to pay to (REQ-SID-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
+	 */
+	public function testPdfHandsTheDocumentItsParties(): void {
+		$invoice = ['invoiceNumber' => 'F-2026-0009', 'administrationId' => 'adm-1', 'customerId' => 'C-1'];
+		$this->objectService->method('find')->willReturn($this->entity($invoice));
+		$this->objectService->method('findAll')->willReturn([]);
+		$parties = [
+			'creditor' => ['legalName' => 'Gemeente Zuidoost', 'iban' => 'NL91ABNA0417164300'],
+			'recipient' => ['legalName' => 'Advies B.V.', 'language' => 'en'],
+			'layout' => ['variant' => 'modern', 'showQr' => true],
+			'language' => 'nl',
+		];
+		$resolver = $this->createMock(InvoiceDocumentParties::class);
+		$resolver->expects(self::once())->method('forInvoice')->with($invoice)->willReturn($parties);
+		$seenContext = null;
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(true);
+		$this->pdfGenerator->method('generatePdf')->willReturnCallback(
+			static function (array $invoiceArg, array $linesArg, array $context) use (&$seenContext): array {
+				$seenContext = $context;
+				return ['filename' => 'invoice-F-2026-0009.pdf', 'pdf' => '%PDF-1.7', 'mimeType' => 'application/pdf'];
+			}
+		);
+		$controller = new InvoiceApiController(
+			request: $this->request,
+			service: $this->service,
+			pdfGenerator: $this->pdfGenerator,
+			session: $this->session,
+			administrationContext: $this->administrationContext,
+			logger: $this->logger,
+			objectService: $this->objectService,
+			billableLines: $this->billableLines,
+			parties: $resolver,
+		);
+
+		$response = $controller->pdf('inv-9');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($parties['creditor'], $seenContext['creditor']);
+		self::assertSame($parties['recipient'], $seenContext['recipient']);
+		self::assertSame($parties['layout'], $seenContext['layout']);
+		self::assertSame('nl', $seenContext['language']);
+		self::assertNotSame('', $seenContext['userId']);
+
+	}//end testPdfHandsTheDocumentItsParties()
 
 	/**
 	 * A hostile filename coming back from the renderer can never inject a

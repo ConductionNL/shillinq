@@ -44,6 +44,7 @@ use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 use OCA\Shillinq\Kernel\Exception\UnratedHoursException;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentParties;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -117,6 +118,7 @@ class InvoiceApiController extends Controller {
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param BillableLinesServiceInterface $billableLines The lines one customer can be invoiced for.
+	 * @param InvoiceDocumentParties|null $parties The creditor, recipient, layout and language of the document.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -127,6 +129,7 @@ class InvoiceApiController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly BillableLinesServiceInterface $billableLines,
+		private readonly ?InvoiceDocumentParties $parties = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -467,14 +470,15 @@ class InvoiceApiController extends Controller {
 
 	/**
 	 * Render the invoice PDF through docudesk, when the invoice belongs to the
-	 * caller's administration; without docudesk, say that it is needed
-	 * (REQ-SID-002).
+	 * caller's administration, with its creditor, recipient, layout and
+	 * language; without docudesk, say that it is needed (REQ-SID-002).
 	 *
 	 * @param string $invoiceId The invoice id.
 	 *
 	 * @return DataDisplayResponse|JSONResponse
 	 *
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-4.2
 	 */
 	private function renderPdf(string $invoiceId): DataDisplayResponse|JSONResponse {
 		$invoice = $this->ownInvoice(invoiceId: $invoiceId);
@@ -492,7 +496,10 @@ class InvoiceApiController extends Controller {
 		$pdf = $this->pdfGenerator->generatePdf(
 			invoice: $invoice,
 			lines: $this->invoiceLines(invoiceId: $invoiceId),
-			context: ['userId' => (string)$this->session->getUser()?->getUID()]
+			context: array_merge(
+				($this->parties?->forInvoice(invoice: $invoice) ?? []),
+				['userId' => (string)$this->session->getUser()?->getUID()]
+			)
 		);
 
 		return new DataDisplayResponse(
