@@ -16,7 +16,7 @@
 
 - [x] 3.1 The `shillinq-helper` template file and its offer to hermiq (REQ-PHA-002, REQ-PHA-003). Verify: PHPUnit that the package carries no secret and restricts `views` to `HelpArticle`.
 - [ ] 3.2 Live check on an instance with hermiq: instantiate the helper and ask the period close question (REQ-PHA-003). Verify: the answer and its link in the PR body.
-  - Partly written (24 Nov 2026) in `tests/e2e/platform-help-agent.spec.ts`: the period close HelpArticle and its index (REQ-PHA-001), and, once the helper exists in hermiq, the question through hermiq's chat with the article link in the answer (REQ-PHA-003). Left: instantiating the template (REQ-PHA-002) has no hermiq route this repo names, so the ask test skips until an administrator instantiated it; and the period close pages declare no `documentationUrl`, so the article gets no `pageIds` (design D1) — the spec checks this softly.
+  - Partly written (24 Nov 2026) in `tests/e2e/platform-help-agent.spec.ts`: the period close HelpArticle and its index (REQ-PHA-001), and, once the helper exists in hermiq, the question through hermiq's chat with the article link in the answer (REQ-PHA-003). Left: instantiating the template (REQ-PHA-002) has no hermiq route this repo names, so the ask test skips until an administrator instantiated it; the period close pages now declare the guide as `documentationUrl` (24 Nov 2026), so the article gets both as `pageIds` (design D1).
 - [x] 3.3 Dutch and English strings for the template's description and the articles index. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
