@@ -7,7 +7,17 @@
     findUnusedBaselineEntry="true"
     findUnusedCode="true"
     findUnusedVariablesAndParams="true"
+    strictBinaryOperands="false"
+    ensureOverrideAttribute="false"
 >
+    <!--
+        strictBinaryOperands and ensureOverrideAttribute: psalm 7 turned both on
+        by default; psalm 5 ran with them off. Kept off so the upgrade does not
+        change what is checked. Casting the money arithmetic (460 sites) and
+        adding #[Override] (1039 methods) are their own changes: the attribute
+        raises phpmd coupling past 19 in three classes and lowers the
+        duplication rating, so it needs those classes split first.
+    -->
     <projectFiles>
         <directory name="lib" />
         <ignoreFiles>

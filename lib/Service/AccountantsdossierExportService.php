@@ -786,6 +786,10 @@ class AccountantsdossierExportService implements AccountantsdossierExportService
 	 * @param string $generatedAt The ISO 8601 timestamp.
 	 *
 	 * @return string
+	 *
+	 * @psalm-taint-escape file The id is reduced to [A-Za-z0-9_-], so it cannot carry a path.
+	 *
+	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
 	 */
 	private function packageId(string $protocolId, string $generatedAt): string {
 		$safe = preg_replace('/[^A-Za-z0-9_-]/', '_', $protocolId);
