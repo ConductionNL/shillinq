@@ -1200,7 +1200,7 @@
   {
     "id": "shillinq.receipt.book",
     "name": "Book a receipt on an expense claim",
-    "description": "Book a captured receipt onto a draft expense claim of the same administration, as the receipt review screen does: the receipt is confirmed, any field you pass is recorded as a correction, and the booked account is fed back to the receipt reader. Use it when the user asks to book or add a receipt to their expense claim; find the receipt first with shillinq.Receipt.search (the capture made it from the photo) and the claim with shillinq.ExpenseClaimEntry.search. The claim must still be a draft, and a receipt already on another claim is refused. The receipt needs an amount, a currency, a date and a category; pass any it lacks.",
+    "description": "Book a captured receipt onto a draft expense claim of the same administration, as the receipt review screen does: the receipt is confirmed, any field you pass is recorded as a correction, and the booked account is fed back to the receipt reader. Use it when the user asks to book or add a receipt to their expense claim; the receipt id comes from the capture that made it from the photo (the receipt review screen shows it), and the claim is found with shillinq.ExpenseClaimEntry.search. The claim must still be a draft, and a receipt already on another claim is refused. The receipt needs an amount, a currency, a date and a category; pass any it lacks.",
     "scope": "create",
     "reach": "user",
     "readOnlyHint": false,
