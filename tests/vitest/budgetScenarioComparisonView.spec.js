@@ -12,7 +12,7 @@
  * `loadLedgerGroupNames()` is pinned separately by
  * tests/vitest/budgetScenarioLedgerGroups.spec.js.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

@@ -6,7 +6,7 @@
  * renders (server-side, no DOM) before and after a proposal, and what its
  * load and submit send and do with the answer.
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
  */
 
 import axios from '@nextcloud/axios'

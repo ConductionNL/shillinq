@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use RuntimeException;
 /**
  * The batch is not there for this caller.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 class ImportBatchNotFoundException extends RuntimeException {
 }//end class

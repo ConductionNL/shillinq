@@ -243,7 +243,7 @@ import { leafReportMixin } from './leafReport.js'
  *
  * @type {string[]}
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export const ALL_KINDS = [
 	'quote',
@@ -258,7 +258,7 @@ export const ALL_KINDS = [
  *
  * @type {string[]}
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export const ALL_ACTIONS = [
 	'issue-invoice',
@@ -289,7 +289,7 @@ const ROW_ACTS = [
  *
  * @return {string[]} The acts.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export function actsForRow(row, acts, allowed) {
 	if (!row || row.restricted === true) {
@@ -306,7 +306,7 @@ export function actsForRow(row, acts, allowed) {
 /**
  * The panel mounted by the `shillinq-financial-documents-panel` leaf.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export default {
 	name: 'ShillinqFinancialDocumentsPanel',
@@ -353,7 +353,7 @@ export default {
 	computed: {
 		/**
 		 * @return {object[]} The rows of the kinds this placement shows.
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		visibleRows() {
 			return this.rows.filter((row) => this.kinds.includes(row.kind))
@@ -361,7 +361,7 @@ export default {
 
 		/**
 		 * @return {object} What this leaf reports to a carding host or a "linked" card.
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		leafReport() {
 			const actions = this.topActs.map((act) => ({
@@ -387,7 +387,7 @@ export default {
 		 * The acts not tied to a row that the caller holds and the placement allows.
 		 *
 		 * @return {Array<{id: string, label: string}>} The acts.
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		topActs() {
 			return [
@@ -397,32 +397,32 @@ export default {
 			].filter((act) => this.offers(act.id))
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		newQuoteLabel() {
 			return t('shillinq', 'New quote')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		raisePayoutLabel() {
 			return t('shillinq', 'Raise payout')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		creditLabel() {
 			return t('shillinq', 'Credit invoice')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		payeeNameLabel() {
 			return t('shillinq', 'Who is paid')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		ibanLabel() {
 			return t('shillinq', 'IBAN')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		emptyLabel() {
 			return t(
 				'shillinq',
@@ -430,67 +430,67 @@ export default {
 			)
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		issueLabel() {
 			return t('shillinq', 'Issue invoice')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		confirmIssueLabel() {
 			return t('shillinq', 'Issue the invoice')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		amountLabel() {
 			return t('shillinq', 'Amount')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		descriptionLabel() {
 			return t('shillinq', 'What it is for')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		debtorNameLabel() {
 			return t('shillinq', 'Who pays')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		debtorEmailLabel() {
 			return t('shillinq', 'Their email address')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		requestPaymentLabel() {
 			return t('shillinq', 'Request payment')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		sendLabel() {
 			return t('shillinq', 'Send payment link')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		settleLabel() {
 			return t('shillinq', 'Mark paid by other means')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		confirmSettleLabel() {
 			return t('shillinq', 'Record the payment')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		cancelLabel() {
 			return t('shillinq', 'Cancel')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		openLabel() {
 			return t('shillinq', 'Open in Shillinq')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		restrictedLabel() {
 			return t(
 				'shillinq',
@@ -498,22 +498,22 @@ export default {
 			)
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		methodLabel() {
 			return t('shillinq', 'How the money arrived')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		referenceLabel() {
 			return t('shillinq', 'Reference')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		reasonLabel() {
 			return t('shillinq', 'Reason, which a waiver needs')
 		},
 
-		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		/** @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		settlementMethods() {
 			return [
 				{ value: 'pin', label: t('shillinq', 'Pin at the counter') },
@@ -535,7 +535,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async load() {
 			await this.readHostLeaf(FINANCIAL_DOCUMENTS_DATA_LEAF, {
@@ -556,7 +556,7 @@ export default {
 		 * @param {string} act The act.
 		 * @return {boolean} True when the caller holds it and the placement allows it.
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		offers(act) {
 			const grants = {
@@ -577,7 +577,7 @@ export default {
 		 * @param {object} row One row.
 		 * @return {string[]} The acts.
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		rowActs(row) {
 			return actsForRow(row, this.acts, this.actions)
@@ -589,7 +589,7 @@ export default {
 		 * @param {object} row One row.
 		 * @return {string} The title.
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		titleOf(row) {
 			const kinds = {
@@ -614,7 +614,7 @@ export default {
 		 * @param {object} row One row.
 		 * @return {string} The state, or an empty string when nothing is owed.
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		stateOf(row) {
 			const states = {
@@ -631,7 +631,7 @@ export default {
 		 * @param {object} row One row.
 		 * @return {string} The line, or an empty string.
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		dueLine(row) {
 			if (!row.dueOn) {
@@ -646,7 +646,7 @@ export default {
 		 * @param {object} row One row with a path.
 		 * @return {string} The URL.
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		pageOf(row) {
 			return generateUrl(row.path)
@@ -657,7 +657,7 @@ export default {
 		 *
 		 * @param {string} act The act: issue-invoice, new-quote or raise-payout.
 		 * @return {void}
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		openForm(act) {
 			this.form = {
@@ -675,7 +675,7 @@ export default {
 		 *
 		 * @param {string} act The act.
 		 * @return {string} The label.
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		confirmLabelFor(act) {
 			const labels = {
@@ -690,7 +690,7 @@ export default {
 		 * Submit the open form: issue an invoice, start a quote or raise a payout on the host object.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async submitForm() {
 			const host = hostIdentity(this.$props)
@@ -741,7 +741,7 @@ export default {
 		 *
 		 * @param {object} row The invoice row.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async credit(row) {
 			await this.act(
@@ -757,7 +757,7 @@ export default {
 		 * @param {object} row The invoice row.
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async requestPayment(row) {
 			await this.act(
@@ -773,7 +773,7 @@ export default {
 		 * @param {object} row The payment request row.
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async send(row) {
 			await this.act(
@@ -789,7 +789,7 @@ export default {
 		 * @param {object} row The payment request row.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		openSettle(row) {
 			this.settleFor = row.id
@@ -802,7 +802,7 @@ export default {
 		 * @param {object} row The payment request row.
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async settle(row) {
 			const settlement = { ...this.settleForm, amount: 0 }
@@ -822,7 +822,7 @@ export default {
 		 * @param {string} done What to say when it went through.
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async act(row, call, done) {
 			this.busyId = row.id

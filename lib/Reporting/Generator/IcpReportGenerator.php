@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -34,7 +34,7 @@ use RuntimeException;
  * a CSV of its lines. It renders what was prepared on the ICP page; a
  * period without a prepared statement is refused, not computed silently.
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.2
  */
 final class IcpReportGenerator implements ReportGeneratorInterface {
 
@@ -55,7 +55,7 @@ final class IcpReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.2
 	 */
 	public static function reportType(): string {
 		return 'icp-opgaaf';
@@ -66,7 +66,7 @@ final class IcpReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.2
 	 */
 	public static function supportedFormats(): array {
 		return ['xml', 'csv'];
@@ -82,7 +82,7 @@ final class IcpReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @throws RuntimeException When the format is unsupported or nothing was prepared.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.2
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
 		if (in_array($format, self::supportedFormats(), true) === false) {

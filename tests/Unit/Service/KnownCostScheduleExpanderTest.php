@@ -18,9 +18,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

@@ -4,7 +4,7 @@
  *
  * "Confirm all" is one server call, not a PATCH per mapping row.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 
 import axios from '@nextcloud/axios'

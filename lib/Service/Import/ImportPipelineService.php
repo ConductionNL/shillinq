@@ -191,7 +191,7 @@ class ImportPipelineService {
 	 *
 	 * @return array<string,mixed> 'stagedCounts', 'stagingPayload', 'findings'.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function stageBatch(array $batch): array {
 		$profile = $this->profileFor(sourceSystem: (string)($batch['sourceSystem'] ?? 'xaf-generic'));
@@ -263,7 +263,7 @@ class ImportPipelineService {
 	 *
 	 * @return array<string,mixed> 'mappings', 'blocking' (bool), 'findings'.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function resolveBatchMappings(array $batch, string $batchId): array {
 		$stagingPayload = ($batch['stagingPayload'] ?? []);
@@ -408,7 +408,7 @@ class ImportPipelineService {
 	 *
 	 * @return string|null Suggested target code, or null.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function suggestByCodeOrName(string $sourceCode, array $targetNumbers): ?string {
 		if ($sourceCode === '') {
@@ -1150,7 +1150,7 @@ class ImportPipelineService {
 	 * @return array{byRgs:array<string,string>,numbers:array<string,string>} RGS code → target account
 	 *         code (auto-mapping), and every account number keyed by itself (the code-identity suggestion).
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function loadTargetChart(string $administrationId): array {
 		$chart = ['byRgs' => [], 'numbers' => []];

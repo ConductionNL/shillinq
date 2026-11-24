@@ -33,8 +33,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/specs/bookkeeping-vat-btw-filing/spec.md
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-3.2
  *
  * @e2e bookkeeping-vat-btw-filing::a-bookkeeper-checks-the-position-mid-quarter
  * @e2e bookkeeping-vat-btw-filing::the-lines-behind-a-box

@@ -67,7 +67,7 @@ interface BudgetScenarioDefaultPromoterInterface {
 	 *
 	 * @throws RuntimeException When the target scenario does not exist.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function promote(string $scenarioId): array;
 }//end interface

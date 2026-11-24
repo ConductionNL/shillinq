@@ -6,7 +6,7 @@
  * reading list of the invoice generator, and the request the generator
  * sends when usage is chosen.
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  */
 
 import fs from 'fs'

@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -73,7 +73,7 @@ class MeterReadingImportController extends Controller {
 	 *
 	 * @return JSONResponse 200 with `created` and `refused`; 400, 401 or 404.
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	#[NoAdminRequired]
 	public function import(): JSONResponse {

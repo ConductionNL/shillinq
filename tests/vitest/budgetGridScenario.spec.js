@@ -7,7 +7,7 @@
  * for that scenario's figures (optional scenarioId) and shows a
  * "Scenario: X" label; "Base budget" sends no scenarioId.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
  */
 
 import fs from 'fs'

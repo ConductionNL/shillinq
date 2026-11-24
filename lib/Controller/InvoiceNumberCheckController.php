@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Serves the invoice number check.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
  */
 class InvoiceNumberCheckController extends Controller {
 
@@ -72,7 +72,7 @@ class InvoiceNumberCheckController extends Controller {
 	 *
 	 * @return JSONResponse The report, with `missingCount`, `duplicateCount` and one row per finding.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
 	 */
 	#[NoAdminRequired]
 	public function check(): JSONResponse {

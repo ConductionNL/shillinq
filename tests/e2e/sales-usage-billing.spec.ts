@@ -10,7 +10,7 @@
  * state) is proven by SalesUsageBillingTest; these flows prove the screens
  * reach it.
  *
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-3.2
  */
 
 import { expect, test } from '@playwright/test'

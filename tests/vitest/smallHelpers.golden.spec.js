@@ -8,7 +8,7 @@
  *
  * SHILLINQ_GOLDEN_RECORD=1 rewrites the record.
  *
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
  */
 
 import { describe, it, vi } from 'vitest'

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -26,7 +26,7 @@ namespace OCA\Shillinq\Service;
  * The administration, its loaded context and the summary of one
  * KnownCostBudgetWriter::run(). Built and read by KnownCostBudgetWriter.
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md
  */
 final class KnownCostRun {
 

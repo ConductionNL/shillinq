@@ -31,8 +31,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
- * @spec openspec/changes/ledger-open-item-clearing/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/tasks.md#task-4.1
  *
  * @e2e bookkeeping-general-ledger::a-bookkeeper-opens-the-kruisposten-account
  * @e2e bookkeeping-general-ledger::clearing-a-savings-transfer

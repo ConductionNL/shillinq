@@ -1055,7 +1055,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 *
 	 * @return string Invoice number.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
 	private function generateInvoiceNumber(string $administrationId, string $invoiceDate): string {
 		$year = substr($invoiceDate, 0, 4);

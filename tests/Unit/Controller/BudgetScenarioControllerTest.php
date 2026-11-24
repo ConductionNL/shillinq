@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -65,7 +65,7 @@ use Psr\Log\NullLogger;
 /**
  * Tests the REQ-BSC-002 promote endpoint against engine-shaped store rows.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
 final class BudgetScenarioControllerTest extends TestCase {
 
@@ -182,7 +182,7 @@ final class BudgetScenarioControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function testPromoteAnswers200AndDemotesThePreviousDefaultOnEngineShapedRows(): void {
 		[$controller, $store] = $this->buildController(findAllRendersEntities: true);
@@ -214,7 +214,7 @@ final class BudgetScenarioControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function testPromoteAlsoWorksWhenTheStoreAnswersPlainArrayRows(): void {
 		[$controller, $store] = $this->buildController(findAllRendersEntities: false);
@@ -236,7 +236,7 @@ final class BudgetScenarioControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function testPromoteAnswers404ForAnUnknownScenario(): void {
 		[$controller] = $this->buildController();
@@ -252,7 +252,7 @@ final class BudgetScenarioControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function testPromoteMasksANonMemberAsNotFound(): void {
 		[$controller] = $this->buildController(canAccess: false);
@@ -268,7 +268,7 @@ final class BudgetScenarioControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function testPromoteRejectsAnonymousCallers(): void {
 		$appConfig = $this->createMock(IAppConfig::class);
@@ -306,7 +306,7 @@ final class BudgetScenarioControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function testPromoteRejectsAMalformedScenarioId(): void {
 		[$controller] = $this->buildController();

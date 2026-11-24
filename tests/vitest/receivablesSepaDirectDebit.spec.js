@@ -8,7 +8,7 @@
  * sends is the one DirectDebitBatchController reads, and every reason the
  * proposal can give has a sentence.
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 
 import fs from 'fs'

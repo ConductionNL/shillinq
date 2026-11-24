@@ -21,8 +21,8 @@
  * The caller is the suite's administrator (globalSetup's storage state). The
  * spec writes nothing.
  *
- * @spec openspec/changes/reporting-cash-flow-statement/specs/bookkeeping-financial-statements/spec.md
- * @spec openspec/changes/reporting-cash-flow-statement/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/specs/bookkeeping-financial-statements/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md
  *
  * @e2e bookkeeping-financial-statements::a-director-reads-september-year-to-date
  * @e2e bookkeeping-financial-statements::an-unclassified-account-shows-as-a-difference

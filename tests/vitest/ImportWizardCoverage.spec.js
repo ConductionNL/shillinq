@@ -8,7 +8,7 @@
  * handler the template bound is called — which request it sends to the
  * register and where the wizard lands afterwards.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

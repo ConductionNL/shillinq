@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.3
  */
 class PeriodClosedDriftListener implements IEventListener {
 
@@ -75,7 +75,7 @@ class PeriodClosedDriftListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.3
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectUpdatedEvent) === false) {

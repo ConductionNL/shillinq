@@ -11,7 +11,7 @@
  An Account leaf row (REQ-BGV-007) has no budget at all — BudgetLine is
  LedgerGroup-scoped, not Account-scoped — so it renders actual-only.
 
- @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+ @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 -->
 <template>
 	<span class="budget-grid-cell">
@@ -92,7 +92,7 @@ export default {
 		 * favorable/unfavorable text label.
 		 *
 		 * @return {?boolean}
-		 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+		 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 		 */
 		deviationState() {
 			return favorableState(this.cell)
@@ -103,7 +103,7 @@ export default {
 		 * never colour alone (WCAG 2.1 AA).
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+		 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 		 */
 		deviationLabel() {
 			return this.deviationState === true

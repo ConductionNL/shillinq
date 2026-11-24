@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -29,7 +29,7 @@ use InvalidArgumentException;
  * Validates statement dates and derives the comparison ranges: the previous
  * period of the same length, and the same period one year earlier.
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  */
 final class StatementPeriods {
 
@@ -53,7 +53,7 @@ final class StatementPeriods {
 	 *
 	 * @throws InvalidArgumentException When the date is malformed.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public static function date(string $date, string $field): DateTimeImmutable {
 		$parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date, new \DateTimeZone('UTC'));
@@ -74,7 +74,7 @@ final class StatementPeriods {
 	 *
 	 * @throws InvalidArgumentException When the range is not accepted.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public static function assertRange(string $from, string $to): void {
 		$start = self::date(date: $from, field: 'from');
@@ -97,7 +97,7 @@ final class StatementPeriods {
 	 *
 	 * @throws InvalidArgumentException When a kind is not known.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public static function comparisons(string $compare): array {
 		$asked = array_filter(array_map('trim', explode(',', $compare)), static fn (string $kind): bool => $kind !== '');
@@ -123,7 +123,7 @@ final class StatementPeriods {
 	 *
 	 * @return array{from: string, to: string} The comparison range.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public static function comparisonRange(string $kind, string $from, string $to): array {
 		$start = self::date(date: $from, field: 'from');
@@ -149,7 +149,7 @@ final class StatementPeriods {
 	 *
 	 * @return array{from: string, to: string}|null The range, or null for an unreadable label.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public static function rangeOfLabel(string $label): ?array {
 		$label = trim($label);

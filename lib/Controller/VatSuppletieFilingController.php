@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -51,7 +51,7 @@ use Throwable;
 /**
  * Download or file the supplementary return of a prepared correction.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  */
 class VatSuppletieFilingController extends Controller {
 
@@ -92,7 +92,7 @@ class VatSuppletieFilingController extends Controller {
 	 *                                           404 for a correction that does not exist or the caller may not see;
 	 *                                           409 for a correction not prepared yet.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
 	#[NoAdminRequired]
 	public function download(string $correctionId): DataDownloadResponse|JSONResponse {
@@ -124,7 +124,7 @@ class VatSuppletieFilingController extends Controller {
 	 *                      correction not prepared or no longer a draft, and, with `download`, while
 	 *                      Digipoort is not connected; 500 when filing failed.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
 	#[NoAdminRequired]
 	public function file(string $correctionId): JSONResponse {

@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use Throwable;
 /**
  * Files are linked, not copied: the batch names them and parse reads them here.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 class ImportSourceReader {
 
@@ -59,7 +59,7 @@ class ImportSourceReader {
 	 *
 	 * @throws DomainException When the batch names no auditfile or its owner cannot read it.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function readAuditfile(array $batch): string {
 		$source = $this->auditfileOf(batch: $batch);

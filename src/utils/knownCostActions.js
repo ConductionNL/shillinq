@@ -13,7 +13,7 @@ import RegenerateKnownCostsModal from '../modals/RegenerateKnownCostsModal.vue'
  * Open the regeneration dialog.
  *
  * @return {object} The spawned dialog.
- * @spec openspec/changes/budget-known-costs/design.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/design.md
  */
 export function openRegenerateKnownCosts() {
 	return spawnDialog(RegenerateKnownCostsModal, {})

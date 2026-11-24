@@ -20,7 +20,7 @@ import VatPositionLinesModal from '../modals/VatPositionLinesModal.vue'
  *
  * @param {{item: object}|null} scope The page scope.
  * @return {string} The id, or an empty string.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  */
 export function recordId(scope) {
 	return scope?.item?.id || scope?.object?.id || window.location.pathname.split('/').pop() || ''
@@ -42,7 +42,7 @@ function refusal(error, fallback) {
  *
  * @param {{drift: boolean}} data The endpoint's answer.
  * @return {{kind: string, text: string}} The toast kind and its text.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  */
 export function driftMessage(data) {
 	if (data?.drift === true) {
@@ -59,7 +59,7 @@ export function driftMessage(data) {
  *
  * @param {{thresholdExceeded: boolean, filingDeadline: string|null}} correction The prepared correction.
  * @return {string}
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  */
 export function preparedMessage(correction) {
 	if (correction?.thresholdExceeded === true) {
@@ -80,7 +80,7 @@ const TOAST = { success: showSuccess, warning: showWarning }
  *
  * @param {{item: object}} scope The page scope.
  * @return {Promise<object|null>} The answer, or null when it failed.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  */
 export async function checkVatReturnForCorrections(scope) {
 	const id = recordId(scope)
@@ -155,7 +155,7 @@ export async function checkVatFiscalYearCorrections(scope) {
  *
  * @param {{item: object}} scope The page scope.
  * @return {Promise<object|null>} The prepared correction, or null when it failed.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  */
 export async function prepareSupplementaryReturn(scope) {
 	const id = recordId(scope)
@@ -178,7 +178,7 @@ export async function prepareSupplementaryReturn(scope) {
  *
  * @param {{item: object}} scope The page scope.
  * @return {string} The address opened, or an empty string.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  */
 export function downloadSupplementaryReturn(scope) {
 	const id = recordId(scope)
@@ -196,7 +196,7 @@ export function downloadSupplementaryReturn(scope) {
  *
  * @param {{item: object}} scope The page scope.
  * @return {Promise<string>} `filed`, `downloaded` or `failed`.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  */
 export async function fileSupplementaryReturn(scope) {
 	const id = recordId(scope)
@@ -227,7 +227,7 @@ export async function fileSupplementaryReturn(scope) {
  *
  * @param {...object} args The dispatch arguments, the row last.
  * @return {Promise<unknown>|null} The dialog's close payload, or null without a box.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.3
  */
 export function openVatPositionLines(...args) {
 	const box = [...args].reverse().find((arg) => arg && Array.isArray(arg.lines))

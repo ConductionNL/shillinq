@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md
  */
 
 declare(strict_types=1);

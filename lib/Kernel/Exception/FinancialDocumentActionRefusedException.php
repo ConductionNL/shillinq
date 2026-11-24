@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use DomainException;
 /**
  * A refused act and its status.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 class FinancialDocumentActionRefusedException extends DomainException {
 	/**
@@ -48,7 +48,7 @@ class FinancialDocumentActionRefusedException extends DomainException {
 	 *
 	 * @return int The status.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function getStatus(): int {
 		return $this->status;

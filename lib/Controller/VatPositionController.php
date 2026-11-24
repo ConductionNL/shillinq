@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
 /**
  * The VAT position endpoint.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.2
  */
 class VatPositionController extends Controller {
 
@@ -83,7 +83,7 @@ class VatPositionController extends Controller {
 	 * @return JSONResponse 200 with the position; 400 without any administration or for a malformed
 	 *                      period; 401 without a user; 404 for an administration the caller may not see.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.2
 	 */
 	#[NoAdminRequired]
 	public function show(): JSONResponse {
@@ -135,7 +135,7 @@ class VatPositionController extends Controller {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.3
 	 */
 	public static function openQuarter(DateTimeImmutable $today): string {
 		return $today->format('Y') . '-Q' . (string)intdiv(((int)$today->format('n') + 2), 3);
@@ -148,7 +148,7 @@ class VatPositionController extends Controller {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.3
 	 */
 	private static function withRowIds(array $boxes): array {
 		foreach ($boxes as $index => $box) {

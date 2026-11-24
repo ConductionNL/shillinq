@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Service;
  * The LedgerGroup key and the loaded grid context BudgetGridCalculator's
  * cell helpers share.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
  */
 final class BudgetGridCellRun {
 

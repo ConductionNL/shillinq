@@ -216,7 +216,7 @@ class IcpService implements IcpServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	private function invoiceSuppliesNotRecorded(string $administrationId, array $recorded): array {
 		$named = [];
@@ -310,7 +310,7 @@ class IcpService implements IcpServiceInterface {
 	 *
 	 * @return float|null
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	private function box3bFromBooks(string $administrationId, string $period): ?float {
 		$wanted = $this->bookPeriod(period: $period);

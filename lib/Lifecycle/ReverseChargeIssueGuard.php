@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use RuntimeException;
 /**
  * The buyer VAT number check on issuing a reverse-charged invoice.
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
  */
 class ReverseChargeIssueGuard implements LifecycleActionInterface {
 
@@ -60,7 +60,7 @@ class ReverseChargeIssueGuard implements LifecycleActionInterface {
 	 *
 	 * @throws RuntimeException Naming the missing buyer VAT number.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "budget-known-costs: BudgetLineDerivation, the idempotency + override ledger for known-cost regeneration. Written only by KnownCostBudgetWriter, one row per (annualBudgetId, ledgerGroupId, sourceType) triple that has ever been machine-generated. See openspec/changes/budget-known-costs/design.md §4."
+    "description": "budget-known-costs: BudgetLineDerivation, the idempotency + override ledger for known-cost regeneration. Written only by KnownCostBudgetWriter, one row per (annualBudgetId, ledgerGroupId, sourceType) triple that has ever been machine-generated. See openspec/changes/archive/2026-11-24-budget-known-costs/design.md §4."
   },
   "components": {
     "schemas": {
@@ -12,7 +12,7 @@
         "description": "A system-managed bookkeeping row that fingerprints the last monthly amounts KnownCostBudgetWriter wrote to one BudgetLine, so regeneration is idempotent and an operator's own edit to a derived line is detected and respected rather than silently overwritten (design.md §4). Written only by KnownCostBudgetWriter, never by an operator directly. No lifecycle: derived state, not operator-authored configuration.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-openregister-purpose": "configuration",
-        "x-spec": "openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md",
         "type": "object",
         "required": [
           "administrationId",

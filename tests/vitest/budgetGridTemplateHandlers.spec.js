@@ -11,7 +11,7 @@
  * the view rendered again, so the test checks which method each control
  * reaches and what it changes, without a DOM.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
  */
 

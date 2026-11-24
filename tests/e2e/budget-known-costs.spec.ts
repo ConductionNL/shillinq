@@ -56,7 +56,7 @@
  * writer-run actually performed first (via whatever trigger mechanism a
  * future change exposes), before this change ships.
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md
  */
 
 import type { Page } from '@playwright/test'

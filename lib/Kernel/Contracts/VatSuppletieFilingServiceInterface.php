@@ -50,7 +50,7 @@ interface VatSuppletieFilingServiceInterface {
 	 *
 	 * @throws RuntimeException When the correction was not prepared.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
 	public function document(array $correction): array;
 
@@ -66,7 +66,7 @@ interface VatSuppletieFilingServiceInterface {
 	 * @throws SuppletieFilingUnavailableException When no Digipoort connection is bound.
 	 * @throws RuntimeException When the correction is not a prepared draft, or the delivery failed.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
 	public function file(array $correction): array;
 }//end interface

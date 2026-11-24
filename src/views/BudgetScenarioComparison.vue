@@ -22,7 +22,7 @@
  convention: when none is default, no scenario is pre-selected and the
  operator chooses one explicitly).
 
- @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+ @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 -->
 <template>
 	<NcAppContent>
@@ -246,7 +246,7 @@ export default {
 		 *
 		 * @return {Array<string>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		monthLabels() {
 			return [
@@ -272,7 +272,7 @@ export default {
 		 *
 		 * @return {Array<object>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		groupedRows() {
 			const byGroup = new Map()
@@ -314,7 +314,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		async loadAdministrationContext() {
 			this.loading = true
@@ -347,7 +347,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		async onAdministrationChange() {
 			this.scenarioId = ''
@@ -362,7 +362,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		onFiscalYearChange() {
 			if (this.scenarioId) {
@@ -377,7 +377,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 		 */
 		async loadScenarios() {
 			try {
@@ -417,7 +417,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-009
 		 */
 		async loadLedgerGroupNames() {
 			try {
@@ -445,7 +445,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
 		 */
 		async loadComparison() {
 			if (!this.scenarioId) {
@@ -484,7 +484,7 @@ export default {
 		 * @param {object} scenario - The BudgetScenario row.
 		 * @return {string}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 		 */
 		scenarioLabel(scenario) {
 			if (scenario.isDefault) {
@@ -501,7 +501,7 @@ export default {
 		 * @param {string} rowKind - One of 'base' | 'scenario' | 'delta'.
 		 * @return {string}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		rowLabel(rowKind) {
 			if (rowKind === 'base') {
@@ -519,7 +519,7 @@ export default {
 		 * @param {number} cents - The signed amount in EUR cents.
 		 * @return {string}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		formatCents(cents) {
 			return ((Number(cents) || 0) / 100).toLocaleString(undefined, {

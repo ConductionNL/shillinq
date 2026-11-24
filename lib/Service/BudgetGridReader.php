@@ -63,7 +63,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
  */
 
 declare(strict_types=1);
@@ -79,7 +79,7 @@ use Psr\Log\LoggerInterface;
  * Resolves the begroting grid's row tree, column list, and past/future
  * boundary, batched to a flat 8 `findAll()` calls (REQ-BGV-009).
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
  */
 class BudgetGridReader implements BudgetGridReaderInterface {
 	/**
@@ -163,10 +163,10 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 *     budgetLinesByFiscalYear: array<int,list<array<string,mixed>>|null>,
 	 * }
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
 	 */
 	public function loadGrid(string $administrationId, string $startPeriod, string $endPeriod, string $granularity): array {
 		$rowTree = $this->rowsFor(administrationId: $administrationId);
@@ -336,7 +336,7 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 *     rootIndexes: list<int>,
 	 * }
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 	 */
 	public function rowsFor(string $administrationId): array {
 		$rows = $this->query(schema: self::SCHEMA_LEDGER_GROUP, filters: ['administrationId' => $administrationId]);
@@ -462,7 +462,7 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 *
 	 * @return list<array{key:string,label:string,granularity:string,startDate:string,endDate:string,monthKeys:list<string>,isPast:bool,fiscalYears:list<int>}>
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	public function columnsFor(array $range, string $granularity): array {
 		$ordinals = $this->rangeOrdinals(range: $range);
@@ -496,7 +496,7 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 *
 	 * @return array{0:int,1:int}|null
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	private function rangeOrdinals(array $range): array|null {
 		$start = $this->parseYearMonth(value: (string)($range['start'] ?? ''));
@@ -528,7 +528,7 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	private function alignedOrdinal(int $startOrdinal, int $step): int {
 		$alignedStartOrdinal = $startOrdinal;
@@ -551,7 +551,7 @@ class BudgetGridReader implements BudgetGridReaderInterface {
 	 *
 	 * @return array<string,bool> columnKey => true for every past column.
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
 	 */
 	public function pastColumnKeys(array $columns, array $fiscalPeriods): array {
 		$closedPeriods = self::closedPeriods(fiscalPeriods: $fiscalPeriods);

@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 /**
  * Edges of the meter-reading import, billing and rating services.
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  */
 class UsageEdgeCasesTest extends TestCase {
 

@@ -18,7 +18,7 @@ const BASE = '/apps/shillinq/api/v1'
  *
  * @param {string} administrationId The administration.
  * @return {Promise<{intact: boolean, entries: number, transactionNumber: ?string, transactionId: ?string, reason: ?string, message: string}>} The result.
- * @spec openspec/changes/ledger-sealed-entries/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/tasks.md#task-2.1
  */
 export async function checkLedgerSeal(administrationId) {
 	const { data } = await axios.get(generateUrl(`${BASE}/ledger/seal-check`), {
@@ -43,7 +43,7 @@ export function sealCheckError(error, fallback) {
  * Header action on the general ledger page: open the seal check dialog.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/ledger-sealed-entries/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/tasks.md#task-2.1
  */
 export function openLedgerSealCheck() {
 	return spawnDialog(LedgerSealCheckModal, {})

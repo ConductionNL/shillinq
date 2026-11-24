@@ -9,7 +9,7 @@
  * failed, the comparison table — renders whichever way the components render
  * their slots. Only HTTP and the @nextcloud/vue components are replaced.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

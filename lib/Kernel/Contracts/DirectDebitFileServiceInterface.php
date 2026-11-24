@@ -49,7 +49,7 @@ interface DirectDebitFileServiceInterface {
 	 *
 	 * @throws RuntimeException When the file has errors; the message lists them.
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
 	public function generate(array $batch): array;
 
@@ -60,7 +60,7 @@ interface DirectDebitFileServiceInterface {
 	 *
 	 * @return RenderedFile|null
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.3
 	 */
 	public function storedFile(array $batch): ?RenderedFile;
 }//end interface

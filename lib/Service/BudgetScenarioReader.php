@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
  */
 
 declare(strict_types=1);
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  * Reads every schema `BudgetScenarioEvaluator` needs, batched to exactly 5
  * `findAll()` calls (REQ-BSC-007).
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
  */
 class BudgetScenarioReader implements BudgetScenarioReaderInterface {
 	/**
@@ -120,7 +120,7 @@ class BudgetScenarioReader implements BudgetScenarioReaderInterface {
 	 *     ledgerGroups: list<array<string,mixed>>,
 	 * } The assembled context {@see BudgetScenarioEvaluator} consumes.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
 	 */
 	public function loadContext(string $administrationId, array $annualBudgetIds): array {
 		$scenarios = $this->query(schema: self::SCHEMA_SCENARIO, filters: ['administrationId' => $administrationId]);
@@ -212,7 +212,7 @@ class BudgetScenarioReader implements BudgetScenarioReaderInterface {
 	 *
 	 * @return list<string> The matching AnnualBudget ids.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 	 */
 	public function resolveAnnualBudgetIds(string $administrationId, int $fiscalYear): array {
 		$rows = $this->query(

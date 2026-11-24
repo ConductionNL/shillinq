@@ -46,7 +46,7 @@ interface DirectDebitBatchServiceInterface {
 	 * @return array{batches: list<array<string, mixed>>, skipped: list<array<string, string>>} The draft batches, each
 	 *         with its `collections`, and every invoice left out with its reason.
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.1
 	 */
 	public function propose(string $administrationId, string $collectionDate): array;
 }//end interface

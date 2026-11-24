@@ -15,7 +15,7 @@ import { mountPairFor, sharedRegistry } from './leafMount.js'
  *
  * @type {string}
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export const FINANCIAL_DOCUMENTS_PANEL_ID = 'shillinq-financial-documents-panel'
 
@@ -27,7 +27,7 @@ const pair = mountPairFor(() => import('./ShillinqFinancialDocumentsPanel.vue'))
  *
  * @type {object}
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export const financialDocumentsPanelDescriptor = {
 	id: FINANCIAL_DOCUMENTS_PANEL_ID,
@@ -51,7 +51,7 @@ export const financialDocumentsPanelDescriptor = {
  *
  * @return {void}
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export function registerFinancialDocumentsLeaf(globalRef) {
 	const integrations = sharedRegistry(globalRef)

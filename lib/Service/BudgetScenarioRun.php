@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Service;
  * The LedgerGroup index, the real CashflowRecurring rows by recurId and the
  * fiscal year that BudgetScenarioEvaluator's helpers share.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
  */
 final class BudgetScenarioRun {
 

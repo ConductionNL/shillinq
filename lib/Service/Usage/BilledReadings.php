@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use RuntimeException;
 /**
  * The billed-once rule for meter readings.
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  */
 class BilledReadings {
 
@@ -64,7 +64,7 @@ class BilledReadings {
 	 *
 	 * @throws RuntimeException `Conflict:` for an invoiced reading, otherwise not rated.
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function assertBillable(array $reading, string $id): void {
 		$status = (string)($reading['status'] ?? 'unrated');
@@ -86,7 +86,7 @@ class BilledReadings {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function markInvoiced(array $lineDrafts, string $invoiceId): void {
 		$register = $this->settings->getRegisterSlug();

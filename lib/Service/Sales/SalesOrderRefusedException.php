@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ use DomainException;
 /**
  * Refusal with a translatable template and its parameters.
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/tasks.md#task-1.2
  */
 class SalesOrderRefusedException extends DomainException {
 	/**
@@ -53,7 +53,7 @@ class SalesOrderRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/tasks.md#task-1.2
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -65,7 +65,7 @@ class SalesOrderRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/tasks.md#task-1.2
 	 */
 	public function getParameters(): array {
 		return $this->parameters;

@@ -72,9 +72,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-005
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-007
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-005
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-007
  */
 
 declare(strict_types=1);
@@ -92,7 +92,7 @@ use Throwable;
  * Idempotent, override-aware regeneration of `contract`/`recurring`-sourced
  * `BudgetLine` rows from `CashflowRecurring` schedules.
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
  */
 class KnownCostBudgetWriter {
 	/**
@@ -148,7 +148,7 @@ class KnownCostBudgetWriter {
 	 *
 	 * @return array{created:int,updated:int,overridden:int,skippedFiscalYears:list<int>} A run summary.
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
 	 */
 	public function run(string $administrationId): array {
 		$run = new KnownCostRun();

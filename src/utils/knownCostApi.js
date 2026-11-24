@@ -14,7 +14,7 @@ import { generateUrl } from '@nextcloud/router'
  *
  * @param {string} [administrationId] The administration; empty for the active one.
  * @return {Promise<object>} `{created, updated, overridden, skippedFiscalYears}`.
- * @spec openspec/changes/budget-known-costs/design.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/design.md
  */
 export async function regenerateKnownCosts(administrationId = '') {
 	const body = administrationId === '' ? {} : { administrationId }
@@ -30,7 +30,7 @@ export async function regenerateKnownCosts(administrationId = '') {
  *
  * @param {object} result The run summary.
  * @return {Array<string>} The lines.
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md
  */
 export function summaryLines(result) {
 	const lines = [
@@ -73,7 +73,7 @@ export function summaryLines(result) {
  *
  * @param {object} error The request error.
  * @return {string} The message.
- * @spec openspec/changes/budget-known-costs/design.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/design.md
  */
 export function regenerateErrorText(error) {
 	const status = error?.response?.status

@@ -11,7 +11,7 @@
  * `BudgetScenario`, never writing to any `BudgetLine` or `CashflowRecurring`
  * row. Generalises `BegrotingswijzigingStacker::currentStand()`'s exact
  * "base + stacked dated deltas, no I/O" shape
- * (`openspec/changes/budget-scenarios/design.md` §6a) to `BudgetLine`'s own
+ * (`openspec/changes/archive/2026-11-24-budget-scenarios/design.md` §6a) to `BudgetLine`'s own
  * `LedgerGroup` x month grain. No constructor dependency on
  * `ObjectServiceInterface` or any OpenRegister type — mirrors
  * `BegrotingswijzigingStacker`'s and `BudgetVsActualsCalculator`'s own "reads
@@ -63,7 +63,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
  */
 
 declare(strict_types=1);
@@ -78,7 +78,7 @@ use Throwable;
  * Pure base-vs-scenario evaluator over a {@see BudgetScenarioReader} context
  * bundle (REQ-BSC-005, REQ-BSC-006, REQ-BSC-007).
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
  */
 class BudgetScenarioEvaluator implements BudgetScenarioEvaluatorInterface {
 	/**
@@ -132,7 +132,7 @@ class BudgetScenarioEvaluator implements BudgetScenarioEvaluatorInterface {
 	 *
 	 * @return array<string,array{month:string,ledgerGroupId:string,base:int,scenario:int,delta:int}> Keyed by `"{ledgerGroupId}:{YYYY-MM}"`.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
 	 */
 	public function evaluate(
 		array $baseBudgetLines,

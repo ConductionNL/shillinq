@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCA\Shillinq\Service\VATReturnService;
  * A period is named the way a return names it: `2026-Q4` for a quarter,
  * `2026-11` for a month, `2026` for a year.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.1
  */
 class VatPositionService implements VatPositionServiceInterface {
 
@@ -62,7 +62,7 @@ class VatPositionService implements VatPositionServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the period is not one of the three forms.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.1
 	 */
 	public function positionFor(string $administrationId, string $period): array {
 		[$startDate, $endDate] = $this->periodBounds(period: $period);
@@ -96,7 +96,7 @@ class VatPositionService implements VatPositionServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the period is not one of the three forms.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.1
 	 */
 	public function periodBounds(string $period): array {
 		$period = trim($period);

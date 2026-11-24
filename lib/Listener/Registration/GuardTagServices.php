@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 /**
  * Registers each group of `Class::method` guard tags; a new group is added here, not in Application.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 final class GuardTagServices {
 
@@ -41,7 +41,7 @@ final class GuardTagServices {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function register(IRegistrationContext $context): void {
 		(new CommitmentGuardServices())->register(context: $context);

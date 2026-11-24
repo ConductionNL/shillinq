@@ -15,7 +15,7 @@
  * the bookkeeper account) is created here with a unique suffix and removed in
  * afterAll, so the spec leaves the instance as it found it.
  *
- * @spec openspec/changes/platform-custom-record-types/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/tasks.md#task-3.1
  */
 
 import type { APIRequestContext, Page } from '@playwright/test'

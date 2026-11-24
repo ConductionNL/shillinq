@@ -31,8 +31,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
- * @spec openspec/changes/ledger-foreign-legislation/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/tasks.md#task-4.1
  *
  * @e2e bookkeeping-multi-administratie::an-accountant-creates-a-belgian-administration
  * @e2e bookkeeping-multi-administratie::the-jurisdiction-is-fixed-after-posting

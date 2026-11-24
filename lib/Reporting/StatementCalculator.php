@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
  * Reads are cached per administration for the life of the request, so a
  * comparison column or a second statement does not read the ledger again.
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Profit and loss, balance sheet and cash flow movements share one ledger read.
  */
@@ -154,7 +154,7 @@ class StatementCalculator {
 	 *
 	 * @return array<string, mixed> from, to, revenue, expense (rows of accountNumber, label, amount, from, to) and totals.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public function resultsBetween(string $administrationId, string $from, string $to): array {
 		$sums = $this->sumPerAccount(administrationId: $administrationId, class: 'pnl', from: $from, to: $to);
@@ -206,7 +206,7 @@ class StatementCalculator {
 	 *
 	 * @return array<string, mixed> asOf, fiscalYearStart, yearClosed, assets, liabilities, equity and totals.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public function balancesAsOf(string $administrationId, string $asOf): array {
 		$yearStart = $this->fiscalYearStart(administrationId: $administrationId, asOf: $asOf);
@@ -276,7 +276,7 @@ class StatementCalculator {
 	 *
 	 * @return string YYYY-MM-DD.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public function fiscalYearStart(string $administrationId, string $asOf): string {
 		$fallback = substr($asOf, 0, 4) . '-01-01';
@@ -313,7 +313,7 @@ class StatementCalculator {
 	 *
 	 * @return array{result: float, accounts: array<string, array{net: float, credit: float, debit: float}>}
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-2.1
 	 *
 	 * @SuppressWarnings(PHPMD.ElseExpression) Each branch is one kind of movement.
 	 */
@@ -370,7 +370,7 @@ class StatementCalculator {
 	 *
 	 * @return array{lines: list<array<string, mixed>>, total: float} Lines in date and account order, and their credit-positive sum.
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.1
 	 */
 	public function linesBetween(string $administrationId, array $accounts, string $class, string $from, string $to): array {
 		$wanted = array_fill_keys(array_map('strval', $accounts), true);
@@ -411,7 +411,7 @@ class StatementCalculator {
 	 *
 	 * @return string account~from~to.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	public static function accountLinesKey(string $account, string $from, string $to): string {
 		return $account.'~'.$from.'~'.$to;
@@ -431,7 +431,7 @@ class StatementCalculator {
 	 *
 	 * @throws InvalidArgumentException When the key is malformed, its range is, or no such trial balance line exists.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) StatementPeriods is pure period arithmetic; it holds no state.
 	 */
@@ -473,7 +473,7 @@ class StatementCalculator {
 	 *
 	 * @throws InvalidArgumentException When the administration has no such trial balance line.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	private function trialBalanceLineLines(string $administrationId, string $lineId): array {
 		$account = '';
@@ -527,7 +527,7 @@ class StatementCalculator {
 	 *
 	 * @return array<string, mixed> id, transactionId, date, accountNumber, account, description, amount.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	private static function lineRow(array $line, array $names, float $sign): array {
 		return [
@@ -552,7 +552,7 @@ class StatementCalculator {
 	 *
 	 * @return bool True for debit positive.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	private function shownDebitPositive(string $administrationId, string $account, float $signed): bool {
 		$type = $this->accountType(administrationId: $administrationId, account: $account);
@@ -571,7 +571,7 @@ class StatementCalculator {
 	 *
 	 * @return list<array<string, mixed>> The same lines, amounts negated.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	private static function flipped(array $lines): array {
 		return array_map(
@@ -590,7 +590,7 @@ class StatementCalculator {
 	 *
 	 * @return array<string, array<string, mixed>>
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-2.1
 	 */
 	public function accountsByNumber(string $administrationId): array {
 		return $this->accountRows(administrationId: $administrationId);

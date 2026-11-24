@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * tag, which can never autowire; unregistered, every parse and every
  * reversal failed with "Lifecycle guard ... is not registered".
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 final class ImportBatchServices {
 
@@ -50,7 +50,7 @@ final class ImportBatchServices {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerService(

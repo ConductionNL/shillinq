@@ -13,7 +13,7 @@
  readings (src/utils/usageBillingActions.js), so it lives in its own file
  (hydra gate-13).
 
- @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 -->
 
 <template>
@@ -128,7 +128,7 @@ export default {
 		 * Whether there is something to import.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
 		 */
 		canSubmit() {
 			return this.administrationId !== '' && this.rows.length > 0
@@ -138,7 +138,7 @@ export default {
 	/**
 	 * Load the active administration.
 	 *
-	 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
 	 */
 	async mounted() {
 		try {
@@ -163,7 +163,7 @@ export default {
 		 * Read the chosen file into rows.
 		 *
 		 * @param {Event} event The change event of the file input.
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
 		 */
 		async onFile(event) {
 			this.error = ''
@@ -184,7 +184,7 @@ export default {
 		/**
 		 * Import the rows.
 		 *
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
 		 */
 		async submit() {
 			this.error = ''
@@ -204,7 +204,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
 		 */
 		close() {
 			this.$emit('close', this.result)

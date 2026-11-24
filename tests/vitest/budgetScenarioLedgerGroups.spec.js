@@ -5,7 +5,7 @@
  * Pins how the scenario comparison reads the ledger-group names: the request,
  * the response shapes it accepts, the id and name fallbacks and the failure.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-009
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-009
  */
 
 import axios from '@nextcloud/axios'

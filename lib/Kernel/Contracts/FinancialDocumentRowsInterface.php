@@ -44,7 +44,7 @@ interface FinancialDocumentRowsInterface {
 	 *
 	 * @return array<string, mixed> The restricted row.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function restricted(array $row): array;
 
@@ -56,7 +56,7 @@ interface FinancialDocumentRowsInterface {
 	 *
 	 * @return array<string, mixed> The row.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function row(string $schema, array $document): array;
 	/**
@@ -67,7 +67,7 @@ interface FinancialDocumentRowsInterface {
 	 *
 	 * @return string One of quote, invoice, credit-note, payment-request, payout.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function kindOf(string $schema, array $document): string;
 }//end interface

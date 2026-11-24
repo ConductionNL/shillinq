@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 
 declare(strict_types=1);
@@ -28,7 +28,7 @@ use RuntimeException;
  * Thrown when the statement of a period is past draft: it is never
  * replaced, a change goes through a correction (REQ-ICP-008).
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 class IcpStatementFiledException extends RuntimeException {
 

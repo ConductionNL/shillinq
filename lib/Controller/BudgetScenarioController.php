@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
 
 declare(strict_types=1);
@@ -61,7 +61,7 @@ use Throwable;
 /**
  * REST surface for `BudgetScenarioDefaultPromoter`.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
 class BudgetScenarioController extends Controller {
 	/**
@@ -97,7 +97,7 @@ class BudgetScenarioController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the promotion outcome; 401/404/500 on error.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	#[NoAdminRequired]
 	public function promote(string $scenarioId): JSONResponse {
@@ -129,7 +129,7 @@ class BudgetScenarioController extends Controller {
 	 *
 	 * @return JSONResponse 200 with `{data: {scenarioId, fiscalYear, cells}}`; 400/401/404/500 on error.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 	 */
 	#[NoAdminRequired]
 	public function evaluate(string $scenarioId): JSONResponse {

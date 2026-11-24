@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 
 declare(strict_types=1);
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * The ICP page's prepare, download and file endpoints.
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 class IcpStatementController extends Controller {
 
@@ -87,7 +87,7 @@ class IcpStatementController extends Controller {
 	 * @return JSONResponse 200 with { statement, reconciliation, replaced }; 409
 	 *                      when the period's statement was filed; 400 / 401 / 404 / 422 / 500.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	#[NoAdminRequired]
 	public function prepare(): JSONResponse {
@@ -119,7 +119,7 @@ class IcpStatementController extends Controller {
 	 *
 	 * @return DataDownloadResponse|JSONResponse The XML, or 404 when nothing was prepared.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 	 */
 	#[NoAdminRequired]
 	public function xml(): DataDownloadResponse|JSONResponse {
@@ -144,7 +144,7 @@ class IcpStatementController extends Controller {
 	 *
 	 * @return JSONResponse 200 with { available }; 401 when not logged in.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
 	 */
 	#[NoAdminRequired]
 	public function filing(): JSONResponse {
@@ -163,7 +163,7 @@ class IcpStatementController extends Controller {
 	 * @return JSONResponse 200 with { status, deliveryStatus, reference }; 409
 	 *                      when it cannot be filed (and why); 400 / 401 / 404 / 500.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
 	 */
 	#[NoAdminRequired]
 	public function file(): JSONResponse {

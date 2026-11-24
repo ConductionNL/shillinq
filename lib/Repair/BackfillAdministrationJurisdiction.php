@@ -20,7 +20,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Throwable;
 /**
  * Sets jurisdiction NL on administrations that name none. Idempotent; never overwrites.
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 class BackfillAdministrationJurisdiction implements IRepairStep {
 
@@ -51,7 +51,7 @@ class BackfillAdministrationJurisdiction implements IRepairStep {
 	 * @param RegisterLocation       $settings      Where the register lives.
 	 * @param LoggerInterface        $logger        Logger.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -65,7 +65,7 @@ class BackfillAdministrationJurisdiction implements IRepairStep {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function getName(): string {
 		return 'Shillinq: give every administration a jurisdiction (NL when it names none)';
@@ -78,7 +78,7 @@ class BackfillAdministrationJurisdiction implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function run(IOutput $output): void {
 		try {

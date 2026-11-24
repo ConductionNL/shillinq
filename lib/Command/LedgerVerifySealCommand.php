@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Check an administration's ledger seal chain.
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+ * @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
  */
 class LedgerVerifySealCommand extends Command {
 	/**
@@ -53,7 +53,7 @@ class LedgerVerifySealCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+	 * @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:ledger:verify-seal')
@@ -69,7 +69,7 @@ class LedgerVerifySealCommand extends Command {
 	 *
 	 * @return integer 0 when intact, 1 when broken.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+	 * @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$result = $this->seals->verify(administrationId: (string)$input->getArgument('administrationId'));

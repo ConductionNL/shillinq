@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Controller;
 /**
  * The parts of a loaded budget grid that every row of the response reads.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 final class BudgetGridRun {
 	/**

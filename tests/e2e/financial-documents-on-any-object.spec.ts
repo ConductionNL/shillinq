@@ -21,7 +21,7 @@
  * Not the panel's kinds filter: that is the vitest financialDocumentsPanel
  * spec, since the panel renders inside a host app's page, not shillinq's.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md
  * @e2e financial-documents-on-any-object/requirement-one-leaf-lists-every-financial-document-on-an-object-req-fdo-002/a-case-with-an-invoice-and-a-payout
  * @e2e financial-documents-on-any-object/requirement-an-invoice-on-an-object-is-payable-through-shillinq-req-fdo-004/a-citizen-pays-the-invoice-on-their-case
  */

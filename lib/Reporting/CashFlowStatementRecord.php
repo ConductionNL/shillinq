@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-cash-flow-statement
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  * it off and nothing is written. A draft record of that report and date is
  * brought up to date; a final one is left as it is.
  *
- * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.2
  */
 class CashFlowStatementRecord {
 
@@ -80,7 +80,7 @@ class CashFlowStatementRecord {
 	 *
 	 * @return array<string, mixed>|null The stored record, the final one left as it was, or null without an annual report.
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.2
 	 */
 	public function store(string $administrationId, array $statement, string $currency): ?array {
 		$date = substr((string)($statement['to'] ?? ''), 0, 10);

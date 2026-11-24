@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use RuntimeException;
 /**
  * Seal a GLTransaction on posted.
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  */
 class GLTransactionSealListener implements IEventListener {
 	/**
@@ -70,7 +70,7 @@ class GLTransactionSealListener implements IEventListener {
 	 *   is posted: deferred, two posts could chain onto one head and a failed seal would leave
 	 *   a posted entry outside the chain (design D2).
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
+	 * @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectTransitionedEvent === false || $event->getTo() !== 'posted') {

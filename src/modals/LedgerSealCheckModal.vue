@@ -13,7 +13,7 @@
  Opened with spawnDialog from the header action on the general ledger page
  (src/utils/ledgerSealApi.js), so it lives in its own file (gate 13).
 
- @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+ @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
 -->
 
 <template>

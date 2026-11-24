@@ -50,7 +50,7 @@ interface VatPositionServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the period is not one of the three forms.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.1
 	 */
 	public function positionFor(string $administrationId, string $period): array;
 

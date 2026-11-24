@@ -123,7 +123,7 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) VatFiscalUnityResolver's static helpers read the unity record; they hold no state.
 	 */
@@ -313,7 +313,7 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @return array{boxes:list<array{returnBox:string,type:string,taxRate:float,base:float,vat:float,lineCount:int,lines:list<array<string,mixed>>}>,totalVATCollected:float,totalVATPaid:float,totalTaxableAmount:float,payable:float}
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.1
 	 */
 	public function positionByBox(string $administrationId, string $startDate, string $endDate): array {
 		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);

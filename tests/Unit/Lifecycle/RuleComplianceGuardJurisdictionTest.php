@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
 /**
  * The posting rule check follows the jurisdiction of the transaction's administration.
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 final class RuleComplianceGuardJurisdictionTest extends TestCase {
 

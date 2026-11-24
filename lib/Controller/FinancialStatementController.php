@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,9 +50,9 @@ use Throwable;
  * malformed date, and a masked 404 for an administration the caller does not
  * belong to, before anything is read.
  *
- * @spec openspec/changes/reporting-financial-statements
- * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
- * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-2.2
  */
 class FinancialStatementController extends Controller {
 
@@ -82,7 +82,7 @@ class FinancialStatementController extends Controller {
 	 *
 	 * @return JSONResponse The statement, or an error.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	#[NoAdminRequired]
 	public function profitAndLoss(): JSONResponse {
@@ -108,7 +108,7 @@ class FinancialStatementController extends Controller {
 	 *
 	 * @return JSONResponse The statement, or an error.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	#[NoAdminRequired]
 	public function balanceSheet(): JSONResponse {
@@ -127,7 +127,7 @@ class FinancialStatementController extends Controller {
 	 *
 	 * @return JSONResponse The statement, or an error.
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-2.2
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) StatementPeriods is pure period arithmetic; it holds no state.
 	 */
@@ -153,7 +153,7 @@ class FinancialStatementController extends Controller {
 	 *
 	 * @return JSONResponse 200 with lines and total; 400 malformed key; 401; 404 no access.
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.1
 	 */
 	#[NoAdminRequired]
 	public function cashFlowLines(): JSONResponse {
@@ -173,7 +173,7 @@ class FinancialStatementController extends Controller {
 	 *
 	 * @return JSONResponse 200 with lines and total; 400 malformed key; 401; 404 no access.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	#[NoAdminRequired]
 	public function accountLines(): JSONResponse {

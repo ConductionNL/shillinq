@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

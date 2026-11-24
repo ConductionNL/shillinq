@@ -8,7 +8,7 @@
  * explicit-dash "no budget for this year" state, the default period range,
  * and the favorable/unfavorable framing helper.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 
 import { describe, expect, it } from 'vitest'

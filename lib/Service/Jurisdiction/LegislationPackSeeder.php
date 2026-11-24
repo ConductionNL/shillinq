@@ -22,7 +22,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use OCA\Shillinq\Service\Seed\SeedMessages;
 /**
  * Seeds an administration from the legislation pack of its jurisdiction.
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 class LegislationPackSeeder {
 
@@ -55,7 +55,7 @@ class LegislationPackSeeder {
 	 *
 	 * @param SeedImporter $importer Reads seed files and imports their rows.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function __construct(
 		private readonly SeedImporter $importer,
@@ -69,7 +69,7 @@ class LegislationPackSeeder {
 	 *
 	 * @return string|null The upper-case country, e.g. `BE`.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public static function countryOfTemplate(string $template): ?string {
 		if (str_starts_with($template, self::TEMPLATE_PREFIX) === false) {
@@ -91,7 +91,7 @@ class LegislationPackSeeder {
 	 *
 	 * @return array{pack: array<string,mixed>}|array{error: array<string,mixed>}
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function pack(string $country): array {
 		$code = strtoupper(trim($country));
@@ -125,7 +125,7 @@ class LegislationPackSeeder {
 	 *
 	 * @return array<string,mixed> `success`, `message`, and the `chart` and `vatRates` import results.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function seed(string $country, string $administrationId): array {
 		if ($administrationId === '') {

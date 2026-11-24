@@ -7,7 +7,7 @@
  * and toggles a row's expand state and its trend chart locally. The template is
  * rendered in its loading, empty and loaded states with Vue's server renderer.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

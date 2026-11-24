@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -83,7 +83,7 @@ class CustomRecordTypeService {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
+	 * @spec openspec/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
 	 */
 	public function shippedSlugs(): array {
 		if ($this->shipped === null) {
@@ -112,7 +112,7 @@ class CustomRecordTypeService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
+	 * @spec openspec/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
 	 */
 	public function isShipped(string $slug): bool {
 		return in_array(strtolower($slug), $this->shippedSlugs(), true);
@@ -123,7 +123,7 @@ class CustomRecordTypeService {
 	 *
 	 * @return array<int,array{slug:string,title:string,description:string,icon:?string}>
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
+	 * @spec openspec/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
 	 */
 	public function customTypes(): array {
 		$types = [];
@@ -146,7 +146,7 @@ class CustomRecordTypeService {
 	 *
 	 * @return array<int,array{slug:string,title:string,description:string,icon:?string}>
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
+	 * @spec openspec/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
 	 */
 	public function shownTypes(): array {
 		$shown = array_map('strtolower', $this->storedSlugs());
@@ -164,7 +164,7 @@ class CustomRecordTypeService {
 	 *
 	 * @return array<int,array{slug:string,title:string,description:string,icon:?string,shown:bool}>
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
+	 * @spec openspec/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
 	 */
 	public function customTypesWithState(): array {
 		$shown = array_map('strtolower', $this->storedSlugs());
@@ -181,7 +181,7 @@ class CustomRecordTypeService {
 	 *
 	 * @return array<string,bool>
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
+	 * @spec openspec/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
 	 */
 	public function shownMap(): array {
 		return array_column($this->customTypesWithState(), 'shown', 'slug');
@@ -197,7 +197,7 @@ class CustomRecordTypeService {
 	 *
 	 * @throws InvalidArgumentException When the slug is shipped or does not exist
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
+	 * @spec openspec/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
 	 */
 	public function switchShown(string $slug, bool $shown): array {
 		$current = array_column($this->shownTypes(), 'slug');
@@ -223,7 +223,7 @@ class CustomRecordTypeService {
 	 *
 	 * @throws InvalidArgumentException When a slug is not a string, is shipped or does not exist
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
+	 * @spec openspec/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
 	 */
 	public function saveShown(array $slugs): array {
 		$this->appConfig->setValueString(

@@ -14,7 +14,7 @@
  Budget Line Derivations (src/utils/knownCostActions.js), so it lives in its
  own file (hydra gate-13).
 
- @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md
+ @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md
 -->
 
 <template>
@@ -93,7 +93,7 @@ export default {
 		 * The result as sentences.
 		 *
 		 * @return {Array<string>}
-		 * @spec openspec/changes/budget-known-costs/design.md
+		 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/design.md
 		 */
 		lines() {
 			return this.result ? summaryLines(this.result) : []
@@ -106,7 +106,7 @@ export default {
 		/**
 		 * Run the regeneration for the active administration.
 		 *
-		 * @spec openspec/changes/budget-known-costs/design.md
+		 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/design.md
 		 */
 		async submit() {
 			this.error = ''
@@ -123,7 +123,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/budget-known-costs/design.md
+		 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/design.md
 		 */
 		close() {
 			this.$emit('close', this.result)

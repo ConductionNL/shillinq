@@ -175,7 +175,7 @@ class BudgetVsActualsReader {
 	 * } The assembled context the calculator consumes.
 	 *
 	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is REQ-BCS-008's own
 	 * call-budget toggle (5 calls with LedgerGroups, 4 without) — splitting it

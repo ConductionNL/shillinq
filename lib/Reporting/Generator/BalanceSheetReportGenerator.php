@@ -56,7 +56,7 @@ use Throwable;
 /**
  * Renders a balance sheet from the statement calculator's figures.
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  */
 final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator {
 
@@ -86,7 +86,7 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->statement($context);
@@ -135,7 +135,7 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	 *
 	 * @return string YYYY-MM-DD.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	private function asOf(array $context): string {
 		$asOf = $this->str($context, 'asOf');

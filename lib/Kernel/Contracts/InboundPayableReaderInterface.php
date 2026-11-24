@@ -47,7 +47,7 @@ interface InboundPayableReaderInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
 	 */
 	public function listFor(PayablesRequestedEvent $event): void;
 }//end interface

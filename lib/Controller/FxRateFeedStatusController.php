@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCP\IRequest;
 /**
  * Read-only FX rate feed status for the FX rates page.
  *
- * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
  */
 class FxRateFeedStatusController extends Controller {
 	/**
@@ -58,7 +58,7 @@ class FxRateFeedStatusController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	#[NoAdminRequired]
 	public function status(): JSONResponse {

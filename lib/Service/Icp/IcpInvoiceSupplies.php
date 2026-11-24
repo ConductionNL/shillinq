@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 
 declare(strict_types=1);
@@ -34,7 +34,7 @@ use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
  * ICP overlay says so, or a line or VAT group carries category K. A domestic
  * reverse charge (AE) is not an ICP supply. Side-effect free.
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 class IcpInvoiceSupplies {
 
@@ -70,7 +70,7 @@ class IcpInvoiceSupplies {
 	 *
 	 * @return array<int,array<string,mixed>> One IcpSupply-shaped row per invoice that is an ICP supply.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	public function fromInvoices(array $invoices, string $administrationId): array {
 		$supplies = [];
@@ -107,7 +107,7 @@ class IcpInvoiceSupplies {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	public function keysOf(array $invoice): array {
 		$keys = [];

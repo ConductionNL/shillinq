@@ -6,7 +6,7 @@
  * side, so no DOM is needed) on each of its six steps, and how it resolves
  * the administration it imports into.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

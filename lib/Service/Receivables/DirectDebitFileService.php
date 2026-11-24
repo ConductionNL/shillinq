@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use RuntimeException;
 /**
  * Renders, validates and returns the pain.008 file of a batch.
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  */
 class DirectDebitFileService implements DirectDebitFileServiceInterface {
 
@@ -78,7 +78,7 @@ class DirectDebitFileService implements DirectDebitFileServiceInterface {
 	 *
 	 * @throws RuntimeException When the file has errors; the message lists them.
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
 	public function generate(array $batch): array {
 		$batchId = ObjectIdentifier::resolve(saved: $batch);
@@ -107,7 +107,7 @@ class DirectDebitFileService implements DirectDebitFileServiceInterface {
 	 *
 	 * @return RenderedFile|null
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.3
 	 */
 	public function storedFile(array $batch): ?RenderedFile {
 		$xml = (string)($batch['pain008Xml'] ?? '');

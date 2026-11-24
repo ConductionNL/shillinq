@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md
  */
 
 declare(strict_types=1);

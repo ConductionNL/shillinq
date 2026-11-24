@@ -9,7 +9,7 @@
  * Simulates a concurrent `BudgetScenarioDefaultPromoter::promote()` call
  * (e.g. a second browser tab) interleaving its own write BETWEEN this call's
  * demotion/promotion writes and its own post-promotion verification re-read
- * (`openspec/changes/budget-scenarios/design.md` §3b, open question §13.1).
+ * (`openspec/changes/archive/2026-11-24-budget-scenarios/design.md` §3b, open question §13.1).
  * `InMemoryObjectServiceStub` is `final` (cannot be extended), so this
  * decorates by composition, forwarding every {@see ObjectServiceInterface}
  * method to the wrapped stub UNCHANGED except `findAll()`: on the SECOND
@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
 
 declare(strict_types=1);
@@ -296,7 +296,7 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 *
 	 * @return ObjectEntityInterface
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function patchObject(
 		ObjectPatch|PublishedObjectPatch $patch,

@@ -530,7 +530,7 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 *
 	 * @return string The paragraph, or ''.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
 	 */
 	private function reverseChargeHtml(array $invoice, array $recipient): string {
 		$notice = (new ReverseChargeNotice())->forInvoice(invoice: $invoice, customer: $recipient);

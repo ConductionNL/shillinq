@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use OCA\Shillinq\Kernel\Contracts\FinancialDocumentRowsInterface;
 /**
  * The row shape of the financial documents leaf.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
 final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	/**
@@ -91,7 +91,7 @@ final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	 *
 	 * @return string One of quote, invoice, credit-note, payment-request, payout.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function kindOf(string $schema, array $document): string {
 		$kinds = ['Quote' => 'quote', 'PaymentRequest' => 'payment-request', 'InboundPayable' => 'payout'];
@@ -114,7 +114,7 @@ final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	 *
 	 * @return array<string, mixed> The row.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function row(string $schema, array $document): array {
 		$fields = self::FIELDS[$schema];
@@ -151,7 +151,7 @@ final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	 *
 	 * @return array<string, mixed> The restricted row.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function restricted(array $row): array {
 		return array_merge(

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use OCA\Shillinq\Service\Sales\InvoiceNumberSequenceService;
 /**
  * Numbers an AR invoice when it is issued.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
  */
 class AssignInvoiceNumberAction implements LifecycleActionInterface {
 
@@ -61,7 +61,7 @@ class AssignInvoiceNumberAction implements LifecycleActionInterface {
 	 *
 	 * @return bool True for every invoice the seller drew up; false for a self-billed one.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
 	public static function takesNumber(array $invoice): bool {
 		return self::isSelfBilled(invoice: $invoice) === false;
@@ -74,7 +74,7 @@ class AssignInvoiceNumberAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string,mixed> The invoice with its number.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

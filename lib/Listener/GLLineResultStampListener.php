@@ -59,7 +59,7 @@ use Throwable;
  * the clearing groups of a reversed transaction's lines.
  *
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
- * @spec openspec/changes/ledger-open-item-clearing/design.md (D4)
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/design.md (D4)
  *
  * @template-implements IEventListener<Event>
  */
@@ -142,7 +142,7 @@ class GLLineResultStampListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/design.md (D4)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/design.md (D4)
 	 */
 	private function reopenClearings(string $transactionId): void {
 		try {

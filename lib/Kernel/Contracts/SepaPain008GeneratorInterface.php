@@ -53,7 +53,7 @@ interface SepaPain008GeneratorInterface {
 	 *
 	 * @return float
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
 	public function controlSum(array $collections): float;
 
@@ -66,7 +66,7 @@ interface SepaPain008GeneratorInterface {
 	 *
 	 * @return RenderedFile
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
 	public function render(array $batch, array $collections, array $creditor): RenderedFile;
 }//end interface

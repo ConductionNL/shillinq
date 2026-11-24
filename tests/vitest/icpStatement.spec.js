@@ -10,7 +10,7 @@
  * event bus, the dialog spawner and the @nextcloud/vue components are
  * replaced.
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 
 import fs from 'fs'

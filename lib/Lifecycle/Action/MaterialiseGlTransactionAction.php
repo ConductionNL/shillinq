@@ -770,7 +770,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @throws RuntimeException When a rate is missing, a typed rate is invalid or has no reason, or rounding unbalances the entry.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	private function bookAtRate(array $booking, string $currency): array {
 		$administrationId = (string)$booking['header']['administrationId'];
@@ -807,7 +807,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @return string|null The base currency to book in, or null to leave the posting as it is.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	private function foreignBase(string $currency, string $administrationId): ?string {
 		if ($currency === '') {
@@ -833,7 +833,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @throws RuntimeException When the typed rate is invalid or no booking-date rate exists.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	private function bookedLine(array $line, int $number): array {
 		$snapshot  = ($this->typedRate(line: $line, number: $number) ?? $this->bookingDateRate());
@@ -860,7 +860,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @throws RuntimeException When no usable rate exists.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	private function bookingDateRate(): array {
 		$this->bookingRate ??= $this->fxResolver()->resolve(
@@ -884,7 +884,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @throws RuntimeException When the typed rate is not positive or has no reason.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.2
 	 */
 	private function typedRate(array $line, int $number): ?array {
 		if (array_key_exists('typedFxRate', $line) === false) {
@@ -906,7 +906,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @throws RuntimeException When the typed rate is not positive or has no reason.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.2
 	 */
 	private static function assertTypedRate(array $line, int $number): void {
 		if (is_numeric($line['typedFxRate']) === false || (float)$line['typedFxRate'] <= 0.0) {
@@ -926,7 +926,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @return array<string,mixed> `typedFxRate` and `fxRateReason`, or empty when no rate is typed.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.2
 	 */
 	private static function typedRateFields(array $line): array {
 		$rate = ($line['fxRate'] ?? null);
@@ -945,7 +945,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	private static function fxColumns(array $line): array {
 		$fx = array_intersect_key((array)($line['fx'] ?? []), array_flip(self::FX_FIELDS));
@@ -963,7 +963,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @throws RuntimeException When debit and credit differ.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	private function assertBalancedInBase(array $lines, string $label): void {
 		$debit  = 0;

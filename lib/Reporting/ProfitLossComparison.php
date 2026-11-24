@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Reporting;
  * row per account found in any column, its amount per column and, for each
  * comparison, the chosen amount minus the compared one.
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  */
 class ProfitLossComparison {
 
@@ -51,7 +51,7 @@ class ProfitLossComparison {
 	 *
 	 * @return array<string, mixed> administrationId, columns, revenue, expense, totals.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	public function compare(string $administrationId, string $from, string $to, array $comparisons): array {
 		$columns = [['key' => 'current', 'from' => $from, 'to' => $to]];
@@ -90,7 +90,7 @@ class ProfitLossComparison {
 	 *
 	 * @return array<int, array<string, mixed>> accountNumber, label, amounts, differences, ranges and the current column's linesKey.
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) StatementCalculator::accountLinesKey is the one pure key format the lines endpoint parses.
 	 */

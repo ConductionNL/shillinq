@@ -25,8 +25,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/reporting-financial-statements/specs/bookkeeping-financial-statements/spec.md
- * @spec openspec/changes/reporting-financial-statements/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/specs/bookkeeping-financial-statements/spec.md
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-4.1
  *
  * @e2e bookkeeping-financial-statements::a-director-compares-september-year-to-date
  * @e2e bookkeeping-financial-statements::a-balance-sheet-at-the-end-of-september

@@ -16,7 +16,7 @@ import { generateUrl } from '@nextcloud/router'
  *
  * @param {object} form The dialog's values.
  * @return {{administrationId: string, collectionDate: string}} The request body.
- * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
  */
 export function buildProposalRequest(form) {
 	return {
@@ -33,7 +33,7 @@ export function buildProposalRequest(form) {
  *
  * @param {object} form The dialog's values.
  * @return {Promise<{batches: Array<object>, skipped: Array<object>}>} The proposal.
- * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
  */
 export async function proposeDirectDebitBatches(form) {
 	try {
@@ -55,7 +55,7 @@ export async function proposeDirectDebitBatches(form) {
  *
  * @param {Array<object>} batches The proposed batches.
  * @return {number} The sum of their control sums.
- * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
  */
 export function proposalTotal(batches) {
 	const cents = (batches || []).reduce(
@@ -70,7 +70,7 @@ export function proposalTotal(batches) {
  *
  * @param {object} skip One entry of `skipped`.
  * @return {string} The translated reason.
- * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
  */
 export function skipReasonText(skip) {
 	const detail = String(skip?.detail || '')
@@ -128,7 +128,7 @@ function saveFile(content, fileName) {
  * @param {object} headers The response headers.
  * @param {object|undefined} item The batch.
  * @return {string} The file name.
- * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
  */
 export function downloadFileName(headers, item) {
 	const disposition = String(headers?.['content-disposition'] || '')
@@ -144,7 +144,7 @@ export function downloadFileName(headers, item) {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {Promise<string|null>} The file name, or null when it failed.
- * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
  */
 export async function downloadDirectDebitFile(scope) {
 	const id = batchId(scope)

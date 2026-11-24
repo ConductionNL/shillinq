@@ -11,9 +11,9 @@
  * renamed page, endpoint, response key or untranslated label fails here
  * instead of on a live instance.
  *
- * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.1
- * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.2
- * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
  */
 
 import fs from 'fs'

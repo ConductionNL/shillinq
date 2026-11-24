@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Seal an administration's existing posted transactions once.
  *
- * @spec openspec/changes/ledger-sealed-entries/design.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/design.md
  */
 class LedgerSealExistingCommand extends Command {
 	/**
@@ -56,7 +56,7 @@ class LedgerSealExistingCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/design.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/design.md
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:ledger:seal-existing')
@@ -72,7 +72,7 @@ class LedgerSealExistingCommand extends Command {
 	 *
 	 * @return integer 0 when sealed, 1 when refused.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/design.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/design.md
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {

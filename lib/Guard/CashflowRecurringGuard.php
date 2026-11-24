@@ -48,7 +48,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-5
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
  */
 
 declare(strict_types=1);
@@ -362,7 +362,7 @@ class CashflowRecurringGuard {
 	 *
 	 * @return bool True when no contract window is violated.
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
 	 */
 	private function hasConsistentContractWindow(array $recurring): bool {
 		$contractReference = (string)($recurring['contractReference'] ?? '');
@@ -388,7 +388,7 @@ class CashflowRecurringGuard {
 	 *
 	 * @return bool True when the window falls within the Contract's.
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
 	 */
 	private function startsWithinContract(array $recurring, array $contract): bool {
 		$from = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
@@ -418,7 +418,7 @@ class CashflowRecurringGuard {
 	 *
 	 * @return bool True when validTo is absent or within the Contract's end.
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
 	 */
 	private function endsWithinContract(array $recurring, array $contract): bool {
 		$to = $this->parsedValidTo(recurring: $recurring);

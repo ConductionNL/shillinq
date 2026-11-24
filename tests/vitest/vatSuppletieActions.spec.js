@@ -6,8 +6,8 @@
  * Check for corrections, Prepare, Download and File reach their routes, say
  * what happened, and the pages, the handler map and appinfo/routes.php agree.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  */
 
 import fs from 'fs'

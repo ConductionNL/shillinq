@@ -275,7 +275,7 @@ interface SettingsServiceInterface {
 	 *
 	 * @return array<string,mixed> Result with success flag and message.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function seedLegislationPack(string $country, string $administrationId): array;
 

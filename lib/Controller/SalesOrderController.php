@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * Quote-to-order and order-to-invoice endpoints.
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
  */
 class SalesOrderController extends Controller {
 	/**
@@ -75,7 +75,7 @@ class SalesOrderController extends Controller {
 	 *
 	 * @return JSONResponse 201 with the order, 404 when missing or outside the caller's administrations, or 422.
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
+	 * @spec openspec/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
 	 */
 	#[NoAdminRequired]
 	public function fromQuote(string $id): JSONResponse {
@@ -98,7 +98,7 @@ class SalesOrderController extends Controller {
 	 *
 	 * @return JSONResponse 201 with the invoice, 404 when missing or outside the caller's administrations, or 422.
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
+	 * @spec openspec/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
 	 */
 	#[NoAdminRequired]
 	public function invoice(string $id): JSONResponse {

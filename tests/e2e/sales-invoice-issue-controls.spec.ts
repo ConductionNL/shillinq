@@ -40,8 +40,8 @@
  * number, so not every draft is without a number as REQ-SIIC-001 says; the
  * issue transition replaces it.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core/spec.md
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-4.1
  *
  * @e2e bookkeeping-accounts-receivable-core::two-bookkeepers-issue-at-the-same-moment
  * @e2e bookkeeping-accounts-receivable-core::a-self-billed-invoice-keeps-the-customer-s-number

@@ -193,7 +193,7 @@ export const manifestActions = Object.freeze({
  *
  * @param {object} manifest The merged manifest, mutated in place.
  * @return {object} The same manifest.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function attachManifestActions(manifest) {
 	Object.defineProperty(manifest, 'actions', {

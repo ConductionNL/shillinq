@@ -6,7 +6,7 @@
  * every kind and payment state, each grant on its own, the strict checks on
  * the grant and the restricted flag, and the placement narrowing.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 
 import { describe, expect, it } from 'vitest'

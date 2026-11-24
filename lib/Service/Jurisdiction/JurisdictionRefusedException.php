@@ -20,7 +20,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 
 declare(strict_types=1);
@@ -32,7 +32,7 @@ use DomainException;
 /**
  * An output was refused because the administration's jurisdiction is not the one it is for.
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 class JurisdictionRefusedException extends DomainException {
 
@@ -43,7 +43,7 @@ class JurisdictionRefusedException extends DomainException {
 	 * @param string $jurisdiction The administration's jurisdiction (ISO 3166 alpha-2).
 	 * @param string $required     The jurisdiction the output is for.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function __construct(
 		private readonly string $output,
@@ -65,7 +65,7 @@ class JurisdictionRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function getOutput(): string {
 		return $this->output;
@@ -76,7 +76,7 @@ class JurisdictionRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function getJurisdiction(): string {
 		return $this->jurisdiction;
@@ -87,7 +87,7 @@ class JurisdictionRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function getRequired(): string {
 		return $this->required;

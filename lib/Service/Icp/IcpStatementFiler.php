@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
  */
 
 declare(strict_types=1);
@@ -44,7 +44,7 @@ use OCP\IAppConfig;
  * While the hand-off is dormant (no Digipoort connection), filing is
  * refused and the XML can be downloaded instead.
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
  */
 class IcpStatementFiler {
 
@@ -89,7 +89,7 @@ class IcpStatementFiler {
 	 *
 	 * @return bool False while the hand-off is dormant.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
 	 */
 	public function isAvailable(): bool {
 		return $this->digipoort->isDormant() === false;
@@ -105,7 +105,7 @@ class IcpStatementFiler {
 	 *
 	 * @throws DomainException When no statement has been prepared for the period.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
 	 */
 	public function instanceXml(string $administrationId, string $period): string {
 		$statement = $this->requireStatement(administrationId: $administrationId, period: $period);
@@ -123,7 +123,7 @@ class IcpStatementFiler {
 	 *
 	 * @throws DomainException When filing is unavailable, or the statement is missing, not finalised or does not reconcile.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
 	 */
 	public function file(string $administrationId, string $period): array {
 		if ($this->isAvailable() === false) {

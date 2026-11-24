@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * Each step works on the batch as it is being saved and returns it; none
  * saves the batch itself.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 class ImportBatchSteps implements ImportBatchStepsInterface {
 
@@ -68,7 +68,7 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @throws DomainException When the file cannot be read or parsed (REQ-AIW-002).
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function parse(array $batch): array {
 		$xaf    = $this->reader->readAuditfile(batch: $batch);
@@ -95,7 +95,7 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @return array<string,mixed> The batch, unchanged.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function startMapping(array $batch): array {
 		$this->pipeline->resolveBatchMappings(batch: $batch, batchId: $this->idOf(batch: $batch));
@@ -111,7 +111,7 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @return array<string,mixed> The batch in state validated or validation_failed.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function validate(array $batch): array {
 		$open   = $this->period->isOpen(
@@ -138,7 +138,7 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @return array<string,mixed> The batch with its dry-run report.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function dryRun(array $batch): array {
 		$batch['dryRunReport'] = $this->pipeline->dryRun(
@@ -158,7 +158,7 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @throws DomainException When another batch already posted the same files and mappings.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function post(array $batch): array {
 		$this->refuseAnImportPostedBefore(batch: $batch);
@@ -183,7 +183,7 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @throws DomainException When the period is closed or a write is refused; the batch stays posted.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function reverse(array $batch): array {
 		$open   = $this->period->isOpen(
@@ -243,7 +243,7 @@ class ImportBatchSteps implements ImportBatchStepsInterface {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function mappingsOf(array $batch): array {
 		$rows = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('ImportMapping')

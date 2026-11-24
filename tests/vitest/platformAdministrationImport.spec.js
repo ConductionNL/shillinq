@@ -6,7 +6,7 @@
  * stubbed register. Each step sends the ImportBatch transition the lifecycle
  * declares and lands on the step the returned status belongs on.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 
 import fs from 'fs'

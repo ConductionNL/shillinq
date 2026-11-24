@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Service;
  * AnnualBudget stays empty (a scenario is base plus modifiers; with no base
  * there is nothing to modify).
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
  */
 class BudgetGridScenarioOverlay {
 
@@ -63,7 +63,7 @@ class BudgetGridScenarioOverlay {
 	 *
 	 * @return array<string,mixed>|null The scenario row, or null when it is not in the bundle.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	public function findScenario(array $scenarioContext, string $scenarioId): ?array {
 		foreach (($scenarioContext['scenarios'] ?? []) as $scenario) {
@@ -87,7 +87,7 @@ class BudgetGridScenarioOverlay {
 	 *
 	 * @return array<int,list<array<string,mixed>>|null> The swapped slices, same keys.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	public function apply(array $budgetLinesByFiscalYear, array $scenarioContext, string $scenarioId): array {
 		$modifiers = ($scenarioContext['modifiersByScenarioId'][$scenarioId] ?? []);

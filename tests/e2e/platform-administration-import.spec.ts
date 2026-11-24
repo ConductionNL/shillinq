@@ -10,7 +10,7 @@
  * prove the wizard reaches it. The fixture auditfile is put in the admin's
  * Files over WebDAV first, the way an administrator would have it there.
  *
- * @spec openspec/changes/platform-administration-import/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/tasks.md#task-3.2
  */
 
 import { expect, test } from '@playwright/test'

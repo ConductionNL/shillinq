@@ -38,7 +38,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
  */
 
 declare(strict_types=1);
@@ -51,7 +51,7 @@ use Throwable;
 /**
  * Builds and differences the hypothetical schedules a `RECURRING_*` modifier implies.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
  */
 final class RecurringModifierExpander {
 
@@ -93,7 +93,7 @@ final class RecurringModifierExpander {
 	 *         PHP coerces a canonical numeric string key to int, so `"01".."09"`
 	 *         stay strings while `10`, `11`, `12` are ints.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
 	 */
 	public function monthlyDeltas(array $real, array $modifier, string $type, int $fiscalYear): ?array {
 		// The real row is expanded FIRST, before any hypothetical slice. Call

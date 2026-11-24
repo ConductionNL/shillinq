@@ -12,7 +12,7 @@
  * a renamed page, route parameter or endpoint fails here instead of on a
  * live instance.
  *
- * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.1
  */
 
 import fs from 'fs'

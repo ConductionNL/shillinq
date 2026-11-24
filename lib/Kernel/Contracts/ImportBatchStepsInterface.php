@@ -46,7 +46,7 @@ interface ImportBatchStepsInterface {
 	 *
 	 * @return array<string,mixed> The batch with its dry-run report.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function dryRun(array $batch): array;
 
@@ -59,7 +59,7 @@ interface ImportBatchStepsInterface {
 	 *
 	 * @throws DomainException When the file cannot be read or parsed (REQ-AIW-002).
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function parse(array $batch): array;
 
@@ -72,7 +72,7 @@ interface ImportBatchStepsInterface {
 	 *
 	 * @throws DomainException When another batch already posted the same files and mappings.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function post(array $batch): array;
 
@@ -85,7 +85,7 @@ interface ImportBatchStepsInterface {
 	 *
 	 * @throws DomainException When the period is closed or a write is refused; the batch stays posted.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function reverse(array $batch): array;
 
@@ -96,7 +96,7 @@ interface ImportBatchStepsInterface {
 	 *
 	 * @return array<string,mixed> The batch, unchanged.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function startMapping(array $batch): array;
 
@@ -107,7 +107,7 @@ interface ImportBatchStepsInterface {
 	 *
 	 * @return array<string,mixed> The batch in state validated or validation_failed.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function validate(array $batch): array;
 }//end interface

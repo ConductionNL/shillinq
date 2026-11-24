@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Throwable;
  * already has a correction waiting in draft is left alone too: checking it
  * again would write the same correction a second time.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.3
  */
 class FiledReturnDriftCheck implements FiledReturnDriftCheckInterface {
 
@@ -86,7 +86,7 @@ class FiledReturnDriftCheck implements FiledReturnDriftCheckInterface {
 	 *
 	 * @return array{checked:int,corrections:int} How many returns were checked and how many corrections were written.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.3
 	 */
 	public function checkFiscalYear(string $administrationId, int $fiscalYear): array {
 		$outcome = ['checked' => 0, 'corrections' => 0];

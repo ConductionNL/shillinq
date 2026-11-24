@@ -15,7 +15,7 @@
  Direct debit batches (src/utils/directDebitActions.js), so it lives in its
  own file (hydra gate-13).
 
- @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
+ @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
 -->
 
 <template>
@@ -134,7 +134,7 @@ export default {
 		 * Whether the form is complete.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 		 */
 		canSubmit() {
 			return this.administrationId !== '' && this.collectionDate !== ''
@@ -144,7 +144,7 @@ export default {
 		 * The total of the proposed batches.
 		 *
 		 * @return {number}
-		 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 		 */
 		total() {
 			return proposalTotal(this.result?.batches)
@@ -154,7 +154,7 @@ export default {
 	/**
 	 * Load the active administration.
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 	 */
 	async mounted() {
 		try {
@@ -181,7 +181,7 @@ export default {
 		 *
 		 * @param {object} skip The entry.
 		 * @return {string}
-		 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 		 */
 		reasonText(skip) {
 			return skipReasonText(skip)
@@ -192,7 +192,7 @@ export default {
 		 *
 		 * @param {object} batch The batch.
 		 * @return {string}
-		 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 		 */
 		batchUrl(batch) {
 			return generateUrl(
@@ -206,7 +206,7 @@ export default {
 		 *
 		 * @param {object} batch The batch.
 		 * @return {string}
-		 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 		 */
 		batchLabel(batch) {
 			return n(
@@ -226,7 +226,7 @@ export default {
 		/**
 		 * Ask for the draft batches.
 		 *
-		 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 		 */
 		async submit() {
 			this.error = ''
@@ -249,7 +249,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 		 */
 		close() {
 			this.$emit('close', this.result)

@@ -41,7 +41,7 @@ export default {
 		/**
 		 * The findings, errors first.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		sorted() {
 			return [...this.findings].sort(

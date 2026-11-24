@@ -18,7 +18,7 @@ import { generateUrl } from '@nextcloud/router'
  * @param {Error} error The request error.
  * @param {string} fallback The text when the endpoint said nothing.
  * @return {string} The text.
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
  */
 export function clearingError(error, fallback) {
 	return error?.response?.data?.message || fallback
@@ -29,7 +29,7 @@ export function clearingError(error, fallback) {
  *
  * @param {string[]} lineIds The GLLine ids.
  * @return {Promise<boolean>} Whether the lines were cleared.
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
  */
 export async function clearLines(lineIds) {
 	try {
@@ -48,7 +48,7 @@ export async function clearLines(lineIds) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<boolean>} Whether the pair was cleared.
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-004)
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-004)
  */
 export function clearOpenItemSuggestion(scope) {
 	const lineIds = scope?.item?.lineIds
@@ -63,7 +63,7 @@ export function clearOpenItemSuggestion(scope) {
  *
  * @param {{selectedIds: string[]}} scope The selection scope.
  * @return {Promise<boolean>} Whether the lines were cleared.
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
  */
 export function clearSelectedOpenItems(scope) {
 	const lineIds = scope?.selectedIds
@@ -79,7 +79,7 @@ export function clearSelectedOpenItems(scope) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<boolean>} Whether the clearing was undone.
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
  */
 export async function undoOpenItemClearing(scope) {
 	const groupId = scope?.item?.id

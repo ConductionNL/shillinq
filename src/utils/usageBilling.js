@@ -33,7 +33,7 @@ export const READING_COLUMNS = [
  * @param {string} line The line.
  * @param {string} separator `,` or `;`.
  * @return {Array<string>} The cells.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
  */
 export function splitCsvLine(line, separator) {
 	const scan = { line, separator, cells: [], cell: '', quoted: false }
@@ -87,7 +87,7 @@ function csvQuote(scan, i) {
  *
  * @param {string} text The file's text.
  * @return {Array<object>} The rows, in file order.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
  */
 export function parseReadingsCsv(text) {
 	const lines = String(text || '')
@@ -117,7 +117,7 @@ export function parseReadingsCsv(text) {
  * @param {string} administrationId The active administration.
  * @param {Array<object>} rows The parsed rows.
  * @return {Promise<{created: Array<string>, refused: Array<{row: number, reason: string}>}>} The outcome.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
  */
 export async function importReadings(administrationId, rows) {
 	const { data } = await axios.post(
@@ -132,7 +132,7 @@ export async function importReadings(administrationId, rows) {
  *
  * @param {Array<string>} ids The reading ids.
  * @return {Promise<{rated: number, failed: number}>} The counts.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
  */
 export async function rateReadings(ids) {
 	let rated = 0
@@ -162,7 +162,7 @@ export async function rateReadings(ids) {
  * @param {string} fromDate First day of the invoice period (YYYY-MM-DD).
  * @param {string} toDate Last day of the invoice period (YYYY-MM-DD).
  * @return {Array<object>} The billable readings, oldest period first.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
  */
 export function billableReadings(readings, customerId, fromDate, toDate) {
 	const period = {
@@ -218,7 +218,7 @@ function endsInPeriod(periodEnd, period) {
  * @param {string} fromDate First day of the invoice period.
  * @param {string} toDate Last day of the invoice period.
  * @return {Promise<Array<object>>} The billable readings.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
  */
 export async function loadBillableReadings(customerId, fromDate, toDate) {
 	const response = await axios.get(

@@ -50,7 +50,7 @@ interface SuggestedMappingConfirmationInterface {
 	 * @throws RuntimeException When the batch does not exist or the caller is no member of its administration.
 	 * @throws DomainException When the batch is not in the mapping state.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function confirm(string $batchId): int;
 

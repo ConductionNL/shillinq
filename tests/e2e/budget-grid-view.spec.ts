@@ -31,7 +31,7 @@
  * persisted rows (design.md §0/§1c amendment); actuals come from
  * GLTransaction/GLLine/Account.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md
  */
 
 import type { Page } from '@playwright/test'

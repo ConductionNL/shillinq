@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 /**
  * Refuses an act before it writes.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 class FinancialDocumentGuard {
 	/**
@@ -71,7 +71,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller lacks it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function assertMay(string $action): void {
 		if ($this->authorizer->may($action) === false) {
@@ -88,7 +88,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller may not work in it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function assertAdministration(string $administrationId): void {
 		if ($administrationId === '' || $this->administrations->canAccess(administrationId: $administrationId) === false) {
@@ -105,7 +105,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller cannot read it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function readableInvoice(string $invoiceId): array {
 		$rows = $this->objectService
@@ -128,7 +128,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @return string The administration id, or empty when the caller has none.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function administrationOr(string $given): string {
 		if (trim($given) !== '') {
@@ -143,7 +143,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @return string The id, or empty.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function callerId(): string {
 		return $this->authorizer->callerId();
@@ -159,7 +159,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller or the app lacks it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function assertActorMay(string $action, string $appId): void {
 		if ($appId === '') {
@@ -188,7 +188,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When none is named by an app (400) or the caller does not work in it (403).
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	public function administrationFor(string $given, string $appId): string {
 		if ($appId === '') {
@@ -217,7 +217,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When it is not readable (404) or not the caller's administration (403).
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	public function invoiceFor(string $invoiceId, string $appId): array {
 		if ($appId === '') {
@@ -246,7 +246,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @return string The caller's uid, or `app:<appId>`.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function actorId(string $appId): string {
 		if ($appId === '') {

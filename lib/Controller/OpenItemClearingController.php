@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Throwable;
 /**
  * Open item clearing endpoints.
  *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
  */
 class OpenItemClearingController extends Controller {
 
@@ -82,7 +82,7 @@ class OpenItemClearingController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the overview, 404 for an unknown or foreign account.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
 	 */
 	#[NoAdminRequired]
 	public function overview(string $accountId): JSONResponse {
@@ -106,7 +106,7 @@ class OpenItemClearingController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the group, 401, 403, 404 or 422 with a message.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002, REQ-LOIC-004)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002, REQ-LOIC-004)
 	 */
 	#[NoAdminRequired]
 	public function clear(): JSONResponse {
@@ -152,7 +152,7 @@ class OpenItemClearingController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the released lines, 401, 403 or 404.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
 	 */
 	#[NoAdminRequired]
 	public function undo(string $groupId): JSONResponse {

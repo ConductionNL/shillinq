@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use RuntimeException;
 /**
  * Tests the begroting grid endpoint's guard rails and envelope build.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 final class BudgetGridControllerTest extends TestCase {
 
@@ -526,7 +526,7 @@ final class BudgetGridControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	public function testIndexSwapsBudgetColumnToChosenScenario(): void {
 		$this->actAs('alice');
@@ -567,7 +567,7 @@ final class BudgetGridControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	public function testIndexAnswers404ForScenarioOutsideAdministration(): void {
 		$this->actAs('alice');
@@ -586,7 +586,7 @@ final class BudgetGridControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	public function testIndexRejectsMalformedScenarioId(): void {
 		$this->actAs('alice');
@@ -605,7 +605,7 @@ final class BudgetGridControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	public function testIndexWithoutScenarioNamesNone(): void {
 		$this->actAs('alice');

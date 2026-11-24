@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ use RuntimeException;
 /**
  * No Digipoort connection is bound, so the supplementary return cannot be filed from here.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  */
 class SuppletieFilingUnavailableException extends RuntimeException {
 }//end class
