@@ -515,7 +515,7 @@ class PosStockDecrementListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testMatchedLineDelegatesToIssueForDelivery(): void {
-		$this->setUpListener(inventoryStock: [['sku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
 
 		$this->dispatchService->expects(self::once())
 			->method('issueForDelivery')
@@ -548,7 +548,7 @@ class PosStockDecrementListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testDownstreamExceptionIsFailSoft(): void {
-		$this->setUpListener(inventoryStock: [['sku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
 
 		$this->dispatchService->method('issueForDelivery')->willThrowException(new \RuntimeException('boom'));
 		$this->logger->expects(self::once())->method('error');
@@ -620,7 +620,7 @@ class PosStockDecrementListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testMixedMatchedAndUnmatchedLinesBothHandled(): void {
-		$this->setUpListener(inventoryStock: [['sku' => 'SKU-OK', 'administrationId' => 'adm-1']]);
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-OK', 'administrationId' => 'adm-1']]);
 
 		$this->dispatchService->expects(self::once())
 			->method('issueForDelivery')
@@ -658,7 +658,7 @@ class PosStockDecrementListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testEveryLineOutcomeIsLoggedAndNotifiedInOrder(): void {
-		$this->setUpListener(inventoryStock: [['sku' => 'SKU-OK', 'administrationId' => 'adm-1']]);
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-OK', 'administrationId' => 'adm-1']]);
 		$log = [];
 		foreach (['error', 'info'] as $level) {
 			$this->logger->method($level)->willReturnCallback(
@@ -803,11 +803,11 @@ class PosStockDecrementListenerTest extends TestCase {
 			'postedAt' => '2026-07-01T09:00:00Z',
 		];
 		$store->objects['InventoryStock'][] = [
-			'sku' => 'SKU-1001',
+			'productSku' => 'SKU-1001',
 			'administrationId' => 'adm-1',
-			'locationId' => 'loc-1',
-			'quantity' => 10,
-			'reservedQuantity' => 0,
+			'locationCode' => 'loc-1',
+			'quantityOnHand' => 10,
+			'quantityReserved' => 0,
 		];
 
 		$fakeObjectService = new class($store) {

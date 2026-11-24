@@ -494,6 +494,8 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 * @param array<int,array<string,mixed>> $stockRows Candidate InventoryStock rows for the sku.
 	 *
 	 * @return string Resolved locationId, or '' when unresolvable.
+	 *
+	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function resolveLocation(array $line, array $delivery, array $stockRows): string {
 		$lineLocation = trim((string)($line['sourceLocationId'] ?? ''));
@@ -509,10 +511,10 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 		$bestLocation = '';
 		$bestAvailable = -1.0;
 		foreach ($stockRows as $row) {
-			$available = ((float)($row['quantity'] ?? 0) - (float)($row['reservedQuantity'] ?? 0));
+			$available = ((float)($row['quantityOnHand'] ?? 0) - (float)($row['quantityReserved'] ?? 0));
 			if ($available > $bestAvailable) {
 				$bestAvailable = $available;
-				$bestLocation = (string)($row['locationId'] ?? '');
+				$bestLocation = (string)($row['locationCode'] ?? '');
 			}
 		}
 
@@ -762,6 +764,8 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 * @param string $sku Product SKU.
 	 *
 	 * @return array<int,array<string,mixed>> Matching InventoryStock rows.
+	 *
+	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function inventoryStockRows(string $administrationId, string $sku): array {
 		try {
@@ -772,7 +776,7 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 					[
 						'filters' => [
 							'administrationId' => $administrationId,
-							'sku' => $sku,
+							'productSku' => $sku,
 						],
 					]
 				);

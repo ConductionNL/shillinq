@@ -144,9 +144,9 @@ final class SalesDispatchIssueCharacterisationTest extends TestCase {
 		// phpcs:enable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
 
 		$this->store->rows['InventoryStock'] = [
-			['sku' => 'sku-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 5, 'reservedQuantity' => 0],
-			['sku' => 'sku-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-2', 'quantity' => 9, 'reservedQuantity' => 1],
-			['sku' => 'sku-n', 'administrationId' => 'adm-1', 'quantity' => 9],
+			['productSku' => 'sku-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'quantityOnHand' => 5, 'quantityReserved' => 0],
+			['productSku' => 'sku-a', 'administrationId' => 'adm-1', 'locationCode' => 'loc-2', 'quantityOnHand' => 9, 'quantityReserved' => 1],
+			['productSku' => 'sku-n', 'administrationId' => 'adm-1', 'quantityOnHand' => 9],
 		];
 
 		$this->service = new SalesDispatchStockIssueService(
@@ -294,11 +294,11 @@ final class SalesDispatchIssueCharacterisationTest extends TestCase {
 	 */
 	public function testBlockedLineEnvelope(): void {
 		$this->store->rows['InventoryStock'][] = [
-			'sku' => 'sku-l',
+			'productSku' => 'sku-l',
 			'productId' => 'p-l',
 			'administrationId' => 'adm-1',
-			'locationId' => 'loc-1',
-			'quantity' => 9,
+			'locationCode' => 'loc-1',
+			'quantityOnHand' => 9,
 		];
 		$this->store->rows['InventoryLot'] = [
 			[

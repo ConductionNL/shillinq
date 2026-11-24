@@ -412,6 +412,8 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 	 * @param string $sku              Product SKU.
 	 *
 	 * @return mixed The findAll() result.
+	 *
+	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function inventoryStockRows(string $administrationId, string $sku): mixed {
 		return $this->objectService()
@@ -421,7 +423,7 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'sku' => $sku,
+						'productSku' => $sku,
 					],
 				]
 			);
