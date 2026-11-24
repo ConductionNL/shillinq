@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Online payment links (`receivables-payment-links`). An open invoice carries a
+  signed pay link on its PDF ("Betaal online") and in its mail, the portal's
+  Pay now and a case's leges request reach a checkout, and Send payment link is
+  disabled with the reason while no provider is connected. **Setup:** configure
+  and connect a payment source in Integriq (Mollie, or Integriq's test source
+  for a trial), and set shillinq's app config `pay_link_page_url` to
+  Portaliq's guest pay page (https); without it no link is printed. The guest
+  page itself is Portaliq's (ConductionNL/portaliq#2667).
 - VAT rates from the register, and partly deductible costs
   (`tax-vat-rates-and-deductibility`). The five statutory VAT tariffs (high
   21, low 9, zero, exempt, reverse-charge) are now **seeded on every install

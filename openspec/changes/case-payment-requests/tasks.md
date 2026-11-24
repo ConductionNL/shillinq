@@ -25,4 +25,5 @@
 - [x] 5.1 PHPUnit: schema guard, uniqueness, reconciliation branch, provider refusals, initiation amount; run inside the container
 - [x] 5.2 Playwright `tests/e2e/payment-request-leaf.spec.ts` and `tests/e2e/payment-request-panel.spec.ts`
 - [ ] 5.3 Dutch and English strings; docs with screenshots — the strings ship (en and nl, admin section included); the docs page with screenshots needs a live instance and stays open
-- [ ] 5.4 Hand the two leaf ids and the `create` payload to dossiq for `financial-integration`
+- [x] 5.4 Hand the two leaf ids and the `create` payload to dossiq for `financial-integration`
+  - Filed: ConductionNL/dossiq#6872 (`shillinq-payment-requests`, `shillinq-payment-requests-panel` and the `create` payload).
