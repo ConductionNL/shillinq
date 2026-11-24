@@ -92,44 +92,14 @@ class InvoiceDocumentParties {
 				],
 				static fn (string $value): bool => $value !== ''
 			),
-			'layout' => $this->layout(administrationId: $administrationId),
+			'layout' => $this->one(schema: 'InvoiceLayout', id: $administrationId, fallbackProperty: 'administrationId'),
 			'language' => trim((string)($administration['defaultLanguage'] ?? '')),
 		];
 	}//end forInvoice()
 
 	/**
-	 * The administration's invoice layout, or an empty array when it has none.
-	 *
-	 * @param string $administrationId The administration.
-	 *
-	 * @return array<string, mixed>
-	 *
-	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
-	 */
-	private function layout(string $administrationId): array {
-		if ($administrationId === '') {
-			return [];
-		}
-
-		try {
-			$rows = $this->scoped(schema: 'InvoiceLayout')->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 1]);
-		} catch (Throwable $e) {
-			$this->logger->warning('InvoiceDocumentParties: invoice layout unreadable', ['exception' => $e->getMessage()]);
-			return [];
-		}
-
-		foreach ($rows as $row) {
-			$record = ObjectIdentifier::recordWithId(candidate: $row);
-			if ($record !== null) {
-				return $record;
-			}
-		}
-
-		return [];
-	}//end layout()
-
-	/**
-	 * One record by id or business key, or an empty array.
+	 * One record by id or business key, or an empty array. The layout is
+	 * found by its administration the same way.
 	 *
 	 * @param string $schema           The schema.
 	 * @param string $id               The id or business key.

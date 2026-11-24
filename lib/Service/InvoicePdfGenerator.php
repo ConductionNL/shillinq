@@ -58,6 +58,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 use OCA\Shillinq\Reporting\DocudeskUnavailableException;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentData;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentParties;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentLanguage;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentRenderer;
 use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
@@ -100,11 +101,13 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 * @param PayLinkService|null          $payLinks     Gives the pay link an open invoice prints; without it none is printed.
 	 * @param InvoiceDocumentData|null     $documentData The template data of the invoice document.
 	 * @param InvoiceDocumentRenderer|null $renderer     The docudesk hand-off; without it no PDF can be produced.
+	 * @param InvoiceDocumentParties|null  $parties      Reads the creditor, recipient, layout and language a caller did not pass.
 	 */
 	public function __construct(
 		private readonly ?PayLinkService $payLinks = null,
 		private readonly ?InvoiceDocumentData $documentData = null,
 		private readonly ?InvoiceDocumentRenderer $renderer = null,
+		private readonly ?InvoiceDocumentParties $parties = null,
 	) {
 	}//end __construct()
 
@@ -131,7 +134,8 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 * @param array<string,mixed> $invoice BillableInvoice or ARInvoice record.
 	 * @param array<int,array<string,mixed>> $lines Its lines.
 	 * @param array<string,mixed> $context `creditor`, `recipient`, `layout` (the InvoiceLayout),
-	 *                                     `language` (the administration's default) and `userId`.
+	 *                                     `language` (the administration's default) and `userId`;
+	 *                                     the parties a caller leaves out are read for the invoice.
 	 *
 	 * @return array{filename:string,pdf:string,mimeType:string}
 	 *
@@ -139,11 +143,14 @@ class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	 * @throws RuntimeException             When docudesk renders no PDF.
 	 *
 	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
 	 */
 	public function generatePdf(array $invoice, array $lines, array $context = []): array {
 		if ($this->documentData === null || $this->renderer === null) {
 			throw new DocudeskUnavailableException(message: self::DOCUDESK_NEEDED);
 		}
+
+		$context += ($this->parties?->forInvoice(invoice: $invoice) ?? []);
 
 		$data = $this->documentData->assemble(
 			invoice: $invoice,

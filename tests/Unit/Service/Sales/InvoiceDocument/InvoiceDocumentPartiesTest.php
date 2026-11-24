@@ -54,7 +54,7 @@ class InvoiceDocumentPartiesTest extends TestCase {
 	 */
 	private function parties(bool $failing = false): InvoiceDocumentParties {
 		$schema = '';
-		$store = $this->createMock(ObjectServiceInterface::class);
+		$store = $this->createMock(originalClassName: ObjectServiceInterface::class);
 		$store->method('setRegister')->willReturnSelf();
 		$store->method('setSchema')->willReturnCallback(
 			static function (string $name) use (&$schema, $store): ObjectServiceInterface {
@@ -78,10 +78,14 @@ class InvoiceDocumentPartiesTest extends TestCase {
 				);
 			}
 		);
-		$location = $this->createMock(RegisterLocation::class);
+		$location = $this->createMock(originalClassName: RegisterLocation::class);
 		$location->method('getRegisterSlug')->willReturn('shillinq');
 
-		return new InvoiceDocumentParties($store, $location, $this->createMock(LoggerInterface::class));
+		return new InvoiceDocumentParties(
+			objectService: $store,
+			registerLocation: $location,
+			logger: $this->createMock(originalClassName: LoggerInterface::class)
+		);
 	}//end parties()
 
 	/**
@@ -93,10 +97,24 @@ class InvoiceDocumentPartiesTest extends TestCase {
 		parent::setUp();
 		$this->rows = [
 			'Administration' => [
-				['id' => 'a-1', 'administrationCode' => 'ADM-001', 'name' => 'Gemeente Zuidoost', 'primaryIban' => 'NL91ABNA0417164300', 'primaryBic' => 'ABNANL2A', 'defaultLanguage' => 'nl'],
+				[
+					'id' => 'a-1',
+					'administrationCode' => 'ADM-001',
+					'name' => 'Gemeente Zuidoost',
+					'primaryIban' => 'NL91ABNA0417164300',
+					'primaryBic' => 'ABNANL2A',
+					'defaultLanguage' => 'nl',
+				],
 			],
 			'CustomerMaster' => [
-				['id' => 'c-1', 'customerId' => 'C-1', 'administrationId' => 'ADM-001', 'legalName' => 'Advies B.V.', 'vatId' => 'NL003726244B01', 'language' => 'en'],
+				[
+					'id' => 'c-1',
+					'customerId' => 'C-1',
+					'administrationId' => 'ADM-001',
+					'legalName' => 'Advies B.V.',
+					'vatId' => 'NL003726244B01',
+					'language' => 'en',
+				],
 				['id' => 'c-2', 'customerId' => 'C-2', 'administrationId' => 'ADM-OTHER', 'legalName' => 'Elders B.V.'],
 			],
 			'InvoiceLayout' => [
@@ -114,14 +132,14 @@ class InvoiceDocumentPartiesTest extends TestCase {
 	public function testAnInvoiceGetsItsCreditorRecipientLayoutAndLanguage(): void {
 		$parties = $this->parties()->forInvoice(['administrationId' => 'ADM-001', 'customerId' => 'C-1', 'invoiceNumber' => 'F-1']);
 
-		self::assertSame(['legalName' => 'Gemeente Zuidoost', 'iban' => 'NL91ABNA0417164300', 'bic' => 'ABNANL2A'], $parties['creditor']);
-		self::assertSame(['legalName' => 'Advies B.V.', 'vatNumber' => 'NL003726244B01', 'language' => 'en'], $parties['recipient']);
-		self::assertSame('modern', $parties['layout']['variant']);
-		self::assertSame('nl', $parties['language']);
+		self::assertSame(expected: ['legalName' => 'Gemeente Zuidoost', 'iban' => 'NL91ABNA0417164300', 'bic' => 'ABNANL2A'], actual: $parties['creditor']);
+		self::assertSame(expected: ['legalName' => 'Advies B.V.', 'vatNumber' => 'NL003726244B01', 'language' => 'en'], actual: $parties['recipient']);
+		self::assertSame(expected: 'modern', actual: $parties['layout']['variant']);
+		self::assertSame(expected: 'nl', actual: $parties['language']);
 
 		$epc = (new EpcQrPayload())->forTransfer(creditor: $parties['creditor'], currency: 'EUR', amount: 24200.0, reference: 'F-1');
-		self::assertNotNull($epc);
-		self::assertStringContainsString("NL91ABNA0417164300\nEUR24200.00", (string)$epc);
+		self::assertNotNull(actual: $epc);
+		self::assertStringContainsString(needle: "NL91ABNA0417164300\nEUR24200.00", haystack: (string)$epc);
 	}//end testAnInvoiceGetsItsCreditorRecipientLayoutAndLanguage()
 
 	/**
@@ -132,8 +150,8 @@ class InvoiceDocumentPartiesTest extends TestCase {
 	public function testACustomerOfAnotherAdministrationIsLeftOut(): void {
 		$parties = $this->parties()->forInvoice(['administrationId' => 'ADM-001', 'customerId' => 'C-2']);
 
-		self::assertSame([], $parties['recipient']);
-		self::assertSame('Gemeente Zuidoost', $parties['creditor']['legalName']);
+		self::assertSame(expected: [], actual: $parties['recipient']);
+		self::assertSame(expected: 'Gemeente Zuidoost', actual: $parties['creditor']['legalName']);
 	}//end testACustomerOfAnotherAdministrationIsLeftOut()
 
 	/**
@@ -144,6 +162,6 @@ class InvoiceDocumentPartiesTest extends TestCase {
 	public function testAnUnreadableRegisterLeavesThePartsEmpty(): void {
 		$parties = $this->parties(failing: true)->forInvoice(['administrationId' => 'ADM-001', 'customerId' => 'C-1']);
 
-		self::assertSame(['creditor' => [], 'recipient' => [], 'layout' => [], 'language' => ''], $parties);
+		self::assertSame(expected: ['creditor' => [], 'recipient' => [], 'layout' => [], 'language' => ''], actual: $parties);
 	}//end testAnUnreadableRegisterLeavesThePartsEmpty()
 }//end class

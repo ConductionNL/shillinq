@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Payment\PayLinkService;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\EpcQrPayload;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentData;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentParties;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentLanguage;
 use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentRenderer;
 use OCP\App\IAppManager;
@@ -202,6 +203,51 @@ final class InvoiceDocumentRendererTest extends TestCase {
 		self::assertSame(['en', 'GBP', 'modern'], [$data['language'], $data['currency'], $data['layout']['variant']]);
 		self::assertSame('2026-0042', $data['invoice']['number']);
 		self::assertSame(['modern', 'variant-modern'], [$options['adHocData']['variant']['name'], $options['adHocData']['variant']['className']]);
+	}
+
+	/**
+	 * A caller that passes only the user (the PDF route) still gets the
+	 * invoice's creditor, recipient and layout, so the EPC QR has an IBAN to
+	 * pay to (REQ-SID-005); a part the caller passes wins.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
+	 */
+	public function testTheRouteGetsTheInvoicePartiesItDidNotPass(): void {
+		$payLinks = $this->createMock(originalClassName: PayLinkService::class);
+		$payLinks->method('forOpenInvoice')->willReturn(value: null);
+		$data = new InvoiceDocumentData(
+			language: new InvoiceDocumentLanguage(InvoiceDocumentLanguageTest::factory($this)),
+			epc: new EpcQrPayload(),
+			payLinks: $payLinks
+		);
+		$invoice = ['invoiceNumber' => '2026-0050', 'currency' => 'EUR', 'grossAmount' => 24200.0, 'administrationId' => 'ADM-001'];
+		$parties = $this->createMock(originalClassName: InvoiceDocumentParties::class);
+		$parties->expects(self::once())->method('forInvoice')->with($invoice)->willReturn(
+			value: [
+				'creditor' => ['legalName' => 'Gemeente Zuidoost', 'iban' => 'NL91ABNA0417164300'],
+				'recipient' => ['legalName' => 'Advies B.V.', 'language' => 'nl'],
+				'layout' => ['variant' => 'compact'],
+				'language' => 'nl',
+				'userId' => 'not-this-one',
+			]
+		);
+		$generator = new InvoicePdfGenerator(
+			payLinks: $payLinks,
+			documentData: $data,
+			renderer: $this->renderer(templates: self::oneTemplate()),
+			parties: $parties
+		);
+
+		$generator->generatePdf(invoice: $invoice, lines: [], context: ['userId' => 'bookkeeper']);
+
+		[, $options] = $this->calls[0];
+		$document = $options['adHocData']['invoiceDocument'];
+		self::assertSame(expected: 'bookkeeper', actual: $options['userId']);
+		self::assertSame(expected: 'NL91ABNA0417164300', actual: $document['creditor']['iban']);
+		self::assertSame(expected: ['nl', 'compact'], actual: [$document['language'], $document['layout']['variant']]);
+		self::assertStringContainsString(needle: "NL91ABNA0417164300\nEUR24200.00\n", haystack: (string)$document['qr']['epc']);
 	}
 
 	/**
