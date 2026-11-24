@@ -338,7 +338,7 @@ final class IntegriqCloudEventListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.3
 	 */
 	public function testAReceivedPeppolDocumentGoesToTheInboundIntake(): void {
 		$data = [

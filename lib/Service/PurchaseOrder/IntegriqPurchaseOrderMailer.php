@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use Throwable;
 /**
  * PDF and email dispatch of purchase orders through integriq.
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
  */
 class IntegriqPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 
@@ -58,7 +58,7 @@ class IntegriqPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 * @param PurchaseOrderPdfRenderer $pdfRenderer   Renders the order.
 	 * @param LoggerInterface          $logger        Logger.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -74,7 +74,7 @@ class IntegriqPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function isAvailable(): bool {
 		return $this->dispatcher() !== null;
@@ -89,7 +89,7 @@ class IntegriqPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 * @return bool True when the channel accepted the message; false without
 	 *              integriq, without a supplier address or on a refusal.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool {
 		$dispatcher = $this->dispatcher();
@@ -123,7 +123,7 @@ class IntegriqPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function payload(array $purchaseOrder, array $supplier, string $email): array {
 		$poNumber = (string)($purchaseOrder['poNumber'] ?? '');

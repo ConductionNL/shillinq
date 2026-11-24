@@ -64,7 +64,7 @@ interface PurchaseOrderServiceInterface {
 	 *
 	 * @return array{peppol: array{available: bool, reason: string|null}, email: array{available: bool, reason: string|null}}
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 	 */
 	public function dispatchChannels(): array;
 
@@ -77,7 +77,7 @@ interface PurchaseOrderServiceInterface {
 	 *
 	 * @return bool True when the order changed.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
 	 */
 	public function applyPeppolDeliveryStatus(string $purchaseOrderId, string $status, string $detail): bool;
 

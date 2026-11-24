@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use RuntimeException;
 /**
  * Peppol transmission of purchase orders through integriq.
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
  */
 class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 
@@ -82,7 +82,7 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 * @param IUserSession                    $userSession    The buyer.
 	 * @param LoggerInterface                 $logger         Logger.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	public function __construct(
 		private readonly PeppolTransmissionPortInterface $partyDirectory,
@@ -103,7 +103,7 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 *
 	 * @throws RuntimeException When integriq is not installed.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	public function lookupParticipant(string $administrationId, string $partyId): ?string {
 		$peppolId = $this->partyDirectory->lookupParticipant(administrationId: $administrationId, partyId: $partyId);
@@ -136,7 +136,7 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 *
 	 * @throws RuntimeException When integriq is not installed.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	public function submit(string $participantId, string $documentType, string $payloadFileUri): string {
 		$this->emit(
@@ -164,7 +164,7 @@ class IntegriqPeppolOrderAdapter implements PeppolTransmissionAdapterInterface {
 	 *
 	 * @throws RuntimeException When the order has no id, nobody is signed in or integriq is not installed.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string {
 		$orderId = $this->orderId(purchaseOrder: $purchaseOrder);

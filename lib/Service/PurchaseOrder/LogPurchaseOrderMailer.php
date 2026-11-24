@@ -65,7 +65,7 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @inheritDoc
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool {
 		$this->logger->info(
@@ -85,7 +85,7 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 *
 	 * @return bool Always true.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function isAvailable(): bool {
 		return true;

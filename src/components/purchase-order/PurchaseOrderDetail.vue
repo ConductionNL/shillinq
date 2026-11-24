@@ -323,7 +323,7 @@ export default {
 		 * Whether the order holds a service line, so a delivery can be confirmed.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
 		 */
 		hasServiceLines() {
 			return (this.purchaseOrder?.lines || []).some(isServiceLine)
@@ -333,7 +333,7 @@ export default {
 		 * The channels the server says cannot take an order, in button order.
 		 *
 		 * @return {string[]}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 		 */
 		unavailableChannels() {
 			return ['peppol', 'email'].filter((channel) => !this.channelAvailable(channel))
@@ -424,7 +424,7 @@ export default {
 		/**
 		 * Read which dispatch channels the server can send through.
 		 *
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 		 */
 		async loadChannels() {
 			try {
@@ -444,7 +444,7 @@ export default {
 		 *
 		 * @param {string} channel peppol or email
 		 * @return {boolean}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 		 */
 		channelAvailable(channel) {
 			return this.channels?.[channel]?.available !== false
@@ -455,7 +455,7 @@ export default {
 		 *
 		 * @param {string} channel peppol or email
 		 * @return {string}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 		 */
 		channelReason(channel) {
 			if (this.channelAvailable(channel)) {
@@ -471,7 +471,7 @@ export default {
 		/**
 		 * @param {string} channel peppol or email
 		 * @return {string}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 		 */
 		channelLabel(channel) {
 			const labels = {
@@ -484,7 +484,7 @@ export default {
 		/**
 		 * @param {string|null} status pending, sent or failed
 		 * @return {string}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 		 */
 		dispatchStatusLabel(status) {
 			const labels = {
@@ -498,7 +498,7 @@ export default {
 		/**
 		 * Open the service receipt form for this order.
 		 *
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
 		 */
 		onConfirmService() {
 			this.$router.push({ name: 'ServiceReceiptForm', query: { poId: this.id } })

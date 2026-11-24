@@ -44,7 +44,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.3
  */
 
 declare(strict_types=1);
@@ -238,7 +238,7 @@ class IntegriqCloudEventListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.3
 	 */
 	private function receiveInbound(mixed $data): void {
 		if (is_array($data) === false) {

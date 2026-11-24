@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use OCP\Notification\UnknownNotificationException;
 /**
  * Prepares `einvoice_delivery_rejected` notifications for display.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.2
  */
 class EInvoiceNotifier extends AppNotifier {
 	/**
@@ -83,7 +83,7 @@ class EInvoiceNotifier extends AppNotifier {
 	 *
 	 * @throws UnknownNotificationException When the notification is not ours.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-2.2
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$l = $this->ownedL10n(notification: $notification, languageCode: $languageCode);

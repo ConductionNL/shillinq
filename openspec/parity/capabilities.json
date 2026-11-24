@@ -1844,7 +1844,7 @@
 			"feature": "outbound-peppol-factur-x",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): integriq registration line is :268, and the artefact store is a placeholder. Corrections round 8 (2026-09-28): integriq's Peppol consumer now refuses every outbound request, its own included, because it compares slugs with numeric ids, so the live check the evidence asked for is settled, integriq#1222; rating kept at partial because the UBL is still built and the invoice queued, and nothing is transmitted."
+			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): integriq registration line is :268, and the artefact store is a placeholder. Corrections round 8 (2026-09-28): integriq's Peppol consumer now refuses every outbound request, its own included, because it compares slugs with numeric ids, so the live check the evidence asked for is settled, integriq#1222; rating kept at partial because the UBL is still built and the invoice queued, and nothing is transmitted."
 		},
 		{
 			"id": "sal-customer-language",
@@ -2727,8 +2727,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "purchasing-order-dispatch-and-receipt",
 				"requirement": [
-					"openspec/changes/purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A purchase order sent by Peppol is handed to integriq (REQ-PODR-001)",
-					"openspec/changes/purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A purchase order sent by email is handed to integriq's email channel (REQ-PODR-002)"
+					"openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A purchase order sent by Peppol is handed to integriq (REQ-PODR-001)",
+					"openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A purchase order sent by email is handed to integriq's email channel (REQ-PODR-002)"
 				]
 			},
 			"screen": {
@@ -2747,7 +2747,7 @@
 			"feature": "purchase-order-3way-match",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Raising the PO works; 'send to supplier' marks it sent but both Peppol and PDF+email are log-only adapters, nothing reaches the supplier. Specified 2026-09-27 in openspec/changes/purchasing-order-dispatch-and-receipt (OpenSpec pass)."
+			"note": "Raising the PO works; 'send to supplier' marks it sent but both Peppol and PDF+email are log-only adapters, nothing reaches the supplier. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt (OpenSpec pass)."
 		},
 		{
 			"id": "pur-receipt",
@@ -2767,7 +2767,7 @@
 				"change": "purchasing-order-dispatch-and-receipt",
 				"requirement": [
 					"openspec/specs/bookkeeping-purchase-order-3way :: REQ-PO3W-003: Goods receipt note entry with line-level quantities",
-					"openspec/changes/purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A delivered service is confirmed from a screen (REQ-PODR-004)"
+					"openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A delivered service is confirmed from a screen (REQ-PODR-004)"
 				]
 			},
 			"screen": {
@@ -2786,7 +2786,7 @@
 			"feature": "purchase-order-3way-match",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Goods including partial deliveries: yes; services: API only, no screen reaches it. Specified 2026-09-27 in openspec/changes/purchasing-order-dispatch-and-receipt (OpenSpec pass)."
+			"note": "Goods including partial deliveries: yes; services: API only, no screen reaches it. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt (OpenSpec pass)."
 		},
 		{
 			"id": "pur-vendor-score",
@@ -8579,8 +8579,8 @@
 				"reachedOn": "nothing reaches it",
 				"change": "sales-einvoice-exchange",
 				"requirement": [
-					"openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A received self-billed invoice becomes a sales invoice to review (REQ-SEIX-006)",
-					"openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A self-billed invoice is booked only after review (REQ-SEIX-007)"
+					"openspec/changes/archive/2026-11-24-sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A received self-billed invoice becomes a sales invoice to review (REQ-SEIX-006)",
+					"openspec/changes/archive/2026-11-24-sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A self-billed invoice is booked only after review (REQ-SEIX-007)"
 				]
 			},
 			"screen": {
@@ -8601,7 +8601,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
-			"note": "A sales invoice can be marked self-billed; receiving the customer-made invoice is not supported. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): rated partial, but the self-billing flags the rating rested on are not declared on ARInvoice."
+			"note": "A sales invoice can be marked self-billed; receiving the customer-made invoice is not supported. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): rated partial, but the self-billing flags the rating rested on are not declared on ARInvoice."
 		},
 		{
 			"id": "sal-einvoice-rejection",
@@ -8620,7 +8620,7 @@
 				"evidence": "lib/Listener/PeppolDeliveryStatusListener.php:85 would notify with subject einvoice_delivery_rejected, but no notifier renders that subject (only DeadlineReminderNotifier and PosStockUnmatchedLineNotifier are registered, lib/AppInfo/Application.php:752, :760), and the listener is registered on a named Nextcloud event (Application.php:340-350) that integriq never dispatches: integriq emits delivery status as a CloudEvent object in register integriq, schema event (integriq lib/Service/EventService.php:2584).",
 				"reachedOn": "nothing reaches it",
 				"change": "sales-einvoice-exchange",
-				"requirement": "openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A rejected e-invoice reaches the bookkeeper (REQ-SEIX-004)"
+				"requirement": "openspec/changes/archive/2026-11-24-sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A rejected e-invoice reaches the bookkeeper (REQ-SEIX-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8640,7 +8640,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
-			"note": "The listener is wired; whether rejections ever arrive depends on the integriq Peppol path. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): rated partial, but no rejection can reach the user: the listener never fires and its notification has no notifier."
+			"note": "The listener is wired; whether rejections ever arrive depends on the integriq Peppol path. Specified 2026-09-27 in openspec/changes/archive/2026-11-24-sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): rated partial, but no rejection can reach the user: the listener never fires and its notification has no notifier."
 		},
 		{
 			"id": "led-multi-legislation",

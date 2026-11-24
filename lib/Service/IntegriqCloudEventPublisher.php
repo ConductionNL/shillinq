@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * Saves a CloudEvent in integriq's event register.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
  */
 class IntegriqCloudEventPublisher {
 
@@ -92,7 +92,7 @@ class IntegriqCloudEventPublisher {
 	 *
 	 * @return bool True when integriq can read a published event.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
 	 */
 	public function isAvailable(): bool {
 		try {
@@ -117,7 +117,7 @@ class IntegriqCloudEventPublisher {
 	 *
 	 * @return bool True when the event object was saved.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
 	 */
 	public function publish(string $type, string $source, string $subject, array $data): bool {
 		$event = [
@@ -153,7 +153,7 @@ class IntegriqCloudEventPublisher {
 	 *
 	 * @return string The id.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
 	 */
 	private function eventId(): string {
 		$bytes    = random_bytes(16);

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use RuntimeException;
 /**
  * Refuses to issue a self-billed invoice its agreement does not cover.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
  */
 class SelfBillingAgreementGuard implements LifecycleActionInterface {
 	/**
@@ -60,7 +60,7 @@ class SelfBillingAgreementGuard implements LifecycleActionInterface {
 	 *
 	 * @throws RuntimeException When the invoice may not be issued.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

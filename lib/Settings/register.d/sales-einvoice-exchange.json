@@ -106,7 +106,7 @@
         "x-openregister-audit-trail": {
           "enabled": true
         },
-        "x-spec": "openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md",
         "type": "object",
         "required": [
           "receivedAt",

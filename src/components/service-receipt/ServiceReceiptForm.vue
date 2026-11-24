@@ -112,7 +112,7 @@ export default {
 		 * The three confirmation modes, labelled.
 		 *
 		 * @return {Array<{value: string, label: string}>}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
 		 */
 		modeOptions() {
 			return [
@@ -126,7 +126,7 @@ export default {
 		 * The line payloads of the entries that hold a valid value.
 		 *
 		 * @return {object[]}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
 		 */
 		payloads() {
 			const period = { periodStart: this.periodStart, periodEnd: this.periodEnd }
@@ -145,7 +145,7 @@ export default {
 		 * Read the order and its service lines.
 		 *
 		 * @param {string} poId The purchase order id.
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
 		 */
 		async load(poId) {
 			this.loading = true
@@ -179,7 +179,7 @@ export default {
 		 *
 		 * @param {string} mode A confirmation mode.
 		 * @return {string}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
 		 */
 		modeLabel(mode) {
 			const labels = {
@@ -193,7 +193,7 @@ export default {
 		/**
 		 * Create the receipt, add its lines, confirm it and open it.
 		 *
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
 		 */
 		async submit() {
 			if (this.submitting || this.payloads.length === 0) {

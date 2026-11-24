@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
  */
 
 declare(strict_types=1);
@@ -47,7 +47,7 @@ use Throwable;
 /**
  * Moves orders sent under the old field onto the declared lifecycle field.
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
  */
 class AlignPurchaseOrderStatusCode implements IRepairStep {
 	use ReadsSourceRowsInBatches;
@@ -78,7 +78,7 @@ class AlignPurchaseOrderStatusCode implements IRepairStep {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
 	public function getName(): string {
 		return 'Shillinq: give purchase orders sent under the old state field the declared state sent';
@@ -91,7 +91,7 @@ class AlignPurchaseOrderStatusCode implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
 	public function run(IOutput $output): void {
 		try {
@@ -123,7 +123,7 @@ class AlignPurchaseOrderStatusCode implements IRepairStep {
 	 *
 	 * @return int 1 when the order was saved, 0 when it was left alone.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
 	private function alignRow(mixed $row, string $registerSlug): int {
 		$order = $this->rowPayload(row: $row);

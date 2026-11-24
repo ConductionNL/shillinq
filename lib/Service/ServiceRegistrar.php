@@ -356,7 +356,7 @@ final class ServiceRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt
 	 */
 	private function registerPurchaseOrderDispatch(IRegistrationContext $context): void {
 		// Change purchasing-order-dispatch-and-receipt (REQ-PODR-001/002): a purchase

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

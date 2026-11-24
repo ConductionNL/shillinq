@@ -185,7 +185,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>> The stuck invoices, in register order.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
 	 */
 	public function queuedByTheOldPath(): array {
 		$stuck = [];
@@ -214,7 +214,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *                          number, is not issued, was already handed over, or
 	 *                          fails validation.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
 	 */
 	public function requeue(array $invoice): array {
 		$administrationId = trim((string)($invoice['administrationId'] ?? ''));
@@ -257,7 +257,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @return bool False for no reference or the old path's placeholder.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
 	 */
 	private static function handedOver(array $invoice): bool {
 		$uri = trim((string)($invoice['payloadFileUri'] ?? ''));
@@ -333,7 +333,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @return array{deliveryStatus:string,transmissionId:?string,payloadFileUri:?string,fallback:bool,warnings:array<int,array<string,string>>}
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
 	 */
 	private function transmit(EInvoiceSend $send): array {
 		if ($this->publisher->isAvailable() === false) {
@@ -377,7 +377,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @return array{deliveryStatus:string,transmissionId:?string,payloadFileUri:?string,fallback:bool,warnings:array<int,array<string,string>>}
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
 	 */
 	private function queue(EInvoiceSend $send): array {
 		$invoice = $send->invoice;
@@ -421,7 +421,7 @@ final class EInvoiceService implements EInvoiceServiceInterface {
 	 *
 	 * @return bool True when the request was saved.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
 	 */
 	private function publishOutboundRequested(EInvoiceSend $send): bool {
 		$invoice = $send->invoice;

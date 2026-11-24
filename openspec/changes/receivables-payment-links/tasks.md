@@ -25,6 +25,7 @@
 ## 4. End to end
 
 - [ ] 4.1 Live check with integriq's Mollie test source: portal Pay now, a case leges request and an invoice pay link each reach a checkout and end paid (REQ-RPL-003, REQ-RPL-005). Verify: the three payment ids and end states in the PR body.
+  - Partly written (24 Nov 2026) in `tests/e2e/receivables-payment-links.spec.ts`: the case leges request and portal Pay now reach a Mollie checkout link and end paid on integriq's status event (written into integriq's event register the way integriq stores it), with a repeat event changing nothing and a forged pay token refused. Left: paying in Mollie's own test checkout (the provider's network) and the invoice pay link, which reaches a person only in the mail: no PDF carries it (`InvoicePdfGenerator` drops the HTML of the hybrid PDF, and the PDF route renders a BillableInvoice whose `status` `PayLinkService::forOpenInvoice()` does not read).
 - [x] 4.2 Open the portaliq issue for the guest pay page of a signed link and add a release note naming the integriq source setup. Verify: the issue link and the note in the PR body.
   - Filed: ConductionNL/portaliq#2667 (guest pay page for `?pay=<token>`, forwarding `{payToken}` to `portalPaymentInitiation#initiate`); the release note naming the integriq source setup is in `CHANGELOG.md` under Unreleased.
 

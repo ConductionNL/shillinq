@@ -47,7 +47,7 @@ interface SelfBilledInvoiceIntakeInterface {
 	 *                                                        `supplier` or `skipped` (not an
 	 *                                                        invoice, or no administration).
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.2
 	 */
 	public function receive(array $data): array;
 }//end interface

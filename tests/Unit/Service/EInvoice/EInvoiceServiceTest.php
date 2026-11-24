@@ -14,7 +14,7 @@
  *
  * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
  * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-006
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

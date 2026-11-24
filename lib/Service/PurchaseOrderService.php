@@ -514,7 +514,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @throws \RuntimeException When the PO is missing or not approved.
 	 *
 	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
 	public function markSent(string $administrationId, string $purchaseOrderId): array {
 		$po = $this->loadPurchaseOrderForTransmission(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId);
@@ -536,7 +536,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @return array{peppol: array{available: bool, reason: string|null}, email: array{available: bool, reason: string|null}}
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 	 */
 	public function dispatchChannels(): array {
 		$channels = [
@@ -574,7 +574,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *                           dispatch is already pending
 	 *                           (mapped to 404 / 409 by the controller).
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	public function sendToPeppol(string $administrationId, string $purchaseOrderId): array {
 		$po = $this->loadPurchaseOrderForTransmission(
@@ -648,7 +648,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @return array<string,mixed> The saved PurchaseOrder.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	private function recordPeppolDispatch(array $purchaseOrder, string $messageId): array {
 		$purchaseOrder['peppolMessageId'] = $messageId;
@@ -680,7 +680,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *                           incomplete, a Peppol dispatch is pending or no
 	 *                           mail channel is configured.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function sendToPDFEmail(
 		string $administrationId,
@@ -736,7 +736,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @return bool True when the order changed.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
 	 */
 	public function applyPeppolDeliveryStatus(string $purchaseOrderId, string $status, string $detail): bool {
 		$po = $this->findOne(schema: 'PurchaseOrder', filters: ['id' => $purchaseOrderId]);
@@ -771,7 +771,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	private function recordPeppolDelivered(array $purchaseOrder): void {
 		$now = $this->nowIso();

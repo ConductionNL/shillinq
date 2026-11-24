@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Throwable;
 /**
  * Lists, and on confirmation re-sends, e-invoices stuck at queued.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
  */
 class EInvoiceRequeueCommand extends Command {
 	/**
@@ -66,7 +66,7 @@ class EInvoiceRequeueCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'shillinq:einvoice:requeue')
@@ -88,7 +88,7 @@ class EInvoiceRequeueCommand extends Command {
 	 * @return int 0 when nothing is stuck, nothing was confirmed or every invoice
 	 *             was queued again; 1 when one or more could not be sent.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$stuck = $this->eInvoiceService->queuedByTheOldPath();

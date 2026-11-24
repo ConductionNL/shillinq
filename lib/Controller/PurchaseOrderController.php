@@ -258,7 +258,7 @@ class PurchaseOrderController extends Controller {
 	 *
 	 * @return JSONResponse 200 with {peppol: {available, reason}, email: {available, reason}}; 401 anonymous.
 	 *
-	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 	 *
 	 * @no-admin-idor-exempt Instance-wide capability read — takes no object reference
 	 *     and reads no storage: it reports whether a Peppol adapter and a mail channel

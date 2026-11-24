@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use RuntimeException;
  * @covers \OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderPdfRenderer
  * @uses \OCA\Shillinq\Support\FleetAppId
  *
- * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
  */
 final class IntegriqPurchaseOrderMailerTest extends TestCase {
 

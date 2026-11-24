@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use RuntimeException;
 /**
  * Guards issuing a self-billed invoice, and records its rejection.
  *
- * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
  */
 class SelfBilledInvoiceReview implements SelfBilledInvoiceReviewInterface {
 	/**
@@ -74,7 +74,7 @@ class SelfBilledInvoiceReview implements SelfBilledInvoiceReviewInterface {
 	 *
 	 * @throws RuntimeException With the reason, when it may not be issued.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) SelfBilledInvoiceIntake::agreementGap() is a pure check of the customer record.
 	 */
@@ -121,7 +121,7 @@ class SelfBilledInvoiceReview implements SelfBilledInvoiceReviewInterface {
 	 * @throws RuntimeException `ARInvoice not found` for a missing or inaccessible
 	 *                          invoice; otherwise the refusal.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-3.4
 	 */
 	public function reject(string $administrationId, string $invoiceNumber, string $reason): array {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {

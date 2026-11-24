@@ -68,7 +68,7 @@ interface EInvoiceServiceInterface {
 	 *
 	 * @return array<int,array<string,mixed>> The stuck invoices, in register order.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
 	 */
 	public function queuedByTheOldPath(): array;
 
@@ -88,7 +88,7 @@ interface EInvoiceServiceInterface {
 	 *                          number, is not issued, was already handed over, or
 	 *                          fails validation.
 	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-sales-einvoice-exchange/tasks.md#task-1.4
 	 */
 	public function requeue(array $invoice): array;
 }//end interface
