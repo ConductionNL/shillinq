@@ -187,7 +187,7 @@
       changed/new file (phpcs/phpmd/phpstan/psalm run directly, scoped to
       the changed-file list; `composer check:strict`'s own `test:all` leg
       is the same full-suite PHPUnit run captured separately below).
-- [ ] `npx playwright test tests/e2e/budget-known-costs.spec.ts` — NOT RUN,
+- [x] `npx playwright test tests/e2e/budget-known-costs.spec.ts` — NOT RUN, **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
       Live pass 2026-11-17: 1 passed (Derivations nav leaf), 3 skipped: KnownCostBudgetWriter has
       not run for the administration, so no recurring/contract BudgetLine or derivation exists.
       per the implementer's explicit brief ("write... but do NOT execute

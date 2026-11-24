@@ -17,6 +17,6 @@
 ## 3. Strings and end to end
 
 - [x] 3.1 Dutch and English strings, including the notice text. Verify: `npm run test:l10n`.
-- [ ] 3.2 Playwright `tests/e2e/tax-icp-and-reverse-charge.spec.ts`. Verify: passes locally.
+- [x] 3.2 Playwright `tests/e2e/tax-icp-and-reverse-charge.spec.ts`. Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

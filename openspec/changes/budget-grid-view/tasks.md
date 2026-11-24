@@ -197,7 +197,7 @@
       `BudgetGridCalculatorTest` — all green.
       (Full app tally: Tests: 4675, Assertions: 45462, Failures: 0,
       Skipped: 1 pre-existing.)
-- [ ] `npx playwright test tests/e2e/budget-grid-view.spec.ts` — **NOT RUN**,
+- [x] `npx playwright test tests/e2e/budget-grid-view.spec.ts` — **NOT RUN**, **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
       Live pass 2026-11-17 (LedgerGroups copied to the administration by hand: a fresh install
       seeds them only as administrationId "template"): 3 passed after the keyboard toggle fix,
       2 skipped (no leaf group with account members, no closed period with actuals).

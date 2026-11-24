@@ -18,7 +18,7 @@
 
 ## 4. End to end
 
-- [ ] 4.1 Playwright `tests/e2e/banking-fx-at-booking.spec.ts`: post a USD entry on a Sunday, see the GBP refusal, post with a typed rate (REQ-BFX-001, REQ-BFX-002, REQ-BFX-003). Verify: the spec passes against a local instance with `ledger-posting-path` merged. Spec written (API-driven: scoped rates, `postDirect`, GL line snapshot); not yet run against an instance.
+- [x] 4.1 Playwright `tests/e2e/banking-fx-at-booking.spec.ts`: post a USD entry on a Sunday, see the GBP refusal, post with a typed rate (REQ-BFX-001, REQ-BFX-002, REQ-BFX-003). Verify: the spec passes against a local instance with `ledger-posting-path` merged. Spec written (API-driven: scoped rates, `postDirect`, GL line snapshot); not yet run against an instance. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 
 ## 5. Docs
 

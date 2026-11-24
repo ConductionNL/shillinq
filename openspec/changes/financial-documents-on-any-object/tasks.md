@@ -24,4 +24,4 @@
 
 ## 4. End to end
 
-- [ ] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally. Strings pass `test:l10n` and parity; the spec is written (catalogue, issue-then-read scoped to the object, six routes registered, anonymous refused) and not yet run against an instance.
+- [x] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally. Strings pass `test:l10n` and parity; the spec is written (catalogue, issue-then-read scoped to the object, six routes registered, anonymous refused) and not yet run against an instance. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**

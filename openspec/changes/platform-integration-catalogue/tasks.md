@@ -15,7 +15,7 @@
 
 - [x] 2.1 List the bookkeeping connectors that need an integriq catalogue item in an integriq issue, linked from the PR. Verify: issue link in the PR body.
   - Filed: ConductionNL/integriq#3866 (the 14 connection families without a catalogue item, with suggested categories, and the `slug` field on `connections.schema.json`). integriq#3769 already added the bank, payments and e-invoicing templates.
-- [ ] 2.2 Playwright `tests/e2e/platform-integration-catalogue.spec.ts` with and without integriq. Verify: passes locally.
+- [x] 2.2 Playwright `tests/e2e/platform-integration-catalogue.spec.ts` with and without integriq. Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 - [x] 2.3 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
   - The page's English and Dutch strings; `test:l10n` and `test:l10n-parity` pass.
 

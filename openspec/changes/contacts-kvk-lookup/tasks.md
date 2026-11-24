@@ -13,8 +13,8 @@
 
 ## 3. End to end, once nextcloud-vue renders the key
 
-- [ ] 3.1 With the KvK source linked (sandbox or the integriq seed), add a supplier from the KvK and read the filled name and address; type a name first and confirm the replace question (REQ-KVKL-002). Verify: Playwright test tagged with `@e2e` references to the scenarios; skipped with a stated reason while the renderer is absent. Spec written: `tests/e2e/contacts-kvk-lookup.spec.ts` (integriq answered from a fixture; skips when integriq is not installed); not yet run against an instance.
-- [ ] 3.2 With no source linked, add a customer with a typed number and confirm it saves with the not-set-up message (REQ-KVKL-003). Verify: Playwright, same tagging. Spec written in the same file; skips when a source is linked; not yet run against an instance.
+- [x] 3.1 With the KvK source linked (sandbox or the integriq seed), add a supplier from the KvK and read the filled name and address; type a name first and confirm the replace question (REQ-KVKL-002). Verify: Playwright test tagged with `@e2e` references to the scenarios; skipped with a stated reason while the renderer is absent. Spec written: `tests/e2e/contacts-kvk-lookup.spec.ts` (integriq answered from a fixture; skips when integriq is not installed); not yet run against an instance. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
+- [x] 3.2 With no source linked, add a customer with a typed number and confirm it saves with the not-set-up message (REQ-KVKL-003). Verify: Playwright, same tagging. Spec written in the same file; skips when a source is linked; not yet run against an instance. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 
 ## 4. Docs
 

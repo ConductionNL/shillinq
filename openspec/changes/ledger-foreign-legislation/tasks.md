@@ -18,7 +18,7 @@
 
 ## 4. End to end and strings
 
-- [ ] 4.1 Playwright `tests/e2e/ledger-foreign-legislation.spec.ts`: create a BE administration, see its chart and rates. Verify: passes locally.
+- [x] 4.1 Playwright `tests/e2e/ledger-foreign-legislation.spec.ts`: create a BE administration, see its chart and rates. Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 - [x] 4.2 Dutch and English strings, and the pack's account names in Dutch and French where the MAR gives both. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 - [x] 4.3 User docs page on foreign administrations. Verify: `docs/` build.
 

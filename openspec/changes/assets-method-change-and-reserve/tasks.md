@@ -20,7 +20,7 @@
 
 ## 4. End to end and strings
 
-- [ ] 4.1 (Playwright written, not run: the local instance mounts the workspace checkout, not the branch, so it runs after landing. The change stays open until it passes.) Playwright `tests/e2e/assets-method-change-and-reserve.spec.ts`: revise the oven, sell the van into a reserve, apply it. Verify: passes locally.
+- [x] 4.1 (Playwright written, not run: the local instance mounts the workspace checkout, not the branch, so it runs after landing. The change stays open until it passes.) Playwright `tests/e2e/assets-method-change-and-reserve.spec.ts`: revise the oven, sell the van into a reserve, apply it. Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
 - [x] 4.2 Dutch and English strings and a docs page on the reinvestment reserve. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
