@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
  */
 class InvestmentAssetListener implements IEventListener {
 
@@ -66,7 +66,7 @@ class InvestmentAssetListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
 	 */
 	public function handle(Event $event): void {
 		$entity = null;

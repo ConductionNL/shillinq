@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
  */
 
 declare(strict_types=1);
@@ -33,7 +33,7 @@ use OCA\Shillinq\Service\RegisterBinding;
 /**
  * Year-scoped lookups of the deduction tables.
  *
- * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
  */
 class InvestmentDeductionTables {
 
@@ -67,7 +67,7 @@ class InvestmentDeductionTables {
 	 *
 	 * @return array<int, array<string, mixed>> Empty when none are loaded.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
 	 */
 	public function kiaTiers(int $year): array {
 		$tiers = $this->rows(table: 'kia', year: $year);
@@ -84,7 +84,7 @@ class InvestmentDeductionTables {
 	 *
 	 * @return array<string, mixed>|null
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
 	 */
 	public function energyCode(string $code, int $year): ?array {
 		return $this->code(table: 'energy', code: $code, year: $year);
@@ -98,7 +98,7 @@ class InvestmentDeductionTables {
 	 *
 	 * @return array<string, mixed>|null
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
 	 */
 	public function environmentCode(string $code, int $year): ?array {
 		return $this->code(table: 'environment', code: $code, year: $year);

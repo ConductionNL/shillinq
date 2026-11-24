@@ -69,7 +69,7 @@ async function runStep(step) {
  *
  * @param {{item?: object}} scope The action scope.
  * @return {Promise<object|null>} The sales order, or null when none was made.
- * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
+ * @spec openspec/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
  */
 export async function createSalesOrderFromQuote(scope) {
 	const id = actionObjectId(scope)
@@ -89,7 +89,7 @@ export async function createSalesOrderFromQuote(scope) {
  *
  * @param {{item?: object}} scope The action scope.
  * @return {Promise<object|null>} The draft invoice, or null when none was written.
- * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
+ * @spec openspec/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
  */
 export async function invoiceSalesOrder(scope) {
 	const id = actionObjectId(scope)

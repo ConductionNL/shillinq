@@ -8,7 +8,7 @@
  grid. When nothing is shown, or a typed URL named a type that is not shown
  (the router guard sends it here with `?unavailable=<slug>`), it says so.
 
- @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
+ @spec openspec/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
 -->
 <template>
 	<div class="custom-record-types" data-testid="custom-record-types">
@@ -66,7 +66,7 @@ export default {
 		 * The card section of the shown types.
 		 *
 		 * @return {Array<object>} ClusterOverview sections.
-		 * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
+		 * @spec openspec/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
 		 */
 		sections() {
 			return cardSections(this.types, t('shillinq', 'Own record types'))
@@ -76,7 +76,7 @@ export default {
 		 * The slug a refused URL named, if any.
 		 *
 		 * @return {string} The slug, or an empty string.
-		 * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
+		 * @spec openspec/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
 		 */
 		unavailable() {
 			const value = this.$route?.query?.unavailable
@@ -87,7 +87,7 @@ export default {
 	/**
 	 * Read the shown types once.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
+	 * @spec openspec/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
 	 */
 	async created() {
 		this.types = await fetchShownTypes()

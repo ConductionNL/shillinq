@@ -188,7 +188,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When none is named by an app (400) or the caller does not work in it (403).
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	public function administrationFor(string $given, string $appId): string {
 		if ($appId === '') {
@@ -217,7 +217,7 @@ class FinancialDocumentGuard {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When it is not readable (404) or not the caller's administration (403).
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	public function invoiceFor(string $invoiceId, string $appId): array {
 		if ($appId === '') {

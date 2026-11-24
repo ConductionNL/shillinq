@@ -189,7 +189,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return array<string, mixed> The `{items, total, nextCursor, acts}` envelope.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002, REQ-FDO-003)
+	 * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002, REQ-FDO-003)
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
 	 * the panel narrows by kind itself.
@@ -316,7 +316,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws RuntimeException With the HTTP status first when the act is refused.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	private function act(array $host, array $payload, string $appId): array {
 		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
@@ -361,7 +361,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws FinancialDocumentActionRefusedException When no such invoice stands on this object (404).
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	private function invoiceOnObject(array $host, array $payload, string $appId): string {
 		$invoiceId = trim((string)($payload['invoiceId'] ?? ''));

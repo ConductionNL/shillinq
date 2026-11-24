@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
+ * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use OCP\IRequest;
  * Issues an invoice on an object, requests payment of an invoice, and starts a
  * quote, a credit note or a payout.
  *
- * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
+ * @spec openspec/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  */
 class FinancialDocumentActionController extends Controller {
 	/**

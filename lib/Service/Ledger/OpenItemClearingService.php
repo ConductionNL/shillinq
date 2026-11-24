@@ -125,7 +125,7 @@ class OpenItemClearingService {
 	 *
 	 * @return array<string, mixed> `uncleared`, `openGroups` and `suggestions`.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
 	 */
 	public function overview(array $account): array {
 		$uncleared = $this->unclearedLines(account: $account);

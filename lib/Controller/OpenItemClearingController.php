@@ -82,7 +82,7 @@ class OpenItemClearingController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the overview, 404 for an unknown or foreign account.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
 	 */
 	#[NoAdminRequired]
 	public function overview(string $accountId): JSONResponse {

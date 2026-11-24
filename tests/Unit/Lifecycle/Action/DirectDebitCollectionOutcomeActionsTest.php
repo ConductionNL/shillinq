@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-collection-outcome-settles-or-keeps-the-invoice-req-sdd-013
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-collection-outcome-settles-or-keeps-the-invoice-req-sdd-013
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

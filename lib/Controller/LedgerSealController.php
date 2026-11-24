@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+ * @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Throwable;
  * of one administration and names the first transaction that no longer matches.
  * Only a Nextcloud admin or a controller of that administration may run it (ADR-005).
  *
- * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+ * @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
  */
 class LedgerSealController extends Controller {
 
@@ -80,7 +80,7 @@ class LedgerSealController extends Controller {
 	 *
 	 * @return JSONResponse `{intact, entries, transactionNumber, transactionId, reason, message}`, or 401 / 403 / 404.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+	 * @spec openspec/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
 	 */
 	#[NoAdminRequired]
 	public function verify(): JSONResponse {

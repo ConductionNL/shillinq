@@ -78,7 +78,7 @@ class InvestmentDeductionService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
 	 */
 	public static function isActive(array $fixedAsset): bool {
 		return (($fixedAsset['lifecycleState'] ?? null) === 'active' || ($fixedAsset['status'] ?? null) === 'active');
@@ -93,7 +93,7 @@ class InvestmentDeductionService {
 	 *
 	 * @return array<string, mixed>|null The InvestmentAsset, or null when the asset is not active or has no administration.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-an-activated-fixed-asset-gets-its-deduction-eligibility-req-idc-001
 	 */
 	public function recordEligibility(string $fixedAssetId, array $fixedAsset): ?array {
 		$administrationId = trim((string)($fixedAsset['administrationId'] ?? ''));
@@ -129,7 +129,7 @@ class InvestmentDeductionService {
 	 *
 	 * @throws InvalidArgumentException When no KIA tiers are loaded for the year.
 	 *
-	 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md#requirement-a-years-deduction-is-calculated-per-scheme-req-idc-002
 	 */
 	public function calculateYear(string $administrationId, int $year): array {
 		$tiers = $this->tables->kiaTiers(year: $year);

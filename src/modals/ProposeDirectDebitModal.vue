@@ -15,7 +15,7 @@
  Direct debit batches (src/utils/directDebitActions.js), so it lives in its
  own file (hydra gate-13).
 
- @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
+ @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
 -->
 
 <template>
