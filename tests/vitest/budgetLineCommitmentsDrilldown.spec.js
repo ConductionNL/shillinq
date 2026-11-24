@@ -2,10 +2,11 @@
  * SPDX-License-Identifier: EUPL-1.2
  * Copyright (C) 2026 Conduction B.V.
  *
- * BudgetLineCommitments: resolving the active administration (and its
- * fallbacks), the drilldown toggle that reads the underlying commitment
- * lines with bare property filters, its response shapes, its failure and its
- * collapse on a second press. The row load lives in
+ * BudgetLineCommitments: leaving the administration to the server (which
+ * resolves the active one and its fallbacks, see
+ * AdministrationResultsControllerTest), the drilldown toggle that reads the
+ * underlying commitment lines with bare property filters, its response
+ * shapes, its failure and its collapse on a second press. The row load lives in
  * budgetLineCommitmentsLoad.spec.js.
  *
  * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md
@@ -39,27 +40,29 @@ beforeEach(() => {
 	axios.get.mockReset()
 })
 
-describe('resolveAdministrationId', () => {
-	it('prefers the active administration, else the first one', async () => {
-		axios.get.mockResolvedValueOnce({ data: { activeAdministrationId: 'a2', administrations: [{ administrationId: 'a1' }] } })
-		expect(await view().resolveAdministrationId()).toBe('a2')
-		expect(axios.get).toHaveBeenCalledWith('/index.php/apps/shillinq/api/administrations/context')
+describe('administration', () => {
+	it('sends no administration of its own, so the server picks the active one', async () => {
+		axios.get.mockResolvedValue({ data: { results: [] } })
+		await view().loadRows()
+		await view().toggleDrilldown(ROW)
 
-		axios.get.mockResolvedValueOnce({ data: { administrations: [{ administrationId: 'a1' }] } })
-		expect(await view().resolveAdministrationId()).toBe('a1')
+		expect(axios.get).toHaveBeenCalledTimes(2)
+		expect(axios.get).not.toHaveBeenCalledWith('/index.php/apps/shillinq/api/administrations/context')
+		for (const [, options] of axios.get.mock.calls) {
+			expect(Object.keys(options?.params ?? {}).some((k) => k.includes('administrationId'))).toBe(false)
+		}
 	})
 
-	it('answers empty when there is none or the context cannot be read', async () => {
-		axios.get.mockResolvedValueOnce({ data: {} })
-		expect(await view().resolveAdministrationId()).toBe('')
-
-		axios.get.mockRejectedValueOnce(new Error('x'))
-		expect(await view().resolveAdministrationId()).toBe('')
+	it('shows the refusal when the server finds no administration', async () => {
+		axios.get.mockRejectedValueOnce({ response: { status: 400 } })
+		const vm = view()
+		await vm.loadRows()
+		expect([vm.errorMessage, vm.rows, vm.loading]).toEqual(['No active administration, so the budget lines cannot be shown.', [], false])
 	})
 })
 
 describe('toggleDrilldown', () => {
-	it('reads the commitment lines with bare property filters and a limit', async () => {
+	it('reads the commitment lines with bare property filters, the server paging them', async () => {
 		const vm = view({ drilldownItems: [{ id: 'old' }] })
 		axios.get.mockImplementationOnce(async () => {
 			expect(vm.drilldownLoading).toBe(true)
@@ -68,19 +71,24 @@ describe('toggleDrilldown', () => {
 		})
 		await vm.toggleDrilldown(ROW)
 		expect(axios.get).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/CommitmentLine',
-			{ params: { ...drilldownFilters(ROW), _limit: 100 } },
+			'/index.php/apps/shillinq/api/v1/budget-line-commitments/lines',
+			{ params: drilldownFilters(ROW) },
 		)
 		expect(Object.keys(axios.get.mock.calls[0][1].params).some((k) => k.startsWith('filters['))).toBe(false)
 		expect(vm.drilldownItems).toEqual([{ id: 'c1' }])
 		expect(vm.drilldownLoading).toBe(false)
 	})
 
-	it('accepts a bare array and treats anything else as empty', async () => {
-		axios.get.mockResolvedValueOnce({ data: [{ id: 'c2' }] })
+	it('reads only the results envelope and treats anything else as empty', async () => {
+		axios.get.mockResolvedValueOnce({ data: { results: [{ id: 'c2' }], total: 1 } })
 		const vm = view()
 		await vm.toggleDrilldown(ROW)
 		expect(vm.drilldownItems).toEqual([{ id: 'c2' }])
+
+		axios.get.mockResolvedValueOnce({ data: [{ id: 'c3' }] })
+		const bare = view()
+		await bare.toggleDrilldown(ROW)
+		expect(bare.drilldownItems).toEqual([])
 
 		axios.get.mockResolvedValueOnce({ data: { results: 'nope' } })
 		const other = view()

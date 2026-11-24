@@ -29,7 +29,7 @@ vi.mock('@nextcloud/vue', async () => {
 const { default: Commitments } = await import('../../src/views/BudgetLineCommitments.vue')
 
 const globals = { t: (app, text) => text }
-const DRILLDOWN_URL = '/index.php/apps/openregister/api/objects/shillinq/CommitmentLine'
+const DRILLDOWN_URL = '/index.php/apps/shillinq/api/v1/budget-line-commitments/lines'
 
 const ROW = {
 	key: '5.1|FAC-2026|2026|4000',
@@ -70,7 +70,7 @@ describe('BudgetLineCommitments template events', () => {
 		expect(http.get).toHaveBeenCalledTimes(1)
 		const [url, { params }] = http.get.mock.calls[0]
 		expect(url).toBe(DRILLDOWN_URL)
-		expect(params._limit).toBe(100)
+		expect(params).toEqual({ programme: '5.1', costCentre: 'FAC-2026', financialYear: 2026, generalLedgerAccount: '4000' })
 		expect(view.vm.expandedKey).toBe(ROW.key)
 		expect(view.vm.drilldownItems).toEqual([{ id: 'c1', commitment: 'PO-1', amount_excl_vat: 1200 }])
 

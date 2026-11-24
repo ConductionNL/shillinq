@@ -3,8 +3,8 @@
  * Copyright (C) 2026 Conduction B.V.
  *
  * Characterisation tests for BudgetLineCommitments.vue's loadRows(): the
- * administration-scoped request, the refusal without an administration and
- * the message of each failure. Methods run bound to a fake `this`.
+ * request the server scopes to the administration, the refusal it answers
+ * without one and the message of each failure. Methods run bound to a fake `this`.
  *
  * @spec openspec/specs/budget-core-schema/spec.md
  */
@@ -19,15 +19,13 @@ vi.mock('@nextcloud/router', () => ({ generateUrl: (url) => '/index.php' + url }
 /**
  * A fake BudgetLineCommitments with its methods bound.
  *
- * @param {string} administrationId What the administration lookup answers.
  * @return {object}
  */
-function view(administrationId) {
+function view() {
 	const self = { ...BudgetLineCommitments.data.call({}), t: (app, text) => `${app}:${text}` }
 	for (const [name, method] of Object.entries(BudgetLineCommitments.methods)) {
 		self[name] = method.bind(self)
 	}
-	self.resolveAdministrationId = () => Promise.resolve(administrationId)
 	return self
 }
 
@@ -36,38 +34,38 @@ describe('BudgetLineCommitments loadRows', () => {
 		axios.get.mockReset()
 	})
 
-	it('scopes the aggregation to the administration', async () => {
+	it('reads the aggregation the server scopes to the administration', async () => {
 		axios.get.mockResolvedValue({ data: [] })
-		const vm = view('adm-1')
+		const vm = view()
 
 		await vm.loadRows()
 
-		expect(axios.get.mock.calls[0][1]).toEqual({ params: { 'filter[administrationId]': 'adm-1' } })
-		expect(axios.get.mock.calls[0][0]).toContain('/CommitmentLine/committedVsRealisedPerBudgetLine')
+		expect(axios.get.mock.calls).toEqual([['/index.php/apps/shillinq/api/v1/budget-line-commitments']])
 		expect([vm.loading, vm.errorMessage]).toEqual([false, ''])
 	})
 
-	it('sends nothing without an administration', async () => {
-		const vm = view('')
+	it('shows nothing when the server finds no administration', async () => {
+		axios.get.mockRejectedValueOnce({ response: { status: 400 } })
+		const vm = view()
 
 		await vm.loadRows()
 
-		expect(axios.get).not.toHaveBeenCalled()
-		expect([vm.loading, vm.errorMessage, vm.rows]).toEqual([false, 'shillinq:No active administration — cannot scope budget lines.', []])
+		expect(axios.get).toHaveBeenCalledOnce()
+		expect([vm.loading, vm.errorMessage, vm.rows]).toEqual([false, 'shillinq:No active administration, so the budget lines cannot be shown.', []])
 	})
 
 	it('words each failure', async () => {
 		const messages = []
-		for (const status of [404, 501, 401, 403, 500]) {
+		for (const status of [400, 404, 401, 403, 500]) {
 			axios.get.mockRejectedValueOnce({ response: { status } })
-			const vm = view('adm-1')
+			const vm = view()
 			await vm.loadRows()
 			messages.push(vm.errorMessage)
 		}
 
 		expect(messages).toEqual([
-			'shillinq:Aggregation endpoint unavailable on this OpenRegister build.',
-			'shillinq:Aggregation endpoint unavailable on this OpenRegister build.',
+			'shillinq:No active administration, so the budget lines cannot be shown.',
+			'shillinq:Permission required to read budget-line data.',
 			'shillinq:Permission required to read budget-line data.',
 			'shillinq:Permission required to read budget-line data.',
 			'shillinq:Failed to load budget lines.',

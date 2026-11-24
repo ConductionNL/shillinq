@@ -3,8 +3,8 @@
  * Copyright (C) 2026 Conduction B.V.
  *
  * Characterisation tests for SegmentPnLDashboard.vue: the message of each
- * failed segment load, the unknown-segment and missing-administration
- * refusals, and the CSV the export downloads. Methods run bound to a fake
+ * failed segment load, the unknown-segment refusal, the missing-administration
+ * refusal the server answers with 400, and the CSV the export downloads. Methods run bound to a fake
  * `this` seeded from the real `data()`.
  *
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
@@ -13,25 +13,23 @@
 import axios from '@nextcloud/axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SegmentPnLDashboard from '../../src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
-import { SEGMENT_AGGREGATION } from '../../src/utils/segmentResults.js'
+import { SEGMENTS } from '../../src/utils/segmentResults.js'
 
 vi.mock('@nextcloud/axios', () => ({ default: { get: vi.fn() } }))
 vi.mock('@nextcloud/router', () => ({ generateUrl: (url) => '/index.php' + url }))
 
-const SEGMENT = Object.keys(SEGMENT_AGGREGATION)[0]
+const SEGMENT = SEGMENTS[0]
 
 /**
  * A fake dashboard with its methods bound.
  *
- * @param {string} administrationId What the administration lookup answers.
  * @return {object}
  */
-function dashboard(administrationId) {
+function dashboard() {
 	const self = { ...SegmentPnLDashboard.data.call({}), periods: ['2026-01'], t: (app, text) => `${app}:${text}` }
 	for (const [name, method] of Object.entries(SegmentPnLDashboard.methods)) {
 		self[name] = method.bind(self)
 	}
-	self.resolveAdministrationId = () => Promise.resolve(administrationId)
 	return self
 }
 
@@ -45,29 +43,33 @@ describe('SegmentPnLDashboard', () => {
 	})
 
 	it('refuses an unknown segment and a missing administration', async () => {
-		const unknown = dashboard('adm-1')
+		const unknown = dashboard()
 		await unknown.loadSegment('no-such-segment')
-		const unscoped = dashboard('')
+		expect(axios.get).not.toHaveBeenCalled()
+
+		axios.get.mockRejectedValueOnce({ response: { status: 400 } })
+		const unscoped = dashboard()
 		await unscoped.loadSegment(SEGMENT)
 
-		expect(axios.get).not.toHaveBeenCalled()
+		expect(axios.get).toHaveBeenCalledOnce()
+		expect(axios.get).toHaveBeenCalledWith('/index.php/apps/shillinq/api/v1/segment-results', { params: { segment: SEGMENT } })
 		expect([unknown.errorMessage, unknown.loading]).toEqual(['shillinq:Unknown segment selected.', false])
-		expect([unscoped.errorMessage, unscoped.loading]).toEqual(['shillinq:No active administration, so the segment P&L cannot be scoped.', false])
+		expect([unscoped.errorMessage, unscoped.loading, unscoped.rows]).toEqual(['shillinq:No active administration, so the segment P&L cannot be scoped.', false, []])
 	})
 
 	it('words each failed load', async () => {
 		const messages = []
-		for (const status of [404, 501, 401, 403, 500]) {
+		for (const status of [400, 404, 401, 403, 500]) {
 			axios.get.mockRejectedValueOnce({ response: { status } })
-			const vm = dashboard('adm-1')
+			const vm = dashboard()
 			await vm.loadSegment(SEGMENT)
 			messages.push(vm.errorMessage)
 			expect(vm.loading).toBe(false)
 		}
 
 		expect(messages).toEqual([
-			'shillinq:Aggregation endpoint unavailable on this OpenRegister build. Upgrade OR to read segment P&L roll-ups.',
-			'shillinq:Aggregation endpoint unavailable on this OpenRegister build. Upgrade OR to read segment P&L roll-ups.',
+			'shillinq:No active administration, so the segment P&L cannot be scoped.',
+			'shillinq:Permission required to read segment P&L data.',
 			'shillinq:Permission required to read segment P&L data.',
 			'shillinq:Permission required to read segment P&L data.',
 			'shillinq:Failed to load segment P&L.',
@@ -79,7 +81,7 @@ describe('SegmentPnLDashboard', () => {
 		const anchor = { click: vi.fn() }
 		vi.stubGlobal('URL', { createObjectURL: (blob) => { blobs.push(blob); return 'blob:1' }, revokeObjectURL: vi.fn() })
 		vi.stubGlobal('document', { createElement: () => anchor, body: { appendChild: vi.fn(), removeChild: vi.fn() } })
-		const vm = dashboard('adm-1')
+		const vm = dashboard()
 		vm.activeSegment = 'costCenter'
 
 		vm.exportCsv()

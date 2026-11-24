@@ -288,8 +288,11 @@ describe('Switch on reminders on an administration', () => {
 
 	it('switches it on by the property the job reads', async () => {
 		const { switchOnDunning } = await import('../../src/utils/dunningApi.js')
+		const contract = read('lib/Kernel/Contracts/DunningTickRunnerInterface.php')
+		expect(contract).toContain("ENABLED_PROPERTY = 'dunningEnabled'")
 		const runner = read('lib/Service/Dunning/DunningTickRunner.php')
-		expect(runner).toContain("ENABLED_PROPERTY = 'dunningEnabled'")
+		expect(runner).toContain('implements DunningTickRunnerInterface')
+		expect(runner).toContain('$administration[self::ENABLED_PROPERTY]')
 
 		axiosMock.patch.mockResolvedValue({
 			data: { id: 'uuid-adm-kade', dunningEnabled: true },

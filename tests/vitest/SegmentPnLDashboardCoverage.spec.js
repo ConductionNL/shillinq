@@ -5,8 +5,9 @@
  * SegmentPnLDashboard rendered with recording stand-ins for @nextcloud/vue
  * (tests/vitest/ssrCapture.js), so the segment chips, the period select and
  * the CSV button are pressed through the handlers the template bound; and
- * the load itself against a stubbed register: the administration context,
- * the fiscal periods and the GLLine aggregation, with their exact requests.
+ * the load itself against a stubbed segment results endpoint, which picks the
+ * administration on the server and answers the rows with the fiscal periods,
+ * with its exact requests.
  *
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
@@ -20,9 +21,7 @@ vi.mock('@nextcloud/router', () => ({ generateUrl: (url) => '/index.php' + url }
 
 const { default: SegmentPnLDashboard } = await import('../../src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue')
 
-const CONTEXT = '/index.php/apps/shillinq/api/administrations/context'
-const PERIODS = '/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod'
-const AGGREGATION = (name) => `/index.php/apps/openregister/api/objects/aggregations/shillinq/GLLine/${name}`
+const RESULTS = '/index.php/apps/shillinq/api/v1/segment-results'
 const t = (app, text) => text
 
 /**
@@ -35,7 +34,7 @@ async function dashboard(state) {
 	const view = session()
 	const html = await view.render(
 		SegmentPnLDashboard,
-		{ loading: false, administrationId: 'adm-1', periods: [{ id: 'p1', label: 'January' }, { id: 'p2', label: 'February' }], ...state },
+		{ loading: false, periods: [{ id: 'p1', label: 'January' }, { id: 'p2', label: 'February' }], ...state },
 		{ t },
 		['NcAppContent', 'NcButton', 'NcEmptyContent', 'NcLoadingIcon'],
 	)
@@ -60,27 +59,20 @@ function instance(over = {}) {
 }
 
 /**
- * The register: the administration context, the fiscal periods and one aggregation answer.
+ * The segment results endpoint: one aggregation answer with the administration's fiscal periods.
  *
  * @param {object} aggregation The aggregation response body.
  */
 function register(aggregation) {
-	axios.get.mockImplementation(async (url) => {
-		if (url === CONTEXT) {
-			return { data: { activeAdministrationId: 'adm-1' } }
-		}
-		if (url === PERIODS) {
-			return {
-				data: {
-					results: [
-						{ periodId: '2026-M02', name: 'February', startDate: '2026-02-01' },
-						{ periodId: '2026-M01', startDate: '2026-01-01' },
-					],
-				},
-			}
-		}
-		return { data: aggregation }
-	})
+	axios.get.mockImplementation(async () => ({
+		data: {
+			...aggregation,
+			periods: [
+				{ periodId: '2026-M02', name: 'February', startDate: '2026-02-01' },
+				{ periodId: '2026-M01', startDate: '2026-01-01' },
+			],
+		},
+	}))
 }
 
 const row = (key, over = {}) => ({ key, name: '', parent: '', revenue: 0, costs: 0, result: 0, depth: 0, ...over })
@@ -110,7 +102,7 @@ describe('SegmentPnLDashboard controls', () => {
 		expect(view.labelled('NcButton', 'Export CSV').disabled).toBe(false)
 	})
 
-	it('loads another segment through its chip, scoped to the administration', async () => {
+	it('loads another segment through its chip, the server scoping it to the administration', async () => {
 		register({ groups: [{ key: 'P1', name: 'Bouw', values: { revenue: '200', costs: 50, result: 150 } }] })
 		const { view } = await dashboard({ rows: [row('CC1')] })
 
@@ -118,9 +110,8 @@ describe('SegmentPnLDashboard controls', () => {
 		await vi.waitFor(() => expect(view.vm.loading).toBe(false))
 
 		expect(view.vm.activeSegment).toBe('project')
-		expect(axios.get).toHaveBeenCalledTimes(2)
-		expect(axios.get).toHaveBeenNthCalledWith(1, CONTEXT)
-		expect(axios.get).toHaveBeenNthCalledWith(2, AGGREGATION('byProject'), { params: { 'filter[administrationId]': 'adm-1' } })
+		expect(axios.get).toHaveBeenCalledOnce()
+		expect(axios.get).toHaveBeenCalledWith(RESULTS, { params: { segment: 'project' } })
 		expect(view.vm.rows).toEqual([row('P1', { name: 'Bouw', revenue: 200, costs: 50, result: 150 })])
 	})
 
@@ -133,8 +124,8 @@ describe('SegmentPnLDashboard controls', () => {
 		expect(view.vm.periodId).toBe('p2')
 		await select.props.onChange()
 
-		expect(axios.get).toHaveBeenLastCalledWith(AGGREGATION('byCostObject'), {
-			params: { 'filter[administrationId]': 'adm-1', 'filter[periodId]': 'p2' },
+		expect(axios.get).toHaveBeenLastCalledWith(RESULTS, {
+			params: { segment: 'costObject', periodId: 'p2' },
 		})
 		expect([view.vm.rows, view.vm.errorMessage]).toEqual([[], ''])
 	})
@@ -150,7 +141,7 @@ describe('SegmentPnLDashboard controls', () => {
 		await chips[3].props.onClick()
 		await vi.waitFor(() => expect(view.vm.loading).toBe(false))
 		expect(view.vm.activeSegment).toBe('project')
-		expect(axios.get).toHaveBeenLastCalledWith(AGGREGATION('byProject'), { params: { 'filter[administrationId]': 'adm-1' } })
+		expect(axios.get).toHaveBeenLastCalledWith(RESULTS, { params: { segment: 'project' } })
 	})
 
 	it('exports the shown rows as CSV through the Export CSV button', async () => {
@@ -207,16 +198,14 @@ describe('SegmentPnLDashboard loading', () => {
 		expect(self.loadSegment).toHaveBeenCalledWith('costObject')
 	})
 
-	it('reads the periods first when it has none, then the flat rows', async () => {
+	it('reads the flat rows and the periods from one segment results call', async () => {
 		register({ groups: [{ key: 'CC1', name: 'Zuivering', values: { revenue: 100, costs: 40, result: 60 } }, { key: '', values: {} }] })
 		const view = instance()
 
 		await view.loadSegment('costCenter')
 
 		expect(axios.get.mock.calls).toEqual([
-			[CONTEXT],
-			[PERIODS, { params: { administrationId: 'adm-1', _limit: 500 } }],
-			[AGGREGATION('byCostCenter'), { params: { 'filter[administrationId]': 'adm-1' } }],
+			[RESULTS, { params: { segment: 'costCenter' } }],
 		])
 		expect(view.periods).toEqual([
 			{ id: '2026-M01', label: '2026-M01' },
@@ -239,7 +228,7 @@ describe('SegmentPnLDashboard loading', () => {
 
 		await view.loadSegment('costCenterHierarchy')
 
-		expect(axios.get).toHaveBeenLastCalledWith(AGGREGATION('byCostCenterHierarchy'), { params: { 'filter[administrationId]': 'adm-1' } })
+		expect(axios.get).toHaveBeenLastCalledWith(RESULTS, { params: { segment: 'costCenterHierarchy' } })
 		expect(view.rows.map((r) => [r.key, r.depth, r.revenue])).toEqual([['A', 0, 0], ['A1', 1, 0]])
 	})
 
