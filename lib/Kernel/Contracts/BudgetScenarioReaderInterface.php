@@ -52,7 +52,7 @@ interface BudgetScenarioReaderInterface {
 	 *     ledgerGroups: list<array<string,mixed>>,
 	 * } The assembled context {@see BudgetScenarioEvaluator} consumes.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-007
 	 */
 	public function loadContext(string $administrationId, array $annualBudgetIds): array;
 
@@ -69,7 +69,7 @@ interface BudgetScenarioReaderInterface {
 	 *
 	 * @return list<string> The matching AnnualBudget ids.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 	 */
 	public function resolveAnnualBudgetIds(string $administrationId, int $fiscalYear): array;
 }//end interface

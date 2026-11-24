@@ -31,8 +31,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
- * @spec openspec/changes/sales-quote-and-order-to-invoice/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/tasks.md#task-3.2
  *
  * @e2e sales-quote-order-invoice::a-salesperson-orders-an-accepted-quote
  * @e2e sales-quote-order-invoice::a-quote-that-is-still-being-negotiated-is-refused

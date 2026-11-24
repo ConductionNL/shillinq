@@ -10,7 +10,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

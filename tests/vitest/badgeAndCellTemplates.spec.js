@@ -8,7 +8,7 @@
  * account row).
  *
  * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T4.2
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'

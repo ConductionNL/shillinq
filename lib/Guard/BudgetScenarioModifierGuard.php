@@ -53,7 +53,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
  */
 
 declare(strict_types=1);
@@ -73,7 +73,7 @@ use Throwable;
  * Fail-closed: any lookup exception denies the save (CWE-863 / OWASP
  * A01:2021).
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
  */
 class BudgetScenarioModifierGuard {
 	/**
@@ -124,7 +124,7 @@ class BudgetScenarioModifierGuard {
 	 *
 	 * @return bool True when the modifier may be saved.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
 	 */
 	public function validateOnSave(array $modifier): bool {
 		try {

@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Throwable;
 /**
  * The feed state and the newest rate date per currency pair.
  *
- * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
  */
 class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	/**
@@ -78,7 +78,7 @@ class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	 *
 	 * @return array{fromFeed:bool,statusLine:string,newest:array<int,array{transactionCurrency:string,baseCurrency:string,newestDate:string}>,newestLine:string}
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	public function status(): array {
 		$fromFeed = $this->isFeedLive();
@@ -103,7 +103,7 @@ class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	 *
 	 * @return array<int,array{transactionCurrency:string,baseCurrency:string,newestDate:string}>
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	public function newestPerPair(): array {
 		$byPair = [];
@@ -134,7 +134,7 @@ class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	 *
 	 * @return int The usort comparison.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	private static function compareByNewest(array $left, array $right): int {
 		if ($left['newestDate'] !== $right['newestDate']) {
@@ -152,7 +152,7 @@ class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	 *
 	 * @return iterable<mixed>
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	private function fxRateRows(): iterable {
 		try {
@@ -170,7 +170,7 @@ class FxRateFeedStatus implements FxRateFeedStatusInterface {
 	 *
 	 * @return array{transactionCurrency:string,baseCurrency:string,newestDate:string}|null
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	private function ratePair(mixed $row): array|null {
 		$record = ObjectIdentifier::recordWithId(candidate: $row);

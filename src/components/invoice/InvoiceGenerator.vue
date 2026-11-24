@@ -317,7 +317,7 @@ export default {
 		 * Whether the usage model is chosen (sales-usage-billing REQ-USB-002).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
 		 */
 		needsUsage() {
 			return this.form.billingModel === 'usage'
@@ -327,7 +327,7 @@ export default {
 		 * What the usage reading list depends on.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
 		 */
 		usageQuery() {
 			return [
@@ -342,7 +342,7 @@ export default {
 		 * The generation request, with the selected reading ids for usage.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
 		 */
 		payload() {
 			const ticked = this.needsUsage ? [] : this.work.expenses.filter((item) => this.expenseItemIds.includes(item.id))
@@ -396,7 +396,7 @@ export default {
 		/**
 		 * Reload the billable readings when the model, customer or period changes.
 		 *
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
 		 */
 		usageQuery() {
 			this.loadReadings()
@@ -491,7 +491,7 @@ export default {
 		/**
 		 * Load the customer's rated readings in the period; select them all.
 		 *
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
 		 */
 		async loadReadings() {
 			this.readings = []
@@ -521,7 +521,7 @@ export default {
 		 *
 		 * @param {object} reading A meter reading.
 		 * @return {string}
-		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.2
 		 */
 		readingLabel(reading) {
 			return t('shillinq', '{from} to {to}: {quantity} {unit}, EUR {amount}', {

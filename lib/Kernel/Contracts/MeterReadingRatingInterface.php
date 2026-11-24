@@ -48,7 +48,7 @@ interface MeterReadingRatingInterface {
 	 *
 	 * @throws DomainException When the reading's plan is not found in its administration.
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function rate(array $reading): array;
 }//end interface

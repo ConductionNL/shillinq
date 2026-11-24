@@ -957,7 +957,7 @@ class VatSuppletieDetectionService implements VatSuppletieDetectionServiceInterf
 	 *
 	 * @return array<string,mixed>|null The correction, or null when it does not exist.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
 	 */
 	public function findCorrection(string $vatCorrectionId): ?array {
 		$correction = ObjectIdentifier::findScoped(

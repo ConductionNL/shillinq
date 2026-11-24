@@ -7,7 +7,7 @@
  * transaction that no longer matches. The helper, the manifest, the handler
  * map and appinfo/routes.php are held to each other.
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
  */
 
 import fs from 'fs'

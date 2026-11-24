@@ -233,7 +233,7 @@ final class InboundPayableServiceTest extends TestCase {
 	/**
 	 * A payout names the objects it is for, and the payable keeps them (REQ-FDO-001).
 	 * @return void
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
 	 */
 	public function testAPayoutNamesTheObjectsItIsFor(): void {
 		$case = ['app' => 'dossiq', 'type' => 'case', 'register' => 'dossiq', 'schema' => 'case', 'id' => 'c-1'];
@@ -265,7 +265,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * reached, with no booking and no callback, because the money moved outside
 	 * shillinq (REQ-FDO-007).
 	 * @return void
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
 	 */
 	public function testAHistoricalPayoutIsRecordedWithoutBookingOrCallback(): void {
 		$case = ['app' => 'dossiq', 'type' => 'case', 'register' => 'dossiq', 'schema' => 'case', 'id' => 'case-7'];
@@ -291,7 +291,7 @@ final class InboundPayableServiceTest extends TestCase {
 	/**
 	 * A historical state must be one a payout can end in, and a paid one needs its date (REQ-FDO-007).
 	 * @return void
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
 	 */
 	public function testAHistoricalStateMustBeOneAPayoutCanReach(): void {
 		foreach ([['historicalState' => 'booked'], ['historicalState' => 'paid'], ['historicalState' => 'paid', 'paidOn' => '3-3-2026']] as $override) {
@@ -305,7 +305,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * The app that raised payouts reads them back: its own only, narrowed by
 	 * calculation and by the year they were paid in (REQ-FDO-008).
 	 * @return void
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
 	 */
 	public function testTheRaisingAppReadsItsOwnPayouts(): void {
 		$service = $this->service(installed: ['dossiq', 'larpinq']);
@@ -331,7 +331,7 @@ final class InboundPayableServiceTest extends TestCase {
 	/**
 	 * An app that is not installed reads nothing (REQ-FDO-008).
 	 * @return void
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
 	 */
 	public function testAnAppThatIsNotInstalledIsRefused(): void {
 		$event = new PayablesRequestedEvent(sourceApp: 'ghostapp');

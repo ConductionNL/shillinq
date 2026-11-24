@@ -12,7 +12,7 @@ import RecalculateInvestmentDeductionsModal from '../modals/RecalculateInvestmen
  * Header action: open the Recalculate dialog.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
  */
 export function openRecalculateInvestmentDeductions() {
 	return spawnDialog(RecalculateInvestmentDeductionsModal, {})

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-fx-at-booking/specs/bookkeeping-multi-currency/spec.md
+ * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/specs/bookkeeping-multi-currency/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * Resolves the booking-date exchange rate of a foreign-currency line.
  *
- * @spec openspec/changes/banking-fx-at-booking/specs/bookkeeping-multi-currency/spec.md
+ * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/specs/bookkeeping-multi-currency/spec.md
  */
 class FxAtBookingResolver {
 
@@ -107,7 +107,7 @@ class FxAtBookingResolver {
 	 *
 	 * @return string ISO 4217 code.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	public function baseCurrencyFor(string $administrationId): string {
 		try {
@@ -141,7 +141,7 @@ class FxAtBookingResolver {
 	 *
 	 * @throws RuntimeException When no rate is on or before the date, or the newest is too old.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-1.1
 	 */
 	public function resolve(string $transactionCurrency, string $baseCurrency, string $date, string $administrationId): array {
 		$pair = $transactionCurrency . ' to ' . $baseCurrency;
@@ -169,7 +169,7 @@ class FxAtBookingResolver {
 	 *
 	 * @return array{rate:float,source:string,date:string,administrationId:string}|null
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-1.1
 	 */
 	private function bestRate(string $transactionCurrency, string $baseCurrency, string $date, string $administrationId): array|null {
 		$best = null;
@@ -210,7 +210,7 @@ class FxAtBookingResolver {
 	 *
 	 * @throws RuntimeException When the newest rate is too old.
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-1.1
 	 */
 	private function assertFresh(string $pair, array $best, string $date): void {
 		$age = $this->daysBetween(from: $best['date'], until: $date);
@@ -239,7 +239,7 @@ class FxAtBookingResolver {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-2.1
 	 */
 	public static function toBaseCents(int $cents, float $rate): int {
 		return (int)round(($cents * $rate), 0, PHP_ROUND_HALF_UP);

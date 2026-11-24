@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * Imports meter readings row by row.
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  */
 class MeterReadingImportService implements MeterReadingImportServiceInterface {
 
@@ -70,7 +70,7 @@ class MeterReadingImportService implements MeterReadingImportServiceInterface {
 	 *
 	 * @return array{created:list<string>,refused:list<array{row:int,reason:string}>}
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function import(string $administrationId, array $rows): array {
 		$run = new MeterReadingImportRun(administrationId: $administrationId);

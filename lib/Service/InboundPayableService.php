@@ -144,7 +144,7 @@ class InboundPayableService implements InboundPayableServiceInterface {
 	 *
 	 * @return array<string, mixed> The payable to store.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
 	 */
 	private function withInitialState(array $payable): array {
 		$historical = (string)$payable['historicalState'];

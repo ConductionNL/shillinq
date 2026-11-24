@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Service\Ledger;
 /**
  * Canonical posted content and the chained seal over it.
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  */
 final class LedgerSealCanonicaliser {
 
@@ -84,7 +84,7 @@ final class LedgerSealCanonicaliser {
 	 *
 	 * @return string The canonical content.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-reversal-does-not-break-the-chain-req-lse-003
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-reversal-does-not-break-the-chain-req-lse-003
 	 */
 	public function canonical(array $transaction, array $lines): string {
 		$header = [];
@@ -112,7 +112,7 @@ final class LedgerSealCanonicaliser {
 	 *
 	 * @return string The seal, 64 lowercase hex characters.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
 	 */
 	public function seal(string $previousSealHash, string $canonical): string {
 		return hash('sha256', $previousSealHash . $canonical);
@@ -128,7 +128,7 @@ final class LedgerSealCanonicaliser {
 	 *
 	 * @return integer The amount in cents.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
 	 */
 	public static function cents(mixed $amount): int {
 		$text = trim(self::text(value: $amount));

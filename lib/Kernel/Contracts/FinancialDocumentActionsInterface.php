@@ -62,7 +62,7 @@ interface FinancialDocumentActionsInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function issueInvoice(string $register, string $schema, string $objectId, array $payload, string $appId=''): array;
 
@@ -79,7 +79,7 @@ interface FinancialDocumentActionsInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the invoice or an open request refuses it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
 	 */
 	public function requestPayment(string $invoiceId, string $appId=''): array;
 }//end interface

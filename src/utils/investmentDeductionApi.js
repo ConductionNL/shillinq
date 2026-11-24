@@ -18,7 +18,7 @@ export const SCHEMES = ['KIA', 'EIA', 'MIA']
  *
  * @param {Date} [now] The moment to count from.
  * @return {number} The year.
- * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
  */
 export function defaultYear(now = new Date()) {
 	return now.getMonth() < 6 ? now.getFullYear() - 1 : now.getFullYear()
@@ -29,7 +29,7 @@ export function defaultYear(now = new Date()) {
  *
  * @param {number} cents The amount.
  * @return {string} For example "17,920.00".
- * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
  */
 export function euro(cents) {
 	return (Number(cents || 0) / 100).toLocaleString('en-US', {
@@ -43,7 +43,7 @@ export function euro(cents) {
  *
  * @param {object} totals The totals per scheme, in cents.
  * @return {Array<{scheme: string, amount: string}>} The rows.
- * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
  */
 export function totalRows(totals) {
 	return SCHEMES.map((scheme) => ({
@@ -58,7 +58,7 @@ export function totalRows(totals) {
  * @param {number|string} year The year.
  * @param {string} administrationId The administration; empty for the active one.
  * @return {Promise<object>} year, totals, claims and kept.
- * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
  */
 export async function recalculateYear(year, administrationId = '') {
 	const body = administrationId === '' ? {} : { administrationId }
@@ -78,7 +78,7 @@ export async function recalculateYear(year, administrationId = '') {
  *
  * @param {object} error The axios error.
  * @return {string} The sentence.
- * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
  */
 export function recalculateErrorText(error) {
 	const status = error?.response?.status

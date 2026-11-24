@@ -348,7 +348,7 @@ export default {
 		/**
 		 * The position of the current step in the six.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		stepIndex() {
 			return this.steps.indexOf(this.step)
@@ -357,7 +357,7 @@ export default {
 		/**
 		 * The source packages the wizard offers.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		sourceSystems() {
 			return SOURCE_SYSTEMS.map((system) => ({
@@ -373,7 +373,7 @@ export default {
 			/**
 			 * The chosen source package as a select option.
 			 *
-			 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+			 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 			 */
 			get() {
 				return (
@@ -388,7 +388,7 @@ export default {
 			 *
 			 * @param {{id: string}} option The chosen select option.
 			 *
-			 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+			 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 			 */
 			set(option) {
 				this.form.sourceSystem = option?.id || ''
@@ -398,7 +398,7 @@ export default {
 		/**
 		 * Whether the upload step names everything parse needs.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		ready() {
 			return formComplete(this.form)
@@ -407,7 +407,7 @@ export default {
 		/**
 		 * The mapping rows still to confirm.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		open() {
 			return openMappings(this.mappings)
@@ -416,7 +416,7 @@ export default {
 		/**
 		 * How many mapping rows have no target account.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		unmapped() {
 			return this.mappings.filter((row) => !row.targetAccount).length
@@ -425,7 +425,7 @@ export default {
 		/**
 		 * Whether validation lets the dry run start.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		dryRunAllowed() {
 			return canRunDryRun(this.batch)
@@ -434,7 +434,7 @@ export default {
 		/**
 		 * The opening balance debit and credit of the dry run.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		totals() {
 			return openingTotals(this.batch?.dryRunReport)
@@ -443,7 +443,7 @@ export default {
 		/**
 		 * The open items the dry run counted.
 		 *
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		openItems() {
 			const report = this.batch?.dryRunReport || {}
@@ -457,7 +457,7 @@ export default {
 	 * Resolve the target administration, then open the batch the address names.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	async mounted() {
 		await this.resolveAdministration()
@@ -478,7 +478,7 @@ export default {
 		 * The active administration is the import's target.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async resolveAdministration() {
 			try {
@@ -494,7 +494,7 @@ export default {
 		 *
 		 * @param {string} id The step id.
 		 * @return {string}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		stepLabel(id) {
 			const labels = {
@@ -512,7 +512,7 @@ export default {
 		 * Pick the auditfile from Files.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async pickFile() {
 			try {
@@ -542,7 +542,7 @@ export default {
 		 * Create the batch, read the auditfile and start the mapping review.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async start() {
 			await this.guarded(async () => {
@@ -558,7 +558,7 @@ export default {
 		 * Confirm every suggested mapping row.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async confirmAll() {
 			await this.guarded(async () => {
@@ -572,7 +572,7 @@ export default {
 		 *
 		 * @param {string} action validate, dryRun or post.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async transition(action) {
 			await this.guarded(async () => {
@@ -585,7 +585,7 @@ export default {
 		 * Move to the step the batch's status belongs on.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async show() {
 			this.step = stepForBatch(this.batch)
@@ -599,7 +599,7 @@ export default {
 		 *
 		 * @param {() => Promise<void>} work The request.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async guarded(work) {
 			this.busy = true
@@ -620,7 +620,7 @@ export default {
 		 * Begin again with an empty form.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async restart() {
 			this.form = emptyForm()
@@ -636,7 +636,7 @@ export default {
 		 *
 		 * @param {string} id The batch id.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		async resume(id) {
 			this.busy = true
@@ -663,7 +663,7 @@ export default {
 		 *
 		 * @param {string|null} id The batch id, or null for a new import.
 		 * @return {void}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		remember(id) {
 			if (!this.$router) {
@@ -677,7 +677,7 @@ export default {
 		 *
 		 * @param {number} amount The amount.
 		 * @return {string}
-		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		money(amount) {
 			return new Intl.NumberFormat(undefined, {

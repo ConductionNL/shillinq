@@ -25,8 +25,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
- * @spec openspec/changes/ledger-sealed-entries/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/tasks.md#task-3.1
  *
  * @e2e bookkeeping-audit-trail::a-bookkeeper-posts-and-the-entry-is-sealed
  * @e2e bookkeeping-audit-trail::an-intact-ledger

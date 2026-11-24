@@ -243,7 +243,7 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-sales-order-has-its-own-states-req-qti-002
+	 * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-sales-order-has-its-own-states-req-qti-002
 	 */
 	public function testSalesLifecycleVocabulary(): void {
 		$order = $this->orderSchema();

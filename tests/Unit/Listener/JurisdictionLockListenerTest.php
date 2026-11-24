@@ -37,7 +37,7 @@ use Psr\Log\NullLogger;
  * @covers \OCA\Shillinq\Listener\JurisdictionLockListener
  * @uses   \OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 final class JurisdictionLockListenerTest extends TestCase {
 

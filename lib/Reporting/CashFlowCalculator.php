@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-cash-flow-statement
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Throwable;
  * cash). The sections add up to the change of the cash accounts; any rounding
  * difference left over is reported, never hidden (REQ-RCF-002).
  *
- * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-2.1
  */
 class CashFlowCalculator {
 
@@ -150,7 +150,7 @@ class CashFlowCalculator {
 	 *                              unclassified (each rows and total), summary (one row per section and the
 	 *                              change in cash), cash (opening, closing, change) and totals.
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-2.1
 	 */
 	public function between(string $administrationId, string $from, string $to): array {
 		$period = $this->statements->cashFlowMovements(administrationId: $administrationId, from: $from, to: $to);
@@ -387,7 +387,7 @@ class CashFlowCalculator {
 	 *
 	 * @throws InvalidArgumentException When the key is malformed or its range is.
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.1
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) StatementPeriods is pure period arithmetic; it holds no state.
 	 * @SuppressWarnings(PHPMD.ElseExpression) Three scopes, three reads; the chain names each one.
@@ -447,7 +447,7 @@ class CashFlowCalculator {
 	 *
 	 * @return string scope~from~to.
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.1
 	 */
 	public static function linesKey(string $scope, string $from, string $to): string {
 		return $scope.'~'.$from.'~'.$to;

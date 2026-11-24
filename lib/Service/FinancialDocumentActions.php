@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 /**
  * Issues an invoice on an object and requests payment of an invoice.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  */
 class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 
@@ -91,8 +91,8 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function issueInvoice(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
 		return $this->issueOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
@@ -109,7 +109,7 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	private function issueOn(array $host, array $payload, string $appId): array {
 		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
@@ -154,7 +154,7 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When there is no usable debtor.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	private function assertInvoiceDebtor(mixed $debtor): void {
 		if (is_array($debtor) === false || ((string)($debtor['customerMasterId'] ?? '') === '' && (string)($debtor['email'] ?? '') === '')) {
@@ -175,8 +175,8 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the invoice or an open request refuses it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function requestPayment(string $invoiceId, string $appId = ''): array {
 		$this->guard->assertActorMay(action: PaymentActionAuthorizer::ACTION_REQUEST, appId: $appId);

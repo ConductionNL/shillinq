@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Confirms the suggested mappings of a batch the caller may work on.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 class SuggestedMappingConfirmation implements SuggestedMappingConfirmationInterface {
 
@@ -67,7 +67,7 @@ class SuggestedMappingConfirmation implements SuggestedMappingConfirmationInterf
 	 * @throws ImportBatchNotFoundException When the batch does not exist or the caller is no member of its administration.
 	 * @throws DomainException When the batch is not in the mapping state.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function confirm(string $batchId): int {
 		$register = $this->settings->getRegisterSlug();

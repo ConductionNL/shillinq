@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use OCP\EventDispatcher\IEventListener;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.3
  */
 class InvoiceNumberLockListener implements IEventListener {
 
@@ -73,7 +73,7 @@ class InvoiceNumberLockListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.3
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {

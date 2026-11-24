@@ -10,7 +10,7 @@
  its own file (hydra gate-13). The lines arrive with the box: the position
  endpoint already returns them, so nothing is fetched here.
 
- @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
+ @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.3
 -->
 
 <template>

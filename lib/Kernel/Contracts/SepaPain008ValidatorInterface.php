@@ -46,7 +46,7 @@ interface SepaPain008ValidatorInterface {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
 	public function errors(string $xml, array $collections, array $creditor): array;
 }//end interface

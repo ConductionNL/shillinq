@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#requirement-req-bkc-004-budgetlinederivation-must-make-regeneration-idempotent
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#requirement-req-bkc-004-budgetlinederivation-must-make-regeneration-idempotent
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use Throwable;
  * be allowed to change that administration's books; anyone else is told the
  * administration does not exist.
  *
- * @spec openspec/changes/budget-known-costs/design.md
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/design.md
  */
 class KnownCostController extends Controller {
 
@@ -78,7 +78,7 @@ class KnownCostController extends Controller {
 	 * @return JSONResponse 200 with the summary; 401 without a user; 404 for an
 	 *                      administration the caller may not change; 500 when the run failed.
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#requirement-req-bkc-004-budgetlinederivation-must-make-regeneration-idempotent
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#requirement-req-bkc-004-budgetlinederivation-must-make-regeneration-idempotent
 	 */
 	#[NoAdminRequired]
 	public function regenerate(): JSONResponse {

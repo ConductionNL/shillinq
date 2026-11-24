@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use OCP\IAppConfig;
  * A draft of the period is replaced in place; a statement past draft is
  * never replaced (IcpStatementFiledException).
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
  */
 class IcpStatementPreparer {
 
@@ -81,7 +81,7 @@ class IcpStatementPreparer {
 	 * @throws InvalidArgumentException   When the period is not a quarter or a month.
 	 * @throws IcpStatementFiledException When the period's statement is past draft.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	public function prepare(string $administrationId, string $period): array {
 		if (preg_match(self::PERIOD_PATTERN, $period) !== 1) {
@@ -141,7 +141,7 @@ class IcpStatementPreparer {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	public function statementOf(string $administrationId, string $period): ?array {
 		$found = null;
@@ -175,7 +175,7 @@ class IcpStatementPreparer {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
 	public function idOf(array $record): string {
 		return trim((string)($record['@self']['id'] ?? ($record['id'] ?? ($record['uuid'] ?? ''))));

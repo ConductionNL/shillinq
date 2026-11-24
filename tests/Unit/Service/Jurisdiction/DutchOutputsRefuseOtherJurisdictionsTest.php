@@ -45,7 +45,7 @@ use Psr\Log\NullLogger;
  * @uses   \OCA\Shillinq\Service\Vat\VatReturnBox
  * @uses   \OCA\Shillinq\Service\VatReturnScope
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 final class DutchOutputsRefuseOtherJurisdictionsTest extends TestCase {
 

@@ -95,7 +95,7 @@ class RuleComplianceGuard {
 	 * @throws PostingRefusedException When the invoice needs approval before it is issued.
 	 *
 	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-2.2
 	 */
 	public function validateInvoice(string|array $invoiceOrId): bool {
 		$id = $this->idOf(objectOrId: $invoiceOrId);
@@ -286,7 +286,7 @@ class RuleComplianceGuard {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) AssignInvoiceNumberAction::takesNumber() is the one reading of who numbers an invoice.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
 	private function asNumbered(array $invoice): array {
 		if (AssignInvoiceNumberAction::takesNumber(invoice: $invoice) === true) {
@@ -305,7 +305,7 @@ class RuleComplianceGuard {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	private function context(array $object): array {
 		$administrationId = ($object['administrationId'] ?? null);

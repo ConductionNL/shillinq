@@ -8,7 +8,7 @@
  * chart props scoped to the grid's range. The grid request itself lives in
  * budgetGridLoad.spec.js and the pure helpers in budgetGridHelpers.spec.js.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

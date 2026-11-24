@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Proposes direct debit batches and serves their pain.008 files.
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  */
 class DirectDebitBatchController extends Controller {
 
@@ -90,7 +90,7 @@ class DirectDebitBatchController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
 	 */
 	#[NoAdminRequired]
 	public function propose(): JSONResponse {
@@ -133,7 +133,7 @@ class DirectDebitBatchController extends Controller {
 	 *
 	 * @return DataDownloadResponse|JSONResponse
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.3
 	 */
 	#[NoAdminRequired]
 	public function file(string $id): DataDownloadResponse|JSONResponse {

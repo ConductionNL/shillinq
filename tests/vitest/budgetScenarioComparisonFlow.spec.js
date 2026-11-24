@@ -8,7 +8,7 @@
  * grouping of flat cells into per-ledger-group month rows and the labels.
  * The ledger-group name load lives in budgetScenarioLedgerGroups.spec.js.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
  */
 
 import axios from '@nextcloud/axios'

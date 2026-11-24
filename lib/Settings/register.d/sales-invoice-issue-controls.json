@@ -14,7 +14,7 @@
         "version": "0.1.0",
         "title": "Invoice number series",
         "description": "The invoice number series of one administration, kind and fiscal year: its pattern and the last counter value handed out. Written by the server only, under a lock, when an invoice is issued or generated.",
-        "x-spec": "openspec/changes/sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every number handed out raises the counter on the audit trail, so a gap can be traced to the issue that took it."

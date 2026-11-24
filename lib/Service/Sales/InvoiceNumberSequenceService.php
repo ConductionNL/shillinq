@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use RuntimeException;
 /**
  * Takes the next number of an invoice series under a lock.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
  */
 class InvoiceNumberSequenceService {
 
@@ -133,7 +133,7 @@ class InvoiceNumberSequenceService {
 	 * @throws InvalidArgumentException When the administration is empty or the kind unknown.
 	 * @throws RuntimeException When the lock stays held or the series cannot be saved.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
 	public function next(string $administrationId, string $kind, int $year): string {
 		$this->requireSeries(administrationId: $administrationId, kind: $kind);
@@ -172,7 +172,7 @@ class InvoiceNumberSequenceService {
 	 *
 	 * @throws InvalidArgumentException When the administration is empty or the kind unknown.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.1
 	 */
 	public function seed(string $administrationId, string $kind, int $year, int $lastValue): bool {
 		$this->requireSeries(administrationId: $administrationId, kind: $kind);
@@ -207,7 +207,7 @@ class InvoiceNumberSequenceService {
 	 *
 	 * @return string The pattern.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.1
 	 */
 	public function patternOf(string $administrationId, string $kind): string {
 		$latest = null;

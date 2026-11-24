@@ -25,7 +25,7 @@ export const ICP_PERIOD_KINDS = ['quarter', 'month']
  * @param {number|string} year The year.
  * @param {number|string} number The quarter (1 to 4) or month (1 to 12).
  * @return {string} The period.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export function icpPeriod(kind, year, number) {
 	const y = Number(year)
@@ -45,7 +45,7 @@ export function icpPeriod(kind, year, number) {
  * @param {string} kind quarter or month.
  * @param {Date} now Today.
  * @return {{year: number, number: number}} The period.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export function lastFinishedIcpPeriod(kind, now = new Date()) {
 	const year = now.getFullYear()
@@ -72,7 +72,7 @@ function euro(amount) {
  *
  * @param {{icpTotal: number, rubriek3b: number|null, matches: boolean, missing: boolean, difference: number}} outcome The outcome.
  * @return {{kind: string, text: string}} success when it reconciles, error when it does not, warning without a return.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export function reconciliationMessage(outcome) {
 	if (!outcome || outcome.missing || outcome.rubriek3b === null) {
@@ -114,7 +114,7 @@ export function reconciliationMessage(outcome) {
  *
  * @param {object} error The axios error.
  * @return {string} The sentence.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export function icpErrorText(error) {
 	const status = error?.response?.status
@@ -148,7 +148,7 @@ export function icpErrorText(error) {
  *
  * @param {{administrationId: string, period: string}} form The administration and period.
  * @return {Promise<{statement: object, reconciliation: object, replaced: boolean}>} What was prepared.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export async function prepareIcpStatement(form) {
 	const response = await axios.post(
@@ -166,7 +166,7 @@ export async function prepareIcpStatement(form) {
  *
  * @param {{administrationId: string, period: string}} statement The statement.
  * @return {Promise<object>} The outcome.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export async function reconcileIcpPeriod(statement) {
 	const response = await axios.get(generateUrl('/apps/shillinq/api/icp/reconcile'), {
@@ -183,7 +183,7 @@ export async function reconcileIcpPeriod(statement) {
  *
  * @param {{administrationId: string, period: string}} statement The statement.
  * @return {string} The URL.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export function icpStatementXmlUrl(statement) {
 	return (
@@ -199,7 +199,7 @@ export function icpStatementXmlUrl(statement) {
  * Whether filing through Digipoort is available.
  *
  * @return {Promise<boolean>} False while no Digipoort hand-off is bound, or when it cannot be asked.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
  */
 export async function icpFilingAvailable() {
 	try {
@@ -217,7 +217,7 @@ export async function icpFilingAvailable() {
  *
  * @param {{administrationId: string, period: string}} statement The statement.
  * @return {Promise<{status: string, deliveryStatus: string, reference: string}>} Digipoort's answer.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
  */
 export async function fileIcpStatementRequest(statement) {
 	const response = await axios.post(
@@ -235,7 +235,7 @@ export async function fileIcpStatementRequest(statement) {
  *
  * @param {{status: string, reference: string}} result The answer.
  * @return {{kind: string, text: string}} The toast kind and text.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
  */
 export function filingMessage(result) {
 	if (result?.status === 'submitted') {

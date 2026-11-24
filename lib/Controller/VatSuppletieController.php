@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use RuntimeException;
 /**
  * Detect drift on a filed return and prepare its supplementary return.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
  */
 class VatSuppletieController extends Controller {
 
@@ -90,7 +90,7 @@ class VatSuppletieController extends Controller {
 	 *                      still match; 400 for a malformed id; 401 without a user; 404 for a return
 	 *                      that does not exist or the caller may not see; 409 for a return not filed.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
 	 */
 	#[NoAdminRequired]
 	public function detectDrift(string $returnId): JSONResponse {
@@ -133,7 +133,7 @@ class VatSuppletieController extends Controller {
 	 *                      user; 404 for a correction that does not exist or the caller may not see;
 	 *                      409 for a correction already prepared or no longer a draft.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.1
 	 */
 	#[NoAdminRequired]
 	public function prepare(string $correctionId): JSONResponse {

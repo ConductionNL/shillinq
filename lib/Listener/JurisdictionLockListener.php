@@ -21,7 +21,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 class JurisdictionLockListener implements IEventListener {
 
@@ -56,7 +56,7 @@ class JurisdictionLockListener implements IEventListener {
 	 * @param ListenerSchemaResolver     $schemaResolver Matches the event's object to the Administration schema.
 	 * @param LoggerInterface            $logger         Logger.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function __construct(
 		private readonly AdministrationJurisdiction $jurisdiction,
@@ -74,7 +74,7 @@ class JurisdictionLockListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) AdministrationJurisdiction reads the jurisdiction field; it holds no state.
 	 */

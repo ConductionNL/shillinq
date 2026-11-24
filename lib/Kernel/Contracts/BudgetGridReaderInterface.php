@@ -66,10 +66,10 @@ interface BudgetGridReaderInterface {
 	 *     budgetLinesByFiscalYear: array<int,list<array<string,mixed>>|null>,
 	 * }
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
 	 */
 	public function loadGrid(string $administrationId, string $startPeriod, string $endPeriod, string $granularity): array;
 }//end interface

@@ -46,7 +46,7 @@ interface FinancialDocumentFinderInterface {
 	 *
 	 * @return array<int, array{schema: string, document: array<string, mixed>, readable: bool}> The documents.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function onObject(string $register, string $schema, string $objectId): array;
 }//end interface

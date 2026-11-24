@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Reports missing and duplicate numbers in a year of issued sales invoices.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
  */
 final class InvoiceNumberAuditService {
 	/**
@@ -91,7 +91,7 @@ final class InvoiceNumberAuditService {
 	 *
 	 * @throws InvalidArgumentException When the administration is empty or the pattern has no sequence.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
 	 */
 	public function gaps(string $administrationId, int $year, string $pattern = self::DEFAULT_PATTERN): array {
 		if (trim($administrationId) === '') {
@@ -141,7 +141,7 @@ final class InvoiceNumberAuditService {
 	 *
 	 * @return array{0: array<int,int>, 1: list<string>, 2: int} [counts per sequence, numbers outside the series, numbers checked].
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
 	 */
 	private function tallySequences(string $administrationId, int $year, string $regex): array {
 		$counts = [];
@@ -172,7 +172,7 @@ final class InvoiceNumberAuditService {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
 	 */
 	private function missingSequences(array $counts, callable $format): array {
 		$missing = [];
@@ -194,7 +194,7 @@ final class InvoiceNumberAuditService {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-3.1
 	 */
 	private function duplicateSequences(array $counts, callable $format): array {
 		$duplicates = [];

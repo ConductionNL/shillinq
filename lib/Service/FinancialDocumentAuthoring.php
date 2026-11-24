@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 /**
  * Starts a quote, a credit note or a payout on a host object.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
  */
 class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface {
 
@@ -95,8 +95,8 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function createQuote(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
 		return $this->createQuoteOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
@@ -113,7 +113,7 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	private function createQuoteOn(array $host, array $payload, string $appId): array {
 		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
@@ -157,8 +157,8 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the invoice refuses it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function creditInvoice(string $invoiceId, string $appId = ''): array {
 		$this->guard->assertActorMay(action: self::ACTION_CREDIT_INVOICE, appId: $appId);
@@ -208,8 +208,8 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or finance refuses it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function raisePayout(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
 		return $this->raisePayoutOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
@@ -226,7 +226,7 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	private function raisePayoutOn(array $host, array $payload, string $appId): array {
 		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;

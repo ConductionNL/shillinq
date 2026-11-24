@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Throwable;
 /**
  * Starts every administration's invoice number series after the numbers in use.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.1
  */
 class SeedInvoiceNumberSequences implements IRepairStep {
 	use RunsUnderSystemIdentity;
@@ -82,7 +82,7 @@ class SeedInvoiceNumberSequences implements IRepairStep {
 	 *
 	 * @return string The name.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.1
 	 */
 	public function getName(): string {
 		return 'Shillinq: start the invoice number series after the numbers already in use';
@@ -95,7 +95,7 @@ class SeedInvoiceNumberSequences implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.1
 	 */
 	public function run(IOutput $output): void {
 		$this->withSystemIdentity(objectService: $this->objectService, work: fn () => $this->seedAll(output: $output));

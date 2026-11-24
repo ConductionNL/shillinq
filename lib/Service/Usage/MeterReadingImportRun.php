@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Service\Usage;
 /**
  * One import in progress.
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  */
 final class MeterReadingImportRun {
 
@@ -85,7 +85,7 @@ final class MeterReadingImportRun {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function refuse(string $reason): void {
 		$this->refused[] = ['row' => $this->row, 'reason' => $reason];
@@ -97,7 +97,7 @@ final class MeterReadingImportRun {
 	 *
 	 * @return array{created:list<string>,refused:list<array{row:int,reason:string}>}
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function result(): array {
 		return ['created' => $this->created, 'refused' => $this->refused];

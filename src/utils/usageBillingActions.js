@@ -16,7 +16,7 @@ import { rateReadings } from './usageBilling.js'
  *
  * @param {object} scope The bulk scope, with `selectedIds`.
  * @return {Promise<{rated: number, failed: number}>|undefined} The counts.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
  */
 export async function rateMeterReadings(scope) {
 	const ids = Array.isArray(scope?.selectedIds) ? scope.selectedIds : []
@@ -45,7 +45,7 @@ export async function rateMeterReadings(scope) {
  * Header action "Import readings" on the meter readings page.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/tasks.md#task-2.1
  */
 export function openMeterReadingImport() {
 	return spawnDialog(MeterReadingImportModal, {})

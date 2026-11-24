@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * Gives every payment request with a subject its one-item list of linked objects.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
  */
 class BackfillLinkedObjects implements IRepairStep {
 	use ReadsSourceRowsInBatches;
@@ -76,7 +76,7 @@ class BackfillLinkedObjects implements IRepairStep {
 	 *
 	 * @return string The display name.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
 	 */
 	public function getName(): string {
 		return 'Shillinq: list the object each payment request is about in its linked objects';
@@ -89,7 +89,7 @@ class BackfillLinkedObjects implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
 	 */
 	public function run(IOutput $output): void {
 		try {
@@ -140,7 +140,7 @@ class BackfillLinkedObjects implements IRepairStep {
 	 *
 	 * @return bool True when there is nothing to backfill.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
 	 */
 	private static function skipsBackfill(string $uuid, array $request): bool {
 		$subject = $request['subject'] ?? null;

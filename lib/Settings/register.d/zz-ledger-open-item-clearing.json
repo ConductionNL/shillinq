@@ -4,8 +4,8 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "ledger-open-item-clearing",
     "adr": "ADR-037 modular register fragment; ADR-022 apps consume OpenRegister, no own CRUD; ADR-031 declarative balance",
-    "description": "Open item clearing (afletteren) on balance accounts, as designed in openspec/changes/ledger-open-item-clearing/design.md. Account gains openItemManaged, GLLine gains clearingGroupId, and ClearingGroup records which posted lines of one account were cleared against each other, by whom and when. The group's balanceCents is a calculation over the debit and credit totals the clearing service writes, so groups that do not net to zero are a plain filter. Named zz- so it merges after the fragments that set the Account and GLLine versions, whose last value wins the deep merge.",
-    "spec": "openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md"
+    "description": "Open item clearing (afletteren) on balance accounts, as designed in openspec/changes/archive/2026-11-24-ledger-open-item-clearing/design.md. Account gains openItemManaged, GLLine gains clearingGroupId, and ClearingGroup records which posted lines of one account were cleared against each other, by whom and when. The group's balanceCents is a calculation over the debit and credit totals the clearing service writes, so groups that do not net to zero are a plain filter. Named zz- so it merges after the fragments that set the Account and GLLine versions, whose last value wins the deep merge.",
+    "spec": "openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md"
   },
   "components": {
     "schemas": {
@@ -40,7 +40,7 @@
         "title": "Clearing group",
         "description": "Posted lines of one balance account that a person cleared against each other, with who cleared them and when. A group whose balance is not zero, or that was reopened because one of its transactions was reversed, stays listed as open.",
         "x-schema-org": "schema:Collection",
-        "x-spec": "openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md",
         "type": "object",
         "required": [
           "administrationId",

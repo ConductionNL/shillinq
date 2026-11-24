@@ -43,7 +43,7 @@ function statementOf(scope) {
  * Header action on the ICP page: open the Prepare statement dialog.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export function openPrepareIcpStatement() {
 	return spawnDialog(PrepareIcpStatementModal, {})
@@ -54,7 +54,7 @@ export function openPrepareIcpStatement() {
  *
  * @param {{item: object}} scope The page scope.
  * @return {Promise<object|null>} The outcome, or null when it failed.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export async function reconcileIcpStatement(scope) {
 	const statement = statementOf(scope)
@@ -78,7 +78,7 @@ export async function reconcileIcpStatement(scope) {
  * @param {{item: object}} scope The page scope.
  * @param {Window} target The window that follows the download link.
  * @return {string} The address, or '' without a statement.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
  */
 export function downloadIcpStatementXml(scope, target = window) {
 	const statement = statementOf(scope)
@@ -96,7 +96,7 @@ export function downloadIcpStatementXml(scope, target = window) {
  *
  * @param {{item: object}} scope The page scope.
  * @return {Promise<object|null>} Digipoort's answer, or null when nothing was filed.
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.4
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.4
  */
 export async function fileIcpStatement(scope) {
 	const statement = statementOf(scope)

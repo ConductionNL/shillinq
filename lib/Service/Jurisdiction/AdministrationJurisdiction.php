@@ -22,7 +22,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use OCP\IAppConfig;
 /**
  * The jurisdiction of an administration.
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 class AdministrationJurisdiction {
 
@@ -57,7 +57,7 @@ class AdministrationJurisdiction {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param IAppConfig             $appConfig     App config for the register slug.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -72,7 +72,7 @@ class AdministrationJurisdiction {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public static function normalise(mixed $value): string {
 		$code = '';
@@ -94,7 +94,7 @@ class AdministrationJurisdiction {
 	 *
 	 * @return string ISO 3166 alpha-2.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 *
 	 * @SuppressWarnings(PHPMD.ShortMethodName) of() reads as AdministrationJurisdiction::of($administration).
 	 */
@@ -128,7 +128,7 @@ class AdministrationJurisdiction {
 	 *
 	 * @throws JurisdictionRefusedException When the administration is under another jurisdiction.
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function assertIs(string $administrationId, string $output, string $required=self::DEFAULT): void {
 		$jurisdiction = $this->of(administrationId: $administrationId);
@@ -144,7 +144,7 @@ class AdministrationJurisdiction {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function hasPostings(string $administrationId): bool {
 		if (trim($administrationId) === '') {

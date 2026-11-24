@@ -6,7 +6,7 @@
  * its registration, the kinds and acts a placement narrows it to, and the
  * two new calls it makes.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 
 import axios from '@nextcloud/axios'

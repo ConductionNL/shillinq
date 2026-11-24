@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -55,7 +55,7 @@ use Throwable;
 /**
  * Seal and check the posted-transaction chain of an administration.
  *
- * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md
  */
 class LedgerSealService {
 	use ReadsSourceRowsInBatches;
@@ -96,7 +96,7 @@ class LedgerSealService {
 	 *
 	 * @throws RuntimeException When the lock cannot be taken or the seal cannot be written.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-posted-transaction-is-sealed-into-its-administrations-chain-req-lse-001
 	 */
 	public function seal(array $transaction): array {
 		$id = self::idOf(row: $transaction);
@@ -124,7 +124,7 @@ class LedgerSealService {
 	 *
 	 * @return array{intact:bool, entries:int, transactionNumber:?string, transactionId:?string, reason:?string} The outcome.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/specs/bookkeeping-audit-trail/spec.md#requirement-a-controller-checks-the-seal-chain-req-lse-002
 	 */
 	public function verify(string $administrationId): array {
 		$chain = $this->sealedTransactions(administrationId: $administrationId);
@@ -159,7 +159,7 @@ class LedgerSealService {
 	 *
 	 * @throws RuntimeException When the administration already has seals.
 	 *
-	 * @spec openspec/changes/ledger-sealed-entries/design.md
+	 * @spec openspec/changes/archive/2026-11-24-ledger-sealed-entries/design.md
 	 */
 	public function sealExisting(string $administrationId): int {
 		$sealed = $this->underLock(

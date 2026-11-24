@@ -51,7 +51,7 @@ interface BudgetGridCalculatorInterface {
 	 *
 	 * @return array{budget:?int,actual:int,deviation:?int,favorable:?bool}
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-005
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-005
 	 */
 	public function cumulative(
 		string $ledgerGroupKey,
@@ -76,8 +76,8 @@ interface BudgetGridCalculatorInterface {
 	 *
 	 * @return array{budget:?int,actual:?int,deviation:?int,favorable:?bool,hasBudget:bool}
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 	 */
 	public function evaluateColumn(
 		string $ledgerGroupKey,
@@ -101,7 +101,7 @@ interface BudgetGridCalculatorInterface {
 	 *
 	 * @return array<string,int|float|null> computedRow `code` => its evaluated value for this column.
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-008
 	 */
 	public function evaluateComputedRows(array $computedRows, array $rowValuesByCode): array;
 }//end interface

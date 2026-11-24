@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 
 declare(strict_types=1);
@@ -61,7 +61,7 @@ use Throwable;
 /**
  * Read-only JSON endpoint for the begroting grid.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 class BudgetGridController extends Controller {
 
@@ -152,10 +152,10 @@ class BudgetGridController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -189,7 +189,7 @@ class BudgetGridController extends Controller {
 	 *
 	 * @return JSONResponse|null
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	private function administrationIdRefusal(string $administrationId): JSONResponse|null {
 		if ($administrationId === '' || preg_match(self::ID_PATTERN, $administrationId) !== 1) {
@@ -204,7 +204,7 @@ class BudgetGridController extends Controller {
 	 *
 	 * @return array{granularity: string, startPeriod: string, endPeriod: string, scenarioId: string}|JSONResponse The query, or the 400.
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	private function gridQuery(): array|JSONResponse {
 		$granularity = (string)$this->request->getParam('granularity', 'month');
@@ -234,7 +234,7 @@ class BudgetGridController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	private function gridResponse(string $administrationId, array $query): JSONResponse {
 		try {

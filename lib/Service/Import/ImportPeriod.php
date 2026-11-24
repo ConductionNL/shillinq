@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Whether a migration date falls in an open fiscal year of its administration.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 class ImportPeriod implements ImportPeriodInterface {
 
@@ -59,7 +59,7 @@ class ImportPeriod implements ImportPeriodInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function isOpen(string $administrationId, string $date): bool {
 		$years = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('FiscalYear')

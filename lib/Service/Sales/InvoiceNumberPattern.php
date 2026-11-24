@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ use InvalidArgumentException;
 /**
  * Formats and reads the numbers of one series pattern.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
  */
 final class InvoiceNumberPattern {
 
@@ -74,7 +74,7 @@ final class InvoiceNumberPattern {
 	 *
 	 * @return string The invoice number.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
 	public function format(int $year, int $sequence): string {
 		$padded = str_pad((string)$sequence, $this->width, '0', STR_PAD_LEFT);
@@ -90,7 +90,7 @@ final class InvoiceNumberPattern {
 	 *
 	 * @return int|null The counter value.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.1
 	 */
 	public function sequenceOf(string $number, int $year): ?int {
 		$regex = '';

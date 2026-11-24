@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use OCP\IRequest;
  * Issues an invoice on an object, requests payment of an invoice, and starts a
  * quote, a credit note or a payout.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  */
 class FinancialDocumentActionController extends Controller {
 	/**
@@ -77,7 +77,7 @@ class FinancialDocumentActionController extends Controller {
 	 *
 	 * @return JSONResponse The issued invoice, or the refusal.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	#[NoAdminRequired]
 	public function issueInvoice(
@@ -123,7 +123,7 @@ class FinancialDocumentActionController extends Controller {
 	 *
 	 * @return JSONResponse The payment request, or the refusal.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
 	 */
 	#[NoAdminRequired]
 	public function requestPayment(string $id): JSONResponse {
@@ -151,7 +151,7 @@ class FinancialDocumentActionController extends Controller {
 	 *
 	 * @return JSONResponse The quote, or the refusal.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
 	#[NoAdminRequired]
 	public function createQuote(
@@ -188,7 +188,7 @@ class FinancialDocumentActionController extends Controller {
 	 *
 	 * @return JSONResponse The credit note, or the refusal.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
 	#[NoAdminRequired]
 	public function creditInvoice(string $id): JSONResponse {
@@ -211,7 +211,7 @@ class FinancialDocumentActionController extends Controller {
 	 *
 	 * @return JSONResponse The payout, or the refusal.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
 	#[NoAdminRequired]
 	public function raisePayout(

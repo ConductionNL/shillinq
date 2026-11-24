@@ -8,7 +8,7 @@
  * order posts to /api/orders/{id}/invoice and opens the draft invoice. A
  * refusal is shown as the server words it, and nothing is opened.
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
  */
 
 import fs from 'fs'

@@ -6,7 +6,7 @@
 // one ImportBatch through its declared lifecycle; the server runs the
 // pipeline in the transition's action (ImportBatchAction).
 //
-// @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+// @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -49,7 +49,7 @@ const STEP_BY_STATUS = {
  *
  * @param {object|null} batch The batch, or null before one exists.
  * @return {string} A step id from WIZARD_STEPS.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function stepForBatch(batch) {
 	if (!batch) {
@@ -63,7 +63,7 @@ export function stepForBatch(batch) {
  *
  * @param {object|null} report A validationReport or postingReport.
  * @return {Array<object>} The findings with severity error.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function errorFindings(report) {
 	return (report?.findings || []).filter(
@@ -76,7 +76,7 @@ export function errorFindings(report) {
  *
  * @param {object|null} batch The batch.
  * @return {boolean}
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function canRunDryRun(batch) {
 	return (
@@ -90,7 +90,7 @@ export function canRunDryRun(batch) {
  *
  * @param {Array<object>} mappings The batch's ImportMapping rows.
  * @return {Array<object>}
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function openMappings(mappings) {
 	return (mappings || []).filter(
@@ -103,7 +103,7 @@ export function openMappings(mappings) {
  *
  * @param {object|null} report The dryRunReport.
  * @return {{debit: number, credit: number, lines: number}}
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function openingTotals(report) {
 	const lines = report?.openingJournal?.lines || []
@@ -121,7 +121,7 @@ export function openingTotals(report) {
  *
  * @param {object} form path, sourceSystem, migrationDate, administrationId, scope.
  * @return {object} The ImportBatch payload in state draft.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function batchPayload(form) {
 	return {
@@ -144,7 +144,7 @@ export function batchPayload(form) {
  *
  * @param {object} form The wizard form.
  * @return {boolean}
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function formComplete(form) {
 	return Boolean(
@@ -160,7 +160,7 @@ export function formComplete(form) {
  *
  * @param {object} form The wizard form.
  * @return {Promise<object>} The saved batch.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export async function createBatch(form) {
 	const { data } = await axios.post(
@@ -175,7 +175,7 @@ export async function createBatch(form) {
  *
  * @param {string} id The batch id.
  * @return {Promise<object>}
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export async function loadBatch(id) {
 	const { data } = await axios.get(
@@ -192,7 +192,7 @@ export async function loadBatch(id) {
  * @param {string} id The batch id.
  * @param {string} action The transition: parse, startMapping, validate, dryRun, post or reverse.
  * @return {Promise<object>} The batch after the transition.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export async function runTransition(id, action) {
 	await axios.post(
@@ -209,7 +209,7 @@ export async function runTransition(id, action) {
  *
  * @param {string} id The batch id.
  * @return {Promise<Array<object>>}
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export async function loadMappings(id) {
 	const response = await axios.get(
@@ -228,7 +228,7 @@ export async function loadMappings(id) {
  *
  * @param {string} batchId The batch id.
  * @return {Promise<number>} How many rows were confirmed.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export async function confirmSuggestions(batchId) {
 	const response = await axios.post(
@@ -243,7 +243,7 @@ export async function confirmSuggestions(batchId) {
  * @param {Error} error The axios error.
  * @param {string} fallback The fallback message.
  * @return {string}
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function refusalMessage(error, fallback) {
 	const data = error?.response?.data
@@ -255,7 +255,7 @@ export function refusalMessage(error, fallback) {
  *
  * @param {string} id The batch id.
  * @return {string} The URL of the wizard opened on that batch.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function wizardUrl(id) {
 	return (
@@ -272,7 +272,7 @@ export function wizardUrl(id) {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {boolean} Whether the wizard was opened.
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function openImportWizard(scope) {
 	const id = scope?.item?.id || window.location.pathname.split('/').pop() || ''

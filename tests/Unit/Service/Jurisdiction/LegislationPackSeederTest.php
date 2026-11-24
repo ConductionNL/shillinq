@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
  * @uses   \OCA\Shillinq\Service\Seed\SeedImport
  * @uses   \OCA\Shillinq\Service\Seed\SeedMessages
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 final class LegislationPackSeederTest extends TestCase {
 

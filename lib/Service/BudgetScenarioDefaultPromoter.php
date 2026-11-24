@@ -13,7 +13,7 @@
  * default already exists. A scenario default answers "which what-if does the
  * grid show by default when nobody picked one" — a UI convenience, not a
  * fiscal-year commitment — so promoting scenario B automatically demotes
- * scenario A in the same action (`openspec/changes/budget-scenarios/
+ * scenario A in the same action (`openspec/changes/archive/2026-11-24-budget-scenarios/
  * design.md` §3a).
  *
  * `isDefault` is set via THIS service call, never via an
@@ -47,7 +47,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
 
 declare(strict_types=1);
@@ -66,7 +66,7 @@ use Throwable;
 /**
  * Atomically-demoting default-scenario promoter (REQ-BSC-002).
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
 class BudgetScenarioDefaultPromoter implements BudgetScenarioDefaultPromoterInterface {
 	/**
@@ -118,7 +118,7 @@ class BudgetScenarioDefaultPromoter implements BudgetScenarioDefaultPromoterInte
 	 *
 	 * @throws RuntimeException When the target scenario does not exist.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function promote(string $scenarioId): array {
 		$target = $this->find(id: $scenarioId);

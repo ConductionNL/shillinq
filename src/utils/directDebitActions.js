@@ -13,7 +13,7 @@ import ProposeDirectDebitModal from '../modals/ProposeDirectDebitModal.vue'
  * Header action: open the Propose direct debit dialog.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-2.1
  */
 export function openProposeDirectDebit() {
 	return spawnDialog(ProposeDirectDebitModal, {})

@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 final class AdministrationJurisdictionTest extends TestCase {
 

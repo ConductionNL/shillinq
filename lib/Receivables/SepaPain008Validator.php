@@ -21,7 +21,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use OCA\Shillinq\Validation\IbanValidator;
 /**
  * The errors that keep a pain.008 file from being stored.
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-the-batch-is-written-as-a-validated-pain008-file-req-sdd-012
  */
 final class SepaPain008Validator implements SepaPain008ValidatorInterface {
 
@@ -67,7 +67,7 @@ final class SepaPain008Validator implements SepaPain008ValidatorInterface {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
 	public function errors(string $xml, array $collections, array $creditor): array {
 		$errors = $this->creditorErrors(creditor: $creditor);
@@ -97,7 +97,7 @@ final class SepaPain008Validator implements SepaPain008ValidatorInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.2
 	 */
 	public static function schemaPath(): string {
 		return __DIR__ . '/xsd/pain.008.001.02.xsd';

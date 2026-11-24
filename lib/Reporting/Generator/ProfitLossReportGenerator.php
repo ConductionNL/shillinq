@@ -54,7 +54,7 @@ use OCA\Shillinq\Reporting\ReportSection;
 /**
  * Renders a profit-and-loss account from the statement calculator's figures.
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  */
 final class ProfitLossReportGenerator extends AbstractStatementReportGenerator {
 
@@ -84,7 +84,7 @@ final class ProfitLossReportGenerator extends AbstractStatementReportGenerator {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->statement($context);

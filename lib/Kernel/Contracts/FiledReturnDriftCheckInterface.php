@@ -47,7 +47,7 @@ interface FiledReturnDriftCheckInterface {
 	 *
 	 * @return array{checked:int,corrections:int} How many returns were checked and how many corrections were written.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.3
 	 */
 	public function checkFiscalYear(string $administrationId, int $fiscalYear): array;
 }//end interface

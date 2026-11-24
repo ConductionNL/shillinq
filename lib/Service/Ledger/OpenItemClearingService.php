@@ -28,7 +28,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
  */
 
 declare(strict_types=1);
@@ -50,7 +50,7 @@ use OutOfBoundsException;
 /**
  * Clears, undoes, lists and suggests open items on a balance account.
  *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Suggesting, clearing and undoing a clearing share one open-item read.
  */
@@ -105,7 +105,7 @@ class OpenItemClearingService {
 	 *
 	 * @throws OutOfBoundsException When there is no such account.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001)
 	 */
 	public function findAccount(string $accountId): array {
 		$account = $this->record(schema: 'Account', id: $accountId);
@@ -125,7 +125,7 @@ class OpenItemClearingService {
 	 *
 	 * @return array<string, mixed> `uncleared`, `openGroups` and `suggestions`.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004)
 	 */
 	public function overview(array $account): array {
 		$uncleared = $this->unclearedLines(account: $account);
@@ -148,7 +148,7 @@ class OpenItemClearingService {
 	 *
 	 * @return array<int, array<string, mixed>> The pairs.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-004)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-004)
 	 */
 	public function suggest(array $account): array {
 		return $this->pairs(lines: $this->unclearedLines(account: $account));
@@ -165,7 +165,7 @@ class OpenItemClearingService {
 	 * @throws OutOfBoundsException             When a line does not exist.
 	 * @throws OpenItemClearingRefusedException When no lines are given or they span administrations.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
 	 */
 	public function administrationOfLines(array $lineIds): string {
 		$ids = $this->lineIds(lineIds: $lineIds);
@@ -194,7 +194,7 @@ class OpenItemClearingService {
 	 * @throws OutOfBoundsException             When a line does not exist.
 	 * @throws OpenItemClearingRefusedException When the lines may not be cleared together.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
 	 */
 	public function clear(array $lineIds, string $actor, string $reason=''): array {
 		$ids = $this->lineIds(lineIds: $lineIds);
@@ -264,7 +264,7 @@ class OpenItemClearingService {
 	 *
 	 * @throws OutOfBoundsException When there is no such group.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
 	 */
 	public function findGroup(string $groupId): array {
 		$group = $this->record(schema: 'ClearingGroup', id: $groupId);
@@ -285,7 +285,7 @@ class OpenItemClearingService {
 	 *
 	 * @return array<string, mixed> `groupId` and the `releasedLineIds`.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
 	 */
 	public function undo(array $group): array {
 		$groupId = (string)($group['id'] ?? '');
@@ -320,7 +320,7 @@ class OpenItemClearingService {
 	 *
 	 * @return array<int, string> The ids of the groups reopened.
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/design.md (D4)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/design.md (D4)
 	 */
 	public function reopenForTransaction(string $transactionId): array {
 		if ($transactionId === '') {

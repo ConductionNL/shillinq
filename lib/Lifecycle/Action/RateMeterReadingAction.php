@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use OCA\Shillinq\Kernel\Contracts\MeterReadingRatingInterface;
 /**
  * The `rate` transition's executor.
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  */
 class RateMeterReadingAction implements LifecycleActionInterface {
 
@@ -53,7 +53,7 @@ class RateMeterReadingAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string,mixed> The reading to save.
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

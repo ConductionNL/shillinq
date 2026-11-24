@@ -33,8 +33,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md
- * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-3.1
  *
  * @e2e bookkeeping-investeringsaftrek::a-bookkeeper-activates-a-delivery-van
  * @e2e bookkeeping-investeringsaftrek::an-override-survives-a-later-change

@@ -44,7 +44,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
  */
 
 declare(strict_types=1);
@@ -61,7 +61,7 @@ use Throwable;
  * Reads every schema `budget-known-costs`' regeneration run needs, batched
  * to exactly 6 `findAll()` calls (REQ-BKC-008).
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
  */
 class KnownCostReader {
 	/**
@@ -134,7 +134,7 @@ class KnownCostReader {
 	 *     derivations: list<array<string,mixed>>,
 	 * } The assembled context {@see KnownCostBudgetWriter} consumes.
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
 	 */
 	public function loadContext(string $administrationId): array {
 		$recurring    = $this->forAdministration(schema: self::SCHEMA_CASHFLOW_RECURRING, administrationId: $administrationId);

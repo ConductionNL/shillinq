@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 /**
  * Selects the open direct debit invoices into draft collections and batches.
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-batch-is-proposed-from-open-invoices-with-a-mandate-req-sdd-011
  */
 class DirectDebitBatchService implements DirectDebitBatchServiceInterface {
 
@@ -114,7 +114,7 @@ class DirectDebitBatchService implements DirectDebitBatchServiceInterface {
 	 * @return array{batches: list<array<string, mixed>>, skipped: list<array<string, string>>} The draft batches, each
 	 *         with its `collections`, and every invoice left out with its reason.
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.1
 	 */
 	public function propose(string $administrationId, string $collectionDate): array {
 		$mandates = $this->byId(rows: $this->read(schema: 'SepaMandate', administrationId: $administrationId));

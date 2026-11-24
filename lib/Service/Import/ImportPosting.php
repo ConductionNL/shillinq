@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Throwable;
 /**
  * Writes and unwinds the opening entry and customers of an import.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 class ImportPosting {
 
@@ -71,7 +71,7 @@ class ImportPosting {
 	 *
 	 * @return array{failed:bool,postingRefs:array<string,mixed>|null,findings:array<int,array<string,mixed>>}
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function post(array $batch, array $report): array {
 		$findings = [];
@@ -113,7 +113,7 @@ class ImportPosting {
 	 *
 	 * @return array<int,array<string,mixed>> The findings.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function withMissingOpeningBalance(array $findings, array|null $entry, array $batch): array {
 		if ($entry === null && $this->inScope(batch: $batch, part: 'openingBalance') === true) {
@@ -136,7 +136,7 @@ class ImportPosting {
 	 *
 	 * @return array{failed:bool,postingRefs:array<string,mixed>|null,findings:array<int,array<string,mixed>>}
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function writePosting(array $customers, array|null $entry, array $findings): array {
 		$refs = ['openingJournalId' => null, 'masterIds' => [], 'linkedMasterIds' => []];
@@ -163,7 +163,7 @@ class ImportPosting {
 	 *
 	 * @return array{reversalRefs:array<string,mixed>,findings:array<int,array<string,mixed>>}
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function reverse(array $batch): array {
 		$refs      = (array)($batch['postingRefs'] ?? []);

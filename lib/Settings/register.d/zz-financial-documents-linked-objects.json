@@ -10,7 +10,7 @@
     "schemas": {
       "Quote": {
         "version": "0.2.0",
-        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
         "properties": {
           "linkedObjects": {
             "type": "array",
@@ -68,7 +68,7 @@
       },
       "ARInvoice": {
         "version": "0.19.0",
-        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
         "properties": {
           "linkedObjects": {
             "type": "array",
@@ -126,7 +126,7 @@
       },
       "PaymentRequest": {
         "version": "0.11.1",
-        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
         "properties": {
           "linkedObjects": {
             "type": "array",
@@ -184,7 +184,7 @@
       },
       "InboundPayable": {
         "version": "0.4.0",
-        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
         "properties": {
           "linkedObjects": {
             "type": "array",

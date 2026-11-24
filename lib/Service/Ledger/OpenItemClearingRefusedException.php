@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ use DomainException;
 /**
  * Refusal with a translatable template and its parameters.
  *
- * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md
  */
 class OpenItemClearingRefusedException extends DomainException {
 
@@ -54,7 +54,7 @@ class OpenItemClearingRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -66,7 +66,7 @@ class OpenItemClearingRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
+	 * @spec openspec/changes/archive/2026-11-24-ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md (REQ-LOIC-002)
 	 */
 	public function getParameters(): array {
 		return $this->parameters;

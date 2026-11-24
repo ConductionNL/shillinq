@@ -14,7 +14,7 @@
  deductions (src/utils/investmentDeductionActions.js), so it lives in its own
  file (hydra gate-13).
 
- @spec openspec/changes/tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md
+ @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek/spec.md
 -->
 
 <template>
@@ -119,7 +119,7 @@ export default {
 		 * Whether the year is a whole number the server accepts.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
 		 */
 		canSubmit() {
 			const year = Number(this.year)
@@ -130,7 +130,7 @@ export default {
 		 * The result's total per scheme.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
 		 */
 		totals() {
 			return totalRows(this.result?.totals)
@@ -143,7 +143,7 @@ export default {
 		/**
 		 * Recalculate the year for the active administration.
 		 *
-		 * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
 		 */
 		async submit() {
 			this.error = ''
@@ -160,7 +160,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/tax-investment-deduction-claims/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-24-tax-investment-deduction-claims/tasks.md#task-2.1
 		 */
 		close() {
 			this.$emit('close', this.result)

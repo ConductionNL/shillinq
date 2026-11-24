@@ -48,7 +48,7 @@ interface ImportPeriodInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function isOpen(string $administrationId, string $date): bool;
 }//end interface

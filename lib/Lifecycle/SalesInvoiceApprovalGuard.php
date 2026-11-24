@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use OCP\IUserSession;
 /**
  * Refuses issuing a large invoice unapproved, and approving one's own invoice.
  *
- * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-2.2
  */
 class SalesInvoiceApprovalGuard {
 
@@ -92,7 +92,7 @@ class SalesInvoiceApprovalGuard {
 	 *
 	 * @throws PostingRefusedException When the caller created the invoice, or either party is unknown.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-2.2
 	 */
 	public function canApprove(array $invoice): bool {
 		$approver = trim((string)($this->userSession->getUser()?->getUID() ?? ''));
@@ -120,7 +120,7 @@ class SalesInvoiceApprovalGuard {
 	 *
 	 * @throws PostingRefusedException When a draft is above the threshold.
 	 *
-	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-2.2
 	 */
 	public function canIssue(array $invoice): bool {
 		$stored = $this->stored(schema: 'ARInvoice', id: $this->idOf(invoice: $invoice));

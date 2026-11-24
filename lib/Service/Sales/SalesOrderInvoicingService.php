@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Quote to sales order, sales order to draft invoice.
  *
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
  */
 class SalesOrderInvoicingService {
 	/**
@@ -99,7 +99,7 @@ class SalesOrderInvoicingService {
 	 *
 	 * @throws OutOfBoundsException When there is no such quote.
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
+	 * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
 	 */
 	public function findQuote(string $quoteId): array {
 		return $this->findRecord(schema: 'Quote', id: $quoteId, fallbackProperty: 'quoteNumber');
@@ -115,7 +115,7 @@ class SalesOrderInvoicingService {
 	 *
 	 * @throws OutOfBoundsException When there is no such order.
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
+	 * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
 	 */
 	public function findOrder(string $orderId): array {
 		return $this->findRecord(schema: 'OrderPrimitive', id: $orderId, fallbackProperty: 'orderNumber');
@@ -133,7 +133,7 @@ class SalesOrderInvoicingService {
 	 * @throws OutOfBoundsException       When there is no such quote in the administration.
 	 * @throws SalesOrderRefusedException When the quote is not accepted, already ordered or has no lines.
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
+	 * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
 	 */
 	public function orderFromQuote(string $quoteId, string $administrationId): array {
 		$quote = $this->inAdministration(record: $this->findQuote(quoteId: $quoteId), administrationId: $administrationId);
@@ -202,7 +202,7 @@ class SalesOrderInvoicingService {
 	 * @throws OutOfBoundsException       When there is no such order in the administration.
 	 * @throws SalesOrderRefusedException When it is not a confirmed sales order or nothing is left to invoice.
 	 *
-	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
+	 * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
 	 */
 	public function invoiceFromOrder(string $orderId, string $administrationId): array {
 		$order = $this->inAdministration(record: $this->findOrder(orderId: $orderId), administrationId: $administrationId);

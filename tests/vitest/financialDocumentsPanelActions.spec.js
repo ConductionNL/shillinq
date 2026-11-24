@@ -9,7 +9,7 @@
  * acts, and reads again after each success or words the refusal. Methods and
  * computed run against a fake instance; only HTTP is replaced.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 
 import axios from '@nextcloud/axios'

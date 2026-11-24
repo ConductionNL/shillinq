@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use RuntimeException;
 /**
  * Lists the financial documents linked to a host object.
  *
- * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+ * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
 final class FinancialDocumentLeafProvider implements RefIntegrationProvider, FinancialDocumentLeafProviderInterface {
 
@@ -76,7 +76,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string The id.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function getId(): string {
 		return self::LEAF_ID;
@@ -87,7 +87,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string The label.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function getLabel(): string {
 		return 'Financial documents';
@@ -98,7 +98,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string The icon.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function getIcon(): string {
 		return 'FileDocumentMultipleOutline';
@@ -109,7 +109,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string The group.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function getGroup(): string {
 		return 'Finance';
@@ -120,7 +120,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string The app id.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function getRequiredApp(): string {
 		return 'shillinq';
@@ -131,7 +131,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string The storage strategy.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function getStorageStrategy(): string {
 		return 'app-local';
@@ -142,7 +142,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string|null The source.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function getOpenConnectorSource(): ?string {
 		return null;
@@ -153,7 +153,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return bool True.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function isEnabled(): bool {
 		return true;
@@ -164,7 +164,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return string|null The action.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function requiresPermission(): ?string {
 		return null;
@@ -175,7 +175,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return array<string, mixed> The requirements.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function authRequirements(): array {
 		return [];
@@ -189,7 +189,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return array<string, mixed> The `{items, total, nextCursor, acts}` envelope.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002, REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002, REQ-FDO-003)
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
 	 * the panel narrows by kind itself.
@@ -235,7 +235,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws RuntimeException When no readable document with that id stands on this object.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function get(ObjectRef $ref, string $entityId): array {
 		foreach ($this->list(ref: $ref)['items'] as $row) {
@@ -263,7 +263,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws RuntimeException With the HTTP status first when the act is refused; nothing is written.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function create(ObjectRef $ref, array $payload): array {
 		$register = (string) $ref->register;
@@ -295,7 +295,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws RuntimeException With the HTTP status first when the app or the act is refused; nothing is written.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function createAsApp(string $appId, string $register, string $schema, string $objectId, array $payload): array {
 		if ($appId === '') {
@@ -316,7 +316,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws RuntimeException With the HTTP status first when the act is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	private function act(array $host, array $payload, string $appId): array {
 		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
@@ -361,7 +361,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws FinancialDocumentActionRefusedException When no such invoice stands on this object (404).
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
 	private function invoiceOnObject(array $host, array $payload, string $appId): string {
 		$invoiceId = trim((string)($payload['invoiceId'] ?? ''));
@@ -390,7 +390,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws RuntimeException Always.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is IntegrationProvider's.
 	 */
@@ -408,7 +408,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @throws RuntimeException Always.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is IntegrationProvider's.
 	 */
@@ -421,7 +421,7 @@ final class FinancialDocumentLeafProvider implements RefIntegrationProvider, Fin
 	 *
 	 * @return array<string, mixed> The health.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function health(): array {
 		return ['status' => 'ok', 'leaf' => self::LEAF_ID];

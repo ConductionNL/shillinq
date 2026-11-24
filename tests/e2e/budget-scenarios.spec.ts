@@ -68,7 +68,7 @@
  *    cashflow-13wk ships its own `Scenarios` nav leaf, which is why the nav
  *    test below asserts manifest ids instead.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md
  */
 
 import type { Locator, Page } from '@playwright/test'

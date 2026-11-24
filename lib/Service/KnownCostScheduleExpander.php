@@ -78,9 +78,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
  */
 
 declare(strict_types=1);
@@ -104,7 +104,7 @@ use DateTimeImmutable;
  * The signature already matched the interface exactly, as that interface's
  * own docblock states; only the declaration was missing.
  *
- * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
+ * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
  */
 class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	/**
@@ -146,9 +146,9 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	 *         and PHP coerces a canonical numeric string key to int, so `"01".."09"`
 	 *         stay strings while `10`, `11`, `12` are ints.
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $contract is documented
 	 *     above as accepted for the design's declared public surface / call-site

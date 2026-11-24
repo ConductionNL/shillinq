@@ -55,7 +55,7 @@ use Throwable;
 /**
  * Base for the generators that render a statement from StatementCalculator figures.
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  */
 abstract class AbstractStatementReportGenerator extends AbstractDocumentReportGenerator {
 
@@ -73,7 +73,7 @@ abstract class AbstractStatementReportGenerator extends AbstractDocumentReportGe
 	 *
 	 * @return StatementCalculator|null
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	protected function calculator(): ?StatementCalculator {
 		try {
@@ -95,7 +95,7 @@ abstract class AbstractStatementReportGenerator extends AbstractDocumentReportGe
 	 *
 	 * @return array{from: string, to: string}
 	 *
-	 * @spec openspec/changes/reporting-financial-statements
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
 	 */
 	protected function contextRange(array $context): array {
 		$from = $this->str($context, 'from');

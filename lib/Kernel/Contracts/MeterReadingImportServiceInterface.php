@@ -45,7 +45,7 @@ interface MeterReadingImportServiceInterface {
 	 *
 	 * @return array{created:list<string>,refused:list<array{row:int,reason:string}>}
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function import(string $administrationId, array $rows): array;
 }//end interface

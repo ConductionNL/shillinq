@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use RuntimeException;
 /**
  * Builds, downloads and files the supplementary return of a prepared correction.
  *
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
  */
 class VatSuppletieFilingService implements VatSuppletieFilingServiceInterface {
 
@@ -72,7 +72,7 @@ class VatSuppletieFilingService implements VatSuppletieFilingServiceInterface {
 	 *
 	 * @return bool False while only the log adapter is bound.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
 	public function canFile(): bool {
 		return $this->digipoort->isDormant() === false;
@@ -88,7 +88,7 @@ class VatSuppletieFilingService implements VatSuppletieFilingServiceInterface {
 	 *
 	 * @throws RuntimeException When the correction was not prepared.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
 	public function document(array $correction): array {
 		if (($correction['preparedAt'] ?? null) === null || $correction['preparedAt'] === '') {
@@ -136,7 +136,7 @@ class VatSuppletieFilingService implements VatSuppletieFilingServiceInterface {
 	 * @throws SuppletieFilingUnavailableException When no Digipoort connection is bound.
 	 * @throws RuntimeException When the correction is not a prepared draft, or the delivery failed.
 	 *
-	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-2.2
 	 */
 	public function file(array $correction): array {
 		if ((string)($correction['state'] ?? '') !== 'draft') {

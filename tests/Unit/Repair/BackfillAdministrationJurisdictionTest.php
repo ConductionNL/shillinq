@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\Shillinq\Repair\BackfillAdministrationJurisdiction
  * @uses   \OCA\Shillinq\Service\SettingsService
  *
- * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
  */
 final class BackfillAdministrationJurisdictionTest extends TestCase {
 

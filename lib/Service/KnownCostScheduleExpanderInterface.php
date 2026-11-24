@@ -9,7 +9,7 @@
  * `budget-scenarios` (REQ-BSC-006) MUST evaluate a `RECURRING_END`/
  * `RECURRING_AMOUNT_CHANGE` modifier by calling `budget-known-costs`'s own
  * pure `KnownCostScheduleExpander::expand()` — never a second, independent
- * schedule-expansion arithmetic (`openspec/changes/budget-scenarios/
+ * schedule-expansion arithmetic (`openspec/changes/archive/2026-11-24-budget-scenarios/
  * design.md` §6a). That class lives on the sibling branch
  * `feat/budget-known-costs` (PR #967), not on this change's own base
  * (`feat/budget-core-schema`), so it does not exist in this checkout's
@@ -69,7 +69,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
  */
 
 declare(strict_types=1);
@@ -79,7 +79,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Port for `budget-known-costs`'s pure `CashflowRecurring` schedule expander.
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
  */
 interface KnownCostScheduleExpanderInterface {
 	/**
@@ -112,8 +112,8 @@ interface KnownCostScheduleExpanderInterface {
 	 *         (they coerce identically); only code testing `is_string()` on the
 	 *         key is misled.
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
 	 */
 	public function expand(array $recurring, int $fiscalYear, ?array $contract): array;
 }//end interface

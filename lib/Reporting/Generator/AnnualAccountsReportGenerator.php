@@ -273,7 +273,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-cash-flow-statement/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-24-reporting-cash-flow-statement/tasks.md#task-3.2
 	 */
 	private function buildCashFlow(ReportSection $section, array $statement, array $context, string $currency): void {
 		$calculator = $this->resolve(class: CashFlowCalculator::class);

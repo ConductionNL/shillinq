@@ -21,7 +21,7 @@
  * dated between the scenario's dates, left by someone else, would change the
  * outcome; the scenario dates (2026-09) keep that unlikely.
  *
- * @spec openspec/changes/banking-fx-at-booking/specs/banking-fx-at-booking/spec.md
+ * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/specs/banking-fx-at-booking/spec.md
  * @e2e banking-fx-at-booking/requirement-a-foreign-currency-line-is-booked-at-the-rate-of-its-date-req-bfx-001/a-bookkeeper-posts-a-usd-supplier-invoice-on-a-sunday
  * @e2e banking-fx-at-booking/requirement-no-foreign-currency-line-posts-without-a-usable-rate-req-bfx-002/a-gbp-entry-with-a-stale-rate-is-refused
  * @e2e banking-fx-at-booking/requirement-a-rate-typed-on-the-entry-wins-and-is-recorded-as-manual-req-bfx-003/a-bookkeeper-books-at-the-rate-agreed-with-the-bank

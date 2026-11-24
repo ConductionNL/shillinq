@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-collection-outcome-settles-or-keeps-the-invoice-req-sdd-013
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-collection-outcome-settles-or-keeps-the-invoice-req-sdd-013
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use RuntimeException;
 /**
  * Requires and normalises the reason code of a rejected collection.
  *
- * @spec openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-collection-outcome-settles-or-keeps-the-invoice-req-sdd-013
+ * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md#requirement-a-collection-outcome-settles-or-keeps-the-invoice-req-sdd-013
  */
 class RecordDirectDebitRejectAction implements LifecycleActionInterface {
 
@@ -54,7 +54,7 @@ class RecordDirectDebitRejectAction implements LifecycleActionInterface {
 	 *
 	 * @throws RuntimeException When the reason code is missing or malformed.
 	 *
-	 * @spec openspec/changes/receivables-sepa-direct-debit/tasks.md#task-1.4
+	 * @spec openspec/changes/archive/2026-11-24-receivables-sepa-direct-debit/tasks.md#task-1.4
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;

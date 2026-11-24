@@ -21,7 +21,7 @@ import { generateUrl } from '@nextcloud/router'
  *
  * @param {{item?: object}|undefined} scope The action scope.
  * @return {string} The id, or '' when there is none.
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
  */
 export function actionObjectId(scope) {
 	return String(scope?.item?.id || window.location.pathname.split('/').pop() || '')
@@ -33,7 +33,7 @@ export function actionObjectId(scope) {
  * @param {unknown} error The axios error.
  * @param {string} fallback The text when the server gave none.
  * @return {string} The reason.
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md
  */
 export function salesOrderError(error, fallback) {
 	const data = error?.response?.data
@@ -69,7 +69,7 @@ async function runStep(step) {
  *
  * @param {{item?: object}} scope The action scope.
  * @return {Promise<object|null>} The sales order, or null when none was made.
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-an-accepted-quote-becomes-a-sales-order-req-qti-001
  */
 export async function createSalesOrderFromQuote(scope) {
 	const id = actionObjectId(scope)
@@ -89,7 +89,7 @@ export async function createSalesOrderFromQuote(scope) {
  *
  * @param {{item?: object}} scope The action scope.
  * @return {Promise<object|null>} The draft invoice, or null when none was written.
- * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
+ * @spec openspec/changes/archive/2026-11-24-sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-confirmed-sales-order-becomes-a-draft-invoice-req-qti-003
  */
 export async function invoiceSalesOrder(scope) {
 	const id = actionObjectId(scope)

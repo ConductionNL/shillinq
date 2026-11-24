@@ -76,7 +76,7 @@ interface FinancialDocumentAuthoringInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
 	public function createQuote(string $register, string $schema, string $objectId, array $payload, string $appId=''): array;
 
@@ -90,7 +90,7 @@ interface FinancialDocumentAuthoringInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the invoice refuses it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
 	public function creditInvoice(string $invoiceId, string $appId=''): array;
 
@@ -110,7 +110,7 @@ interface FinancialDocumentAuthoringInterface {
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or finance refuses it.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
 	 */
 	public function raisePayout(string $register, string $schema, string $objectId, array $payload, string $appId=''): array;
 }//end interface

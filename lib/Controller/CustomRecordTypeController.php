@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -68,7 +68,7 @@ class CustomRecordTypeController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
+	 * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-shown-record-types-have-list-and-detail-pages-req-crt-002
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -80,7 +80,7 @@ class CustomRecordTypeController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
+	 * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
 	 */
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
 	public function available(): JSONResponse {
@@ -97,7 +97,7 @@ class CustomRecordTypeController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
+	 * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-only-shown-record-types-can-be-opened-req-crt-003
 	 */
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
 	public function update(): JSONResponse {
@@ -124,7 +124,7 @@ class CustomRecordTypeController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
+	 * @spec openspec/changes/archive/2026-11-24-platform-custom-record-types/specs/app-administration/spec.md#requirement-an-administrator-chooses-which-own-record-types-show-req-crt-001
 	 */
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
 	public function toggle(): JSONResponse {

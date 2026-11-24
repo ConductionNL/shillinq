@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Rates a reading against the rate plan of its own administration.
  *
- * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
  */
 class MeterReadingRating implements MeterReadingRatingInterface {
 
@@ -63,7 +63,7 @@ class MeterReadingRating implements MeterReadingRatingInterface {
 	 *
 	 * @throws DomainException When the reading's plan is not found in its administration.
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function rate(array $reading): array {
 		$plan = $this->planFor(reading: $reading);
@@ -85,7 +85,7 @@ class MeterReadingRating implements MeterReadingRatingInterface {
 	 *
 	 * @return array<string,mixed>|null The plan, or null.
 	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function planFor(array $reading): ?array {
 		$planId = (string)($reading['ratePlanId'] ?? '');

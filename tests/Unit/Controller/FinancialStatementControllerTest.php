@@ -10,7 +10,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-financial-statements
+ * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -160,7 +160,7 @@ class FinancialStatementControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	public function testTheLinesBehindAnAccountFigure(): void {
 		$statement = $this->controller(params: ['from' => '2026-01-01', 'to' => '2026-09-30', 'compare' => 'previous-year'])->profitAndLoss()->getData();
@@ -179,7 +179,7 @@ class FinancialStatementControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-financial-statements/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-reporting-financial-statements/tasks.md#task-2.3
 	 */
 	public function testAccountLinesRefusals(): void {
 		$untouched = $this->createMock(originalClassName: StatementCalculator::class);

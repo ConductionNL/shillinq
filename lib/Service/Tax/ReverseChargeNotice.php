@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service\Tax;
 /**
  * The reverse-charge state of one sales invoice.
  *
- * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+ * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
  */
 class ReverseChargeNotice {
 
@@ -72,7 +72,7 @@ class ReverseChargeNotice {
 	 * @return array{category: string, buyerVatNumber: string, notice: string, noticeNl: string,
 	 *               exemptionReasonCode: string, exemptionReason: string}|null
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
 	 */
 	public function forInvoice(array $invoice, array $customer = []): ?array {
 		$category = $this->categoryOf(invoice: $invoice);
@@ -99,7 +99,7 @@ class ReverseChargeNotice {
 	 *
 	 * @return string|null K, AE or null.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
 	 */
 	public function categoryOf(array $invoice): ?string {
 		$found = [];
@@ -132,7 +132,7 @@ class ReverseChargeNotice {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
 	 */
 	public function lacksBuyerVatNumber(array $invoice, array $customer = []): bool {
 		return $this->categoryOf(invoice: $invoice) !== null
@@ -148,7 +148,7 @@ class ReverseChargeNotice {
 	 *
 	 * @return string The number, '' when none is known.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
 	 */
 	public function buyerVatNumber(array $invoice, array $customer = []): string {
 		foreach ([($invoice['buyerVatId'] ?? null), ($customer['vatId'] ?? null), ($customer['vatNumber'] ?? null)] as $candidate) {

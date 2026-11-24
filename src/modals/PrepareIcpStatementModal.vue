@@ -16,7 +16,7 @@
  ICP page (src/utils/icpStatementActions.js), so it lives in its own file
  (hydra gate-13).
 
- @spec openspec/changes/tax-icp-and-reverse-charge/specs/bookkeeping-icp-opgaaf/spec.md
+ @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/specs/bookkeeping-icp-opgaaf/spec.md
 -->
 
 <template>
@@ -162,7 +162,7 @@ export default {
 		 * The period kinds.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		kindOptions() {
 			return [
@@ -175,7 +175,7 @@ export default {
 		 * The label of the period number field.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		numberLabel() {
 			return this.kind === 'month'
@@ -187,7 +187,7 @@ export default {
 		 * The chosen period, or '' when it is incomplete.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		period() {
 			return icpPeriod(this.kind, this.year, this.number)
@@ -197,7 +197,7 @@ export default {
 		 * Whether the form is complete.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		canSubmit() {
 			return this.administrationId !== '' && this.period !== ''
@@ -207,7 +207,7 @@ export default {
 		 * The prepared lines.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		lines() {
 			return Array.isArray(this.result?.statement?.lines)
@@ -219,7 +219,7 @@ export default {
 		 * The comparison with box 3b, in words.
 		 *
 		 * @return {{kind: string, text: string}}
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		reconciliation() {
 			return reconciliationMessage(this.result?.reconciliation)
@@ -229,7 +229,7 @@ export default {
 	/**
 	 * Load the active administration.
 	 *
-	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 	 */
 	async mounted() {
 		try {
@@ -255,7 +255,7 @@ export default {
 		 *
 		 * @param {string} code L, S or T.
 		 * @return {string}
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		supplyTypeLabel(code) {
 			const labels = {
@@ -269,7 +269,7 @@ export default {
 		/**
 		 * Put the period back on the last finished one of the chosen kind.
 		 *
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		resetPeriod() {
 			const last = lastFinishedIcpPeriod(this.kind)
@@ -280,7 +280,7 @@ export default {
 		/**
 		 * Prepare the statement.
 		 *
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		async submit() {
 			this.error = ''
@@ -300,7 +300,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#task-2.3
 		 */
 		close() {
 			this.$emit('close', this.result)

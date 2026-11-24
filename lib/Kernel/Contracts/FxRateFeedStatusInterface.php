@@ -48,7 +48,7 @@ interface FxRateFeedStatusInterface {
 	 *
 	 * @return array{fromFeed:bool,statusLine:string,newest:array<int,array{transactionCurrency:string,baseCurrency:string,newestDate:string}>,newestLine:string}
 	 *
-	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-24-banking-fx-at-booking/tasks.md#task-3.1
 	 */
 	public function status(): array;
 }//end interface

@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ use DomainException;
 /**
  * Builds the JournalEntry and CustomerMaster payloads of a posted import.
  *
- * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
  */
 final class ImportPostingPayloads {
 
@@ -59,7 +59,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @throws DomainException When a line's account has no mapping.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function openingEntry(array $batch, array $journal): ?array {
 		$lines = $this->openingLines(journal: $journal);
@@ -88,7 +88,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @throws DomainException When a line's account has no mapping.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function openingLines(array $journal): array {
 		$lines = [];
@@ -116,7 +116,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @return string The source system.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function importSource(array $batch): string {
 		$source = trim((string)($batch['sourceSystem'] ?? ''));
@@ -135,7 +135,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @return array<string,mixed> The JournalEntry payload in state draft.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function reversingEntry(array $batch, array $opening): array {
 		$lines = [];
@@ -165,7 +165,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @return array<string,mixed>|null The payload, or null when the relation is not a customer or has no email.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function customer(array $relation, string $administrationId): ?array {
 		$email = trim((string)($relation['email'] ?? ''));
@@ -197,7 +197,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @return string The customer code.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function customerCode(array $relation, string $name, string $email): string {
 		$code = trim((string)($relation['code'] ?? ''));
@@ -216,7 +216,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @return array<string,mixed> The payload.
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function withOptionalCustomerFields(array $customer, array $relation): array {
 		$optional = ['kvkNumber' => 'kvk', 'vatId' => 'vat', 'telephone' => 'phone'];
@@ -237,7 +237,7 @@ final class ImportPostingPayloads {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function isCustomer(array $relation): bool {
 		return in_array(strtoupper(trim((string)($relation['type'] ?? ''))), self::CUSTOMER_TYPES, true);

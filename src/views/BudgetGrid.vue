@@ -26,7 +26,7 @@
  REQ-PBE-002), and MultiYearBudget sets the years side by side with Start
  next year (REQ-PBE-003).
 
- @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md
+ @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -334,7 +334,7 @@ export default {
 		 * (design.md §1c, REQ-BGV-002).
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 		 */
 		visibleRows() {
 			return flattenVisibleRows(this.rows, this.expandedIds)
@@ -342,7 +342,7 @@ export default {
 	},
 
 	/**
-	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+	 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 	 */
 	async mounted() {
 		await this.resolveAdministration()
@@ -357,7 +357,7 @@ export default {
 		 * add its own administration selector (design.md §1a).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 		 */
 		async resolveAdministration() {
 			try {
@@ -373,8 +373,8 @@ export default {
 		 * for the current administration/range/granularity in ONE request.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
-		 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+		 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 		 */
 		async loadGrid() {
 			if (!this.administrationId) {
@@ -414,7 +414,7 @@ export default {
 		 * failure leaves only "Basis"; the grid itself still loads.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		async loadScenarios() {
 			if (!this.administrationId) {
@@ -443,7 +443,7 @@ export default {
 		 * Show a loaded grid: its columns and rows, every row collapsed and no chart open.
 		 *
 		 * @param {object} data The budget-grid response body.
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		applyGrid(data) {
 			this.activeScenario = data?.scenario || null
@@ -461,7 +461,7 @@ export default {
 		 *
 		 * @param {object} error The request error.
 		 * @return {string}
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		gridLoadError(error) {
 			const status = error?.response?.status
@@ -480,7 +480,7 @@ export default {
 		/**
 		 * Empty the grid after a failed load.
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 		 */
 		clearGrid() {
 			this.columns = []
@@ -495,7 +495,7 @@ export default {
 		 *
 		 * @param {string} id The row id to toggle.
 		 * @return {void}
-		 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 		 */
 		toggleRow(id) {
 			const next = new Set(this.expandedIds)

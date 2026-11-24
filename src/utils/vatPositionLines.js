@@ -9,7 +9,7 @@
  *
  * @param {Array<{taxableAmount: number, vatAmount: number}>} lines The lines.
  * @return {{base: number, vat: number}} The totals in euros.
- * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-24-tax-vat-position-and-suppletie/tasks.md#task-1.3
  */
 export function positionLineTotals(lines) {
 	let base = 0

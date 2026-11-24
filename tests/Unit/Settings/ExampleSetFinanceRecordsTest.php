@@ -56,7 +56,7 @@ class ExampleSetFinanceRecordsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 * @spec openspec/changes/archive/2026-11-24-financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function testTheSetLetsDossiqRaisePaymentRequests(): void {
 		$fragment = json_decode((string)file_get_contents(self::FRAGMENT), true);
