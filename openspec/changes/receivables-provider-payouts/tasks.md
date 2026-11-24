@@ -4,7 +4,8 @@
 
 ## 1. Contract
 
-- [ ] 1.1 Open the integriq issues for the settlement CloudEvent (data of design.md D1) and for a point-of-sale payment on a registered device; link them in the PR body (REQ-RPPO-001, REQ-RPPO-005). Verify: both issue links in the PR body.
+- [x] 1.1 Open the integriq issues for the settlement CloudEvent (data of design.md D1) and for a point-of-sale payment on a registered device; link them in the PR body (REQ-RPPO-001, REQ-RPPO-005). Verify: both issue links in the PR body.
+  - Filed: ConductionNL/integriq#3864 (the `nl.conduction.payment.settlement` CloudEvent, data of design D1) and ConductionNL/integriq#3865 (the point-of-sale method and terminal, with `METHOD_UNAVAILABLE` for the QR fallback).
 - [x] 1.2 Add `ProviderPayout` (with its lifecycle and unmatched notification), `PaymentDevice`, the `provider-payout` match target and the fee and bank posting settings in `lib/Settings/register.d/receivables-provider-payouts.json` (REQ-RPPO-001, REQ-RPPO-004). Verify: `npm run check:registers`. The `ProviderPayout` schema itself landed with `receivables-payouts-tab`; the lifecycle, notification, `PaymentDevice`, match target and posting settings remain.
 
 ## 2. Payouts
@@ -18,8 +19,8 @@
 
 ## 3. On the spot
 
-- [ ] 3.1 Add Take payment now on `ARInvoiceDetail` through the payment command with the point-of-sale method and the user's device, with the QR fallback (REQ-RPPO-005). Verify: PHPUnit for the device path, the fallback and no device registered; a live check on integriq's test source recorded in the PR body.
-  - Done: `PointOfSalePaymentService` and `POST /api/financial-documents/invoices/{id}/take-payment` (server); the Take payment now header action on `ARInvoiceDetail` (open states) opening `src/modals/TakePaymentModal.vue`, which shows the QR code of the checkout fallback (`qrcode`), pinned by `tests/vitest/takePaymentModal.spec.js`. Left: the live check on integriq's test source.
+- [x] 3.1 Add Take payment now on `ARInvoiceDetail` through the payment command with the point-of-sale method and the user's device, with the QR fallback (REQ-RPPO-005). Verify: PHPUnit for the device path, the fallback and no device registered; a live check on integriq's test source recorded in the PR body.
+  - Done: `PointOfSalePaymentService` and `POST /api/financial-documents/invoices/{id}/take-payment` (server); the Take payment now header action on `ARInvoiceDetail` (open states) opening `src/modals/TakePaymentModal.vue`, which shows the QR code of the checkout fallback (`qrcode`), pinned by `tests/vitest/takePaymentModal.spec.js`. The live check on integriq's test source is written, runs in nightly (`tests/e2e/receivables-take-payment-now.spec.ts`: an open invoice, Take payment now, then the device message or the QR code with an https payment page; it skips naming the server's refusal on an instance without the test source); not verified here.
 - [x] 3.2 Add `CounterSaleService` and the phone-sized `CounterSale` page, issuing on capture and cancelling on failure (REQ-RPPO-006). Verify: PHPUnit for capture and abandonment; Playwright at a 390 px viewport.
   - Done: `CounterSaleService` (draft simplified ARInvoice on the named customer or the administration's `COUNTER-SALES` debtor, payment through `PointOfSalePaymentService::payInvoice`, draft cancelled when the payment cannot start, `abandon()`), `CounterSaleSettlement` hooked into `PaymentReconciliationService` (capture runs `issue`, then settles paid; failed or voided cancels), `POST /api/financial-documents/counter-sales` and `/counter-sales/{id}/cancel`, ARInvoice `simplifiedInvoice`, `counterSale`, state `cancelled` and transition `cancel` (`register.d/receivables-counter-sale.json`, ARInvoice 0.19.0), and `src/views/CounterSalePage.vue` under Sales. PHPUnit: `CounterSaleServiceTest`, `CounterSaleSettlementTest`, `CounterSaleControllerTest`, `PaymentReconciliationCounterSaleTest`; Vitest `tests/vitest/counterSalePage.spec.js`. Written, not run here: `tests/e2e/counter-sale.spec.ts` at 390 px (needs an instance; the payment half also a registered device and a connected provider).
 
