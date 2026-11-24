@@ -33,7 +33,7 @@ final class McpResult {
 	/**
 	 * A structured error.
 	 *
-	 * @param string $code    A stable code: invalid_arguments, unauthorised, not_found, conflict, failed, unknown_tool.
+	 * @param string $code    A stable code: invalid_arguments, unauthorised, forbidden, not_found, conflict, failed, unknown_tool.
 	 * @param string $message A sentence for the model.
 	 *
 	 * @return array{isError: true, error: string, message: string}
