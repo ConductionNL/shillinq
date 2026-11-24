@@ -104,7 +104,7 @@ Every path that creates a `GLLine` must set `administrationId` from the parent
 
 ## Phase 6 — e2e
 
-- [ ] **Not applicable as written.** `/api/analytics/spend` has NO frontend
+- [x] **Not applicable as written.** `/api/analytics/spend` has NO frontend
       consumer: `grep -rn "analytics/spend" src/` returns nothing and no
       `src/manifest.d/` page declares it. The four spend views are an API-only
       surface, so there is no UI to cover and no `data-testid` to locate. Both
@@ -113,6 +113,7 @@ Every path that creates a `GLLine` must set `administrationId` from the parent
       (not run: 9 Oct 2026, the UI consumer has landed with
       spend-analytics-ui's SpendAnalyticsPanel; the Playwright run needs the
       live instance.)
+      - **Written, runs in nightly (24 Nov 2026):** the UI consumer is covered by `tests/e2e/spend-analytics.spec.ts` (the page mounts against the real deployment; the gate-shut and gate-open states of REQ-GLS-003 through a stubbed endpoint), in the CI Playwright testDir and matching no testIgnore. The two scoping scenarios keep their `@e2e exclude` with the rewritten reason (no seeded two-administration fixture) and are enforced by `SpendAnalyticsServiceTest`. Not verified here, no live instance in the build sandbox.
 
 ## Known gaps
 

@@ -53,7 +53,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+ * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
  */
 
 declare(strict_types=1);
@@ -77,7 +77,7 @@ use Psr\Log\LoggerInterface;
  * Repair step that backfills `GLLine.administrationId` from the parent
  * `GLTransaction` and opens the SpendAnalytics scoping gate on proof.
  *
- * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+ * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
  */
 class BackfillGlLineAdministration implements IRepairStep {
 	use ReadsSourceRowsInBatches;
@@ -92,7 +92,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function __construct(
 		private readonly RegisterLocationInterface $registerLocation,
@@ -108,7 +108,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 *
 	 * @return string The display name.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function getName(): string {
 		return 'Shillinq: backfill GLLine.administrationId from the parent GLTransaction';
@@ -121,7 +121,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function run(IOutput $output): void {
 		// FAIL-CLOSED FIRST. Every early return below — and every crash — now
