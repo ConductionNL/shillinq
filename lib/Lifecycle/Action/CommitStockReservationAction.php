@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Commits a StockMove's stock reservation when the move transitions.
+ * Commits a StockMove's stock when the move transitions.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle\Action
@@ -22,55 +22,23 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
-use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
-use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Lifecycle\StockReservationGuard;
-use RuntimeException;
-
 /**
- * The lifecycle action the StockMove transition declares by this class name
- * (a kebab-case name such as `commit-stock-reservation` never resolves: the
- * server container reaches shillinq's container only for an `OCA\Shillinq\` id).
- * It runs StockReservationGuard::commitReservation() and refuses the transition,
- * by throwing, when that does not succeed, so stock never silently stays as
- * it was.
+ * Posting a StockMove takes its quantity from the source and adds it to the destination, releasing what the move reserved.
  *
  * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  */
-final class CommitStockReservationAction implements LifecycleActionInterface {
+final class CommitStockReservationAction extends StockReservationAction {
 
 	/**
-	 * Constructor.
+	 * Run StockReservationGuard::commitReservation() for the move.
 	 *
-	 * @param StockReservationGuard $reservations The InventoryStock reservation arithmetic.
-	 */
-	public function __construct(
-		private readonly StockReservationGuard $reservations,
-	) {
-	}//end __construct()
-
-	/**
-	 * Run the reservation step for the move being transitioned.
+	 * @param array<string,mixed> $move The StockMove.
 	 *
-	 * @param LifecycleActionContext $context The transition: the move is its objectData.
-	 *
-	 * @return array<string,mixed> The move, unchanged.
-	 *
-	 * @throws RuntimeException When the stock could not be updated.
+	 * @return bool True when the stock was updated.
 	 *
 	 * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
 	 */
-	public function execute(LifecycleActionContext $context): array {
-		$move = $context->objectData;
-		if ($this->reservations->commitReservation(move: $move) === false) {
-			throw new RuntimeException(
-				sprintf(
-					'The stock for move %s could not be updated: the location has no stock row for the item, its on-hand does not cover the move, or another operator changed it. Try again.',
-					(string)($move['movementNumber'] ?? '')
-				)
-			);
-		}
-
-		return $move;
-	}//end execute()
+	protected function applyTo(array $move): bool {
+		return $this->reservations->commitReservation(move: $move);
+	}//end applyTo()
 }//end class

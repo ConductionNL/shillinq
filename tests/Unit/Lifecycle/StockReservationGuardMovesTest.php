@@ -210,9 +210,9 @@ final class StockReservationGuardMovesTest extends TestCase {
 
 		$this->assertCount(1, $this->updates);
 		$this->assertSame('st-a', $this->updates[0][0]);
-		$this->assertSame(6.75, $this->updates[0][1]['quantityReserved']);
+		$this->assertSame(expected: 6.75, actual: $this->updates[0][1]['quantityReserved']);
 		$this->assertSame(4, $this->updates[0][1]['version']);
-		$this->assertSame(10, $this->updates[0][1]['quantityOnHand'], 'on hand is untouched by a reservation');
+		$this->assertSame(expected: 10, actual: $this->updates[0][1]['quantityOnHand'], message: 'on hand is untouched by a reservation');
 	}//end testReservingAddsToTheReservation()
 
 	/**
@@ -288,11 +288,11 @@ final class StockReservationGuardMovesTest extends TestCase {
 		$this->assertTrue($this->guard()->commitReservation(self::move(4, 'loc-a', 'loc-b')));
 
 		$this->assertSame(['st-a', 'st-b'], array_column($this->updates, 0));
-		$this->assertSame(6.0, $this->updates[0][1]['quantityOnHand']);
-		$this->assertSame(0.0, $this->updates[0][1]['quantityReserved']);
+		$this->assertSame(expected: 6.0, actual: $this->updates[0][1]['quantityOnHand']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[0][1]['quantityReserved']);
 		$this->assertSame(4, $this->updates[0][1]['version']);
-		$this->assertSame(5.5, $this->updates[1][1]['quantityOnHand']);
-		$this->assertSame(date('Y-m-d'), $this->updates[1][1]['lastRestockDate']);
+		$this->assertSame(expected: 5.5, actual: $this->updates[1][1]['quantityOnHand']);
+		$this->assertSame(expected: date('Y-m-d'), actual: $this->updates[1][1]['lastRestockDate']);
 		$this->assertSame(4, $this->updates[1][1]['version']);
 	}//end testCommittingATransferMovesTheStock()
 
@@ -327,13 +327,16 @@ final class StockReservationGuardMovesTest extends TestCase {
 	 * @return void
 	 */
 	public function testACommitTheSourceCannotCoverIsDenied(): void {
-		$this->stockAt('st-a', 'loc-a', 3, 3);
+		$this->stockAt(id: 'st-a', location: 'loc-a', quantity: 3, reserved: 3);
 		$this->logger->expects($this->once())
 			->method('info')
 			->with('StockReservationGuard: commit denied — source on-hand does not cover the move', ['movementNumber' => 'SM-1', 'sourceLocation' => 'loc-a']);
 		$guard = $this->guard();
 
-		$this->assertFalse($guard->commitReservation(self::move(4, 'loc-a', 'loc-b')), 'on hand 3 cannot cover 4');
+		$this->assertFalse(
+			condition: $guard->commitReservation(move: self::move(quantity: 4, source: 'loc-a', destination: 'loc-b')),
+			message: 'on hand 3 cannot cover 4'
+		);
 		$this->assertFalse($guard->commitReservation(self::move(4, 'loc-x', 'loc-b')), 'no source row');
 		$this->assertSame([], $this->updates);
 		$this->assertSame([], $this->created);
@@ -349,16 +352,16 @@ final class StockReservationGuardMovesTest extends TestCase {
 	 * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
 	 */
 	public function testAnUnreservedIssueTakesFromOnHand(): void {
-		$this->stockAt('st-a', 'loc-a', 10);
-		$this->stockAt('st-b', 'loc-b', 10, 1);
+		$this->stockAt(id: 'st-a', location: 'loc-a', quantity: 10);
+		$this->stockAt(id: 'st-b', location: 'loc-b', quantity: 10, reserved: 1);
 
-		$this->assertTrue($this->guard()->commitReservation(self::move(3, 'loc-a')));
-		$this->assertTrue($this->guard()->commitReservation(self::move(3, 'loc-b')));
+		$this->assertTrue(condition: $this->guard()->commitReservation(move: self::move(quantity: 3, source: 'loc-a')));
+		$this->assertTrue(condition: $this->guard()->commitReservation(move: self::move(quantity: 3, source: 'loc-b')));
 
-		$this->assertSame(7.0, $this->updates[0][1]['quantityOnHand']);
-		$this->assertSame(0.0, $this->updates[0][1]['quantityReserved']);
-		$this->assertSame(7.0, $this->updates[1][1]['quantityOnHand']);
-		$this->assertSame(0.0, $this->updates[1][1]['quantityReserved']);
+		$this->assertSame(expected: 7.0, actual: $this->updates[0][1]['quantityOnHand']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[0][1]['quantityReserved']);
+		$this->assertSame(expected: 7.0, actual: $this->updates[1][1]['quantityOnHand']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[1][1]['quantityReserved']);
 	}//end testAnUnreservedIssueTakesFromOnHand()
 
 	/**
@@ -370,7 +373,7 @@ final class StockReservationGuardMovesTest extends TestCase {
 		$this->stockAt('st-a', 'loc-a', 10, 2);
 
 		$this->assertTrue($this->guard()->releaseReservation(self::move(5)));
-		$this->assertSame(0.0, $this->updates[0][1]['quantityReserved']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[0][1]['quantityReserved']);
 		$this->assertTrue($this->guard()->releaseReservation(self::move(1, 'loc-x')), 'no row to release from');
 		$this->assertCount(1, $this->updates);
 	}//end testReleasingNeverGoesBelowZero()

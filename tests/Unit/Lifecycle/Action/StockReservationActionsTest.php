@@ -75,7 +75,7 @@ final class StockReservationActionsTest extends TestCase {
 	 */
 	public function testCancellingReleasesTheReservation(): void {
 		$guard = $this->createMock(originalClassName: StockReservationGuard::class);
-		$guard->expects(self::exactly(2))->method('releaseReservation')->with(self::MOVE)->willReturnOnConsecutiveCalls(true, false);
+		$guard->expects(self::exactly(count: 2))->method('releaseReservation')->with(self::MOVE)->willReturnOnConsecutiveCalls(true, false);
 		$action = new ReleaseStockReservationAction(reservations: $guard);
 
 		self::assertSame(expected: self::MOVE, actual: $action->execute(context: $this->context(action: 'cancel')));
