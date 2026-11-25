@@ -108,6 +108,58 @@ final class AppHostRegistrationGoldenTest extends TestCase {
 	}//end testTheWiringMatchesTheGolden()
 
 	/**
+	 * Against an OpenRegister whose generic settings classes take value objects,
+	 * the admin form and its section are built from them, not from the named
+	 * arguments that OpenRegister no longer accepts.
+	 *
+	 * @return void
+	 */
+	public function testTheSettingsAreBuiltFromValueObjectsWhenOpenRegisterHasThem(): void {
+		foreach (['GenericAdminSettings', 'GenericSettingsSection', 'SettingsPlacement', 'AdminFormServices', 'SectionAppearance'] as $short) {
+			$this->declareRecordingDouble(class: 'OCA\\OpenRegister\\AppHost\\Settings\\' . $short);
+		}
+
+		$registered = [];
+		$context    = $this->createMock(IRegistrationContext::class);
+		$context->method('registerService')->willReturnCallback(
+			static function (string $name, callable $factory) use (&$registered): void {
+				$registered[$name] = $factory;
+			}
+		);
+
+		(new AppHostRegistration())->register(context: $context);
+		OpenRegisterAutoloader::unregister();
+
+		$form    = $this->describe(value: $registered['OCA\\Shillinq\\Settings\\AdminSettings']($this->container()));
+		$section = $this->describe(value: $registered['OCA\\Shillinq\\Sections\\SettingsSection']($this->container()));
+
+		$placement = 'OCA\\OpenRegister\\AppHost\\Settings\\SettingsPlacement';
+		self::assertSame(
+			[
+				['class' => $placement, 'args' => ['appId' => 'shillinq', 'sectionId' => 'shillinq', 'priority' => 10]],
+				[
+					'class' => 'OCA\\OpenRegister\\AppHost\\Settings\\AdminFormServices',
+					'args'  => [
+						'appManager'   => 'get:OCP\\App\\IAppManager',
+						'initialState' => 'get:OCP\\AppFramework\\Services\\IInitialState',
+						'appConfig'    => 'get:OCP\\IAppConfig',
+					],
+				],
+			],
+			$form['args']
+		);
+		self::assertSame(
+			[
+				['class' => $placement, 'args' => ['appId' => 'shillinq', 'sectionId' => 'shillinq', 'priority' => 75]],
+				['class' => 'OCA\\OpenRegister\\AppHost\\Settings\\SectionAppearance', 'args' => ['name' => 'Shillinq', 'iconFile' => 'app-dark.svg']],
+				'get:OCP\\IURLGenerator',
+			],
+			$section['args']
+		);
+
+	}//end testTheSettingsAreBuiltFromValueObjectsWhenOpenRegisterHasThem()
+
+	/**
 	 * A container whose every entry is a marker naming the id it was asked for.
 	 *
 	 * @return ContainerInterface The container.

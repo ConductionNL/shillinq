@@ -151,6 +151,9 @@
                 <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericMetricsController"/>
                 <referencedClass name="OCA\OpenRegister\AppHost\Settings\GenericAdminSettings"/>
                 <referencedClass name="OCA\OpenRegister\AppHost\Settings\GenericSettingsSection"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Settings\SettingsPlacement"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Settings\AdminFormServices"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Settings\SectionAppearance"/>
                 <!-- Decidesk cross-app dep (decision module) -->
                 <referencedClass name="OCA\Decidesk\Event\DecisionConcludedEvent"/>
                 <referencedClass name="OCA\Decidesk\Event\DecisionRequestedEvent"/>
