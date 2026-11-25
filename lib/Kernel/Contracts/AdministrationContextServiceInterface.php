@@ -149,7 +149,7 @@ interface AdministrationContextServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
 	 */
 	public function rememberActiveAdministration(string $administrationId): void;
 }//end interface

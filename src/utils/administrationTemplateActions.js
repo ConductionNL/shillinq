@@ -18,7 +18,7 @@ import SaveAdministrationTemplateModal from '../modals/SaveAdministrationTemplat
  * @param {string} administrationId The administration.
  * @param {string} name The template's name.
  * @return {Promise<object>} The saved template.
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
  */
 export async function saveAdministrationAsTemplate(administrationId, name) {
 	const response = await axios.post(
@@ -33,7 +33,7 @@ export async function saveAdministrationAsTemplate(administrationId, name) {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {Promise<unknown>|undefined} The dialog's close payload.
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
  */
 export function openSaveAdministrationTemplate(scope) {
 	const id = scope?.item?.id || window.location.pathname.split('/').pop() || ''

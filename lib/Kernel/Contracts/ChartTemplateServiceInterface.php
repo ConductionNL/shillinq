@@ -51,7 +51,7 @@ interface ChartTemplateServiceInterface {
 	 *
 	 * @return array<int, array{id: string, name: string, version: int, accounts: int, dimensions: int}>
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function activeTemplates(): array;
 
@@ -65,7 +65,7 @@ interface ChartTemplateServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the name or administration is empty.
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
 	 */
 	public function saveAsTemplate(string $administrationId, string $name): array;
 
@@ -80,7 +80,7 @@ interface ChartTemplateServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the template does not exist or the administration is empty.
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function seedFromTemplate(string $templateId, string $administrationId): array;
 
@@ -94,7 +94,7 @@ interface ChartTemplateServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the template does not exist.
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-followers-receive-template-changes-req-lma-005
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-followers-receive-template-changes-req-lma-005
 	 */
 	public function syncFollowers(string $templateId): array;
 }//end interface

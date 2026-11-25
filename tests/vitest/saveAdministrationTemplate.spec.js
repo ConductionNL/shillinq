@@ -10,7 +10,7 @@
  * the template endpoint, refusing an empty name and showing the server's
  * refusal as it words it.
  *
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
  * @license EUPL-1.2
  * @copyright 2026 Conduction B.V.
  */

@@ -14,7 +14,7 @@
  (src/utils/administrationTemplateActions.js) through spawnDialog. Its own
  file for hydra gate-13.
 
- @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
+ @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
 -->
 
 <template>
@@ -100,7 +100,7 @@ export default {
 		/**
 		 * Save the template and close with it.
 		 *
-		 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
+		 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
 		 */
 		async submit() {
 			this.error = ''

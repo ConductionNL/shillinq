@@ -917,7 +917,7 @@ class SettingsServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function testAnOfficeVariantSeedsFromThatTemplate(): void {
 		$this->appManager->method('isInstalled')->willReturn(true);
@@ -942,7 +942,7 @@ class SettingsServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function testAMissingOfficeTemplateFails(): void {
 		$this->appManager->method('isInstalled')->willReturn(true);
@@ -961,7 +961,7 @@ class SettingsServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function testAFailingOfficeSeedIsLoggedAndReported(): void {
 		$this->appManager->method('isInstalled')->willReturn(true);
@@ -981,7 +981,7 @@ class SettingsServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function testAnOfficeVariantWithoutAdministrationIsRefused(): void {
 		$this->appManager->method('isInstalled')->willReturn(true);
@@ -998,7 +998,7 @@ class SettingsServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function testTheTemplateStepListsShippedThenOfficeTemplates(): void {
 		$this->appManager->method('isInstalled')->willReturn(true);
@@ -1026,7 +1026,7 @@ class SettingsServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function testUnreadableOfficeTemplatesLeaveTheShippedVariants(): void {
 		$this->appManager->method('isInstalled')->willReturn(true);
@@ -1044,7 +1044,7 @@ class SettingsServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function testWithoutOpenRegisterOnlyShippedVariantsAreOffered(): void {
 		$this->appManager->method('isInstalled')->willReturn(false);

@@ -15,7 +15,7 @@
  *
  * Usage: node scripts/generate-administration-scoped-pages.js
  *
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-lists-show-the-active-administration-only-req-lma-002
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-lists-show-the-active-administration-only-req-lma-002
  */
 
 const fs = require('fs')

@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md
  */
 
 declare(strict_types=1);
@@ -43,7 +43,7 @@ use Throwable;
  * Office templates of a chart of accounts. Every administration-scoped call
  * answers a masked 404 to a user without access (ADR-005).
  *
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md
  */
 class AdministrationTemplateController extends Controller {
 
@@ -69,7 +69,7 @@ class AdministrationTemplateController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -92,7 +92,7 @@ class AdministrationTemplateController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-an-office-saves-an-administration-as-a-template-req-lma-003
 	 */
 	#[NoAdminRequired]
 	public function saveAs(string $id): JSONResponse {
@@ -120,7 +120,7 @@ class AdministrationTemplateController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	#[NoAdminRequired]
 	public function seed(string $id): JSONResponse {
