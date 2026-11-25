@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use DateTimeImmutable;
 use OCA\Shillinq\Service\FinancialDashboardService;
 use OCA\Shillinq\Service\FinancialSeriesCalculator;
+use OCA\Shillinq\Service\HumaniqHoursReader;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -93,14 +94,25 @@ final class FinancialDashboardServiceTest extends TestCase {
 	];
 
 	/**
-	 * UrenRegistratie fixture: April 30h billable / 10h non-billable.
+	 * Humaniq TimeEntry fixture, as the reader answers: April 30h billable /
+	 * 10h non-billable, plus a rejected entry and one without hours that must
+	 * not count.
 	 *
-	 * @var array<int,array<string,mixed>>
+	 * @var array<string,array<string,mixed>>
 	 */
 	private const HOUR_ENTRIES = [
-		['date' => '2026-04-02', 'hours' => 30, 'recognisedRate' => 95],
-		['date' => '2026-04-03', 'hours' => 10],
+		'te-1' => ['uuid' => 'te-1', 'date' => '2026-04-02', 'hours' => 30.0, 'billable' => true, 'approvalState' => 'approved'],
+		'te-2' => ['uuid' => 'te-2', 'date' => '2026-04-03', 'hours' => 10.0, 'billable' => false, 'approvalState' => 'submitted'],
+		'te-3' => ['uuid' => 'te-3', 'date' => '2026-04-04', 'hours' => 50.0, 'billable' => true, 'approvalState' => 'rejected'],
+		'te-4' => ['uuid' => 'te-4', 'date' => '2026-04-05', 'hours' => null, 'billable' => true, 'approvalState' => 'approved'],
 	];
+
+	/**
+	 * The periods the hours reader was asked for.
+	 *
+	 * @var array<int,array{0:string,1:string}>
+	 */
+	private array $hourReads = [];
 
 	/**
 	 * Mock ContainerInterface.
@@ -141,11 +153,21 @@ final class FinancialDashboardServiceTest extends TestCase {
 	 * Build the service wired to an ObjectService stub.
 	 *
 	 * @param object $objectService The ObjectService stub.
+	 * @param array<string,array<string,mixed>>|null $hourEntries What humaniq answers, null when it does not.
 	 *
 	 * @return FinancialDashboardService
 	 */
-	private function buildService(object $objectService): FinancialDashboardService {
-		$this->container->method('get')->willReturn($objectService);
+	private function buildService(object $objectService, ?array $hourEntries = self::HOUR_ENTRIES): FinancialDashboardService {
+		$reader = $this->hoursReader($hourEntries);
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($reader, $objectService): object {
+				if ($id === HumaniqHoursReader::class) {
+					return $reader;
+				}
+
+				return $objectService;
+			}
+		);
 
 		return new FinancialDashboardService(
 			container: $this->container,
@@ -155,6 +177,25 @@ final class FinancialDashboardServiceTest extends TestCase {
 		);
 
 	}//end buildService()
+
+	/**
+	 * A humaniq hours reader answering with the given entries, recording each period asked.
+	 *
+	 * @param array<string,array<string,mixed>>|null $entries What humaniq answers, null when it does not.
+	 *
+	 * @return HumaniqHoursReader&MockObject
+	 */
+	private function hoursReader(?array $entries): HumaniqHoursReader&MockObject {
+		$reader = $this->createMock(HumaniqHoursReader::class);
+		$reader->method('entriesBetween')->willReturnCallback(
+			function (string $from, string $until) use ($entries): ?array {
+				$this->hourReads[] = [$from, $until];
+				return $entries;
+			}
+		);
+
+		return $reader;
+	}//end hoursReader()
 
 	/**
 	 * Build a recording ObjectService stub that returns per-schema records
@@ -263,7 +304,6 @@ final class FinancialDashboardServiceTest extends TestCase {
 			'Account' => self::ACCOUNTS,
 			'GLTransaction' => self::TRANSACTIONS,
 			'GLLine' => self::LINES,
-			'UrenRegistratie' => self::HOUR_ENTRIES,
 			'ARInvoice' => [
 				['id' => 'a', 'dueDate' => '2026-05-01', 'grossAmount' => 1210, 'lifecycleState' => 'issued'],
 			],
@@ -312,7 +352,8 @@ final class FinancialDashboardServiceTest extends TestCase {
 
 		$schemas = array_column($stub->calls, 'schema');
 		sort($schemas);
-		$this->assertSame(['Account', 'GLLine', 'GLTransaction', 'UrenRegistratie'], $schemas);
+		$this->assertSame(['Account', 'GLLine', 'GLTransaction'], $schemas);
+		$this->assertSame([['2026-02-01', '2026-04-30']], $this->hourReads);
 
 		foreach ($stub->calls as $call) {
 			$this->assertArrayNotHasKey('limit', $call['params']);
@@ -411,9 +452,11 @@ final class FinancialDashboardServiceTest extends TestCase {
 		$schemas = array_column($stub->calls, 'schema');
 		sort($schemas);
 		$this->assertSame(
-			['APTransaction', 'ARInvoice', 'Account', 'GLLine', 'GLTransaction', 'UrenRegistratie'],
+			['APTransaction', 'ARInvoice', 'Account', 'GLLine', 'GLTransaction'],
 			$schemas
 		);
+		// One hours read covering the previous and the current window.
+		$this->assertSame([['2026-01-01', '2026-04-30']], $this->hourReads);
 
 	}//end testSummaryFetchesEachSchemaExactlyOnce()
 
@@ -440,4 +483,61 @@ final class FinancialDashboardServiceTest extends TestCase {
 		$this->assertSame(0.0, $result['current']['cashPosition']);
 
 	}//end testSummaryDegradesGracefullyWithoutOpenRegister()
+
+	/**
+	 * Humaniq answering with no hours is a real zero: the figures read 0 and
+	 * the source says humaniq.
+	 *
+	 * @return void
+	 */
+	public function testSeriesReportsZeroHoursWhenHumaniqHoldsNone(): void {
+		$service = $this->buildService($this->buildObjectServiceStub($this->fixtureRecords()), []);
+
+		$result = $service->series('2026-02-01', '2026-04-30');
+
+		$this->assertSame([0.0, 0.0, 0.0], $result['billableHours']);
+		$this->assertSame([null, null, null], $result['billablePct']);
+		$this->assertSame('humaniq', $result['hoursSource']);
+
+	}//end testSeriesReportsZeroHoursWhenHumaniqHoldsNone()
+
+	/**
+	 * Humaniq not answering is not zero hours (REQ-H2H-002): every hour
+	 * figure is null and the source says unavailable, while the money
+	 * series still flow.
+	 *
+	 * @return void
+	 */
+	public function testSeriesNeverReportsZeroHoursWhenHumaniqIsAbsent(): void {
+		$service = $this->buildService($this->buildObjectServiceStub($this->fixtureRecords()), null);
+
+		$result = $service->series('2026-02-01', '2026-04-30');
+
+		$this->assertSame([null, null, null], $result['billableHours']);
+		$this->assertSame([null, null, null], $result['nonBillableHours']);
+		$this->assertSame([null, null, null], $result['billablePct']);
+		$this->assertSame('unavailable', $result['hoursSource']);
+		$this->assertSame([0.0, 1000.0, 0.0], $result['revenue']);
+
+	}//end testSeriesNeverReportsZeroHoursWhenHumaniqIsAbsent()
+
+	/**
+	 * The KPI summary blanks both windows' hour figures when humaniq does not
+	 * answer, and keeps the money figures.
+	 *
+	 * @return void
+	 */
+	public function testSummaryNeverReportsZeroHoursWhenHumaniqIsAbsent(): void {
+		$service = $this->buildService($this->buildObjectServiceStub($this->fixtureRecords()), null);
+
+		$result = $service->summary('2026-03-01', '2026-04-30', new DateTimeImmutable('2026-04-15'));
+
+		$this->assertNull($result['current']['billableHours']);
+		$this->assertNull($result['current']['billablePct']);
+		$this->assertNull($result['previousPeriod']['billableHours']);
+		$this->assertNull($result['previousPeriod']['billablePct']);
+		$this->assertSame('unavailable', $result['hoursSource']);
+		$this->assertSame(1000.0, $result['current']['turnover']);
+
+	}//end testSummaryNeverReportsZeroHoursWhenHumaniqIsAbsent()
 }//end class

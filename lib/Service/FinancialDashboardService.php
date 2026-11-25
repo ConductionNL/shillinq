@@ -9,8 +9,8 @@
  * Server-side data layer for the Wave-4 financial dashboard endpoints
  * (financial-series + financial-summary). Replaces the client-side
  * useFinancialData.js fetch layer: each schema the dashboard consumes
- * (Account, GLTransaction, GLLine, UrenRegistratie, ARInvoice,
- * APTransaction) is read once per request via OpenRegister's ObjectService —
+ * (Account, GLTransaction, GLLine, ARInvoice, APTransaction) is read once
+ * per request via OpenRegister's ObjectService —
  * WITHOUT a limit, so ALL matching objects contribute (the client's
  * 2000-object `_limit` truncation is the bug this fixes). A failing schema
  * resolves to an empty list (and is logged) so one missing schema cannot
@@ -32,6 +32,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
  */
 
 declare(strict_types=1);
@@ -69,7 +70,6 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 		'accounts' => 'Account',
 		'transactions' => 'GLTransaction',
 		'lines' => 'GLLine',
-		'hourEntries' => 'UrenRegistratie',
 	];
 
 	/**
@@ -89,7 +89,6 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 		'accounts' => 'Account',
 		'transactions' => 'GLTransaction',
 		'lines' => 'GLLine',
-		'hourEntries' => 'UrenRegistratie',
 		'arInvoices' => 'ARInvoice',
 		'apTransactions' => 'APTransaction',
 	];
@@ -148,6 +147,7 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	 * @return array<string,mixed> The series payload (months + nine parallel arrays).
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
 	 */
 	public function series(?string $from, ?string $to, ?DateTimeImmutable $now = null): array {
 		$now = ($now ?? new DateTimeImmutable());
@@ -156,9 +156,14 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 		$series = $this->calculator->monthlyFinancialSeries(
 			input: ['accounts' => $data['accounts'], 'transactions' => $data['transactions'], 'lines' => $data['lines'], 'months' => $months]
 		);
-		$billable = $this->calculator->billableSeries(entries: $data['hourEntries'], months: $months);
+		$hourEntries = $this->hourEntries(months: $months);
+		$none = array_fill(0, count($months), null);
+		$billable = ['billable' => $none, 'nonBillable' => $none, 'pct' => $none];
+		if ($hourEntries !== null) {
+			$billable = $this->calculator->billableSeries(entries: $hourEntries, months: $months);
+		}
 
-		return $this->seriesPayload(series: $series, billable: $billable);
+		return $this->seriesPayload(series: $series, billable: $billable) + ['hoursSource' => $this->hoursSource(entries: $hourEntries)];
 
 	}//end series()
 
@@ -204,24 +209,130 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	 * @return array<string,mixed> The summary payload (months, previousMonths, current, previousPeriod).
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
 	 */
 	public function summary(?string $from, ?string $to, ?DateTimeImmutable $now = null): array {
 		$now = ($now ?? new DateTimeImmutable());
 		$months = $this->resolveMonths(from: (string)$from, to: (string)$to, now: $now);
 		$previousMonths = $this->previousMonths(months: $months);
 		$data = $this->fetchSchemas(schemas: self::SUMMARY_SCHEMAS);
+		$hourEntries = $this->hourEntries(months: array_merge($previousMonths, $months));
+		$data['hourEntries'] = ($hourEntries ?? []);
 		$current = $this->calculator->computeRangeKpis(data: $data, months: $months);
 		$previous = $this->calculator->computeRangeKpis(data: $data, months: $previousMonths);
 		$pointInTime = $this->calculator->computeKpis(data: $data, now: $now);
+		if ($hourEntries === null) {
+			$current = $this->withoutHours(kpis: $current);
+			$previous = $this->withoutHours(kpis: $previous);
+		}
 
 		return [
 			'months' => $months,
 			'previousMonths' => $previousMonths,
 			'current' => ($this->rangeFigures(kpis: $current) + $this->pointInTimeFigures(kpis: $pointInTime)),
 			'previousPeriod' => $this->rangeFigures(kpis: $previous),
+			'hoursSource' => $this->hoursSource(entries: $hourEntries),
 		];
 
 	}//end summary()
+
+	/**
+	 * Humaniq's hours over the month window, as the calculator reads them.
+	 *
+	 * Rejected entries and entries without a number of hours do not count: a
+	 * missing number is not zero hours. Billable is humaniq's own flag.
+	 *
+	 * @param array<int,string> $months Month keys (`YYYY-MM`), ascending.
+	 *
+	 * @return array<int,array{date:string,hours:float,billable:bool}>|null The entries, null when humaniq does not answer.
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
+	 */
+	private function hourEntries(array $months): ?array {
+		if ($months === []) {
+			return [];
+		}
+
+		$reader = $this->hoursReader();
+		if ($reader === null) {
+			return null;
+		}
+
+		$from = $months[0] . '-01';
+		$until = (new DateTimeImmutable(end($months) . '-01'))->format('Y-m-t');
+		$entries = $reader->entriesBetween(from: $from, until: $until);
+		if ($entries === null) {
+			return null;
+		}
+
+		$rows = [];
+		foreach ($entries as $entry) {
+			if ($entry['hours'] === null || $entry['approvalState'] === 'rejected') {
+				continue;
+			}
+
+			$rows[] = ['date' => $entry['date'], 'hours' => $entry['hours'], 'billable' => $entry['billable']];
+		}
+
+		return $rows;
+	}//end hourEntries()
+
+	/**
+	 * Humaniq's hours reader, resolved lazily like OpenRegister's ObjectService;
+	 * null when it cannot be built, which reads as humaniq unavailable.
+	 *
+	 * @return HumaniqHoursReader|null
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
+	 */
+	private function hoursReader(): ?HumaniqHoursReader {
+		try {
+			$reader = $this->container->get(HumaniqHoursReader::class);
+		} catch (\Throwable $e) {
+			$this->logger->debug('FinancialDashboardService: hours reader unavailable: ' . $e->getMessage());
+			return null;
+		}
+
+		if ($reader instanceof HumaniqHoursReader) {
+			return $reader;
+		}
+
+		return null;
+	}//end hoursReader()
+
+	/**
+	 * Where the hour figures came from: `humaniq`, or `unavailable` when it did not answer.
+	 *
+	 * @param array<int,array<string,mixed>>|null $entries The hour entries, null when humaniq did not answer.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
+	 */
+	private function hoursSource(?array $entries): string {
+		if ($entries === null) {
+			return 'unavailable';
+		}
+
+		return 'humaniq';
+	}//end hoursSource()
+
+	/**
+	 * Range KPIs with the hour figures blanked: humaniq did not answer, so
+	 * there is no number to show, and zero would be a lie.
+	 *
+	 * @param array<string,mixed> $kpis Range KPIs from the calculator.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
+	 */
+	private function withoutHours(array $kpis): array {
+		$kpis['billableHours'] = null;
+		$kpis['billablePct'] = null;
+
+		return $kpis;
+	}//end withoutHours()
 
 	/**
 	 * The range-driven KPIs of one window.
