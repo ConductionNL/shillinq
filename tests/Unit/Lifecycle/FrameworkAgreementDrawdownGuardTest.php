@@ -335,4 +335,99 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 		);
 		self::assertSame([], $guard->agreedUnitAmounts(agreement: []));
 	}//end testAgreedUnitAmountsByProductCode()
+
+	/**
+	 * OpenRegister answers ObjectEntity rows; the guard reads them through
+	 * jsonSerialize() and finds the agreement (live: every call-off failed
+	 * with "Framework agreement not found" while only arrays were read).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function testAgreementRowsAsEntitiesAreRead(): void {
+		$agreement = $this->nearCeilingAgreement() + ['supplierId' => 'sup-1'];
+		$entities = new class ($agreement) {
+			/**
+			 * The one agreement row.
+			 *
+			 * @var array<string,mixed>
+			 */
+			private array $row;
+
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string,mixed> $row The agreement.
+			 */
+			public function __construct(array $row) {
+				$this->row = $row;
+			}//end __construct()
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * The agreement as an entity row, as OpenRegister answers it.
+			 *
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,\JsonSerializable>
+			 */
+			public function findAll(array $params = []): array {
+				$row = $this->row;
+				return [
+					new class ($row) implements \JsonSerializable {
+						/**
+						 * Constructor.
+						 *
+						 * @param array<string,mixed> $data The object data.
+						 */
+						public function __construct(private readonly array $data) {
+						}//end __construct()
+
+						/**
+						 * The object as an array.
+						 *
+						 * @return array<string,mixed>
+						 */
+						public function jsonSerialize(): array {
+							return $this->data;
+						}//end jsonSerialize()
+					},
+				];
+			}//end findAll()
+		};
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$guard = new FrameworkAgreementDrawdownGuard(
+			appConfig: $appConfig,
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: new DuckObjectServiceAdapter($entities),
+		);
+
+		$found = $guard->agreementForCallOff(administrationId: 'adm-1', frameworkAgreementId: 'FA-1', supplierId: 'sup-1');
+		self::assertSame('FA-1', $found['agreementNumber']);
+		self::assertSame(4800000, $guard->assertWithinCeiling(administrationId: 'adm-1', frameworkAgreementId: 'FA-1', addCents: 150000)['drawnAmount']);
+	}//end testAgreementRowsAsEntitiesAreRead()
 }//end class
