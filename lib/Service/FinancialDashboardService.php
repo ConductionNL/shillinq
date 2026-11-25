@@ -126,14 +126,12 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param FinancialSeriesCalculator $calculator Pure financial-series arithmetic (port of financialSeries.js).
 	 * @param LoggerInterface $logger Nextcloud logger.
-	 * @param HumaniqHoursReader $hours Humaniq's hours, the dashboard's hour source.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly FinancialSeriesCalculator $calculator,
 		private readonly LoggerInterface $logger,
-		private readonly HumaniqHoursReader $hours,
 	) {
 	}//end __construct()
 
@@ -159,10 +157,9 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 			input: ['accounts' => $data['accounts'], 'transactions' => $data['transactions'], 'lines' => $data['lines'], 'months' => $months]
 		);
 		$hourEntries = $this->hourEntries(months: $months);
-		if ($hourEntries === null) {
-			$none = array_fill(0, count($months), null);
-			$billable = ['billable' => $none, 'nonBillable' => $none, 'pct' => $none];
-		} else {
+		$none = array_fill(0, count($months), null);
+		$billable = ['billable' => $none, 'nonBillable' => $none, 'pct' => $none];
+		if ($hourEntries !== null) {
 			$billable = $this->calculator->billableSeries(entries: $hourEntries, months: $months);
 		}
 
@@ -256,9 +253,14 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 			return [];
 		}
 
+		$reader = $this->hoursReader();
+		if ($reader === null) {
+			return null;
+		}
+
 		$from = $months[0] . '-01';
 		$until = (new DateTimeImmutable(end($months) . '-01'))->format('Y-m-t');
-		$entries = $this->hours->entriesBetween(from: $from, until: $until);
+		$entries = $reader->entriesBetween(from: $from, until: $until);
 		if ($entries === null) {
 			return null;
 		}
@@ -274,6 +276,29 @@ class FinancialDashboardService implements FinancialDashboardServiceInterface {
 
 		return $rows;
 	}//end hourEntries()
+
+	/**
+	 * Humaniq's hours reader, resolved lazily like OpenRegister's ObjectService;
+	 * null when it cannot be built, which reads as humaniq unavailable.
+	 *
+	 * @return HumaniqHoursReader|null
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
+	 */
+	private function hoursReader(): ?HumaniqHoursReader {
+		try {
+			$reader = $this->container->get(HumaniqHoursReader::class);
+		} catch (\Throwable $e) {
+			$this->logger->debug('FinancialDashboardService: hours reader unavailable: ' . $e->getMessage());
+			return null;
+		}
+
+		if ($reader instanceof HumaniqHoursReader) {
+			return $reader;
+		}
+
+		return null;
+	}//end hoursReader()
 
 	/**
 	 * Where the hour figures came from: `humaniq`, or `unavailable` when it did not answer.

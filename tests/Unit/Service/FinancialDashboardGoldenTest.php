@@ -164,12 +164,7 @@ final class FinancialDashboardGoldenTest extends TestCase {
 				return ($this->records[$this->schema] ?? []);
 			}
 		};
-		$container = $this->createMock(ContainerInterface::class);
-		if ($noStore === true) {
-			$container->method('get')->willThrowException(new \RuntimeException('no OR'));
-		} else {
-			$container->method('get')->willReturn($store);
-		}
+
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn('');
 		$logger = $this->createMock(LoggerInterface::class);
@@ -186,7 +181,7 @@ final class FinancialDashboardGoldenTest extends TestCase {
 			'te-1' => ['uuid' => 'te-1', 'date' => '2026-04-02', 'hours' => 6.0, 'billable' => true, 'approvalState' => 'approved'],
 			'te-2' => ['uuid' => 'te-2', 'date' => '2026-03-03', 'hours' => 2.0, 'billable' => false, 'approvalState' => 'approved'],
 		];
-		$hours = $this->createMock(HumaniqHoursReader::class);
+		$hours = $this->createMock(originalClassName: HumaniqHoursReader::class);
 		$hours->method('entriesBetween')->willReturnCallback(
 			function (string $from, string $until) use ($noStore, $entries, &$events): ?array {
 				$events[] = ['hours', $from, $until];
@@ -197,8 +192,22 @@ final class FinancialDashboardGoldenTest extends TestCase {
 				return $entries;
 			}
 		);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) use ($noStore, $store, $hours): object {
+				if ($id === HumaniqHoursReader::class) {
+					return $hours;
+				}
 
-		return new FinancialDashboardService($container, $config, new FinancialSeriesCalculator(), $logger, $hours);
+				if ($noStore === true) {
+					throw new \RuntimeException('no OR');
+				}
+
+				return $store;
+			}
+		);
+
+		return new FinancialDashboardService($container, $config, new FinancialSeriesCalculator(), $logger);
 
 	}//end service()
 

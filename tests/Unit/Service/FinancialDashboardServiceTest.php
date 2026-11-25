@@ -158,14 +158,22 @@ final class FinancialDashboardServiceTest extends TestCase {
 	 * @return FinancialDashboardService
 	 */
 	private function buildService(object $objectService, ?array $hourEntries = self::HOUR_ENTRIES): FinancialDashboardService {
-		$this->container->method('get')->willReturn($objectService);
+		$reader = $this->hoursReader($hourEntries);
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($reader, $objectService): object {
+				if ($id === HumaniqHoursReader::class) {
+					return $reader;
+				}
+
+				return $objectService;
+			}
+		);
 
 		return new FinancialDashboardService(
 			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new FinancialSeriesCalculator(),
 			logger: $this->logger,
-			hours: $this->hoursReader($hourEntries),
 		);
 
 	}//end buildService()
@@ -466,7 +474,6 @@ final class FinancialDashboardServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			calculator: new FinancialSeriesCalculator(),
 			logger: $this->logger,
-			hours: $this->hoursReader([]),
 		);
 
 		$result = $service->summary('2026-03-01', '2026-04-30', new DateTimeImmutable('2026-04-15'));

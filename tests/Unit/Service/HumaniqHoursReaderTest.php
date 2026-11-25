@@ -252,4 +252,38 @@ class HumaniqHoursReaderTest extends TestCase {
 	public function testTheProjectReadIsNullWhenHumaniqDoesNotAnswer(): void {
 		self::assertNull($this->reader([], true)->entriesForProject('prj-1', '2026-10-01', '2026-10-31'));
 	}
+
+	/**
+	 * The dashboard read is filtered by period only, and drops a row outside
+	 * the period even when the register ignores the filter.
+	 *
+	 * @return void
+	 */
+	public function testThePeriodReadKeepsOnlyThePeriod(): void {
+		$reader = $this->reader(
+			[
+				['uuid' => 'te-1', 'date' => '2026-03-01', 'hours' => 2, 'administrationId' => 'adm-1'],
+				['uuid' => 'te-2', 'date' => '2026-03-31T17:00:00+00:00', 'hours' => 1, 'administrationId' => 'adm-2'],
+				['uuid' => 'te-3', 'date' => '2026-04-01', 'hours' => 4],
+				['uuid' => 'te-4', 'date' => '', 'hours' => 4],
+			]
+		);
+
+		$entries = $reader->entriesBetween('2026-03-01', '2026-03-31');
+
+		self::assertSame(['date' => ['gte' => '2026-03-01', 'lte' => '2026-03-31']], $this->lastQuery['filters']);
+		self::assertSame(['te-1', 'te-2'], array_keys($entries));
+	}
+
+	/**
+	 * The period read answers null when humaniq does not answer, and reads
+	 * nothing for an empty period.
+	 *
+	 * @return void
+	 */
+	public function testThePeriodReadIsNullWhenHumaniqDoesNotAnswer(): void {
+		self::assertNull($this->reader([], true)->entriesBetween('2026-03-01', '2026-03-31'));
+		self::assertSame([], $this->reader([])->entriesBetween('', '2026-03-31'));
+		self::assertSame(0, $this->reads);
+	}
 }

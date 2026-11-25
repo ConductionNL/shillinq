@@ -132,20 +132,13 @@ class HumaniqHoursReader {
 			return [];
 		}
 
-		$rows = $this->rows(filters: ['date' => ['gte' => trim($from), 'lte' => trim($until)]]);
-		if ($rows === null) {
-			return null;
-		}
+		$from = trim($from);
+		$until = trim($until);
 
-		$entries = [];
-		foreach ($rows as $row) {
-			$entry = $this->normalised(row: $this->toArray(row: $row));
-			if ($entry !== null && $this->inPeriod(date: $entry['date'], from: trim($from), until: trim($until)) === true) {
-				$entries[$entry['uuid']] = $entry;
-			}
-		}
-
-		return $entries;
+		return $this->keyedEntries(
+			filters: ['date' => ['gte' => $from, 'lte' => $until]],
+			keep: fn (array $entry): bool => $this->inPeriod(date: $entry['date'], from: $from, until: $until)
+		);
 	}//end entriesBetween()
 
 	/**
@@ -215,7 +208,24 @@ class HumaniqHoursReader {
 			return [];
 		}
 
-		$rows = $this->rows(filters: [$field => $value, 'date' => ['gte' => trim($from), 'lte' => trim($until)]]);
+		return $this->keyedEntries(
+			filters: [$field => $value, 'date' => ['gte' => trim($from), 'lte' => trim($until)]],
+			keep: static fn (array $entry): bool => $entry[$field] === $value
+		);
+	}//end scopedEntries()
+
+	/**
+	 * One read, normalised and keyed by uuid, keeping the rows `keep` accepts.
+	 *
+	 * @param array<string, mixed>                 $filters The register filters.
+	 * @param callable(array<string, mixed>): bool $keep    Whether a normalised entry belongs to the read.
+	 *
+	 * @return array<string, array<string, mixed>>|null The entries, null when humaniq does not answer.
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
+	 */
+	private function keyedEntries(array $filters, callable $keep): ?array {
+		$rows = $this->rows(filters: $filters);
 		if ($rows === null) {
 			return null;
 		}
@@ -223,13 +233,13 @@ class HumaniqHoursReader {
 		$entries = [];
 		foreach ($rows as $row) {
 			$entry = $this->normalised(row: $this->toArray(row: $row));
-			if ($entry !== null && $entry[$field] === $value) {
+			if ($entry !== null && $keep($entry) === true) {
 				$entries[$entry['uuid']] = $entry;
 			}
 		}
 
 		return $entries;
-	}//end scopedEntries()
+	}//end keyedEntries()
 
 	/**
 	 * One stored row as the ledger reads it, or null when it has no uuid.
