@@ -188,7 +188,7 @@ const CI_TEST_IGNORE = [
  * the SHARED `ConductionNL/.github/.github/workflows/quality.yml`
  * `playwright` job, which affects all 18 fleet apps on this reusable
  * workflow and belongs in its own PR against `.github`. Concrete proposal:
- * `openspec/changes/setup-wizard-english/notes-github-playwright-split.md`.
+ * `openspec/changes/archive/2026-11-25-setup-wizard-english/notes-github-playwright-split.md`.
  * Once that lands, delete this env-gate and the `dependencies` discussion
  * above becomes moot — the projects run as two independently-reported CI
  * steps instead.

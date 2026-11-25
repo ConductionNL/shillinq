@@ -40,7 +40,7 @@
  * regardless, running this file with `--workers=1` (or as its own CI job) is
  * still the safer choice if the shared config ever changes.
  *
- * @spec openspec/changes/setup-wizard-english/specs/setup-wizard-english/spec.md
+ * @spec openspec/changes/archive/2026-11-25-setup-wizard-english/specs/setup-wizard-english/spec.md
  */
 
 import type { Page } from '@playwright/test'
