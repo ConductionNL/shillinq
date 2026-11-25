@@ -191,7 +191,7 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-journal-entry-lines-carry-dimension-codes-onto-the-ledger-req-ljd-001
+	 * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-journal-entry-lines-carry-dimension-codes-onto-the-ledger-req-ljd-001
 	 */
 	public function testAJournalLinesThreeCodesReachTheGlLine(): void {
 		$entry = $this->journalEntry();

@@ -29,8 +29,8 @@
  *
  * Written, not run: it needs a live instance.
  *
- * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md
- * @spec openspec/changes/ledger-journal-line-dimensions/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md
+ * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/tasks.md#task-1.4
  *
  * @e2e bookkeeping-general-ledger::humaniq-s-payroll-journal-keeps-its-cost-centres
  * @e2e bookkeeping-general-ledger::a-cost-centre-humaniq-knows-but-shillinq-does-not

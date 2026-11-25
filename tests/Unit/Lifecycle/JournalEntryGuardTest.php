@@ -179,7 +179,7 @@ class JournalEntryGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
 	 */
 	public function testUnknownCostCentreIsRefused(): void {
 		$this->withDimensions(dimensions: self::dimensions());
@@ -195,7 +195,7 @@ class JournalEntryGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
 	 */
 	public function testBlockedProjectIsRefused(): void {
 		$this->withDimensions(dimensions: self::dimensions());
@@ -211,7 +211,7 @@ class JournalEntryGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
 	 */
 	public function testLinesWithoutCodesStillPost(): void {
 		$this->withDimensions(dimensions: []);
