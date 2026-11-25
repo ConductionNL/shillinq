@@ -20,9 +20,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\AuditExportService;
+use OCP\IAppConfig;
+use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
+use Psr\Container\ContainerInterface;
+use Psr\Log\NullLogger;
+use RuntimeException;
 
 /**
  * Pins the sorted event ledger and summary for bundles covering every
@@ -38,8 +43,17 @@ final class AuditExportLedgerGoldenTest extends TestCase {
 	 * @return void
 	 */
 	public function testLedgersMatchGolden(): void {
-		// No collaborator is read by buildLedger(), so none is wired.
-		$service = (new ReflectionClass(AuditExportService::class))->newInstanceWithoutConstructor();
+		// The ledger only asks the container for OpenRegister's task reader;
+		// these bundles predate it, so the container has none.
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willThrowException(new RuntimeException('no task reader'));
+		$service = new AuditExportService(
+			$container,
+			$this->createMock(IAppConfig::class),
+			$this->createMock(AdministrationContextService::class),
+			$this->createMock(IUserSession::class),
+			new NullLogger()
+		);
 		$result = [];
 		foreach ($this->bundles() as $name => $bundle) {
 			$result[$name] = $service->buildLedger($bundle);
