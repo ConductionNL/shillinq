@@ -64,7 +64,18 @@
 
 ## 6. Degrade honestly without humaniq
 
-- [ ] 6.1 Every hours surface shows a named empty state when humaniq is
+- [x] 6.1 Every hours surface shows a named empty state when humaniq is
       absent. Never a zero. The dossiq KPI reporting 0 hours on every case
       is the bug this change exists to stop repeating.
-- [ ] 6.2 Add a test that asserts the empty state, not the zero.
+- [x] 6.2 Add a test that asserts the empty state, not the zero.
+  - Built (25 Nov 2026): `GET /api/subject-cost` (`SubjectCostService::costFor`)
+    answered 0 hours when humaniq did not answer; it now answers `hours` null,
+    `costCents` null and `missingApp: Humaniq` (MODIFIED delta on
+    `subject-cost-aggregation`). PHPUnit
+    `SubjectCostServiceTest::testAbsentHumaniqIsNamedNotZero` and
+    `testPresentHumaniqWithoutHoursIsZero`. The other humaniq-backed hours
+    surfaces already name the absence: the case-costs report
+    (`ClassifiedSubjectCostSource`, `missingApp: Humaniq`), the contract
+    roll-up (a null cost marks the total incomplete) and dossiq's
+    `case-kpis-hours`, now a placement of humaniq's `humaniq-hours` leaf
+    that is not registered without humaniq.

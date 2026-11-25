@@ -168,6 +168,33 @@ class SubjectCostServiceTest extends TestCase {
 	}
 
 	/**
+	 * Humaniq absent: the hours are named unavailable, never reported as 0 (REQ-H2H-002).
+	 *
+	 * @return void
+	 */
+	public function testAbsentHumaniqIsNamedNotZero(): void {
+		$result = $this->service([], ['p1' => 5000], readThrows: true)->costFor('dossiq', 'case-1', ['adm-1']);
+
+		self::assertSame('Humaniq', $result['missingApp']);
+		self::assertNull($result['hours']);
+		self::assertNull($result['costCents']);
+		self::assertFalse($result['complete']);
+		self::assertSame('case-1', $result['subjectId']);
+	}
+
+	/**
+	 * Humaniq present with no hours on the case: 0 hours, nothing named missing.
+	 *
+	 * @return void
+	 */
+	public function testPresentHumaniqWithoutHoursIsZero(): void {
+		$result = $this->service([], ['p1' => 5000])->costFor('dossiq', 'case-1', ['adm-1']);
+
+		self::assertNull($result['missingApp']);
+		self::assertSame(0.0, $result['hours']);
+	}
+
+	/**
 	 * Hours handed in are costed without a read, dropping another app's rows
 	 * and rows outside the caller's administrations.
 	 *
@@ -296,14 +323,15 @@ class SubjectCostServiceTest extends TestCase {
 	}
 
 	/**
-	 * An unreadable register yields an empty aggregate, not an exception.
+	 * An unreadable register yields an unavailable aggregate, not an exception
+	 * and not zero hours (REQ-H2H-002).
 	 *
 	 * @return void
 	 */
-	public function testAnUnreadableRegisterYieldsAnEmptyAggregate(): void {
+	public function testAnUnreadableRegisterYieldsAnUnavailableAggregate(): void {
 		$result = $this->service([], [], true)->costFor('dossiq', 'case-1', ['adm-1']);
 
-		self::assertSame(0.0, $result['hours']);
+		self::assertNull($result['hours']);
 		self::assertSame(0, $result['unscopedRowsExcluded']);
 	}
 
