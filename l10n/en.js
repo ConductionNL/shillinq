@@ -1,6 +1,8 @@
 OC.L10N.register(
     "shillinq",
     {
+        "More to create": "More to create",
+        "Create invoice": "Create invoice",
         "After a number of appointments": "After a number of appointments",
         "Book the series": "Book the series",
         "Daily": "Daily",

@@ -3483,6 +3483,7 @@ OC.L10N.register(
         "Financial overview": "Financieel overzicht",
         "Live financial position of the company from the bookkeeping register": "Actuele financiële positie van de organisatie uit het boekhoudregister",
         "Create invoice": "Factuur maken",
+        "More to create": "Meer aanmaken",
         "Last 3 months": "Afgelopen 3 maanden",
         "Last 6 months": "Afgelopen 6 maanden",
         "Last 12 months": "Afgelopen 12 maanden",
