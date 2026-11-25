@@ -24,6 +24,7 @@
 
 - [x] 5.1 PHPUnit: schema guard, uniqueness, reconciliation branch, provider refusals, initiation amount; run inside the container
 - [x] 5.2 Playwright `tests/e2e/payment-request-leaf.spec.ts` and `tests/e2e/payment-request-panel.spec.ts`
-- [ ] 5.3 Dutch and English strings; docs with screenshots — the strings ship (en and nl, admin section included); the docs page with screenshots needs a live instance and stays open
+- [x] 5.3 Dutch and English strings; docs with screenshots — the strings ship (en and nl, admin section included)
+  - Docs: `docs/user-guide/bookkeeping/payment-requests-on-a-case.md` with three screenshots taken on a sandbox Nextcloud 34 + OpenRegister main + shillinq development on PostgreSQL (25 Nov 2026): the Payment requests list, a request's page, and the admin section "Revenue accounts for payment requests". The two requests in them were raised live through the leaf route (`POST /api/objects/shillinq/{schema}/{id}/integrations/shillinq-payment-requests`) and one was settled live by pin through `POST /api/payment-requests/{id}/settle`. That live run found and fixed two bugs: send and settle answered 404 for every request (a `findAll()` filter on `id` that OpenRegister matches no row for; now read by uuid), and the admin settings page answered 500 against OpenRegister main (separate PR).
 - [x] 5.4 Hand the two leaf ids and the `create` payload to dossiq for `financial-integration`
   - Filed: ConductionNL/dossiq#6872 (`shillinq-payment-requests`, `shillinq-payment-requests-panel` and the `create` payload).
