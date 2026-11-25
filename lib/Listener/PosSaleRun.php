@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Listener;
  * PosStockMovedEvent's processing. Built and used only by
  * PosStockDecrementListener.
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
 final class PosSaleRun {
 	/**

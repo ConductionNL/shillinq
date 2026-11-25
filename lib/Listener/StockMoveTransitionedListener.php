@@ -47,10 +47,9 @@ use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\Contracts\CogsPosterServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FifoValuationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\MovingAverageValuationServiceInterface;
-use OCA\Shillinq\Support\RegisterSlug;
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -75,17 +74,17 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @param FifoValuationServiceInterface $fifo FIFO engine.
 	 * @param MovingAverageValuationServiceInterface $average Moving-average engine.
 	 * @param CogsPosterServiceInterface $cogs COGS poster.
-	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param SchemaDefinitionsInterface $schemas Resolves the event's schema id to its slug.
 	 */
 	public function __construct(
 		private readonly FifoValuationServiceInterface $fifo,
 		private readonly MovingAverageValuationServiceInterface $average,
 		private readonly CogsPosterServiceInterface $cogs,
-		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly SchemaDefinitionsInterface $schemas,
 	) {
 
 	}//end __construct()
@@ -107,7 +106,7 @@ class StockMoveTransitionedListener implements IEventListener {
 		try {
 			$move = $this->postedStockMove(event: $event);
 			if ($move !== null) {
-				$this->valuate(move: $move);
+				$this->valuate(move: $move, register: (string)$event->getRegister());
 			}
 		} catch (Throwable $e) {
 			// Fail-soft: valuation is a derived view. Never bubble up
@@ -151,11 +150,12 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * a positive cost, post the COGS.
 	 *
 	 * @param array<string,mixed> $move The StockMove.
+	 * @param string              $register The register the move (and its valuation) lives in.
 	 *
 	 * @return void
 	 */
-	private function valuate(array $move): void {
-		$result = $this->processWithMethod(move: $move);
+	private function valuate(array $move, string $register): void {
+		$result = $this->processWithMethod(move: $move, register: $register);
 		if (((bool)($result['processed'] ?? false)) !== true) {
 			return;
 		}
@@ -181,11 +181,12 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * findOrCreateValuation().
 	 *
 	 * @param array<string,mixed> $move The StockMove.
+	 * @param string              $register The register the move (and its valuation) lives in.
 	 *
 	 * @return array<string,mixed> The engine result.
 	 */
-	private function processWithMethod(array $move): array {
-		$valuation = $this->lookupValuation(move: $move);
+	private function processWithMethod(array $move, string $register): array {
+		$valuation = $this->lookupValuation(move: $move, register: $register);
 		$method = (string)($valuation['valuationMethod'] ?? 'FIFO');
 
 		return match ($method) {
@@ -198,10 +199,11 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * Look up the active InventoryValuation snapshot for the move.
 	 *
 	 * @param array<string,mixed> $move The StockMove.
+	 * @param string              $register The register the move (and its valuation) lives in.
 	 *
 	 * @return array<string,mixed>|null Snapshot or null.
 	 */
-	private function lookupValuation(array $move): array|null {
+	private function lookupValuation(array $move, string $register): array|null {
 		$filters = $this->valuationFilters(move: $move);
 		if ($filters === null) {
 			return null;
@@ -209,7 +211,7 @@ class StockMoveTransitionedListener implements IEventListener {
 
 		try {
 			$rows = $this->objectService
-				->setRegister($this->register())
+				->setRegister($register)
 				->setSchema('InventoryValuation')
 				->findAll(['filters' => $filters, 'limit' => 1]);
 
@@ -325,18 +327,23 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @param string $schema Schema identifier.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
 	 */
 	private function isStockMoveSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'stockmove' || str_ends_with($normalised, '/stockmove'));
+		if ($normalised === 'stockmove' || str_ends_with($normalised, '/stockmove') === true) {
+			return true;
+		}
+
+		// OpenRegister names the schema by its id unless its
+		// transition_event_slug_contract flag is on (the default is off), so a
+		// slug check alone never saw a posted StockMove.
+		if (ctype_digit($normalised) === false) {
+			return false;
+		}
+
+		return strtolower((string)($this->schemas->definition(schema: $normalised)['slug'] ?? '')) === 'stockmove';
 	}//end isStockMoveSchema()
 
-	/**
-	 * Resolve the OR register slug, defaulting to 'shillinq'.
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		return RegisterSlug::of(config: $this->appConfig);
-	}//end register()
 }//end class

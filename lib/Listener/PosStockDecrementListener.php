@@ -62,7 +62,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
 
 declare(strict_types=1);
@@ -90,7 +90,7 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
 class PosStockDecrementListener implements IEventListener, PosStockDecrementListenerInterface {
 	/**
@@ -135,7 +135,7 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	public function handle(Event $event): void {
 		if (class_exists(\OCA\Pipelinq\Event\PosStockMovedEvent::class) === false
@@ -164,7 +164,7 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function process(\OCA\Pipelinq\Event\PosStockMovedEvent $event): void {
 		$sale = $this->saleOf(event: $event);
@@ -413,7 +413,7 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 	 *
 	 * @return mixed The findAll() result.
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function inventoryStockRows(string $administrationId, string $sku): mixed {
 		return $this->objectService()
@@ -440,7 +440,7 @@ class PosStockDecrementListener implements IEventListener, PosStockDecrementList
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function auditUnmatchedLine(PosSaleLine $line): void {
 		$this->logger->error(

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use OCP\Notification\UnknownNotificationException;
 /**
  * Prepares `pos_stock_unmatched_line` notifications for display.
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
 class PosStockUnmatchedLineNotifier extends AppNotifier {
 	/**
@@ -60,7 +60,7 @@ class PosStockUnmatchedLineNotifier extends AppNotifier {
 	 *
 	 * @throws UnknownNotificationException When the notification is not ours.
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$l = $this->ownedL10n(notification: $notification, languageCode: $languageCode);
