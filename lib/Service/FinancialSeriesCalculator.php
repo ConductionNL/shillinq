@@ -401,15 +401,17 @@ class FinancialSeriesCalculator {
 	}//end monthFigures()
 
 	/**
-	 * Monthly billable vs non-billable hours from UrenRegistratie.
-	 * Billable = `recognisedRate` greater than zero.
+	 * Monthly billable vs non-billable hours.
+	 * Billable = the entry's own `billable` flag when it carries one (humaniq
+	 * `TimeEntry`), else `recognisedRate` greater than zero (UrenRegistratie).
 	 *
-	 * @param array<int,array<string,mixed>> $entries UrenRegistratie objects.
+	 * @param array<int,array<string,mixed>> $entries Hour entries.
 	 * @param array<int,string> $months Month keys to bucket into.
 	 *
 	 * @return array{billable: array<int,float>, nonBillable: array<int,float>, pct: array<int,float|null>}
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
 	 */
 	public function billableSeries(array $entries, array $months): array {
 		$hours = $this->hoursByMonth(entries: $entries);
@@ -436,12 +438,13 @@ class FinancialSeriesCalculator {
 	}//end billableSeries()
 
 	/**
-	 * Total and billable hours per month; billable = `recognisedRate` above
-	 * zero, and an entry without a readable date is skipped.
+	 * Total and billable hours per month; an entry without a readable date is skipped.
 	 *
-	 * @param array<int,array<string,mixed>> $entries UrenRegistratie objects.
+	 * @param array<int,array<string,mixed>> $entries Hour entries.
 	 *
 	 * @return array{total: array<string,float>, billable: array<string,float>}
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
 	 */
 	private function hoursByMonth(array $entries): array {
 		$byMonth = ['total' => [], 'billable' => []];
@@ -453,13 +456,31 @@ class FinancialSeriesCalculator {
 
 			$hours = $this->toFloat(value: $entry['hours'] ?? null);
 			$byMonth['total'][$key] = (($byMonth['total'][$key] ?? 0.0) + $hours);
-			if ($this->toFloat(value: $entry['recognisedRate'] ?? null) > 0) {
+			if ($this->isBillable(entry: $entry) === true) {
 				$byMonth['billable'][$key] = (($byMonth['billable'][$key] ?? 0.0) + $hours);
 			}
 		}
 
 		return $byMonth;
 	}//end hoursByMonth()
+
+	/**
+	 * Whether an hour entry is billable: its own `billable` flag when it has
+	 * one, else a `recognisedRate` above zero.
+	 *
+	 * @param array<string,mixed> $entry The hour entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
+	 */
+	private function isBillable(array $entry): bool {
+		if (array_key_exists('billable', $entry) === true) {
+			return ($entry['billable'] === true);
+		}
+
+		return ($this->toFloat(value: $entry['recognisedRate'] ?? null) > 0);
+	}//end isBillable()
 
 	/**
 	 * Open-receivables table rows from ARInvoice objects, sorted by due date

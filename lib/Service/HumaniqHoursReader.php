@@ -113,6 +113,60 @@ class HumaniqHoursReader {
 	}//end entriesForProject()
 
 	/**
+	 * Every hour the caller may read over a period, keyed by entry uuid.
+	 *
+	 * The financial dashboard reports over everything the signed-in user may
+	 * read, as its ledger reads do; OpenRegister's access checks decide that
+	 * scope, so the period is the only filter here. Booking runs use the
+	 * administration or project reads above, never this one.
+	 *
+	 * @param string $from  First day, `YYYY-MM-DD`, inclusive.
+	 * @param string $until Last day, `YYYY-MM-DD`, inclusive.
+	 *
+	 * @return array<string, array<string, mixed>>|null The entries, [] when humaniq holds none, null when humaniq does not answer.
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
+	 */
+	public function entriesBetween(string $from, string $until): ?array {
+		if (trim($from) === '' || trim($until) === '') {
+			return [];
+		}
+
+		$rows = $this->rows(filters: ['date' => ['gte' => trim($from), 'lte' => trim($until)]]);
+		if ($rows === null) {
+			return null;
+		}
+
+		$entries = [];
+		foreach ($rows as $row) {
+			$entry = $this->normalised(row: $this->toArray(row: $row));
+			if ($entry !== null && $this->inPeriod(date: $entry['date'], from: trim($from), until: trim($until)) === true) {
+				$entries[$entry['uuid']] = $entry;
+			}
+		}
+
+		return $entries;
+	}//end entriesBetween()
+
+	/**
+	 * Whether a `YYYY-MM-DD` date lies in the period; a register that ignores
+	 * the date filter must not widen the report.
+	 *
+	 * @param string $date  The entry date (a longer ISO string is cut to its day).
+	 * @param string $from  First day, inclusive.
+	 * @param string $until Last day, inclusive.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
+	 */
+	private function inPeriod(string $date, string $from, string $until): bool {
+		$day = substr($date, 0, 10);
+
+		return ($day !== '' && $day >= $from && $day <= $until);
+	}//end inPeriod()
+
+	/**
 	 * One read of humaniq's hours with the given filters.
 	 *
 	 * @param array<string, mixed> $filters The register filters.

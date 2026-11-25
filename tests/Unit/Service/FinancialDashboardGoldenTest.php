@@ -23,6 +23,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use DateTimeImmutable;
 use OCA\Shillinq\Service\FinancialDashboardService;
 use OCA\Shillinq\Service\FinancialSeriesCalculator;
+use OCA\Shillinq\Service\HumaniqHoursReader;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -101,7 +102,6 @@ final class FinancialDashboardGoldenTest extends TestCase {
 					['transactionId' => 'tx-4', 'accountNumber' => '1000', 'side' => 'debit', 'amount' => 120],
 				]
 			),
-			'UrenRegistratie' => [['date' => '2026-04-02', 'hours' => 6, 'recognisedRate' => 90], ['date' => '2026-03-03', 'hours' => 2]],
 			'ARInvoice' => $both(
 				[
 					['id' => 'i1', 'customerId' => 'c1', 'invoiceDate' => '2026-01-10', 'dueDate' => '2026-02-10', 'grossAmount' => 1210, 'netAmount' => 1000, 'lifecycleState' => 'overdue'],
@@ -181,7 +181,24 @@ final class FinancialDashboardGoldenTest extends TestCase {
 			);
 		}
 
-		return new FinancialDashboardService($container, $config, new FinancialSeriesCalculator(), $logger);
+		// Humaniq's hours: April 6h billable, March 2h not; absent with OpenRegister.
+		$entries = [
+			'te-1' => ['uuid' => 'te-1', 'date' => '2026-04-02', 'hours' => 6.0, 'billable' => true, 'approvalState' => 'approved'],
+			'te-2' => ['uuid' => 'te-2', 'date' => '2026-03-03', 'hours' => 2.0, 'billable' => false, 'approvalState' => 'approved'],
+		];
+		$hours = $this->createMock(HumaniqHoursReader::class);
+		$hours->method('entriesBetween')->willReturnCallback(
+			function (string $from, string $until) use ($noStore, $entries, &$events): ?array {
+				$events[] = ['hours', $from, $until];
+				if ($noStore === true) {
+					return null;
+				}
+
+				return $entries;
+			}
+		);
+
+		return new FinancialDashboardService($container, $config, new FinancialSeriesCalculator(), $logger, $hours);
 
 	}//end service()
 

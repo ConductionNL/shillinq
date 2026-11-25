@@ -31,6 +31,7 @@ use OCA\Shillinq\Dashboard\TopCustomersWidget;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\FinancialDashboardService;
 use OCA\Shillinq\Service\FinancialSeriesCalculator;
+use OCA\Shillinq\Service\HumaniqHoursReader;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Dashboard\IAPIWidgetV2;
 use OCP\IAppConfig;
@@ -98,7 +99,7 @@ class FinancialWidgetsTest extends TestCase {
 		$container->method('get')->willReturn(new InMemoryObjectServiceStub($this->register()));
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
-		$dashboard = new FinancialDashboardService($container, $appConfig, new FinancialSeriesCalculator(), $this->createMock(LoggerInterface::class));
+		$dashboard = new FinancialDashboardService($container, $appConfig, new FinancialSeriesCalculator(), $this->createMock(LoggerInterface::class), $this->createMock(HumaniqHoursReader::class));
 
 		$context = $this->createMock(AdministrationContextService::class);
 		$context->method('defaultAdministrationIdForUser')->with('director')->willReturn($administrationId);

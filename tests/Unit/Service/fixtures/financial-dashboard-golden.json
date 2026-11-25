@@ -55,7 +55,8 @@
                 0.0,
                 -750.0,
                 3060.0
-            ]
+            ],
+            "hoursSource": "humaniq"
         },
         "events": [
             [
@@ -74,9 +75,9 @@
                 []
             ],
             [
-                "find",
-                "UrenRegistratie",
-                []
+                "hours",
+                "2026-02-01",
+                "2026-04-30"
             ]
         ]
     },
@@ -235,7 +236,8 @@
                 0.0,
                 -750.0,
                 3060.0
-            ]
+            ],
+            "hoursSource": "humaniq"
         },
         "events": [
             [
@@ -254,9 +256,9 @@
                 []
             ],
             [
-                "find",
-                "UrenRegistratie",
-                []
+                "hours",
+                "2025-05-01",
+                "2026-04-30"
             ]
         ]
     },
@@ -415,7 +417,8 @@
                 0.0,
                 -750.0,
                 3060.0
-            ]
+            ],
+            "hoursSource": "humaniq"
         },
         "events": [
             [
@@ -434,9 +437,9 @@
                 []
             ],
             [
-                "find",
-                "UrenRegistratie",
-                []
+                "hours",
+                "2025-05-01",
+                "2026-04-30"
             ]
         ]
     },
@@ -472,7 +475,8 @@
                 "marginPct": null,
                 "billableHours": 0.0,
                 "billablePct": null
-            }
+            },
+            "hoursSource": "humaniq"
         },
         "events": [
             [
@@ -492,11 +496,6 @@
             ],
             [
                 "find",
-                "UrenRegistratie",
-                []
-            ],
-            [
-                "find",
                 "ARInvoice",
                 []
             ],
@@ -504,6 +503,11 @@
                 "find",
                 "APTransaction",
                 []
+            ],
+            [
+                "hours",
+                "2026-01-01",
+                "2026-04-30"
             ]
         ]
     },
@@ -559,7 +563,8 @@
                 "marginPct": null,
                 "billableHours": 0.0,
                 "billablePct": null
-            }
+            },
+            "hoursSource": "humaniq"
         },
         "events": [
             [
@@ -579,11 +584,6 @@
             ],
             [
                 "find",
-                "UrenRegistratie",
-                []
-            ],
-            [
-                "find",
                 "ARInvoice",
                 []
             ],
@@ -591,6 +591,11 @@
                 "find",
                 "APTransaction",
                 []
+            ],
+            [
+                "hours",
+                "2024-05-01",
+                "2026-04-30"
             ]
         ]
     },
@@ -1030,7 +1035,7 @@
                 "turnover": 0.0,
                 "margin": 0.0,
                 "marginPct": null,
-                "billableHours": 0.0,
+                "billableHours": null,
                 "billablePct": null,
                 "openDebtors": {
                     "count": 0,
@@ -1046,9 +1051,10 @@
                 "turnover": 0.0,
                 "margin": 0.0,
                 "marginPct": null,
-                "billableHours": 0.0,
+                "billableHours": null,
                 "billablePct": null
-            }
+            },
+            "hoursSource": "unavailable"
         },
         "events": [
             [
@@ -1087,11 +1093,9 @@
                 }
             ],
             [
-                "warning",
-                "FinancialDashboardService: ObjectService unavailable",
-                {
-                    "exception": "no OR"
-                }
+                "hours",
+                "2024-05-01",
+                "2026-04-30"
             ]
         ]
     }

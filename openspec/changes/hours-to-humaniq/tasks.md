@@ -44,8 +44,16 @@
   - The aggregator's hour rows already came from humaniq `TimeEntry` through
     `SubjectCostService` (`SubjectCostServiceTest`); the one reference was its
     docblock, which now names `TimeEntry`.
-- [ ] 4.2 `FinancialDashboardService` (3 references). Reporting only, no tax
+- [x] 4.2 `FinancialDashboardService` (3 references). Reporting only, no tax
       position.
+  - The series and summary endpoints read humaniq `TimeEntry` through
+    `HumaniqHoursReader::entriesBetween()`, one read per request over the
+    month window (the summary's covers both windows). Billable is humaniq's
+    own flag; rejected entries and entries without hours do not count. When
+    humaniq does not answer, every hour figure is null and `hoursSource` is
+    `unavailable` (REQ-H2H-002), so the tiles show a dash, never a zero.
+    The golden fixture keeps the same hour figures. PHPUnit
+    `FinancialDashboardServiceTest`, `FinancialDashboardGoldenTest`.
 - [ ] 4.3 `InvoiceGenerationService` (2 references) and
       `TimeIntakeService` (10). Invoicing.
 - [ ] 4.4 `WBSOExportValidationGuard` (5 references). Subsidy. Run old and
