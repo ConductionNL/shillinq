@@ -151,14 +151,14 @@
             "description": "Code of one of the administration's active expense categories; uncategorised until someone picks one.",
             "example": "travel-public",
             "title": "Category",
-            "x-openregister-relation": {
+            "x-options-from": {
+              "register": "shillinq",
               "schema": "ExpenseCategory",
-              "matchField": "code",
-              "labelField": "name",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "active": true
-              }
+              },
+              "valueField": "code",
+              "labelField": "code"
             }
           },
           "nights": {
