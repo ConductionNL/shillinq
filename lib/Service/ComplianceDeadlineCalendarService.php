@@ -118,6 +118,11 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	public const CALENDAR_URI = 'shillinq-deadlines';
 
 	/**
+	 * The container id of the dav app's CalDAV backend.
+	 */
+	private const CALDAV_BACKEND = 'OCA\\DAV\\CalDAV\\CalDavBackend';
+
+	/**
 	 * Per-user preference defaults: filing / payment-run / contract ON,
 	 * AR due dates OFF (REQ-CDC-004 default-off; design.md Seed Data).
 	 *
@@ -591,7 +596,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 			}
 
 			$desired = $this->desiredDeadlines(userId: $userId);
-			$events  = new DeadlineCalendarEvents($this->logger);
+			$events  = new DeadlineCalendarEvents($this->logger, $this->calendarObjectBackend());
 			return [
 				'status' => 'ok',
 				'published' => $events->publish(calendar: $calendar, desired: $desired),
@@ -858,6 +863,37 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 
 		return null;
 	}//end getCalendarManager()
+
+	/**
+	 * The dav app's CalDAV backend, which rewrites an event a calendar already
+	 * holds (OCP has no update for a calendar object); null when the container
+	 * has none.
+	 *
+	 * @return object|null The backend.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function calendarObjectBackend(): ?object {
+		try {
+			if ($this->container->has(self::CALDAV_BACKEND) === false) {
+				return null;
+			}
+
+			$backend = $this->container->get(self::CALDAV_BACKEND);
+		} catch (Throwable $e) {
+			$this->logger->debug(
+				'ComplianceDeadlineCalendarService: CalDAV backend not resolvable — events are created, not rewritten',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		if (is_object($backend) === true) {
+			return $backend;
+		}
+
+		return null;
+	}//end calendarObjectBackend()
 
 	/**
 	 * Pick the dedicated deadline calendar, else the first writable one.
