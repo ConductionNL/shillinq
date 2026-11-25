@@ -1,6 +1,6 @@
 # Tasks: competitor-parity-2026-09
 
-- [ ] 1.1 Build `case-payment-requests` (ledger row 12.12). Archive it on merge and tick it here.
+- [x] 1.1 Build `case-payment-requests` (ledger row 12.12). Archive it on merge and tick it here. — archived as `archive/2026-11-25-case-payment-requests` (#3355).
 - [ ] 1.2 Build `leges-at-intake` (ledger row 1.11, depends on 1.1). Archive it on merge and tick it here.
 - [ ] 1.3 Build `fees-payments-and-the-contract-register` (discovery cluster 55, depends on 1.1 and 1.2). Archive it on merge and tick it here.
 - [ ] 2.1 Hand dossiq its halves: the fee declared per case type and per intake channel, the contract a case runs under, and the payment state read from shillinq.
