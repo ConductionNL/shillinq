@@ -66,6 +66,21 @@ final class DeadlineCalendarEvents {
 
 
 	/**
+	 * The searches that find the app's events: every UID, and per category
+	 * (CATEGORIES is indexed where UID is not).
+	 *
+	 * @var list<array{0: string, 1: string}>
+	 */
+	private const SWEEP_SEARCHES = [
+		['', 'UID'],
+		[ComplianceDeadlineCalendarService::CATEGORY_FILING, 'CATEGORIES'],
+		[ComplianceDeadlineCalendarService::CATEGORY_PAYMENT_RUN, 'CATEGORIES'],
+		[ComplianceDeadlineCalendarService::CATEGORY_AR_DUE, 'CATEGORIES'],
+		[ComplianceDeadlineCalendarService::CATEGORY_CONTRACT, 'CATEGORIES'],
+	];
+
+
+	/**
 	 * The status and sequence lines of a confirmed (0) or cancelled (1)
 	 * VEVENT.
 	 *
@@ -79,10 +94,13 @@ final class DeadlineCalendarEvents {
 	/**
 	 * Construct the writer.
 	 *
-	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param LoggerInterface $logger          Logger for fail-soft diagnostics.
+	 * @param object|null     $calendarObjects The dav app's CalDAV backend, which rewrites an event the
+	 *                                         calendar already holds; null where it is not available.
 	 */
 	public function __construct(
 		private readonly LoggerInterface $logger,
+		private readonly ?object $calendarObjects = null,
 	) {
 	}//end __construct()
 
@@ -109,26 +127,33 @@ final class DeadlineCalendarEvents {
 	}//end publish()
 
 	/**
-	 * Write one VEVENT; a write the calendar refuses is logged and skipped,
-	 * so one event never stops the others.
+	 * Write one VEVENT: create it, or rewrite the one the calendar already
+	 * holds under the same name. A write that fails both ways is logged and
+	 * skipped, so one event never stops the others.
 	 *
-	 * Nextcloud 34's createFromString() only creates: for a UID the
-	 * calendar already holds it answers a conflict, so an event already
-	 * published stays as it was.
+	 * Nextcloud 34's createFromString() only creates: for a UID the calendar
+	 * already holds it answers a conflict. The event is then rewritten in
+	 * place through the CalDAV backend, so a moved due date moves and a closed
+	 * deadline is cancelled (REQ-CDC-001, REQ-CDC-002).
 	 *
 	 * @param object $calendar The resolved calendar.
 	 * @param string $uid      The VEVENT UID.
 	 * @param string $vevent   The VCALENDAR payload.
 	 *
-	 * @return bool True when the calendar took the write.
+	 * @return bool True when the calendar holds the event as written.
 	 *
-	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	private function write(object $calendar, string $uid, string $vevent): bool {
+		$name = $this->uidToFilename(uid: $uid);
 		try {
-			$calendar->createFromString($this->uidToFilename(uid: $uid), $vevent);
+			$calendar->createFromString($name, $vevent);
 			return true;
 		} catch (Throwable $e) {
+			if ($this->rewrite(calendar: $calendar, name: $name, vevent: $vevent) === true) {
+				return true;
+			}
+
 			$this->logger->debug(
 				'ComplianceDeadlineCalendarService: calendar refused the event write; it stays as it was',
 				['uid' => $uid, 'exception' => $e->getMessage()]
@@ -136,6 +161,44 @@ final class DeadlineCalendarEvents {
 			return false;
 		}
 	}//end write()
+
+	/**
+	 * Rewrite an event the calendar already holds under this name, through
+	 * the CalDAV backend.
+	 *
+	 * @param object $calendar The resolved calendar (its key is the CalDAV calendar id).
+	 * @param string $name     The calendar-object name.
+	 * @param string $vevent   The VCALENDAR payload.
+	 *
+	 * @return bool True when the event was rewritten; false without a backend, without
+	 *              an event of that name, or when the backend refused.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function rewrite(object $calendar, string $name, string $vevent): bool {
+		$backend = $this->calendarObjects;
+		if ($backend === null || method_exists($calendar, 'getKey') === false
+			|| method_exists($backend, 'getCalendarObject') === false || method_exists($backend, 'updateCalendarObject') === false
+		) {
+			return false;
+		}
+
+		try {
+			$calendarId = (int)$calendar->getKey();
+			if ($backend->getCalendarObject($calendarId, $name) === null) {
+				return false;
+			}
+
+			$backend->updateCalendarObject($calendarId, $name, $vevent);
+			return true;
+		} catch (Throwable $e) {
+			$this->logger->debug(
+				'ComplianceDeadlineCalendarService: the CalDAV backend refused the event rewrite',
+				['name' => $name, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}
+	}//end rewrite()
 
 
 	/**
@@ -236,27 +299,37 @@ final class DeadlineCalendarEvents {
 	 * The calendar's VEVENT search results, or [] when the calendar cannot
 	 * search or the search fails.
 	 *
+	 * Nextcloud indexes CATEGORIES but not UID, so a search on UID finds
+	 * nothing there; every app event carries its category, so the sweep
+	 * also searches each category. Results repeat across searches; the
+	 * caller keeps each UID once.
+	 *
 	 * @param object $calendar The resolved calendar.
 	 *
 	 * @return array<mixed>
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	private function searchVevents(object $calendar): array {
 		if (method_exists($calendar, 'search') === false) {
 			return [];
 		}
 
-		try {
-			$results = $calendar->search('', ['UID'], ['types' => ['VEVENT']]);
-		} catch (Throwable $e) {
-			$this->logger->debug(
-				'ComplianceDeadlineCalendarService: calendar search unavailable — skipping stale sweep',
-				['exception' => $e->getMessage()]
-			);
-			return [];
-		}
+		$results = [];
+		foreach (self::SWEEP_SEARCHES as [$pattern, $property]) {
+			try {
+				$found = $calendar->search($pattern, [$property], ['types' => ['VEVENT']]);
+			} catch (Throwable $e) {
+				$this->logger->debug(
+					'ComplianceDeadlineCalendarService: calendar search unavailable — skipping stale sweep',
+					['exception' => $e->getMessage()]
+				);
+				return [];
+			}
 
-		if (is_array($results) === false) {
-			return [];
+			if (is_array($found) === true) {
+				$results = array_merge($results, $found);
+			}
 		}
 
 		return $results;
