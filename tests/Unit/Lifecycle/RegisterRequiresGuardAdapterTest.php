@@ -172,16 +172,26 @@ final class RegisterRequiresGuardAdapterTest extends TestCase {
 			}//end canExecute()
 		};
 
-		$voids = new RegisterRequiresGuardAdapter(guard: $guard, method: 'canVoid', denyMessage: 'no', logger: $this->createMock(LoggerInterface::class));
-		self::assertTrue($voids->check(['id' => 'je-1', 'state' => 'posted'], 'void', 'user-1')->isAllowed());
-		self::assertFalse($voids->check(['@self' => ['id' => 'je-2']], 'void', 'user-1')->isAllowed());
+		$voids = new RegisterRequiresGuardAdapter(
+			guard: $guard,
+			method: 'canVoid',
+			denyMessage: 'no',
+			logger: $this->createMock(originalClassName: LoggerInterface::class)
+		);
+		self::assertTrue(condition: $voids->check(['id' => 'je-1', 'state' => 'posted'], 'void', 'user-1')->isAllowed());
+		self::assertFalse(condition: $voids->check(['@self' => ['id' => 'je-2']], 'void', 'user-1')->isAllowed());
 
-		$runs = new RegisterRequiresGuardAdapter(guard: $guard, method: 'canExecute', denyMessage: 'no', logger: $this->createMock(LoggerInterface::class));
-		self::assertTrue($runs->check(['uuid' => 'run-1'], 'execute', 'user-1')->isAllowed());
+		$runs = new RegisterRequiresGuardAdapter(
+			guard: $guard,
+			method: 'canExecute',
+			denyMessage: 'no',
+			logger: $this->createMock(originalClassName: LoggerInterface::class)
+		);
+		self::assertTrue(condition: $runs->check(['uuid' => 'run-1'], 'execute', 'user-1')->isAllowed());
 
 		self::assertSame(
-			[['je-1', ['id' => 'je-1', 'state' => 'posted']], ['je-2', ['@self' => ['id' => 'je-2']]], ['run-1']],
-			$guard->calls
+			expected: [['je-1', ['id' => 'je-1', 'state' => 'posted']], ['je-2', ['@self' => ['id' => 'je-2']]], ['run-1']],
+			actual: $guard->calls
 		);
 
 	}//end testAnIdTakingGuardGetsTheIdAndTheObject()

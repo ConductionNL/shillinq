@@ -62,7 +62,7 @@ final class RequiresGuardRegistrationTest extends TestCase {
 	 */
 	public function testEachTagIsRegisteredAsAnAdapterOverItsGuard(): void {
 		$factories = [];
-		$context   = $this->createMock(IRegistrationContext::class);
+		$context   = $this->createMock(originalClassName: IRegistrationContext::class);
 		$context->method('registerService')->willReturnCallback(
 			static function (string $name, callable $factory) use (&$factories): void {
 				$factories[$name] = $factory;
@@ -74,7 +74,7 @@ final class RequiresGuardRegistrationTest extends TestCase {
 		self::assertSame(expected: RequiresGuardRegistration::TAGS, actual: array_keys($factories));
 
 		$asked     = [];
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static function (string $id) use (&$asked): object {
 				if ($id === LoggerInterface::class) {

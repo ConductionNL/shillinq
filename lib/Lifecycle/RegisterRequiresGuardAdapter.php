@@ -59,6 +59,8 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use Psr\Log\LoggerInterface;
+use ReflectionMethod;
+use ReflectionNamedType;
 
 /**
  * Adapts a `bool <method>(array $object): bool` guard method to
@@ -148,9 +150,9 @@ final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface {
 			return [$object];
 		}
 
-		$parameters = (new \ReflectionMethod($this->guard, $this->method))->getParameters();
+		$parameters = (new ReflectionMethod($this->guard, $this->method))->getParameters();
 		$first      = ($parameters[0] ?? null)?->getType();
-		if ($first instanceof \ReflectionNamedType === false || $first->getName() !== 'string') {
+		if ($first instanceof ReflectionNamedType === false || $first->getName() !== 'string') {
 			return [$object];
 		}
 
