@@ -43,7 +43,7 @@ final class AuditExportLedgerGoldenTest extends TestCase {
 	 * @return void
 	 */
 	public function testLedgersMatchGolden(): void {
-		// buildLedger() only asks the container for OpenRegister's task reader;
+		// The ledger only asks the container for OpenRegister's task reader;
 		// these bundles predate it, so the container has none.
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willThrowException(new RuntimeException('no task reader'));

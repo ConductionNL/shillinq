@@ -45,29 +45,28 @@ final class PurchaseOrderApprovalTaskEventsTest extends TestCase {
 	/**
 	 * A task as OpenRegister's `ObjectTaskRecord` carries it.
 	 *
-	 * @param string      $uuid       The task.
-	 * @param string|null $outcome    The decision, null while open.
-	 * @param string|null $decidedBy  Who decided.
-	 * @param string|null $onBehalfOf On whose behalf, for a handed-over step.
-	 * @param string|null $mandate    The mandate of the hand-over.
-	 * @param string|null $decidedAt  When, ISO 8601.
+	 * @param string               $uuid     The task.
+	 * @param array<string, mixed> $decision Outcome, decidedBy, onBehalfOf, mandate and decidedAt; empty while open.
 	 *
 	 * @return object The record.
 	 */
-	private static function task(string $uuid, ?string $outcome, ?string $decidedBy = null, ?string $onBehalfOf = null, ?string $mandate = null, ?string $decidedAt = null): object {
+	private static function task(string $uuid, array $decision = []): object {
+		$decidedAt = null;
+		if (isset($decision['decidedAt']) === true) {
+			$decidedAt = new DateTimeImmutable($decision['decidedAt']);
+		}
+
 		return (object)[
 			'uuid' => $uuid,
 			'title' => 'Facility manager',
 			'workflowStepId' => 'step-' . $uuid,
-			'state' => ($outcome === null) ? 'open' : 'completed',
-			'isTerminal' => ($outcome !== null),
-			'outcome' => $outcome,
+			'isTerminal' => isset($decision['outcome']),
+			'outcome' => $decision['outcome'] ?? null,
 			'assignee' => 'pieter',
-			'decidedBy' => $decidedBy,
-			'onBehalfOf' => $onBehalfOf,
-			'mandate' => $mandate,
-			'decidedAt' => ($decidedAt === null) ? null : new DateTimeImmutable($decidedAt),
-			'createdAt' => new DateTimeImmutable('2026-09-01T08:00:00+00:00'),
+			'decidedBy' => $decision['decidedBy'] ?? null,
+			'onBehalfOf' => $decision['onBehalfOf'] ?? null,
+			'mandate' => $decision['mandate'] ?? null,
+			'decidedAt' => $decidedAt,
 		];
 	}//end task()
 
@@ -120,9 +119,18 @@ final class PurchaseOrderApprovalTaskEventsTest extends TestCase {
 	 */
 	private static function orderTasks(): array {
 		return [
-			self::task('t-1', 'approved', 'karin', 'pieter', 'Holiday cover 1-14 Sept, orders up to EUR 25.000', '2026-09-03T10:15:00+00:00'),
-			self::task('t-2', 'approved', 'eva', null, null, '2026-09-04T09:00:00+00:00'),
-			self::task('t-3', null),
+			self::task(
+				't-1',
+				[
+					'outcome' => 'approved',
+					'decidedBy' => 'karin',
+					'onBehalfOf' => 'pieter',
+					'mandate' => 'Holiday cover 1-14 Sept, orders up to EUR 25.000',
+					'decidedAt' => '2026-09-03T10:15:00+00:00',
+				]
+			),
+			self::task('t-2', ['outcome' => 'approved', 'decidedBy' => 'eva', 'decidedAt' => '2026-09-04T09:00:00+00:00']),
+			self::task('t-3'),
 		];
 	}//end orderTasks()
 
@@ -206,7 +214,10 @@ final class PurchaseOrderApprovalTaskEventsTest extends TestCase {
 		);
 
 		$rows = (new ReflectionMethod(AuditExportService::class, 'eventRows'))->invoke($service, $decisions);
-		$this->assertStringContainsString('<td>po_approval_decision</td><td>karin</td><td>pieter</td><td>Holiday cover 1-14 Sept, orders up to EUR 25.000</td><td>po-40</td>', $rows);
+		$this->assertStringContainsString(
+			'<td>po_approval_decision</td><td>karin</td><td>pieter</td><td>Holiday cover 1-14 Sept, orders up to EUR 25.000</td><td>po-40</td>',
+			$rows
+		);
 		$this->assertStringContainsString('<td>po_approval_decision</td><td>eva</td><td></td><td></td><td>po-40</td>', $rows);
 	}//end testTheAuditExportShowsDeciderOnBehalfOfAndMandate()
 }//end class

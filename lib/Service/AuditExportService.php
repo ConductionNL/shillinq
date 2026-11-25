@@ -152,7 +152,8 @@ th{background:#f3f3f3}
 <dt>Total incl. VAT (cents)</dt><dd>%d %s</dd>
 </dl>
 <h2>Lifecycle events (%d)</h2>
-<table><thead><tr><th>Timestamp</th><th>Event</th><th>Actor</th><th>On behalf of</th><th>Mandate</th><th>Object</th></tr></thead><tbody>%s</tbody></table>
+<table><thead><tr><th>Timestamp</th><th>Event</th><th>Actor</th><th>On behalf of</th><th>Mandate</th><th>Object</th></tr></thead>
+<tbody>%s</tbody></table>
 <h2>Object counts</h2>
 <table><tbody>
 <tr><th>Purchase orders</th><td>%d</td></tr>
