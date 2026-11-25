@@ -6,7 +6,7 @@
  * the files widget on the pages whose records hold a document, the talk tab on
  * the curated dossier pages, and the pages this change must leave alone.
  *
- * @spec openspec/changes/integration-leaves-consume/specs/consume-platform-abstractions/spec.md
+ * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/specs/consume-platform-abstractions/spec.md
  */
 
 import fs from 'fs'
@@ -86,7 +86,7 @@ function leaves(node, found = []) {
 	return found
 }
 
-// @spec openspec/changes/integration-leaves-consume/tasks.md
+// @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 describe('a detail page without curated tabs is left as it was (diff-check)', () => {
 	it('gives ARInvoiceDetail, which curates no tabs, no talk tab and no tab list of its own', () => {
 		const { config } = page(manifest, 'ARInvoiceDetail')

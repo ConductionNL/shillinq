@@ -39,14 +39,11 @@
  * Every leg skips with the reason when the Nextcloud app behind its leaf
  * (files, calendar, contacts, spreed) is not enabled on the instance.
  *
- * Two things the test does by hand, because nothing in shillinq does them:
- * ComplianceDeadlineCalendarService reads its BTW deadlines from the
- * `BtwAangifte` schema while BtwAangifteDetail shows a `VatReturn`, and it
- * writes VEVENTs without linking them to their object. So the test makes the
- * Q2 return as both objects and links the published VEVENT to the VatReturn
- * through the leaf's own "link existing event" call (`…/events/link`), which is
- * what a user does on the page; for the ARInvoice it links only when the leaf
- * does not already list the event. The receipt and statement files are stored
+ * ComplianceDeadlineCalendarService publishes the BTW deadline from the
+ * `VatReturn` BtwAangifteDetail shows and writes the X-OPENREGISTER-*
+ * properties of the return and of the ARInvoice on each VEVENT, so both
+ * calendar leaves list their event without a link made by hand. The receipt
+ * and statement files are stored
  * through the files leaf's upload call (`…/files`), as the widget does.
  *
  * Everything runs in an administration of its own (unique id, with a
@@ -56,8 +53,8 @@
  *
  * Written 24 Nov 2026, runs in the nightly; not run in the build sandbox (no live instance).
  *
- * @spec openspec/changes/integration-leaves-consume/specs/consume-platform-abstractions/spec.md
- * @spec openspec/changes/integration-leaves-consume/tasks.md
+ * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/specs/consume-platform-abstractions/spec.md
+ * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
  *
  * @e2e consume-platform-abstractions::a-receipts-image-is-reachable-from-its-detail-page
  * @e2e consume-platform-abstractions::an-expense-claim-shows-all-of-its-receipt-evidence
@@ -174,6 +171,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 		await fx.create('Administration', {
 			administrationCode: ADMINISTRATION_ID,
 			name: `Leaves ${UNIQUE_PREFIX}`,
+			legalForm: 'bv',
 			status: 'actief',
 			fiscalYearStartMonth: 1,
 			fiscalYearStartDay: 1,
@@ -290,9 +288,10 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 	 * @return The calendar collection hrefs.
 	 */
 	async function calendars(): Promise<string[]> {
+		// A cookie session reaches DAV only with its request token; without it DAV answers 401.
 		const res = await api.fetch(`/remote.php/dav/calendars/${ADMIN_USER}/`, {
 			method: 'PROPFIND',
-			headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8' },
+			headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8', requesttoken: await requestToken() },
 			data: '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>',
 		})
 		expect(res.status(), 'PROPFIND of the calendar home').toBe(207)
@@ -318,7 +317,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 		for (const href of await calendars()) {
 			const res = await api.fetch(href, {
 				method: 'REPORT',
-				headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8' },
+				headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8', requesttoken: await requestToken() },
 				data: '<?xml version="1.0"?><c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'
 					+ '<d:prop><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT">'
 					+ `<c:prop-filter name="UID"><c:text-match collation="i;octet" match-type="equals">${uid}</c:text-match></c:prop-filter>`
@@ -353,25 +352,16 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 	}
 
 	/**
-	 * The calendar leaf's rows for one VEVENT UID, linking the event through the
-	 * leaf's "link existing event" call when the leaf does not list it yet.
+	 * The calendar leaf's rows for one VEVENT UID. The publisher links the
+	 * event to its object itself, so nothing is linked here.
 	 *
 	 * @param schema The schema slug.
 	 * @param id     The object id.
 	 * @param uid    The VEVENT UID.
-	 * @param where  Where the VEVENT is stored.
 	 * @return The leaf's rows for that UID.
 	 */
-	async function leafEvents(schema: string, id: string, uid: string, where: FoundEvent): Promise<Array<Record<string, unknown>>> {
-		const matching = async () => (await linkedEvents(schema, id)).filter((row) => String(row.uid ?? row.eventUid ?? '') === uid)
-		if ((await matching()).length === 0) {
-			const linked = await api.post(`${OBJECTS}/${schema}/${id}/events/link`, {
-				headers: await writeHeaders(),
-				data: { calendarUri: where.calendarUri, eventUid: uid },
-			})
-			expect(linked.ok(), `link ${uid} to ${schema}: HTTP ${linked.status()} ${await linked.text()}`).toBeTruthy()
-		}
-		return matching()
+	async function leafEvents(schema: string, id: string, uid: string): Promise<Array<Record<string, unknown>>> {
+		return (await linkedEvents(schema, id)).filter((row) => String(row.uid ?? row.eventUid ?? '') === uid)
 	}
 
 	/**
@@ -560,7 +550,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 			periodQuarter: 3,
 			periodStart: '2026-07-01',
 			periodEnd: '2026-09-30',
-			rubrieken: {},
+			rubrieken: { '1a': { revenue: 0, vat: 0 } },
 			dueSalesTax: 0,
 			inputVat: 0,
 			payableOrRefund: 0,
@@ -578,22 +568,11 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 
 	test('the published Q2 BTW deadline and an AR due date show on their pages, once each @spec REQ-CPA-006', async ({ page }) => {
 		await needApps(['openregister', 'calendar'])
-		const missing = await fx.missingSchema(['Administration', 'AdministrationMembership', 'BtwAangifte', 'VatReturn', 'CustomerMaster', 'ARInvoice'])
+		const missing = await fx.missingSchema(['Administration', 'AdministrationMembership', 'VatReturn', 'CustomerMaster', 'ARInvoice'])
 		test.skip(missing !== null, `the shillinq register lacks ${missing}`)
 		await administration()
 
-		// The Q2 return: the BtwAangifte the publisher reads and the VatReturn the page shows.
-		const { id: aangifteId } = await fx.create('BtwAangifte', {
-			returnNumber: `${UNIQUE_PREFIX}-BTW-Q2`,
-			period: 'quarter',
-			periodYear: 2026,
-			periodNumber: 2,
-			startDate: '2026-04-01',
-			endDate: '2026-06-30',
-			regime: 'standard',
-			administrationId: ADMINISTRATION_ID,
-			statusCode: 'draft',
-		})
+		// The Q2 return BtwAangifteDetail shows; the publisher reads it too.
 		const { id: returnId } = await fx.create('VatReturn', {
 			administrationId: ADMINISTRATION_ID,
 			periodType: 'quarter',
@@ -601,7 +580,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 			periodQuarter: 2,
 			periodStart: '2026-04-01',
 			periodEnd: '2026-06-30',
-			rubrieken: {},
+			rubrieken: { '1a': { revenue: 0, vat: 0 } },
 			dueSalesTax: 0,
 			inputVat: 0,
 			payableOrRefund: 0,
@@ -646,10 +625,10 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 		expect((await published.json()).publication).toBe('ok')
 
 		// The BTW deadline: one VEVENT, listed by the VatReturn's calendar leaf, still one after the page rendered.
-		const btwUid = await deadlineUid('btw-filing', 'BtwAangifte', aangifteId)
+		const btwUid = await deadlineUid('btw-filing', 'VatReturn', returnId)
 		const btwEvents = await events(btwUid)
 		expect(btwEvents, `one VEVENT ${btwUid}`).toHaveLength(1)
-		const onReturn = await leafEvents('VatReturn', returnId, btwUid, btwEvents[0])
+		const onReturn = await leafEvents('VatReturn', returnId, btwUid)
 		expect(onReturn, 'the calendar leaf lists the deadline once').toHaveLength(1)
 		expect(String(onReturn[0].summary ?? '')).toBe('BTW-aangifte 2026-Q2')
 		await page.goto(`${APP}/belastingen/btw-aangiften/${returnId}`)
@@ -662,7 +641,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 		const arEvents = await events(arUid)
 		expect(arEvents, `one VEVENT ${arUid}`).toHaveLength(1)
 		const summary = `Factuur ${invoiceNumber} vervalt`
-		const onInvoice = await leafEvents('ARInvoice', invoiceId, arUid, arEvents[0])
+		const onInvoice = await leafEvents('ARInvoice', invoiceId, arUid)
 		expect(onInvoice).toHaveLength(1)
 		expect(String(onInvoice[0].summary ?? '')).toBe(summary)
 		expect(String(onInvoice[0].dtstart ?? '')).toContain('2027')

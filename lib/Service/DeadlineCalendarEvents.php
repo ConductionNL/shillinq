@@ -100,13 +100,69 @@ final class DeadlineCalendarEvents {
 		$published = 0;
 		foreach ($desired as $deadline) {
 			$vevent = $this->buildVevent(deadline: $deadline, cancelled: false);
-			$calendar->createFromString($this->uidToFilename(uid: $deadline['uid']), $vevent);
-			$published++;
+			if ($this->write(calendar: $calendar, uid: $deadline['uid'], vevent: $vevent) === true) {
+				$published++;
+			}
 		}
 
 		return $published;
 	}//end publish()
 
+	/**
+	 * Write one VEVENT; a write the calendar refuses is logged and skipped,
+	 * so one event never stops the others.
+	 *
+	 * Nextcloud 34's createFromString() only creates: for a UID the
+	 * calendar already holds it answers a conflict, so an event already
+	 * published stays as it was.
+	 *
+	 * @param object $calendar The resolved calendar.
+	 * @param string $uid      The VEVENT UID.
+	 * @param string $vevent   The VCALENDAR payload.
+	 *
+	 * @return bool True when the calendar took the write.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	private function write(object $calendar, string $uid, string $vevent): bool {
+		try {
+			$calendar->createFromString($this->uidToFilename(uid: $uid), $vevent);
+			return true;
+		} catch (Throwable $e) {
+			$this->logger->debug(
+				'ComplianceDeadlineCalendarService: calendar refused the event write; it stays as it was',
+				['uid' => $uid, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}
+	}//end write()
+
+
+	/**
+	 * The fields that link a deadline's VEVENT to its OpenRegister row:
+	 * objectUuid, registerId and schemaId from the row's `@self`. Empty for a
+	 * row that does not carry its uuid and schema there.
+	 *
+	 * @param array<string,mixed> $row The source row.
+	 *
+	 * @return array<string,string> The link fields, or nothing.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	public function linkFieldsOf(array $row): array {
+		$self = ($row['@self'] ?? []);
+		if (is_array($self) === false) {
+			return [];
+		}
+
+		$uuid   = (string)($self['id'] ?? '');
+		$schema = (string)($self['schema'] ?? '');
+		if ($uuid === '' || $schema === '') {
+			return [];
+		}
+
+		return ['objectUuid' => $uuid, 'registerId' => (string)($self['register'] ?? ''), 'schemaId' => $schema];
+	}//end linkFieldsOf()
 
 	/**
 	 * Cancel app-owned VEVENTs that are no longer desired (category toggled
@@ -122,8 +178,7 @@ final class DeadlineCalendarEvents {
 	public function cancelUndesired(object $calendar, array $desired): int {
 		$removed = 0;
 		foreach ($this->existingAppUids(calendar: $calendar) as $uid) {
-			if (isset($desired[$uid]) === false) {
-				$calendar->createFromString($this->uidToFilename(uid: $uid), $this->cancelledVevent(uid: $uid));
+			if (isset($desired[$uid]) === false && $this->write(calendar: $calendar, uid: $uid, vevent: $this->cancelledVevent(uid: $uid)) === true) {
 				$removed++;
 			}
 		}
@@ -352,8 +407,37 @@ final class DeadlineCalendarEvents {
 			$lines[] = 'CATEGORIES:' . $this->escapeIcal(value: $deadline['category']);
 		}
 
-		return $lines;
+		return array_merge($lines, $this->linkLines(deadline: $deadline));
 	}//end eventLines()
+
+	/**
+	 * The X-OPENREGISTER-* lines that link the VEVENT to its source object,
+	 * the properties OpenRegister's calendar leaf reads to list an object's
+	 * events. None when the deadline names no object uuid.
+	 *
+	 * @param array<string,string> $deadline The deadline entry.
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	private function linkLines(array $deadline): array {
+		$uuid = (string)($deadline['objectUuid'] ?? '');
+		if ($uuid === '') {
+			return [];
+		}
+
+		$lines = [];
+		foreach (['X-OPENREGISTER-REGISTER' => 'registerId', 'X-OPENREGISTER-SCHEMA' => 'schemaId'] as $property => $key) {
+			$value = (string)($deadline[$key] ?? '');
+			if ($value !== '') {
+				$lines[] = $property . ':' . $this->escapeIcal(value: $value);
+			}
+		}
+
+		$lines[] = 'X-OPENREGISTER-OBJECT:' . $this->escapeIcal(value: $uuid);
+		return $lines;
+	}//end linkLines()
 
 
 	/**

@@ -76,7 +76,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTime;
-use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
@@ -316,12 +315,17 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	public function collectDeadlines(): array {
-		$deadlines = array_merge(
-			$this->sourceDeadlines(schema: 'BtwAangifte', mapper: $this->btwFilingDeadline(...)),
-			$this->sourceDeadlines(schema: 'IcpOpgaaf', mapper: $this->icpFilingDeadline(...)),
-			$this->sourceDeadlines(schema: 'TaxDeadline', mapper: $this->vpbFilingDeadline(...)),
-			$this->sourceDeadlines(schema: 'PaymentRun', mapper: $this->paymentRunDeadline(...)),
-			$this->sourceDeadlines(schema: 'ARInvoice', mapper: $this->arInvoiceDeadline(...)),
+		$vatReturns = $this->fetchRows(schema: 'VatReturn');
+		$deadlines  = array_merge(
+			$this->rowDeadlines(rows: $vatReturns, mapper: $this->vatReturnFilingDeadline(...)),
+			$this->rowDeadlines(
+				rows: $this->btwRowsWithoutVatReturn(btwRows: $this->fetchRows(schema: 'BtwAangifte'), vatReturns: $vatReturns),
+				mapper: $this->btwFilingDeadline(...)
+			),
+			$this->rowDeadlines(rows: $this->fetchRows(schema: 'IcpOpgaaf'), mapper: $this->icpFilingDeadline(...)),
+			$this->rowDeadlines(rows: $this->fetchRows(schema: 'TaxDeadline'), mapper: $this->vpbFilingDeadline(...)),
+			$this->rowDeadlines(rows: $this->fetchRows(schema: 'PaymentRun'), mapper: $this->paymentRunDeadline(...)),
+			$this->rowDeadlines(rows: $this->fetchRows(schema: 'ARInvoice'), mapper: $this->arInvoiceDeadline(...)),
 		);
 
 		// REQ-CDC-005 — contract deadlines come from the extended bridge
@@ -334,16 +338,18 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	}//end collectDeadlines()
 
 	/**
-	 * Map every row of one source schema to its open deadline.
+	 * Map rows of a source to their open deadlines.
 	 *
-	 * @param string $schema The source schema.
+	 * @param array<int,array<string,mixed>>                            $rows   The source rows.
 	 * @param callable(array<string,mixed>):(array<string,string>|null) $mapper Row to deadline, null when not open.
 	 *
 	 * @return array<int,array<string,string>> The open deadlines of the source.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
-	private function sourceDeadlines(string $schema, callable $mapper): array {
+	private function rowDeadlines(array $rows, callable $mapper): array {
 		$deadlines = [];
-		foreach ($this->fetchRows(schema: $schema) as $row) {
+		foreach ($rows as $row) {
 			$deadline = $mapper($row);
 			if ($deadline !== null) {
 				$deadlines[] = $deadline;
@@ -351,7 +357,67 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		}
 
 		return $deadlines;
-	}//end sourceDeadlines()
+	}//end rowDeadlines()
+
+	/**
+	 * The BtwAangifte rows whose administration and period no VatReturn covers.
+	 *
+	 * The VatReturn is the return a user opens (BtwAangifteDetail shows it), so
+	 * its deadline is the one published; a BtwAangifte of the same
+	 * administration and period would publish the same obligation twice.
+	 *
+	 * @param array<int,array<string,mixed>> $btwRows    The BtwAangifte rows.
+	 * @param array<int,array<string,mixed>> $vatReturns The VatReturn rows.
+	 *
+	 * @return array<int,array<string,mixed>> The BtwAangifte rows left.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	private function btwRowsWithoutVatReturn(array $btwRows, array $vatReturns): array {
+		$period  = $this->periods();
+		$covered = [];
+		foreach ($vatReturns as $row) {
+			$covered[(string)($row['administrationId'] ?? '') . '|' . $period->label(row: $row)] = true;
+		}
+
+		return array_values(
+			array_filter(
+				$btwRows,
+				fn (array $row): bool => isset($covered[(string)($row['administrationId'] ?? '') . '|' . $this->vatPeriodLabel(row: $row)]) === false
+			)
+		);
+	}//end btwRowsWithoutVatReturn()
+
+	/**
+	 * REQ-CDC-002: a draft VatReturn's filing deadline, from its period end.
+	 *
+	 * The period end is the row's periodEnd, else the last day of its
+	 * month, quarter or year.
+	 *
+	 * @param array<string,mixed> $row The VatReturn row.
+	 *
+	 * @return array<string,string>|null The deadline, null once submitted, accepted, rejected or corrected.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	private function vatReturnFilingDeadline(array $row): ?array {
+		if ((string)($row['state'] ?? 'draft') !== 'draft') {
+			return null;
+		}
+
+		$period    = $this->periods();
+		$periodEnd = $period->periodEnd(row: $row);
+		$due       = null;
+		if ($periodEnd !== null) {
+			$due = $this->periods()->dueDateAfter(periodEnd: $periodEnd);
+		}
+
+		$summary = 'BTW-aangifte ' . $period->label(row: $row);
+		$entry   = ['source' => 'btw-filing', 'category' => self::CATEGORY_FILING, 'summary' => $summary, 'dueDate' => $due];
+
+		return $this->openDeadline(row: $row, entry: $entry);
+	}//end vatReturnFilingDeadline()
+
 
 	/**
 	 * REQ-CDC-002: a draft BTW return's filing deadline, from its period end.
@@ -366,7 +432,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		}
 
 		$summary = 'BTW-aangifte ' . $this->vatPeriodLabel(row: $row);
-		$due     = $this->filingDueDateFromPeriodEnd(periodEnd: (string)($row['endDate'] ?? ''));
+		$due     = $this->periods()->dueDateAfter(periodEnd: (string)($row['endDate'] ?? ''));
 		$entry   = ['source' => 'btw-filing', 'category' => self::CATEGORY_FILING, 'summary' => $summary, 'dueDate' => $due];
 
 		return $this->openDeadline(row: $row, entry: $entry);
@@ -388,7 +454,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		$periodEnd = $this->icpPeriodEnd(period: $period);
 		$due       = null;
 		if ($periodEnd !== null) {
-			$due = $this->filingDueDateFromPeriodEnd(periodEnd: $periodEnd);
+			$due = $this->periods()->dueDateAfter(periodEnd: $periodEnd);
 		}
 
 		$entry = ['source' => 'icp-filing', 'category' => self::CATEGORY_FILING, 'summary' => 'ICP-opgaaf ' . $period, 'dueDate' => $due];
@@ -411,7 +477,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		$label = trim((string)($row['deadlineType'] ?? '') . ' ' . (string)($row['fiscalYear'] ?? ''));
 
 		$summary = trim('VPB ' . $label);
-		$due     = $this->normaliseDate(date: (string)($row['deadlineDate'] ?? ''));
+		$due     = $this->periods()->date(value: (string)($row['deadlineDate'] ?? ''));
 		$entry   = ['source' => 'vpb-filing', 'category' => self::CATEGORY_FILING, 'summary' => $summary, 'dueDate' => $due];
 
 		return $this->openDeadline(row: $row, entry: $entry);
@@ -431,7 +497,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		}
 
 		$summary = trim('Betaalrun ' . $this->labelOrObjectId(row: $row, field: 'runNumber'));
-		$due     = $this->normaliseDate(date: (string)($row['executionDate'] ?? ''));
+		$due     = $this->periods()->date(value: (string)($row['executionDate'] ?? ''));
 		$entry   = ['source' => 'payment-run', 'category' => self::CATEGORY_PAYMENT_RUN, 'summary' => $summary, 'dueDate' => $due];
 
 		return $this->openDeadline(row: $row, entry: $entry);
@@ -452,7 +518,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		}
 
 		$summary = trim('Factuur ' . $this->labelOrObjectId(row: $row, field: 'invoiceNumber') . ' vervalt');
-		$due     = $this->normaliseDate(date: (string)($row['dueDate'] ?? ''));
+		$due     = $this->periods()->date(value: (string)($row['dueDate'] ?? ''));
 		$entry   = ['source' => 'ar-invoice', 'category' => self::CATEGORY_AR_DUE, 'summary' => $summary, 'dueDate' => $due];
 
 		return $this->openDeadline(row: $row, entry: $entry);
@@ -473,7 +539,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 			return null;
 		}
 
-		return [
+		$deadline = [
 			'uid' => $entry['source'] . ':' . $objectId,
 			'category' => $entry['category'],
 			'summary' => $entry['summary'],
@@ -481,6 +547,8 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 			'source' => $entry['source'],
 			'objectId' => $objectId,
 		];
+
+		return array_merge($deadline, (new DeadlineCalendarEvents($this->logger))->linkFieldsOf(row: $row));
 	}//end openDeadline()
 
 	/**
@@ -601,7 +669,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	public function dispatchDueReminders(?DateTimeInterface $now = null): int {
-		$today = ($now ?? new DateTimeImmutable('today'));
+		$today = ($now ?? $this->periods()->today());
 		$dispatched = 0;
 
 		try {
@@ -836,35 +904,6 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	}//end isDeadlineCalendar()
 
 	/**
-	 * Derive the NL filing due date from a period end date: the last day
-	 * of the month FOLLOWING the period end (standard BTW-aangifte / ICP
-	 * rule). Pure derivation from existing period data — no parallel
-	 * deadline is stored (REQ-CDC-002).
-	 *
-	 * @param string $periodEnd The period end (Y-m-d-ish).
-	 *
-	 * @return string|null The due date (Y-m-d), or null when unparseable.
-	 *
-	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
-	 */
-	private function filingDueDateFromPeriodEnd(string $periodEnd): ?string {
-		$end = $this->normaliseDate(date: $periodEnd);
-		if ($end === null) {
-			return null;
-		}
-
-		try {
-			return (new DateTimeImmutable($end))
-				->modify('first day of next month')
-				->modify('last day of this month')
-				->format('Y-m-d');
-		} catch (Throwable $e) {
-			return null;
-		}
-
-	}//end filingDueDateFromPeriodEnd()
-
-	/**
 	 * Resolve the period end date of an IcpOpgaaf `period` value
 	 * ('YYYY-Qn' quarterly or 'YYYY-MM' monthly).
 	 *
@@ -876,38 +915,19 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		if (preg_match('/^(\\d{4})-Q([1-4])$/i', $period, $matches) === 1) {
 			$year = (int)$matches[1];
 			$endMonth = ((int)$matches[2] * 3);
-			return $this->lastDayOf(year: $year, month: $endMonth);
+			return $this->periods()->lastDayOf(year: $year, month: $endMonth);
 		}
 
 		if (preg_match('/^(\\d{4})-(\\d{2})$/', $period, $matches) === 1) {
 			$year = (int)$matches[1];
 			$month = (int)$matches[2];
 			if ($month >= 1 && $month <= 12) {
-				return $this->lastDayOf(year: $year, month: $month);
+				return $this->periods()->lastDayOf(year: $year, month: $month);
 			}
 		}
 
 		return null;
 	}//end icpPeriodEnd()
-
-	/**
-	 * The last day of a year+month as Y-m-d.
-	 *
-	 * @param int $year The year.
-	 * @param int $month The month (1-12).
-	 *
-	 * @return string|null The date, or null on failure.
-	 */
-	private function lastDayOf(int $year, int $month): ?string {
-		try {
-			return (new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))
-				->modify('last day of this month')
-				->format('Y-m-d');
-		} catch (Throwable $e) {
-			return null;
-		}
-
-	}//end lastDayOf()
 
 	/**
 	 * Human period label for a VATReturn row ("2026-Q1" / "2026-03" /
@@ -932,26 +952,6 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 
 		return $year;
 	}//end vatPeriodLabel()
-
-	/**
-	 * Normalise a date-ish string to Y-m-d, or null when unparseable.
-	 *
-	 * @param string $date The raw date value.
-	 *
-	 * @return string|null Y-m-d, or null.
-	 */
-	private function normaliseDate(string $date): ?string {
-		if ($date === '') {
-			return null;
-		}
-
-		try {
-			return (new DateTimeImmutable($date))->format('Y-m-d');
-		} catch (Throwable $e) {
-			return null;
-		}
-
-	}//end normaliseDate()
 
 	/**
 	 * The stable object id of an OR record (slug preferred, then ids) —
@@ -1090,6 +1090,15 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 
 		return null;
 	}//end innerRow()
+
+	/**
+	 * The date and period reader the deadline sources share.
+	 *
+	 * @return FilingPeriodRow The reader.
+	 */
+	private function periods(): FilingPeriodRow {
+		return new FilingPeriodRow();
+	}//end periods()
 
 	/**
 	 * Resolve the configured OpenRegister register slug (default 'shillinq').
