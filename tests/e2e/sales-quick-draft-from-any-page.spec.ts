@@ -13,9 +13,9 @@
  * tests/vitest/invoiceQuickDraft.spec.js and the choice of the starting
  * customer by tests/vitest/invoiceQuickDraftStartingCustomer.spec.js.
  *
- * The purchase invoices and bank reconciliation scenarios need the
- * app-level Create invoice action (task 1.1), which is not built yet: they
- * skip with that reason while the page offers no Create invoice action.
+ * On the purchase invoices and bank reconciliation pages Create invoice is
+ * the sub-action of the navigation's New Booking button (task 1.1): the
+ * chevron beside New Booking opens a menu with Create invoice.
  *
  * Base URL from the environment (playwright.config.ts, tests/e2e/base-url.ts).
  *
@@ -93,6 +93,20 @@ function createInvoiceAction(page: Page): Locator {
 }
 
 /**
+ * Choose Create invoice from the navigation: the chevron beside New Booking,
+ * then its Create invoice entry.
+ *
+ * @param page The page.
+ * @return Nothing.
+ */
+async function chooseCreateInvoiceInNav(page: Page): Promise<void> {
+	const nav = page.getByTestId('cn-nav-primary-action')
+	await expect(nav).toBeVisible({ timeout: 15_000 })
+	await nav.getByTestId('cn-action-children-new-booking').getByRole('button').first().click()
+	await page.getByRole('menuitem', { name: 'Create invoice' }).click()
+}
+
+/**
  * Open the page, dismissing the first-run wizard when it shows.
  *
  * @param page The page.
@@ -153,15 +167,9 @@ test.describe('shillinq-invoice-quick-draft — from any page', () => {
 	test('a bookkeeper drafts an invoice from the purchase invoices page', async ({ page }) => {
 		const posted = await stubCustomersAndDrafts(page)
 		await open(page, '/inkoop/supplier-invoices')
-		const action = createInvoiceAction(page)
-		await action.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {})
-		test.skip(
-			(await action.count()) === 0,
-			'no Create invoice action on this page: the app-level action (task 1.1) is not built',
-		)
 		const before = page.url()
 
-		await action.click()
+		await chooseCreateInvoiceInNav(page)
 		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
 		await page.getByTestId('iqd-customer').click()
 		await page.getByText(KORENAAR.legalName, { exact: true }).first().click()
@@ -180,15 +188,9 @@ test.describe('shillinq-invoice-quick-draft — from any page', () => {
 	test('cancelling keeps the page', async ({ page }) => {
 		const posted = await stubCustomersAndDrafts(page)
 		await open(page, '/bookkeeping/bank-reconciliation')
-		const action = createInvoiceAction(page)
-		await action.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {})
-		test.skip(
-			(await action.count()) === 0,
-			'no Create invoice action on this page: the app-level action (task 1.1) is not built',
-		)
 		const before = page.url()
 
-		await action.click()
+		await chooseCreateInvoiceInNav(page)
 		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
 		await page.getByTestId('iqd-cancel').click()
 

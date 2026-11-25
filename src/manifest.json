@@ -13,7 +13,20 @@
                 "label": "New Booking",
                 "type": "open-form",
                 "register": "shillinq",
-                "schema": "JournalEntry"
+                "schema": "JournalEntry",
+                "childrenLabel": "More to create",
+                "children": [
+                    {
+                        "id": "create-invoice",
+                        "label": "Create invoice",
+                        "type": "open-modal",
+                        "target": "InvoiceQuickDraftModal",
+                        "icon": "FileDocumentPlus",
+                        "props": {
+                            "open": true
+                        }
+                    }
+                ]
             }
         },
         "help": {
