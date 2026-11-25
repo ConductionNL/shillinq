@@ -191,6 +191,8 @@ class PaymentRequestActionController extends Controller {
 	 * @param array<string, mixed> $request The payment request.
 	 *
 	 * @return void
+	 *
+	 * @throws \Exception When OpenRegister refuses the save; the caller's response is not sent.
 	 */
 	private function saveRequest(array $request): void {
 		$this->objectService->saveObject(

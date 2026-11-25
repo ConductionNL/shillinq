@@ -470,14 +470,14 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testOnlyTheRequestWithThatIdIsSettled(): void {
-		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
+		$controller = $this->makeController(stored: ['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
 
-		$missing = $controller->settle('pr-other', 'PIN-2026-0004', 'pin');
-		self::assertSame(Http::STATUS_NOT_FOUND, $missing->getStatus());
-		self::assertSame([], $this->saved);
+		$missing = $controller->settle(id: 'pr-other', settlementReference: 'PIN-2026-0004', method: 'pin');
+		self::assertSame(expected: Http::STATUS_NOT_FOUND, actual: $missing->getStatus());
+		self::assertSame(expected: [], actual: $this->saved);
 
-		$found = $controller->settle('pr-1', 'PIN-2026-0004', 'pin');
-		self::assertSame(Http::STATUS_OK, $found->getStatus());
+		$found = $controller->settle(id: 'pr-1', settlementReference: 'PIN-2026-0004', method: 'pin');
+		self::assertSame(expected: Http::STATUS_OK, actual: $found->getStatus());
 	}//end testOnlyTheRequestWithThatIdIsSettled()
 	/**
 	 * A published fee for the case's type.
