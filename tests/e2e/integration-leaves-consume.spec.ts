@@ -171,6 +171,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 		await fx.create('Administration', {
 			administrationCode: ADMINISTRATION_ID,
 			name: `Leaves ${UNIQUE_PREFIX}`,
+			legalForm: 'bv',
 			status: 'actief',
 			fiscalYearStartMonth: 1,
 			fiscalYearStartDay: 1,
@@ -287,9 +288,10 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 	 * @return The calendar collection hrefs.
 	 */
 	async function calendars(): Promise<string[]> {
+		// A cookie session reaches DAV only with its request token; without it DAV answers 401.
 		const res = await api.fetch(`/remote.php/dav/calendars/${ADMIN_USER}/`, {
 			method: 'PROPFIND',
-			headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8' },
+			headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8', requesttoken: await requestToken() },
 			data: '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>',
 		})
 		expect(res.status(), 'PROPFIND of the calendar home').toBe(207)
@@ -315,7 +317,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 		for (const href of await calendars()) {
 			const res = await api.fetch(href, {
 				method: 'REPORT',
-				headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8' },
+				headers: { Depth: '1', 'Content-Type': 'application/xml; charset=utf-8', requesttoken: await requestToken() },
 				data: '<?xml version="1.0"?><c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'
 					+ '<d:prop><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT">'
 					+ `<c:prop-filter name="UID"><c:text-match collation="i;octet" match-type="equals">${uid}</c:text-match></c:prop-filter>`
@@ -548,7 +550,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 			periodQuarter: 3,
 			periodStart: '2026-07-01',
 			periodEnd: '2026-09-30',
-			rubrieken: {},
+			rubrieken: { '1a': { revenue: 0, vat: 0 } },
 			dueSalesTax: 0,
 			inputVat: 0,
 			payableOrRefund: 0,
@@ -578,7 +580,7 @@ test.describe('integration-leaves-consume: files, calendar, contacts and talk on
 			periodQuarter: 2,
 			periodStart: '2026-04-01',
 			periodEnd: '2026-06-30',
-			rubrieken: {},
+			rubrieken: { '1a': { revenue: 0, vat: 0 } },
 			dueSalesTax: 0,
 			inputVat: 0,
 			payableOrRefund: 0,

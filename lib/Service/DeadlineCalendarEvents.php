@@ -100,12 +100,42 @@ final class DeadlineCalendarEvents {
 		$published = 0;
 		foreach ($desired as $deadline) {
 			$vevent = $this->buildVevent(deadline: $deadline, cancelled: false);
-			$calendar->createFromString($this->uidToFilename(uid: $deadline['uid']), $vevent);
-			$published++;
+			if ($this->write(calendar: $calendar, uid: $deadline['uid'], vevent: $vevent) === true) {
+				$published++;
+			}
 		}
 
 		return $published;
 	}//end publish()
+
+	/**
+	 * Write one VEVENT; a write the calendar refuses is logged and skipped,
+	 * so one event never stops the others.
+	 *
+	 * Nextcloud 34's createFromString() only creates: for a UID the
+	 * calendar already holds it answers a conflict, so an event already
+	 * published stays as it was.
+	 *
+	 * @param object $calendar The resolved calendar.
+	 * @param string $uid      The VEVENT UID.
+	 * @param string $vevent   The VCALENDAR payload.
+	 *
+	 * @return bool True when the calendar took the write.
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	private function write(object $calendar, string $uid, string $vevent): bool {
+		try {
+			$calendar->createFromString($this->uidToFilename(uid: $uid), $vevent);
+			return true;
+		} catch (Throwable $e) {
+			$this->logger->debug(
+				'ComplianceDeadlineCalendarService: calendar refused the event write; it stays as it was',
+				['uid' => $uid, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}
+	}//end write()
 
 
 	/**
@@ -148,8 +178,7 @@ final class DeadlineCalendarEvents {
 	public function cancelUndesired(object $calendar, array $desired): int {
 		$removed = 0;
 		foreach ($this->existingAppUids(calendar: $calendar) as $uid) {
-			if (isset($desired[$uid]) === false) {
-				$calendar->createFromString($this->uidToFilename(uid: $uid), $this->cancelledVevent(uid: $uid));
+			if (isset($desired[$uid]) === false && $this->write(calendar: $calendar, uid: $uid, vevent: $this->cancelledVevent(uid: $uid)) === true) {
 				$removed++;
 			}
 		}

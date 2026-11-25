@@ -373,6 +373,14 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 			public array $writes = [];
 
 			/**
+			 * Calendar-object names whose write is refused, as Nextcloud 34
+			 * refuses a create for a UID the calendar already holds.
+			 *
+			 * @var array<int, string>
+			 */
+			public array $refusedNames = [];
+
+			/**
 			 * The pre-existing UIDs surfaced via search().
 			 *
 			 * @var array<int, string>
@@ -407,6 +415,10 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 			 * @return void
 			 */
 			public function createFromString(string $name, string $calendarData): void {
+				if (in_array($name, $this->refusedNames, true) === true) {
+					throw new \RuntimeException('Calendar object with uid already exists in this calendar collection.');
+				}
+
 				$this->writes[] = [$name, $calendarData];
 
 			}//end createFromString()
@@ -841,6 +853,35 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 		self::assertStringNotContainsString(needle: 'btw-same', haystack: $writes[0][1] . $writes[1][1]);
 
 	}//end testVatReturnDeadlineIsPublishedAndLinkedToTheReturn()
+
+	/**
+	 * A write the calendar refuses (Nextcloud 34 answers a conflict for a UID
+	 * it already holds) is skipped: the other deadlines still publish and
+	 * the publication is still ok.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	public function testARefusedWriteSkipsThatEventOnly(): void {
+		$service = $this->buildService(
+			recordsBySchema: [
+				'BtwAangifte' => [
+					$this->vatReturn(),
+					$this->vatReturn(overrides: ['@self' => ['slug' => 'vatreturn-2026-Q2'], 'periodNumber' => 2, 'endDate' => '2026-06-30']),
+				],
+			],
+		);
+		$this->calendarStub->refusedNames = ['shillinq-btw-filing-vatreturn-2026-q1.ics'];
+
+		$result = $service->publishForUser(userId: 'alice');
+
+		self::assertSame(expected: 'ok', actual: $result['status']);
+		self::assertSame(expected: 1, actual: $result['published']);
+		self::assertCount(expectedCount: 1, haystack: $this->calendarStub->writes);
+		self::assertStringContainsString(needle: 'UID:btw-filing:vatreturn-2026-Q2', haystack: $this->calendarStub->writes[0][1]);
+
+	}//end testARefusedWriteSkipsThatEventOnly()
 
 	/**
 	 * A VatReturn's period end and label come from its year and month,
