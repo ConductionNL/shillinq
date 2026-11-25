@@ -18,18 +18,32 @@
 
 ## 3. Move the hour
 
-- [ ] 3.1 Humaniq writes case-scoped hours: `TimeEntry.domainObjectRef` +
+- [x] 3.1 Humaniq writes case-scoped hours: `TimeEntry.domainObjectRef` +
       `domainObjectType` are stamped on create from the logging app.
-- [ ] 3.2 Correct humaniq's `x-notes` example from `procest:case` to
+  - Already on humaniq development (checked 25 Nov 2026 at aea494a6): the
+    hours leaf's `HoursBookingDialog` and `RunningTimerService::start()` write
+    both fields from the host page, `ObjectWeekHours` and
+    `TimeEstimateService` read them; nothing left to build here.
+- [x] 3.2 Correct humaniq's `x-notes` example from `procest:case` to
       `dossiq:case`. The app id moved and nothing writes the field yet, so
       this costs nothing now and is unrecoverable once hours exist.
-- [ ] 3.3 Shillinq reads hours from humaniq for the ledger, in the shape
+  - Already on humaniq development: `register.d/hr-cost-rate.json` names
+    `dossiq:case`; no `procest:case` literal is left in humaniq's lib/ or src/.
+- [x] 3.3 Shillinq reads hours from humaniq for the ledger, in the shape
       task 1.1 chose.
+  - `HumaniqHoursReader::entriesInPeriod()`: one read per run over an
+    administration and a period, keyed by `TimeEntry` uuid (the reference a
+    booking keeps), null when humaniq does not answer and [] when it holds no
+    hours (REQ-H2H-002). PHPUnit `HumaniqHoursReaderTest`. The register slug
+    comes from `HrmqCostRateAdapter`, the one seam.
 
 ## 4. Repoint each consumer, statutory ones last
 
-- [ ] 4.1 `SubjectCostAggregator` (1 reference). Smallest, and it proves the
+- [x] 4.1 `SubjectCostAggregator` (1 reference). Smallest, and it proves the
       read path.
+  - The aggregator's hour rows already came from humaniq `TimeEntry` through
+    `SubjectCostService` (`SubjectCostServiceTest`); the one reference was its
+    docblock, which now names `TimeEntry`.
 - [ ] 4.2 `FinancialDashboardService` (3 references). Reporting only, no tax
       position.
 - [ ] 4.3 `InvoiceGenerationService` (2 references) and

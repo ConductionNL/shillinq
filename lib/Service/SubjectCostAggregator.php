@@ -71,7 +71,8 @@ class SubjectCostAggregator {
 	 * is integer in hrmq — a float total over many rows drifts, and a ledger
 	 * that drifts is not a ledger.
 	 *
-	 * @param array<int, array<string, mixed>> $hourRows UrenRegistratie rows for one subject.
+	 * @param array<int, array<string, mixed>> $hourRows Humaniq TimeEntry rows for one subject, normalised by
+	 *     SubjectCostService to personId, hours and administrationId.
 	 * @param array<string, int> $rates personId => cost cents per hour.
 	 *
 	 * @return array{
@@ -81,6 +82,7 @@ class SubjectCostAggregator {
 	 * }
 	 *
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-cost-is-published-only-when-every-hour-in-it-could-be-priced
+	 * @spec openspec/changes/hours-to-humaniq/tasks.md#4-repoint-each-consumer-statutory-ones-last
 	 */
 	public function aggregate(array $hourRows, array $rates): array {
 		$hoursByPerson = $this->hoursByPerson(hourRows: $hourRows);
