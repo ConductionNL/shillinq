@@ -128,4 +128,61 @@ final class RegisterRequiresGuardAdapterTest extends TestCase {
 		self::assertFalse($result->isAllowed());
 
 	}//end testFailsClosedWhenWrappedMethodThrows()
+	/**
+	 * A guard method whose first parameter is a string id gets the object's id
+	 * and the object (`canVoid(string $journalEntryId, ?array $object)`), and a
+	 * method that takes only the id gets only the id.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/missing-lifecycle-guards/spec.md
+	 */
+	public function testAnIdTakingGuardGetsTheIdAndTheObject(): void {
+		$guard = new class {
+			/**
+			 * Every call's arguments.
+			 *
+			 * @var list<array<int, mixed>>
+			 */
+			public array $calls = [];
+
+			/**
+			 * Record the call.
+			 *
+			 * @param string                    $entryId The object id.
+			 * @param array<string, mixed>|null $object  The object.
+			 *
+			 * @return bool
+			 */
+			public function canVoid(string $entryId, ?array $object = null): bool {
+				$this->calls[] = [$entryId, $object];
+				return $entryId === 'je-1';
+			}//end canVoid()
+
+			/**
+			 * Record the call.
+			 *
+			 * @param string $runId The object id.
+			 *
+			 * @return bool
+			 */
+			public function canExecute(string $runId): bool {
+				$this->calls[] = [$runId];
+				return true;
+			}//end canExecute()
+		};
+
+		$voids = new RegisterRequiresGuardAdapter(guard: $guard, method: 'canVoid', denyMessage: 'no', logger: $this->createMock(LoggerInterface::class));
+		self::assertTrue($voids->check(['id' => 'je-1', 'state' => 'posted'], 'void', 'user-1')->isAllowed());
+		self::assertFalse($voids->check(['@self' => ['id' => 'je-2']], 'void', 'user-1')->isAllowed());
+
+		$runs = new RegisterRequiresGuardAdapter(guard: $guard, method: 'canExecute', denyMessage: 'no', logger: $this->createMock(LoggerInterface::class));
+		self::assertTrue($runs->check(['uuid' => 'run-1'], 'execute', 'user-1')->isAllowed());
+
+		self::assertSame(
+			[['je-1', ['id' => 'je-1', 'state' => 'posted']], ['je-2', ['@self' => ['id' => 'je-2']]], ['run-1']],
+			$guard->calls
+		);
+
+	}//end testAnIdTakingGuardGetsTheIdAndTheObject()
 }//end class
