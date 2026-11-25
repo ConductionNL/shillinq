@@ -11,7 +11,7 @@
       "DeferralSchedule": {
         "slug": "DeferralSchedule",
         "icon": "CalendarClock",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Deferral Schedule",
         "description": "A prepaid cost or deferred revenue from one invoice line, spread over the fiscal periods of its service period (ledger-period-end REQ-LPE-004). On creation one journal entry moves the total from the result account to the balance account; the nightly soft close posts the release of each ended period, straight line by day count with the rounding remainder on the last release, and completes the schedule when the last release posts (REQ-LPE-005).",
         "x-schema-org": "schema:Schedule",
@@ -83,10 +83,8 @@
             "description": "The last day of the service period."
           },
           "openingJournalEntryId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Opening entry",
             "description": "The posted journal entry that moved the total to the balance account."
           },
@@ -132,18 +130,14 @@
                   "description": "The share of the total released in this period, in cents."
                 },
                 "journalEntryId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
+                  "nullable": true,
                   "title": "Journal entry",
                   "description": "The posted journal entry that released this share; empty until the period has ended and the nightly close posted it."
                 },
                 "releasedAt": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
+                  "nullable": true,
                   "format": "date-time",
                   "title": "Released at",
                   "description": "When the release was posted."
