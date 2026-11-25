@@ -496,7 +496,7 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 *
 	 * @return string Resolved locationId, or '' when unresolvable.
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function resolveLocation(array $line, array $delivery, array $stockRows): string {
 		$lineLocation = trim((string)($line['sourceLocationId'] ?? ''));
@@ -766,7 +766,7 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 *
 	 * @return array<int,array<string,mixed>> Matching InventoryStock rows.
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function inventoryStockRows(string $administrationId, string $sku): array {
 		try {

@@ -8995,7 +8995,7 @@
       "Receipt": {
         "slug": "Receipt",
         "icon": "ReceiptOutline",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Receipt",
         "description": "Scanned or uploaded receipt photo with amount, date, expense category, and multi-currency support. Linked to a parent ExpenseClaimEntry for approval and reimbursement. Per.",
         "x-schema-org": "schema:DigitalDocument",
