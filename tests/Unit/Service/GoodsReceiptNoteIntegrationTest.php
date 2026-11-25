@@ -311,8 +311,8 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 		$fallback = 'GoodsReceiptNoteService: StockMove posted without the transition engine; its post listeners did not run';
 		self::assertSame(
 			[
-				[$fallback, ['stockMoveId' => 'obj-1', 'movementNumber' => 'SM-2026-adm-1-000001-LINEA']],
-				[$fallback, ['stockMoveId' => 'obj-2', 'movementNumber' => 'SM-2026-adm-1-000001-LINEB']],
+				[$fallback, ['stockMoveId' => 'obj-1', 'movementNumber' => 'SM-2026-ADM-1-000001-LINEA']],
+				[$fallback, ['stockMoveId' => 'obj-2', 'movementNumber' => 'SM-2026-ADM-1-000001-LINEB']],
 				['GoodsReceiptNoteService: PO line missing on accept; StockMove skipped', ['poLineId' => 'poline-gone', 'grnId' => 'grn-1']],
 			],
 			$this->sortedByMessage($warnings)
@@ -347,8 +347,8 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 		];
 		self::assertSame(
 			[
-				$expected('SM-2026-adm-1-000001-LINEA', 2.5, 'WH-LINE', 'obj-1'),
-				$expected('SM-2026-adm-1-000001-LINEB', 1.0, 'WH-GRN', 'obj-2'),
+				$expected('SM-2026-ADM-1-000001-LINEA', 2.5, 'WH-LINE', 'obj-1'),
+				$expected('SM-2026-ADM-1-000001-LINEB', 1.0, 'WH-GRN', 'obj-2'),
 			],
 			array_values($moves)
 		);

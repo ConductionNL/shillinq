@@ -53,6 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Inventory\StockMoveNumber;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GoodsReceiptNoteServiceInterface;
 use OCP\IAppConfig;
@@ -860,11 +861,11 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 		}
 
 		$suffix = preg_replace('/[^A-Za-z0-9]/', '', $grnLineId) ?? '';
-		if ($suffix === '') {
-			return $base;
+		if ($suffix !== '') {
+			$base .= '-' . strtoupper(substr($suffix, 0, 12));
 		}
 
-		return $base . '-' . strtoupper(substr($suffix, 0, 12));
+		return (new StockMoveNumber())->normalise(candidate: $base);
 	}//end buildMovementNumber()
 
 	/**
