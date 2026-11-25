@@ -59,6 +59,8 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use Psr\Log\LoggerInterface;
+use ReflectionMethod;
+use ReflectionNamedType;
 
 /**
  * Adapts a `bool <method>(array $object): bool` guard method to
@@ -106,7 +108,7 @@ final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface {
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {
 		try {
-			$allowed = ($this->guard->{$this->method}($object) === true);
+			$allowed = ($this->guard->{$this->method}(...$this->arguments(object: $object)) === true);
 		} catch (PostingRefusedException $e) {
 			// A refusal the bookkeeper must read: which account or which
 			// restriction (ledger-booking-rules).
@@ -130,4 +132,40 @@ final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface {
 
 		return GuardResult::deny($this->denyMessage);
 	}//end check()
+
+	/**
+	 * The arguments the guard method takes: the object, or, for a method whose
+	 * first parameter is a string (`canVoid(string $journalEntryId, ?array $object)`),
+	 * the object's id and the object.
+	 *
+	 * @param array<string, mixed> $object The object being transitioned.
+	 *
+	 * @return list<mixed> The arguments.
+	 *
+	 * @spec openspec/specs/missing-lifecycle-guards/spec.md
+	 */
+	private function arguments(array $object): array {
+		if (method_exists($this->guard, $this->method) === false) {
+			// A guard answering through __call takes the object.
+			return [$object];
+		}
+
+		$parameters = (new ReflectionMethod($this->guard, $this->method))->getParameters();
+		$first      = ($parameters[0] ?? null)?->getType();
+		if ($first instanceof ReflectionNamedType === false || $first->getName() !== 'string') {
+			return [$object];
+		}
+
+		$self = ($object['@self'] ?? []);
+		if (is_array($self) === false) {
+			$self = [];
+		}
+
+		$id = (string)($object['id'] ?? ($self['id'] ?? ($object['uuid'] ?? '')));
+		if (count($parameters) === 1) {
+			return [$id];
+		}
+
+		return [$id, $object];
+	}//end arguments()
 }//end class
