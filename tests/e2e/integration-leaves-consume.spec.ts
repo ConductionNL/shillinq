@@ -53,8 +53,8 @@
  *
  * Written 24 Nov 2026, runs in the nightly; not run in the build sandbox (no live instance).
  *
- * @spec openspec/changes/integration-leaves-consume/specs/consume-platform-abstractions/spec.md
- * @spec openspec/changes/integration-leaves-consume/tasks.md
+ * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/specs/consume-platform-abstractions/spec.md
+ * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
  *
  * @e2e consume-platform-abstractions::a-receipts-image-is-reachable-from-its-detail-page
  * @e2e consume-platform-abstractions::an-expense-claim-shows-all-of-its-receipt-evidence

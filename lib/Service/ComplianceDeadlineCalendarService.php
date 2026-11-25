@@ -345,7 +345,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 *
 	 * @return array<int,array<string,string>> The open deadlines of the source.
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	private function rowDeadlines(array $rows, callable $mapper): array {
 		$deadlines = [];
@@ -371,7 +371,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 *
 	 * @return array<int,array<string,mixed>> The BtwAangifte rows left.
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	private function btwRowsWithoutVatReturn(array $btwRows, array $vatReturns): array {
 		$period  = $this->periods();
@@ -398,7 +398,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 *
 	 * @return array<string,string>|null The deadline, null once submitted, accepted, rejected or corrected.
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	private function vatReturnFilingDeadline(array $row): ?array {
 		if ((string)($row['state'] ?? 'draft') !== 'draft') {

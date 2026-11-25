@@ -808,7 +808,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function testVatReturnDeadlineIsPublishedAndLinkedToTheReturn(): void {
 		$return = [
@@ -861,7 +861,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function testARefusedWriteSkipsThatEventOnly(): void {
 		$service = $this->buildService(
@@ -890,7 +890,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function testVatReturnPeriodComesFromItsNumbersOrItsEnd(): void {
 		$service = $this->buildService(

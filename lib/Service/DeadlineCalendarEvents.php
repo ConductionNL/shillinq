@@ -122,7 +122,7 @@ final class DeadlineCalendarEvents {
 	 *
 	 * @return bool True when the calendar took the write.
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	private function write(object $calendar, string $uid, string $vevent): bool {
 		try {
@@ -147,7 +147,7 @@ final class DeadlineCalendarEvents {
 	 *
 	 * @return array<string,string> The link fields, or nothing.
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function linkFieldsOf(array $row): array {
 		$self = ($row['@self'] ?? []);
@@ -419,7 +419,7 @@ final class DeadlineCalendarEvents {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	private function linkLines(array $deadline): array {
 		$uuid = (string)($deadline['objectUuid'] ?? '');

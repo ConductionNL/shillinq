@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/integration-leaves-consume/tasks.md
+ * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use Throwable;
  * periodYear and periodMonth or periodQuarter, or a periodEnd date): its end
  * date and its label ("2026-Q2", "2026-03", "2026").
  *
- * @spec openspec/changes/integration-leaves-consume/tasks.md
+ * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
  */
 final class FilingPeriodRow {
 
@@ -42,7 +42,7 @@ final class FilingPeriodRow {
 	 *
 	 * @return string|null The period end (Y-m-d), or null when neither is usable.
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function periodEnd(array $row): ?string {
 		$end = $this->date(value: (string)($row['periodEnd'] ?? ''));
@@ -67,7 +67,7 @@ final class FilingPeriodRow {
 	 *
 	 * @return string The label.
 	 *
-	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function label(array $row): string {
 		$type  = (string)($row['periodType'] ?? 'quarter');
