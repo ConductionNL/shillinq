@@ -163,6 +163,23 @@ final class PaymentRequestActionControllerTest extends TestCase {
 			}
 
 			/**
+			 * The stored row of the selected schema with this id, as OpenRegister's find() reads by uuid.
+			 *
+			 * @param int|string $id The id.
+			 *
+			 * @return array<string, mixed>|null
+			 */
+			public function find(int|string $id): ?array {
+				foreach (($this->stored[$this->schema] ?? []) as $row) {
+					if (is_array($row) === true && (string)($row['id'] ?? '') === (string)$id) {
+						return $row;
+					}
+				}
+
+				return null;
+			}
+
+			/**
 			 * @param array<string, mixed> $object Object to persist.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
@@ -444,6 +461,24 @@ final class PaymentRequestActionControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testAnUnknownRequestIsNotFound()
+
+	/**
+	 * Another stored request is never taken for the one asked for. The lookup
+	 * reads by uuid; a findAll() filter on `id`, which OpenRegister matches no
+	 * row for, made every live send and settle answer 404 (REQ-SOPR-004).
+	 *
+	 * @return void
+	 */
+	public function testOnlyTheRequestWithThatIdIsSettled(): void {
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
+
+		$missing = $controller->settle('pr-other', 'PIN-2026-0004', 'pin');
+		self::assertSame(Http::STATUS_NOT_FOUND, $missing->getStatus());
+		self::assertSame([], $this->saved);
+
+		$found = $controller->settle('pr-1', 'PIN-2026-0004', 'pin');
+		self::assertSame(Http::STATUS_OK, $found->getStatus());
+	}//end testOnlyTheRequestWithThatIdIsSettled()
 	/**
 	 * A published fee for the case's type.
 	 *

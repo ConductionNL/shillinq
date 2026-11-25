@@ -38,6 +38,7 @@ use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -350,25 +351,21 @@ class PaymentRequestActionController extends Controller {
 	 *
 	 * @param string $id The request id.
 	 *
+	 * Read by uuid through the schema-scoped find(), not a findAll() filter on
+	 * `id`: OpenRegister matches no row for that filter, so on a live instance
+	 * every send and settle of a request the leaf had just created answered
+	 * "No payment request with that id".
+	 *
 	 * @return array<string, mixed>|null The request, or null when there is none.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 	 */
 	private function loadRequest(string $id): ?array {
-		$rows = $this->objectService
+		$scoped = $this->objectService
 			->setRegister($this->registerSlug())
-			->setSchema(self::SCHEMA)
-			->findAll(['filters' => ['id' => $id], 'limit' => 1]);
+			->setSchema(self::SCHEMA);
 
-		if ($rows === []) {
-			return null;
-		}
-
-		$row = $rows[0];
-
-		if (is_array($row) === false) {
-			return null;
-		}
-
-		return $row;
+		return ObjectIdentifier::findOne(scoped: $scoped, id: $id);
 	}//end loadRequest()
 
 	/**
@@ -523,19 +520,18 @@ class PaymentRequestActionController extends Controller {
 	 * @param string $schema The schema slug.
 	 * @param string $objectId The object id.
 	 *
+	 * Read by uuid through the schema-scoped find(), as in loadRequest().
+	 *
 	 * @return array<string, mixed>|null The object, or null.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 	 */
 	private function loadObject(string $register, string $schema, string $objectId): ?array {
-		$rows = $this->objectService
+		$scoped = $this->objectService
 			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $objectId], 'limit' => 1]);
+			->setSchema($schema);
 
-		if ($rows === [] || is_array($rows[0]) === false) {
-			return null;
-		}
-
-		return $rows[0];
+		return ObjectIdentifier::findOne(scoped: $scoped, id: $objectId);
 	}//end loadObject()
 
 	/**
