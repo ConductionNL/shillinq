@@ -176,7 +176,7 @@ class JournalEntryGuard {
 	 * @return true
 	 * @throws PostingRefusedException When a line breaks a booking rule or names an unknown dimension.
 	 *
-	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
 	 */
 	private function bookable(array $lines, array|null $object): bool {
 		$this->restrictions->assertAllowed(

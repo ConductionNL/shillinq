@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+ * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use OCP\IL10N;
 /**
  * Checks the dimension codes on a posting's lines against the administration's active dimensions.
  *
- * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+ * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
  */
 class LineDimensionCheck {
 
@@ -86,7 +86,7 @@ class LineDimensionCheck {
 	 *
 	 * @throws PostingRefusedException Naming the line number and the code.
 	 *
-	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 * @spec openspec/changes/archive/2026-11-25-ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
 	 */
 	public function assertKnown(array $lines, string $administrationId, string $postingDate): void {
 		$codes = $this->codesOf(lines: $lines);
