@@ -115,7 +115,10 @@ final class TaxDigipoortFilingFragmentTest extends TestCase {
 		$fragment = $this->decode('register.d/tax-digipoort-filing.json');
 		$schemas  = $fragment['components']['schemas'];
 
-		self::assertSame(['XBRLTaxonomy', 'XBRLTaxonomy'], array_map(static fn (array $o): string => $o['@self']['schema'], $fragment['objects']));
+		self::assertSame(
+			expected: ['XBRLTaxonomy', 'XBRLTaxonomy'],
+			actual: array_map(static fn (array $o): string => $o['@self']['schema'], $fragment['objects'])
+		);
 		self::assertSame(['XbrlInstance', 'BtwAangifte', 'XBRLTaxonomy'], array_keys($schemas));
 		self::assertSame(['properties', 'x-openregister-lifecycle'], array_keys($schemas['XbrlInstance']));
 		self::assertSame(['transitions', 'states'], array_keys($schemas['XbrlInstance']['x-openregister-lifecycle']));
@@ -188,31 +191,31 @@ final class TaxDigipoortFilingFragmentTest extends TestCase {
 	 */
 	public function testTheSeedTaxonomyIsEffectiveForTheOb2026AndKvk2025Periods(): void {
 		$rows = array_values(array_filter(
-			$this->decode('register.d/tax-digipoort-filing.json')['objects'],
+			$this->decode(file: 'register.d/tax-digipoort-filing.json')['objects'],
 			static fn (array $o): bool => ($o['@self']['schema'] ?? '') === 'XBRLTaxonomy'
 		));
 
-		self::assertCount(2, $rows);
+		self::assertCount(expectedCount: 2, haystack: $rows);
 		foreach ($rows as $row) {
-			self::assertSame('NT20', $row['taxonomyVersion']);
-			self::assertSame($row['@self']['slug'], $row['taxonomyId']);
+			self::assertSame(expected: 'NT20', actual: $row['taxonomyVersion']);
+			self::assertSame(expected: $row['@self']['slug'], actual: $row['taxonomyId']);
 		}
 
 		$ob = XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'belastingdienst-ob', start: '2026-07-01', end: '2026-09-30');
-		self::assertSame('nt20-belastingdienst-ob-2026', $ob['taxonomyId'] ?? null);
-		self::assertNull(XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'belastingdienst-ob', start: '2025-10-01', end: '2025-12-31'));
-		self::assertNull(XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'belastingdienst-ob', start: '2027-01-01', end: '2027-03-31'));
+		self::assertSame(expected: 'nt20-belastingdienst-ob-2026', actual: ($ob['taxonomyId'] ?? null));
+		self::assertNull(actual: XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'belastingdienst-ob', start: '2025-10-01', end: '2025-12-31'));
+		self::assertNull(actual: XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'belastingdienst-ob', start: '2027-01-01', end: '2027-03-31'));
 
 		$kvk = XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'kvk-jaarrekening', start: '2025-01-01', end: '2025-12-31');
-		self::assertSame('nt20-kvk-jaarrekening-2025', $kvk['taxonomyId'] ?? null);
-		self::assertNull(XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'kvk-jaarrekening', start: '2026-01-01', end: '2026-12-31'));
+		self::assertSame(expected: 'nt20-kvk-jaarrekening-2025', actual: ($kvk['taxonomyId'] ?? null));
+		self::assertNull(actual: XbrlTaxonomyLookup::pick(rows: $rows, entryPoint: 'kvk-jaarrekening', start: '2026-01-01', end: '2026-12-31'));
 		self::assertSame(
-			'https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-klein.xsd',
-			XbrlInstanceWriter::schemaRef(taxonomy: $kvk, entryPoint: 'kvk-jaarrekening:small')
+			expected: 'https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-klein.xsd',
+			actual: XbrlInstanceWriter::schemaRef(taxonomy: $kvk, entryPoint: 'kvk-jaarrekening:small')
 		);
-		self::assertSame(['micro', 'small', 'medium', 'large'], array_map(
-			static fn (string $k): string => substr($k, strlen('kvk-jaarrekening:')),
-			array_keys($kvk['schemaRefs'])
-		));
+		self::assertSame(
+			expected: ['kvk-jaarrekening:micro', 'kvk-jaarrekening:small', 'kvk-jaarrekening:medium', 'kvk-jaarrekening:large'],
+			actual: array_keys($kvk['schemaRefs'])
+		);
 	}//end testTheSeedTaxonomyIsEffectiveForTheOb2026AndKvk2025Periods()
 }//end class
