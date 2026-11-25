@@ -220,6 +220,10 @@
         {
             "appVersion": "0.5.19-unstable.20261125100000",
             "versionsSha256": "e5b13c6874574ee03006ffc42820e77643c074896a59b030b690248b3932e3b9"
+        },
+        {
+            "appVersion": "0.5.20-unstable.20261125200600",
+            "versionsSha256": "92628b6d74dcb700c88140c5794a057fbc15dd81e67e8fd5c8cb91716fea90cd"
         }
     ],
     "versions": {
@@ -682,7 +686,7 @@
         "schema:SpendingMandate": "0.1.0",
         "schema:StandardSpecificCalculation": "0.1.0",
         "schema:StandardsPolicy": "",
-        "schema:StockMove": "0.1.0",
+        "schema:StockMove": "0.1.1",
         "schema:Subsidie": "0.1.0",
         "schema:SubsidieVerantwoording": "0.1.0",
         "schema:SupplierInvoice": "0.1.0",

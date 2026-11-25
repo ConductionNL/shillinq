@@ -102,8 +102,8 @@ final class StockReservationGuardMovesTest extends TestCase {
 					array_filter(
 						$this->stock,
 						static fn (array $row): bool => $row['administrationId'] === $filters['administrationId']
-							&& $row['locationId'] === $filters['locationId']
-							&& $row['sku'] === $filters['sku']
+							&& $row['locationCode'] === $filters['locationCode']
+							&& $row['productSku'] === $filters['productSku']
 					)
 				);
 			}
@@ -169,10 +169,10 @@ final class StockReservationGuardMovesTest extends TestCase {
 		$this->stock[$id] = [
 			'id' => $id,
 			'administrationId' => 'adm-1',
-			'locationId' => $location,
-			'sku' => 'SKU-1',
-			'quantity' => $quantity,
-			'reservedQuantity' => $reserved,
+			'locationCode' => $location,
+			'productSku' => 'SKU-1',
+			'quantityOnHand' => $quantity,
+			'quantityReserved' => $reserved,
 			'version' => 3,
 		];
 	}//end stockAt()
@@ -210,9 +210,9 @@ final class StockReservationGuardMovesTest extends TestCase {
 
 		$this->assertCount(1, $this->updates);
 		$this->assertSame('st-a', $this->updates[0][0]);
-		$this->assertSame(6.75, $this->updates[0][1]['reservedQuantity']);
+		$this->assertSame(expected: 6.75, actual: $this->updates[0][1]['quantityReserved']);
 		$this->assertSame(4, $this->updates[0][1]['version']);
-		$this->assertSame(10, $this->updates[0][1]['quantity'], 'on hand is untouched by a reservation');
+		$this->assertSame(expected: 10, actual: $this->updates[0][1]['quantityOnHand'], message: 'on hand is untouched by a reservation');
 	}//end testReservingAddsToTheReservation()
 
 	/**
@@ -288,11 +288,11 @@ final class StockReservationGuardMovesTest extends TestCase {
 		$this->assertTrue($this->guard()->commitReservation(self::move(4, 'loc-a', 'loc-b')));
 
 		$this->assertSame(['st-a', 'st-b'], array_column($this->updates, 0));
-		$this->assertSame(6.0, $this->updates[0][1]['quantity']);
-		$this->assertSame(0.0, $this->updates[0][1]['reservedQuantity']);
+		$this->assertSame(expected: 6.0, actual: $this->updates[0][1]['quantityOnHand']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[0][1]['quantityReserved']);
 		$this->assertSame(4, $this->updates[0][1]['version']);
-		$this->assertSame(date('Y-m-d'), $this->updates[0][1]['lastMovementDate']);
-		$this->assertSame(5.5, $this->updates[1][1]['quantity']);
+		$this->assertSame(expected: 5.5, actual: $this->updates[1][1]['quantityOnHand']);
+		$this->assertSame(expected: date('Y-m-d'), actual: $this->updates[1][1]['lastRestockDate']);
 		$this->assertSame(4, $this->updates[1][1]['version']);
 	}//end testCommittingATransferMovesTheStock()
 
@@ -307,12 +307,14 @@ final class StockReservationGuardMovesTest extends TestCase {
 		$this->assertSame(
 			[[
 				'administrationId' => 'adm-1',
-				'locationId' => 'loc-c',
-				'sku' => 'SKU-1',
-				'quantity' => 2.5,
-				'reservedQuantity' => 0,
+				'locationCode' => 'loc-c',
+				'productSku' => 'SKU-1',
+				'quantityOnHand' => 2.5,
+				'quantityReserved' => 0,
 				'unitCost' => 2.5,
-				'lastMovementDate' => date('Y-m-d'),
+				'lastRestockDate' => date('Y-m-d'),
+				'productId' => 'SKU-1',
+				'status' => 'active',
 				'version' => 1,
 			]],
 			$this->created
@@ -325,17 +327,42 @@ final class StockReservationGuardMovesTest extends TestCase {
 	 * @return void
 	 */
 	public function testACommitTheSourceCannotCoverIsDenied(): void {
-		$this->stockAt('st-a', 'loc-a', 10, 3);
+		$this->stockAt(id: 'st-a', location: 'loc-a', quantity: 3, reserved: 3);
 		$this->logger->expects($this->once())
 			->method('info')
-			->with('StockReservationGuard: commit denied — source reservation/on-hand inconsistent', ['movementNumber' => 'SM-1', 'sourceLocation' => 'loc-a']);
+			->with('StockReservationGuard: commit denied — source on-hand does not cover the move', ['movementNumber' => 'SM-1', 'sourceLocation' => 'loc-a']);
 		$guard = $this->guard();
 
-		$this->assertFalse($guard->commitReservation(self::move(4, 'loc-a', 'loc-b')), 'reserved 3 cannot cover 4');
+		$this->assertFalse(
+			condition: $guard->commitReservation(move: self::move(quantity: 4, source: 'loc-a', destination: 'loc-b')),
+			message: 'on hand 3 cannot cover 4'
+		);
 		$this->assertFalse($guard->commitReservation(self::move(4, 'loc-x', 'loc-b')), 'no source row');
 		$this->assertSame([], $this->updates);
 		$this->assertSame([], $this->created);
 	}//end testACommitTheSourceCannotCoverIsDenied()
+
+	/**
+	 * A move that was never reserved (a POS sale, a direct issue) takes from
+	 * the source's on-hand and releases nothing; a partly reserved one
+	 * releases what it holds.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
+	 */
+	public function testAnUnreservedIssueTakesFromOnHand(): void {
+		$this->stockAt(id: 'st-a', location: 'loc-a', quantity: 10);
+		$this->stockAt(id: 'st-b', location: 'loc-b', quantity: 10, reserved: 1);
+
+		$this->assertTrue(condition: $this->guard()->commitReservation(move: self::move(quantity: 3, source: 'loc-a')));
+		$this->assertTrue(condition: $this->guard()->commitReservation(move: self::move(quantity: 3, source: 'loc-b')));
+
+		$this->assertSame(expected: 7.0, actual: $this->updates[0][1]['quantityOnHand']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[0][1]['quantityReserved']);
+		$this->assertSame(expected: 7.0, actual: $this->updates[1][1]['quantityOnHand']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[1][1]['quantityReserved']);
+	}//end testAnUnreservedIssueTakesFromOnHand()
 
 	/**
 	 * Releasing takes the quantity off the reservation, never below zero.
@@ -346,7 +373,7 @@ final class StockReservationGuardMovesTest extends TestCase {
 		$this->stockAt('st-a', 'loc-a', 10, 2);
 
 		$this->assertTrue($this->guard()->releaseReservation(self::move(5)));
-		$this->assertSame(0.0, $this->updates[0][1]['reservedQuantity']);
+		$this->assertSame(expected: 0.0, actual: $this->updates[0][1]['quantityReserved']);
 		$this->assertTrue($this->guard()->releaseReservation(self::move(1, 'loc-x')), 'no row to release from');
 		$this->assertCount(1, $this->updates);
 	}//end testReleasingNeverGoesBelowZero()
