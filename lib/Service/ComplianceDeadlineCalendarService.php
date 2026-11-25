@@ -316,8 +316,13 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	public function collectDeadlines(): array {
-		$deadlines = array_merge(
-			$this->sourceDeadlines(schema: 'BtwAangifte', mapper: $this->btwFilingDeadline(...)),
+		$vatReturns = $this->fetchRows(schema: 'VatReturn');
+		$deadlines  = array_merge(
+			$this->rowDeadlines(rows: $vatReturns, mapper: $this->vatReturnFilingDeadline(...)),
+			$this->rowDeadlines(
+				rows: $this->btwRowsWithoutVatReturn(btwRows: $this->fetchRows(schema: 'BtwAangifte'), vatReturns: $vatReturns),
+				mapper: $this->btwFilingDeadline(...)
+			),
 			$this->sourceDeadlines(schema: 'IcpOpgaaf', mapper: $this->icpFilingDeadline(...)),
 			$this->sourceDeadlines(schema: 'TaxDeadline', mapper: $this->vpbFilingDeadline(...)),
 			$this->sourceDeadlines(schema: 'PaymentRun', mapper: $this->paymentRunDeadline(...)),
@@ -342,8 +347,22 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 	 * @return array<int,array<string,string>> The open deadlines of the source.
 	 */
 	private function sourceDeadlines(string $schema, callable $mapper): array {
+		return $this->rowDeadlines(rows: $this->fetchRows(schema: $schema), mapper: $mapper);
+	}//end sourceDeadlines()
+
+	/**
+	 * Map rows to their open deadlines.
+	 *
+	 * @param array<int,array<string,mixed>>                         $rows   The source rows.
+	 * @param callable(array<string,mixed>):(array<string,string>|null) $mapper Row to deadline, null when not open.
+	 *
+	 * @return array<int,array<string,string>> The open deadlines.
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	private function rowDeadlines(array $rows, callable $mapper): array {
 		$deadlines = [];
-		foreach ($this->fetchRows(schema: $schema) as $row) {
+		foreach ($rows as $row) {
 			$deadline = $mapper($row);
 			if ($deadline !== null) {
 				$deadlines[] = $deadline;
@@ -351,7 +370,146 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		}
 
 		return $deadlines;
-	}//end sourceDeadlines()
+	}//end rowDeadlines()
+
+	/**
+	 * The BtwAangifte rows whose administration and period no VatReturn covers.
+	 *
+	 * The VatReturn is the return a user opens (BtwAangifteDetail shows it), so
+	 * its deadline is the one published; a BtwAangifte of the same
+	 * administration and period would publish the same obligation twice.
+	 *
+	 * @param array<int,array<string,mixed>> $btwRows    The BtwAangifte rows.
+	 * @param array<int,array<string,mixed>> $vatReturns The VatReturn rows.
+	 *
+	 * @return array<int,array<string,mixed>> The BtwAangifte rows left.
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	private function btwRowsWithoutVatReturn(array $btwRows, array $vatReturns): array {
+		$covered = [];
+		foreach ($vatReturns as $row) {
+			$covered[$this->periodKey(row: $row, label: $this->vatReturnPeriodLabel(row: $row))] = true;
+		}
+
+		return array_values(
+			array_filter(
+				$btwRows,
+				fn (array $row): bool => isset($covered[$this->periodKey(row: $row, label: $this->vatPeriodLabel(row: $row))]) === false
+			)
+		);
+	}//end btwRowsWithoutVatReturn()
+
+	/**
+	 * The administration and period a return is for.
+	 *
+	 * @param array<string,mixed> $row   The return row.
+	 * @param string              $label The period label.
+	 *
+	 * @return string The key.
+	 */
+	private function periodKey(array $row, string $label): string {
+		return (string)($row['administrationId'] ?? '') . '|' . $label;
+	}//end periodKey()
+
+	/**
+	 * REQ-CDC-002: a draft VatReturn's filing deadline, from its period end.
+	 *
+	 * The period end is the row's periodEnd, else the last day of its
+	 * month, quarter or year.
+	 *
+	 * @param array<string,mixed> $row The VatReturn row.
+	 *
+	 * @return array<string,string>|null The deadline, null once submitted, accepted, rejected or corrected.
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	private function vatReturnFilingDeadline(array $row): ?array {
+		if ((string)($row['state'] ?? 'draft') !== 'draft') {
+			return null;
+		}
+
+		$periodEnd = $this->vatReturnPeriodEnd(row: $row);
+		$due       = null;
+		if ($periodEnd !== null) {
+			$due = $this->filingDueDateFromPeriodEnd(periodEnd: $periodEnd);
+		}
+
+		$summary = 'BTW-aangifte ' . $this->vatReturnPeriodLabel(row: $row);
+		$entry   = ['source' => 'btw-filing', 'category' => self::CATEGORY_FILING, 'summary' => $summary, 'dueDate' => $due];
+
+		return $this->openDeadline(row: $row, entry: $entry);
+	}//end vatReturnFilingDeadline()
+
+	/**
+	 * The period end of a VatReturn: its periodEnd, else derived from its
+	 * year and month or quarter.
+	 *
+	 * @param array<string,mixed> $row The VatReturn row.
+	 *
+	 * @return string|null The period end (Y-m-d), or null when neither is usable.
+	 */
+	private function vatReturnPeriodEnd(array $row): ?string {
+		$end = $this->normaliseDate(date: (string)($row['periodEnd'] ?? ''));
+		if ($end !== null) {
+			return $end;
+		}
+
+		$year = (int)($row['periodYear'] ?? 0);
+		if ($year < 1) {
+			return null;
+		}
+
+		return $this->lastDayOf(year: $year, month: $this->vatReturnEndMonth(row: $row));
+	}//end vatReturnPeriodEnd()
+
+	/**
+	 * The last month of a VatReturn's period (12 for a year return).
+	 *
+	 * @param array<string,mixed> $row The VatReturn row.
+	 *
+	 * @return int The month, 1-12, or 0 when the period number is missing.
+	 */
+	private function vatReturnEndMonth(array $row): int {
+		$type = (string)($row['periodType'] ?? 'quarter');
+		if ($type === 'month') {
+			return (int)($row['periodMonth'] ?? 0);
+		}
+
+		if ($type === 'year') {
+			return 12;
+		}
+
+		return ((int)($row['periodQuarter'] ?? 0) * 3);
+	}//end vatReturnEndMonth()
+
+	/**
+	 * Human period label of a VatReturn ("2026-Q2" / "2026-03" / "2026"),
+	 * the same naming as a BtwAangifte (REQ-CDC-002). Year, quarter and
+	 * month come from the row, else from its periodEnd.
+	 *
+	 * @param array<string,mixed> $row The VatReturn row.
+	 *
+	 * @return string The period label.
+	 */
+	private function vatReturnPeriodLabel(array $row): string {
+		$type  = (string)($row['periodType'] ?? 'quarter');
+		$end   = $this->normaliseDate(date: (string)($row['periodEnd'] ?? ''));
+		$month = (int)substr((string)$end, 5, 2);
+		$year  = (string)($row['periodYear'] ?? substr((string)$end, 0, 4));
+
+		if ($type === 'month') {
+			$number = (int)($row['periodMonth'] ?? $month);
+			return $year . '-' . str_pad((string)$number, 2, '0', STR_PAD_LEFT);
+		}
+
+		if ($type === 'year') {
+			return $year;
+		}
+
+		$quarter = (int)($row['periodQuarter'] ?? (int)ceil($month / 3));
+		return $year . '-Q' . $quarter;
+	}//end vatReturnPeriodLabel()
 
 	/**
 	 * REQ-CDC-002: a draft BTW return's filing deadline, from its period end.
@@ -473,7 +631,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 			return null;
 		}
 
-		return [
+		$deadline = [
 			'uid' => $entry['source'] . ':' . $objectId,
 			'category' => $entry['category'],
 			'summary' => $entry['summary'],
@@ -481,7 +639,36 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 			'source' => $entry['source'],
 			'objectId' => $objectId,
 		];
+
+		return array_merge($deadline, $this->objectLink(row: $row));
 	}//end openDeadline()
+
+	/**
+	 * The OpenRegister object a deadline's VEVENT is linked to: the row's
+	 * uuid, register and schema, so the object's calendar leaf lists the
+	 * event (its X-OPENREGISTER-* properties). Empty for a row that does not
+	 * carry its uuid and schema in `@self`.
+	 *
+	 * @param array<string,mixed> $row The source row.
+	 *
+	 * @return array<string,string> objectUuid, registerId and schemaId, or nothing.
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	private function objectLink(array $row): array {
+		$self = ($row['@self'] ?? []);
+		if (is_array($self) === false) {
+			return [];
+		}
+
+		$uuid   = (string)($self['id'] ?? '');
+		$schema = (string)($self['schema'] ?? '');
+		if ($uuid === '' || $schema === '') {
+			return [];
+		}
+
+		return ['objectUuid' => $uuid, 'registerId' => (string)($self['register'] ?? ''), 'schemaId' => $schema];
+	}//end objectLink()
 
 	/**
 	 * A row's label field, or its object id when the field is absent.

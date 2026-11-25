@@ -788,6 +788,87 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 	}//end testSubmittedFilingRemovesItsVevent()
 
 	/**
+	 * A draft VatReturn, the return BtwAangifteDetail shows, publishes its
+	 * BTW deadline, and the VEVENT carries the X-OPENREGISTER-* properties
+	 * of the return so the return's calendar leaf lists it. A BtwAangifte of
+	 * the same administration and period publishes nothing of its own; one
+	 * of another administration still does.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	public function testVatReturnDeadlineIsPublishedAndLinkedToTheReturn(): void {
+		$return = [
+			'@self' => ['id' => '6f1c2d9e-0000-4000-8000-000000000001', 'register' => '7', 'schema' => '42'],
+			'administrationId' => 'ADM-1',
+			'periodType' => 'quarter',
+			'periodStart' => '2026-04-01',
+			'periodEnd' => '2026-06-30',
+			'state' => 'draft',
+		];
+		$sameReturn  = $this->vatReturn(['administrationId' => 'ADM-1', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-same']]);
+		$otherReturn = $this->vatReturn(['administrationId' => 'ADM-2', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-other']]);
+
+		$service = $this->buildService(
+			recordsBySchema: ['VatReturn' => [$return], 'BtwAangifte' => [$sameReturn, $otherReturn]],
+		);
+
+		$result = $service->publishForUser(userId: 'alice');
+
+		self::assertSame('ok', $result['status']);
+		self::assertSame(2, $result['published']);
+
+		$writes = $this->calendarStub->writes;
+		self::assertCount(2, $writes);
+		$vevent = $writes[0][1];
+		self::assertStringContainsString('UID:btw-filing:6f1c2d9e-0000-4000-8000-000000000001', $vevent);
+		self::assertStringContainsString('SUMMARY:BTW-aangifte 2026-Q2', $vevent);
+		self::assertStringContainsString('DTSTART;VALUE=DATE:20260731', $vevent);
+		self::assertStringContainsString("X-OPENREGISTER-REGISTER:7\r\nX-OPENREGISTER-SCHEMA:42\r\nX-OPENREGISTER-OBJECT:6f1c2d9e-0000-4000-8000-000000000001\r\n", $vevent);
+
+		self::assertStringContainsString('UID:btw-filing:btw-other', $writes[1][1]);
+		self::assertStringNotContainsString('X-OPENREGISTER', $writes[1][1], 'a row without its uuid and schema is not linked');
+		self::assertStringNotContainsString('btw-same', $writes[0][1] . $writes[1][1]);
+
+	}//end testVatReturnDeadlineIsPublishedAndLinkedToTheReturn()
+
+	/**
+	 * A VatReturn's period end and label come from its year and month,
+	 * quarter or year when it has no periodEnd, and from its periodEnd when
+	 * it has no year; a submitted one, or one without either, publishes nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	public function testVatReturnPeriodComesFromItsNumbersOrItsEnd(): void {
+		$service = $this->buildService(
+			recordsBySchema: [
+				'VatReturn' => [
+					['@self' => ['slug' => 'vr-m3'], 'periodType' => 'month', 'periodYear' => 2026, 'periodMonth' => 3],
+					['@self' => ['slug' => 'vr-y'], 'periodType' => 'year', 'periodYear' => 2025, 'state' => 'draft'],
+					['@self' => ['slug' => 'vr-end'], 'periodType' => 'quarter', 'periodEnd' => '2026-09-30', 'state' => 'draft'],
+					['@self' => ['slug' => 'vr-sent'], 'periodType' => 'quarter', 'periodYear' => 2026, 'periodQuarter' => 1, 'state' => 'submitted'],
+					['@self' => ['slug' => 'vr-none'], 'periodType' => 'quarter', 'state' => 'draft'],
+				],
+			],
+		);
+
+		$service->publishForUser(userId: 'alice');
+
+		$events = array_map(static fn (array $write): string => $write[1], $this->calendarStub->writes);
+		self::assertCount(3, $events);
+		self::assertStringContainsString('SUMMARY:BTW-aangifte 2026-03', $events[0]);
+		self::assertStringContainsString('DTSTART;VALUE=DATE:20260430', $events[0]);
+		self::assertStringContainsString('SUMMARY:BTW-aangifte 2025', $events[1]);
+		self::assertStringContainsString('DTSTART;VALUE=DATE:20260131', $events[1]);
+		self::assertStringContainsString('SUMMARY:BTW-aangifte 2026-Q3', $events[2]);
+		self::assertStringContainsString('DTSTART;VALUE=DATE:20261031', $events[2]);
+
+	}//end testVatReturnPeriodComesFromItsNumbersOrItsEnd()
+
+	/**
 	 * REQ-CDC-002 — ICP and VPB filing deadlines are derived from the
 	 * existing period data (ICP: last day of month after the period;
 	 * VPB: the TaxDeadline's own deadlineDate).

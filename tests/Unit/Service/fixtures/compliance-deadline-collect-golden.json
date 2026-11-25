@@ -91,6 +91,7 @@
             }
         ],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -135,6 +136,7 @@
             }
         ],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -179,6 +181,7 @@
             }
         ],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -223,6 +226,7 @@
             }
         ],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -259,6 +263,7 @@
             }
         ],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -285,6 +290,7 @@
             }
         ],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -296,6 +302,7 @@
     "collect empty": {
         "deadlines": [],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -307,6 +314,7 @@
     "collect readFails": {
         "deadlines": [],
         "schemas": [
+            "VatReturn",
             "BtwAangifte",
             "IcpOpgaaf",
             "TaxDeadline",
@@ -314,6 +322,7 @@
             "ARInvoice"
         ],
         "log": [
+            "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"VatReturn\",\"exception\":\"read failed for VatReturn\"}",
             "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"BtwAangifte\",\"exception\":\"read failed for BtwAangifte\"}",
             "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"IcpOpgaaf\",\"exception\":\"read failed for IcpOpgaaf\"}",
             "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"TaxDeadline\",\"exception\":\"read failed for TaxDeadline\"}",

@@ -352,8 +352,37 @@ final class DeadlineCalendarEvents {
 			$lines[] = 'CATEGORIES:' . $this->escapeIcal(value: $deadline['category']);
 		}
 
-		return $lines;
+		return array_merge($lines, $this->linkLines(deadline: $deadline));
 	}//end eventLines()
+
+	/**
+	 * The X-OPENREGISTER-* lines that link the VEVENT to its source object,
+	 * the properties OpenRegister's calendar leaf reads to list an object's
+	 * events. None when the deadline names no object uuid.
+	 *
+	 * @param array<string,string> $deadline The deadline entry.
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	private function linkLines(array $deadline): array {
+		$uuid = (string)($deadline['objectUuid'] ?? '');
+		if ($uuid === '') {
+			return [];
+		}
+
+		$lines = [];
+		foreach (['X-OPENREGISTER-REGISTER' => 'registerId', 'X-OPENREGISTER-SCHEMA' => 'schemaId'] as $property => $key) {
+			$value = (string)($deadline[$key] ?? '');
+			if ($value !== '') {
+				$lines[] = $property . ':' . $this->escapeIcal(value: $value);
+			}
+		}
+
+		$lines[] = 'X-OPENREGISTER-OBJECT:' . $this->escapeIcal(value: $uuid);
+		return $lines;
+	}//end linkLines()
 
 
 	/**
