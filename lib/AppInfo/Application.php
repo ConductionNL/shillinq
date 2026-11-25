@@ -45,6 +45,7 @@ use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Guard\GuardRegistrar;
 use OCA\Shillinq\Lifecycle\ExpenseClaimRegistration;
 use OCA\Shillinq\Lifecycle\LedgerPostingRegistration;
+use OCA\Shillinq\Lifecycle\RequiresGuardRegistration;
 use OCA\Shillinq\Lifecycle\LifecycleRegistrar;
 use OCA\Shillinq\Repair\RepairRegistrar;
 use OCA\Shillinq\Service\ServiceRegistrar;
@@ -139,6 +140,9 @@ class Application extends App implements IBootstrap {
 		// Expenses-category-mapping 3.4: the settlement, markup-threshold, cost
 		// centre and open-period guards the expense claim transitions declare.
 		(new ExpenseClaimRegistration())->register(context: $context);
+		// Every other literal `Class::method` requires tag of the register, so
+		// OpenRegister can resolve it instead of refusing the transition.
+		(new RequiresGuardRegistration())->register(context: $context);
 
 		$this->registerNotifiers(context: $context);
 
