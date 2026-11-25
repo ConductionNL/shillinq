@@ -16328,12 +16328,13 @@
                             "label": "Approval",
                             "icon": "CheckDecagramOutline",
                             "order": 10,
-                            "_note": "purchasing-approval-delegation REQ-PAD-001: the order's approval steps are OpenRegister flow tasks provisioned from the purchase-order-approval chain. Each row shows the role, state, handler and deadline; Complete is offered to the user who may decide the step, and the server refuses the requester (separation of duties) and anyone outside the step's group.",
+                            "_note": "purchasing-approval-delegation REQ-PAD-001: the order's approval steps are OpenRegister flow tasks provisioned from the purchase-order-approval chain. Each row shows the role, state, handler and deadline; Complete is offered to the user who may decide the step, and the server refuses the requester (separation of duties) and anyone outside the step's group. REQ-PAD-002: delegate offers Hand to a colleague with a mandate on the viewer's own open step, and a delegated step shows on behalf of.",
                             "widgets": [
                                 {
                                     "type": "tasks",
                                     "content": {
                                         "objectUuid": "@objectId",
+                                        "delegate": true,
                                         "scope": "all",
                                         "variant": "table",
                                         "includeDone": true,
@@ -16853,6 +16854,7 @@
                                     "type": "tasks",
                                     "content": {
                                         "objectUuid": "@objectId",
+                                        "delegate": true,
                                         "scope": "all",
                                         "variant": "table",
                                         "includeDone": true,

@@ -159,12 +159,74 @@ test.describe('purchasing-approval-delegation — approval on OpenRegister', () 
 	})
 })
 
+const HAND_TO_COLLEAGUE = /^(Hand to a colleague|Overdragen aan een collega)$/
+const MANDATE = 'Vervanging tijdens verlof 30 september tot 11 oktober'
+
 test.describe('purchasing-approval-delegation — delegation', () => {
+	test.beforeEach(() => {
+		test.setTimeout(180_000)
+	})
+
 	/**
-	 * Task 2.1 / REQ-PAD-002: hand a pending step to a colleague with a
-	 * mandate. The shared `tasks` widget of @conduction/nextcloud-vue offers
-	 * no delegate verb yet, so there is no control to drive; this stays a
-	 * fixme until the widget ships "Hand to a colleague".
+	 * Task 2.1 / REQ-PAD-002: the approver who may decide a pending step
+	 * hands it to Karin de Wit with a mandate (the `tasks` widget's
+	 * `content.delegate` verb). The hand-over waits for a mandate; Karin then
+	 * sees the step as hers, approves it, and the step reads "on behalf of"
+	 * the original approver.
+	 *
+	 * - `SHILLINQ_E2E_APPROVER_USER` / `_PASS`: Pieter Smit, who may decide
+	 *   the pending teamleider step of the order.
+	 * - `SHILLINQ_E2E_TEAMLEIDER_USER` / `_PASS` and
+	 *   `SHILLINQ_E2E_TEAMLEIDER_NAME` (default "Karin de Wit"): the colleague.
+	 * - `SHILLINQ_E2E_DELEGATE_ORDER`: the number of an order whose teamleider
+	 *   step is pending (PO-2026-040 in the scenario; a separate order keeps
+	 *   this test independent of the approve test above).
 	 */
-	test.fixme('a teamleider hands PO-2026-040 to Karin de Wit with a mandate', async () => {})
+	test('an approver hands a pending step to Karin de Wit with a mandate', async ({ browser }) => {
+		const approver = account('SHILLINQ_E2E_APPROVER')
+		const karin = account('SHILLINQ_E2E_TEAMLEIDER')
+		const order = process.env.SHILLINQ_E2E_DELEGATE_ORDER?.trim() ?? ''
+		const karinName = process.env.SHILLINQ_E2E_TEAMLEIDER_NAME?.trim() || 'Karin de Wit'
+		test.skip(approver === null, 'SHILLINQ_E2E_APPROVER_USER / _PASS are not set')
+		test.skip(karin === null, 'SHILLINQ_E2E_TEAMLEIDER_USER / _PASS are not set')
+		test.skip(order === '', 'SHILLINQ_E2E_DELEGATE_ORDER is not set')
+
+		// The approver hands the step over.
+		const page = await pageAs(browser, approver as Account)
+		await openByNumber(page, PURCHASE_ORDERS, order)
+		const panel = await openApprovalTab(page)
+		await expect(panel.getByTestId('cn-tasks-widget-table')).toBeVisible({ timeout: 15_000 })
+
+		const menu = panel.locator('[data-testid^="cn-tasks-widget-row-"]')
+			.getByRole('button', { name: /(Actions|Acties)/ }).first()
+		await menu.click()
+		await page.getByRole('menuitem', { name: HAND_TO_COLLEAGUE }).click()
+
+		const dialog = page.getByTestId('cn-task-delegate-dialog')
+		await expect(dialog).toBeVisible({ timeout: 10_000 })
+		const submit = dialog.getByTestId('cn-task-delegate-submit')
+		await dialog.getByTestId('cn-task-delegate-colleague').locator('input').fill(karinName)
+		await page.getByRole('option', { name: new RegExp(karinName) }).first().click()
+
+		// An empty mandate is refused: the hand-over cannot be sent without one.
+		await expect(submit, 'a hand-over without a mandate is refused').toBeDisabled()
+		await dialog.getByTestId('cn-task-delegate-mandate').locator('textarea').fill(MANDATE)
+		await expect(submit).toBeEnabled()
+		await submit.click()
+		await expect(dialog).toBeHidden({ timeout: 15_000 })
+		await page.context().close()
+
+		// Karin sees the step as hers, approves it, and it reads "on behalf of".
+		const colleague = await pageAs(browser, karin as Account)
+		await openByNumber(colleague, PURCHASE_ORDERS, order)
+		const karinPanel = await openApprovalTab(colleague)
+		await expect(karinPanel.locator('[data-testid^="cn-tasks-widget-on-behalf-of-"]').first())
+			.toHaveText(/(on behalf of|namens) /, { timeout: 15_000 })
+		const approve = karinPanel.getByRole('button', { name: APPROVE }).first()
+		await expect(approve, 'the colleague may decide the handed-over step').toBeVisible({ timeout: 15_000 })
+		await approve.click()
+		await expect(karinPanel.getByText(APPROVED).first()).toBeVisible({ timeout: 15_000 })
+		await expect(karinPanel.locator('[data-testid^="cn-tasks-widget-on-behalf-of-"]').first()).toBeVisible()
+		await colleague.context().close()
+	})
 })
