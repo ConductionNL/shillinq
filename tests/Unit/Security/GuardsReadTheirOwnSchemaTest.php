@@ -116,7 +116,15 @@ final class GuardsReadTheirOwnSchemaTest extends TestCase {
 		$store = new InMemoryObjectServiceStub([
 			'StockMovement' => [['id' => '7', 'version' => 5]],
 			'InventoryStock' => [
-				['id' => '7', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'productSku' => 'sku-1', 'quantityOnHand' => 10, 'quantityReserved' => 0, 'version' => 1],
+				[
+					'id' => '7',
+					'administrationId' => 'adm-1',
+					'locationCode' => 'loc-1',
+					'productSku' => 'sku-1',
+					'quantityOnHand' => 10,
+					'quantityReserved' => 0,
+					'version' => 1,
+				],
 			],
 		]);
 		$guard = new StockReservationGuard($this->appConfig(), new NullLogger(), $store);
