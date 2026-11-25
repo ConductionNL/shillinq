@@ -51,6 +51,13 @@ final class AppHostRegistration {
 	private const APP_ID = AppIdentity::APP_ID;
 
 	/**
+	 * Namespace of OpenRegister's generic settings classes and their value objects.
+	 *
+	 * @var string
+	 */
+	private const SETTINGS_NS = 'OCA\\OpenRegister\\AppHost\\Settings\\';
+
+	/**
 	 * Register the generic settings, metrics provider and store alias.
 	 *
 	 * @param IRegistrationContext $context The registration context.
@@ -97,13 +104,25 @@ final class AppHostRegistration {
 			'OCA\\Shillinq\\Settings\\AdminSettings',
 			static function (ContainerInterface $c) use ($appId) {
 				$class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings';
+				$appManager   = $c->get('OCP\\App\\IAppManager');
+				$initialState = $c->get('OCP\\AppFramework\\Services\\IInitialState');
+				$appConfig    = $c->get('OCP\\IAppConfig');
+				if (self::settingsTakeValueObjects() === true) {
+					$placement = self::SETTINGS_NS . 'SettingsPlacement';
+					$services  = self::SETTINGS_NS . 'AdminFormServices';
+					return new $class(
+						new $placement(appId: $appId, sectionId: $appId, priority: 10),
+						new $services(appManager: $appManager, initialState: $initialState, appConfig: $appConfig)
+					);
+				}
+
 				return new $class(
 					appId: $appId,
 					sectionId: $appId,
 					priority: 10,
-					appManager: $c->get('OCP\\App\\IAppManager'),
-					initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState'),
-					appConfig: $c->get('OCP\\IAppConfig')
+					appManager: $appManager,
+					initialState: $initialState,
+					appConfig: $appConfig
 				);
 			}
 		);
@@ -111,19 +130,47 @@ final class AppHostRegistration {
 		$context->registerService(
 			'OCA\\Shillinq\\Sections\\SettingsSection',
 			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection';
+				$class        = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection';
+				$urlGenerator = $c->get('OCP\\IURLGenerator');
+				if (self::settingsTakeValueObjects() === true) {
+					$placement  = self::SETTINGS_NS . 'SettingsPlacement';
+					$appearance = self::SETTINGS_NS . 'SectionAppearance';
+					return new $class(
+						new $placement(appId: $appId, sectionId: $appId, priority: 75),
+						new $appearance(name: 'Shillinq', iconFile: 'app-dark.svg'),
+						$urlGenerator
+					);
+				}
+
 				return new $class(
 					sectionId: $appId,
 					name: 'Shillinq',
 					appId: $appId,
 					iconFile: 'app-dark.svg',
 					priority: 75,
-					urlGenerator: $c->get('OCP\\IURLGenerator')
+					urlGenerator: $urlGenerator
 				);
 			}
 		);
 
 	}//end registerSettings()
+
+	/**
+	 * Whether the installed OpenRegister builds its generic settings classes
+	 * from value objects (SettingsPlacement, AdminFormServices,
+	 * SectionAppearance), as its main branch does since 10 Nov 2026.
+	 *
+	 * Against that OpenRegister the old named arguments threw "Unknown named
+	 * parameter $appId" and the Shillinq admin settings page answered 500. An
+	 * OpenRegister without the value objects keeps the named arguments.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	private static function settingsTakeValueObjects(): bool {
+		return class_exists(self::SETTINGS_NS . 'SettingsPlacement') === true;
+	}//end settingsTakeValueObjects()
 
 	/**
 	 * Alias `Controller\StoreController` to OpenRegister's generic store
