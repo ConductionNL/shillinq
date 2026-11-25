@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md
  */
 
 declare(strict_types=1);

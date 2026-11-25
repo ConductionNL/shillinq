@@ -1252,8 +1252,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-multi-administration",
 				"requirement": [
-					"openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: The chosen administration sticks (REQ-LMA-001)",
-					"openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: Lists show the active administration only (REQ-LMA-002)"
+					"openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie :: The chosen administration sticks (REQ-LMA-001)",
+					"openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie :: Lists show the active administration only (REQ-LMA-002)"
 				]
 			},
 			"screen": {
@@ -8350,7 +8350,7 @@
 				"evidence": "lib/Service/SettingsService.php:182 seedRgsTemplate() starts an administration from a shipped RGS template (MKB, ZZP or BBV) in the setup wizard; an office cannot save its own chart as a template.",
 				"reachedOn": "First-run setup wizard, template step",
 				"change": "ledger-multi-administration",
-				"requirement": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: A new administration starts from an office template (REQ-LMA-004)"
+				"requirement": "openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie :: A new administration starts from an office template (REQ-LMA-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8699,7 +8699,7 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "ledger-multi-administration",
-				"requirement": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: Followers receive template changes (REQ-LMA-005)"
+				"requirement": "openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie :: Followers receive template changes (REQ-LMA-005)"
 			},
 			"screen": {
 				"canvas": "design-system",

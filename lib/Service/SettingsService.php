@@ -432,7 +432,7 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> Options with `value` and `label`.
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function chartTemplateChoices(): array {
 		$choices = [
@@ -479,7 +479,7 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	private function seedOfficeTemplate(string $templateId, string $administrationId): array {
 		try {

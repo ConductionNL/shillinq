@@ -41,7 +41,7 @@ interface SettingsServiceInterface {
 	/**
 	 * The prefix of a template variant that names an office template by id.
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public const OFFICE_TEMPLATE_PREFIX = 'office:';
 
@@ -335,7 +335,7 @@ interface SettingsServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> Options with `value` and `label`.
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	public function chartTemplateChoices(): array;
 

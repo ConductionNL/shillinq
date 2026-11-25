@@ -10,7 +10,7 @@
  * every other page as the renderer passed it, and the scoped list is the one
  * the generator derives from the schemas.
  *
- * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-lists-show-the-active-administration-only-req-lma-002
+ * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-lists-show-the-active-administration-only-req-lma-002
  * @license EUPL-1.2
  * @copyright 2026 Conduction B.V.
  */

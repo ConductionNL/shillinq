@@ -1135,7 +1135,7 @@
         "version": "0.1.0",
         "title": "Administration Template",
         "description": "An office's own starting point for a new client administration: a snapshot of one administration's chart of accounts and analytical dimensions, without postings, relations or balances. Administrations that follow it receive each new version (REQ-LMA-003, REQ-LMA-005).",
-        "x-spec": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
           "name",

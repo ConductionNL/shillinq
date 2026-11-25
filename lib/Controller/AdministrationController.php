@@ -124,7 +124,7 @@ class AdministrationController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
 	 */
 	#[NoAdminRequired]
 	public function switch(): JSONResponse {

@@ -384,7 +384,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
 	 */
 	public function rememberActiveAdministration(string $administrationId): void {
 		$userId = $this->currentUserId();
@@ -404,7 +404,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
 	 */
 	private function activeAmong(string $userId, array $administrations): ?string {
 		if ($administrations === []) {

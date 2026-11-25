@@ -13,11 +13,14 @@
  added to its fixed `filter`, which the list applies on every fetch and the
  address cannot override. Other pages pass through unchanged.
 
- Stands in until nextcloud-vue resolves a `@context.<key>` sentinel in page
- config; the pages then declare the filter in the manifest and this wrapper
- is removed in the same change.
+ Kept instead of a `@config.activeAdministrationId` filter in the manifest:
+ the library's index list does not wait for an unresolved token, so the
+ required form would filter on the literal (empty lists for a user without
+ an administration) and the optional form would fetch every
+ administration's records before the scope loads. This wrapper renders the
+ list only once the scope is known (ledger-multi-administration task 2.2).
 
- @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-lists-show-the-active-administration-only-req-lma-002
+ @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-lists-show-the-active-administration-only-req-lma-002
 -->
 <template>
 	<ScopedIndexPage v-if="ready" v-bind="pageProps">
