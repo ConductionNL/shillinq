@@ -152,7 +152,7 @@ th{background:#f3f3f3}
 <dt>Total incl. VAT (cents)</dt><dd>%d %s</dd>
 </dl>
 <h2>Lifecycle events (%d)</h2>
-<table><thead><tr><th>Timestamp</th><th>Event</th><th>Actor</th><th>Object</th></tr></thead><tbody>%s</tbody></table>
+<table><thead><tr><th>Timestamp</th><th>Event</th><th>Actor</th><th>On behalf of</th><th>Mandate</th><th>Object</th></tr></thead><tbody>%s</tbody></table>
 <h2>Object counts</h2>
 <table><tbody>
 <tr><th>Purchase orders</th><td>%d</td></tr>
@@ -162,6 +162,13 @@ th{background:#f3f3f3}
 </tbody></table>
 </body></html>
 HTML;
+
+	/**
+	 * The approval step reader, made on first use.
+	 *
+	 * @var PurchaseOrderApprovalTaskEvents|null
+	 */
+	private ?PurchaseOrderApprovalTaskEvents $approvalTaskEvents = null;
 
 	/**
 	 * Constructor.
@@ -504,6 +511,8 @@ HTML;
 		}
 
 		$events = array_merge($events, self::approvalDecisionEvents(purchaseOrder: $purchaseOrder));
+		// Decisions taken on OpenRegister's approval steps, with decider, on behalf of and mandate (REQ-PAD-003).
+		$events = array_merge($events, $this->approvalTaskEvents()->events(orderId: self::recordId(record: $purchaseOrder)));
 
 		if ((string)($purchaseOrder['peppolSentAt'] ?? '') !== '') {
 			$events[] = self::ledgerEvent(
@@ -520,6 +529,19 @@ HTML;
 
 		return $events;
 	}//end purchaseOrderEvents()
+
+	/**
+	 * The reader of a purchase order's decided OpenRegister approval steps.
+	 *
+	 * @return PurchaseOrderApprovalTaskEvents
+	 *
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-3.1
+	 */
+	private function approvalTaskEvents(): PurchaseOrderApprovalTaskEvents {
+		$this->approvalTaskEvents ??= new PurchaseOrderApprovalTaskEvents(container: $this->container, logger: $this->logger);
+
+		return $this->approvalTaskEvents;
+	}//end approvalTaskEvents()
 
 	/**
 	 * The `po_created` event of a purchase order with a createdAt.
@@ -984,10 +1006,12 @@ HTML;
 		$eventRows = '';
 		foreach ($events as $event) {
 			$eventRows .= sprintf(
-				'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',
+				'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',
 				htmlspecialchars((string)($event['timestamp'] ?? ''), ENT_QUOTES, 'UTF-8'),
 				htmlspecialchars((string)($event['event'] ?? ''), ENT_QUOTES, 'UTF-8'),
 				htmlspecialchars((string)($event['actor'] ?? ''), ENT_QUOTES, 'UTF-8'),
+				htmlspecialchars((string)($event['details']['onBehalfOf'] ?? ''), ENT_QUOTES, 'UTF-8'),
+				htmlspecialchars((string)($event['details']['mandate'] ?? ''), ENT_QUOTES, 'UTF-8'),
 				htmlspecialchars((string)($event['objectId'] ?? ''), ENT_QUOTES, 'UTF-8'),
 			);
 		}
