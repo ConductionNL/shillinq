@@ -27,7 +27,6 @@ namespace OCA\Shillinq\Service;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * The hour lives in humaniq; shillinq reads it per run, not per hour.
@@ -106,7 +105,7 @@ class HumaniqHoursReader {
 						],
 					]
 				);
-		} catch (Throwable $e) {
+		} catch (\Throwable $e) {
 			$this->logger->debug('HumaniqHoursReader: humaniq hours not readable: ' . $e->getMessage());
 			return null;
 		}
