@@ -47,13 +47,16 @@ interface SubjectCostServiceInterface {
 	 * @param string $period Costing period `YYYY-MM`, or '' for the current rate.
 	 *
 	 * @return array{
-	 *     subjectApp: string, subjectId: string, hours: float, costCents: int|null,
-	 *     complete: bool, currency: string, unscopedRowsExcluded: int,
+	 *     subjectApp: string, subjectId: string, hours: float|null, costCents: int|null,
+	 *     complete: bool, currency: string, unscopedRowsExcluded: int, missingApp: string|null,
 	 *     perPerson: array<int, array{personId: string, hours: float, centsPerHour: int|null, costCents: int|null}>,
 	 *     unpricedPersonIds: array<int, string>
-	 * } The aggregate, echoing the subject it describes.
+	 * } The aggregate, echoing the subject it describes. When humaniq does not
+	 *     answer, hours and costCents are null and missingApp is 'Humaniq':
+	 *     an absent app is never reported as zero hours.
 	 *
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
 	 */
 	public function costFor(
 		string $subjectApp,

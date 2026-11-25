@@ -84,7 +84,8 @@ class SubjectCostController extends Controller {
 	 *  - period (optional) costing period `YYYY-MM`.
 	 *
 	 * Returns HTTP 200 with { subjectApp, subjectId, hours, costCents,
-	 * complete, currency, perPerson, unpricedPersonIds, unscopedRowsExcluded };
+	 * complete, currency, perPerson, unpricedPersonIds, unscopedRowsExcluded,
+	 * missingApp };
 	 * 400 on a missing subject or a malformed period; 401 unauthenticated;
 	 * 403 when the caller belongs to no administration; 404 when it names an
 	 * administration it cannot reach; 500 without a stack trace on an
@@ -100,6 +101,8 @@ class SubjectCostController extends Controller {
 	 * is the documented answer when any person's rate could not be resolved,
 	 * and `unpricedPersonIds` names them. A caller renders "hours known, cost
 	 * unavailable" rather than a total that is always lower than the truth.
+	 * When humaniq does not answer, `hours` is null too and `missingApp` is
+	 * `Humaniq`: the surface names the app instead of showing zero hours.
 	 *
 	 * @return JSONResponse The subject cost payload.
 	 *

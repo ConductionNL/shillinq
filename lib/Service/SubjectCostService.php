@@ -109,13 +109,16 @@ class SubjectCostService implements SubjectCostServiceInterface {
 	 * @param string $period Costing period `YYYY-MM`, or '' for the current rate.
 	 *
 	 * @return array{
-	 *     subjectApp: string, subjectId: string, hours: float, costCents: int|null,
-	 *     complete: bool, currency: string, unscopedRowsExcluded: int,
+	 *     subjectApp: string, subjectId: string, hours: float|null, costCents: int|null,
+	 *     complete: bool, currency: string, unscopedRowsExcluded: int, missingApp: string|null,
 	 *     perPerson: array<int, array{personId: string, hours: float, centsPerHour: int|null, costCents: int|null}>,
 	 *     unpricedPersonIds: array<int, string>
-	 * } The aggregate, echoing the subject it describes.
+	 * } The aggregate, echoing the subject it describes. When humaniq does not
+	 *     answer, hours and costCents are null and missingApp is 'Humaniq':
+	 *     an absent app is never reported as zero hours.
 	 *
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
 	 */
 	public function costFor(
 		string $subjectApp,
@@ -123,13 +126,47 @@ class SubjectCostService implements SubjectCostServiceInterface {
 		?array $administrationIds,
 		string $period = '',
 	): array {
+		$rows = $this->hourRows(subjectApp: $subjectApp, subjectId: $subjectId);
+		if ($rows === null) {
+			return self::hoursUnavailable(subjectApp: $subjectApp, subjectId: $subjectId);
+		}
+
 		return $this->costOfNormalisedRows(
 			subject: ['app' => $subjectApp, 'id' => $subjectId],
-			rows: $this->hourRows(subjectApp: $subjectApp, subjectId: $subjectId),
+			rows: $rows,
 			administrationIds: $administrationIds,
 			period: $period
 		);
 	}//end costFor()
+
+	/**
+	 * The answer when humaniq, where the hours live, does not answer.
+	 *
+	 * Not a zero. The dossiq hours tile once summed a field nothing wrote and
+	 * showed 0 hours on every case; null hours with the missing app named let
+	 * a surface say which app is unavailable instead.
+	 *
+	 * @param string $subjectApp The owning app.
+	 * @param string $subjectId  The domain object id.
+	 *
+	 * @return array<string, mixed> The unavailable aggregate.
+	 *
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
+	 */
+	private static function hoursUnavailable(string $subjectApp, string $subjectId): array {
+		return [
+			'subjectApp' => $subjectApp,
+			'subjectId' => $subjectId,
+			'unscopedRowsExcluded' => 0,
+			'missingApp' => 'Humaniq',
+			'hours' => null,
+			'costCents' => null,
+			'complete' => false,
+			'currency' => 'EUR',
+			'perPerson' => [],
+			'unpricedPersonIds' => [],
+		];
+	}//end hoursUnavailable()
 
 	/**
 	 * The employer cost of a given set of one domain object's hour rows.
@@ -189,6 +226,7 @@ class SubjectCostService implements SubjectCostServiceInterface {
 				'subjectApp' => (string)($subject['app'] ?? ''),
 				'subjectId' => (string)($subject['id'] ?? ''),
 				'unscopedRowsExcluded' => $scoped['unscoped'],
+				'missingApp' => null,
 			],
 			$aggregate
 		);
@@ -258,7 +296,7 @@ class SubjectCostService implements SubjectCostServiceInterface {
 	}//end personIds()
 
 	/**
-	 * The hour rows booked against one subject, or [] when unreadable.
+	 * The hour rows booked against one subject, or null when humaniq does not answer.
 	 *
 	 * Both subject fields are passed as filters rather than fetching every
 	 * hour row and matching in PHP: the whole point of `subjectApp` /
@@ -268,11 +306,12 @@ class SubjectCostService implements SubjectCostServiceInterface {
 	 * @param string $subjectApp The owning app.
 	 * @param string $subjectId The domain object id.
 	 *
-	 * @return array<int, array<string, mixed>> The rows.
+	 * @return array<int, array<string, mixed>>|null The rows; null when humaniq does not answer.
 	 *
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
+	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
 	 */
-	private function hourRows(string $subjectApp, string $subjectId): array {
+	private function hourRows(string $subjectApp, string $subjectId): ?array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$rows = $objectService
@@ -291,11 +330,11 @@ class SubjectCostService implements SubjectCostServiceInterface {
 					'exception' => $e->getMessage(),
 				]
 			);
-			return [];
+			return null;
 		}//end try
 
 		if (is_array($rows) === false) {
-			return [];
+			return null;
 		}
 
 		return $this->appHourRows(rows: $rows, subjectApp: $subjectApp);
