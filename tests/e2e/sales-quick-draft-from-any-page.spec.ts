@@ -19,10 +19,10 @@
  *
  * Base URL from the environment (playwright.config.ts, tests/e2e/base-url.ts).
  *
- * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md
+ * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md
  */
 
-import type { Locator, Page, Route } from '@playwright/test'
+import type { Page, Route } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
 
@@ -80,21 +80,37 @@ async function stubCustomersAndDrafts(page: Page): Promise<object[]> {
 }
 
 /**
- * The Create invoice action of the current page.
+ * Choose the current page's own Create invoice action. A detail page holds
+ * it in the header's More menu (CnDetailPage folds header actions past the
+ * inline ones into it); a page that shows it inline gets a direct click.
+ *
+ * The navigation's Create invoice (beside New Booking) is a different action:
+ * it opens the dialog without the page's customer, so it is excluded here.
  *
  * @param page The page.
- * @return The action's locator.
+ * @return Nothing.
  */
-function createInvoiceAction(page: Page): Locator {
-	return page
-		.getByTestId('cn-action-create-invoice')
-		.or(page.getByRole('button', { name: 'Create invoice' }))
+async function chooseCreateInvoiceOnPage(page: Page): Promise<void> {
+	const nav = page.getByTestId('cn-nav-primary-action')
+	const more = page.getByRole('button', { name: 'More', exact: true }).first()
+	await expect(nav.or(more).first()).toBeVisible({ timeout: 15_000 })
+	const inline = page
+		.getByRole('button', { name: 'Create invoice', exact: true })
+		.and(page.locator(':not([data-testid="cn-nav-primary-action"] *)'))
 		.first()
+	if (await inline.isVisible().catch(() => false)) {
+		await inline.click()
+		return
+	}
+	await expect(more).toBeVisible({ timeout: 15_000 })
+	await more.click()
+	await page.getByRole('menuitem', { name: 'Create invoice' }).click()
 }
 
 /**
- * Choose Create invoice from the navigation: the chevron beside New Booking,
- * then its Create invoice entry.
+ * Choose Create invoice from the navigation, beside New Booking. With one
+ * sub-action NcActions draws it inline as an icon button labelled Create
+ * invoice; with more it is a chevron menu holding a Create invoice entry.
  *
  * @param page The page.
  * @return Nothing.
@@ -102,6 +118,11 @@ function createInvoiceAction(page: Page): Locator {
 async function chooseCreateInvoiceInNav(page: Page): Promise<void> {
 	const nav = page.getByTestId('cn-nav-primary-action')
 	await expect(nav).toBeVisible({ timeout: 15_000 })
+	const inline = nav.getByRole('button', { name: 'Create invoice' })
+	if (await inline.isVisible().catch(() => false)) {
+		await inline.click()
+		return
+	}
 	await nav.getByTestId('cn-action-children-new-booking').getByRole('button').first().click()
 	await page.getByRole('menuitem', { name: 'Create invoice' }).click()
 }
@@ -142,11 +163,10 @@ test.describe('shillinq-invoice-quick-draft — from any page', () => {
 	test('the customer page starts the draft for its customer', async ({ page }) => {
 		const posted = await stubCustomersAndDrafts(page)
 		await open(page, '/bookkeeping/customers/' + GEMEENTE.id)
-		const action = createInvoiceAction(page)
-		await expect(action).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByRole('button', { name: 'More', exact: true }).first()).toBeVisible({ timeout: 15_000 })
 		const before = page.url()
 
-		await action.click()
+		await chooseCreateInvoiceOnPage(page)
 		const modal = page.getByTestId('invoice-quick-draft-modal')
 		await expect(modal).toBeVisible({ timeout: 10_000 })
 		await expect(page.getByTestId('iqd-customer')).toContainText(GEMEENTE.legalName)

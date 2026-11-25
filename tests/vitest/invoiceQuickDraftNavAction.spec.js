@@ -14,8 +14,8 @@
  * environment is `node` (no DOM), so the component itself is not mounted;
  * its fallback wiring is pinned against the installed source instead.
  *
- * @spec openspec/changes/sales-quick-draft-from-any-page/tasks.md#task-1.1
- * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+ * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
  */
 
 import fs from 'fs'
