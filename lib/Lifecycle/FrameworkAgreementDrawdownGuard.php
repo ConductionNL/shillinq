@@ -254,10 +254,16 @@ class FrameworkAgreementDrawdownGuard {
 	/**
 	 * Fetch one record via the real ObjectService API (findAll then first).
 	 *
+	 * OpenRegister's findAll() answers ObjectEntity rows, not arrays; a row is
+	 * read through its own jsonSerialize(). Taking only array rows made every
+	 * call-off fail with "Framework agreement not found" on a live instance.
+	 *
 	 * @param string $schema OR schema slug.
 	 * @param array<string,mixed> $filters Equality filters.
 	 *
 	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function findOne(string $schema, array $filters): ?array {
 		$rows = $this->objectService
@@ -266,7 +272,11 @@ class FrameworkAgreementDrawdownGuard {
 			->findAll(['filters' => $filters]);
 
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
+			if ($row instanceof \JsonSerializable) {
+				$row = $row->jsonSerialize();
+			}
+
+			if (is_array($row) === true && $row !== []) {
 				return $row;
 			}
 		}
