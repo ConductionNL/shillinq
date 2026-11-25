@@ -11001,8 +11001,8 @@
     {
       "type": "library",
       "name": "dexie",
-      "version": "4.4.6",
-      "bom-ref": "shillinq@0.2.1|dexie@4.4.6",
+      "version": "4.4.7",
+      "bom-ref": "shillinq@0.2.1|dexie@4.4.7",
       "licenses": [
         {
           "license": {
@@ -11010,15 +11010,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/dexie@4.4.6",
+      "purl": "pkg:npm/dexie@4.4.7",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/dexie/-/dexie-4.4.6.tgz",
+          "url": "https://registry.npmjs.org/dexie/-/dexie-4.4.7.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "8493ff04eea68c1fad5fa853a083b5926c582cd9ae9fdd3061b7dca00a0ba4a1320d86a5fe4df7760d1301fa147b64c3b1b6cba1523396327704dd946d1e443a"
+              "content": "c1e9858829770d30a77f3caa7a95135f5ba06d86e44ebc3768464e1bb62300e5281100798393eb132c0fce4e49a5b5ff4b1a90f48be3529c420c8123a0e5847c"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -11388,8 +11388,8 @@
     {
       "type": "library",
       "name": "enhanced-resolve",
-      "version": "5.25.1",
-      "bom-ref": "shillinq@0.2.1|enhanced-resolve@5.25.1",
+      "version": "5.27.0",
+      "bom-ref": "shillinq@0.2.1|enhanced-resolve@5.27.0",
       "licenses": [
         {
           "license": {
@@ -11397,15 +11397,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/enhanced-resolve@5.25.1",
+      "purl": "pkg:npm/enhanced-resolve@5.27.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.25.1.tgz",
+          "url": "https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.27.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "9c65edb39ce72739963eefa6204f62cc23b3760eb7a0971ada60f3196593b61eecaf86824e829ca32155050c0def9223e4f7faa79d74130913a958934730d5fb"
+              "content": "0e8e81076c7395c73fa1d160f97118ca7780c784ff59fcb03bbd72c3d78f4b6b557d1b1fec9551e2651e10b69d21e1f38b19336c6e43a65ba21053e2d9619f61"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -11555,43 +11555,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/es-errors"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "es-module-lexer",
-      "version": "2.3.2",
-      "bom-ref": "shillinq@0.2.1|es-module-lexer@2.3.2",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/es-module-lexer@2.3.2",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/es-module-lexer/-/es-module-lexer-2.3.2.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "a681c6a4e4400688c926e72757d29b39abc44d6f250559e98645bbec4479fc1439173ee85d2a0235e93b207def4799d18ddb04cfddba89b1585fc2ad2d099dcb"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/es-module-lexer"
         }
       ]
     },
@@ -13433,8 +13396,8 @@
     {
       "type": "library",
       "name": "gridstack",
-      "version": "14.1.0",
-      "bom-ref": "shillinq@0.2.1|gridstack@14.1.0",
+      "version": "14.1.1",
+      "bom-ref": "shillinq@0.2.1|gridstack@14.1.1",
       "licenses": [
         {
           "license": {
@@ -13442,15 +13405,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/gridstack@14.1.0",
+      "purl": "pkg:npm/gridstack@14.1.1",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/gridstack/-/gridstack-14.1.0.tgz",
+          "url": "https://registry.npmjs.org/gridstack/-/gridstack-14.1.1.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "9c5e9ab1b1959c8247ecdf696be0c269204602812f4cd4bb8d81d425f70d37ee5b4c3ddae292c42af1a26bb5bfe8d6e38895a6b3d7b766287562e5387284f740"
+              "content": "ee8c68b2bfe1b61798d900a038db7232dfe54004b4cffdf8690a626fb5ff5440d35ac20d222250fda23bfb2540be85b5188ec18510656e8fe05e55e12ccfcb3a"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -17138,8 +17101,8 @@
     {
       "type": "library",
       "name": "minimizer-webpack-plugin",
-      "version": "5.8.0",
-      "bom-ref": "shillinq@0.2.1|minimizer-webpack-plugin@5.8.0",
+      "version": "5.14.1",
+      "bom-ref": "shillinq@0.2.1|minimizer-webpack-plugin@5.14.1",
       "licenses": [
         {
           "license": {
@@ -17147,15 +17110,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/minimizer-webpack-plugin@5.8.0",
+      "purl": "pkg:npm/minimizer-webpack-plugin@5.14.1",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/minimizer-webpack-plugin/-/minimizer-webpack-plugin-5.8.0.tgz",
+          "url": "https://registry.npmjs.org/minimizer-webpack-plugin/-/minimizer-webpack-plugin-5.14.1.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "d9c4fdfa0a097c186d333fa026a7a349fd3d0a58266213e171c45bfdf6f4ced55b8b1b740643bc991b88dba1683cfb94364464ea2103af2580228b9ce56f1e24"
+              "content": "aac7d36f9028e27adef64ac5c1eaa3f24e5b554ecac60b0fe1690b3bf2134ee88991b8ad0b360163e02e9b9293291858d300ebf152754482ec4c2494b4f77591"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -19814,8 +19777,8 @@
     {
       "type": "library",
       "name": "schema-utils",
-      "version": "4.5.0",
-      "bom-ref": "shillinq@0.2.1|schema-utils@4.5.0",
+      "version": "4.8.5",
+      "bom-ref": "shillinq@0.2.1|schema-utils@4.8.5",
       "licenses": [
         {
           "license": {
@@ -19823,15 +19786,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/schema-utils@4.5.0",
+      "purl": "pkg:npm/schema-utils@4.8.5",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/schema-utils/-/schema-utils-4.5.0.tgz",
+          "url": "https://registry.npmjs.org/schema-utils/-/schema-utils-4.8.5.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "cc994c099d1c011e69fd8e28569468aa2a03309706c5a5d1ad0ff8acfe16c91f38bdce73fc3a255dd6ef5de0e94f06eda1c0c5af6ae13ea1cf12b0c252dcf690"
+              "content": "2b54513fb6935006369465cdccfc2330ae8030ccdb113769177a533cc1271ff46ba663f1e8ad57e3bfe049e6eb57ed48f6945c829c19c2aa58065c9902c9628b"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -20850,8 +20813,8 @@
     {
       "type": "library",
       "name": "tapable",
-      "version": "2.3.3",
-      "bom-ref": "shillinq@0.2.1|tapable@2.3.3",
+      "version": "2.3.4",
+      "bom-ref": "shillinq@0.2.1|tapable@2.3.4",
       "licenses": [
         {
           "license": {
@@ -20859,15 +20822,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/tapable@2.3.3",
+      "purl": "pkg:npm/tapable@2.3.4",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/tapable/-/tapable-2.3.3.tgz",
+          "url": "https://registry.npmjs.org/tapable/-/tapable-2.3.4.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "bb173fce9a8583ac7b0bcbce13b961e8b6dd6bc7842fdce6566fcf2de4cf051861d710a0756690f89d42522786a487e6d8776db14a51bfe1ec8626ac04c71ce8"
+              "content": "3471625a701b309c4d36907088eee3255183baa3314fdfe857cbf9ed147e7e00504a19098a5e629c60fcff15b2d218cbc874325f5b6edbb400361973dca06a0a"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -22363,8 +22326,8 @@
     {
       "type": "library",
       "name": "vue-router",
-      "version": "4.6.4",
-      "bom-ref": "shillinq@0.2.1|vue-router@4.6.4",
+      "version": "4.6.5",
+      "bom-ref": "shillinq@0.2.1|vue-router@4.6.5",
       "licenses": [
         {
           "license": {
@@ -22372,15 +22335,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/vue-router@4.6.4",
+      "purl": "pkg:npm/vue-router@4.6.5",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/vue-router/-/vue-router-4.6.4.tgz",
+          "url": "https://registry.npmjs.org/vue-router/-/vue-router-4.6.5.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "1f3f6ae6c6b7dd885dba0970cfa83db244fc3813e28bee1b167f3cc3a27e27831f128e0a451a6688d1bf8471e475b44594b04eab137ccbc81fd856f431352056"
+              "content": "1c1a06aa2c690767a3d64235ecda2d74e6ad51d288b22df27ce439be1c0085ca0793dd3e26dc2d232ecc11e3aa74f8b5fa7a66415304bb917e1efc3edd3538f3"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -22398,7 +22361,7 @@
           "name": "devtools-api",
           "group": "@vue",
           "version": "6.6.4",
-          "bom-ref": "shillinq@0.2.1|vue-router@4.6.4|@vue/devtools-api@6.6.4",
+          "bom-ref": "shillinq@0.2.1|vue-router@4.6.5|@vue/devtools-api@6.6.4",
           "licenses": [
             {
               "license": {
@@ -22564,8 +22527,8 @@
     {
       "type": "library",
       "name": "watchpack",
-      "version": "2.5.2",
-      "bom-ref": "shillinq@0.2.1|watchpack@2.5.2",
+      "version": "2.6.4",
+      "bom-ref": "shillinq@0.2.1|watchpack@2.6.4",
       "licenses": [
         {
           "license": {
@@ -22573,15 +22536,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/watchpack@2.5.2",
+      "purl": "pkg:npm/watchpack@2.6.4",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/watchpack/-/watchpack-2.5.2.tgz",
+          "url": "https://registry.npmjs.org/watchpack/-/watchpack-2.6.4.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "ea2ff4d0d0633f8c863ecf9c68a4b245fa5317ff13a2bb2ed0c396de633321b86021215d7abf22ef16ea80794b33026b76237c9dd055dd4035fc07f33d2afe8e"
+              "content": "e47dd371ed867f359b72bf559d2ab26a4db084568e370e017662390439cc5e895de2a4a508577ae1768c404491876be40ca99d524bfaad4a35ed4bd9f5ff675f"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -22735,8 +22698,8 @@
     {
       "type": "library",
       "name": "webpack-sources",
-      "version": "3.5.1",
-      "bom-ref": "shillinq@0.2.1|webpack-sources@3.5.1",
+      "version": "3.7.1",
+      "bom-ref": "shillinq@0.2.1|webpack-sources@3.7.1",
       "licenses": [
         {
           "license": {
@@ -22744,15 +22707,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/webpack-sources@3.5.1",
+      "purl": "pkg:npm/webpack-sources@3.7.1",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/webpack-sources/-/webpack-sources-3.5.1.tgz",
+          "url": "https://registry.npmjs.org/webpack-sources/-/webpack-sources-3.7.1.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "8f2ba218976dbd8e37e33e5b519ae3cfaeefefafde3cdbc5653a7d31dcf6f48947e3e18fb20c868e2bf47ca23e33b05d914e800e3ba551c280777b542b75a513"
+              "content": "99cc6cec0d8bb04770b0da906eeaea4b84073d1d826b7346a6551a927e89e463d0be7559e280f820ce0525c4f77fc0153767b612c8ee215c4a8f8ae8ac7bf2b9"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -22805,8 +22768,8 @@
     {
       "type": "library",
       "name": "webpack",
-      "version": "5.111.1",
-      "bom-ref": "shillinq@0.2.1|webpack@5.111.1",
+      "version": "5.113.0",
+      "bom-ref": "shillinq@0.2.1|webpack@5.113.0",
       "licenses": [
         {
           "license": {
@@ -22814,15 +22777,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/webpack@5.111.1",
+      "purl": "pkg:npm/webpack@5.113.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/webpack/-/webpack-5.111.1.tgz",
+          "url": "https://registry.npmjs.org/webpack/-/webpack-5.113.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "70dca96b3d113fe4b872f4158b533fddb45492f34fd316692f44e3171f9cea383ae156f10fedb07960e063d5278d123a761660b5a8fc0d4efa18615c27bf713d"
+              "content": "ab9e221742cd68001d2c4b776a5f6a3170b6cc046f731ecb54a8c7a7e1318c24641b1d0cf1399ac061c05f2917c287d6cf184dccf4c087790b557bcd834125e0"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -22843,7 +22806,7 @@
           "type": "library",
           "name": "mime-db",
           "version": "1.54.0",
-          "bom-ref": "shillinq@0.2.1|webpack@5.111.1|mime-db@1.54.0",
+          "bom-ref": "shillinq@0.2.1|webpack@5.113.0|mime-db@1.54.0",
           "licenses": [
             {
               "license": {
