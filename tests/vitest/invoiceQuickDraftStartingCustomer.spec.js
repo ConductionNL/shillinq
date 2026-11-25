@@ -6,7 +6,7 @@
  * the dialog opened from a customer's detail page selects that customer
  * once the list has loaded, through the same path as a choice by hand.
  *
- * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+ * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
  */
 
 import { readFileSync } from 'node:fs'

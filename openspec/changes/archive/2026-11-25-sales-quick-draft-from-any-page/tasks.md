@@ -11,7 +11,8 @@
 
 ## 2. End to end
 
-- [ ] 2.1 Open the action on the purchase invoices page and on a customer page, save a draft and confirm the page did not change (REQ-IQD-009). Verify: Playwright test tagged with `@e2e` references to the scenarios.
-  - Written: `tests/e2e/sales-quick-draft-from-any-page.spec.ts`, the three scenarios tagged. The purchase invoices and bank reconciliation scenarios now choose Create invoice from the navigation chevron (no skip). Written, runs in nightly; not run here, no live instance.
+- [x] 2.1 Open the action on the purchase invoices page and on a customer page, save a draft and confirm the page did not change (REQ-IQD-009). Verify: Playwright test tagged with `@e2e` references to the scenarios.
+  - Written: `tests/e2e/sales-quick-draft-from-any-page.spec.ts`, the three scenarios tagged.
+  - Run live 25 Nov 2026 on a sandbox Nextcloud 34 + OpenRegister main (MariaDB): 3 passed (17.3s). First it had to follow the pages as they render: with one sub-action the navigation draws Create invoice inline as an icon button labelled Create invoice (no chevron menu), and the customer page holds its own Create invoice in the header's More menu. The old `.first()` locator clicked the navigation's action, which opens the dialog without the page's customer; the spec now takes the page's own action there.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `npm run lint` and `npm run format`.

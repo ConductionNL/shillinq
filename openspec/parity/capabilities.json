@@ -2278,8 +2278,8 @@
 				"reachedOn": "Dashboard / header action 'Create invoice' (modal InvoiceQuickDraftModal)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-shillinq-invoice-quick-draft",
-				"requirement": "openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft :: The quick draft opens from every page of the app (REQ-IQD-009)",
-				"plan": "openspec/changes/sales-quick-draft-from-any-page"
+				"requirement": "openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft :: The quick draft opens from every page of the app (REQ-IQD-009)",
+				"plan": "openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page"
 			},
 			"screen": {
 				"canvas": "design-system",

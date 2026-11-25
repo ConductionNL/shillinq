@@ -271,7 +271,7 @@ function fillBlankLineFields(line, prefs) {
  * @param {string} ref The starting customer: an object id or a customer number.
  * @return {object|null} The matching option, or null.
  *
- * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+ * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
  */
 export function startingCustomerOption(options, ref) {
 	const wanted = String(ref ?? '').trim()

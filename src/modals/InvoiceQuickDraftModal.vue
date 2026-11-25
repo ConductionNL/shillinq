@@ -386,7 +386,7 @@ export default {
 		 * it was opened on, else none.
 		 *
 		 * @return {string} The object id, or ''.
-		 * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+		 * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
 		 */
 		startingCustomerRef() {
 			if (this.from !== 'customer') {
@@ -401,7 +401,7 @@ export default {
 		 * preferences and due date follow.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+		 * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
 		 */
 		selectStartingCustomer() {
 			const option = startingCustomerOption(this.customerOptions, this.startingCustomerRef())
