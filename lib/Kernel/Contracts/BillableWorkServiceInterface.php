@@ -54,7 +54,7 @@ interface BillableWorkServiceInterface {
 	 *
 	 * @return array{hours: array{available: bool, reason: string, entries: list<array<string,mixed>>}, expenses: list<array<string,mixed>>}
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.2
 	 */
 	public function billableWork(
 		string $administrationId,

@@ -20,7 +20,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use Throwable;
 /**
  * The unbilled hours and pass-through expenses of one customer (design D1).
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.2
  */
 class BillableWorkService implements BillableWorkServiceInterface {
 
@@ -99,7 +99,7 @@ class BillableWorkService implements BillableWorkServiceInterface {
 	 *
 	 * @return array{hours: array{available: bool, reason: string, entries: list<array<string,mixed>>}, expenses: list<array<string,mixed>>}
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense/spec.md#requirement-the-generate-page-lists-unbilled-hours-to-tick-req-steb-001
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/specs/invoice-from-time-and-expense/spec.md#requirement-the-generate-page-lists-unbilled-hours-to-tick-req-steb-001
 	 */
 	public function billableWork(
 		string $administrationId,
@@ -199,7 +199,7 @@ class BillableWorkService implements BillableWorkServiceInterface {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense/spec.md#requirement-the-generate-page-lists-unbilled-pass-through-expenses-to-tick-req-steb-002
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/specs/invoice-from-time-and-expense/spec.md#requirement-the-generate-page-lists-unbilled-pass-through-expenses-to-tick-req-steb-002
 	 */
 	private function expenses(string $administrationId, string $customerId): array {
 		$claims = [];

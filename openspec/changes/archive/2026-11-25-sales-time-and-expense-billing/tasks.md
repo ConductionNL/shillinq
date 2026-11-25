@@ -27,4 +27,4 @@
 
 - [x] 5.1 Update the invoice-from-time-and-expense user guide and add a release note naming the `markupValue` precision limit. Verify: the page in `docs/` and the note in the PR body. (`docs/invoice-from-time-and-expense.md`: the tick lists, markup and VAT on recharges, the billable-work endpoint and `expenseItemRefs`; `CHANGELOG.md` names the `markupValue` precision limit.)
 
-Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-N` on every new method, English source strings with Dutch translations.
+Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-N` on every new method, English source strings with Dutch translations.

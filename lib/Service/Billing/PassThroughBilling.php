@@ -20,7 +20,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Throwable;
 /**
  * Pass-through expense items on an invoice, and the claims they close.
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
  */
 class PassThroughBilling {
 
@@ -94,7 +94,7 @@ class PassThroughBilling {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
 	public function expenseRows(array $refs, string $administrationId, string $customerId): array {
 		$rows = [];
@@ -119,7 +119,7 @@ class PassThroughBilling {
 	 *
 	 * @return list<string> The claims marked invoiced.
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.3
 	 */
 	public function markBilledClaims(array $invoice): array {
 		$refs = (array)($invoice['expenseItemRefs'] ?? []);
@@ -188,7 +188,7 @@ class PassThroughBilling {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) PassThroughMarkupResolver reads the markup rules from the record; it holds no state.
 	 */

@@ -17,7 +17,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
  */
 
 declare(strict_types=1);

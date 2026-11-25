@@ -366,7 +366,7 @@ export default {
 		 * What the hours and expense lists depend on.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
 		 */
 		workQuery() {
 			return [
@@ -383,7 +383,7 @@ export default {
 		 * The amount of the ticked hours.
 		 *
 		 * @return {number}
-		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
 		 */
 		tickedHoursAmount() {
 			return this.work.hours.entries
@@ -405,7 +405,7 @@ export default {
 		/**
 		 * Reload the unbilled hours and expenses when the customer, project, period or rate card changes.
 		 *
-		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
 		 */
 		workQuery() {
 			this.loadWork()
@@ -417,7 +417,7 @@ export default {
 		/**
 		 * Load the customer's unbilled hours and pass-through expenses; nothing is ticked.
 		 *
-		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
 		 */
 		async loadWork() {
 			this.work = emptyWork()
@@ -452,7 +452,7 @@ export default {
 		 *
 		 * @param {object} hour An hour entry.
 		 * @return {string}
-		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
 		 */
 		hourLabel(hour) {
 			if (hour.amount === null || hour.amount === undefined) {
@@ -476,7 +476,7 @@ export default {
 		 *
 		 * @param {object} item A pass-through item.
 		 * @return {string}
-		 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+		 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
 		 */
 		expenseLabel(item) {
 			return t('shillinq', '{date} {description}: cost EUR {cost}, markup EUR {markup}, EUR {amount}', {

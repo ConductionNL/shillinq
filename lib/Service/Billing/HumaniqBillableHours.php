@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use OCP\App\IAppManager;
  * ({@see BillableWorkService}), so {@see unbilled()} and {@see forProject()}
  * read the same entries.
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
  */
 class HumaniqBillableHours implements BillableHoursSource {
 
@@ -70,7 +70,7 @@ class HumaniqBillableHours implements BillableHoursSource {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	public function __construct(
 		private readonly HumaniqHoursReader $reader,
@@ -87,7 +87,7 @@ class HumaniqBillableHours implements BillableHoursSource {
 	 *
 	 * @return array{available: bool, reason: string, hours: list<array{id: string, person: string, date: string, hours: float, description: string}>}
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	public function unbilled(string $projectId, string $from, string $to): array {
 		return $this->read(projectId: $projectId, from: $from, to: $to);
@@ -102,7 +102,7 @@ class HumaniqBillableHours implements BillableHoursSource {
 	 *
 	 * @return array{available: bool, reason: string, hours: list<array{id: string, person: string, date: string, hours: float, description: string}>}
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	public function forProject(string $projectId, string $from, string $to): array {
 		return $this->read(projectId: $projectId, from: $from, to: $to);
@@ -117,7 +117,7 @@ class HumaniqBillableHours implements BillableHoursSource {
 	 *
 	 * @return array{available: bool, reason: string, hours: list<array{id: string, person: string, date: string, hours: float, description: string}>}
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	private function read(string $projectId, string $from, string $to): array {
 		if ($this->appManager->isEnabledForAnyone(self::HUMANIQ) !== true) {

@@ -180,7 +180,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 *
 	 * @throws RuntimeException When an item's claim is already invoiced.
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
 	private function assertClaimsNotInvoiced(InvoiceDraft $draft): void {
 		$claimIds = [];
@@ -856,7 +856,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
 	private function loadExpenses(array $ids, string $administrationId, array $itemRefs = [], string $customerId = ''): array {
 		$items = [];

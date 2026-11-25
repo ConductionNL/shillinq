@@ -440,7 +440,7 @@ class BillingModelEngine {
 	 *
 	 * @return float
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.2
 	 */
 	private static function mainSupplyRate(array $lines): float {
 		foreach ($lines as $line) {
@@ -466,7 +466,7 @@ class BillingModelEngine {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
 	private function expenseLine(array $expense, int $lineNumber, float $mainSupplyRate = self::DEFAULT_VAT_RATE): array {
 		$line = [
@@ -499,7 +499,7 @@ class BillingModelEngine {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.2
 	 */
 	private function rechargeLine(array $line, array $recharge, float $mainSupplyRate): array {
 		$costCents   = (int)($recharge['costAmountCents'] ?? $line['costAmountCents']);

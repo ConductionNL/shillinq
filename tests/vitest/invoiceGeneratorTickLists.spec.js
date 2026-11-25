@@ -7,7 +7,7 @@
  * endpoint, the request carries the ticked rows (an expense as a schema, id
  * and disbursement flag), and without an hours source the page says so.
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

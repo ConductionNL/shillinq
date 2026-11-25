@@ -177,7 +177,7 @@ final class BillableInvoiceRecords {
 	 *
 	 * @return array<string,list<array{schema:string,id:string,claimId:string,disbursement:bool}>>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
 	private function itemRefsOf(array $lineDrafts): array {
 		$refs = [];
@@ -246,7 +246,7 @@ final class BillableInvoiceRecords {
 	 *
 	 * @return array<string,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
 	 */
 	private function rechargeOf(array $line): array {
 		if (isset($line['recharge']) === false || is_array($line['recharge']) === false) {

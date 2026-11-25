@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service\Billing;
 /**
  * Reads the unbilled hours of a project.
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.1
  */
 interface BillableHoursSource {
 
@@ -48,7 +48,7 @@ interface BillableHoursSource {
 	 *
 	 * @return array{available: bool, reason: string, hours: list<array{id: string, person: string, date: string, hours: float, description: string}>}
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.1
 	 */
 	public function unbilled(string $projectId, string $from, string $to): array;
 

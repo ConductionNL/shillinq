@@ -9,7 +9,7 @@
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle\Action
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.2
  */
 
 declare(strict_types=1);
