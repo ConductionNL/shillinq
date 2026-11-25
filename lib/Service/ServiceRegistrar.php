@@ -44,7 +44,7 @@ use OCA\Shillinq\Service\External\CsrdEsrsXbrl\LogCsrdEsrsXbrlAdapter;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\Billing\BillableHoursSource;
-use OCA\Shillinq\Service\Billing\UnavailableBillableHours;
+use OCA\Shillinq\Service\Billing\HumaniqBillableHours;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrBinding;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
@@ -227,9 +227,10 @@ final class ServiceRegistrar {
 				return (new DigipoortSbrBinding())->adapter(container: $c);
 			}
 		);
-		// Until humaniq's hours read is bound (sales-time-and-expense-billing
-		// task 2.3), the invoice generator is told hours are unavailable (task 2.1).
-		$context->registerServiceAlias(BillableHoursSource::class, UnavailableBillableHours::class);
+		// The invoice generator reads approved, billable hours from humaniq
+		// (sales-time-and-expense-billing task 2.3); without humaniq the source
+		// answers "unavailable", never zero hours.
+		$context->registerServiceAlias(BillableHoursSource::class, HumaniqBillableHours::class);
 
 		$context->registerServiceAlias(SalarisbureauAdapterInterface::class, LogSalarisbureauAdapter::class);
 

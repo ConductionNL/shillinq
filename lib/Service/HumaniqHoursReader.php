@@ -81,7 +81,7 @@ class HumaniqHoursReader {
 	 *
 	 * @return array<string, array{uuid: string, personId: string, date: string, hours: float|null,
 	 *     billable: bool, approvalState: string, projectId: string, domainObjectType: string,
-	 *     domainObjectRef: string, administrationId: string}>|null
+	 *     domainObjectRef: string, administrationId: string, description: string}>|null
 	 *     The entries, [] when humaniq holds none, null when humaniq does not answer.
 	 *
 	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
@@ -116,6 +116,61 @@ class HumaniqHoursReader {
 
 		return $this->keyedEntries(rows: $rows, administrationId: $administrationId);
 	}//end entriesInPeriod()
+
+	/**
+	 * The hours booked to one project over a period, keyed by entry uuid.
+	 *
+	 * The invoice generator reads hours per project (sales-time-and-expense-billing
+	 * task 2.3). The caller has already checked that the project belongs to the
+	 * customer in its administration; rows booked to another project are dropped
+	 * here even when the register ignores the filter.
+	 *
+	 * @param string $projectId The project the hours were worked on.
+	 * @param string $from      First day, `YYYY-MM-DD`, inclusive.
+	 * @param string $until     Last day, `YYYY-MM-DD`, inclusive.
+	 *
+	 * @return array<string, array<string, mixed>>|null The entries, [] when humaniq holds none, null when humaniq does not answer.
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 */
+	public function entriesForProject(string $projectId, string $from, string $until): ?array {
+		$projectId = trim($projectId);
+		if ($projectId === '' || trim($from) === '' || trim($until) === '') {
+			// An unscoped read would list every project's hours.
+			return [];
+		}
+
+		try {
+			$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
+				->setRegister($this->humaniq->registerSlug())
+				->setSchema(self::HOURS_SCHEMA)
+				->findAll(
+					[
+						'filters' => [
+							'projectId' => $projectId,
+							'date' => ['gte' => trim($from), 'lte' => trim($until)],
+						],
+					]
+				);
+		} catch (\Throwable $e) {
+			$this->logger->debug('HumaniqHoursReader: humaniq project hours not readable: ' . $e->getMessage());
+			return null;
+		}
+
+		if (is_array($rows) === false) {
+			return null;
+		}
+
+		$entries = [];
+		foreach ($rows as $row) {
+			$entry = $this->normalised(row: $this->toArray(row: $row));
+			if ($entry !== null && $entry['projectId'] === $projectId) {
+				$entries[$entry['uuid']] = $entry;
+			}
+		}
+
+		return $entries;
+	}//end entriesForProject()
 
 	/**
 	 * Normalise the rows and key them by uuid, dropping rows of another administration.
@@ -181,6 +236,7 @@ class HumaniqHoursReader {
 			'domainObjectType' => trim((string)($row['domainObjectType'] ?? '')),
 			'domainObjectRef' => trim((string)($row['domainObjectRef'] ?? '')),
 			'administrationId' => trim((string)($row['administrationId'] ?? '')),
+			'description' => trim((string)($row['description'] ?? '')),
 		];
 	}//end normalised()
 

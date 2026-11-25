@@ -56,9 +56,10 @@ final class UnavailableBillableHoursTest extends TestCase {
 		);
 	}//end testTheProjectsHoursAreUnavailableWithTheReason()
 
-	public function testTheAppBindsItAsTheHoursSourceUntilHumaniqIsBound(): void {
+	public function testTheAppBindsTheHumaniqSourceNowThatHumaniqKeepsTheHours(): void {
 		$registrar = (string)file_get_contents(__DIR__ . '/../../../../lib/Service/ServiceRegistrar.php');
 
-		$this->assertStringContainsString('registerServiceAlias(BillableHoursSource::class, UnavailableBillableHours::class)', $registrar);
-	}//end testTheAppBindsItAsTheHoursSourceUntilHumaniqIsBound()
+		$this->assertStringContainsString('registerServiceAlias(BillableHoursSource::class, HumaniqBillableHours::class)', $registrar);
+		$this->assertStringNotContainsString('UnavailableBillableHours::class)', $registrar);
+	}//end testTheAppBindsTheHumaniqSourceNowThatHumaniqKeepsTheHours()
 }//end class
