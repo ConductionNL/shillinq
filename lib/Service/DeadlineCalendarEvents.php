@@ -109,6 +109,32 @@ final class DeadlineCalendarEvents {
 
 
 	/**
+	 * The fields that link a deadline's VEVENT to its OpenRegister row:
+	 * objectUuid, registerId and schemaId from the row's `@self`. Empty for a
+	 * row that does not carry its uuid and schema there.
+	 *
+	 * @param array<string,mixed> $row The source row.
+	 *
+	 * @return array<string,string> The link fields, or nothing.
+	 *
+	 * @spec openspec/changes/integration-leaves-consume/tasks.md
+	 */
+	public function linkFieldsOf(array $row): array {
+		$self = ($row['@self'] ?? []);
+		if (is_array($self) === false) {
+			return [];
+		}
+
+		$uuid   = (string)($self['id'] ?? '');
+		$schema = (string)($self['schema'] ?? '');
+		if ($uuid === '' || $schema === '') {
+			return [];
+		}
+
+		return ['objectUuid' => $uuid, 'registerId' => (string)($self['register'] ?? ''), 'schemaId' => $schema];
+	}//end linkFieldsOf()
+
+	/**
 	 * Cancel app-owned VEVENTs that are no longer desired (category toggled
 	 * off / source reached a closed state).
 	 *

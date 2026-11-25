@@ -807,8 +807,12 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 			'periodEnd' => '2026-06-30',
 			'state' => 'draft',
 		];
-		$sameReturn  = $this->vatReturn(['administrationId' => 'ADM-1', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-same']]);
-		$otherReturn = $this->vatReturn(['administrationId' => 'ADM-2', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-other']]);
+		$sameReturn  = $this->vatReturn(
+			overrides: ['administrationId' => 'ADM-1', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-same']]
+		);
+		$otherReturn = $this->vatReturn(
+			overrides: ['administrationId' => 'ADM-2', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-other']]
+		);
 
 		$service = $this->buildService(
 			recordsBySchema: ['VatReturn' => [$return], 'BtwAangifte' => [$sameReturn, $otherReturn]],
@@ -816,20 +820,25 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 
 		$result = $service->publishForUser(userId: 'alice');
 
-		self::assertSame('ok', $result['status']);
-		self::assertSame(2, $result['published']);
+		self::assertSame(expected: 'ok', actual: $result['status']);
+		self::assertSame(expected: 2, actual: $result['published']);
 
 		$writes = $this->calendarStub->writes;
-		self::assertCount(2, $writes);
+		self::assertCount(expectedCount: 2, haystack: $writes);
 		$vevent = $writes[0][1];
-		self::assertStringContainsString('UID:btw-filing:6f1c2d9e-0000-4000-8000-000000000001', $vevent);
-		self::assertStringContainsString('SUMMARY:BTW-aangifte 2026-Q2', $vevent);
-		self::assertStringContainsString('DTSTART;VALUE=DATE:20260731', $vevent);
-		self::assertStringContainsString("X-OPENREGISTER-REGISTER:7\r\nX-OPENREGISTER-SCHEMA:42\r\nX-OPENREGISTER-OBJECT:6f1c2d9e-0000-4000-8000-000000000001\r\n", $vevent);
+		self::assertStringContainsString(needle: 'UID:btw-filing:6f1c2d9e-0000-4000-8000-000000000001', haystack: $vevent);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2026-Q2', haystack: $vevent);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20260731', haystack: $vevent);
+		$link = "X-OPENREGISTER-REGISTER:7\r\nX-OPENREGISTER-SCHEMA:42\r\nX-OPENREGISTER-OBJECT:6f1c2d9e-0000-4000-8000-000000000001\r\n";
+		self::assertStringContainsString(needle: $link, haystack: $vevent);
 
-		self::assertStringContainsString('UID:btw-filing:btw-other', $writes[1][1]);
-		self::assertStringNotContainsString('X-OPENREGISTER', $writes[1][1], 'a row without its uuid and schema is not linked');
-		self::assertStringNotContainsString('btw-same', $writes[0][1] . $writes[1][1]);
+		self::assertStringContainsString(needle: 'UID:btw-filing:btw-other', haystack: $writes[1][1]);
+		self::assertStringNotContainsString(
+			needle: 'X-OPENREGISTER',
+			haystack: $writes[1][1],
+			message: 'a row without its uuid and schema is not linked'
+		);
+		self::assertStringNotContainsString(needle: 'btw-same', haystack: $writes[0][1] . $writes[1][1]);
 
 	}//end testVatReturnDeadlineIsPublishedAndLinkedToTheReturn()
 
@@ -858,13 +867,13 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 		$service->publishForUser(userId: 'alice');
 
 		$events = array_map(static fn (array $write): string => $write[1], $this->calendarStub->writes);
-		self::assertCount(3, $events);
-		self::assertStringContainsString('SUMMARY:BTW-aangifte 2026-03', $events[0]);
-		self::assertStringContainsString('DTSTART;VALUE=DATE:20260430', $events[0]);
-		self::assertStringContainsString('SUMMARY:BTW-aangifte 2025', $events[1]);
-		self::assertStringContainsString('DTSTART;VALUE=DATE:20260131', $events[1]);
-		self::assertStringContainsString('SUMMARY:BTW-aangifte 2026-Q3', $events[2]);
-		self::assertStringContainsString('DTSTART;VALUE=DATE:20261031', $events[2]);
+		self::assertCount(expectedCount: 3, haystack: $events);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2026-03', haystack: $events[0]);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20260430', haystack: $events[0]);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2025', haystack: $events[1]);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20260131', haystack: $events[1]);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2026-Q3', haystack: $events[2]);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20261031', haystack: $events[2]);
 
 	}//end testVatReturnPeriodComesFromItsNumbersOrItsEnd()
 
