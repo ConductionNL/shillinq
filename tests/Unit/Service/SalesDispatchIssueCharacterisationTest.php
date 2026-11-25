@@ -217,7 +217,7 @@ final class SalesDispatchIssueCharacterisationTest extends TestCase {
 		unset($draft['draftedAt']);
 		self::assertSame(
 			[
-				'movementNumber' => sprintf('SM-DLV-%s-%03d', substr(md5('dn-1'), 0, 8), 5),
+				'movementNumber' => sprintf('SM-DLV-%s-%03d', strtoupper(substr(md5('dn-1'), 0, 8)), 5),
 				'itemId' => 'sku-a',
 				'quantity' => 2.5,
 				'unitCost' => 0,

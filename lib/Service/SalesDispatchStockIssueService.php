@@ -61,6 +61,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Inventory\StockMoveNumber;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\LotSellabilityGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
@@ -641,7 +642,7 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 */
 	private function draftIssueMove(DeliveryIssueRun $run, DeliveryIssueLine $line): array {
 		return [
-			'movementNumber' => sprintf('SM-DLV-%s-%03d', substr(md5($run->deliveryId), 0, 8), $line->index),
+			'movementNumber' => (new StockMoveNumber())->normalise(candidate: sprintf('SM-DLV-%s-%03d', substr(md5($run->deliveryId), 0, 8), $line->index)),
 			'itemId' => $line->sku,
 			'quantity' => $line->quantity,
 			'unitCost' => 0,
