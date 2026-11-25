@@ -47,6 +47,7 @@ use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\Contracts\CogsPosterServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FifoValuationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\MovingAverageValuationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCA\Shillinq\Support\RegisterSlug;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -78,6 +79,7 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param SchemaDefinitionsInterface|null $schemas Resolves the event's schema id to its slug.
 	 */
 	public function __construct(
 		private readonly FifoValuationServiceInterface $fifo,
@@ -86,6 +88,7 @@ class StockMoveTransitionedListener implements IEventListener {
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?SchemaDefinitionsInterface $schemas = null,
 	) {
 
 	}//end __construct()
@@ -325,10 +328,23 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @param string $schema Schema identifier.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
 	 */
 	private function isStockMoveSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'stockmove' || str_ends_with($normalised, '/stockmove'));
+		if ($normalised === 'stockmove' || str_ends_with($normalised, '/stockmove')) {
+			return true;
+		}
+
+		// OpenRegister names the schema by its id unless its
+		// transition_event_slug_contract flag is on (the default is off), so a
+		// slug check alone never saw a posted StockMove.
+		if ($this->schemas === null || ctype_digit($normalised) === false) {
+			return false;
+		}
+
+		return strtolower((string)($this->schemas->definition(schema: $normalised)['slug'] ?? '')) === 'stockmove';
 	}//end isStockMoveSchema()
 
 	/**

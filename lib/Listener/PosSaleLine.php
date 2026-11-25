@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Listener;
  * product reference and quantity, and — once it is known not to be issued —
  * the reason it is audited.
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
 final class PosSaleLine {
 	/**
@@ -59,7 +59,7 @@ final class PosSaleLine {
 	 *
 	 * @return self
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	public function because(string $reason): self {
 		return new self(

@@ -32,6 +32,7 @@ use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
 use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Service\CogsPosterService;
 use OCA\Shillinq\Service\FifoValuationService;
@@ -69,10 +70,11 @@ final class StockMoveTransitionedListenerTest extends TestCase {
 	 * @param mixed                $lookup      findAll() rows, or a Throwable to throw.
 	 * @param array<string, mixed> $result      What the valuation services return.
 	 * @param bool                 $failProcess Whether the valuation services throw.
+	 * @param SchemaDefinitionsInterface|null $schemas The schema definitions, when the event names a schema id.
 	 *
 	 * @return StockMoveTransitionedListener The listener.
 	 */
-	private function listener(mixed $lookup, array $result = [], bool $failProcess = false): StockMoveTransitionedListener {
+	private function listener(mixed $lookup, array $result = [], bool $failProcess = false, ?SchemaDefinitionsInterface $schemas = null): StockMoveTransitionedListener {
 		$fifo = $this->createMock(FifoValuationService::class);
 		$average = $this->createMock(MovingAverageValuationService::class);
 		foreach (['fifo' => $fifo, 'average' => $average] as $name => $service) {
@@ -127,7 +129,7 @@ final class StockMoveTransitionedListenerTest extends TestCase {
 			);
 		}
 
-		return new StockMoveTransitionedListener($fifo, $average, $cogs, $appConfig, $logger, $objectService);
+		return new StockMoveTransitionedListener($fifo, $average, $cogs, $appConfig, $logger, $objectService, $schemas);
 
 	}//end listener()
 
@@ -202,6 +204,35 @@ final class StockMoveTransitionedListenerTest extends TestCase {
 		);
 
 	}//end testIssueWithAverageSnapshotPostsCogs()
+
+	/**
+	 * OpenRegister names the schema by its id unless its slug contract is on;
+	 * an id whose schema is StockMove is processed, any other id, or an id
+	 * without the definitions to resolve it, is ignored.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
+	 */
+	public function testASchemaIdIsResolvedToItsSlug(): void {
+		$schemas = $this->createMock(originalClassName: SchemaDefinitionsInterface::class);
+		$schemas->method('definition')->willReturnCallback(
+			static fn (string $schema): ?array => ['539' => ['slug' => 'StockMove'], '540' => ['slug' => 'Invoice']][$schema] ?? null
+		);
+		$result = ['processed' => true, 'cogsCents' => '1250', 'valuation' => ['v' => 1]];
+
+		$this->listener(lookup: [['valuationMethod' => 'average']], result: $result, schemas: $schemas)
+			->handle(event: self::event(move: self::move(), to: 'posted', schema: '539'));
+		self::assertSame(expected: 'cogs m1 {"v":1} 1250', actual: end($this->calls));
+
+		$this->calls = [];
+		$this->listener(lookup: [['valuationMethod' => 'average']], result: $result, schemas: $schemas)
+			->handle(event: self::event(move: self::move(), to: 'posted', schema: '540'));
+		$this->listener(lookup: [['valuationMethod' => 'average']], result: $result)
+			->handle(event: self::event(move: self::move(), to: 'posted', schema: '539'));
+		self::assertSame(expected: [], actual: $this->calls);
+
+	}//end testASchemaIdIsResolvedToItsSlug()
 
 	/**
 	 * A receipt looks up on the destination, never posts COGS.
