@@ -135,6 +135,8 @@ final class FilingPeriodRow {
 	 * @param int $month The month (1-12).
 	 *
 	 * @return string|null The date, or null on failure.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function lastDayOf(int $year, int $month): ?string {
 		try {
@@ -150,6 +152,8 @@ final class FilingPeriodRow {
 	 * Today, at midnight.
 	 *
 	 * @return DateTimeImmutable Today.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function today(): DateTimeImmutable {
 		return new DateTimeImmutable('today');
@@ -161,6 +165,8 @@ final class FilingPeriodRow {
 	 * @param string $value The raw value.
 	 *
 	 * @return string|null Y-m-d, or null.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
 	 */
 	public function date(string $value): ?string {
 		if ($value === '') {
