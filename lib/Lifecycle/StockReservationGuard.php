@@ -10,20 +10,27 @@
  * compare-and-swap (CAS) reservation workflow declared in
  * REQ-SM-004 + REQ-SM-005. Three operations:
  *
- *   - reserveReservation()  — invoked when a StockMove is created in
- *     `draft` with a `sourceLocationId`. Reads the InventoryStock row
- *     for (administrationId, locationId=source, sku=item) and bumps
- *     `reservedQuantity` by `move.quantity` via CAS on `version`. On
+ *   - reserveReservation()  — reads the InventoryStock row for
+ *     (administrationId, locationCode=source, productSku=item) and bumps
+ *     `quantityReserved` by `move.quantity` via CAS on `version`. On
  *     CAS collision returns false; the caller surfaces a "another
  *     operator is updating this location" message.
  *
- *   - commitReservation()   — invoked on draft → posted. Decrements
- *     `reservedQuantity` by `move.quantity`; decrements source
- *     `quantity` (when source present); increments destination
- *     `quantity` (when destination present). Atomic CAS per row.
+ *   - commitReservation()   — run on draft → posted by
+ *     CommitStockReservationAction. Decrements source `quantityOnHand`
+ *     by `move.quantity` and releases up to that much of
+ *     `quantityReserved` (a move that was never reserved, such as a POS
+ *     sale, releases nothing); refuses when the source on-hand cannot
+ *     cover the move. Increments destination `quantityOnHand`, creating
+ *     the row on a first delivery. Atomic CAS per row.
  *
- *   - releaseReservation()  — invoked on draft → cancelled. Decrements
- *     `reservedQuantity` by `move.quantity`; no on-hand change.
+ *   - releaseReservation()  — run on draft → cancelled by
+ *     ReleaseStockReservationAction. Decrements `quantityReserved` by
+ *     `move.quantity`; no on-hand change.
+ *
+ * The field names are InventoryStock's own (productSku, locationCode,
+ * quantityOnHand, quantityReserved); the StockMove's sourceLocationId
+ * and destinationLocationId carry a location code.
  *
  * All arithmetic is integer-cent (multipleOf 0.01 schema discipline)
  * so CAS comparisons remain bit-exact across IEEE-754 round-trips.
@@ -166,7 +173,7 @@ class StockReservationGuard {
 	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
 	 */
 	private function reserveOnRow(array $move, array $row, int $cents): bool {
-		$availableCents = ($this->cents(value: ($row['quantity'] ?? 0)) - $this->cents(value: ($row['reservedQuantity'] ?? 0)));
+		$availableCents = ($this->cents(value: ($row['quantityOnHand'] ?? 0)) - $this->cents(value: ($row['quantityReserved'] ?? 0)));
 		if ($availableCents < $cents) {
 			$this->logger->info(
 				'StockReservationGuard: reserve denied — insufficient available',
@@ -179,9 +186,9 @@ class StockReservationGuard {
 			return false;
 		}
 
-		$newReservedCents = ($this->cents(value: ($row['reservedQuantity'] ?? 0)) + $cents);
+		$newReservedCents = ($this->cents(value: ($row['quantityReserved'] ?? 0)) + $cents);
 		$patch = [
-			'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
+			'quantityReserved' => $this->fromCents(cents: $newReservedCents),
 			'version' => ((int)($row['version'] ?? 0) + 1),
 		];
 
@@ -286,11 +293,11 @@ class StockReservationGuard {
 			return false;
 		}
 
-		$sourceReservedCents = $this->cents(value: ($source['reservedQuantity'] ?? 0));
-		$sourceOnHandCents = $this->cents(value: ($source['quantity'] ?? 0));
-		if ($sourceOnHandCents < $cents || $sourceReservedCents < $cents) {
+		$sourceReservedCents = $this->cents(value: ($source['quantityReserved'] ?? 0));
+		$sourceOnHandCents = $this->cents(value: ($source['quantityOnHand'] ?? 0));
+		if ($sourceOnHandCents < $cents) {
 			$this->logger->info(
-				'StockReservationGuard: commit denied — source reservation/on-hand inconsistent',
+				'StockReservationGuard: commit denied — source on-hand does not cover the move',
 				[
 					'movementNumber' => ($move['movementNumber'] ?? null),
 					'sourceLocation' => $sourceLocationId,
@@ -300,9 +307,10 @@ class StockReservationGuard {
 		}
 
 		$patch = [
-			'reservedQuantity' => $this->fromCents(cents: $sourceReservedCents - $cents),
-			'quantity' => $this->fromCents(cents: $sourceOnHandCents - $cents),
-			'lastMovementDate' => date('Y-m-d'),
+			// A move that was never reserved (a POS sale, a direct issue)
+			// releases nothing; one that was releases its hold.
+			'quantityReserved' => $this->fromCents(cents: max(0, ($sourceReservedCents - $cents))),
+			'quantityOnHand' => $this->fromCents(cents: $sourceOnHandCents - $cents),
 			'version' => ((int)($source['version'] ?? 0) + 1),
 		];
 
@@ -340,10 +348,10 @@ class StockReservationGuard {
 			);
 		}
 
-		$destOnHandCents = ($this->cents(value: ($destination['quantity'] ?? 0)) + $cents);
+		$destOnHandCents = ($this->cents(value: ($destination['quantityOnHand'] ?? 0)) + $cents);
 		$patch = [
-			'quantity' => $this->fromCents(cents: $destOnHandCents),
-			'lastMovementDate' => date('Y-m-d'),
+			'quantityOnHand' => $this->fromCents(cents: $destOnHandCents),
+			'lastRestockDate' => date('Y-m-d'),
 			'version' => ((int)($destination['version'] ?? 0) + 1),
 		];
 
@@ -407,10 +415,10 @@ class StockReservationGuard {
 			return true;
 		}
 
-		$currentReservedCents = $this->cents(value: ($row['reservedQuantity'] ?? 0));
+		$currentReservedCents = $this->cents(value: ($row['quantityReserved'] ?? 0));
 		$newReservedCents = max(0, ($currentReservedCents - $cents));
 		$patch = [
-			'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
+			'quantityReserved' => $this->fromCents(cents: $newReservedCents),
 			'version' => ((int)($row['version'] ?? 0) + 1),
 		];
 
@@ -438,8 +446,8 @@ class StockReservationGuard {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'locationId' => $locationId,
-						'sku' => $sku,
+						'locationCode' => $locationId,
+						'productSku' => $sku,
 					],
 				]
 			);
@@ -448,7 +456,18 @@ class StockReservationGuard {
 			return null;
 		}
 
-		return $rows[0];
+		// OpenRegister's findAll() answers ObjectEntity rows; the arithmetic
+		// reads arrays.
+		$row = reset($rows);
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$row = $row->jsonSerialize();
+		}
+
+		if (is_array($row) === false) {
+			return null;
+		}
+
+		return $row;
 	}//end findInventoryStock()
 
 	/**
@@ -537,12 +556,14 @@ class StockReservationGuard {
 		try {
 			$row = [
 				'administrationId' => $administrationId,
-				'locationId' => $locationId,
-				'sku' => $sku,
-				'quantity' => $this->fromCents(cents: $quantityCents),
-				'reservedQuantity' => 0,
+				'locationCode' => $locationId,
+				'productSku' => $sku,
+				'quantityOnHand' => $this->fromCents(cents: $quantityCents),
+				'quantityReserved' => 0,
 				'unitCost' => $unitCost,
-				'lastMovementDate' => date('Y-m-d'),
+				'lastRestockDate' => date('Y-m-d'),
+				'productId' => $sku,
+				'status' => 'active',
 				'version' => 1,
 			];
 
