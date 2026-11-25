@@ -218,7 +218,7 @@ class HumaniqHoursReaderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	public function testTheProjectReadIsScopedToTheProject(): void {
 		$reader = $this->reader(
@@ -247,7 +247,7 @@ class HumaniqHoursReaderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	public function testTheProjectReadIsNullWhenHumaniqDoesNotAnswer(): void {
 		self::assertNull($this->reader([], true)->entriesForProject('prj-1', '2026-10-01', '2026-10-31'));

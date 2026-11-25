@@ -30,7 +30,7 @@ async function generate(request) {
  *
  * @param {object} query - { customerId, projectId, from, to, rateCardId }.
  * @return {Promise<object>} { hours: { available, reason, entries }, expenses }.
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
  */
 async function billableWork(query) {
 	const { data } = await axios.get(base('/billable-work'), { params: query })

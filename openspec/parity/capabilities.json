@@ -1898,7 +1898,7 @@
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice)",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-time-and-expense-billing",
-				"requirement": "openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: The generate page lists unbilled hours to tick (REQ-STEB-001)",
+				"requirement": "openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: The generate page lists unbilled hours to tick (REQ-STEB-001)",
 				"plan": "hours-to-humaniq"
 			},
 			"screen": {
@@ -3154,8 +3154,8 @@
 				"readOn": "2026-09-27",
 				"change": "sales-time-and-expense-billing",
 				"requirement": [
-					"openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: A recharged expense line carries its cost, markup and VAT treatment (REQ-STEB-003)",
-					"openspec/changes/sales-time-and-expense-billing/specs/expense-reimbursement-or-passthrough :: The matching markup rule is applied and locked at submit (REQ-STEB-004)"
+					"openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: A recharged expense line carries its cost, markup and VAT treatment (REQ-STEB-003)",
+					"openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/specs/expense-reimbursement-or-passthrough :: The matching markup rule is applied and locked at submit (REQ-STEB-004)"
 				]
 			},
 			"screen": {

@@ -105,7 +105,7 @@ class HumaniqHoursReader {
 	 *
 	 * @return array<string, array<string, mixed>>|null The entries, [] when humaniq holds none, null when humaniq does not answer.
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	public function entriesForProject(string $projectId, string $from, string $until): ?array {
 		// An unscoped read would list every project's hours.
@@ -119,7 +119,7 @@ class HumaniqHoursReader {
 	 *
 	 * @return array<int|string, mixed>|null The rows, null when humaniq does not answer.
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	private function rows(array $filters): ?array {
 		try {
@@ -153,7 +153,7 @@ class HumaniqHoursReader {
 	 *
 	 * @return array<string, array<string, mixed>>|null The entries, null when humaniq does not answer.
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	private function scopedEntries(string $field, string $value, string $from, string $until): ?array {
 		$value = trim($value);

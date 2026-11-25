@@ -17,7 +17,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use Throwable;
 /**
  * Lists the work a customer can still be invoiced for (design D1).
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-2.2
  */
 class BillableWorkController extends Controller {
 	/**
@@ -67,7 +67,7 @@ class BillableWorkController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense/spec.md#requirement-the-generate-page-lists-unbilled-hours-to-tick-req-steb-001
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/specs/invoice-from-time-and-expense/spec.md#requirement-the-generate-page-lists-unbilled-hours-to-tick-req-steb-001
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {

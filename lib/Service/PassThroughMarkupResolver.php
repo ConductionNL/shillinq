@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Picks the markup rule for an expense and computes its markup.
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.1
  */
 class PassThroughMarkupResolver {
 
@@ -52,7 +52,7 @@ class PassThroughMarkupResolver {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.1
 	 */
 	public static function filters(string $administrationId, int $fiscalYear): array {
 		$filters = ['administrationId' => $administrationId];
@@ -73,7 +73,7 @@ class PassThroughMarkupResolver {
 	 *
 	 * @return array<string, mixed>|null
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.1
 	 */
 	public function select(array $rules, string $customerId, string $category): ?array {
 		$best = null;
@@ -102,7 +102,7 @@ class PassThroughMarkupResolver {
 	 *
 	 * @return float
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.1
 	 */
 	public function markup(array $rule, float $cost): float {
 		$value = (float)($rule['markupValue'] ?? 0.0);
@@ -125,7 +125,7 @@ class PassThroughMarkupResolver {
 	 *
 	 * @return array{markupRuleId: string|null, markupRateApplied: float|null, markupAmountCalculated: float}
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.1
 	 */
 	public function resolve(array $rules, string $customerId, string $category, float $cost): array {
 		$rule = $this->select(rules: $rules, customerId: $customerId, category: $category);

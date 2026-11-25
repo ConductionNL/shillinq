@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.2
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * Writes the submit-time markup onto a claim's pass-through items.
  *
- * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.2
  */
 class LockPassThroughMarkupAction implements LifecycleActionInterface {
 
@@ -108,7 +108,7 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed> The claim, unchanged.
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.2
 	 */
 	public function execute(LifecycleActionContext $context): array {
 		$objectData = $context->objectData;
@@ -139,7 +139,7 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-1.2
 	 */
 	private function lockItem(array $item, array $claim): void {
 		try {
