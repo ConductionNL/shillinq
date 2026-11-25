@@ -38,7 +38,6 @@ use OCA\Shillinq\Service\CogsPosterService;
 use OCA\Shillinq\Service\FifoValuationService;
 use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCP\EventDispatcher\Event;
-use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -74,7 +73,12 @@ final class StockMoveTransitionedListenerTest extends TestCase {
 	 *
 	 * @return StockMoveTransitionedListener The listener.
 	 */
-	private function listener(mixed $lookup, array $result = [], bool $failProcess = false, ?SchemaDefinitionsInterface $schemas = null): StockMoveTransitionedListener {
+	private function listener(
+		mixed $lookup,
+		array $result = [],
+		bool $failProcess = false,
+		?SchemaDefinitionsInterface $schemas = null,
+	): StockMoveTransitionedListener {
 		$fifo = $this->createMock(FifoValuationService::class);
 		$average = $this->createMock(MovingAverageValuationService::class);
 		foreach (['fifo' => $fifo, 'average' => $average] as $name => $service) {
@@ -117,9 +121,6 @@ final class StockMoveTransitionedListenerTest extends TestCase {
 			}
 		);
 
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('');
-
 		$logger = $this->createMock(LoggerInterface::class);
 		foreach (['warning', 'error'] as $level) {
 			$logger->method($level)->willReturnCallback(
@@ -129,7 +130,9 @@ final class StockMoveTransitionedListenerTest extends TestCase {
 			);
 		}
 
-		return new StockMoveTransitionedListener($fifo, $average, $cogs, $appConfig, $logger, $objectService, $schemas);
+		$schemas ??= $this->createStub(originalClassName: SchemaDefinitionsInterface::class);
+
+		return new StockMoveTransitionedListener($fifo, $average, $cogs, $logger, $objectService, $schemas);
 
 	}//end listener()
 

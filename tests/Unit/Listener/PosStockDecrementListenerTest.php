@@ -96,6 +96,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\Pipelinq\Event\PosStockMovedEvent;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Service\CogsPosterService;
@@ -955,9 +956,9 @@ class PosStockDecrementListenerTest extends TestCase {
 			fifo: $fifo,
 			average: $average,
 			cogs: $cogs,
-			appConfig: $appConfig,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($fakeObjectService),
+			schemas: $this->createStub(originalClassName: SchemaDefinitionsInterface::class),
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(
