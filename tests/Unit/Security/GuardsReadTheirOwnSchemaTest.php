@@ -115,7 +115,9 @@ final class GuardsReadTheirOwnSchemaTest extends TestCase {
 		// Numeric ids repeat across schemas; the movement row comes first in an unscoped search.
 		$store = new InMemoryObjectServiceStub([
 			'StockMovement' => [['id' => '7', 'version' => 5]],
-			'InventoryStock' => [['id' => '7', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'productSku' => 'sku-1', 'quantityOnHand' => 10, 'quantityReserved' => 0, 'version' => 1]],
+			'InventoryStock' => [
+				['id' => '7', 'administrationId' => 'adm-1', 'locationCode' => 'loc-1', 'productSku' => 'sku-1', 'quantityOnHand' => 10, 'quantityReserved' => 0, 'version' => 1],
+			],
 		]);
 		$guard = new StockReservationGuard($this->appConfig(), new NullLogger(), $store);
 
