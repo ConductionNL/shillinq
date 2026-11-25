@@ -87,34 +87,8 @@ class HumaniqHoursReader {
 	 * @spec openspec/changes/hours-to-humaniq/specs/hours-to-humaniq/spec.md#requirement-req-h2h-002--an-hours-surface-never-reports-zero-for-a-missing-app
 	 */
 	public function entriesInPeriod(string $administrationId, string $from, string $until): ?array {
-		$administrationId = trim($administrationId);
-		if ($administrationId === '' || trim($from) === '' || trim($until) === '') {
-			// An unscoped read would hand one administration's hours to another.
-			return [];
-		}
-
-		try {
-			$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
-				->setRegister($this->humaniq->registerSlug())
-				->setSchema(self::HOURS_SCHEMA)
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'date' => ['gte' => trim($from), 'lte' => trim($until)],
-						],
-					]
-				);
-		} catch (\Throwable $e) {
-			$this->logger->debug('HumaniqHoursReader: humaniq hours not readable: ' . $e->getMessage());
-			return null;
-		}
-
-		if (is_array($rows) === false) {
-			return null;
-		}
-
-		return $this->keyedEntries(rows: $rows, administrationId: $administrationId);
+		// An unscoped read would hand one administration's hours to another.
+		return $this->scopedEntries(field: 'administrationId', value: $administrationId, from: $from, until: $until);
 	}//end entriesInPeriod()
 
 	/**
@@ -134,26 +108,27 @@ class HumaniqHoursReader {
 	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
 	public function entriesForProject(string $projectId, string $from, string $until): ?array {
-		$projectId = trim($projectId);
-		if ($projectId === '' || trim($from) === '' || trim($until) === '') {
-			// An unscoped read would list every project's hours.
-			return [];
-		}
+		// An unscoped read would list every project's hours.
+		return $this->scopedEntries(field: 'projectId', value: $projectId, from: $from, until: $until);
+	}//end entriesForProject()
 
+	/**
+	 * One read of humaniq's hours with the given filters.
+	 *
+	 * @param array<string, mixed> $filters The register filters.
+	 *
+	 * @return array<int|string, mixed>|null The rows, null when humaniq does not answer.
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 */
+	private function rows(array $filters): ?array {
 		try {
 			$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
 				->setRegister($this->humaniq->registerSlug())
 				->setSchema(self::HOURS_SCHEMA)
-				->findAll(
-					[
-						'filters' => [
-							'projectId' => $projectId,
-							'date' => ['gte' => trim($from), 'lte' => trim($until)],
-						],
-					]
-				);
+				->findAll(['filters' => $filters]);
 		} catch (\Throwable $e) {
-			$this->logger->debug('HumaniqHoursReader: humaniq project hours not readable: ' . $e->getMessage());
+			$this->logger->debug('HumaniqHoursReader: humaniq hours not readable: ' . $e->getMessage());
 			return null;
 		}
 
@@ -161,42 +136,46 @@ class HumaniqHoursReader {
 			return null;
 		}
 
-		$entries = [];
-		foreach ($rows as $row) {
-			$entry = $this->normalised(row: $this->toArray(row: $row));
-			if ($entry !== null && $entry['projectId'] === $projectId) {
-				$entries[$entry['uuid']] = $entry;
-			}
-		}
-
-		return $entries;
-	}//end entriesForProject()
+		return $rows;
+	}//end rows()
 
 	/**
-	 * Normalise the rows and key them by uuid, dropping rows of another administration.
+	 * One read scoped to a field and a period, keyed by uuid.
 	 *
-	 * The register filter already scopes the read; the check here holds when a
-	 * register ignores a filter, because a row outside the administration must
-	 * never reach its ledger.
+	 * The register filter already scopes the read; the check on each row holds
+	 * when a register ignores a filter, because a row outside the scope must
+	 * never reach its ledger or invoice. An empty scope reads nothing.
 	 *
-	 * @param array<int|string, mixed> $rows             The rows as stored.
-	 * @param string                   $administrationId The administration asked for.
+	 * @param string $field The field that scopes the read: `administrationId` or `projectId`.
+	 * @param string $value Its value.
+	 * @param string $from  First day, `YYYY-MM-DD`, inclusive.
+	 * @param string $until Last day, `YYYY-MM-DD`, inclusive.
 	 *
-	 * @return array<string, array<string, mixed>>
+	 * @return array<string, array<string, mixed>>|null The entries, null when humaniq does not answer.
 	 *
-	 * @spec openspec/changes/hours-to-humaniq/tasks.md#3-move-the-hour
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
 	 */
-	private function keyedEntries(array $rows, string $administrationId): array {
+	private function scopedEntries(string $field, string $value, string $from, string $until): ?array {
+		$value = trim($value);
+		if ($value === '' || trim($from) === '' || trim($until) === '') {
+			return [];
+		}
+
+		$rows = $this->rows(filters: [$field => $value, 'date' => ['gte' => trim($from), 'lte' => trim($until)]]);
+		if ($rows === null) {
+			return null;
+		}
+
 		$entries = [];
 		foreach ($rows as $row) {
 			$entry = $this->normalised(row: $this->toArray(row: $row));
-			if ($entry !== null && $entry['administrationId'] === $administrationId) {
+			if ($entry !== null && $entry[$field] === $value) {
 				$entries[$entry['uuid']] = $entry;
 			}
 		}
 
 		return $entries;
-	}//end keyedEntries()
+	}//end scopedEntries()
 
 	/**
 	 * One stored row as the ledger reads it, or null when it has no uuid.

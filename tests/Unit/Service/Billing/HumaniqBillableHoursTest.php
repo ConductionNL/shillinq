@@ -23,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\Shillinq\Service\Billing\HumaniqBillableHours
  *
  * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 class HumaniqBillableHoursTest extends TestCase {
 
