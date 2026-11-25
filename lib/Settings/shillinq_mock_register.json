@@ -34047,6 +34047,66 @@
         "retentionYears": 2,
         "retentionEndDate": "2026-03-03",
         "reviewDueDate": "2026-03-03"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ReorderProposal",
+          "slug": "reorderproposal-reorderproposal-1-1"
+        },
+        "reorderRuleId": "Voorbeeld Reorderruleid 1",
+        "inventoryStockId": "Voorbeeld Inventorystockid 1",
+        "quantityOnHand": 1.0,
+        "reorderPoint": 1.0,
+        "reorderQuantity": 1.0,
+        "statusCode": "open",
+        "administrationId": "Voorbeeld Administrationid 1",
+        "productId": "Voorbeeld Productid 1",
+        "locationCode": "Voorbeeld Locationcode 1",
+        "supplierId": "Voorbeeld Supplierid 1",
+        "purchaseOrderId": "Voorbeeld Purchaseorderid 1",
+        "raisedAt": "2026-03-01T09:00:00+00:00",
+        "resolvedAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ReorderProposal",
+          "slug": "reorderproposal-reorderproposal-2-2"
+        },
+        "reorderRuleId": "Voorbeeld Reorderruleid 2",
+        "inventoryStockId": "Voorbeeld Inventorystockid 2",
+        "quantityOnHand": 2.0,
+        "reorderPoint": 2.0,
+        "reorderQuantity": 2.0,
+        "statusCode": "resolved",
+        "administrationId": "Voorbeeld Administrationid 2",
+        "productId": "Voorbeeld Productid 2",
+        "locationCode": "Voorbeeld Locationcode 2",
+        "supplierId": "Voorbeeld Supplierid 2",
+        "purchaseOrderId": "Voorbeeld Purchaseorderid 2",
+        "raisedAt": "2026-03-02T09:00:00+00:00",
+        "resolvedAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ReorderProposal",
+          "slug": "reorderproposal-reorderproposal-3-3"
+        },
+        "reorderRuleId": "Voorbeeld Reorderruleid 3",
+        "inventoryStockId": "Voorbeeld Inventorystockid 3",
+        "quantityOnHand": 3.0,
+        "reorderPoint": 3.0,
+        "reorderQuantity": 3.0,
+        "statusCode": "dismissed",
+        "administrationId": "Voorbeeld Administrationid 3",
+        "productId": "Voorbeeld Productid 3",
+        "locationCode": "Voorbeeld Locationcode 3",
+        "supplierId": "Voorbeeld Supplierid 3",
+        "purchaseOrderId": "Voorbeeld Purchaseorderid 3",
+        "raisedAt": "2026-03-03T09:00:00+00:00",
+        "resolvedAt": "2026-03-03T09:00:00+00:00"
       }
     ]
   }
