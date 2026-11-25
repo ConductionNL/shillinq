@@ -14,14 +14,17 @@
  *      whose line 3 names cost centre KP-900 is refused naming the line and
  *      the code, and the entry stays a draft (REQ-LJD-002);
  *   3. a bookkeeper books a line on cost centre CC-100 in JournalDetail:
- *      test.fixme, the page has no line columns or dimension picker yet
- *      (tasks.md 1.4).
+ *      the Lines field edits as a table (the library's sub-objects editor),
+ *      the row dialog offers the active cost centres by name and stores the
+ *      code (tasks.md 1.4).
  *
  * Scenario 1 reads whatever posted entries the instance holds and skips when
  * none carries a code; it does not post, since a posted entry cannot be
  * removed. The cost centre report half of that scenario needs humaniq's run
  * (tasks.md 1.5) and is not asserted. Scenario 2 creates one draft entry in
  * the caller's administration under this run's stamp and deletes it after.
+ * Scenario 3 creates cost centre CC-100 when the administration has none and
+ * a draft entry, and deletes both after.
  * The caller is the suite's administrator (globalSetup's storage state).
  *
  * Written, not run: it needs a live instance.
@@ -31,6 +34,7 @@
  *
  * @e2e bookkeeping-general-ledger::humaniq-s-payroll-journal-keeps-its-cost-centres
  * @e2e bookkeeping-general-ledger::a-cost-centre-humaniq-knows-but-shillinq-does-not
+ * @e2e bookkeeping-general-ledger::a-bookkeeper-books-a-line-on-cost-centre-cc-100
  */
 
 import type { APIRequestContext } from '@playwright/test'
@@ -71,6 +75,9 @@ interface JournalEntry extends RegisterObject {
 
 /** What this run created, removed afterwards. */
 const created: string[] = []
+
+/** Analytical dimensions this run created, removed afterwards. */
+const createdDimensions: string[] = []
 
 /**
  * The id OpenRegister answers an object under.
@@ -125,6 +132,9 @@ test.describe('ledger-journal-line-dimensions: dimension codes on journal lines'
 	test.afterAll(async ({ request }) => {
 		for (const id of created) {
 			await request.delete(`${SHILLINQ}/JournalEntry/${id}`, { headers: HEADERS }).catch(() => {})
+		}
+		for (const id of createdDimensions) {
+			await request.delete(`${SHILLINQ}/AnalyticalDimension/${id}`, { headers: HEADERS }).catch(() => {})
 		}
 	})
 
@@ -182,6 +192,66 @@ test.describe('ledger-journal-line-dimensions: dimension codes on journal lines'
 		expect(after.glTransactionId ?? null).toBeFalsy()
 	})
 
-	// Missing: per-line dimension columns with a picker on JournalDetail; @conduction/nextcloud-vue has no line-item editor for `lines` yet (tasks.md 1.4).
-	test.fixme('a bookkeeper books a line on cost centre CC-100 @spec REQ-LJD-001', async () => {})
+	test('a bookkeeper books a line on cost centre CC-100 @spec REQ-LJD-001', async ({ page, request }) => {
+		const administrationId = await administration(request)
+		test.skip(administrationId === '', 'no administration is configured for the admin')
+
+		let centre = (await list<RegisterObject & { name?: string }>(request, `${SHILLINQ}/AnalyticalDimension?code=CC-100&dimensionType=cost-center&lifecycleState=active&administrationId=${encodeURIComponent(administrationId)}&_limit=5`))[0]
+		if (centre === undefined) {
+			const made = await request.post(`${SHILLINQ}/AnalyticalDimension`, {
+				headers: HEADERS,
+				data: { code: 'CC-100', name: `E2E cost centre ${RUN}`, dimensionType: 'cost-center', lifecycleState: 'active', status: 'active', administrationId },
+			})
+			expect(made.ok(), await made.text()).toBe(true)
+			centre = (await made.json()) as RegisterObject & { name?: string }
+			createdDimensions.push(idOf(centre))
+		}
+		const centreName = String(centre.name ?? 'CC-100')
+
+		const res = await request.post(`${SHILLINQ}/JournalEntry`, {
+			headers: HEADERS,
+			data: {
+				journalNumber: `E2E-LJD-UI-${RUN}`,
+				entryDate: '2026-09-30',
+				description: `e2e line on a cost centre ${RUN}`,
+				journalType: 'manual',
+				approvalState: 'not-required',
+				state: 'draft',
+				administrationId,
+				lines: [
+					{ accountNumber: '4340', side: 'debit', amount: 100 },
+					{ accountNumber: '1600', side: 'credit', amount: 100 },
+				],
+			},
+		})
+		expect(res.ok(), await res.text()).toBe(true)
+		const id = idOf((await res.json()) as RegisterObject)
+		created.push(id)
+
+		await page.goto(`/index.php/apps/shillinq/journals/${id}`)
+		await page.getByRole('button', { name: /^Edit Lines$/ }).click()
+
+		// The lines are a table whose columns include the three codes.
+		const editor = page.locator('.cn-sub-objects-field')
+		await expect(editor.getByRole('columnheader', { name: 'Cost Center Code' })).toBeVisible()
+		await expect(editor.getByRole('columnheader', { name: 'Cost Carrier Code' })).toBeVisible()
+		await expect(editor.getByRole('columnheader', { name: 'Project Code' })).toBeVisible()
+
+		// Line 1: pick CC-100 by its name in the row dialog.
+		await editor.locator('[data-row-index="0"]').getByRole('button').first().click()
+		await page.getByRole('menuitem', { name: 'Edit' }).click()
+		const dialog = page.getByTestId('cn-sub-objects-dialog')
+		await dialog.getByRole('combobox', { name: /Cost Center Code/ }).click()
+		await page.getByRole('option', { name: new RegExp(centreName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).click()
+		await dialog.getByRole('button', { name: /^(Save|Confirm|OK)$/ }).click()
+		await expect(editor.getByRole('cell', { name: 'CC-100' })).toBeVisible()
+
+		await page.locator('.cn-object-data-widget__editor-actions').getByRole('button', { name: 'Save' }).click()
+
+		// The entry stores the code, which posting checks and copies onto the ledger line.
+		await expect.poll(async () => {
+			const entry = (await (await request.get(`${SHILLINQ}/JournalEntry/${id}`, { headers: HEADERS })).json()) as JournalEntry
+			return entry.lines?.[0]?.costCenterCode ?? null
+		}).toBe('CC-100')
+	})
 })
