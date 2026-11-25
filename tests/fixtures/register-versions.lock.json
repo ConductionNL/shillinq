@@ -224,6 +224,10 @@
         {
             "appVersion": "0.5.20-unstable.20261125200600",
             "versionsSha256": "92628b6d74dcb700c88140c5794a057fbc15dd81e67e8fd5c8cb91716fea90cd"
+        },
+        {
+            "appVersion": "0.5.20-unstable.20261125210131",
+            "versionsSha256": "68ffaf0808eac0cd5dc26b0b3e5ea1bb7fe1cc983b7ff11b4c4b1bb8eceed222"
         }
     ],
     "versions": {
@@ -640,7 +644,7 @@
         "schema:ReimbursementPolicy": "0.1.0",
         "schema:ReinvestmentReserve": "0.1.0",
         "schema:RenteRisicoNorm": "0.1.0",
-        "schema:ReorderProposal": "0.1.0",
+        "schema:ReorderProposal": "0.1.1",
         "schema:RepaymentInstallment": "0.1.0",
         "schema:ReportSchedule": "0.1.0",
         "schema:Requisition": "0.1.0",
