@@ -212,4 +212,44 @@ class HumaniqHoursReaderTest extends TestCase {
 		self::assertSame([], $reader->entriesInPeriod('adm-1', '', '2026-12-31'));
 		self::assertSame(0, $this->reads);
 	}
+
+	/**
+	 * The project read: one query scoped to the project and the period, other projects dropped.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 */
+	public function testTheProjectReadIsScopedToTheProject(): void {
+		$reader = $this->reader(
+			[
+				['uuid' => 'te-1', 'hours' => 2, 'projectId' => 'prj-1', 'description' => ' Design review '],
+				['uuid' => 'te-2', 'hours' => 1, 'projectId' => 'prj-2'],
+			]
+		);
+
+		$entries = $reader->entriesForProject('prj-1', '2026-10-01', '2026-10-31');
+		self::assertSame(1, $this->reads);
+		self::assertSame(
+			['filters' => ['projectId' => 'prj-1', 'date' => ['gte' => '2026-10-01', 'lte' => '2026-10-31']]],
+			$this->lastQuery
+		);
+		self::assertSame(['te-1'], array_keys($entries));
+		self::assertSame('Design review', $entries['te-1']['description']);
+
+		$this->reads = 0;
+		self::assertSame([], $reader->entriesForProject('', '2026-10-01', '2026-10-31'));
+		self::assertSame(0, $this->reads);
+	}
+
+	/**
+	 * Humaniq not answering the project read is null, not zero hours.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.3
+	 */
+	public function testTheProjectReadIsNullWhenHumaniqDoesNotAnswer(): void {
+		self::assertNull($this->reader([], true)->entriesForProject('prj-1', '2026-10-01', '2026-10-31'));
+	}
 }

@@ -2672,7 +2672,7 @@
         "registerServiceAlias",
         [
             "'OCA\\\\Shillinq\\\\Service\\\\Billing\\\\BillableHoursSource'",
-            "'OCA\\\\Shillinq\\\\Service\\\\Billing\\\\UnavailableBillableHours'"
+            "'OCA\\\\Shillinq\\\\Service\\\\Billing\\\\HumaniqBillableHours'"
         ]
     ],
     [
