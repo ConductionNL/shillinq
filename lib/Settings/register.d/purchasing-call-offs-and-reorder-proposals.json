@@ -55,6 +55,10 @@
         "description": "Low-stock alert raised by ReorderProposalJob for an active InventoryReorderRule whose stock is at or below its reorder point, with the draft PurchaseOrder it proposes for the reorder quantity with the rule's preferred supplier. At most one open proposal per rule; the job resolves it once the stock is back above the reorder point.",
         "x-schema-org": "schema:Thing",
         "x-spec": "openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who raised, accepted or dismissed a reorder proposal, and when: a proposal turns into a purchase commitment (REQ-AT-001, REQ-RAP-001)."
+        },
         "type": "object",
         "required": [
           "reorderRuleId",
@@ -195,10 +199,6 @@
           "delete": [
             "shillinq_warehouse_manager"
           ]
-        },
-        "x-openregister-audit-trail": {
-          "enabled": true,
-          "description": "A reorder proposal names the purchase order it drafted and the stock it was raised for; who accepted, dismissed or changed it is part of the procurement record (REQ-AT-001)."
         }
       }
     }

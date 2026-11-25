@@ -13,6 +13,10 @@
       non-null `subjectApp`. Report per administration.
 - [ ] 2.2 Run it on the dev instance and on every reachable install. Record
       the counts in `design.md`. A non-zero count reopens task 1.
+  - Run on a cloud sandbox (25 Nov 2026): 3 entries, 0 with `subjectApp`,
+    0 with `subjectId` ("Nothing to migrate."); recorded in `design.md`. The
+    shared dev instance and the customer installs are not reachable from the
+    cloud lanes, so 2.2 stays open for whoever can reach them.
 - [ ] 2.3 Only when every count is zero: proceed. Otherwise write a data
       migration first.
 

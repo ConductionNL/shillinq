@@ -63,5 +63,6 @@ when either is non-zero.
 | Install | Entries with `subjectApp` | Entries with `subjectId` | Run on |
 |---|---|---|---|
 | dev | not yet run | not yet run | |
+| cloud sandbox (Nextcloud 34.0.6, OpenRegister main, seeded ADM-001 plus test data) | 0 of 3 | 0 of 3 | 2026-11-25 |
 
 Task 2.3 stays closed until every row of this table reads zero.
