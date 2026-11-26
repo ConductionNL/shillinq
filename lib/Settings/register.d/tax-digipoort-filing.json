@@ -8,7 +8,7 @@
     "spec": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md"
   },
   "info": {
-    "version": "0.2.0-tax-digipoort-filing"
+    "version": "0.3.0-tax-digipoort-filing"
   },
   "components": {
     "schemas": {
@@ -272,5 +272,48 @@
       }
     }
   },
-  "objects": []
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "XBRLTaxonomy",
+        "slug": "nt20-belastingdienst-ob-2026"
+      },
+      "taxonomyId": "nt20-belastingdienst-ob-2026",
+      "name": "Nederlandse Taxonomie NT20 — Belastingdienst omzetbelasting 2026",
+      "taxonomyVersion": "NT20",
+      "publicationDate": "2025-11-28",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": "2027-01-01",
+      "status": "active",
+      "entryPoints": [
+        "belastingdienst-ob"
+      ],
+      "description": "NT20 release (package nt20_20251128) for VAT returns over periods in 2026. The entry point schema is not pinned here: the builder then writes no schemaRef and the instance is checked against the OB entry point schema kept in the repository; pin schemaRefs.belastingdienst-ob from the Belastingdienst entry point list before the first Digipoort pre-production test."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "XBRLTaxonomy",
+        "slug": "nt20-kvk-jaarrekening-2025"
+      },
+      "taxonomyId": "nt20-kvk-jaarrekening-2025",
+      "name": "Nederlandse Taxonomie NT20 — KVK taxonomie 2025 (jaarverantwoording)",
+      "taxonomyVersion": "NT20",
+      "publicationDate": "2025-12-10",
+      "effectiveDate": "2025-01-01",
+      "expiryDate": "2026-01-01",
+      "status": "active",
+      "entryPoints": [
+        "kvk-jaarrekening"
+      ],
+      "schemaRefs": {
+        "kvk-jaarrekening:micro": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-micro.xsd",
+        "kvk-jaarrekening:small": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-klein.xsd",
+        "kvk-jaarrekening:medium": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-middelgroot.xsd",
+        "kvk-jaarrekening:large": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-groot.xsd"
+      },
+      "description": "KVK taxonomie 2025 within NT20 (entry points under nt20/kvk/20251210) for annual accounts over financial years 2025, filed in 2026. The full (not publicatiestukken) entry point per size class."
+    }
+  ]
 }

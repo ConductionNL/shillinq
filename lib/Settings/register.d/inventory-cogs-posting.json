@@ -7,7 +7,7 @@
       "InventoryGLConfig": {
         "slug": "InventoryGLConfig",
         "icon": "BankTransfer",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Inventory GL Posting Configuration",
         "titleNl": "Voorraad GL Boekingsconfiguratie",
         "description": "Per-administration mapping from inventory stock-movement event types (sale dispatch, goods receipt, count variance) to General Ledger account numbers. One active record per administrationId. Drives the declarative posting lifecycle on InventoryValuation. Holds FK account numbers (cogsAccountNumber, inventoryAssetAccountNumber, grIrClearingAccountNumber, inventoryAdjustmentAccountNumber) that MUST resolve to existing Account records in the same administration (FK invariant). When isActive=false or any account is missing, the lifecycle action skips the GLTransaction materialisation and emits a structured warning event: no zero-cost or unmatched GL entries are written. Schema.org Thing.",
@@ -70,42 +70,6 @@
             "description": "Operator notes: e.g. 'NL RGS 3.5 MKB defaults applied' or 'overridden to match parent corporate chart'.",
             "example": "Shillinq demo administratie 2026",
             "title": "Description"
-          }
-        },
-        "x-openregister-validations": {
-          "onCreate": {
-            "cogsAccountExists": {
-              "condition": "@proposed.cogsAccountNumber != ''",
-              "message": "cogsAccountNumber must reference an existing Account in this administration.",
-              "messageNl": "cogsAccountNumber moet verwijzen naar een bestaande Rekening in deze administratie.",
-              "guard": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::accountExists"
-            },
-            "inventoryAssetAccountExists": {
-              "condition": "@proposed.inventoryAssetAccountNumber != ''",
-              "message": "inventoryAssetAccountNumber must reference an existing Account in this administration.",
-              "messageNl": "inventoryAssetAccountNumber moet verwijzen naar een bestaande Rekening in deze administratie.",
-              "guard": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::accountExists"
-            },
-            "grIrClearingAccountExists": {
-              "condition": "@proposed.grIrClearingAccountNumber != ''",
-              "message": "grIrClearingAccountNumber must reference an existing Account in this administration.",
-              "messageNl": "grIrClearingAccountNumber moet verwijzen naar een bestaande Rekening in deze administratie.",
-              "guard": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::accountExists"
-            },
-            "inventoryAdjustmentAccountExists": {
-              "condition": "@proposed.inventoryAdjustmentAccountNumber != ''",
-              "message": "inventoryAdjustmentAccountNumber must reference an existing Account in this administration.",
-              "messageNl": "inventoryAdjustmentAccountNumber moet verwijzen naar een bestaande Rekening in deze administratie.",
-              "guard": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::accountExists"
-            }
-          },
-          "onUpdate": {
-            "accountsStillExist": {
-              "condition": "CHANGED(cogsAccountNumber) OR CHANGED(inventoryAssetAccountNumber) OR CHANGED(grIrClearingAccountNumber) OR CHANGED(inventoryAdjustmentAccountNumber)",
-              "message": "All four GL account numbers must reference existing Accounts in this administration.",
-              "messageNl": "Alle vier GL-rekeningnummers moeten verwijzen naar bestaande Rekeningen in deze administratie.",
-              "guard": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::accountExists"
-            }
           }
         },
         "authorization": {
