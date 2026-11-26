@@ -91,9 +91,9 @@ interface PurchaseOrderServiceInterface {
 	 *    (PO-{year}-{administrationCode}-{6-digit-sequence});
 	 *  - cost-center budget is checked against the CostCenter record;
 	 *  - the roles the amount needs are read from the PurchaseOrder schema's
-	 *    declared approval chain and an ApprovalTask record is created for each;
-	 *    the approval steps themselves are OpenRegister's;
-	 *  - every approver is notified via the notification manager;
+	 *    declared approval chain; the approval steps themselves are
+	 *    OpenRegister's (REQ-PAD-001), shillinq writes no task record;
+	 *  - every holder of those roles is notified via the notification manager;
 	 *  - statusCode starts at "draft", the schema's initial state, also while the approval chain is pending
 	 *    or "draft" (no chain — defensive fallback that should not occur for
 	 *    positive totals).

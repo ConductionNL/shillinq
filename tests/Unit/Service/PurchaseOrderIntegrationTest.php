@@ -4,8 +4,8 @@
  * Integration tests for PurchaseOrderService (member 02 of bookkeeping-purchase-order-3way).
  *
  * Exercises the full create-and-send loop end-to-end:
- *  - createPurchaseOrder materialises the approval chain + ApprovalTask records
- *    + notifications;
+ *  - createPurchaseOrder reads the approval chain's roles and notifies their
+ *    holders (the steps are OpenRegister's);
  *  - blockSendUntilApproved is refused while pending and accepted once every
  *    approver has signed with a timestamp;
  *  - the manifest fragment that ships with this slice exposes the
@@ -72,7 +72,6 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 				['administrationId' => 'adm-1', 'role' => 'facility_manager', 'userId' => 'facility-1'],
 			],
 			'PurchaseOrder' => [],
-			'ApprovalTask' => [],
 		];
 
 		$saved = [];

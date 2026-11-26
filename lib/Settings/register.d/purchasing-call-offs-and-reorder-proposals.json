@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "purchasing-call-offs-and-reorder-proposals",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Two additions. (1) An additive overlay on FrameworkAgreement: `agreedPrices`, the price per product agreed with the supplier. PurchaseOrderService applies them server-side to the lines of a call-off before the order total is counted against the ceiling (REQ-PG-005). (2) ReorderProposal: the low-stock alert ReorderProposalJob raises when the stock of a reorder rule is at or below its reorder point, linked to the draft PurchaseOrder it proposes. One open proposal per rule at a time; the job resolves it once the stock is back above the point (REQ-IRA-011). Money fields are integer euro cents.",
+    "description": "Three additions. (1) An additive overlay on FrameworkAgreement: `agreedPrices`, the price per product agreed with the supplier. PurchaseOrderService applies them server-side to the lines of a call-off before the order total is counted against the ceiling (REQ-PG-005). (2) ReorderProposal: the low-stock alert ReorderProposalJob raises when the stock of a reorder rule is at or below its reorder point, linked to the draft PurchaseOrder it proposes. One open proposal per rule at a time; the job resolves it once the stock is back above the point (REQ-IRA-011). Money fields are integer euro cents. (3) An additive overlay on PurchaseOrder declaring the fields PurchaseOrderService writes and the stored 0.1.0 schema lacked (requesterId, frameworkAgreementId, lines, totalAmount, createdAt, notes): OpenRegister discarded them on save, so a call-off lost its agreement and every order its lines.",
     "spec": "openspec/changes/purchasing-call-offs-and-reorder-proposals/specs"
   },
   "components": {
@@ -44,6 +44,124 @@
               }
             },
             "title": "Agreed Prices"
+          }
+        }
+      },
+      "PurchaseOrder": {
+        "version": "0.2.0",
+        "properties": {
+          "requesterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "User ID of the requester, derived server-side from the administration membership (never from the request body). Same value as requester.",
+            "example": "admin",
+            "title": "Requester ID"
+          },
+          "frameworkAgreementId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The FrameworkAgreement this order is a call-off against: its agreed prices are applied and its total is drawn from the agreement's ceiling (REQ-PG-004, REQ-PG-005). Empty for an order outside an agreement.",
+            "example": "9b2c6a7e-3f1d-4c8a-9e5b-1a2b3c4d5e6f",
+            "title": "Framework Agreement"
+          },
+          "lines": {
+            "type": "array",
+            "description": "The order lines as PurchaseOrderService priced them; the PDF, the Peppol order and the receipt match read them from the order.",
+            "items": {
+              "type": "object",
+              "required": [
+                "lineNumber",
+                "productCode",
+                "quantity",
+                "unitPrice",
+                "glAccount"
+              ],
+              "properties": {
+                "lineNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Position of the line on the order, from 1.",
+                  "example": 1,
+                  "title": "Line Number"
+                },
+                "productCode": {
+                  "type": "string",
+                  "description": "Product code of the ordered item; an agreed price of the framework agreement is matched on it.",
+                  "example": "PAPER-A4-BOX",
+                  "title": "Product Code"
+                },
+                "quantity": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "Ordered quantity.",
+                  "example": 20,
+                  "title": "Quantity"
+                },
+                "unitPrice": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Price per unit in euros, excluding VAT; the agreed price when agreedPrice is true.",
+                  "example": 42.0,
+                  "title": "Unit Price"
+                },
+                "lineTotal": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Quantity times unit price in euros, excluding VAT.",
+                  "example": 840.0,
+                  "title": "Line Total"
+                },
+                "vatRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "VAT rate in percent.",
+                  "example": 21,
+                  "title": "VAT Rate"
+                },
+                "vatAmount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "VAT on the line total in euros.",
+                  "example": 176.4,
+                  "title": "VAT Amount"
+                },
+                "glAccount": {
+                  "type": "string",
+                  "description": "General ledger account the line is booked on.",
+                  "example": "4500",
+                  "title": "GL Account"
+                },
+                "agreedPrice": {
+                  "type": "boolean",
+                  "description": "True when the unit price was taken from the framework agreement's agreed prices (REQ-PG-005).",
+                  "example": true,
+                  "title": "Agreed Price"
+                }
+              }
+            },
+            "title": "Lines"
+          },
+          "totalAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Order total in euros excluding VAT, for display; totalExclVat carries the same amount in integer cents for the approval chain.",
+            "example": 840.0,
+            "title": "Total Amount"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the order was created.",
+            "example": "2026-11-26T09:00:00+00:00",
+            "title": "Created At"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free text from the requester.",
+            "example": "Deliver to the back entrance.",
+            "title": "Notes"
           }
         }
       },
