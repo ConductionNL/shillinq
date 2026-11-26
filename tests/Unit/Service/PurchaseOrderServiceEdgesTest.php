@@ -396,7 +396,11 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 		self::assertStringEndsWith('-adm-1-000003', $po['poNumber']);
 		self::assertSame('draft', $po['statusCode']);
 		self::assertSame('requester-1', $po['requesterId']);
-		self::assertSame(['PurchaseOrder'], array_column($os->saved, 'schema'), 'no task record of its own: the approval steps are OpenRegister\'s');
+		self::assertSame(
+			expected: ['PurchaseOrder'],
+			actual: array_column($os->saved, 'schema'),
+			message: 'no task record of its own: the approval steps are OpenRegister\'s'
+		);
 
 	}//end testCreateEmitsActivityAndSurvivesNotificationFailure()
 
@@ -417,7 +421,7 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 				'AdministrationMembership' => [['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'tl-1']],
 			]
 		);
-		$this->logger = $this->createStub(LoggerInterface::class);
+		$this->logger = $this->createStub(originalClassName: LoggerInterface::class);
 		$this->buildService(objectService: $os)->createPurchaseOrder(
 			administrationId: 'adm-1',
 			payload: $this->payload(extra: ['frameworkAgreementId' => '', 'notes' => 'Back entrance'])
@@ -431,18 +435,27 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 		}
 
 		$order = $os->saved[0]['object'];
-		self::assertSame('PurchaseOrder', $os->saved[0]['schema']);
+		self::assertSame(expected: 'PurchaseOrder', actual: $os->saved[0]['schema']);
 		// The object id is OpenRegister's own metadata, which the in-memory stub stamps.
-		self::assertSame([], array_values(array_diff(array_keys($order), $declared, ['id', '@self'])), 'undeclared PurchaseOrder fields are dropped on save');
-		self::assertSame('requester-1', $order['requester']);
-		self::assertNotEmpty($order['lines']);
+		self::assertSame(
+			expected: [],
+			actual: array_values(array_diff(array_keys($order), $declared, ['id', '@self'])),
+			message: 'undeclared PurchaseOrder fields are dropped on save'
+		);
+		self::assertSame(expected: 'requester-1', actual: $order['requester']);
+		self::assertNotEmpty(actual: $order['lines']);
 		$lineDeclared = [];
 		foreach (glob(__DIR__ . '/../../../lib/Settings/register.d/*.json') as $file) {
 			$fragment     = json_decode((string) file_get_contents($file), true);
-			$lineDeclared = array_merge($lineDeclared, array_keys($fragment['components']['schemas']['PurchaseOrder']['properties']['lines']['items']['properties'] ?? []));
+			$lines        = ($fragment['components']['schemas']['PurchaseOrder']['properties']['lines'] ?? []);
+			$lineDeclared = array_merge($lineDeclared, array_keys($lines['items']['properties'] ?? []));
 		}
 
-		self::assertSame([], array_values(array_diff(array_keys($order['lines'][0]), $lineDeclared)), 'undeclared line fields');
+		self::assertSame(
+			expected: [],
+			actual: array_values(array_diff(array_keys($order['lines'][0]), $lineDeclared)),
+			message: 'undeclared line fields'
+		);
 
 	}//end testEveryFieldANewOrderIsSavedWithIsDeclared()
 
