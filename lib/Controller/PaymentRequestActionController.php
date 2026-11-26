@@ -39,7 +39,6 @@ use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -533,11 +532,8 @@ class PaymentRequestActionController extends Controller {
 	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
 	 */
 	private function loadObject(string $register, string $schema, string $objectId): ?array {
-		try {
-			$scoped = $this->objectService
-				->setRegister($register)
-				->setSchema($schema);
-		} catch (DoesNotExistException) {
+		$scoped = ObjectIdentifier::scopedTo(objectService: $this->objectService, register: $register, schema: $schema);
+		if ($scoped === null) {
 			return null;
 		}
 

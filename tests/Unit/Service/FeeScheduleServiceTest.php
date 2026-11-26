@@ -429,7 +429,7 @@ final class FeeScheduleServiceTest extends TestCase {
 	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
 	 */
 	public function testAFeeResolvesFromEntityRowsWithoutARegisterFilter(): void {
-		$double = new class([$this->schedule(), $this->schedule(['id' => 'fs-other', 'register' => 'other', 'amount' => 1.0])]) {
+		$double = new class([$this->schedule(), $this->schedule(overrides: ['id' => 'fs-other', 'register' => 'other', 'amount' => 1.0])]) {
 			/**
 			 * The filters of every findAll().
 			 *
@@ -443,10 +443,24 @@ final class FeeScheduleServiceTest extends TestCase {
 			public function __construct(private array $rows) {
 			}
 
+			/**
+			 * Select the register (ignored: one register).
+			 *
+			 * @param string $register The register.
+			 *
+			 * @return static
+			 */
 			public function setRegister(string $register): static {
 				return $this;
 			}
 
+			/**
+			 * Select the schema (ignored: the schedules only).
+			 *
+			 * @param string $schema The schema.
+			 *
+			 * @return static
+			 */
 			public function setSchema(string $schema): static {
 				return $this;
 			}
@@ -492,10 +506,17 @@ final class FeeScheduleServiceTest extends TestCase {
 			logger: $this->createMock(originalClassName: LoggerInterface::class),
 		);
 
-		$resolved = $service->resolveForObject(register: 'dossiq', schema: 'Zaak', object: ['caseType' => 'bouwvergunning'], intakeChannel: 'desk', onDate: '2026-06-01');
+		$resolved = $service->resolveForObject(
+			register: 'dossiq',
+			schema: 'Zaak',
+			object: ['caseType' => 'bouwvergunning'],
+			intakeChannel: 'desk',
+			onDate: '2026-06-01'
+		);
 
 		self::assertSame(expected: 'fs-1', actual: ($resolved['id'] ?? null));
 		self::assertSame(expected: 245.0, actual: ($resolved['amount'] ?? null));
-		self::assertSame(expected: [], actual: array_values(array_filter($double->filters, static fn (array $f): bool => array_key_exists('register', $f))));
+		$registerFilters = array_filter($double->filters, static fn (array $f): bool => array_key_exists('register', $f));
+		self::assertSame(expected: [], actual: array_values($registerFilters));
 	}//end testAFeeResolvesFromEntityRowsWithoutARegisterFilter()
 }//end class

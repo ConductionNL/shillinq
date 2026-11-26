@@ -609,7 +609,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
 	 */
 	public function testRaisingLegesOnAnAbsentRegisterIsNoSuchObject(): void {
-		$controller = $this->makeController(['FeeSchedule' => [$this->feeSchedule()]], mayAdminister: true);
+		$controller = $this->makeController(stored: ['FeeSchedule' => [$this->feeSchedule()]], mayAdminister: true);
 
 		$response = $controller->raiseLeges(register: 'no-such-register', schema: 'Zaak', objectId: 'zaak-7');
 
