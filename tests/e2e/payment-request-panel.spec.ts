@@ -160,13 +160,13 @@ test.describe('case-payment-requests — the panel actions', () => {
 				},
 			})
 			const scheduleBody = await scheduleRes.text()
-			// OpenRegister before openregister#11192 drops a body's register and
+			// OpenRegister before openregister#11350 drops a body's register and
 			// schema, so a FeeSchedule cannot be written through its API.
-			test.skip(scheduleRes.status() === 400 && scheduleBody.includes('register'), 'OpenRegister drops the schedule\'s register/schema fields (openregister#11192)')
+			test.skip(scheduleRes.status() === 400 && scheduleBody.includes('register'), 'OpenRegister drops the schedule\'s register/schema fields (openregister#11350)')
 			expect(scheduleRes.ok(), scheduleBody).toBeTruthy()
 			const schedule = JSON.parse(scheduleBody)
 			made.push(`${OR}/objects/shillinq/FeeSchedule/${schedule.id}`)
-			test.skip(schedule.register !== registerSlug, 'OpenRegister stored its route register as the schedule\'s data (openregister#11192)')
+			test.skip(schedule.register !== registerSlug, 'OpenRegister stored its route register as the schedule\'s data (openregister#11350)')
 
 			const raised = await request.post(RAISE_LEGES, {
 				headers: json,
