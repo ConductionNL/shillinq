@@ -247,12 +247,14 @@ final class FeeScheduleService implements FeeScheduleServiceInterface {
 	 * @param FeeObjectLookup $lookup The object and what is asked of it.
 	 *
 	 * @return array<string, mixed>|null The schedule with its amount resolved, or null.
+	 *
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
 	 */
 	private function resolveLookup(FeeObjectLookup $lookup): ?array {
-		$rows = $this->objectService
-			->setRegister($this->registerSlug())
-			->setSchema(self::SCHEMA)
-			->findAll(['filters' => ['register' => $lookup->register], 'limit' => 500]);
+		// No `register` filter: OpenRegister reads a `register` filter as its own
+		// register metadata, not the schedule's property, so it matched no row.
+		// rowInScope() compares the schedule's register and schema instead.
+		$rows = $this->scheduleRows(filters: []);
 
 		foreach ($rows as $row) {
 			$tuple = $this->objectTuple(row: $row, lookup: $lookup);
@@ -635,24 +637,56 @@ final class FeeScheduleService implements FeeScheduleServiceInterface {
 	 * @param array<string, mixed> $tuple The tuple parts.
 	 *
 	 * @return array<int, array<string, mixed>> The schedules.
+	 *
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
 	 */
 	private function schedulesFor(array $tuple): array {
-		$rows = $this->objectService
-			->setRegister($this->registerSlug())
-			->setSchema(self::SCHEMA)
-			->findAll(['filters' => ['targetApp' => (string)($tuple['targetApp'] ?? '')], 'limit' => 500]);
+		$rows = $this->scheduleRows(filters: ['targetApp' => (string)($tuple['targetApp'] ?? '')]);
 
 		$key = $this->tupleKey(tuple: $tuple);
 
 		$mine = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true && $this->tupleKey(tuple: $row) === $key) {
+			if ($this->tupleKey(tuple: $row) === $key) {
 				$mine[] = $row;
 			}
 		}
 
 		return $mine;
 	}//end schedulesFor()
+
+	/**
+	 * The stored schedules matching the filters, as arrays.
+	 *
+	 * OpenRegister's findAll() answers ObjectEntity rows, not arrays; a row is
+	 * read through its own jsonSerialize(). Taking only array rows left every
+	 * schedule out on a live instance, so no fee ever resolved.
+	 *
+	 * @param array<string, mixed> $filters Property filters.
+	 *
+	 * @return array<int, array<string, mixed>> The schedules.
+	 *
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
+	 */
+	private function scheduleRows(array $filters): array {
+		$rows = $this->objectService
+			->setRegister($this->registerSlug())
+			->setSchema(self::SCHEMA)
+			->findAll(['filters' => $filters, 'limit' => 500]);
+
+		$schedules = [];
+		foreach ($rows as $row) {
+			if ($row instanceof \JsonSerializable) {
+				$row = $row->jsonSerialize();
+			}
+
+			if (is_array($row) === true && $row !== []) {
+				$schedules[] = $row;
+			}
+		}
+
+		return $schedules;
+	}//end scheduleRows()
 
 	/**
 	 * The register slug holding shillinq's own objects.

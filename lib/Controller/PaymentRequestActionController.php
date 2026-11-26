@@ -39,6 +39,7 @@ use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -522,16 +523,23 @@ class PaymentRequestActionController extends Controller {
 	 * @param string $schema The schema slug.
 	 * @param string $objectId The object id.
 	 *
-	 * Read by uuid through the schema-scoped find(), as in loadRequest().
+	 * Read by uuid through the schema-scoped find(), as in loadRequest(). A
+	 * register or schema this instance does not have is no such object either
+	 * (OpenRegister throws DoesNotExistException for it, which answered 500).
 	 *
 	 * @return array<string, mixed>|null The object, or null.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
 	 */
 	private function loadObject(string $register, string $schema, string $objectId): ?array {
-		$scoped = $this->objectService
-			->setRegister($register)
-			->setSchema($schema);
+		try {
+			$scoped = $this->objectService
+				->setRegister($register)
+				->setSchema($schema);
+		} catch (DoesNotExistException) {
+			return null;
+		}
 
 		return ObjectIdentifier::findOne(scoped: $scoped, id: $objectId);
 	}//end loadObject()
