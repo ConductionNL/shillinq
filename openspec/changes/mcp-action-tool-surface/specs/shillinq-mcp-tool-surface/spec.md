@@ -4,10 +4,12 @@
 
 ### Requirement: REQ-MCP-001 — Derived CRUD tools MUST stay declarative on the schema; action tools MUST live in exactly one hand-written provider
 
-The 24 coarse-CRUD read tools MUST remain derived by OpenRegister's
-`SchemaDerivedToolProvider` from the `x-openregister-mcp` blocks in
-`lib/Settings/register.d/zzz-mcp-tool-surface.json` (ADR-037 key-union merge,
-ADR-063) — no CRUD-shaped tool may be hand-written. Non-CRUD **action tools**
+The 26 coarse-CRUD read tools MUST remain derived by OpenRegister's
+`SchemaDerivedToolProvider` from the `x-openregister-mcp` blocks in the
+register fragments (ADR-037 key-union merge, ADR-063): the 24 of the 12
+curated schemas in `lib/Settings/register.d/zzz-mcp-tool-surface.json`, and
+the `HelpArticle` search and get that `platform-help-agent.json` declares for
+the helper agent — no CRUD-shaped tool may be hand-written. Non-CRUD **action tools**
 (verbs that traverse a shillinq service rather than reading/writing one
 object) MUST live in a single hand-written provider
 `OCA\Shillinq\Mcp\ShillinqToolProvider` implementing
@@ -26,7 +28,7 @@ a catalogue entry produce no tool.
 
 - **GIVEN** this change is deployed
 - **WHEN** the MCP tool list is enumerated
-- **THEN** the 24 `shillinq.{Schema}.{search|get}` derived tools still exist, all `scope: "read"` / `readOnlyHint: true`
+- **THEN** the 26 `shillinq.{Schema}.{search|get}` derived tools still exist, all `scope: "read"` / `readOnlyHint: true`
 - **AND** no CRUD-shaped duplicate of them exists in `ShillinqToolProvider`
 
 #### Scenario: a CRUD-expressible tool is rejected from the provider
