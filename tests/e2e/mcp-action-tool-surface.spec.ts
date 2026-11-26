@@ -24,9 +24,10 @@
  *     nextcloud-vue chat client this app ships reads (useAiChatStream,
  *     CnAiChatPanel::onApprovalDecision).
  *
- * What this repo does not name a route for, and so is a test.fixme with the
- * reason: OpenRegister's MCP JSON-RPC server (enumerating and invoking tools
- * directly), hermiq's grant matrix (reading it, creating a test agent,
+ * OpenRegister's MCP JSON-RPC server is `POST /index.php/apps/openregister/api/mcp`
+ * (initialize, then tools/list and tools/call with the Mcp-Session-Id it
+ * answers). What this repo does not name a route for, and so is a test.fixme
+ * with the reason: hermiq's grant matrix (reading it, creating a test agent,
  * granting a tool), and the audit records an invocation writes. Approving a
  * granted `vat_return.submit` would file with Digipoort, so that half of
  * scenario 3 is a fixme as well.
@@ -60,7 +61,7 @@
 import type { APIRequestContext } from '@playwright/test'
 
 import { expect, request as pwRequest, test } from '@playwright/test'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { OrFixtures, UNIQUE_PREFIX } from './workflows/_fixtures.ts'
 
@@ -121,7 +122,33 @@ function repoJson(path: string): unknown {
 const CATALOGUE = repoJson('lib/Mcp/tool-catalogue.json') as CatalogueTool[]
 
 /**
- * The derived tool ids the fragment declares: `shillinq.{Schema}.{verb}`.
+ * The derived tool ids every register fragment declares: the curated 24 of
+ * `zzz-mcp-tool-surface.json` plus any other change's read surface (the help
+ * articles of platform-help-agent).
+ *
+ * @return The ids, sorted.
+ */
+function declaredToolIds(): string[] {
+	const ids: string[] = []
+	for (const file of readdirSync(join(ROOT, 'lib/Settings/register.d')).filter((name) => name.endsWith('.json'))) {
+		const fragment = repoJson(`lib/Settings/register.d/${file}`) as {
+			components?: { schemas?: Record<string, { configuration?: Record<string, { enabled?: boolean, tools?: Record<string, unknown> }> }> }
+		}
+		for (const [schema, body] of Object.entries(fragment.components?.schemas ?? {})) {
+			const block = body.configuration?.['x-openregister-mcp']
+			if (block === undefined || block.enabled === false) {
+				continue
+			}
+			for (const verb of Object.keys(block.tools ?? {})) {
+				ids.push(`shillinq.${schema}.${verb}`)
+			}
+		}
+	}
+	return [...new Set(ids)].sort()
+}
+
+/**
+ * The derived tool ids the curated fragment declares: `shillinq.{Schema}.{verb}`.
  *
  * @return The ids, sorted.
  */
@@ -202,6 +229,8 @@ test.describe('mcp-action-tool-surface: shillinq\'s tools on both MCP surfaces (
 	let openregister = false
 	let hermiq = false
 	let token = ''
+	let mcpSession = ''
+	let mcpId = 0
 
 	/**
 	 * The CSRF token hermiq's write routes need beside the session cookie.
@@ -214,6 +243,51 @@ test.describe('mcp-action-tool-surface: shillinq\'s tools on both MCP surfaces (
 			token = html.match(/data-requesttoken="([^"]+)"/)?.[1] ?? ''
 		}
 		return token
+	}
+
+	/**
+	 * One JSON-RPC call to OpenRegister's MCP server (`POST /api/mcp`), in a
+	 * session it opens with `initialize` on first use.
+	 *
+	 * @param method The JSON-RPC method.
+	 * @param params Its params.
+	 * @return The JSON-RPC answer ({result} or {error}).
+	 */
+	async function mcp(method: string, params: Record<string, unknown>): Promise<{ result?: Record<string, unknown>, error?: { code: number, message: string } }> {
+		const headers = { ...HEADERS, requesttoken: await requestToken(), 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' }
+		if (mcpSession === '') {
+			const opened = await api.post(`${OR}/mcp`, {
+				headers,
+				data: { jsonrpc: '2.0', id: 0, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'shillinq-e2e', version: '1' } } },
+			})
+			expect(opened.ok(), `MCP initialize: HTTP ${opened.status()}`).toBeTruthy()
+			mcpSession = opened.headers()['mcp-session-id'] ?? ''
+		}
+		const res = await api.post(`${OR}/mcp`, {
+			headers: { ...headers, 'Mcp-Session-Id': mcpSession },
+			data: { jsonrpc: '2.0', id: ++mcpId, method, params },
+		})
+		expect(res.ok(), `MCP ${method}: HTTP ${res.status()}`).toBeTruthy()
+		return await res.json()
+	}
+
+	/**
+	 * Every tool OpenRegister's MCP server lists, following its cursor.
+	 *
+	 * @return The listed tools, by id (the name when a tool carries no id).
+	 */
+	async function listedTools(): Promise<string[]> {
+		const ids: string[] = []
+		let cursor: string | undefined
+		do {
+			const page = await mcp('tools/list', cursor === undefined ? {} : { cursor })
+			expect(page.error, JSON.stringify(page.error)).toBeUndefined()
+			for (const tool of (page.result?.tools ?? []) as Array<{ id?: string, name: string }>) {
+				ids.push(tool.id ?? tool.name)
+			}
+			cursor = (page.result?.nextCursor as string | null | undefined) ?? undefined
+		} while (cursor !== undefined)
+		return ids
 	}
 
 	/**
@@ -320,18 +394,19 @@ test.describe('mcp-action-tool-surface: shillinq\'s tools on both MCP surfaces (
 		await api?.dispose()
 	})
 
-	test('the merged register declares exactly the 24 derived read tools, and the catalogue adds its own without a collision @spec REQ-MCP-001', async () => {
+	test('the merged register declares exactly the 26 derived read tools, and the catalogue adds its own without a collision @spec REQ-MCP-001', async () => {
 		test.skip(!openregister, 'openregister is not installed: it derives the read tools and serves both MCP surfaces')
 
-		const expectedDerived = fragmentToolIds()
-		expect(expectedDerived, 'zzz-mcp-tool-surface.json declares 12 schemas x search+get').toHaveLength(24)
+		expect(fragmentToolIds(), 'zzz-mcp-tool-surface.json declares 12 schemas x search+get').toHaveLength(24)
+		const expectedDerived = declaredToolIds()
+		expect(expectedDerived.filter((id) => !fragmentToolIds().includes(id)), 'beside the curated 24, only the help articles (platform-help-agent)').toEqual(['shillinq.HelpArticle.get', 'shillinq.HelpArticle.search'])
 		expect(expectedDerived.every((id) => /^shillinq\.[A-Za-z]+\.(search|get)$/.test(id))).toBe(true)
 
 		const live = await liveDeclaredVerbs()
 		const liveDerived = [...live.entries()].flatMap(([slug, verbs]) => verbs.map((verb) => `shillinq.${slug}.${verb}`)).sort()
 		test.info().annotations.push({ type: 'live derived tool count', description: String(liveDerived.length) })
 		test.info().annotations.push({ type: 'live derived tool ids', description: liveDerived.join(', ') })
-		// "24 and nothing else": the set, not only the number.
+		// "26 and nothing else": the set, not only the number.
 		expect(liveDerived).toEqual(expectedDerived)
 
 		const catalogueIds = CATALOGUE.map((tool) => tool.id)
@@ -350,20 +425,30 @@ test.describe('mcp-action-tool-surface: shillinq\'s tools on both MCP surfaces (
 		}
 	})
 
-	test('the MCP server lists 24 derived tools plus the catalogue, with no collision or duplicate @spec REQ-MCP-001', async () => {
+	test('the MCP server lists 26 derived tools plus the catalogue, with no collision or duplicate @spec REQ-MCP-001', async () => {
 		test.skip(!openregister, 'openregister is not installed: it serves the MCP tool list')
-		// McpToolsService (JSON-RPC tools/list) and the chat ToolRegistry are
-		// OpenRegister's; neither route is named in this repo, its docs or its
-		// tests. The previous test checks the chain's input and the expected size.
-		test.fixme(true, 'no route for OpenRegister\'s MCP JSON-RPC server (tools/list) is named in this repo, its docs or its tests')
+
+		const listed = await listedTools()
+		expect(new Set(listed).size, 'no tool is listed twice').toBe(listed.length)
+		const shillinq = listed.filter((id) => id.startsWith('shillinq.')).sort()
+		const catalogueIds = CATALOGUE.map((tool) => tool.id)
+		const derived = shillinq.filter((id) => !catalogueIds.includes(id))
+		test.info().annotations.push({ type: 'listed shillinq tools', description: `${shillinq.length} (${derived.length} derived)` })
+		expect(derived, 'the derived tools are exactly the declared ones').toEqual(declaredToolIds())
+		expect(shillinq).toHaveLength(declaredToolIds().length + catalogueIds.length)
 	})
 
-	test('OpenRegister finds shillinq\'s provider by its per-app alias and lets it win an id collision @spec REQ-MCP-001', async () => {
+	test('OpenRegister finds shillinq\'s provider by its per-app alias @spec REQ-MCP-001', async () => {
 		test.skip(!openregister, 'openregister is not installed: the alias discovery is OpenRegister\'s')
-		// The alias (lib/AppInfo/Application.php registerMcpToolProvider) is only
-		// observable in the tool list; a collision needs a fragment declaring a
-		// provider id, which this suite does not import into a shared instance.
-		test.fixme(true, 'alias discovery and the hand-written > derived rule are visible only in OpenRegister\'s MCP tool list, whose route this repo does not name')
+		// Every catalogue tool is listed only when OpenRegister resolved
+		// IMcpToolProvider::shillinq (lib/AppInfo/Application.php). The
+		// hand-written > derived rule (SchemaDerivedToolProvider,
+		// REQ-DERIVED-003) needs a fragment declaring a provider id, which this
+		// suite does not import; it shows here as no derived id equal to a
+		// catalogue id.
+		const listed = await listedTools()
+		const missing = CATALOGUE.map((tool) => tool.id).filter((id) => !listed.includes(id))
+		expect(missing, 'every catalogue tool is served through the per-app alias').toEqual([])
 	})
 
 	test('hermiq reads the scope and reach of shillinq\'s tools into a default-deny matrix with human approval @spec REQ-MCP-003', async () => {
@@ -554,8 +639,15 @@ test.describe('mcp-action-tool-surface: shillinq\'s tools on both MCP surfaces (
 
 	test('through the JSON-RPC surface, a GLTransaction delete and a payroll read answer an unknown-tool error @spec REQ-MCP-003', async () => {
 		test.skip(!openregister, 'openregister is not installed: it serves the JSON-RPC surface')
-		// tools/call shillinq.GLTransaction.delete and shillinq.Employee.search
-		// must each answer an unknown-tool error.
-		test.fixme(true, 'no route for OpenRegister\'s MCP JSON-RPC server (tools/call) is named in this repo, its docs or its tests')
+
+		// Positive control: a derived read answers, so a refusal below is the
+		// allow-list saying no and not a broken call.
+		const read = await mcp('tools/call', { name: 'shillinq.ARInvoice.search', arguments: { limit: 1 } })
+		expect(read.error, JSON.stringify(read.error)).toBeUndefined()
+		for (const name of ['shillinq.GLTransaction.delete', `shillinq.${EXCLUDED_SCHEMAS[0]}.search`]) {
+			const refused = await mcp('tools/call', { name, arguments: {} })
+			expect(refused.result, `${name} must not run`).toBeUndefined()
+			expect(refused.error?.message, `${name} is unknown to the server`).toBe(`Unknown tool: ${name}`)
+		}
 	})
 })
