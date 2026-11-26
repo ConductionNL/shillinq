@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Service;
  * hash shared by the steps of one billable-period request. Built and used
  * only by BillablePeriodInvoiceService.
  *
- * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  */
 final class BillablePeriodRun {
 	/**
@@ -58,7 +58,7 @@ final class BillablePeriodRun {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function administrationId(): string {
 		return (string)$this->customer['administrationId'];
@@ -70,7 +70,7 @@ final class BillablePeriodRun {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function periodStart(): string {
 		return $this->period . '-01';
@@ -82,7 +82,7 @@ final class BillablePeriodRun {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function periodEnd(): string {
 		return date('Y-m-t', (int)strtotime($this->periodStart()));
