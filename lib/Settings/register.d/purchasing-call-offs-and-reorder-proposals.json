@@ -5,7 +5,7 @@
     "change": "purchasing-call-offs-and-reorder-proposals",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
     "description": "Three additions. (1) An additive overlay on FrameworkAgreement: `agreedPrices`, the price per product agreed with the supplier. PurchaseOrderService applies them server-side to the lines of a call-off before the order total is counted against the ceiling (REQ-PG-005). (2) ReorderProposal: the low-stock alert ReorderProposalJob raises when the stock of a reorder rule is at or below its reorder point, linked to the draft PurchaseOrder it proposes. One open proposal per rule at a time; the job resolves it once the stock is back above the point (REQ-IRA-011). Money fields are integer euro cents. (3) An additive overlay on PurchaseOrder declaring the fields PurchaseOrderService writes and the stored 0.1.0 schema lacked (requesterId, frameworkAgreementId, lines, totalAmount, createdAt, notes): OpenRegister discarded them on save, so a call-off lost its agreement and every order its lines.",
-    "spec": "openspec/changes/purchasing-call-offs-and-reorder-proposals/specs"
+    "spec": "openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs"
   },
   "components": {
     "schemas": {
@@ -72,9 +72,7 @@
               "required": [
                 "lineNumber",
                 "productCode",
-                "quantity",
-                "unitPrice",
-                "glAccount"
+                "quantity"
               ],
               "properties": {
                 "lineNumber": {
@@ -127,7 +125,7 @@
                 },
                 "glAccount": {
                   "type": "string",
-                  "description": "General ledger account the line is booked on.",
+                  "description": "General ledger account the line is booked on. Empty on a draft a reorder proposal raised, until the buyer completes the order.",
                   "example": "4500",
                   "title": "GL Account"
                 },
@@ -172,7 +170,7 @@
         "title": "Reorder Proposal",
         "description": "Low-stock alert raised by ReorderProposalJob for an active InventoryReorderRule whose stock is at or below its reorder point, with the draft PurchaseOrder it proposes for the reorder quantity with the rule's preferred supplier. At most one open proposal per rule; the job resolves it once the stock is back above the reorder point.",
         "x-schema-org": "schema:Thing",
-        "x-spec": "openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md",
+        "x-spec": "openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Who raised, accepted or dismissed a reorder proposal, and when: a proposal turns into a purchase commitment (REQ-AT-001, REQ-RAP-001)."

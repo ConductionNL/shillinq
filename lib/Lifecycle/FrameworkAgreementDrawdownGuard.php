@@ -136,7 +136,7 @@ class FrameworkAgreementDrawdownGuard {
 	 *
 	 * @throws RuntimeException When the agreement cannot be called off by this order.
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function agreementForCallOff(string $administrationId, string $frameworkAgreementId, string $supplierId): array {
 		try {
@@ -177,7 +177,7 @@ class FrameworkAgreementDrawdownGuard {
 	 *
 	 * @return array<string,int> Product code => agreed unit amount in cents.
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function agreedUnitAmounts(array $agreement): array {
 		$amounts = [];
@@ -263,7 +263,7 @@ class FrameworkAgreementDrawdownGuard {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function findOne(string $schema, array $filters): ?array {
 		$rows = $this->objectService

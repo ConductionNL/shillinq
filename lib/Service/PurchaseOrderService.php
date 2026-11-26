@@ -38,7 +38,7 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
  */
 
 declare(strict_types=1);
@@ -285,7 +285,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *                           budget is exceeded, or a required field is missing.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function createPurchaseOrder(string $administrationId, array $payload): array {
 		$order              = $this->checkedOrder(administrationId: $administrationId, payload: $payload);
@@ -319,7 +319,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @throws \RuntimeException When the requester lacks access, a field is missing or invalid,
 	 *                           or the framework agreement cannot be called off.
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function checkedOrder(string $administrationId, array $payload): array {
 		$order = $this->orderParties(administrationId: $administrationId, payload: $payload);
@@ -941,7 +941,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @return void
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
 	 */
 	private function notifyApprovalChain(
 		string $administrationId,
@@ -995,7 +995,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @return bool True when the step's role was notified.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
 	 */
 	private function notifyApprovalStep(string $administrationId, string $purchaseOrderId, string $poNumber, array $entry): bool {
 		$role = $entry['role'];
@@ -1116,7 +1116,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @throws \RuntimeException When a line is malformed.
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function normaliseLines(array $rawLines, array $agreedUnitCents=[]): array {
 		if ($rawLines === []) {
@@ -1362,7 +1362,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
 	 */
 	public function generatePoNumber(string $administrationId): string {
 		$year = (int)date('Y');

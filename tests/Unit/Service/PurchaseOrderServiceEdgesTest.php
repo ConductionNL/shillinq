@@ -412,7 +412,7 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
 	 */
 	public function testEveryFieldANewOrderIsSavedWithIsDeclared(): void {
 		$os = new InMemoryObjectServiceStub(

@@ -218,7 +218,7 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function testAgreementForCallOffBelongsToTheOrdersSupplier(): void {
 		$agreement = (['supplierId' => 'sup-1'] + $this->nearCeilingAgreement());
@@ -253,7 +253,7 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function testAgreementForCallOffFailsClosed(): void {
 		$failing = new class {
@@ -311,7 +311,7 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function testAgreedUnitAmountsByProductCode(): void {
 		$guard = $this->buildGuard(agreements: []);
@@ -343,7 +343,7 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function testAgreementRowsAsEntitiesAreRead(): void {
 		$agreement = $this->nearCeilingAgreement() + ['supplierId' => 'sup-1'];
