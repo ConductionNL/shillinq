@@ -196,7 +196,7 @@ final class SigningDelegationPayloadTest extends TestCase {
 		self::assertSame('ACM one', $event->subjectLabel);
 		self::assertSame('/f/acm.pdf', $event->documentReference);
 		self::assertSame([['uid' => 'alice']], $event->signers);
-		self::assertSame('qualified', $event->signatureLevel);
+		self::assertSame('QES', $event->signatureLevel, 'filinq takes SES|AdES|QES; qualified is QES');
 		self::assertSame('parallel', $event->signingMode);
 	}
 
@@ -210,8 +210,40 @@ final class SigningDelegationPayloadTest extends TestCase {
 		self::assertSame('x-2', $this->dispatched->provenance->subjectId);
 		self::assertSame('Title two', $this->dispatched->subjectLabel);
 		self::assertSame('/explicit.pdf', $this->dispatched->documentReference);
-		self::assertSame('advanced', $this->dispatched->signatureLevel);
+		self::assertSame('AdES', $this->dispatched->signatureLevel, 'the default advanced reaches filinq as AdES');
 		self::assertSame('sequential', $this->dispatched->signingMode);
+	}
+
+	/**
+	 * Each eIDAS word reaches filinq as its code; a code passes unchanged; an unknown word passes for filinq to refuse.
+	 *
+	 * @param string $given The level as the caller names it.
+	 * @param string $sent  The level filinq receives.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider levels
+	 */
+	public function testSignatureLevelsReachFilinqAsItsCodes(string $given, string $sent): void {
+		$this->answerWith('req-level');
+		$this->svc->requestSignature(['id' => 'lvl'], 'Doc', 'doc', '/d.pdf', [], $given);
+		self::assertSame($sent, $this->dispatched->signatureLevel);
+	}
+
+	/**
+	 * The level as a caller names it, and as filinq receives it.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function levels(): array {
+		return [
+			'simple' => ['simple', 'SES'],
+			'Advanced' => ['Advanced', 'AdES'],
+			'qualified' => ['qualified', 'QES'],
+			'AdES passes' => ['AdES', 'AdES'],
+			'SES passes' => ['SES', 'SES'],
+			'unknown passes' => ['sealed', 'sealed'],
+		];
 	}
 
 	/**

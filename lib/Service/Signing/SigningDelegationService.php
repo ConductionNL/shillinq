@@ -203,11 +203,41 @@ class SigningDelegationService implements SigningDelegationServiceInterface {
 			subjectLabel: $subjectLabel,
 			documentReference: $this->documentReferenceFor(financeObject: $financeObject, request: $request),
 			signers: $request->signers,
-			signatureLevel: $request->signatureLevel,
+			signatureLevel: self::filinqLevel(level: $request->signatureLevel),
 			signingMode: $request->signingMode,
 		);
 
 	}//end buildSigningEvent()
+
+	/**
+	 * The signature level in the words filinq's event takes: SES, AdES or QES.
+	 *
+	 * Callers here name the eIDAS level (simple, advanced, qualified, and the
+	 * default is `advanced`), while filinq refuses anything but its own codes
+	 * ("Invalid signature level"), so every request raised with the default
+	 * failed closed. A code filinq already knows passes unchanged; an unknown
+	 * word passes too, so filinq's refusal still names it.
+	 *
+	 * @param string $level The level as the caller named it.
+	 *
+	 * @return string The level as filinq names it.
+	 *
+	 * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
+	 */
+	private static function filinqLevel(string $level): string {
+		$codes = [
+			'simple' => 'SES',
+			'ses' => 'SES',
+			'advanced' => 'AdES',
+			'ades' => 'AdES',
+			'aes' => 'AdES',
+			'qualified' => 'QES',
+			'qes' => 'QES',
+		];
+
+		return ($codes[strtolower(trim($level))] ?? $level);
+
+	}//end filinqLevel()
 
 	/**
 	 * Resolve filinq's signing-request event and provenance classes, or fail closed.
