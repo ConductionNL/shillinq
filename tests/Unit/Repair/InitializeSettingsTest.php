@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for InitializeSettings repair step.
@@ -223,13 +225,21 @@ class InitializeSettingsTest extends TestCase {
 		$this->settingsService->method('getRegisterSlug')
 			->willReturn('shillinq');
 
-		// Container get() throws for ScheduledWorkflowMapper so the workflow
-		// registrations (IV3, FixedAssets, BCF) exit via their inner catch blocks
-		// without reaching the outer try/catch in run().
+		// Every lazy container lookup is recorded; none resolves in this test.
+		$requested = [];
 		$this->container->method('get')
-			->willThrowException(new \RuntimeException('Not available in test'));
+			->willReturnCallback(
+				static function (string $id) use (&$requested): never {
+					$requested[] = $id;
+					throw new \RuntimeException('Not available in test');
+				}
+			);
 
 		$this->repairStep->run(output: $this->output);
+
+		// OpenRegister no longer ships a ScheduledWorkflowMapper; the repair
+		// step must not depend on it.
+		self::assertNotContains('OCA\\OpenRegister\\Db\\ScheduledWorkflowMapper', $requested);
 
 	}//end testRunCallsLoadConfigurationAndSeedTemplate()
 
@@ -638,12 +648,16 @@ class InitializeSettingsTest extends TestCase {
 			 * @param array<string,mixed> $object
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->saved[] = $uuid;
 				return $object;
 			}
 
-			public function deleteObject(string $uuid): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$uuid = $deletion->uuid;
 				$this->deleted[] = $uuid;
 				return true;
 			}
@@ -729,7 +743,10 @@ class InitializeSettingsTest extends TestCase {
 			 * @param array<string,mixed> $object
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				if ($uuid === 'obj-fail') {
 					throw new \RuntimeException('save failed');
 				}
@@ -738,7 +755,8 @@ class InitializeSettingsTest extends TestCase {
 				return $object;
 			}
 
-			public function deleteObject(string $uuid): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$uuid = $deletion->uuid;
 				$this->deleted[] = $uuid;
 				return true;
 			}

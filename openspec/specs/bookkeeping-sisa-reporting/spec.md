@@ -19,7 +19,6 @@ This specification defines the requirements for bookkeeping sisa reporting in th
 
 @e2e exclude unbuilt UI: SISA compliance audit page not yet implemented
 
-
 ### REQ-SISA-001: Single Information Single Audit SHALL be declared as `SisaReport` + `AuditDocument` + `ComplianceAuditTrail` registers, not a parallel audit database
 
 Single Information Single Audit compliance MUST be expressed as three new
@@ -328,8 +327,6 @@ manifest pattern. `node tests/validate-manifest.js` must exit 0.
 - **WHEN** the page is opened
 - **THEN** the aggregated metrics (settlement %, findings count, opinion) MUST display.
 
-## MODIFIED Requirements
-
 ### REQ-SISA-M001: Audit trail is captured automatically on state transitions
 
 Every schema that participates in SiSa (`APTransaction`, `ARInvoice`,
@@ -339,6 +336,12 @@ the event (no app-local logging needed).
 
 Rationale: Per ADR-022, prefer OR's abstractions; avoid parallel audit
 tracking.
+
+#### Scenario: A state transition on a SiSa schema is audited by OpenRegister
+- **GIVEN** an `APTransaction`, `ARInvoice`, `JournalEntry` or `AuditDocument` whose schema declares an `x-openregister-lifecycle` block
+- **WHEN** the object moves from one lifecycle state to another
+- **THEN** OpenRegister's audit service SHALL record the transition
+- **AND** shillinq SHALL NOT write an app-local audit entry for it
 
 ## Dependencies
 
@@ -351,3 +354,24 @@ tracking.
 - **T2 grant-subsidy-management**: grant eligibility flags for SiSa filtering.
 - **T2 authorization-mandate-management** (if available for signature authority
   verification; else deferred to T3).
+
+### Requirement: Indicators are computed per specific grant (REQ-SISA-012)
+
+The app SHALL compute, per specific grant received and year, the spending and income indicators from the posted lines tagged with the grant, and SHALL keep output indicators as entered.
+
+#### Scenario: A controller prepares the SiSa appendix
+
+- GIVEN a specific grant with regulation code D8 and EUR 120,000 of posted spending in 2026
+- WHEN the controller opens the SiSa appendix for 2026
+- THEN the spending indicator for D8 reads EUR 120,000
+- AND output indicators without a value are marked as missing
+
+### Requirement: The appendix is exported for the annual accounts (REQ-SISA-013)
+
+The app SHALL export the appendix as a table in the column order of the BZK template.
+
+#### Scenario: A controller exports the appendix
+
+- GIVEN a complete appendix for 2026
+- WHEN the controller chooses export
+- THEN a CSV downloads with one row per indicator in the BZK column order

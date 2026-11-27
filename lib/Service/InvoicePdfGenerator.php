@@ -3,6 +3,9 @@
 /**
  * Invoice PDF Generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renders a Dutch-compliant invoice document (Task 20, issue #111). Produces
  * HTML by default; downstream renderers (mPDF / wkhtmltopdf / browser print)
  * convert it to PDF. Keeping the renderer HTML-first avoids a hard mPDF
@@ -28,7 +31,11 @@
  * under ISO 19005-3). Asserting `pdfaid:conformance` without meeting them
  * would be a false machine-readable claim (facturx-cii-conformance fixed an
  * earlier version of this file that did exactly that — see git history).
- * The existing plain-HTML {@see generatePdf()} path is untouched.
+ * sales-invoice-document REQ-SID-002 makes {@see generatePdf()} a docudesk
+ * consumer: it returns the PDF docudesk renders from the `sales-invoice`
+ * template, or refuses when docudesk is absent. The HTML of
+ * {@see renderHtml()} stays for {@see generateHtml()} and the hybrid path,
+ * which keeps its own byte writer until docudesk can embed the XML.
  *
  * @category Service
  * @package  OCA\Shillinq\Service
@@ -42,14 +49,21 @@
  * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
+use OCA\Shillinq\Reporting\DocudeskUnavailableException;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentData;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentParties;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentLanguage;
+use OCA\Shillinq\Service\Sales\InvoiceDocument\InvoiceDocumentRenderer;
+use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
+use OCA\Shillinq\Service\Payment\PayLinkService;
+use RuntimeException;
 
 /**
  * Dutch-formatted invoice HTML / PDF builder.
@@ -61,7 +75,7 @@ namespace OCA\Shillinq\Service;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class InvoicePdfGenerator {
+class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	/**
 	 * Embedded-filename for the NLCIUS UBL hybrid attachment. Deliberately
 	 * NOT the Factur-X/ZUGFeRD well-known name (`factur-x.xml`) — the
@@ -75,7 +89,90 @@ class InvoicePdfGenerator {
 	public const HYBRID_XML_FILENAME = 'ubl-invoice.xml';
 
 	/**
-	 * Generate the renderable invoice payload.
+	 * How many invoice lines fit under the summary on the one hybrid PDF page.
+	 *
+	 * @var integer
+	 */
+	private const HYBRID_PAGE_LINES = 45;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param PayLinkService|null          $payLinks     Gives the pay link an open invoice prints; without it none is printed.
+	 * @param InvoiceDocumentData|null     $documentData The template data of the invoice document.
+	 * @param InvoiceDocumentRenderer|null $renderer     The docudesk hand-off; without it no PDF can be produced.
+	 * @param InvoiceDocumentParties|null  $parties      Reads the creditor, recipient, layout and language a caller did not pass.
+	 */
+	public function __construct(
+		private readonly ?PayLinkService $payLinks = null,
+		private readonly ?InvoiceDocumentData $documentData = null,
+		private readonly ?InvoiceDocumentRenderer $renderer = null,
+		private readonly ?InvoiceDocumentParties $parties = null,
+	) {
+	}//end __construct()
+
+	/**
+	 * Whether an invoice PDF can be rendered: docudesk is installed and resolves.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
+	 */
+	public function documentsAvailable(): bool {
+		return $this->documentData !== null && $this->renderer !== null && $this->renderer->available() === true;
+	}//end documentsAvailable()
+
+	/**
+	 * Render the invoice PDF through docudesk (REQ-SID-002).
+	 *
+	 * The invoice, its lines and its parties are assembled into the
+	 * `sales-invoice` template data (labels in the document language, amounts
+	 * in the invoice currency, the scan-to-pay payloads) and docudesk renders
+	 * the PDF. Without docudesk this refuses instead of serving HTML labelled
+	 * as a PDF.
+	 *
+	 * @param array<string,mixed> $invoice BillableInvoice or ARInvoice record.
+	 * @param array<int,array<string,mixed>> $lines Its lines.
+	 * @param array<string,mixed> $context `creditor`, `recipient`, `layout` (the InvoiceLayout),
+	 *                                     `language` (the administration's default) and `userId`;
+	 *                                     the parties a caller leaves out are read for the invoice.
+	 *
+	 * @return array{filename:string,pdf:string,mimeType:string}
+	 *
+	 * @throws DocudeskUnavailableException When docudesk is not installed.
+	 * @throws RuntimeException             When docudesk renders no PDF.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-4.2
+	 */
+	public function generatePdf(array $invoice, array $lines, array $context = []): array {
+		if ($this->documentData === null || $this->renderer === null) {
+			throw new DocudeskUnavailableException(message: self::DOCUDESK_NEEDED);
+		}
+
+		$context += ($this->parties?->forInvoice(invoice: $invoice) ?? []);
+
+		$data = $this->documentData->assemble(
+			invoice: $invoice,
+			lines: $lines,
+			parties: [
+				'creditor' => (array)($context['creditor'] ?? []),
+				'recipient' => (array)($context['recipient'] ?? []),
+				'layout' => (array)($context['layout'] ?? []),
+			],
+			fallback: (string)($context['language'] ?? InvoiceDocumentLanguage::DEFAULT_LANGUAGE)
+		);
+
+		return [
+			'filename' => sprintf('invoice-%s.pdf', (string)($invoice['invoiceNumber'] ?? 'INVOICE')),
+			'pdf' => $this->renderer->render(data: $data, userId: (string)($context['userId'] ?? '')),
+			'mimeType' => 'application/pdf',
+		];
+	}//end generatePdf()
+
+	/**
+	 * The invoice as HTML, for a reader that wants the text rather than a
+	 * file (the MCP tool) and as the body of the hybrid PDF.
 	 *
 	 * @param array<string,mixed> $invoice BillableInvoice record.
 	 * @param array<int,array<string,mixed>> $lines BillableInvoiceLine records.
@@ -84,29 +181,26 @@ class InvoicePdfGenerator {
 	 *
 	 * @return array{filename:string,html:string,mimeType:string}
 	 *
-	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
 	 */
-	public function generatePdf(
+	public function generateHtml(
 		array $invoice,
 		array $lines,
 		array $creditor = [],
 		array $recipient = [],
 	): array {
 		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? 'INVOICE');
-		$html = $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient);
-		$filename = sprintf('invoice-%s.pdf', $invoiceNumber);
 
 		return [
-			'filename' => $filename,
-			'html' => $html,
-			'mimeType' => 'application/pdf',
+			'filename' => sprintf('invoice-%s.html', $invoiceNumber),
+			'html' => $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient),
+			'mimeType' => 'text/html',
 		];
-
-	}//end generatePdf()
+	}//end generateHtml()
 
 	/**
 	 * Generate the hybrid PDF export: the same human-readable HTML/summary
-	 * as {@see generatePdf()}, materialised as a real PDF binary with the
+	 * as {@see generateHtml()}, materialised as a real PDF binary with the
 	 * NLCIUS UBL XML embedded as an `AFRelationship=Alternative` associated
 	 * file (REQ-EINV-002). This is the NL/Peppol UBL artefact — it is
 	 * explicitly NOT Factur-X/ZUGFeRD (CII) and does NOT declare PDF/A-3
@@ -115,9 +209,10 @@ class InvoicePdfGenerator {
 	 * @param array<string,mixed> $invoice ARInvoice record (or any invoice-shaped
 	 *                                     array carrying invoiceNumber/grossAmount/
 	 *                                     currency).
-	 * @param array<int,array<string,mixed>> $lines Invoice lines (used for the human-readable
-	 *                                              summary only — the XML itself is supplied
-	 *                                              pre-rendered by the caller).
+	 * @param array<int,array<string,mixed>> $lines Invoice lines, printed one per text line on
+	 *                                              the PDF page under the summary (REQ-EINV-009).
+	 *                                              The XML itself is supplied pre-rendered by
+	 *                                              the caller.
 	 * @param string $ublXml The NLCIUS UBL 2.1 XML document to embed
 	 *                       (see {@see \OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper::toNlciusXml()}).
 	 * @param array<string,mixed> $creditor Creditor (issuing party) details.
@@ -127,6 +222,7 @@ class InvoicePdfGenerator {
 	 *                                                                                      The `pdf` key carries the raw PDF binary (not base64).
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
 	 */
 	public function generateHybridPdf(
 		array $invoice,
@@ -137,7 +233,7 @@ class InvoicePdfGenerator {
 	): array {
 		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? 'INVOICE');
 		$html = $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient);
-		$pdfBytes = $this->buildHybridPdfBytes(invoice: $invoice, html: $html, xmlContent: $ublXml);
+		$pdfBytes = $this->buildHybridPdfBytes(invoice: $invoice, html: $html, lines: $lines, xmlContent: $ublXml);
 		$filename = sprintf('invoice-%s-hybrid.pdf', $invoiceNumber);
 
 		return [
@@ -163,14 +259,13 @@ class InvoicePdfGenerator {
 	 * (facturx-cii-conformance / REQ-EINV-002).
 	 *
 	 * @param array<string,mixed> $invoice Invoice record (invoiceNumber / grossAmount / currency).
-	 * @param string $html Rendered HTML (used only to derive a one-line summary
-	 *                     shown on the PDF page — the HTML markup itself is
-	 *                     not embedded).
+	 * @param string $html Rendered HTML (the markup itself is not embedded).
+	 * @param array<int,array<string,mixed>> $lines The invoice lines, printed under the summary.
 	 * @param string $xmlContent The UBL XML document to embed.
 	 *
 	 * @return string Raw PDF bytes.
 	 */
-	private function buildHybridPdfBytes(array $invoice, string $html, string $xmlContent): string {
+	private function buildHybridPdfBytes(array $invoice, string $html, array $lines, string $xmlContent): string {
 		unset($html);
 
 		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? '');
@@ -180,7 +275,8 @@ class InvoicePdfGenerator {
 		$now = gmdate('YmdHis') . '+00\'00\'';
 		$xmlFilename = self::HYBRID_XML_FILENAME;
 
-		$contentStream = 'BT /F1 14 Tf 56 770 Td (' . $this->pdfEscape(value: $summaryLine) . ') Tj ET';
+		$contentStream = 'BT /F1 14 Tf 56 770 Td (' . $this->pdfEscape(value: $summaryLine) . ') Tj ET'
+			. $this->lineTextStream(lines: $lines, currency: $currency);
 
 		// Only a dc:title entry — no pdfaid:part/pdfaid:conformance
 		// assertion (see this method's docblock for why: no ICC
@@ -261,6 +357,72 @@ class InvoicePdfGenerator {
 	}//end assemblePdf()
 
 	/**
+	 * One text line per invoice line for the hybrid PDF page, under the
+	 * summary: number, description, quantity x price = amount, VAT rate.
+	 * Amounts carry the currency code, not a symbol: the page font is
+	 * WinAnsi-encoded Helvetica.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The invoice lines.
+	 * @param string $currency The invoice currency code.
+	 *
+	 * @return string The content-stream text block, or '' without lines.
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
+	 */
+	private function lineTextStream(array $lines, string $currency): string {
+		$text = '';
+		foreach (array_slice($lines, 0, self::HYBRID_PAGE_LINES) as $line) {
+			$row = $this->normaliseLine(line: (array)$line);
+			$printed = sprintf(
+				'%d  %s  %s x %s = %s %s  btw %s%%',
+				$row['number'],
+				$row['description'],
+				$this->fmt(value: $row['quantity']),
+				$this->fmtMoney(value: $row['price']),
+				$this->fmtMoney(value: $row['amount']),
+				$currency,
+				$this->fmt(value: $row['vatRate'])
+			);
+			$text .= ' T* (' . $this->pdfEscape(value: $printed) . ') Tj';
+		}
+
+		if ($text === '') {
+			return '';
+		}
+
+		return ' BT /F1 10 Tf 14 TL 56 746 Td' . $text . ' ET';
+	}//end lineTextStream()
+
+	/**
+	 * Read a line in either shape it arrives in: a BillableInvoiceLine
+	 * (lineNumber, description, billableUnits, rateApplied.rateCents,
+	 * costAmount) or an ARInvoice `invoiceLines` entry (lineId, itemName,
+	 * quantity, netPrice, netAmount). The BillableInvoiceLine keys win, so a
+	 * time-and-expense PDF renders exactly as before.
+	 *
+	 * @param array<string,mixed> $line The line.
+	 *
+	 * @return array{number:int,description:string,quantity:float,price:float,amount:float,vatRate:float}
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
+	 */
+	private function normaliseLine(array $line): array {
+		$price = (float)($line['netPrice'] ?? 0);
+		if (isset($line['rateApplied']['rateCents']) === true) {
+			$price = ((int)$line['rateApplied']['rateCents']) / 100;
+		}
+
+		return [
+			'number' => (int)($line['lineNumber'] ?? ($line['lineId'] ?? 0)),
+			'description' => (string)($line['description'] ?? ($line['itemName'] ?? '')),
+			'quantity' => (float)($line['billableUnits'] ?? ($line['quantity'] ?? 0)),
+			'price' => $price,
+			'amount' => (float)($line['costAmount'] ?? ($line['netAmount'] ?? 0)),
+			'vatRate' => (float)($line['vatRate'] ?? 21),
+		];
+	}//end normaliseLine()
+
+	/**
 	 * Escape a value for a PDF literal string `(...)` token (backslash,
 	 * parentheses, and control characters).
 	 *
@@ -287,20 +449,15 @@ class InvoicePdfGenerator {
 	private function renderHtml(array $invoice, array $lines, array $creditor, array $recipient): string {
 		$rows = '';
 		foreach ($lines as $line) {
-			if (isset($line['rateApplied']['rateCents']) === true) {
-				$rateValue = ((int)$line['rateApplied']['rateCents']) / 100;
-			} else {
-				$rateValue = 0.0;
-			}
-
+			$row = $this->normaliseLine(line: $line);
 			$rows .= sprintf(
 				'<tr><td>%d</td><td>%s</td><td class="num">%s</td><td class="num">€ %s</td><td class="num">€ %s</td><td class="num">%s%%</td></tr>',
-				(int)($line['lineNumber'] ?? 0),
-				htmlspecialchars((string)($line['description'] ?? ''), ENT_QUOTES),
-				$this->fmt(value: (float)($line['billableUnits'] ?? 0)),
-				$this->fmtMoney(value: $rateValue),
-				$this->fmtMoney(value: (float)($line['costAmount'] ?? 0)),
-				$this->fmt(value: (float)($line['vatRate'] ?? 21))
+				$row['number'],
+				htmlspecialchars($row['description'], ENT_QUOTES),
+				$this->fmt(value: $row['quantity']),
+				$this->fmtMoney(value: $row['price']),
+				$this->fmtMoney(value: $row['amount']),
+				$this->fmt(value: $row['vatRate'])
 			);
 		}
 
@@ -342,7 +499,9 @@ class InvoicePdfGenerator {
 			. '<strong>BTW:</strong> € %s &nbsp; '
 			. '<strong>Te betalen:</strong> € %s</p>'
 			. '<p>Betalingscondities: %s</p>'
+			. '%s'
 			. '<p>%s</p>'
+			. '%s'
 			. '<div class="footer">Gegenereerd op %s — Shillinq invoice-from-time-and-expense</div>'
 			. '</body></html>',
 			htmlspecialchars((string)($invoice['invoiceNumber'] ?? ''), ENT_QUOTES),
@@ -352,7 +511,7 @@ class InvoicePdfGenerator {
 			htmlspecialchars((string)($creditor['vatID'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($creditor['iban'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($recipient['legalName'] ?? ($invoice['customerId'] ?? '')), ENT_QUOTES),
-			htmlspecialchars((string)($recipient['vatID'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($recipient['vatId'] ?? ($recipient['vatID'] ?? '')), ENT_QUOTES),
 			htmlspecialchars((string)($invoice['invoiceDate'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($invoice['dueDate'] ?? ''), ENT_QUOTES),
 			$rows,
@@ -361,11 +520,62 @@ class InvoicePdfGenerator {
 			$this->fmtMoney(value: (float)($invoice['vatAmount'] ?? 0)),
 			$this->fmtMoney(value: (float)($invoice['grossAmount'] ?? 0)),
 			htmlspecialchars((string)($invoice['paymentTerms'] ?? 'net 30'), ENT_QUOTES),
+			$this->payLinkHtml(invoice: $invoice),
 			htmlspecialchars((string)($invoice['notes'] ?? ''), ENT_QUOTES),
+			$this->reverseChargeHtml(invoice: $invoice, recipient: $recipient),
 			date('Y-m-d H:i')
 		);
 
 	}//end renderHtml()
+
+	/**
+	 * The reverse-charge notice with the buyer's VAT number, or '' when no
+	 * line is reverse-charged (tax-icp-and-reverse-charge REQ-ICR-001).
+	 *
+	 * @param array<string,mixed> $invoice   Invoice.
+	 * @param array<string,mixed> $recipient Recipient.
+	 *
+	 * @return string The paragraph, or ''.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 */
+	private function reverseChargeHtml(array $invoice, array $recipient): string {
+		$notice = (new ReverseChargeNotice())->forInvoice(invoice: $invoice, customer: $recipient);
+		if ($notice === null) {
+			return '';
+		}
+
+		return sprintf(
+			'<p class="reverse-charge"><strong>%s</strong> &nbsp; BTW-nummer afnemer: %s</p>',
+			htmlspecialchars($notice['noticeNl'], ENT_QUOTES),
+			htmlspecialchars($notice['buyerVatNumber'], ENT_QUOTES)
+		);
+
+	}//end reverseChargeHtml()
+
+	/**
+	 * The "Betaal online" paragraph under the totals, or '' when the invoice
+	 * gets no pay link (receivables-payment-links D4, D5).
+	 *
+	 * @param array<string,mixed> $invoice Invoice.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.2
+	 */
+	private function payLinkHtml(array $invoice): string {
+		$url = null;
+		if ($this->payLinks !== null) {
+			$url = $this->payLinks->forOpenInvoice(invoice: $invoice);
+		}
+
+		if ($url === null) {
+			return '';
+		}
+
+		$escaped = htmlspecialchars($url, ENT_QUOTES);
+		return '<p class="pay-link"><strong>Betaal online:</strong> <a href="' . $escaped . '">' . $escaped . '</a></p>';
+	}//end payLinkHtml()
 
 	/**
 	 * Format a 2-decimal float with Dutch locale.

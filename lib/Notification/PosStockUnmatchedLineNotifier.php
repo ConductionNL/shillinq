@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,50 +33,22 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Notification;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Listener\PosStockDecrementListener;
-use OCP\L10N\IFactory;
+use OCA\Shillinq\Kernel\Contracts\PosStockDecrementListenerInterface;
 use OCP\Notification\INotification;
-use OCP\Notification\INotifier;
 use OCP\Notification\UnknownNotificationException;
 
 /**
  * Prepares `pos_stock_unmatched_line` notifications for display.
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
-class PosStockUnmatchedLineNotifier implements INotifier {
+class PosStockUnmatchedLineNotifier extends AppNotifier {
 	/**
-	 * Construct the notifier.
+	 * The notification subject this notifier renders.
 	 *
-	 * @param IFactory $l10nFactory The l10n factory for per-language rendering.
+	 * @var string
 	 */
-	public function __construct(
-		private readonly IFactory $l10nFactory,
-	) {
-	}//end __construct()
-
-	/**
-	 * The notifier id (app id).
-	 *
-	 * @return string The identifier.
-	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
-	 */
-	public function getID(): string {
-		return Application::APP_ID;
-	}//end getID()
-
-	/**
-	 * The human-readable notifier name.
-	 *
-	 * @return string The name.
-	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
-	 */
-	public function getName(): string {
-		return $this->l10nFactory->get(Application::APP_ID)->t('Shillinq');
-	}//end getName()
+	protected const SUBJECT = PosStockDecrementListenerInterface::NOTIFICATION_SUBJECT_UNMATCHED;
 
 	/**
 	 * Prepare a `pos_stock_unmatched_line` notification for display.
@@ -88,16 +60,10 @@ class PosStockUnmatchedLineNotifier implements INotifier {
 	 *
 	 * @throws UnknownNotificationException When the notification is not ours.
 	 *
-	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
-		if ($notification->getApp() !== Application::APP_ID
-			|| $notification->getSubject() !== PosStockDecrementListener::NOTIFICATION_SUBJECT_UNMATCHED
-		) {
-			throw new UnknownNotificationException();
-		}
-
-		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
+		$l = $this->ownedL10n(notification: $notification, languageCode: $languageCode);
 		$parameters = $notification->getSubjectParameters();
 		$productRef = (string)($parameters['productRef'] ?? '');
 		$posTxnId = (string)($parameters['posTxnId'] ?? '');

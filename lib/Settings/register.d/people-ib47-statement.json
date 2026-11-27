@@ -1,0 +1,73 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "people-ib47-statement",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative fields, the yearly sum stays imperative in Ib47BatchService",
+    "description": "A payee can be marked as an IB47 recipient and carries what the statement asks of it (BSN and the payment type code); an IB47 record names the payee it was prepared from, so preparing a year again updates that record instead of adding a second.",
+    "spec": "openspec/changes/archive/2026-11-24-people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "Payee": {
+        "properties": {
+          "ib47Recipient": {
+            "type": "boolean",
+            "default": false,
+            "title": "IB47 recipient",
+            "description": "True for someone paid outside the payroll who must be reported to the Belastingdienst once a year on the IB47 statement, such as a freelancer without a VAT number or a volunteer above the allowance.",
+            "example": true
+          },
+          "bsn": {
+            "type": "string",
+            "nullable": true,
+            "title": "BSN",
+            "description": "Burgerservicenummer of an IB47 recipient, which the statement names. Special-category PII (ADR-005): validated by the 11-proef on write (OpenRegister's bsn format), masked as ***<last4> on display, readable and writable only to the payroll officer, never written to the audit trail.",
+            "x-pii": "bsn",
+            "x-mask": "trailing4",
+            "pattern": "^[0-9]{9}$",
+            "format": "bsn",
+            "x-openregister-rbac-field": {
+              "read": [
+                "payroll-officer"
+              ],
+              "write": [
+                "payroll-officer"
+              ]
+            },
+            "example": "123456782"
+          },
+          "ib47PaymentTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "title": "IB47 payment type",
+            "description": "The Belastingdienst IB47 payment type code for this recipient's payments. A recipient without one is left out of the batch and named as incomplete, rather than reported under a code nobody chose.",
+            "example": "1"
+          }
+        }
+      },
+      "IB47Record": {
+        "properties": {
+          "payeeId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Payee",
+            "description": "The payee this record was prepared from. Preparing the same year again updates the record of this payee and never writes a second one.",
+            "example": "payee-jdeboer"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "sales-quote-and-order-to-invoice",
+    "description": "A draft sales invoice written from a sales order (OrderPrimitive orderType sales) names that order in salesOrder, so the invoice page and the order page can find each other. The order's own states, sourceQuote and OrderLine.invoicedQuantity live in zz-order-primitive.json and zz-order-base.json; the conversions live in lib/Service/Sales/SalesOrderInvoicingService.php."
+  },
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "properties": {
+          "salesOrder": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "title": "Sales order",
+            "description": "The sales order this invoice was written from."
+          }
+        }
+      }
+    }
+  }
+}

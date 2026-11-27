@@ -40,7 +40,7 @@
  * regardless, running this file with `--workers=1` (or as its own CI job) is
  * still the safer choice if the shared config ever changes.
  *
- * @spec openspec/changes/setup-wizard-english/specs/setup-wizard-english/spec.md
+ * @spec openspec/changes/archive/2026-11-25-setup-wizard-english/specs/setup-wizard-english/spec.md
  */
 
 import type { Page } from '@playwright/test'
@@ -66,6 +66,12 @@ const SETUP_CONFIG_KEYS = [
 	'administration_id',
 	'setup_seed_done',
 	'setup_completed_version',
+	// The optional `demo-data` step reports itself done when either key is
+	// set (SetupController::status()). Left in place, CnSetupWizard resumes
+	// PAST the welcome and demo-data steps and opens on `country`, so the
+	// walk below would never see step 0.
+	'demo_dataset',
+	'demo_data_decided',
 ]
 
 /**
@@ -178,6 +184,11 @@ async function restoreCiSeedBaseline(baseURL: string): Promise<void> {
 		await ctx.post('/index.php/apps/shillinq/api/setup/action/seed', {
 			data: {},
 		})
+		// Same decision ci-seed.sh records: no example data, step dealt with.
+		await ctx.post(
+			'/index.php/apps/shillinq/api/setup/action/skip-demo-data',
+			{ data: {} },
+		)
 		const status = await ctx.get('/index.php/apps/shillinq/api/setup/status')
 		const body = await status.json().catch(() => ({}))
 		if (body?.completed !== true) {
@@ -248,7 +259,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await restoreCiSeedBaseline(resolveBaseURL())
 	})
 
-	test('the wizard gates the shell and walks all 7 steps in English @e2e REQ-SWE-001 REQ-SWE-005', async ({
+	test('the wizard gates the shell and walks all 8 steps in English @e2e REQ-SWE-001 REQ-SWE-005', async ({
 		page,
 	}) => {
 		// `playwright.config.ts`'s suite-wide per-test `timeout` is 60_000ms,
@@ -261,7 +272,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		// 60s mark. A 60s WHOLE-TEST budget can never fit two actions each
 		// individually budgeted that high, regardless of environment — this
 		// override is a structural fix, not a tuning knob. 300s leaves room
-		// for nav + all 7 steps + two ~120s-worst-case actions + the finish
+		// for nav + all 8 steps + two ~120s-worst-case actions + the finish
 		// assertions; CI's own history should confirm/tighten this number.
 		test.setTimeout(300_000)
 
@@ -299,7 +310,22 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await assertNoDutchToken(dialog)
 		await clickContinue(dialog)
 
-		// ── Step 1: country ──────────────────────────────────────────────
+		// ── Step 1: demo-data (optional choice, cards) ───────────────────
+		await expect(
+			stepBody.getByText('Load example data?', { exact: false }).first(),
+		).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'Example data fills the lists, detail pages and dashboards',
+				{ exact: false },
+			),
+		).toBeVisible()
+		await assertNoDutchToken(dialog)
+		// Optional step: going on without loading a dataset is the
+		// production path the step body itself recommends.
+		await clickContinue(dialog)
+
+		// ── Step 2: country ──────────────────────────────────────────────
 		await expect(
 			stepBody.getByText('Legal region (country)', { exact: false }),
 		).toBeVisible()
@@ -333,7 +359,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await selectOption(page, 'Netherlands')
 		await clickContinue(dialog)
 
-		// ── Step 2: organisation ─────────────────────────────────────────
+		// ── Step 3: organisation ─────────────────────────────────────────
 		await expect(
 			stepBody.getByText('Organisation type', { exact: false }),
 		).toBeVisible()
@@ -349,7 +375,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await selectOption(page, 'Municipality')
 		await clickContinue(dialog)
 
-		// ── Step 3: rgs-template ─────────────────────────────────────────
+		// ── Step 4: rgs-template ─────────────────────────────────────────
 		await expect(
 			stepBody.getByText('Chart of accounts (RGS)', { exact: false }),
 		).toBeVisible()
@@ -365,9 +391,9 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await selectOption(page, 'BBV (government)')
 		await clickContinue(dialog)
 
-		// ── Step 4: administration (run-action) ──────────────────────────
+		// ── Step 5: administration (run-action) ──────────────────────────
 		await expect(
-			dialog.getByText('Create administration', { exact: false }),
+			dialog.getByRole('heading', { name: 'Create administration' }),
 		).toBeVisible()
 		await expect(
 			dialog.getByText(
@@ -376,14 +402,13 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 			),
 		).toBeVisible()
 		await assertNoDutchToken(dialog)
-		await clickRun(dialog)
 		await waitForActionComplete(dialog)
 		await clickContinue(dialog)
 
-		// ── Step 5: seed (run-action) ─────────────────────────────────────
+		// ── Step 6: seed (run-action) ─────────────────────────────────────
 		await expect(
-			dialog.getByText('Load chart of accounts and reference data', {
-				exact: false,
+			dialog.getByRole('heading', {
+				name: 'Load chart of accounts and reference data',
 			}),
 		).toBeVisible()
 		await expect(
@@ -393,12 +418,11 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 			),
 		).toBeVisible()
 		await assertNoDutchToken(dialog)
-		await clickRun(dialog)
 		await waitForActionComplete(dialog)
 		await clickContinue(dialog)
 
-		// ── Step 6: done (summary) ────────────────────────────────────────
-		await expect(dialog.getByText('Done', { exact: true })).toBeVisible()
+		// ── Step 7: done (summary) ────────────────────────────────────────
+		await expect(dialog.getByRole('heading', { name: 'Done', exact: true })).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'Review your choices below and complete the installation.',
@@ -452,14 +476,6 @@ async function assertNoDutchToken(
 async function clickContinue(scope: ReturnType<Page['getByRole']>): Promise<void> {
 	await scope
 		.getByRole('button', { name: /next|continue/i })
-		.first()
-		.click({ timeout: 10_000 })
-}
-
-/** Click a `run-action` step's Run button (per design.md: "Klik op 'Run' om te starten" -> "Run"). */
-async function clickRun(scope: ReturnType<Page['getByRole']>): Promise<void> {
-	await scope
-		.getByRole('button', { name: /run/i })
 		.first()
 		.click({ timeout: 10_000 })
 }
@@ -583,17 +599,12 @@ async function selectOption(page: Page, label: string): Promise<void> {
  * `run-action` steps (`administration`, `seed`) run a privileged server call
  * and report their own completion; wait for that, not a fixed sleep.
  *
- * WHY THE `RUN` BUTTON, NOT `NEXT`/`CONTINUE`
- * ---------------------------------------------
- * Verified live: `Next` is NOT disabled while the action is in flight —
- * clicking it early is caught by the wizard's own on-click `validate`
- * callback, which shows a "Please run this step before continuing." banner
- * and does not advance. Waiting for `Next` to become "enabled" therefore
- * resolves immediately (it was never disabled) and races ahead of the real
- * async action. `CnSetupWizard`'s own template binds the RUN button's
- * `:disabled="running[step.id]"` — that flag is what actually tracks the
- * in-flight action, so waiting for `Run` to re-enable is the real
- * completion signal.
+ * AUTO-RUN: `CnSetupWizard` starts a not-yet-done `run-action` step itself
+ * when the step opens (`maybeAutoRunStep`), so there is no Run button to
+ * click. While the call is in flight the step shows a spinner and no
+ * button; when it ends the step shows its result note and a "Run again"
+ * button. That button appearing is the completion signal, and the result
+ * note must be the success one (verified live, 25 Nov 2026).
  *
  * TIMEOUT: partial live evidence, not a clean measurement. On a shared,
  * contended dev box the `seed` action (chart of accounts + VAT rates + BBV
@@ -604,7 +615,11 @@ async function selectOption(page: Page, label: string): Promise<void> {
 async function waitForActionComplete(
 	scope: ReturnType<Page['getByRole']>,
 ): Promise<void> {
-	await expect(scope.getByRole('button', { name: /run/i }).first()).toBeEnabled({
+	await expect(scope.getByRole('button', { name: /run again/i }).first()).toBeEnabled({
 		timeout: 120_000,
 	})
+	await expect(
+		scope.locator('.cn-wizard-dialog__step-body .notecard--error, .cn-wizard-dialog__step-body [class*="error"]'),
+		'the run-action step must not end with an error note',
+	).toHaveCount(0)
 }

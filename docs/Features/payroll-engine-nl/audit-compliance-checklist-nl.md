@@ -86,8 +86,6 @@ ruwe `LoonStrook`):
 
 - [ ] Werknemer + werkgever aandeel berekend tegen de afgesproken
       `pensioenPremiePctWerkgever` / `pensioenPremiePctWerknemer`
-- [ ] UPA-submission via `PayrollUpaHandoffService` per
-      pensioenuitvoerder maandelijks
 - [ ] Werknemer-aandeel ingehouden op netto; werkgever-aandeel in GL
       4020 (Pensioenpremie WG)
 
@@ -115,8 +113,6 @@ ruwe `LoonStrook`):
 - [ ] `vervaldagAfdracht` = laatste dag van de volgende maand
 - [ ] `sbrInstanceRef` gestempeld via `PayrollSbrConversionService`
       voordat de SBR-app verzendt
-- [ ] AP-transacties aangemaakt via `PayrollApArHandoffService`
-      (Belastingdienst en UWV)
 
 ## 12. GL-boeking (REQ-PAY-012)
 

@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+const { LibraryStylesheetCopy, withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
 const path = require('path')
 const fs = require('fs')
 const webpack = require('webpack')
@@ -29,6 +34,15 @@ webpackConfig.entry = {
 	adminSettings: {
 		import: path.join(__dirname, 'src', 'settings.js'),
 		filename: appId + '-settings.js',
+	},
+	// Every-page leaf bootstrap (ADR-019 / ADR-066), loaded through
+	// Util::addInitScript. It registers the two finance panels on the shared
+	// OpenRegister registry so they mount on ANOTHER app's object detail page,
+	// where Nextcloud never loads shillinq's own bundle. Without this entry
+	// the panels are dark everywhere they are actually wanted.
+	integrationInit: {
+		import: path.join(__dirname, 'src', 'integration-init.js'),
+		filename: appId + '-integration-init.js',
 	},
 	// REQ-WSW-004: embeddable booking self-service widget — script-tag
 	// bundle (`widget.js`). The npm package (widget/) and web-component
@@ -297,4 +311,12 @@ webpackConfig.optimization = {
 	},
 }
 
-module.exports = webpackConfig
+// nextcloud-vue's stylesheet goes to css/nextcloud-vue.css, which the app's
+// pages link (templates/index.php, templates/settings/admin.php) instead of a
+// bundle inserting ~1.1 MB of CSS text on every load.
+webpackConfig.plugins.push(new LibraryStylesheetCopy())
+
+// css-loader writes no source maps into the JavaScript, @nextcloud/vue's index
+// is side-effect free (one Nc* import no longer bundles every component), and
+// the chunks function also requires an initial chunk.
+module.exports = withLeanBundles(webpackConfig)

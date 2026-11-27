@@ -3,6 +3,9 @@
 /**
  * Commitment Materialisation Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-VPL-010 (Tasks 1+2) — thin event-glue that reacts to a PurchaseOrder
  * reaching `approved` or a Contract reaching `active`, and forwards to
  * {@see CommitmentMaterialisationService} to auto-materialise the matching
@@ -11,7 +14,8 @@
  * PO path is fail-closed: {@see InsufficientCommitmentBudgetException} is
  * allowed to propagate. OR dispatches `ObjectTransitionedEvent` /
  * `ObjectCreatedEvent` synchronously in the same write path as the
- * originating PurchaseOrderApprovalService::saveObject() call (no queue),
+ * write that approves the order (OpenRegister's approval chain advancing
+ * its `approve` transition, REQ-PAD-001; no queue),
  * so an uncaught exception here surfaces back to the approval caller as a
  * failed request — the mechanism REQ-VPL-010's "insufficient budget blocks
  * the approval, not just the invoice" scenario relies on. This is a
@@ -34,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -45,9 +46,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
-use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\CommitmentMaterialisationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -63,15 +64,25 @@ use Throwable;
  */
 class CommitmentMaterialisationListener implements IEventListener {
 	/**
+	 * The state at which each commitment source is materialised.
+	 *
+	 * @var array<string,string>
+	 */
+	private const TRIGGER_STATES = [
+		'purchaseorder' => 'approved',
+		'contract' => 'active',
+	];
+
+	/**
 	 * Construct the listener.
 	 *
-	 * @param CommitmentMaterialisationService $materialiser Thin materialisation service.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param CommitmentMaterialisationServiceInterface $materialiser Thin materialisation service.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly CommitmentMaterialisationService $materialiser,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly CommitmentMaterialisationServiceInterface $materialiser,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -89,7 +100,7 @@ class CommitmentMaterialisationListener implements IEventListener {
 	 * @listener-placement inline correctness — this handler must run INSIDE the
 	 *   write it observes, because the write's outcome depends on it. OR
 	 *   dispatches ObjectCreatedEvent synchronously in the same path as
-	 *   PurchaseOrderApprovalService::saveObject(), so an
+	 *   the write that approves the purchase order, so an
 	 *   InsufficientCommitmentBudgetException raised here propagates back to the
 	 *   approval caller and fails the request. That propagation IS the mechanism
 	 *   REQ-VPL-010 relies on for "insufficient budget blocks the approval, not
@@ -106,30 +117,56 @@ class CommitmentMaterialisationListener implements IEventListener {
 			return;
 		}
 
-		$schema = strtolower(trim($this->schemaResolver->schemaSlug(entity: $entity)));
+		$kind = $this->commitmentKind(schema: strtolower(trim($this->schemaResolver->schemaSlug(entity: $entity))));
 		$payload = $entity->getObject();
 		if (is_array($payload) === false) {
 			return;
 		}
 
-		$isPurchaseOrder = str_ends_with(haystack: $schema, needle: 'purchaseorder') === true
-			&& str_ends_with(haystack: $schema, needle: 'purchaseorderline') === false;
-		$isContract = $isPurchaseOrder === false && str_ends_with(haystack: $schema, needle: 'contract') === true;
-
-		if ($isPurchaseOrder === false && $isContract === false) {
+		if ($kind === null || $this->reachedState(event: $event, targetState: self::TRIGGER_STATES[$kind]) === false) {
 			return;
 		}
 
-		$targetState = 'active';
-		if ($isPurchaseOrder === true) {
-			$targetState = 'approved';
+		$this->materialise(kind: $kind, payload: $payload);
+
+	}//end handle()
+
+	/**
+	 * Which commitment source the schema is — a purchase order (not its
+	 * lines) or a contract — or null.
+	 *
+	 * @param string $schema The lower-cased, trimmed schema slug.
+	 *
+	 * @return key-of<self::TRIGGER_STATES>|null
+	 */
+	private function commitmentKind(string $schema): string|null {
+		if (str_ends_with(haystack: $schema, needle: 'purchaseorder') === true
+			&& str_ends_with(haystack: $schema, needle: 'purchaseorderline') === false
+		) {
+			return 'purchaseorder';
 		}
 
-		if ($this->reachedState(event: $event, targetState: $targetState) === false) {
-			return;
+		if (str_ends_with(haystack: $schema, needle: 'contract') === true) {
+			return 'contract';
 		}
 
-		if ($isPurchaseOrder === true) {
+		return null;
+
+	}//end commitmentKind()
+
+	/**
+	 * Materialise the commitment. A purchase order's budget denial
+	 * propagates (fail-closed); a contract failure is only logged.
+	 *
+	 * @param key-of<self::TRIGGER_STATES> $kind    The commitment source.
+	 * @param array<string, mixed>         $payload The object.
+	 *
+	 * @return void
+	 *
+	 * @throws InsufficientCommitmentBudgetException When a PO approval denies for insufficient budget (fail-closed).
+	 */
+	private function materialise(string $kind, array $payload): void {
+		if ($kind === 'purchaseorder') {
 			// Fail-closed: let InsufficientCommitmentBudgetException propagate.
 			$this->materialiser->materialiseFromPurchaseOrder(purchaseOrder: $payload);
 			return;
@@ -145,7 +182,7 @@ class CommitmentMaterialisationListener implements IEventListener {
 			);
 		}
 
-	}//end handle()
+	}//end materialise()
 
 	/**
 	 * Resolve the carrying OR entity for a created/transitioned object.
@@ -184,21 +221,31 @@ class CommitmentMaterialisationListener implements IEventListener {
 		}
 
 		if ($event instanceof ObjectCreatedEvent === true) {
-			$entity = $event->getObject();
-
-			$payload = null;
-			if ($entity !== null) {
-				$payload = $entity->getObject();
-			}
-
-			$status = '';
-			if (is_array($payload) === true) {
-				$status = (string)($payload['statusCode'] ?? ($payload['status'] ?? ''));
-			}
-
-			return $status === $targetState;
+			return $this->createdStatus(event: $event) === $targetState;
 		}
 
 		return false;
 	}//end reachedState()
+
+	/**
+	 * The status a record was created in (`statusCode`, else `status`), or ''.
+	 *
+	 * @param ObjectCreatedEvent $event The creation event.
+	 *
+	 * @return string
+	 */
+	private function createdStatus(ObjectCreatedEvent $event): string {
+		$entity = $event->getObject();
+
+		$payload = null;
+		if ($entity !== null) {
+			$payload = $entity->getObject();
+		}
+
+		if (is_array($payload) === false) {
+			return '';
+		}
+
+		return (string)($payload['statusCode'] ?? ($payload['status'] ?? ''));
+	}//end createdStatus()
 }//end class

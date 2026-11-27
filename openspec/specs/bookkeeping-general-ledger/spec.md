@@ -17,7 +17,6 @@ This specification defines the requirements for bookkeeping general ledger in th
 
 @e2e exclude unbuilt UI: GL index/detail pages not yet implemented
 
-
 ### REQ-GL-001: The system SHALL store general-ledger postings as a header (`GLTransaction`) plus N balanced lines (`GLLine`)
 
 The general ledger MUST be expressed as two registers declared in
@@ -348,3 +347,156 @@ current date, addressing market demand for asset repair reconciliation.
   `subLedgerType: "ar"`, `subLedgerRef: <repair-id>`
 - **THEN** the posting MUST succeed; **AND** the repair module MAY
   query GL lines by `subLedgerRef` for reconciliation reporting.
+
+### Requirement: A balanced transaction posts from the general ledger page (REQ-LPP-001)
+
+Shillinq SHALL register a lifecycle action handler under the name
+`evaluate-allocation-rules`, so that the `post` transition of
+`GLTransaction` completes when its `requires` guard passes. The transition
+MUST NOT abort because the declared action has no handler.
+
+@e2e exclude the post runs in the GLTransaction.post guard and actions, asserted through the real adapter by PostingGuardsThroughAdapterTest::testAMemorialEntryAsTheLedgerPageSendsItPosts, PostingStampsTest and StampPostingActionTest; the Post button is nextcloud-vue's generic lifecycle action
+
+#### Scenario: A bookkeeper posts a balanced memorial entry
+
+- GIVEN a bookkeeper on the general ledger detail page of a draft transaction with a debit line of EUR 1,200 on 4000 and a credit line of EUR 1,200 on 1100
+- WHEN they press Post transaction
+- THEN the transaction shows state posted
+- AND no error about an unresolved lifecycle action appears
+
+#### Scenario: A posted entry is locked, kept and on the audit trail
+
+- GIVEN the balanced memorial entry of the scenario above, dated 2026-09-20
+- WHEN the bookkeeper presses Post transaction
+- THEN the posted transaction is locked against edits and marked intact
+- AND it is kept until 2036-12-31
+- AND its audit trail names the bookkeeper and the moment of posting
+
+#### Scenario: An unbalanced transaction is still refused
+
+- GIVEN a draft transaction with debit EUR 1,200 and credit EUR 1,000
+- WHEN the bookkeeper presses Post transaction
+- THEN the transition is refused with the message that the entry is not balanced
+- AND the transaction stays in draft
+
+### Requirement: Active per-posting allocation rules run when a transaction posts (REQ-LPP-002)
+
+When `GLTransaction.post` runs, the `evaluate-allocation-rules` handler SHALL
+append the balanced `GLLine` pairs prescribed by every `AllocationRule` in
+state `active` with cadence `per-posting` whose `sourceAccountPattern`
+matches a line of the transaction. It SHALL write nothing when no rule
+matches, and it SHALL NOT append the same rule's lines twice for one
+transaction.
+
+@e2e exclude allocation runs in a lifecycle action, asserted by EvaluateAllocationRulesActionTest
+
+#### Scenario: A rent allocation splits a posted cost over two departments
+
+- GIVEN an active per-posting allocation rule that moves 40 percent of account 4000 to cost centre Burgerzaken and 60 percent to Sociaal Domein
+- WHEN a transaction with EUR 1,200 debit on 4000 posts
+- THEN the posted transaction carries allocation lines of EUR 480 and EUR 720 that balance
+- AND the transaction still balances in total
+
+#### Scenario: A transaction no rule matches posts unchanged
+
+- GIVEN no active rule matches account 1100
+- WHEN a transaction on 1100 and 1200 posts
+- THEN it posts with exactly the lines it had
+
+### Requirement: Posting works in every open fiscal year (REQ-LPP-003)
+
+A transaction whose date falls in any `FiscalYear` in state `open` SHALL
+post through the same path, with no limit on how many fiscal years are open
+at once.
+
+@e2e exclude any open fiscal year posts through the same guard, asserted by EvaluateAllocationRulesActionTest and PostingGuardsThroughAdapterTest; no year limit exists in the path
+
+#### Scenario: A bookkeeper books a late invoice in last year while this year is open
+
+- GIVEN fiscal years 2025 and 2026 both open
+- WHEN the bookkeeper posts a balanced transaction dated 2025-12-20
+- THEN the transaction posts and counts in the 2025 trial balance
+
+### Requirement: An issued sales invoice posts to the ledger (REQ-LPP-007)
+
+When an AR invoice is issued, shillinq SHALL write one balanced general ledger
+transaction debiting the receivables control account for the invoice total
+and crediting revenue and VAT per line.
+
+@e2e exclude posting is the lifecycle action's behaviour, asserted by MaterialiseGlTransactionActionTest::testAnIssuedSalesInvoiceBooksReceivablesRevenueAndVat
+
+#### Scenario: A bookkeeper issues an invoice and it reaches the ledger
+
+- GIVEN a draft AR invoice of EUR 1,000 plus EUR 210 VAT to Bakkerij Jansen
+- WHEN the bookkeeper presses Issue on the AR invoice detail page
+- THEN the general ledger shows one posted transaction with EUR 1,210 debit on receivables, EUR 1,000 credit on revenue and EUR 210 credit on VAT
+
+### Requirement: A balance account can be kept by open item (REQ-LOIC-001)
+
+`Account` SHALL carry `openItemManaged`, settable only on accounts of a
+balance type. The open items page SHALL list the uncleared posted lines of
+such an account.
+
+#### Scenario: A bookkeeper opens the kruisposten account
+
+- GIVEN account 1950 Kruisposten marked open-item managed with three uncleared posted lines
+- WHEN the bookkeeper opens the open items page for 1950
+- THEN the three lines are listed with date, description, side and amount
+
+### Requirement: A bookkeeper clears selected lines into a group (REQ-LOIC-002)
+
+The open items page SHALL let a person select posted lines of one account
+and clear them into a `ClearingGroup`, recording who and when, and SHALL let
+them undo a clearing. A line MUST NOT be in two groups at once.
+
+#### Scenario: Clearing a savings transfer
+
+- GIVEN the two EUR 5,000 lines of "Spaaropdracht 0903" on 1950
+- WHEN the bookkeeper selects both and presses Clear
+- THEN both lines leave the uncleared list and one group with balance EUR 0 is shown under cleared
+
+### Requirement: Groups that do not net to zero are listed (REQ-LOIC-003)
+
+The page SHALL list every group on the account whose signed balance is not
+zero, and every reopened group.
+
+#### Scenario: A group left EUR 250 short
+
+- GIVEN a group cleared with lines of EUR 5,000 debit and EUR 4,750 credit
+- WHEN the bookkeeper views groups not netting to zero on 1950
+- THEN that group is listed with a balance of EUR 250
+
+### Requirement: The page suggests exact pairs (REQ-LOIC-004)
+
+The page SHALL suggest pairs of uncleared lines with equal amounts, opposite
+sides and the same reference, and SHALL NOT clear any suggestion without a
+person confirming it.
+
+#### Scenario: A suggestion is confirmed
+
+- GIVEN the two EUR 5,000 lines are uncleared
+- WHEN the bookkeeper opens the suggestions on 1950
+- THEN the pair is suggested
+- AND nothing is cleared until they press Clear on the suggestion
+
+### Requirement: Journal entry lines carry dimension codes onto the ledger (REQ-LJD-001)
+
+A `JournalEntry` line SHALL accept `costCenterCode`, `costCarrierCode` and `projectCode`. Posting the entry SHALL copy each code present on a line onto the `GLLine` made from it.
+
+#### Scenario: Humaniq's payroll journal keeps its cost centres
+
+- GIVEN humaniq's draft payroll journal with a gross debit of 6,000.00 on CC-100 and 4,000.00 on CC-200
+- WHEN a bookkeeper posts it
+- THEN the ledger holds two gross lines with `costCenterCode` CC-100 and CC-200
+- AND the cost centre report shows 6,000.00 and 4,000.00
+
+### Requirement: Posting refuses an unknown or inactive code (REQ-LJD-002)
+
+The journal entry post guard SHALL refuse the post when a line's code names no active `AnalyticalDimension` of the matching type in the entry's administration on the entry date, and SHALL name the line and the code in the refusal. Lines without codes SHALL post as before.
+
+#### Scenario: A cost centre humaniq knows but shillinq does not
+
+- GIVEN a draft journal entry with a line on cost centre KP-900, which no dimension in the administration carries
+- WHEN a bookkeeper posts it
+- THEN the post is refused with "Line 3: cost centre KP-900 does not exist or is not active in this administration"
+- AND the entry stays a draft

@@ -44,6 +44,163 @@ const STATE_SYNCING = 'syncing'
 const STATE_SYNCED = 'synced'
 const STATE_FAILED = 'failed'
 
+/**
+ * Apply one signed stock change for an operation.
+ *
+ * @param {object} run The db, op and timestamp of the submit.
+ * @param {object} change The location and the signed delta.
+ * @return {Promise<number>} The new local quantity.
+ */
+function applyChange(run, change) {
+	return applyDelta(
+		run.db,
+		run.op.sku,
+		change.location,
+		change.delta,
+		run.timestamp,
+	)
+}
+
+// The optimistic local stock mutation per operation type. Each takes the
+// submit's { db, op, timestamp } and resolves to the new local quantity.
+const LOCAL_MUTATIONS = new Map([
+	[
+		'receive',
+		(run) =>
+			applyChange(run, {
+				location: run.op.location,
+				delta: Number(run.op.quantity),
+			}),
+	],
+	[
+		'pick',
+		(run) =>
+			applyChange(run, {
+				location: run.op.location,
+				delta: -Math.abs(Number(run.op.quantity)),
+			}),
+	],
+	['transfer', (run) => applyTransfer(run)],
+	['count', (run) => applyCount(run)],
+])
+
+/**
+ * Move the quantity out of the source and into the destination location.
+ *
+ * @param {object} run The db, op and timestamp of the submit.
+ * @return {Promise<number>} The new quantity at the destination.
+ */
+async function applyTransfer(run) {
+	await applyChange(run, {
+		location: run.op.location,
+		delta: -Math.abs(Number(run.op.quantity)),
+	})
+	return applyChange(run, {
+		location: run.op.toLocation,
+		delta: Math.abs(Number(run.op.quantity)),
+	})
+}
+
+/**
+ * Read the counted location; when reconciling, adjust it to the physical
+ * quantity.
+ *
+ * @param {object} run The db, op and timestamp of the submit.
+ * @return {Promise<number>} The reconciled or the system quantity.
+ */
+async function applyCount(run) {
+	const systemQty = await readStockQuantity(run.db, run.op.sku, run.op.location)
+	if (run.op.reconcile !== true) {
+		return systemQty
+	}
+	return applyChange(run, {
+		location: run.op.location,
+		delta: Number(run.op.physicalQuantity) - systemQty,
+	})
+}
+
+/**
+ * The number in a field, or null when the field is null or undefined.
+ *
+ * @param {number|string|null|undefined} value The raw field.
+ * @return {number|null} The number, or null.
+ */
+function numberOrNull(value) {
+	return value != null ? Number(value) : null
+}
+
+/**
+ * The pendingOps row for a submitted operation.
+ *
+ * @param {object} run The op, transactionId and timestamp of the submit.
+ * @return {object} The row to insert.
+ */
+function pendingOpRow(run) {
+	const { op } = run
+	return {
+		id: `op-${run.transactionId}`,
+		transactionId: run.transactionId,
+		type: op.type,
+		sku: op.sku,
+		location: op.location,
+		toLocation: op.toLocation,
+		orderLineId: op.orderLineId,
+		quantity: numberOrNull(op.quantity),
+		physicalQuantity: numberOrNull(op.physicalQuantity),
+		reconcile: op.reconcile === true,
+		timestamp: run.timestamp,
+		synced: false,
+	}
+}
+
+/**
+ * Start a sync cycle without waiting for it, when the scheduler can.
+ *
+ * @param {object|null} scheduler The store's sync scheduler.
+ */
+function triggerSyncInBackground(scheduler) {
+	if (scheduler && typeof scheduler.triggerNow === 'function') {
+		scheduler.triggerNow().catch(() => {
+			// Failures are surfaced via applyStatus().
+		})
+	}
+}
+
+/**
+ * Take the rejected operations of a sync summary, and surface its LWW
+ * overwrites as a non-blocking conflict toast.
+ *
+ * @param {object} store The scanner store.
+ * @param {object} status Status payload from createSyncScheduler.
+ */
+function applySummary(store, status) {
+	const summary = status.summary
+	if (!summary) {
+		return
+	}
+	if (Array.isArray(summary.rejected)) {
+		store.rejected = summary.rejected
+	}
+	if (summary.applied > 0) {
+		store.conflicts.push({
+			at: status.lastSyncedAt || new Date().toISOString(),
+			applied: summary.applied,
+			kept: summary.kept,
+		})
+	}
+}
+
+/** The badge text of each sync state that is not offline. */
+const STATUS_LABELS = {
+	[STATE_SYNCED]: (state) =>
+		state.lastSyncedAt ? `Synced ${state.lastSyncedAt}` : 'Synced',
+	[STATE_SYNCING]: () => 'Syncing…',
+	[STATE_PENDING]: (state) =>
+		state.pendingCount > 0 ? `Pending (${state.pendingCount})` : 'Pending',
+	[STATE_FAILED]: (state) =>
+		`Sync failed; retry in ${Math.ceil((state.retryInMs || 0) / 1000)}s`,
+}
+
 export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanner', {
 	state: () => ({
 		db: null,
@@ -63,23 +220,11 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 	getters: {
 		isOnline: () =>
 			typeof navigator === 'undefined' || navigator.onLine !== false,
-		statusLabel: (state) => {
-			if (state.syncState === STATE_SYNCED) {
-				return state.lastSyncedAt ? `Synced ${state.lastSyncedAt}` : 'Synced'
-			}
-			if (state.syncState === STATE_SYNCING) {
-				return 'Syncing…'
-			}
-			if (state.syncState === STATE_PENDING) {
-				return state.pendingCount > 0
-					? `Pending (${state.pendingCount})`
-					: 'Pending'
-			}
-			if (state.syncState === STATE_FAILED) {
-				return `Sync failed; retry in ${Math.ceil((state.retryInMs || 0) / 1000)}s`
-			}
-			return 'Offline'
-		},
+		statusLabel: (state) =>
+			Object.hasOwn(STATUS_LABELS, state.syncState)
+				? STATUS_LABELS[state.syncState](state)
+				: 'Offline',
+
 		statusColor: (state) => {
 			if (state.syncState === STATE_SYNCED) {
 				return 'green'
@@ -145,6 +290,7 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 		 *
 		 * @param {object} status Status payload from createSyncScheduler.
 		 * @return {Promise<void>} Resolves once derived state is refreshed.
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async applyStatus(status) {
 			this.syncState = status.state || STATE_PENDING
@@ -153,19 +299,7 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 			}
 			this.lastError = status.error || null
 			this.retryInMs = status.retryInMs || 0
-			if (status.summary && Array.isArray(status.summary.rejected)) {
-				this.rejected = status.summary.rejected
-			}
-			if (status.summary && (status.summary.applied || status.summary.kept)) {
-				// LWW overwrites are surfaced as non-blocking conflict toasts.
-				if (status.summary.applied > 0) {
-					this.conflicts.push({
-						at: status.lastSyncedAt || new Date().toISOString(),
-						applied: status.summary.applied,
-						kept: status.summary.kept,
-					})
-				}
-			}
+			applySummary(this, status)
 			await this.refreshPendingCount()
 		},
 
@@ -194,91 +328,27 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 		 * @param {object} op Operation payload.
 		 * @return {Promise<{transactionId:string, localQuantity:number|null}>}
 		 *   Outcome metadata.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async submitOperation(op) {
 			if (!this.ready || !this.db) {
 				throw new Error('Inventory scanner store not ready')
 			}
-			const transactionId = newTransactionId()
-			const timestamp = new Date().toISOString()
-			const id = `op-${transactionId}`
-
-			let localQuantity = null
-			if (op.type === 'receive') {
-				localQuantity = await applyDelta(
-					this.db,
-					op.sku,
-					op.location,
-					Number(op.quantity),
-					timestamp,
-				)
-			} else if (op.type === 'pick') {
-				localQuantity = await applyDelta(
-					this.db,
-					op.sku,
-					op.location,
-					-Math.abs(Number(op.quantity)),
-					timestamp,
-				)
-			} else if (op.type === 'transfer') {
-				await applyDelta(
-					this.db,
-					op.sku,
-					op.location,
-					-Math.abs(Number(op.quantity)),
-					timestamp,
-				)
-				localQuantity = await applyDelta(
-					this.db,
-					op.sku,
-					op.toLocation,
-					Math.abs(Number(op.quantity)),
-					timestamp,
-				)
-			} else if (op.type === 'count') {
-				const systemQty = await readStockQuantity(
-					this.db,
-					op.sku,
-					op.location,
-				)
-				if (op.reconcile === true) {
-					localQuantity = await applyDelta(
-						this.db,
-						op.sku,
-						op.location,
-						Number(op.physicalQuantity) - systemQty,
-						timestamp,
-					)
-				} else {
-					localQuantity = systemQty
-				}
+			const run = {
+				db: this.db,
+				op,
+				transactionId: newTransactionId(),
+				timestamp: new Date().toISOString(),
 			}
+			const mutate = LOCAL_MUTATIONS.get(op.type)
+			const localQuantity = mutate ? await mutate(run) : null
 
-			await insertPendingOp(this.db, {
-				id,
-				transactionId,
-				type: op.type,
-				sku: op.sku,
-				location: op.location,
-				toLocation: op.toLocation,
-				orderLineId: op.orderLineId,
-				quantity: op.quantity != null ? Number(op.quantity) : null,
-				physicalQuantity:
-					op.physicalQuantity != null ? Number(op.physicalQuantity) : null,
-				reconcile: op.reconcile === true,
-				timestamp,
-				synced: false,
-			})
-
+			await insertPendingOp(this.db, pendingOpRow(run))
 			await this.refreshPendingCount()
+			triggerSyncInBackground(this.scheduler)
 
-			if (this.scheduler && typeof this.scheduler.triggerNow === 'function') {
-				this.scheduler.triggerNow().catch(() => {
-					// Failures are surfaced via applyStatus().
-				})
-			}
-
-			return { transactionId, localQuantity }
+			return { transactionId: run.transactionId, localQuantity }
 		},
 
 		/**

@@ -373,6 +373,14 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 			public array $writes = [];
 
 			/**
+			 * Calendar-object names whose write is refused, as Nextcloud 34
+			 * refuses a create for a UID the calendar already holds.
+			 *
+			 * @var array<int, string>
+			 */
+			public array $refusedNames = [];
+
+			/**
 			 * The pre-existing UIDs surfaced via search().
 			 *
 			 * @var array<int, string>
@@ -407,6 +415,10 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 			 * @return void
 			 */
 			public function createFromString(string $name, string $calendarData): void {
+				if (in_array($name, $this->refusedNames, true) === true) {
+					throw new \RuntimeException('Calendar object with uid already exists in this calendar collection.');
+				}
+
 				$this->writes[] = [$name, $calendarData];
 
 			}//end createFromString()
@@ -788,6 +800,125 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 	}//end testSubmittedFilingRemovesItsVevent()
 
 	/**
+	 * A draft VatReturn, the return BtwAangifteDetail shows, publishes its
+	 * BTW deadline, and the VEVENT carries the X-OPENREGISTER-* properties
+	 * of the return so the return's calendar leaf lists it. A BtwAangifte of
+	 * the same administration and period publishes nothing of its own; one
+	 * of another administration still does.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	public function testVatReturnDeadlineIsPublishedAndLinkedToTheReturn(): void {
+		$return = [
+			'@self' => ['id' => '6f1c2d9e-0000-4000-8000-000000000001', 'register' => '7', 'schema' => '42'],
+			'administrationId' => 'ADM-1',
+			'periodType' => 'quarter',
+			'periodStart' => '2026-04-01',
+			'periodEnd' => '2026-06-30',
+			'state' => 'draft',
+		];
+		$sameReturn  = $this->vatReturn(
+			overrides: ['administrationId' => 'ADM-1', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-same']]
+		);
+		$otherReturn = $this->vatReturn(
+			overrides: ['administrationId' => 'ADM-2', 'periodNumber' => 2, 'endDate' => '2026-06-30', '@self' => ['slug' => 'btw-other']]
+		);
+
+		$service = $this->buildService(
+			recordsBySchema: ['VatReturn' => [$return], 'BtwAangifte' => [$sameReturn, $otherReturn]],
+		);
+
+		$result = $service->publishForUser(userId: 'alice');
+
+		self::assertSame(expected: 'ok', actual: $result['status']);
+		self::assertSame(expected: 2, actual: $result['published']);
+
+		$writes = $this->calendarStub->writes;
+		self::assertCount(expectedCount: 2, haystack: $writes);
+		$vevent = $writes[0][1];
+		self::assertStringContainsString(needle: 'UID:btw-filing:6f1c2d9e-0000-4000-8000-000000000001', haystack: $vevent);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2026-Q2', haystack: $vevent);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20260731', haystack: $vevent);
+		$link = "X-OPENREGISTER-REGISTER:7\r\nX-OPENREGISTER-SCHEMA:42\r\nX-OPENREGISTER-OBJECT:6f1c2d9e-0000-4000-8000-000000000001\r\n";
+		self::assertStringContainsString(needle: $link, haystack: $vevent);
+
+		self::assertStringContainsString(needle: 'UID:btw-filing:btw-other', haystack: $writes[1][1]);
+		self::assertStringNotContainsString(
+			needle: 'X-OPENREGISTER',
+			haystack: $writes[1][1],
+			message: 'a row without its uuid and schema is not linked'
+		);
+		self::assertStringNotContainsString(needle: 'btw-same', haystack: $writes[0][1] . $writes[1][1]);
+
+	}//end testVatReturnDeadlineIsPublishedAndLinkedToTheReturn()
+
+	/**
+	 * A write the calendar refuses (Nextcloud 34 answers a conflict for a UID
+	 * it already holds) is skipped: the other deadlines still publish and
+	 * the publication is still ok.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	public function testARefusedWriteSkipsThatEventOnly(): void {
+		$service = $this->buildService(
+			recordsBySchema: [
+				'BtwAangifte' => [
+					$this->vatReturn(),
+					$this->vatReturn(overrides: ['@self' => ['slug' => 'vatreturn-2026-Q2'], 'periodNumber' => 2, 'endDate' => '2026-06-30']),
+				],
+			],
+		);
+		$this->calendarStub->refusedNames = ['shillinq-btw-filing-vatreturn-2026-q1.ics'];
+
+		$result = $service->publishForUser(userId: 'alice');
+
+		self::assertSame(expected: 'ok', actual: $result['status']);
+		self::assertSame(expected: 1, actual: $result['published']);
+		self::assertCount(expectedCount: 1, haystack: $this->calendarStub->writes);
+		self::assertStringContainsString(needle: 'UID:btw-filing:vatreturn-2026-Q2', haystack: $this->calendarStub->writes[0][1]);
+
+	}//end testARefusedWriteSkipsThatEventOnly()
+
+	/**
+	 * A VatReturn's period end and label come from its year and month,
+	 * quarter or year when it has no periodEnd, and from its periodEnd when
+	 * it has no year; a submitted one, or one without either, publishes nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-integration-leaves-consume/tasks.md
+	 */
+	public function testVatReturnPeriodComesFromItsNumbersOrItsEnd(): void {
+		$service = $this->buildService(
+			recordsBySchema: [
+				'VatReturn' => [
+					['@self' => ['slug' => 'vr-m3'], 'periodType' => 'month', 'periodYear' => 2026, 'periodMonth' => 3],
+					['@self' => ['slug' => 'vr-y'], 'periodType' => 'year', 'periodYear' => 2025, 'state' => 'draft'],
+					['@self' => ['slug' => 'vr-end'], 'periodType' => 'quarter', 'periodEnd' => '2026-09-30', 'state' => 'draft'],
+					['@self' => ['slug' => 'vr-sent'], 'periodType' => 'quarter', 'periodYear' => 2026, 'periodQuarter' => 1, 'state' => 'submitted'],
+					['@self' => ['slug' => 'vr-none'], 'periodType' => 'quarter', 'state' => 'draft'],
+				],
+			],
+		);
+
+		$service->publishForUser(userId: 'alice');
+
+		$events = array_map(static fn (array $write): string => $write[1], $this->calendarStub->writes);
+		self::assertCount(expectedCount: 3, haystack: $events);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2026-03', haystack: $events[0]);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20260430', haystack: $events[0]);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2025', haystack: $events[1]);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20260131', haystack: $events[1]);
+		self::assertStringContainsString(needle: 'SUMMARY:BTW-aangifte 2026-Q3', haystack: $events[2]);
+		self::assertStringContainsString(needle: 'DTSTART;VALUE=DATE:20261031', haystack: $events[2]);
+
+	}//end testVatReturnPeriodComesFromItsNumbersOrItsEnd()
+
+	/**
 	 * REQ-CDC-002 — ICP and VPB filing deadlines are derived from the
 	 * existing period data (ICP: last day of month after the period;
 	 * VPB: the TaxDeadline's own deadlineDate).
@@ -1103,4 +1234,26 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 		self::assertSame([], $this->notified);
 
 	}//end testReminderRespectsLeadTimeWindow()
+	/**
+	 * A moved due date re-arms the reminder and entries that left the open
+	 * set are pruned; an unchanged map is not rewritten, and a past or
+	 * unreadable due date raises nothing.
+	 *
+	 * @return void
+	 */
+	public function testSentMapReArmsPrunesAndStaysUntouched(): void {
+		$key = 'deadline_reminders_sent';
+		$this->userPrefs['alice'][$key] = json_encode(['btw-filing:vatreturn-2026-Q1' => '2026-04-29', 'gone:uid' => '2026-01-01', 7 => 'x']);
+		$service = $this->buildService(recordsBySchema: ['BtwAangifte' => [$this->vatReturn()]]);
+
+		self::assertSame(1, $service->dispatchDueReminders(now: new DateTimeImmutable('2026-04-23')));
+		self::assertSame(['btw-filing:vatreturn-2026-Q1' => '2026-04-30'], json_decode($this->userPrefs['alice'][$key], true));
+
+		$this->userPrefs['alice'][$key] = '{"btw-filing:vatreturn-2026-Q1":  "2026-04-30"}';
+		self::assertSame(0, $service->dispatchDueReminders(now: new DateTimeImmutable('2026-04-24')));
+		self::assertSame(0, $service->dispatchDueReminders(now: new DateTimeImmutable('2026-05-01')));
+		self::assertSame('{"btw-filing:vatreturn-2026-Q1":  "2026-04-30"}', $this->userPrefs['alice'][$key]);
+		self::assertCount(1, $this->notified);
+
+	}//end testSentMapReArmsPrunesAndStaysUntouched()
 }//end class

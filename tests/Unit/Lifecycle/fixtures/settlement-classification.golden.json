@@ -1,0 +1,177 @@
+{
+    "noId": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "noReceipts": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "complete": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "mixed": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "SettlementGuard: mixed settlement mode — denying submit",
+                {
+                    "claimId": "cl-1",
+                    "claimMode": "pass-through",
+                    "receiptMode": "reimbursable"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "claimUnclassified": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "missingCustomer": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "SettlementGuard: pass-through receipt missing customer or AR account — denying submit",
+                {
+                    "claimId": "cl-1",
+                    "receiptId": "r-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "missingAccount": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "SettlementGuard: pass-through receipt missing customer or AR account — denying submit",
+                {
+                    "claimId": "cl-1",
+                    "receiptId": "r-3"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "nonArrayAnswer": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": true,
+        "logs": [
+            [
+                "warning",
+                "SettlementGuard: failed to load child receipts",
+                {
+                    "claimId": "cl-1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            {
+                "findAll": {
+                    "filters": {
+                        "claimId": "cl-1"
+                    }
+                }
+            }
+        ]
+    },
+    "noObjectService": {
+        "result": true,
+        "logs": [
+            [
+                "debug",
+                "SettlementGuard: OpenRegister ObjectService unavailable",
+                {
+                    "exception": "no OR"
+                }
+            ]
+        ],
+        "calls": []
+    }
+}

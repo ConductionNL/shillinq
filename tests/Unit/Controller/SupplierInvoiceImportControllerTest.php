@@ -24,8 +24,11 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Controller\SupplierInvoiceImportController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\AppFramework\Http;
@@ -115,6 +118,7 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		parent::setUp();
 		$this->request = $this->createMock(IRequest::class);
 		$this->service = $this->createMock(SupplierInvoiceService::class);
+		$this->service->method('resolveSupplier')->willReturnArgument(1);
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -140,7 +144,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			session: $this->session,
 			logger: $this->logger,
-			objectService: $this->makeObjectServiceStub(),
+			objectService: $objectService = $this->makeObjectServiceStub(),
+			checks: $this->checksOver($objectService),
 		);
 
 	}//end setUp()
@@ -162,8 +167,23 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$objectService->method('setSchema')->willReturnSelf();
 		$objectService->method('findAll')->willReturnCallback(
 			function (array $config = []): array {
-				$this->recordFilters((array)($config['filters'] ?? []));
-				return $this->stubRowsForTest();
+				$filters = (array)($config['filters'] ?? []);
+				$this->recordFilters($filters);
+				// Answer only rows that match every filter, as OpenRegister does.
+				return array_values(
+					array_filter(
+						$this->stubRowsForTest(),
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
+
+							return true;
+						}
+					)
+				);
 			}
 		);
 		$objectService->method('saveObject')->willReturnCallback(
@@ -239,6 +259,7 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			session: $session,
 			logger: $this->logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
+			checks: $this->checksOver($this->createMock(ObjectServiceInterface::class)),
 		);
 
 		$response = $controller->import();
@@ -288,7 +309,7 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			['invoiceNumber' => 'INV-DUP', 'supplierId' => 'SUP-1']
 		);
 		// The pre-check finds an existing record.
-		$this->stubRows = [['id' => 'existing', 'invoiceNumber' => 'INV-DUP', 'supplierId' => 'SUP-1']];
+		$this->stubRows = [['id' => 'existing', 'invoiceNumber' => 'INV-DUP', 'supplierId' => 'SUP-1', 'administrationId' => 'adm-1']];
 		$this->service->expects(self::never())->method('ingestUBLInvoice');
 
 		$response = $this->controller->import();
@@ -391,8 +412,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$csv = "supplier,invoiceNumber,invoiceDate,amount,vatAmount\n"
 			. "SUP-1,INV-DUP,2026-01-01,121.00,21.00\n";
 		$this->withJsonBody($csv, 'csv');
-		// Pre-check finds the row already exists.
-		$this->stubRows = [['id' => 'existing']];
+		// Pre-check finds the row already exists: same number, same stated supplier.
+		$this->stubRows = [['id' => 'existing', 'invoiceNumber' => 'INV-DUP', 'supplierIdentifier' => 'SUP-1', 'administrationId' => 'adm-1']];
 
 		$response = $this->controller->import();
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
@@ -400,6 +421,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$data = $response->getData();
 		self::assertSame(0, $data['imported']);
 		self::assertSame(1, $data['skipped']);
+		// REQ-PSII-003: the skipped row is reported by its number.
+		self::assertSame([['invoiceNumber' => 'INV-DUP', 'reason' => 'duplicate', 'duplicateOfId' => 'existing']], $data['skippedRows']);
 
 	}//end testCsvImportSkipsDuplicateRow()
 
@@ -416,4 +439,162 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 
 	}//end testEmptyUploadReturns422()
 
+	/**
+	 * The shared checks over the controller's object service stub.
+	 *
+	 * @param ObjectServiceInterface $objectService The stub.
+	 *
+	 * @return SupplierInvoiceChecks
+	 */
+	private function checksOver(ObjectServiceInterface $objectService): SupplierInvoiceChecks {
+		$settings = $this->createStub(RegisterLocation::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+
+		return new SupplierInvoiceChecks($objectService, $settings);
+
+	}//end checksOver()
+	/**
+	 * F2-S7: an import from the review dialog lands as a draft awaiting confirmation.
+	 *
+	 * @return void
+	 */
+	public function testCsvImportForReviewIsADraft(): void {
+		$this->withReviewBody("supplier,invoiceNumber,invoiceDate,amount,vatAmount\nSUP-1,INV-100,2026-01-01,121.00,21.00\n", 'csv');
+
+		$data = $this->controller->import()->getData();
+
+		self::assertSame('pending-review', $data['records'][0]['extractionStatus']);
+		self::assertSame('received', $data['records'][0]['statusCode']);
+
+	}//end testCsvImportForReviewIsADraft()
+
+	/**
+	 * F2-S7: a UBL import from the review dialog asks the service for a draft.
+	 *
+	 * @return void
+	 */
+	public function testUblImportForReviewAsksForADraft(): void {
+		$this->withReviewBody('<Invoice/>', 'ubl');
+		$this->service->method('parseUblInvoice')->willReturn(['invoiceNumber' => 'INV-1', 'supplierId' => 'SUP-1']);
+		$this->service->expects(self::once())
+			->method('ingestUBLInvoice')
+			->with('adm-1', '<Invoice/>', ['reviewDraft' => true])
+			->willReturn(['id' => 'si-1']);
+
+		self::assertSame(Http::STATUS_OK, $this->controller->import()->getStatus());
+
+	}//end testUblImportForReviewAsksForADraft()
+
+	/**
+	 * F2-S7: the importer discards their own unconfirmed import.
+	 *
+	 * @return void
+	 */
+	public function testDiscardDeletesYourOwnDraft(): void {
+		$deleted = [];
+		$controller = $this->discardController(
+			['id' => 'si-1', 'administrationId' => 'adm-1', 'extractionStatus' => 'pending-review', 'owner' => 'alice'],
+			$deleted
+		);
+
+		self::assertSame(Http::STATUS_NO_CONTENT, $controller->discard('si-1')->getStatus());
+		self::assertSame([['si-1', 'shillinq', 'SupplierInvoice']], $deleted);
+
+	}//end testDiscardDeletesYourOwnDraft()
+
+	/**
+	 * F2-S7: someone else's draft, or a confirmed invoice, is not discarded.
+	 *
+	 * @return void
+	 */
+	public function testDiscardRefusesAnotherOwnerOrAConfirmedInvoice(): void {
+		$deleted = [];
+		$others = $this->discardController(
+			['id' => 'si-1', 'administrationId' => 'adm-1', 'extractionStatus' => 'pending-review', 'owner' => 'bob'],
+			$deleted
+		);
+		self::assertSame(Http::STATUS_CONFLICT, $others->discard('si-1')->getStatus());
+
+		$confirmed = $this->discardController(
+			['id' => 'si-2', 'administrationId' => 'adm-1', 'extractionStatus' => 'confirmed', 'owner' => 'alice'],
+			$deleted
+		);
+		self::assertSame(Http::STATUS_CONFLICT, $confirmed->discard('si-2')->getStatus());
+		self::assertSame([], $deleted);
+
+	}//end testDiscardRefusesAnotherOwnerOrAConfirmedInvoice()
+
+	/**
+	 * F2-S7: an invoice of another administration reads as not found.
+	 *
+	 * @return void
+	 */
+	public function testDiscardMasksAnotherAdministration(): void {
+		$deleted = [];
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('canAccess')->willReturn(false);
+		$controller = $this->discardController(
+			['id' => 'si-1', 'administrationId' => 'adm-2', 'extractionStatus' => 'pending-review', 'owner' => 'alice'],
+			$deleted,
+			$context
+		);
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $controller->discard('si-1')->getStatus());
+		self::assertSame([], $deleted);
+
+	}//end testDiscardMasksAnotherAdministration()
+
+	/**
+	 * Request params for an upload from the review dialog.
+	 *
+	 * @param string $contents The file contents.
+	 * @param string $format   ubl or csv.
+	 *
+	 * @return void
+	 */
+	private function withReviewBody(string $contents, string $format): void {
+		$this->request->method('getUploadedFile')->willReturn([]);
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $key, mixed $default = null): mixed => match ($key) {
+				'format' => $format,
+				'review' => 'true',
+				default => $default,
+			}
+		);
+		$this->request->method('getParams')->willReturn(['contents' => $contents, 'format' => $format, 'review' => 'true']);
+
+	}//end withReviewBody()
+
+	/**
+	 * A controller over one stored invoice that records deletes.
+	 *
+	 * @param array<string,mixed>                         $invoice The stored invoice.
+	 * @param list<string>                                $deleted Deleted ids (by reference).
+	 * @param AdministrationContextService&MockObject|null $context The administration context.
+	 *
+	 * @return SupplierInvoiceImportController
+	 */
+	private function discardController(array $invoice, array &$deleted, ?AdministrationContextService $context=null): SupplierInvoiceImportController {
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('find')->willReturn(new ObjectEntityStub(payload: $invoice));
+		$objectService->method('deleteObject')->willReturnCallback(
+			static function (ObjectDeletion $deletion) use (&$deleted): bool {
+				$deleted[] = [$deletion->uuid, $deletion->target->register, $deletion->target->schema];
+				return true;
+			}
+		);
+
+		return new SupplierInvoiceImportController(
+			request: $this->request,
+			supplierInvoiceService: $this->service,
+			administrationContext: ($context ?? $this->administrationContext),
+			session: $this->session,
+			logger: $this->logger,
+			objectService: $objectService,
+			checks: $this->checksOver($objectService),
+		);
+
+	}//end discardController()
 }//end class

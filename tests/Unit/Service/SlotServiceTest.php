@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SlotService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICacheFactory;
@@ -49,9 +49,9 @@ class SlotServiceTest extends TestCase {
 	/**
 	 * Settings stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Cache factory stub (always returns "no cache" so tests stay deterministic).
@@ -89,7 +89,7 @@ class SlotServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->cacheFactory = $this->createMock(ICacheFactory::class);
 		$this->time = $this->createMock(ITimeFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -99,7 +99,7 @@ class SlotServiceTest extends TestCase {
 
 		$this->service = new SlotService(
 			container: $this->container,
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			cacheFactory: $this->cacheFactory,
 			time: $this->time,
 			logger: $this->logger,
@@ -197,7 +197,7 @@ class SlotServiceTest extends TestCase {
 		$time->method('getTime')->willReturn(strtotime('2026-05-22T09:30:00Z'));
 		$service = new SlotService(
 			container: $this->container,
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			cacheFactory: $this->cacheFactory,
 			time: $time,
 			logger: $this->logger,

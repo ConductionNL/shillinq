@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 use OCP\Util;
 
 $appId = OCA\Shillinq\AppInfo\Application::APP_ID;
@@ -12,6 +17,7 @@ $appId = OCA\Shillinq\AppInfo\Application::APP_ID;
 // `adminSettings` shares the framework chunks with `main` (that is what
 // `minChunks: 2` selects for), so this template has to load them too. See the
 // longer note in templates/index.php.
+Util::addStyle($appId, 'nextcloud-vue');
 Util::addScript($appId, $appId . '-shared-vendor');
 Util::addScript($appId, $appId . '-shared-nc-vue');
 Util::addScript($appId, $appId . '-settings');

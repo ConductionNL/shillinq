@@ -3,6 +3,9 @@
 /**
  * Shillinq Portal Payment Initiation Controller (portal-payment-initiation, A6 receiver).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The receiving end of portaliq's server-to-server `pay` action forward
  * (ADR-046 contract v2, A6 — see `PortalContributionProvider`'s `customer`
  * manifest). The route is `#[PublicPage]` + `#[NoCSRFRequired]` because the
@@ -28,18 +31,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Portal\PortalAssertionVerifier;
-use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
+use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
+use OCA\Shillinq\Kernel\Model\PortalPaymentSessionResult;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -55,29 +56,33 @@ use Throwable;
  * session for the asserted subject's own invoice.
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PortalPaymentInitiationController extends Controller {
 	/**
-	 * The audience this receiver serves — any other audience is refused
-	 * before any OpenRegister read (REQ-SPPI-002).
+	 * The audiences this receiver serves: customers, and parents paying a
+	 * school contribution (REQ-SCON-010). Any other audience is refused before
+	 * any OpenRegister read (REQ-SPPI-002).
+	 *
+	 * @var array<int, string>
 	 */
-	private const AUDIENCE_CUSTOMER = 'customer';
+	private const PAYING_AUDIENCES = ['customer', 'parent'];
 
 	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
-	 * @param PortalPaymentSessionService $sessionService Resolves ownership + mints the payment session.
+	 * @param PortalAssertionVerifierInterface $verifier Verifies the X-Portal-Subject assertion.
+	 * @param PortalPaymentSessionServiceInterface $sessionService Resolves ownership + mints the payment session.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PortalAssertionVerifier $verifier,
-		private readonly PortalPaymentSessionService $sessionService,
+		private readonly PortalAssertionVerifierInterface $verifier,
+		private readonly PortalPaymentSessionServiceInterface $sessionService,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -87,7 +92,14 @@ class PortalPaymentInitiationController extends Controller {
 	 * Declared in `PortalContributionProvider` as endpoint-forward action
 	 * `pay`; portaliq forwards `POST /apps/shillinq/api/portal/payments/initiate`
 	 * with the portal client's JSON body `{"invoiceId": "<uuid-or-slug>"}` and
-	 * the signed assertion header.
+	 * the signed assertion header. A `requestPayments` row sends
+	 * `{"paymentRequestId": "<uuid>"}` instead (action `pay-request`), for a
+	 * payment request that stands without an invoice (REQ-SPPI-008).
+	 *
+	 * portaliq's guest page sends `{"payToken": "<token>"}` from an invoice's
+	 * signed pay link instead, with no assertion header: the token is then the
+	 * credential, and a paid invoice answers 200 `{status: "paid"}` with no
+	 * checkout (REQ-RPL-006).
 	 *
 	 * Response contract: 200 `{checkoutUrl}` on success; 401 missing/invalid
 	 * assertion; 403 wrong audience OR the target is foreign-owned,
@@ -99,6 +111,7 @@ class PortalPaymentInitiationController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 * Rate limit: citizen-facing, and it starts a payment. Tighter than the
 	 * receivers because a human clicks this, and each call creates a payment
 	 * intent at the provider — real work, and real cost, per request.
@@ -107,26 +120,70 @@ class PortalPaymentInitiationController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function initiate(): JSONResponse {
-		// 1. Verify — the assertion is the ONLY credential (fail-closed 401).
-		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifier::HEADER));
+		$assertion = (string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER);
+
+		// 0. A guest has no subject assertion: portaliq's guest page forwards
+		// the signed pay link of an invoice instead, and that token is the
+		// credential, verified by the session service before any read
+		// (REQ-RPL-006). Without either, the 401 below.
+		if ($assertion === '') {
+			$payToken = $this->request->getParam('payToken');
+			if (is_string($payToken) === true && $payToken !== '') {
+				return $this->payTokenAnswer(token: $payToken);
+			}
+		}
+
+		// 1. Verify — the assertion is the credential of a subject (fail-closed 401).
+		$claims = $this->verifier->verify($assertion);
 		if ($claims === null) {
 			return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
 		}
 
 		// 2. Audience gate — before any OpenRegister read (REQ-SPPI-002).
-		if ((string)($claims['audience'] ?? '') !== self::AUDIENCE_CUSTOMER) {
+		if (in_array((string)($claims['audience'] ?? ''), self::PAYING_AUDIENCES, true) === false) {
 			return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
 		}
 
+		return $this->sessionAnswer(claims: $claims, target: $this->target());
+	}//end initiate()
+
+	/**
+	 * The target the body names, read before the session starts: the invoice
+	 * id when one is sent (a non-string counts as absent), else a payment
+	 * request that stands without an invoice (REQ-SPPI-008).
+	 *
+	 * @return array{0:string,1:string} 'invoice' or 'request', and the id ('' when neither is sent).
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	private function target(): array {
 		$invoiceId = $this->request->getParam('invoiceId');
 		if (is_string($invoiceId) === false) {
 			$invoiceId = '';
 		}
 
+		$paymentRequestId = $this->request->getParam('paymentRequestId');
+		if ($invoiceId === '' && is_string($paymentRequestId) === true && $paymentRequestId !== '') {
+			return ['request', $paymentRequestId];
+		}
+
+		return ['invoice', $invoiceId];
+	}//end target()
+
+	/**
+	 * Start the session and answer its outcome, or the logged 502.
+	 *
+	 * Never leaks internals from a #[PublicPage] endpoint (ADR-005).
+	 *
+	 * @param array<string, mixed>     $claims The verified assertion claims.
+	 * @param array{0:string,1:string} $target The target from target().
+	 *
+	 * @return JSONResponse
+	 */
+	private function sessionAnswer(array $claims, array $target): JSONResponse {
 		try {
-			$result = $this->sessionService->initiate(claims: $claims, target: $invoiceId);
+			$result = $this->startSession(claims: $claims, target: $target);
 		} catch (Throwable $e) {
-			// Never leak internals from a #[PublicPage] endpoint (ADR-005).
 			$this->logger->error(
 				'Shillinq: portal payment initiation controller caught an unexpected failure',
 				['exception' => $e->getMessage()]
@@ -134,11 +191,64 @@ class PortalPaymentInitiationController extends Controller {
 			return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
 		}
 
+		return self::outcomeResponse(result: $result);
+	}//end sessionAnswer()
+
+	/**
+	 * Open the checkout a signed pay link names, or the logged 502.
+	 *
+	 * @param string $token The pay token.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 */
+	private function payTokenAnswer(string $token): JSONResponse {
+		try {
+			$result = $this->sessionService->initiateForPayToken(token: $token);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'Shillinq: portal payment initiation controller caught an unexpected failure',
+				['exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
+		}
+
+		return self::outcomeResponse(result: $result);
+	}//end payTokenAnswer()
+
+	/**
+	 * The answer for a session outcome; anything unknown is the uniform 403.
+	 *
+	 * @param PortalPaymentSessionResult $result The outcome.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function outcomeResponse(PortalPaymentSessionResult $result): JSONResponse {
 		return match ($result->status) {
 			'ok' => new JSONResponse(['checkoutUrl' => $result->checkoutUrl]),
+			'paid' => new JSONResponse(['status' => 'paid', 'message' => 'This invoice has been paid.']),
 			'deferred' => new JSONResponse(['status' => 'deferred'], Http::STATUS_SERVICE_UNAVAILABLE),
 			'downstream_error' => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
 			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
 		};
-	}//end initiate()
+	}//end outcomeResponse()
+
+	/**
+	 * Start the session for the target: an invoice, or a payment request without an invoice.
+	 *
+	 * @param array<string, mixed>     $claims The verified assertion claims.
+	 * @param array{0:string,1:string} $target The target from target().
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	private function startSession(array $claims, array $target): PortalPaymentSessionResult {
+		if ($target[0] === 'request') {
+			return $this->sessionService->initiateForRequest(claims: $claims, target: $target[1]);
+		}
+
+		return $this->sessionService->initiate(claims: $claims, target: $target[1]);
+	}//end startSession()
 }//end class

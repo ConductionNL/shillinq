@@ -4,7 +4,7 @@
       "JournalEntry": {
         "slug": "JournalEntry",
         "icon": "BookEditOutline",
-        "version": "0.1.0",
+        "version": "0.3.0",
         "title": "Journal Entry",
         "description": "A human-authored bookkeeping construct (memoriaalboeking / recurring template / reversing accrual). Posting one materialises exactly one balanced GLTransaction with its GLLine children. Distinct from the GLTransaction it produces.",
         "x-schema-org": "schema:AccountingTransaction",
@@ -42,6 +42,7 @@
           },
           "lines": {
             "type": "array",
+            "x-widget": "sub-objects",
             "description": "Embedded line preview. Each row materialises into a GLLine on post. Debit/credit polarity lives in `side`; `amount` is always non-negative, mirroring GLLine.",
             "minItems": 2,
             "items": {
@@ -74,11 +75,77 @@
                   "example": 25.0,
                   "title": "Amount"
                 },
+                "costCenterCode": {
+                  "type": "string",
+                  "description": "FK to AnalyticalDimension.code (dimensionType=cost-center). Copied onto the ledger line on post; posting refuses a code that is not an active cost centre of the administration on the entry date.",
+                  "nullable": true,
+                  "example": "KC-100",
+                  "title": "Cost Center Code",
+                  "x-options-from": {
+                    "register": "shillinq",
+                    "schema": "AnalyticalDimension",
+                    "filter": {
+                      "dimensionType": "cost-center",
+                      "lifecycleState": "active"
+                    },
+                    "valueField": "code",
+                    "labelField": "name"
+                  }
+                },
+                "costCarrierCode": {
+                  "type": "string",
+                  "description": "FK to AnalyticalDimension.code (dimensionType=cost-object). Copied onto the ledger line on post; posting refuses a code that is not an active cost carrier of the administration on the entry date.",
+                  "nullable": true,
+                  "example": "KD-200",
+                  "title": "Cost Carrier Code",
+                  "x-options-from": {
+                    "register": "shillinq",
+                    "schema": "AnalyticalDimension",
+                    "filter": {
+                      "dimensionType": "cost-object",
+                      "lifecycleState": "active"
+                    },
+                    "valueField": "code",
+                    "labelField": "name"
+                  }
+                },
+                "projectCode": {
+                  "type": "string",
+                  "description": "FK to AnalyticalDimension.code (dimensionType=project). Copied onto the ledger line on post; posting refuses a code that is not an active project of the administration on the entry date.",
+                  "nullable": true,
+                  "example": "PRJ-2026-001",
+                  "title": "Project Code",
+                  "x-options-from": {
+                    "register": "shillinq",
+                    "schema": "AnalyticalDimension",
+                    "filter": {
+                      "dimensionType": "project",
+                      "lifecycleState": "active"
+                    },
+                    "valueField": "code",
+                    "labelField": "name"
+                  }
+                },
                 "description": {
                   "type": "string",
                   "description": "Optional line-level description.",
                   "nullable": true,
                   "title": "Description"
+                },
+                "fxRate": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "nullable": true,
+                  "title": "Exchange Rate",
+                  "description": "Optional exchange rate typed for this line, transaction currency to base currency. When set the line is booked at it with source manual instead of the booking-date FxRate, and fxRateReason is required (banking-fx-at-booking REQ-BFX-003).",
+                  "example": 0.9102
+                },
+                "fxRateReason": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Exchange Rate Reason",
+                  "description": "Why the typed exchange rate applies (e.g. a forward contract). Required when fxRate is set.",
+                  "example": "Termijncontract ING 2026-114"
                 }
               }
             },
@@ -242,9 +309,10 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome / design D3: no PHP orchestration.",
                   "actionParameters": {
+                    "sourceSchema": "JournalEntry",
                     "register": "shillinq",
                     "schema": "GLTransaction",
                     "linesSchema": "GLLine",
@@ -264,9 +332,10 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId.",
                   "actionParameters": {
+                    "sourceSchema": "JournalEntry",
                     "register": "shillinq",
                     "schema": "GLTransaction",
                     "linesSchema": "GLLine",
@@ -292,27 +361,19 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeping-approver": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_bookkeeping_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_bookkeeping_approver"
+          ]
         }
       }
     }

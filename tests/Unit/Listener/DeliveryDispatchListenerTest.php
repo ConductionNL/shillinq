@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Service\CogsPosterService;
@@ -247,11 +248,11 @@ class DeliveryDispatchListenerTest extends TestCase {
 			'postedAt' => '2026-07-01T09:00:00Z',
 		];
 		$store->objects['InventoryStock'][] = [
-			'sku' => 'sku-a',
+			'productSku' => 'sku-a',
 			'administrationId' => 'adm-1',
-			'locationId' => 'loc-1',
-			'quantity' => 10,
-			'reservedQuantity' => 0,
+			'locationCode' => 'loc-1',
+			'quantityOnHand' => 10,
+			'quantityReserved' => 0,
 		];
 
 		$fakeObjectService = new class($store) {
@@ -490,9 +491,9 @@ class DeliveryDispatchListenerTest extends TestCase {
 			fifo: $fifo,
 			average: $average,
 			cogs: $cogs,
-			appConfig: $appConfig,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($fakeObjectService),
+			schemas: $this->createStub(originalClassName: SchemaDefinitionsInterface::class),
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(

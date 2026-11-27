@@ -113,6 +113,10 @@ configure Peppol in **Settings → E-invoicing**:
 3. When sending an invoice to a government customer, select the
    **Peppol** delivery method and enter the customer's **OIN** (Organisatie
    Identificatie Nummer) as the Peppol receiver ID.
+4. Put the order number or reference the government customer gave you in the
+   invoice's **reference**. Shillinq sends it as the buyer reference (BT-10),
+   which most government buyers need to route the invoice. An empty reference
+   is left out of the e-invoice.
 
 ### Send e-invoice and delivery status
 
@@ -159,6 +163,12 @@ To cancel or partially credit a sent invoice:
 3. Adjust the lines (remove, reduce quantity, or change price).
 4. Save and send the credit note. Shillinq posts the reversing journal entry
    and links the credit note to the original invoice.
+
+## Send the invoice
+
+An issued invoice is sent from Shillinq by email, Peppol or post, one at a time
+or as a selection, and one set of lines can be billed to several customers at
+once. See [Send invoices](./send-invoices.md).
 
 ## Common issues
 

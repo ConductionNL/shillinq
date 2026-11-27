@@ -8,6 +8,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Online payment links (`receivables-payment-links`). An open invoice carries a
+  signed pay link on its PDF ("Betaal online") and in its mail, the portal's
+  Pay now and a case's leges request reach a checkout, and Send payment link is
+  disabled with the reason while no provider is connected. **Setup:** configure
+  and connect a payment source in Integriq (Mollie, or Integriq's test source
+  for a trial), and set shillinq's app config `pay_link_page_url` to
+  Portaliq's guest pay page (https); without it no link is printed. The guest
+  page itself is Portaliq's (ConductionNL/portaliq#2667).
+- VAT rates from the register, and partly deductible costs
+  (`tax-vat-rates-and-deductibility`). The five statutory VAT tariffs (high
+  21, low 9, zero, exempt, reverse-charge) are now **seeded on every install
+  and upgrade**, marked statutory and read-only; an administrator adds a rate
+  with its own code and dates under Taxes > VAT rates. Every VAT calculation
+  uses the tariff valid on the document date and refuses an unknown or
+  expired code; there is no default rate any more. Legacy line codes are
+  mapped once: `BTW21` to high, `BTW9` to low, `BTW0` to zero, `VERLEGD` to
+  reverse-charge. A ledger account gains a deductible percentage
+  (**default 100**, so nothing changes until it is set) and a private-share
+  account; a cost line below 100 percent, on a purchase invoice, AP
+  transaction or journal entry, posts its deductible share with its input
+  VAT and the rest plus the VAT on it to the private-share account, marked
+  non-deductible. A line can override the account's percentage.
+- E-invoices over Peppol through Integriq (`sales-einvoice-exchange`). Send
+  e-invoice hands the invoice to Integriq's Peppol connection, with the UBL file
+  and the hybrid PDF stored in the administration's Files folder; delivery
+  status and rejections come back to the invoice. A self-billed invoice a
+  customer sends over Peppol becomes a draft sales invoice when the customer has
+  a self-billing agreement, and is refused with a reason otherwise. See
+  `docs/user-guide/bookkeeping/peppol-einvoicing.md`.
+  **Upgrade step**: invoices the old send path left at queued were never sent.
+  Run `occ shillinq:einvoice:requeue` to list them and, once you confirm, send
+  them again.
+- Time and expense billing by ticking (`sales-time-and-expense-billing`). The
+  Generate invoice page lists the unbilled hours of the chosen project and
+  the customer's unbilled pass-through receipts, mileage and per diem items
+  to tick, instead of id fields. A recharged item is billed at cost plus the
+  markup locked when its claim was submitted, at the VAT rate of the
+  invoice's main supply, or outside the VAT base when ticked as a
+  disbursement. A pass-through claim moves to invoiced once all its items
+  are on posted invoices. `BillableInvoice` (0.2.0) gains `expenseItemRefs`,
+  `BillableInvoiceLine` (0.2.0) gains `recharge`.
+  **Known limit:** `PassThroughMarkupRule.markupValue` has two decimals
+  (`multipleOf 0.01` of a fraction), so a 12.5 percent markup cannot be
+  stored. See `docs/invoice-from-time-and-expense.md`.
+- Purchase orders reach the supplier (`purchasing-order-dispatch-and-receipt`).
+  **Orders marked sent before this change were not delivered**: the send only
+  logged the Peppol message or the email and then marked the order sent. Peppol
+  now goes through integriq's Peppol connector (pending until integriq reports
+  the delivery) and email through integriq's mail channel (sent only when it
+  accepts the message); without integriq both send buttons are disabled with
+  the reason. Re-send any order that must reach its supplier. The order's state
+  now lives in `statusCode` only; a repair step aligns orders still marked sent
+  in the old `lifecycleState` field. Service receipts get their own pages under
+  Purchasing, and Confirm service on an order with service lines.
+- Sending sales invoices (`sales-invoice-sending`). A customer carries a
+  payment term, a delivery method (email, Peppol, post or none) and an invoice
+  email; new invoices take their due date from the term. An issued invoice is
+  sent from its page by email with the PDF attached or by the customer's
+  delivery method, Peppol falling back to email; Send selected sends up to 200
+  invoices in a background batch; New invoice batch bills one set of lines to
+  up to 200 customers, each due by their own term, optionally issued and sent,
+  and a retried batch writes nothing twice; recurring profiles with email
+  delivery send what they issue. See `docs/guides/send-invoices.md`.
+- Web shop orders become sales invoices (`sales-webshop-orders`). An order a
+  shop connector in integriq writes is invoiced once per channel and shop
+  order number, on a matched or new business customer or the channel's
+  consumer debtor, at the domestic, OSS or reverse-charge VAT its buyer
+  routes to; a paid order is settled on the channel's clearing account and a
+  refund or cancellation becomes a credit note. Orders that cannot be
+  invoiced are refused with the reason. New pages: Sales → Web shop orders,
+  and Web shop channels under the settings gear.
+- Automatic payment reminders (`receivables-automatic-dunning`). A daily job
+  marks issued invoices past their due date as overdue and sends each overdue
+  invoice the stage that is due on its customer's ladder, by email with the
+  invoice attached. Registered post, the collection agency and a customer
+  without an email address become manual stages and notify the
+  `ar-controller` group. **Reminders ship switched off**: nothing is sent
+  until an administrator chooses Switch on reminders on an administration.
+  See `docs/user-guide/bookkeeping/payment-reminders.md`.
+- An app granted `payment.request` in the `paymentActionApps` app config raises a
+  payment request through the leaf with nobody signed in
+  (`PaymentRequestLeafProvider::createAsApp`, shillinq#1836). See
+  `docs/api/payment-request-leaf.md`.
 - Read-only MCP tool surface (`shillinq-mcp-adoption`, ADR-063) — new
   `lib/Settings/register.d/zzz-mcp-tool-surface.json` declares the
   `x-openregister-mcp` dialect on 12 curated schemas (`ARInvoice`,
@@ -144,6 +227,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schema keys, property titles, enums, or descriptions were touched.
 
 ### Fixed
+- A provider capture of a payment request on an object booked nothing live:
+  the receipt was saved as a GLTransaction with inline lines, which the
+  register refuses (`lines` holds GLLine uuids). It is now a JournalEntry
+  posted through `postDirect`, and a refused posting leaves the request in
+  `captured_unapplied` with the reason.
+- Posting to the ledger works end to end (`ledger-posting-path`, #516).
+  A balanced entry now posts from the general ledger page. Before, the
+  ledger rules refused every post, because a draft has no lock, retention
+  date, integrity flag or audit-trail entry. The post now sets those
+  fields itself: locked, kept until 31 December ten years on, and the
+  posting user on the audit trail. Journal entries, sales invoices and
+  purchase invoices post the same way.
+- Allocation rules run when a transaction posts. The three seeded rules
+  arrive paused. Only one runs per posting: "Facility cost
+  fixed-percentage split" (accounts 4800 to 4899), once you set it
+  active. The other two run monthly.
+- Two postings are gone because another path already books them.
+  `StockMove.post` and `Payroll.issue` no longer declare a posting, and
+  the three `InventoryValuation` posting transitions (`postCOGS`,
+  `postReceipt`, `postVariance`) are removed. Stock issues are booked
+  per stock move. Goods receipts and count variances are not booked to
+  the ledger yet.
+- Expense claims still cannot post: their account mapping arrives with
+  `expenses-category-mapping`, and the post is refused by name until then.
 - Register-config log noise on every OpenRegister config import
   (`fix-log-noise-schemas`):
   - All six `x-openregister-widgets` annotations used custom widget types

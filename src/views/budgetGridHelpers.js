@@ -12,7 +12,7 @@
  * row list is a pure, synchronous function of the already-fetched tree plus
  * a Set of expanded row ids — it never touches the network.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 
 /**
@@ -26,7 +26,7 @@
  * @param {number} depth Starting indentation depth (used for the recursive call).
  * @return {Array<object>} Flattened rows, each with an added `depth` field.
  *
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 export function flattenVisibleRows(rows, expandedIds, depth = 0) {
 	const out = []
@@ -48,7 +48,7 @@ export function flattenVisibleRows(rows, expandedIds, depth = 0) {
  *
  * @param {?number} cents Amount in minor units, or null for "no value".
  * @return {string} Formatted currency string, or '—' when cents is null.
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
  */
 export function formatAmount(cents) {
 	if (cents === null || cents === undefined) {
@@ -74,7 +74,7 @@ export function formatAmount(cents) {
  *
  * @param {Date} [now] Injectable clock for testing.
  * @return {{startPeriod: string, endPeriod: string, granularity: string}}
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
  */
 export function defaultRange(now = new Date()) {
 	const year = now.getFullYear()
@@ -94,11 +94,76 @@ export function defaultRange(now = new Date()) {
  *
  * @param {object} cell A cell object as returned by the API (`{budget, actual, deviation, favorable}`).
  * @return {?boolean} true/false when framed, null when not applicable.
- * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+ * @spec openspec/changes/archive/2026-11-24-budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
  */
 export function favorableState(cell) {
 	if (!cell || cell.favorable === null || cell.favorable === undefined) {
 		return null
 	}
 	return Boolean(cell.favorable)
+}
+
+/**
+ * The row whose trend chart is open after pressing a row's "View trend"
+ * button: a second press on the open row closes it, any other row replaces
+ * it (one chart at a time, budget-charts REQ-BCH-001).
+ *
+ * @param {string|null} openId The row whose chart is open now, or null.
+ * @param {string} rowId The row whose button was pressed.
+ * @return {string|null} The row whose chart is open next, or null.
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-001
+ */
+export function nextOpenChartRow(openId, rowId) {
+	return openId === rowId ? null : rowId
+}
+
+/**
+ * The BudgetTrendChart props for one grid row: a ledger group by its id, an
+ * account by its number, over the grid's own period range. A computed row
+ * has no chart.
+ *
+ * @param {object} row The grid row.
+ * @param {string|null} administrationId The active administration.
+ * @param {{startPeriod: string, endPeriod: string}} range The grid's period range.
+ * @return {object|null} The chart props, or null for a row without a chart.
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-001
+ */
+export function trendChartProps(row, administrationId, range) {
+	if (row?.kind !== 'ledgerGroup' && row?.kind !== 'account') {
+		return null
+	}
+	return {
+		scope: row.kind,
+		id: row.kind === 'account' ? String(row.accountNumber) : String(row.id),
+		name: row.label,
+		administrationId,
+		range: { from: range.startPeriod, to: range.endPeriod },
+	}
+}
+
+/**
+ * The GET /api/budget-grid query for the grid's current controls. The
+ * optional `scenarioId` is sent only when a scenario is chosen, so "Basis"
+ * reads the default budget exactly as before (REQ-BSC-011).
+ *
+ * @param {object} state The grid's controls.
+ * @param {string} state.administrationId The active administration.
+ * @param {string} state.startPeriod First month, YYYY-MM.
+ * @param {string} state.endPeriod Last month, YYYY-MM.
+ * @param {string} state.granularity month, quarter or year.
+ * @param {string} [state.scenarioId] The chosen BudgetScenario id, empty for Basis.
+ * @return {object} The request params.
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+ */
+export function gridRequestParams(state) {
+	const params = {
+		administrationId: state.administrationId,
+		startPeriod: state.startPeriod,
+		endPeriod: state.endPeriod,
+		granularity: state.granularity,
+	}
+	if (state.scenarioId) {
+		params.scenarioId = state.scenarioId
+	}
+	return params
 }

@@ -4,8 +4,8 @@
  * Integration tests for PurchaseOrderService (member 02 of bookkeeping-purchase-order-3way).
  *
  * Exercises the full create-and-send loop end-to-end:
- *  - createPurchaseOrder materialises the approval chain + ApprovalTask records
- *    + notifications;
+ *  - createPurchaseOrder reads the approval chain's roles and notifies their
+ *    holders (the steps are OpenRegister's);
  *  - blockSendUntilApproved is refused while pending and accepted once every
  *    approver has signed with a timestamp;
  *  - the manifest fragment that ships with this slice exposes the
@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,9 +32,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
+use OCP\IUser;
+use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
 use PHPUnit\Framework\TestCase;
@@ -56,9 +59,9 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 	private array $notificationState = [];
 
 	/**
-	 * End-to-end: create a €18,500 PO, materialise the two-approver chain,
-	 * verify both approvers receive a notification, refuse the send before
-	 * every approver signs, then signature-by-signature drive the PO to "sent".
+	 * End-to-end: create a €18,500 PO, notify the two roles the declared chain
+	 * needs, refuse the send while the order is a draft, and send it once
+	 * OpenRegister's approval chain has moved it to approved (REQ-PAD-001).
 	 *
 	 * @return void
 	 */
@@ -69,7 +72,6 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 				['administrationId' => 'adm-1', 'role' => 'facility_manager', 'userId' => 'facility-1'],
 			],
 			'PurchaseOrder' => [],
-			'ApprovalTask' => [],
 		];
 
 		$saved = [];
@@ -91,8 +93,9 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 		);
 
 		self::assertSame(18500.00, $po['totalAmount']);
-		self::assertSame('pending_approval', $po['lifecycleState']);
-		self::assertCount(2, $po['approvalChain']);
+		self::assertSame(1850000, $po['totalExclVat'], 'the amount the declared chain routes on');
+		self::assertSame('draft', $po['statusCode']);
+		self::assertArrayNotHasKey('approvalChain', $po);
 		self::assertCount(2, $notifications);
 
 		// Stub records every save back into its in-memory store, so the PO is
@@ -100,47 +103,32 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 		$poId = (string)($po['id'] ?? '');
 		self::assertNotEmpty($poId);
 
-		// Step 1: still pending → send refused.
-		try {
-			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-			self::fail('Expected blockSendUntilApproved to refuse incomplete chain');
-		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
-		}
-
-		// Step 2: approver-by-approver signs. Mutating the in-memory row reflects
-		// through the stub on subsequent reads.
+		// Step 1: still a draft → send refused, even with a forged old chain.
 		$stub->mutate(
 			'PurchaseOrder',
 			$poId,
 			static function (array &$row) {
-				$row['approvalChain'][0]['status'] = 'approved';
-				$row['approvalChain'][0]['signedAt'] = '2026-06-01T12:00:00+00:00';
-				$row['approvalChain'][0]['signedBy'] = 'teamleider-1';
+				$row['approvalChain'] = [['role' => 'teamleider', 'decision' => 'approved', 'decidedAt' => '2026-06-01T12:00:00+00:00']];
 			}
 		);
-
-		// Only one of two signed — still refused.
 		try {
-			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-			self::fail('Expected blockSendUntilApproved to still refuse');
+			$service->markSent(administrationId: 'adm-1', purchaseOrderId: $poId);
+			self::fail('Expected markSent to refuse a draft order');
 		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
+			self::assertSame('Purchase order cannot be sent: it is not approved', $e->getMessage());
 		}
 
-		// Second approver signs.
+		// Step 2: OpenRegister's approval chain completes and advances `approve`.
 		$stub->mutate(
 			'PurchaseOrder',
 			$poId,
 			static function (array &$row) {
-				$row['approvalChain'][1]['status'] = 'approved';
-				$row['approvalChain'][1]['signedAt'] = '2026-06-02T09:00:00+00:00';
-				$row['approvalChain'][1]['signedBy'] = 'facility-1';
+				$row['statusCode'] = 'approved';
 			}
 		);
 
-		$updated = $service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-		self::assertSame('sent', $updated['lifecycleState']);
+		$updated = $service->markSent(administrationId: 'adm-1', purchaseOrderId: $poId);
+		self::assertSame('sent', $updated['statusCode']);
 		self::assertNotEmpty($updated['sentAt']);
 
 	}//end testCreateThenSendEndToEnd()
@@ -415,12 +403,27 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 			}
 		);
 
+		// The declared `send` transition, as the lifecycle engine runs it.
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use ($stub): void {
+				$stub->mutate(
+					'PurchaseOrder',
+					$objectId,
+					static function (array &$row) use ($action): void {
+						$row['statusCode'] = ($action === 'send' ? 'sent' : $row['statusCode']);
+					}
+				);
+			}
+		);
+
 		return new PurchaseOrderService(
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			notificationManager: $manager,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			transitionRunner: $runner,
 		);
 
 	}//end buildService()

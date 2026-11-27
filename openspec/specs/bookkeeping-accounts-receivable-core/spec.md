@@ -20,6 +20,7 @@ completes the AP half delivered by `bookkeeping-accounts-payable-core`.
 ## Purpose
 
 This specification defines the requirements for bookkeeping accounts receivable core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
 ## Requirements
 
 @e2e exclude pure backend/schema: AR register declarations, schema constraints, dunning logic — not browser-testable
@@ -321,3 +322,460 @@ The delivery sub-lifecycle MUST NOT alter the accounting `lifecycleState`
 - WHEN a delivery-status event advances `deliveryStatus` to `delivered`
 - THEN `lifecycleState` MUST remain `paid` (unchanged)
 
+### Requirement: A down-payment invoice is raised on an order (REQ-SDP-001)
+
+A user SHALL be able to raise an `ARInvoice` of down-payment kind for a
+customer and an order, for a percentage of the order's net total or a fixed
+net amount. The order SHALL be referenced by semantic type
+`https://schema.org/Order`; when the reference does not resolve to an order
+whose totals shillinq can read, the user MUST enter the order's net total per
+VAT rate. The down payment SHALL be split over the order's VAT rates in
+proportion, SHALL carry invoice type code 386, and SHALL store the totals it
+was computed from.
+
+#### Scenario: A kitchen studio asks 30 percent up front
+
+- GIVEN order Keuken Eiland 2026-117 for Familie De Boer with a net total of EUR 15,000 at 21 percent VAT
+- WHEN a bookkeeper chooses New down-payment invoice on the Accounts Receivable page, picks the customer and the order and enters 30 percent
+- THEN a draft invoice of EUR 4,500 plus EUR 945 VAT, total EUR 5,445, exists with type code 386 and the order named on it
+
+### Requirement: A down payment is booked as an advance received (REQ-SDP-002)
+
+Issuing a down-payment invoice SHALL post debit debtors, credit the
+administration's advances account and credit VAT payable, and MUST NOT post to
+a revenue account. The advances account SHALL default to 2310 Vooruitontvangen
+bedragen in an administration seeded from the RGS template.
+
+@e2e exclude posting is the lifecycle action's behaviour, asserted by MaterialiseGlTransactionActionTest::testADownPaymentIsBookedAsAnAdvanceNotAsRevenue
+
+#### Scenario: The balance sheet shows the advance
+
+- GIVEN the down-payment invoice of EUR 5,445 for Familie De Boer
+- WHEN the bookkeeper issues it
+- THEN the general ledger shows EUR 4,500 credited to 2310 and EUR 945 to VAT payable, and nothing on revenue
+
+### Requirement: The final invoice deducts every open down payment of the order (REQ-SDP-003)
+
+On a draft `ARInvoice` for a customer with issued down payments for an order
+that no invoice has deducted, `ARInvoiceDetail` SHALL offer to make it the final
+invoice of that order. Doing so SHALL add one negative line per down payment
+and VAT rate at the down payment's own net and VAT, and SHALL reference each
+down-payment invoice. Issuing it SHALL book the full revenue and debit the
+advances account for the deductions.
+
+#### Scenario: The kitchen is delivered and invoiced
+
+- GIVEN the paid down payment of EUR 5,445 for order Keuken Eiland 2026-117
+- WHEN the bookkeeper drafts the invoice for the kitchen at EUR 15,000 plus EUR 3,150 VAT and chooses Deduct down payments for that order
+- THEN the invoice shows a deduction of minus EUR 4,500 and minus EUR 945 VAT referencing the down-payment invoice, and an amount due of EUR 12,705
+
+### Requirement: A down payment is deducted once, and never beyond the invoice (REQ-SDP-004)
+
+Issuing a final invoice MUST be refused when one of its deductions was already
+deducted on another invoice, or when the deductions exceed the invoice's total.
+On issue each deducted down payment SHALL record the final invoice that
+deducted it.
+
+@e2e exclude the refusal runs in the issue transition, asserted by DownPaymentServiceTest::testADownPaymentDeductedElsewhereIsRefusedOnIssue and DownPaymentGuardTest::testTheCheckRefusesASecondDeductionNamingTheFirstInvoice
+
+#### Scenario: A second final invoice tries the same deduction
+
+- GIVEN the down payment deducted on issued invoice 2026-0587
+- WHEN a bookkeeper issues another draft that also deducts it
+- THEN the issue is refused naming invoice 2026-0587
+
+### Requirement: The order's down-payment position is visible (REQ-SDP-005)
+
+`ARInvoiceDetail` of a down-payment or final invoice SHALL show, for its order,
+every down payment with its amount, paid state and the invoice that deducted
+it.
+
+#### Scenario: The bookkeeper checks what is still to deduct
+
+- GIVEN two down payments on order Keuken Eiland 2026-117, one deducted and one not
+- WHEN the bookkeeper opens either down-payment invoice
+- THEN the page lists both with their state and the invoice that deducted the first
+
+### Requirement: The e-invoice carries the down payment and its deduction (REQ-SDP-006)
+
+The UBL of a down-payment invoice SHALL carry invoice type code 386, and the UBL
+of a final invoice SHALL carry the deduction lines as negative lines at their
+VAT category and rate and a billing reference to each down-payment invoice.
+
+@e2e exclude the UBL document is rendered server side, asserted by ArInvoiceUblMapperTest::testAFinalInvoiceCarriesTheDeductionAndTheBillingReference
+
+#### Scenario: A municipality receives the final invoice over Peppol
+
+- GIVEN a final invoice to Gemeente Voorbeeld deducting one down payment
+- WHEN it is sent as an e-invoice
+- THEN its UBL contains the negative deduction line and a billing reference to the down-payment invoice number
+
+### Requirement: An issued invoice is sent by email with its PDF attached (REQ-SIS-001)
+
+Shillinq SHALL let a user with access to the administration send an `ARInvoice`
+in state `issued` or `overdue` to the customer by email from `ARInvoiceDetail`.
+The mail MUST carry the invoice as a PDF attachment named
+`Factuur-<invoiceNumber>.pdf`, MUST go to `CustomerMaster.invoiceEmail` when
+set and to `CustomerMaster.email` otherwise, and the invoice SHALL record
+`sending.sentVia`, `sending.sentTo` and `sending.sentAt` only after the mailer
+accepted the message.
+
+#### Scenario: A bookkeeper mails an issued invoice
+
+- GIVEN a bookkeeper on the AR invoice page of issued invoice 2026-0412 for Bakkerij De Korenaar B.V., whose invoice email is facturen@dekorenaar.example
+- WHEN they choose Send by email
+- THEN a mail with the attachment Factuur-2026-0412.pdf goes to facturen@dekorenaar.example
+- AND the invoice page shows it was sent by email to that address, with the date and time
+
+#### Scenario: A draft invoice cannot be sent
+
+- GIVEN invoice 2026-0413 in state draft
+- WHEN the bookkeeper opens its AR invoice page
+- THEN the Send by email action is disabled with the reason that only an issued invoice can be sent
+
+#### Scenario: A mail failure is shown, not hidden
+
+- GIVEN the instance's mail server refuses the message
+- WHEN the bookkeeper sends invoice 2026-0412
+- THEN the page shows that the invoice could not be sent and why
+- AND the invoice carries no sentAt
+
+### Requirement: A send follows the customer's delivery method (REQ-SIS-002)
+
+The send action SHALL route by `CustomerMaster.deliveryMethod`: `email` mails
+the PDF, `peppol` hands the invoice to the existing e-invoice send, `post` and
+`none` MUST NOT mail anything and SHALL record the method. When the e-invoice
+send answers that the customer has no Peppol participant, the action SHALL
+offer to mail the PDF instead of telling the user to leave the app.
+
+#### Scenario: A Peppol customer without a participant id gets the PDF by email
+
+- GIVEN customer Gemeente Voorbeeld with delivery method peppol and no resolvable Peppol participant
+- WHEN the bookkeeper sends issued invoice 2026-0420 from its AR invoice page
+- THEN the page offers Send by email instead
+- AND choosing it mails the PDF and records sentVia email
+
+#### Scenario: A post customer is not mailed
+
+- GIVEN customer Stichting Buurthuis De Linde with delivery method post
+- WHEN the bookkeeper sends issued invoice 2026-0421
+- THEN no mail is sent
+- AND the invoice page shows the delivery method post and that the letter is printed by hand
+
+### Requirement: Selected invoices are sent in one action (REQ-SIS-003)
+
+`AccountsReceivable` SHALL let a user select up to 200 invoices and send them in
+one action. The sends SHALL run in a queued background job, each invoice MUST
+follow REQ-SIS-002, and the batch SHALL record an outcome per invoice: sent,
+skipped with a reason, or failed with the error. An invoice that already
+carries `sending.sentAt` SHALL be skipped unless the user asked to resend.
+
+#### Scenario: A bookkeeper sends the month's invoices
+
+- GIVEN twelve issued invoices of September 2026 selected on the Accounts Receivable page, one of them already sent
+- WHEN the bookkeeper chooses Send selected
+- THEN eleven invoices are sent according to each customer's delivery method
+- AND the batch result lists the already-sent invoice as skipped
+
+#### Scenario: The same batch is not sent twice
+
+- GIVEN a send batch that finished
+- WHEN the bookkeeper selects the same invoices and chooses Send selected without resend
+- THEN every invoice is skipped as already sent
+
+### Requirement: A batch creates one invoice per customer (REQ-SIS-004)
+
+Shillinq SHALL let a user create one `ARInvoice` per selected customer from one
+set of lines, for up to 200 customers per call, through
+`POST /apps/shillinq/api/ar-invoices/batch`. The create MUST be idempotent per
+batch and customer, each invoice's due date SHALL follow that customer's
+`paymentTermDays` unless the batch names a due date, and the user MAY issue and
+send the created invoices in the same action.
+
+#### Scenario: A consultancy bills its maintenance contract to three customers
+
+- GIVEN a bookkeeper who selects Bakkerij De Korenaar B.V. (14 days), Gemeente Voorbeeld (30 days) and Stichting Buurthuis De Linde (21 days) and one line Onderhoudscontract oktober 2026 of EUR 250 excl. 21 percent VAT dated 2026-10-01
+- WHEN they create the batch with issue and send
+- THEN three issued invoices of EUR 302.50 exist with due dates 2026-10-15, 2026-10-31 and 2026-10-22
+- AND each is sent according to its customer's delivery method
+
+#### Scenario: A retried batch writes nothing twice
+
+- GIVEN a batch create that wrote invoices for two of three customers before the connection dropped
+- WHEN the same batch is submitted again
+- THEN only the third customer's invoice is written
+
+### Requirement: A customer carries a payment term and a delivery method (REQ-SIS-005)
+
+`CustomerMaster` SHALL declare `paymentTermDays` (integer, default 30),
+`deliveryMethod` (`email`, `peppol`, `post`, `none`, default `email`) and an
+optional `invoiceEmail`, editable on `CustomerDetail`. A new invoice created by
+the quick draft, the time-and-expense generator or the batch create SHALL take
+its due date as invoice date plus the customer's `paymentTermDays`, and a new
+recurring profile SHALL default its payment term to it.
+
+#### Scenario: The quick draft uses the customer's term
+
+- GIVEN customer Bakkerij De Korenaar B.V. with a payment term of 14 days
+- WHEN a bookkeeper starts a quick draft for that customer dated 2026-10-01
+- THEN the due date field shows 2026-10-15
+
+#### Scenario: The time-and-expense generator uses the customer's term
+
+- GIVEN customer Gemeente Voorbeeld with a payment term of 30 days
+- WHEN a bookkeeper generates an invoice on the Generate invoice page with period end 2026-10-31
+- THEN the drafted invoice has due date 2026-11-30 and payment terms stating 30 days
+
+### Requirement: The customer list shows fields the customer carries (REQ-SIS-006)
+
+Every column of the `Customers` index SHALL name a property `CustomerMaster`
+declares. The index MUST show the customer code, legal name, payment term,
+delivery method, credit limit and status.
+
+#### Scenario: A bookkeeper scans the customer list
+
+- GIVEN three customers with codes, names and payment terms set
+- WHEN a bookkeeper opens the Customers page
+- THEN every column shows a value for every customer and none is empty for want of a field
+
+### Requirement: A recurring profile with email delivery sends its auto-issued invoices (REQ-SIS-007)
+
+When `RecurringInvoiceGenerator` issues an invoice for a profile in issue mode
+`auto-issue` whose `deliveryChannel` is `email`, the invoice SHALL be sent
+through REQ-SIS-001. A profile in `draft-for-review` mode MUST NOT send.
+
+#### Scenario: A monthly subscription invoice goes out by itself
+
+- GIVEN an active profile for Bakkerij De Korenaar B.V. in auto-issue mode with delivery channel email
+- WHEN the scheduled run issues the October 2026 invoice
+- THEN the invoice is mailed to facturen@dekorenaar.example with its PDF
+- AND its AR invoice page shows it was sent by email
+
+### Requirement: A received web shop order becomes one issued sales invoice (REQ-SWO-001)
+
+When a `WebshopOrder` is written for a known `WebshopChannel`, shillinq SHALL
+write one `ARInvoice` with a line per order line and one for shipping, issue it
+when the channel's issue mode is `auto-issue`, record its id on the order and
+move the order to `invoiced`. A second order record with the same channel and
+shop order number MUST NOT write an invoice and SHALL be marked `duplicate`.
+
+#### Scenario: A tea order becomes an invoice
+
+- GIVEN web shop order 100231 from J. Bakker for 2 x Earl Grey los 250 g at EUR 8.95 and shipping EUR 4.95, received on channel theehandelvandijk.nl
+- WHEN the order is written
+- THEN the Accounts Receivable page lists an issued invoice for Webwinkel particulieren with buyer J. Bakker and a total of EUR 22.85
+- AND the Web shop orders page shows order 100231 as invoiced with a link to that invoice
+
+#### Scenario: The same order sent twice
+
+- GIVEN order 100231 already invoiced
+- WHEN integriq writes order 100231 again
+- THEN no second invoice exists and the Web shop orders page shows the second record as a duplicate
+
+### Requirement: The debtor is a matched business or the shop's collective consumer debtor (REQ-SWO-002)
+
+For a business buyer the invoicer SHALL use the `CustomerMaster` of the
+channel's administration with the same VAT id, else the same KvK number, else
+the same invoice email, and SHALL create one marked as created by the channel
+when none matches. A consumer order SHALL be booked on the channel's collective
+debtor with the buyer's name and address on the invoice.
+
+#### Scenario: A returning business buyer is recognised
+
+- GIVEN customer Lunchroom De Theepot with VAT id NL000099997B57
+- WHEN an order arrives from a business buyer with that VAT id
+- THEN the invoice is booked on Lunchroom De Theepot and no new customer is created
+
+### Requirement: Web shop VAT follows the destination rules (REQ-SWO-003)
+
+Each order line SHALL be invoiced net of VAT at the rate the order routes to: a
+domestic order at the line's own rate, a consumer in another EU member state at
+that state's rate through OSS, a business buyer in another member state with a
+validated VAT id under reverse charge with the mention "Btw verlegd". An order
+whose route cannot be determined MUST be refused, not invoiced at the Dutch
+rate.
+
+#### Scenario: A consumer in Belgium
+
+- GIVEN order 100232 from a consumer in Antwerpen with prices including VAT
+- WHEN the order is invoiced
+- THEN the invoice lines carry the Belgian VAT rate and the invoice is marked for the OSS return
+
+### Requirement: A paid order is settled on the payment clearing account (REQ-SWO-004)
+
+An order received with payment status paid SHALL leave its invoice `paid`,
+settled against the channel's clearing account, with the provider's payment id
+recorded on the invoice for the later payout match. An order with payment
+status pending SHALL leave its invoice issued and open.
+
+#### Scenario: An iDEAL order is paid on arrival
+
+- GIVEN order 100231 paid by iDEAL with provider payment id tr_example0001
+- WHEN it is invoiced
+- THEN its AR invoice page shows state paid and payment reference tr_example0001
+
+### Requirement: A refunded or cancelled order is credited (REQ-SWO-005)
+
+When an invoiced `WebshopOrder` is updated to payment status refunded or
+cancelled, shillinq SHALL write an `ARInvoice` of type credit-note for the
+refunded lines, referencing the original invoice, and SHALL move the order to
+`credited`.
+
+#### Scenario: A customer returns the tea
+
+- GIVEN invoiced order 100231
+- WHEN the shop reports the order refunded
+- THEN the Accounts Receivable page lists a credit note of EUR 22.85 referencing the invoice of order 100231
+
+### Requirement: An order that cannot be invoiced is refused visibly (REQ-SWO-006)
+
+An order for an unknown channel, without lines, or whose line totals differ
+from the order total by more than one cent per line SHALL NOT be invoiced; it
+SHALL move to `refused` with a reason naming the problem and both totals where
+they differ, and the bookkeeper SHALL be notified.
+
+#### Scenario: Totals that do not add up
+
+- GIVEN order 100233 whose lines add up to EUR 45.20 while the order total is EUR 45.60
+- WHEN the order is written
+- THEN no invoice is written
+- AND the Web shop orders page shows order 100233 as refused with both totals in the reason
+
+### Requirement: An issued invoice takes the next number of its series (REQ-SIIC-001)
+
+When an AR invoice is issued, shillinq SHALL assign the next number of the
+administration's sales sequence for the invoice's fiscal year, under a lock,
+and a time-and-expense invoice SHALL take its number from the billable
+sequence. A number MUST NOT be assigned twice, and a draft SHALL carry no
+number. A self-billed invoice, made by the customer on the seller's behalf,
+SHALL keep the number the customer gave it and SHALL NOT take a number from
+the sequence.
+
+#### Scenario: Two bookkeepers issue at the same moment
+
+- GIVEN the sales sequence of Adviesbureau Van Dijk for 2026 at 41
+- WHEN two bookkeepers each press Issue on a different draft on the AR invoice detail page at the same time
+- THEN one invoice is 2026-0042 and the other 2026-0043
+
+#### Scenario: A self-billed invoice keeps the customer's number
+
+- GIVEN a self-billed invoice received from Gemeente Voorbeeld with its own number GV-2026-0815
+- WHEN it is issued
+- THEN it keeps GV-2026-0815 and the sales sequence does not advance
+
+#### Scenario: A deleted draft leaves no gap
+
+- GIVEN a draft invoice that is deleted before it is issued
+- WHEN the next invoice is issued
+- THEN it takes the next number after the last issued one
+
+### Requirement: An assigned number cannot be edited (REQ-SIIC-002)
+
+The invoice number SHALL be read-only once assigned, and a change to it on an
+invoice that is not a draft MUST be refused.
+
+#### Scenario: A bookkeeper tries to renumber an issued invoice
+
+- GIVEN issued invoice 2026-0042
+- WHEN a bookkeeper tries to change its number on the AR invoice detail page
+- THEN the field cannot be edited
+
+### Requirement: Invoices above the threshold need a second person's approval (REQ-SIIC-003)
+
+An invoice whose total exceeds the administration's approval threshold MUST
+NOT be issued from draft. It SHALL be sent for approval, approved or
+rejected with a reason, and approval MUST be refused to the user who created
+the invoice.
+
+#### Scenario: A large invoice waits for approval
+
+- GIVEN a draft invoice of EUR 24,200 created by j.devries and a threshold of EUR 10,000
+- WHEN j.devries presses Issue
+- THEN issuing is refused and Request approval is offered
+- AND after a.bakker approves it, Issue succeeds
+
+#### Scenario: The creator cannot approve
+
+- GIVEN that invoice awaiting approval
+- WHEN j.devries presses Approve
+- THEN the approval is refused with the reason that the creator cannot approve
+
+#### Scenario: A small invoice issues directly
+
+- GIVEN a draft invoice of EUR 1,210
+- WHEN the bookkeeper presses Issue
+- THEN it is issued without approval
+
+### Requirement: Gaps in a year's numbers are reported (REQ-SIIC-004)
+
+A report SHALL list missing and duplicate numbers in a year's issued sales
+invoices per administration.
+
+#### Scenario: A controller checks 2026
+
+- GIVEN issued invoices 2026-0001 to 2026-0043 with 2026-0017 missing
+- WHEN the controller opens the invoice number check for 2026
+- THEN it lists 2026-0017 as missing and no duplicates
+
+### Requirement: An administration sets its invoice layout (REQ-SID-001)
+
+Shillinq SHALL keep one `InvoiceLayout` per administration with a logo, a
+primary and an accent colour, a layout variant and footer text, edited on an
+invoice layout settings page with a preview, and SHALL refuse a primary
+colour below a 4.5:1 contrast ratio against white.
+
+#### Scenario: An office sets its house style
+
+- GIVEN an administrator on the invoice layout settings page of Adviesbureau Van Dijk
+- WHEN they upload the logo, choose primary colour #1B4F72 and variant modern and save
+- THEN the preview shows the logo and the colour
+- AND the next invoice PDF shows them too
+
+### Requirement: The invoice is rendered through docudesk (REQ-SID-002)
+
+The invoice PDF SHALL be rendered by docudesk from the `sales-invoice`
+template with the administration's layout. When docudesk is absent, the
+invoice page SHALL say so instead of producing a file.
+
+#### Scenario: Docudesk is not installed
+
+- GIVEN an instance without docudesk
+- WHEN a bookkeeper asks for the PDF of an issued invoice on the AR invoice detail page
+- THEN the page states that docudesk is needed to produce invoice documents
+
+### Requirement: The invoice speaks the customer's language (REQ-SID-003)
+
+`CustomerMaster` SHALL carry a `language` (nl, en, de, fr). The invoice
+document SHALL use that language for its labels and number formatting, and
+the invoice SHALL record it for the invoice email.
+
+#### Scenario: An English customer gets an English invoice
+
+- GIVEN customer Brightside Consulting Ltd with language en
+- WHEN its invoice PDF is produced
+- THEN the labels read "Invoice", "Due date" and "Total", and amounts use English formatting
+
+### Requirement: The invoice shows its own currency (REQ-SID-004)
+
+The invoice document SHALL show every amount in the invoice currency, and
+the time-and-expense generator SHALL set the currency from the order or the
+customer instead of fixing it to EUR.
+
+#### Scenario: A pound invoice
+
+- GIVEN Brightside Consulting Ltd with currency GBP
+- WHEN an invoice of 40 hours at GBP 120 is generated from logged time
+- THEN the invoice and its PDF show GBP 4,800 and no euro sign
+
+### Requirement: The invoice carries a scan-to-pay code (REQ-SID-005)
+
+When the layout shows QR codes, a EUR invoice with an administration IBAN
+SHALL carry an EPC SEPA transfer QR for its open amount with the invoice
+number as reference, and an invoice with a payment link SHALL carry a QR of
+that link.
+
+#### Scenario: A municipality pays by scanning
+
+- GIVEN issued invoice 2026-0042 of EUR 24,200 to Gemeente Voorbeeld
+- WHEN its PDF is produced
+- THEN it shows an EPC QR whose payload names amount EUR 24200.00 and reference 2026-0042

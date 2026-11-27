@@ -1,0 +1,319 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-digipoort-filing",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating. The taxonomy record also names, per release, the entry point schemas (`schemaRefs`), the concept namespaces (`namespaces`) and any concept it renames (`conceptMap`), which the XBRL builders write. Filing follows integriq: `submit` now stores the file and hands it to integriq (state handed-off, action hand-to-digipoort), `deliver` moves it to submitted only on integriq's delivery report carrying the Digipoort reference, and `retract` returns an undeliverable filing to validated; accept and reject stay inbound from submitted. A VAT return files the same way: its `submit` runs FileVatReturnAction (build, validate and hand off its instance) into handed-off, and only integriq's delivery report moves it on to submitted (`deliver`), or back to draft (`retract`).",
+    "spec": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md"
+  },
+  "info": {
+    "version": "0.3.0-tax-digipoort-filing"
+  },
+  "components": {
+    "schemas": {
+      "XbrlInstance": {
+        "properties": {
+          "entryPoint": {
+            "enum": [
+              "belastingdienst-ob"
+            ],
+            "title": "Entry Point",
+            "description": "Canonical SBR entry point. Each pins a Logius-published NL-taxonomie version."
+          },
+          "filingType": {
+            "type": "string",
+            "enum": [
+              "vat-return",
+              "kvk-deponering"
+            ],
+            "nullable": true,
+            "description": "What this instance files: a VAT return to the Belastingdienst (`vat-return`, entry point belastingdienst-ob) or the annual accounts to the KvK (`kvk-deponering`, entry point kvk-jaarrekening). Set by the builder that made the instance.",
+            "example": "vat-return",
+            "title": "Filing type"
+          },
+          "sourceReturnId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The BtwAangifte this VAT return instance was built from. Empty for an annual accounts instance, which names its statement in sourceStatementId.",
+            "example": "btw-2026-q3",
+            "title": "Source return"
+          },
+          "state": {
+            "enum": [
+              "handed-off"
+            ],
+            "title": "State",
+            "description": "Lifecycle state. Transitions are declared in x-openregister-lifecycle below; no PHP XbrlReportService authors transitions (ADR-031)."
+          },
+          "payloadFileUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "The stored XBRL file handed to integriq's Digipoort connector, under /Shillinq/Sbr/<administrationId>/ in the files of whoever filed it.",
+            "example": "nextcloud://files/4711",
+            "title": "Filed file"
+          },
+          "handOffReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "The correlation id the filing was handed to integriq with; integriq's status reports refer to the filing by it.",
+            "example": "openregister://shillinq/XbrlInstance/2c1d…",
+            "title": "Hand-off reference"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "validate": {
+              "requires": "OCA\\Shillinq\\Guard\\XbrlInstanceValidationGuard::requireValidInstance"
+            },
+            "submit": {
+              "to": "handed-off",
+              "label": "Indienen",
+              "description": "Store the XBRL file and hand it to integriq's Digipoort connector (hand-to-digipoort). Refused when no filing connection is configured, so nothing is marked submitted that never left shillinq.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\HandToDigipoortAction",
+                  "description": "Store the XML under /Shillinq/Sbr/<administrationId>/ and emit nl.conduction.sbr.filing.requested for integriq; set payloadFileUri and handOffReference."
+                }
+              ]
+            },
+            "deliver": {
+              "from": "handed-off",
+              "to": "submitted",
+              "trigger": "inbound",
+              "label": "Afgeleverd bij Digipoort",
+              "description": "integriq reported the delivery; digipoortReceiptId and submittedAt are set. Refused without the Digipoort reference.",
+              "requires": "OCA\\Shillinq\\Guard\\XbrlDeliveryGuard::requireDeliveryReference"
+            },
+            "retract": {
+              "from": "handed-off",
+              "to": "validated",
+              "trigger": "inbound",
+              "label": "Niet afgeleverd",
+              "description": "integriq could not deliver the filing; rejectionReason says why and the filing can be submitted again."
+            }
+          },
+          "states": {
+            "handed-off": {
+              "label": "Aangeboden",
+              "description": "Handed to integriq's Digipoort connector (source digipoort-sbr). Not yet submitted: it becomes submitted only when integriq reports the delivery with a Digipoort reference."
+            }
+          }
+        }
+      },
+      "BtwAangifte": {
+        "properties": {
+          "xbrlInstanceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The XbrlInstance that files this return through Digipoort. The return mirrors that instance's state: submitted once the delivery is reported, accepted or rejected once the Belastingdienst's outcome is reported.",
+            "example": "xbrl-2026-0042",
+            "title": "XBRL instance"
+          },
+          "statusCode": {
+            "enum": [
+              "handed-off"
+            ],
+            "title": "Status Code",
+            "description": "Lifecycle status."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "states": {
+            "handed-off": {
+              "label": "Aangeboden",
+              "description": "The return's XBRL instance is handed to integriq's Digipoort connector. Not yet submitted: the return shows submitted, with the Digipoort reference, once integriq reports the delivery."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "to": "handed-off",
+              "description": "File the return through its XBRL instance: build it on the Belastingdienst OB entry point, validate it and hand it to integriq's Digipoort connector. Refused, and the return stays in draft, when no filing connection is configured or the instance does not validate.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\FileVatReturnAction",
+                  "description": "Build, validate and submit the return's XbrlInstance; set xbrlInstanceId."
+                }
+              ]
+            },
+            "deliver": {
+              "from": "handed-off",
+              "to": "submitted",
+              "trigger": "inbound",
+              "label": "Afgeleverd bij Digipoort",
+              "description": "integriq reported the delivery of the return's XBRL instance; filingReference holds the Digipoort reference. Refused without it.",
+              "requires": "OCA\\Shillinq\\Guard\\XbrlDeliveryGuard::requireFilingReference"
+            },
+            "retract": {
+              "from": "handed-off",
+              "to": "draft",
+              "trigger": "inbound",
+              "label": "Niet afgeleverd",
+              "description": "integriq could not deliver the return's XBRL instance; the notes say why and the return can be submitted again."
+            }
+          }
+        }
+      },
+      "XBRLTaxonomy": {
+        "properties": {
+          "entryPoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The entry points this taxonomy version carries, such as belastingdienst-ob and kvk-jaarrekening. An instance is validated against the taxonomy effective for its period that lists its entry point.",
+            "example": [
+              "belastingdienst-ob",
+              "kvk-jaarrekening"
+            ],
+            "title": "Entry points"
+          },
+          "requiredConcepts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "nullable": true,
+            "description": "Per entry point, the concepts an instance must report before it may be validated, as prefix:name or bare name (any prefix), such as {\"kvk-jaarrekening\": [\"jenv-bw2-i:Equity\"]}. Read by the validation guard of XbrlInstance.",
+            "example": {
+              "kvk-jaarrekening": [
+                "jenv-bw2-i:Equity",
+                "jenv-bw2-i:Assets"
+              ]
+            },
+            "title": "Required concepts"
+          },
+          "summations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "entryPoint": {
+                  "type": "string",
+                  "title": "Entry point",
+                  "description": "The entry point whose instances this summation applies to."
+                },
+                "total": {
+                  "type": "string",
+                  "title": "Total",
+                  "description": "The concept that must equal the sum of the parts."
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Parts",
+                  "description": "The concepts that add up to the total."
+                }
+              }
+            },
+            "description": "Totals that must equal the sum of their parts in an instance of the named entry point, such as total assets as the sum of fixed and current assets. Read by the validation guard of XbrlInstance.",
+            "example": [
+              {
+                "entryPoint": "kvk-jaarrekening",
+                "total": "jenv-bw2-i:Assets",
+                "parts": [
+                  "jenv-bw2-i:AssetsNoncurrent",
+                  "jenv-bw2-i:AssetsCurrent"
+                ]
+              }
+            ],
+            "title": "Summations"
+          },
+          "schemaRefs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Per entry point, the URL of the entry point schema an instance refers to in its link:schemaRef, as the taxonomy release publishes it. Written into every instance the builders make for that entry point.",
+            "example": {
+              "kvk-jaarrekening": "https://www.nltaxonomie.nl/<release>/kvk/entrypoints/kvk-rpt-jaarverantwoording-<year>-nlgaap-klein.xsd"
+            },
+            "title": "Entry point schemas"
+          },
+          "namespaces": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "The namespace URI of each concept prefix the instances use, such as bd-i and jenv-bw2-i, as this taxonomy release defines them. A prefix this record does not name falls back to the builder's default.",
+            "example": {
+              "jenv-bw2-i": "http://www.nltaxonomie.nl/<release>/basis/jenv/items/jenv-bw2-data"
+            },
+            "title": "Concept namespaces"
+          },
+          "conceptMap": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "nullable": true,
+            "description": "Per entry point, the concept a builder writes for each amount when this release names it differently from the builder's default, such as {\"belastingdienst-ob\": {\"1a.vat\": \"bd-i:ValueAddedTaxSuppliesServicesGeneralTariff\"}} or {\"kvk-jaarrekening\": {\"equity\": \"jenv-bw2-i:Equity\"}}. Keys are the VAT return box and amount (1a.base, 1a.vat, ..., 5g.vat) or the annual accounts line (fixedAssets, currentAssets, assets, equity, provisions, liabilities, netTurnover, operatingExpenses, financialResult, result).",
+            "example": {
+              "belastingdienst-ob": {
+                "5g.vat": "bd-i:ValueAddedTaxOwedToBePaidBack"
+              }
+            },
+            "title": "Concept map"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "XBRLTaxonomy",
+        "slug": "nt20-belastingdienst-ob-2026"
+      },
+      "taxonomyId": "nt20-belastingdienst-ob-2026",
+      "name": "Nederlandse Taxonomie NT20 — Belastingdienst omzetbelasting 2026",
+      "taxonomyVersion": "NT20",
+      "publicationDate": "2025-11-28",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": "2027-01-01",
+      "status": "active",
+      "entryPoints": [
+        "belastingdienst-ob"
+      ],
+      "description": "NT20 release (package nt20_20251128) for VAT returns over periods in 2026. The entry point schema is not pinned here: the builder then writes no schemaRef and the instance is checked against the OB entry point schema kept in the repository; pin schemaRefs.belastingdienst-ob from the Belastingdienst entry point list before the first Digipoort pre-production test."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "XBRLTaxonomy",
+        "slug": "nt20-kvk-jaarrekening-2025"
+      },
+      "taxonomyId": "nt20-kvk-jaarrekening-2025",
+      "name": "Nederlandse Taxonomie NT20 — KVK taxonomie 2025 (jaarverantwoording)",
+      "taxonomyVersion": "NT20",
+      "publicationDate": "2025-12-10",
+      "effectiveDate": "2025-01-01",
+      "expiryDate": "2026-01-01",
+      "status": "active",
+      "entryPoints": [
+        "kvk-jaarrekening"
+      ],
+      "schemaRefs": {
+        "kvk-jaarrekening:micro": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-micro.xsd",
+        "kvk-jaarrekening:small": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-klein.xsd",
+        "kvk-jaarrekening:medium": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-middelgroot.xsd",
+        "kvk-jaarrekening:large": "https://www.nltaxonomie.nl/nt20/kvk/20251210/entrypoints/kvk-rpt-jaarverantwoording-2025-nlgaap-groot.xsd"
+      },
+      "description": "KVK taxonomie 2025 within NT20 (entry points under nt20/kvk/20251210) for annual accounts over financial years 2025, filed in 2026. The full (not publicatiestukken) entry point per size class."
+    }
+  ]
+}

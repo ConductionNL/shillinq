@@ -34,14 +34,17 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Verifies the per-tick branch table.
@@ -154,7 +157,9 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$effectiveSchema = ($schema ?? (string)$this->schema);
 				$id = (string)($object['id'] ?? ('row-' . count($this->store[$effectiveSchema] ?? [])));
 				$object['id'] = $id;
@@ -172,7 +177,8 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id): void {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): void {
+				$id = $deletion->uuid;
 				$schema = (string)$this->schema;
 				unset($this->store[$schema][$id]);
 				$this->deletes[] = ['schema' => $schema, 'id' => $id];
@@ -239,7 +245,7 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 					return $objectService;
 				}
 
-				if ($id === PipelinqContactAdapter::class) {
+				if ($id === PipelinqContactAdapter::class || $id === PipelinqContactAdapterInterface::class) {
 					return $adapter;
 				}
 
@@ -271,10 +277,10 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 	/**
 	 * Build a settings stub.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
@@ -343,7 +349,7 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 	): void {
 		$job = new PipelinqTimelineRetryJob(
 			time: $this->timeAt($nowIso),
-			settings: $this->settings(),
+			registerLocation: $this->settings(),
 			container: $this->container($objectService, $adapter),
 			jobList: $this->jobList($added),
 			logger: $logger,

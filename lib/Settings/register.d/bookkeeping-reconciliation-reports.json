@@ -247,28 +247,6 @@
               "reconciliationStatus": "closed"
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "verifier": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "ReconciliationMatch": {
@@ -343,6 +321,12 @@
             "nullable": true,
             "description": "Operator-supplied reason for the resolution classification (audit-trailed). Required when resolutionStatus is set.",
             "title": "Resolution Reason"
+          },
+          "resolvedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who set the resolution classification. Written by the resolve endpoints.",
+            "title": "Resolved by"
           },
           "arInvoiceId": {
             "type": "string",
@@ -476,24 +460,12 @@
             "groupBy": ["administrationId"]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "verifier": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_verifier",
+            "shillinq_auditor"
+          ]
         }
       }
     }

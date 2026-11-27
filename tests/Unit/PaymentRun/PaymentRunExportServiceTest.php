@@ -22,9 +22,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
+use OCA\OpenRegister\Exception\HookStoppedException;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunCsvGenerator;
 use OCA\Shillinq\PaymentRun\Generator\SepaPain001Generator;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
+use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
@@ -41,13 +46,43 @@ use Psr\Log\LoggerInterface;
  * Tests REQ-SEPA-001 / REQ-SEPA-004 / REQ-SEPA-005 — validate, store, write-back.
  */
 class PaymentRunExportServiceTest extends TestCase {
+
+	/**
+	 * How many files the export wrote into Files.
+	 *
+	 * @var int
+	 */
+	private int $newFileCalls = 0;
+
+	/**
+	 * What the fake ObjectService throws on save (null: it saves).
+	 *
+	 * @var \Throwable|null
+	 */
+	private ?\Throwable $refusal = null;
+
+	/**
+	 * Whether OpenRegister's ObjectService resolves from the container.
+	 *
+	 * @var boolean
+	 */
+	private bool $objectServiceAvailable = true;
+
+	/**
+	 * How many stored export files were deleted again.
+	 *
+	 * @var integer
+	 */
+	private int $deletedFiles = 0;
+
 	/**
 	 * The seeded approved PR-2026-001 fixture (SAFE placeholders).
 	 *
 	 * @return array<string, mixed>
 	 */
 	private function approvedRun(): array {
-		return [
+		return $this->sealed(
+			[
 			'id' => 'pr-2026-001',
 			'runNumber' => 'PR-2026-001',
 			'administrationId' => 'adm-consultancy',
@@ -61,8 +96,22 @@ class PaymentRunExportServiceTest extends TestCase {
 				['payeeName' => 'Eneco Energie B.V.', 'creditorIban' => 'NL00BANK0123456789', 'amount' => 892.50, 'remittanceInfo' => 'ENECO-2026-04-0001', 'apTransactionRef' => 'a'],
 				['payeeName' => 'Jan de Vries (ZZP)', 'creditorIban' => 'NL00TEST0222222222', 'amount' => 605.00, 'remittanceInfo' => 'JDV-2026-06-0003', 'apTransactionRef' => 'b'],
 			],
-		];
+			]
+		);
 	}//end approvedRun()
+
+	/**
+	 * Stamp the approval digest the lock listener writes when a run is approved.
+	 *
+	 * @param array<string, mixed> $run The run as approved.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function sealed(array $run): array {
+		$run['approvedLinesDigest'] = (new PaymentRunApprovalLock())->digest(run: $run);
+		$run['approvedBy'] = 'approver';
+		return $run;
+	}//end sealed()
 
 	/**
 	 * A fake fluent ObjectService capturing the saved run.
@@ -72,12 +121,14 @@ class PaymentRunExportServiceTest extends TestCase {
 	 * @return object
 	 */
 	private function fakeObjectService(array &$captured): object {
-		return new class($captured) {
+		return new class($captured, $this->refusal) {
 			/**
 			 * @param array<string,mixed> $captured Capture slot.
+			 * @param \Throwable|null     $refusal  What the save throws, if anything.
 			 */
 			public function __construct(
 				private array &$captured,
+				private ?\Throwable $refusal,
 			) {
 			}//end __construct()
 
@@ -95,6 +146,10 @@ class PaymentRunExportServiceTest extends TestCase {
 			 * @return array<string,mixed>
 			 */
 			public function saveObject(array $object): array {
+				if ($this->refusal !== null) {
+					throw $this->refusal;
+				}
+
 				$this->captured = $object;
 				return $object;
 			}//end saveObject()
@@ -108,7 +163,7 @@ class PaymentRunExportServiceTest extends TestCase {
 	 *
 	 * @return PaymentRunExportService
 	 */
-	private function service(array &$captured): PaymentRunExportService {
+	private function service(array &$captured, ?array $records = null): PaymentRunExportService {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			function (string $id) use (&$captured) {
@@ -123,7 +178,7 @@ class PaymentRunExportServiceTest extends TestCase {
 					return new PaymentRunCsvGenerator();
 				}
 
-				if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
+				if ($id === 'OCA\\OpenRegister\\Service\\ObjectService' && $this->objectServiceAvailable === true) {
 					return $this->fakeObjectService($captured);
 				}
 
@@ -134,11 +189,16 @@ class PaymentRunExportServiceTest extends TestCase {
 		$file = $this->createMock(File::class);
 		$file->method('getPath')->willReturn('/admin/files/Shillinq/PaymentRuns/adm-consultancy/PR-2026-001.pain001.xml');
 		$file->method('getId')->willReturn(4242);
+		$this->deletedFiles = 0;
+		$file->method('delete')->willReturnCallback(
+			function (): void {
+				$this->deletedFiles++;
+			}
+		);
 
 		$folder = $this->createMock(Folder::class);
 		$folder->method('nodeExists')->willReturn(false);
 		$folder->method('newFolder')->willReturnSelf();
-		$folder->method('newFile')->willReturn($file);
 
 		$rootFolder = $this->createMock(IRootFolder::class);
 		$rootFolder->method('getUserFolder')->willReturn($folder);
@@ -154,6 +214,26 @@ class PaymentRunExportServiceTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 
+		if ($records === null) {
+			$records = [
+				'APTransaction' => [
+					['id' => 'a', 'invoiceNumber' => 'ENECO-2026-04-0001', 'state' => 'issued'],
+					['id' => 'b', 'invoiceNumber' => 'JDV-2026-06-0003', 'state' => 'issued'],
+				],
+			];
+		}
+
+		$settings = $this->createMock(RegisterLocation::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+
+		$this->newFileCalls = 0;
+		$folder->method('newFile')->willReturnCallback(
+			function () use ($file) {
+				$this->newFileCalls++;
+				return $file;
+			}
+		);
+
 		return new PaymentRunExportService(
 			$container,
 			$rootFolder,
@@ -161,6 +241,7 @@ class PaymentRunExportServiceTest extends TestCase {
 			$tagMapper,
 			$session,
 			$this->createMock(LoggerInterface::class),
+			new PaymentBlockChecker(new InMemoryObjectServiceStub($records), $settings),
 		);
 	}//end service()
 
@@ -224,6 +305,7 @@ class PaymentRunExportServiceTest extends TestCase {
 
 		$run = $this->approvedRun();
 		$run['paymentLines'][1]['creditorIban'] = '';
+		$run = $this->sealed($run);
 
 		$result = $service->export($run);
 
@@ -231,4 +313,180 @@ class PaymentRunExportServiceTest extends TestCase {
 		$this->assertSame([2], $result['lines']);
 		$this->assertSame([], $captured);
 	}//end testLineMissingCreditorIbanRejected()
+
+	/**
+	 * F2-S1: a line changed after approval refuses the export before any file is written.
+	 *
+	 * @return void
+	 */
+	public function testALineChangedAfterApprovalIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		$run['paymentLines'][1]['creditorIban'] = 'NL00EVIL0666666666';
+
+		$result = $service->export($run);
+
+		$this->assertSame('changed-after-approval', $result['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+		$this->assertSame([], $captured);
+	}//end testALineChangedAfterApprovalIsRefused()
+
+	/**
+	 * F2-S1: an amount raised after approval refuses the export.
+	 *
+	 * @return void
+	 */
+	public function testAnAmountChangedAfterApprovalIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		$run['paymentLines'][0]['amount'] = 8925.00;
+		$run['totalAmount'] = 9530.00;
+
+		$this->assertSame('changed-after-approval', $service->export($run)['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+	}//end testAnAmountChangedAfterApprovalIsRefused()
+
+	/**
+	 * F2-S1: a run without an approval digest cannot be exported (fail closed).
+	 *
+	 * @return void
+	 */
+	public function testARunWithoutAnApprovalDigestIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		unset($run['approvedLinesDigest']);
+
+		$this->assertSame('changed-after-approval', $service->export($run)['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+	}//end testARunWithoutAnApprovalDigestIsRefused()
+
+	/**
+	 * A run approved before the approval lock carries no digest, approver or
+	 * approval time; it is exported on the lines it holds.
+	 *
+	 * @return void
+	 */
+	public function testARunApprovedBeforeTheLockIsExported(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		unset($run['approvedLinesDigest'], $run['approvedBy'], $run['approvedAt']);
+
+		$result = $service->export($run);
+
+		$this->assertArrayNotHasKey('error', $result);
+		$this->assertGreaterThan(0, $this->newFileCalls);
+		$this->assertSame($run['paymentLines'], $captured['paymentLines']);
+	}//end testARunApprovedBeforeTheLockIsExported()
+
+	/**
+	 * A run stamped with an approval time but no digest is not a pre-lock run
+	 * and stays refused.
+	 *
+	 * @return void
+	 */
+	public function testARunWithAnApprovalTimeButNoDigestIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		unset($run['approvedLinesDigest'], $run['approvedBy']);
+		$run['approvedAt'] = '2026-11-01T10:00:00Z';
+
+		$this->assertSame('changed-after-approval', $service->export($run)['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+	}//end testARunWithAnApprovalTimeButNoDigestIsRefused()
+
+	/**
+	 * F2-S1: the export pays exactly the approved lines.
+	 *
+	 * @return void
+	 */
+	public function testTheExportPaysExactlyTheApprovedLines(): void {
+		$captured = [];
+		$service = $this->service($captured);
+		$approved = $this->approvedRun();
+
+		$result = $service->export($approved);
+
+		$this->assertArrayNotHasKey('error', $result);
+		$this->assertSame($approved['paymentLines'], $captured['paymentLines']);
+		$this->assertSame($approved['approvedLinesDigest'], (new PaymentRunApprovalLock())->digest(run: $captured));
+	}//end testTheExportPaysExactlyTheApprovedLines()
+
+	/**
+	 * REQ-BPR-005: a blocked line refuses the export before any file is written.
+	 *
+	 * @return void
+	 */
+	public function testABlockedLineIsRefusedBeforeAnyFileIsWritten(): void {
+		$captured = [];
+		$service = $this->service(
+			$captured,
+			[
+				'APTransaction' => [
+					['id' => 'a', 'invoiceNumber' => 'ENECO-2026-04-0001', 'state' => 'issued'],
+					['id' => 'b', 'invoiceNumber' => 'JDV-2026-06-0003', 'state' => 'issued', 'paymentBlocked' => true, 'paymentBlockReason' => 'Wacht op creditnota'],
+				],
+			]
+		);
+
+		$result = $service->export($this->approvedRun());
+
+		$this->assertSame('payment-blocked', $result['error']);
+		$this->assertSame(['JDV-2026-06-0003'], array_column($result['blocked'], 'invoiceNumber'));
+		$this->assertSame(0, $this->newFileCalls);
+		$this->assertSame([], $captured);
+	}//end testABlockedLineIsRefusedBeforeAnyFileIsWritten()
+
+	/**
+	 * A refused save (the duplicate guard stops the approved to exported
+	 * transition) is reported as a refusal, not as an exported run, and the
+	 * bank file of the refused run is removed again so nobody uploads it.
+	 *
+	 * @return void
+	 */
+	public function testARefusedSaveIsReportedAndTheBankFileRemoved(): void {
+		// The shape MagicMapper throws after LifecycleValidationListener::reject().
+		$reason = 'Invoice ENECO-2026-04-0001 is already paid in run PR-2026-000';
+		$this->refusal = new HookStoppedException(
+			$reason,
+			['message' => $reason, 'action' => 'export']
+		);
+		$captured = [];
+		$service = $this->service($captured);
+
+		$result = $service->export($this->approvedRun());
+
+		$this->assertSame('export-refused', $result['error'] ?? null);
+		$this->assertSame('Invoice ENECO-2026-04-0001 is already paid in run PR-2026-000', $result['reason']);
+		$this->assertArrayNotHasKey('exportedFileRef', $result);
+		$this->assertArrayNotHasKey('lifecycleState', $result);
+		$this->assertSame(2, $this->deletedFiles, 'The pain.001 and the CSV of a refused run must not stay in Files');
+	}//end testARefusedSaveIsReportedAndTheBankFileRemoved()
+
+	/**
+	 * Without OpenRegister's ObjectService the run cannot move to exported,
+	 * so the export must not say it did.
+	 *
+	 * @return void
+	 */
+	public function testAnUnsavedRunIsNotReportedAsExported(): void {
+		$this->objectServiceAvailable = false;
+		$captured = [];
+		$service = $this->service($captured);
+
+		$result = $service->export($this->approvedRun());
+
+		$this->assertSame('save-failed', $result['error'] ?? null);
+		$this->assertArrayNotHasKey('lifecycleState', $result);
+		$this->assertSame(2, $this->deletedFiles);
+	}//end testAnUnsavedRunIsNotReportedAsExported()
 }//end class

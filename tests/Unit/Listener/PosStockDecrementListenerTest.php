@@ -3,6 +3,9 @@
 /**
  * Unit tests for PosStockDecrementListener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Verifies the change inventory-pos-decrement (shillinq#504) contract:
  *
  *  - fail-closed when pipelinq's PosStockMovedEvent class does not exist /
@@ -33,10 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/changes/archive/2026-11-25-inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
 
 declare(strict_types=1);
@@ -96,6 +96,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\Pipelinq\Event\PosStockMovedEvent;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Service\CogsPosterService;
@@ -515,7 +516,7 @@ class PosStockDecrementListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testMatchedLineDelegatesToIssueForDelivery(): void {
-		$this->setUpListener(inventoryStock: [['sku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
 
 		$this->dispatchService->expects(self::once())
 			->method('issueForDelivery')
@@ -548,7 +549,7 @@ class PosStockDecrementListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testDownstreamExceptionIsFailSoft(): void {
-		$this->setUpListener(inventoryStock: [['sku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-1001', 'administrationId' => 'adm-1']]);
 
 		$this->dispatchService->method('issueForDelivery')->willThrowException(new \RuntimeException('boom'));
 		$this->logger->expects(self::once())->method('error');
@@ -620,7 +621,7 @@ class PosStockDecrementListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testMixedMatchedAndUnmatchedLinesBothHandled(): void {
-		$this->setUpListener(inventoryStock: [['sku' => 'SKU-OK', 'administrationId' => 'adm-1']]);
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-OK', 'administrationId' => 'adm-1']]);
 
 		$this->dispatchService->expects(self::once())
 			->method('issueForDelivery')
@@ -648,6 +649,122 @@ class PosStockDecrementListenerTest extends TestCase {
 
 		self::assertCount(1, $this->notifiedNotifications, 'exactly the unmatched line is audited');
 	}//end testMixedMatchedAndUnmatchedLinesBothHandled()
+
+	/**
+	 * Every line outcome, in event order: a non-array line is skipped, a
+	 * zero quantity and an unknown SKU are audited, and a line the issue
+	 * pipeline blocks is audited after the dispatch log — each with the same
+	 * log context and notification.
+	 *
+	 * @return void
+	 */
+	public function testEveryLineOutcomeIsLoggedAndNotifiedInOrder(): void {
+		$this->setUpListener(inventoryStock: [['productSku' => 'SKU-OK', 'administrationId' => 'adm-1']]);
+		$log = [];
+		foreach (['error', 'info'] as $level) {
+			$this->logger->method($level)->willReturnCallback(
+				static function (string $message, array $context = []) use (&$log, $level): void {
+					$log[] = [$level, $message, $context];
+				}
+			);
+		}
+
+		$this->dispatchService->expects(self::once())
+			->method('issueForDelivery')
+			->with(['id' => 'pos-tx-9', 'administrationId' => 'adm-1', 'lines' => [['productReference' => 'SKU-OK', 'quantityShipped' => 2.0]]])
+			->willReturn(['issued' => 0, 'skipped' => 1, 'blocked' => 1, 'blockedLines' => [['lineIndex' => 1, 'sku' => 'SKU-OK', 'quantityRequired' => 2.0]]]);
+
+		$this->listener->handle(
+			$this->makeEvent(
+				posTxnId: ' tx-9 ',
+				administrationId: ' adm-1 ',
+				lines: [
+					'not-a-line',
+					['productRef' => ' SKU-OK ', 'qty' => 2],
+					['productRef' => 'SKU-OK', 'qty' => 0],
+					['productRef' => 'SKU-GHOST', 'qty' => 1.5],
+				]
+			)
+		);
+
+		$unmatched = 'PosStockDecrementListener: unmatched POS stock line — surfaced for reconciliation, NOT silently dropped';
+		self::assertSame(
+			[
+				['error', $unmatched, ['posTxnId' => 'tx-9', 'administrationId' => 'adm-1', 'lineIndex' => 2, 'productRef' => 'SKU-OK', 'quantity' => 0.0, 'reason' => 'no_product_ref']],
+				['error', $unmatched, ['posTxnId' => 'tx-9', 'administrationId' => 'adm-1', 'lineIndex' => 3, 'productRef' => 'SKU-GHOST', 'quantity' => 1.5, 'reason' => 'no_inventory_stock']],
+				['info', 'PosStockDecrementListener: POS sale dispatched to the reused stock-issue pipeline', ['posTxnId' => 'tx-9', 'issued' => 0, 'skipped' => 1, 'blocked' => 1]],
+				['error', $unmatched, ['posTxnId' => 'tx-9', 'administrationId' => 'adm-1', 'lineIndex' => 1, 'productRef' => 'SKU-OK', 'quantity' => 2.0, 'reason' => 'unsellable_lot']],
+			],
+			$log
+		);
+
+		self::assertSame(
+			['no_product_ref', 'no_inventory_stock', 'unsellable_lot'],
+			array_map(static fn (INotification $n): string => $n->getSubjectParameters()['reason'], $this->notifiedNotifications)
+		);
+		self::assertSame(
+			['posTxnId' => 'tx-9', 'productRef' => 'SKU-GHOST', 'quantity' => 1.5, 'reason' => 'no_inventory_stock'],
+			$this->notifiedNotifications[1]->getSubjectParameters()
+		);
+
+	}//end testEveryLineOutcomeIsLoggedAndNotifiedInOrder()
+
+	/**
+	 * Without lines that can be issued nothing is dispatched; a missing
+	 * transaction id is logged as nothing to process.
+	 *
+	 * @return void
+	 */
+	public function testNothingIsDispatchedWithoutIssuableLines(): void {
+		$this->setUpListener();
+		$this->dispatchService->expects(self::never())->method('issueForDelivery');
+		$this->logger->expects(self::once())->method('info')->with(
+			'PosStockDecrementListener: event carried no posTxnId/administrationId/lines — nothing to process',
+			['posTxnId' => '', 'administrationId' => 'adm-1']
+		);
+
+		$this->listener->handle($this->makeEvent(posTxnId: '  ', lines: [['productRef' => 'SKU-1', 'qty' => 1]]));
+		$this->listener->handle($this->makeEvent(lines: ['not-a-line']));
+
+	}//end testNothingIsDispatchedWithoutIssuableLines()
+
+	/**
+	 * No admin group means no notification; a failing notification is only warned about.
+	 *
+	 * @return void
+	 */
+	public function testNotificationFailuresAreSoft(): void {
+		$this->setUpListener();
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('get')->willReturn(null);
+		$listener = new PosStockDecrementListener(
+			dispatchService: $this->dispatchService,
+			appConfig: $this->appConfig,
+			groupManager: $groupManager,
+			notificationMgr: $this->notificationMgr,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),
+		);
+		$listener->handle($this->makeEvent(lines: [['productRef' => '', 'qty' => 1]]));
+		self::assertSame([], $this->notifiedNotifications);
+
+		$failing = $this->createMock(IGroupManager::class);
+		$failing->method('get')->willThrowException(new \RuntimeException('ldap down'));
+		$this->logger->expects(self::once())->method('warning')->with(
+			'PosStockDecrementListener: failed to notify admins of an unmatched line',
+			['posTxnId' => 'tx-1', 'exception' => 'ldap down']
+		);
+		$listener = new PosStockDecrementListener(
+			dispatchService: $this->dispatchService,
+			appConfig: $this->appConfig,
+			groupManager: $failing,
+			notificationMgr: $this->notificationMgr,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),
+		);
+		$listener->handle($this->makeEvent(lines: [['productRef' => '', 'qty' => 1]]));
+
+	}//end testNotificationFailuresAreSoft()
 
 	// -------------------------------------------------------------------
 	// CORRECTNESS PROOF: real decrement + COGS + idempotency, in-memory.
@@ -687,11 +804,11 @@ class PosStockDecrementListenerTest extends TestCase {
 			'postedAt' => '2026-07-01T09:00:00Z',
 		];
 		$store->objects['InventoryStock'][] = [
-			'sku' => 'SKU-1001',
+			'productSku' => 'SKU-1001',
 			'administrationId' => 'adm-1',
-			'locationId' => 'loc-1',
-			'quantity' => 10,
-			'reservedQuantity' => 0,
+			'locationCode' => 'loc-1',
+			'quantityOnHand' => 10,
+			'quantityReserved' => 0,
 		];
 
 		$fakeObjectService = new class($store) {
@@ -839,9 +956,9 @@ class PosStockDecrementListenerTest extends TestCase {
 			fifo: $fifo,
 			average: $average,
 			cogs: $cogs,
-			appConfig: $appConfig,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($fakeObjectService),
+			schemas: $this->createStub(originalClassName: SchemaDefinitionsInterface::class),
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(

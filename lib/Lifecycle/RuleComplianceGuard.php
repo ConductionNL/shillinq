@@ -3,6 +3,9 @@
 /**
  * Rule Compliance Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard that enforces the machine-checkable
  * bookkeeping rules (the RuleCatalogue / RuleEngine) at the point a record is
  * issued or posted. Referenced from the schema x-openregister-lifecycle
@@ -35,28 +38,44 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use DateTimeImmutable;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Lifecycle\Action\AssignInvoiceNumberAction;
+use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Lifecycle guard enforcing machine-checkable rules on issue/post.
  */
 class RuleComplianceGuard {
 	/**
+	 * The number an invoice is judged by when the issue assigns it.
+	 *
+	 * @var string
+	 */
+	public const NUMBER_ASSIGNED_AT_ISSUE = 'assigned-at-issue';
+
+	/**
 	 * Construct the rule compliance lifecycle guard.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for violations + fail-closed diagnostics.
 	 * @param BalanceGuard $balanceGuard Existing double-entry balance guard (reused).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
+	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
+	 * @param SalesInvoiceApprovalGuard|null $approvals The approval threshold of an issue (REQ-SIIC-003).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly BalanceGuard $balanceGuard,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly PostingRestrictionGuard $restrictions,
+		private readonly ?SalesInvoiceApprovalGuard $approvals = null,
 	) {
 
 	}//end __construct()
@@ -64,20 +83,45 @@ class RuleComplianceGuard {
 	/**
 	 * Allow ARInvoice.issue only when no mandatory invoice rule is violated.
 	 *
-	 * @param string $id The ARInvoice id being issued.
+	 * Takes either the invoice id or the invoice object itself. The object
+	 * form is what RegisterRequiresGuardAdapter passes on the transition
+	 * (#1103): it is the payload being issued, so it is evaluated as it
+	 * stands rather than re-read from the store.
+	 *
+	 * @param string|array<string,mixed> $invoiceOrId The ARInvoice id, or the ARInvoice being issued.
 	 *
 	 * @return bool True to allow the transition.
+	 *
+	 * @throws PostingRefusedException When the invoice needs approval before it is issued.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-2.2
 	 */
-	public function validateInvoice(string $id): bool {
+	public function validateInvoice(string|array $invoiceOrId): bool {
+		$id = $this->idOf(objectOrId: $invoiceOrId);
 		try {
-			$invoice = $this->loadObject('ARInvoice', $id);
+			$invoice = $invoiceOrId;
+			if (is_array($invoice) === false) {
+				$invoice = $this->loadObject('ARInvoice', $id);
+			}
+
 			if ($invoice === null) {
 				return false;
 			}
 
-			$violations = RuleEngine::evaluate('ARInvoice', $invoice, $this->context($invoice));
+			// Above the administration's threshold a draft is approved first
+			// (sales-invoice-issue-controls REQ-SIIC-003): issue takes one
+			// `requires`, so the approval check is delegated from here.
+			if ($this->approvals !== null && $this->approvals->canIssue(invoice: $invoice) === false) {
+				return false;
+			}
+
+			$violations = RuleEngine::evaluate('ARInvoice', $this->asNumbered(invoice: $invoice), $this->context($invoice));
 			$this->logViolations('ARInvoice', $id, $violations);
 			return RuleEngine::hasMandatory($violations) === false;
+		} catch (PostingRefusedException $e) {
+			// A refusal that names what to do (request approval): passed on as is.
+			throw $e;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RuleComplianceGuard: invoice validation failed — denying issue (fail-closed)',
@@ -93,26 +137,31 @@ class RuleComplianceGuard {
 	 * violated. Balance is delegated to BalanceGuard so existing behaviour is
 	 * preserved exactly; the engine adds completeness + sequential-numbering.
 	 *
-	 * @param string $id The GLTransaction id being posted.
+	 * Takes either the transaction id or the transaction object itself, the
+	 * form RegisterRequiresGuardAdapter passes on the transition (#1103). The
+	 * lines and the balance are read from the stored GLLine rows either way.
+	 *
+	 * @param string|array<string,mixed> $transactionOrId The GLTransaction id, or the GLTransaction being posted.
 	 *
 	 * @return bool True to allow the transition.
+	 *
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
-	public function validateTransaction(string $id): bool {
+	public function validateTransaction(string|array $transactionOrId): bool {
+		$id = $this->idOf(objectOrId: $transactionOrId);
 		try {
-			$transaction = $this->loadObject('GLTransaction', $id);
-			if ($transaction === null) {
+			$transaction = $this->transactionAsPosted(transactionOrId: $transactionOrId, id: $id);
+			if ($transaction === null || $this->violatesMandatoryRule(id: $id, transaction: $transaction) === true) {
 				return false;
 			}
 
-			$transaction['lines'] = $this->loadLines($transaction);
+			$this->assertBookingRules(transaction: $transaction);
 
-			$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
-			if ($this->balanceGuard->isBalanced($id) === false) {
-				$violations[] = RuleEngine::violationFor('gl-double-entry-balanced');
-			}
-
-			$this->logViolations('GLTransaction', $id, $violations);
-			return RuleEngine::hasMandatory($violations) === false;
+			return true;
+		} catch (PostingRefusedException $e) {
+			throw $e;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RuleComplianceGuard: transaction validation failed — denying post (fail-closed)',
@@ -124,18 +173,158 @@ class RuleComplianceGuard {
 	}//end validateTransaction()
 
 	/**
-	 * Build the evaluation context. Jurisdiction drives which rules apply; it
-	 * defaults to NL (the home jurisdiction — EU + global rules then apply) and
-	 * is the seam for per-administration jurisdiction resolution later.
+	 * Check a person's posting against the booking rules. A transaction a
+	 * sub-ledger prepared carries its journal code (the GR/IR and inventory
+	 * posters) or the journal entry it books, which JournalEntryGuard already
+	 * checked (ledger-booking-rules D2).
+	 *
+	 * @param array<string,mixed> $transaction The transaction as posted.
+	 *
+	 * @return void
+	 *
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
+	 */
+	private function assertBookingRules(array $transaction): void {
+		if ($this->fromSubLedger(transaction: $transaction) === false) {
+			$this->restrictions->assertAllowed(
+				lines: $transaction['lines'],
+				administrationId: (string)($transaction['administrationId'] ?? ''),
+				postingDate: (string)($transaction['postingDate'] ?? '')
+			);
+		}
+	}//end assertBookingRules()
+
+	/**
+	 * The transaction as the post leaves it, with its stored lines; null when
+	 * it cannot be found or carries no id.
+	 *
+	 * The page sends the draft with its state moved to posted. The lock,
+	 * retention, integrity and audit-trail fields are what the post itself
+	 * gives the entry (StampPostingAction persists them), so the entry is
+	 * judged as the post leaves it (REQ-LPP-001, #516).
+	 *
+	 * @param string|array<string,mixed> $transactionOrId The GLTransaction id, or the GLTransaction.
+	 * @param string $id The transaction's id.
+	 *
+	 * @return array<string,mixed>|null The stamped transaction with `lines`.
+	 */
+	private function transactionAsPosted(string|array $transactionOrId, string $id): array|null {
+		$transaction = $transactionOrId;
+		if (is_array($transaction) === false) {
+			$transaction = $this->loadObject('GLTransaction', $id);
+		}
+
+		if ($transaction === null || $id === '') {
+			return null;
+		}
+
+		$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
+		$transaction['lines'] = $this->loadLines($transaction);
+		return $transaction;
+
+	}//end transactionAsPosted()
+
+	/**
+	 * Evaluate the ledger rules plus the double-entry balance, logging every violation.
+	 *
+	 * @param string $id The transaction's id.
+	 * @param array<string,mixed> $transaction The stamped transaction with its lines.
+	 *
+	 * @return bool True when a mandatory rule is violated.
+	 */
+	private function violatesMandatoryRule(string $id, array $transaction): bool {
+		$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
+		if ($this->balanceGuard->isBalanced($id) === false) {
+			$violations[] = RuleEngine::violationFor('gl-double-entry-balanced');
+		}
+
+		$this->logViolations('GLTransaction', $id, $violations);
+		return RuleEngine::hasMandatory($violations) === true;
+
+	}//end violatesMandatoryRule()
+
+	/**
+	 * Whether a transaction was prepared by a sub-ledger rather than a person.
+	 *
+	 * @param array<string,mixed> $transaction The GL transaction.
+	 *
+	 * @return bool
+	 */
+	private function fromSubLedger(array $transaction): bool {
+		return (string)($transaction['journalEntryId'] ?? '') !== ''
+			|| (string)($transaction['journalCode'] ?? '') !== '';
+	}//end fromSubLedger()
+
+	/**
+	 * The id of an object passed either as its id or as the object array.
+	 *
+	 * @param string|array<string,mixed> $objectOrId The id, or the object.
+	 *
+	 * @return string The id, '' when the object carries none.
+	 */
+	private function idOf(string|array $objectOrId): string {
+		if (is_array($objectOrId) === false) {
+			return $objectOrId;
+		}
+
+		return (string)($objectOrId['id'] ?? ($objectOrId['@self']['id'] ?? ''));
+	}//end idOf()
+
+	/**
+	 * The invoice as it is issued: with its number.
+	 *
+	 * This guard runs before the transition's actions, and the first of them,
+	 * AssignInvoiceNumberAction, gives a draft its number (REQ-SIIC-001). An
+	 * invoice that takes its number there is judged as numbered, so the
+	 * number-present rules hold it to the number it is about to get.
+	 *
+	 * @param array<string, mixed> $invoice The invoice being issued.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AssignInvoiceNumberAction::takesNumber() is the one reading of who numbers an invoice.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-issue-controls/tasks.md#task-1.2
+	 */
+	private function asNumbered(array $invoice): array {
+		if (AssignInvoiceNumberAction::takesNumber(invoice: $invoice) === true) {
+			$invoice['invoiceNumber'] = self::NUMBER_ASSIGNED_AT_ISSUE;
+		}
+
+		return $invoice;
+	}//end asNumbered()
+
+	/**
+	 * Build the evaluation context. Jurisdiction drives which rules apply: the
+	 * administration's own jurisdiction, NL when it names none (EU and global
+	 * rules then apply as well). A failed lookup keeps NL, the home jurisdiction.
 	 *
 	 * @param array<string, mixed> $object The object under evaluation.
 	 *
 	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	private function context(array $object): array {
+		$administrationId = ($object['administrationId'] ?? null);
+		$jurisdiction = AdministrationJurisdiction::DEFAULT;
+		if (is_string($administrationId) === true && trim($administrationId) !== '') {
+			try {
+				$jurisdiction = (new AdministrationJurisdiction(objectService: $this->objectService, appConfig: $this->appConfig))
+					->of(administrationId: $administrationId);
+			} catch (\Throwable $e) {
+				$this->logger->warning(
+					'RuleComplianceGuard: the administration\'s jurisdiction could not be read; checking under NL rules',
+					['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+				);
+			}
+		}
+
 		return [
-			'jurisdiction' => 'NL',
-			'administrationId' => ($object['administrationId'] ?? null),
+			'jurisdiction' => $jurisdiction,
+			'administrationId' => $administrationId,
 		];
 
 	}//end context()
@@ -149,7 +338,10 @@ class RuleComplianceGuard {
 	 * @return array<string, mixed>|null
 	 */
 	private function loadObject(string $schema, string $id): ?array {
-		$entity = $this->objectService->find(id: $id, register: $this->register(), schema: $schema);
+		$entity = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema($schema),
+			id: $id
+		);
 		if ($entity === null) {
 			return null;
 		}
@@ -190,12 +382,8 @@ class RuleComplianceGuard {
 
 			// ADR-084: findAll() is declared `: array` — never null.
 			foreach ($rows as $row) {
-				$line = $row;
-				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-					$line = (array)$row->jsonSerialize();
-				}
-
-				if (is_array($line) === true) {
+				$line = $this->lineRow(row: $row);
+				if ($line !== null) {
 					$lineId = (string)($line['id'] ?? $line['@self']['id'] ?? count($lines));
 					$lines[$lineId] = $line;
 				}
@@ -204,6 +392,26 @@ class RuleComplianceGuard {
 
 		return array_values($lines);
 	}//end loadLines()
+
+	/**
+	 * A GLLine row as an array, or null when it is neither an array nor serialisable to one.
+	 *
+	 * @param mixed $row The findAll() row.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function lineRow(mixed $row): array|null {
+		$line = $row;
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$line = (array)$row->jsonSerialize();
+		}
+
+		if (is_array($line) === true) {
+			return $line;
+		}
+
+		return null;
+	}//end lineRow()
 
 	/**
 	 * Log violations (mandatory at warning level, others at info).
@@ -240,7 +448,7 @@ class RuleComplianceGuard {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		return $register === '' ? 'shillinq' : $register;
 	}//end register()
 }//end class

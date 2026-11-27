@@ -3,14 +3,17 @@
 /**
  * Integration tests for the slice-11 audit-trail export (REQ-PO3W-010).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Exercises the full PO → approval → GRN → invoice → match → exception →
  * resolution → GR/IR → payment lifecycle end-to-end and asserts that the
  * audit-trail export captures every transition with the correct actor +
  * timestamp:
  *
- *  1. createPurchaseOrder (slice 02) — materialises the approval chain
- *  2. PurchaseOrderApprovalService::recordApprovalDecision (slice 11) —
- *     stamps approver identity + decidedAt on each chain entry
+ *  1. a purchase order created by its requester
+ *  2. an approval decision in the order's approval-chain history, stamped
+ *     with the approver's identity and decidedAt
  *  3. simulate Peppol send (peppolSentAt)
  *  4. simulate GRN receipt + acceptance
  *  5. simulate SupplierInvoice receipt
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,7 +48,6 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\AuditExportService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -86,9 +85,11 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'currency' => 'EUR',
 					'costCenter' => 'FAC-2026',
 					'projectCode' => 'PRJ-A',
-					'lifecycleState' => 'pending_approval',
+					// Decided before approval moved onto OpenRegister's chain:
+					// the in-object chain is the order's read-only history.
+					'statusCode' => 'approved',
 					'approvalChain' => [
-						['userId' => '', 'decision' => 'pending'],
+						['userId' => 'bob', 'decision' => 'approved', 'decidedAt' => '2026-02-10T09:00:00+00:00', 'comment' => 'within budget'],
 					],
 				],
 			],
@@ -117,6 +118,7 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'totalInclVat' => 188760,
 					'currency' => 'EUR',
 					'ublFileId' => 'file-200',
+					'owner' => 'peppol-intake',
 				],
 			],
 			'ThreeWayMatch' => [
@@ -131,34 +133,28 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'divergenceDetails' => [['field' => 'totalInclVat', 'delta' => 1260]],
 				],
 			],
-			'AdministrationMembership' => [],
+			'AdministrationMembership' => [
+				[
+					'id' => 'mem-100',
+					'administrationId' => 'admin-1',
+					'role' => ExceptionResolutionService::ROLE_CREDITEUREN_ADMIN,
+					'userId' => 'carol',
+				],
+			],
 			'ToleranceProfile' => [],
 		];
 
 		$saved = [];
 		$stub = $this->objectServiceStub(data: $data, saved: $saved);
 
-		// ---- Step 1: approval decision (slice 11) by user "bob" ----
-		$approvalService = $this->buildApprovalService(
-			stub: $stub,
-			accessibleAdministrations: ['admin-1'],
-			userId: 'bob'
-		);
+		// ---- Step 1: the order as approved, with bob's decision in its history ----
+		$purchaseOrder = $data['PurchaseOrder'][0];
 
-		$purchaseOrder = $approvalService->recordApprovalDecision(
-			administrationId: 'admin-1',
-			purchaseOrderId: 'po-100',
-			decision: PurchaseOrderApprovalService::DECISION_APPROVED,
-			comment: 'within budget'
-		);
-		self::assertSame('approved', $purchaseOrder['lifecycleState']);
-		self::assertSame('bob', $purchaseOrder['approvalChain'][0]['userId']);
-		self::assertNotEmpty($purchaseOrder['approvalChain'][0]['decidedAt']);
-
-		// ---- Step 2: simulate Peppol send + PO lifecycleState=sent ----
-		$purchaseOrder['lifecycleState'] = 'sent';
+		// ---- Step 2: simulate Peppol send + PO statusCode=sent ----
+		$purchaseOrder['statusCode'] = 'sent';
 		$purchaseOrder['peppolSentAt'] = '2026-02-15T08:00:00+00:00';
 		$purchaseOrder['peppolMessageId'] = 'urn:uuid:peppol-100';
+		$stub->setSchema('PurchaseOrder');
 		$stub->saveObject($purchaseOrder);
 
 		// ---- Step 3: exception resolution (slice 08) by user "carol" ----
@@ -251,50 +247,6 @@ final class AuditTrailIntegrationTest extends TestCase {
 		@unlink($envelope['zipPath']);
 
 	}//end testFullLifecycleAuditTrailExport()
-
-	/**
-	 * Build PurchaseOrderApprovalService sharing the same OR stub.
-	 *
-	 * @param object $stub OR stub.
-	 * @param array<int,string> $accessibleAdministrations Tenants canAccess returns true for.
-	 * @param string $userId UID returned by the session.
-	 *
-	 * @return PurchaseOrderApprovalService
-	 */
-	private function buildApprovalService(
-		object $stub,
-		array $accessibleAdministrations,
-		string $userId,
-	): PurchaseOrderApprovalService {
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($stub);
-
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
-
-		$logger = $this->createMock(LoggerInterface::class);
-
-		$user = $this->createMock(IUser::class);
-		$user->method('getUID')->willReturn($userId);
-		$userSession = $this->createMock(IUserSession::class);
-		$userSession->method('getUser')->willReturn($user);
-
-		$administrationContext = $this->createMock(AdministrationContextService::class);
-		$administrationContext->method('canAccess')->willReturnCallback(
-			static function (string $administrationId) use ($accessibleAdministrations): bool {
-				return in_array($administrationId, $accessibleAdministrations, true);
-			}
-		);
-
-		return new PurchaseOrderApprovalService(
-			appConfig: $appConfig,
-			administrationContext: $administrationContext,
-			userSession: $userSession,
-			logger: $logger,
-			objectService: new DuckObjectServiceAdapter($stub),
-		);
-
-	}//end buildApprovalService()
 
 	/**
 	 * Build ExceptionResolutionService sharing the same OR stub.

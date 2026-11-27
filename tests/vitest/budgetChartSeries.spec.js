@@ -23,9 +23,9 @@
  * re-verifies it; every fixture below is a fixed, already-computed typed
  * result, per design.md §11's `@e2e exclude` framing extended to vitest.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-004
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-006
  */
 
 import { describe, expect, it } from 'vitest'

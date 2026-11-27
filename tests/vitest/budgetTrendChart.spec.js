@@ -14,7 +14,7 @@
  * pattern. `useBudgetChartData` is mocked so these tests exercise pure
  * shaping over a fixed payload, never a real network fetch.
  *
- * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+ * @spec openspec/changes/archive/2026-11-24-budget-charts/specs/budget-charts/spec.md#req-bch-005
  */
 
 import { describe, expect, it, vi } from 'vitest'

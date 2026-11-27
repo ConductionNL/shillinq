@@ -3,6 +3,9 @@
 /**
  * Rule Catalogue
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Versioned, read-only catalogue of operative bookkeeping rules derived from
  * standards and laws (Category: the granular "what must I do/check" layer, below
  * the regime-level ComplianceCatalogue and the per-tenant StandardsPolicy). Rules

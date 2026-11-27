@@ -27,7 +27,9 @@ declare PDF/A-3 conformance (see REQ-EINV-002 / REQ-EINV-008).
 Market driver: NL B2G e-invoicing is already mandatory; a B2B e-invoicing draft
 law is expected Q4 2026 on the EU ViDA trajectory toward a 2030 structured-invoicing
 mandate with Peppol as the preferred network.
+
 ## Requirements
+
 ### Requirement: REQ-EINV-000 — Shillinq SHALL generate and transmit EN 16931 / NLCIUS e-invoices over Peppol from issued AR invoices
 
 The system SHALL be able to turn an issued `ARInvoice` into an EN 16931 / NLCIUS
@@ -281,6 +283,51 @@ rather than being handed a UBL payload under a Factur-X-branded filename.
   this change — only the embedded filename and the (now absent) false
   PDF/A-3B XMP claim changed
 
+### Requirement: REQ-EINV-009: The hybrid PDF SHALL print the ARInvoice's own lines
+
+`InvoicePdfGenerator` SHALL read a line in either shape: the BillableInvoiceLine
+keys (`lineNumber`, `description`, `billableUnits`, `rateApplied.rateCents`,
+`costAmount`) first, and the `invoiceLines` keys (`lineId`, `itemName`,
+`quantity`, `netPrice`, `netAmount`) when those are absent. The hybrid PDF page
+SHALL print one text line per invoice line under its summary (number,
+description, quantity x price = amount with the currency code, VAT rate), up to
+45 lines. A BillableInvoice PDF SHALL render exactly as before.
+
+#### Scenario: An e-invoice PDF shows the consultancy line
+
+- GIVEN an ARInvoice line `lineId` "1", `itemName` "Consulting", `quantity` 2, `netPrice` 100, `netAmount` 200, `vatRate` 21
+- WHEN the hybrid PDF is generated
+- THEN its page prints "1  Consulting  2 x 100,00 = 200,00 EUR  btw 21%" under the summary
+- AND the HTML row for the same line shows 1, Consulting, 2, € 100,00, € 200,00 and 21%
+- @e2e exclude document generation; covered by `InvoicePdfGeneratorTest::testTheHybridPdfPrintsTheArInvoiceLines` and `::testTheHtmlRowReadsEitherLineShape`
+
+#### Scenario: A time-and-expense PDF is unchanged
+
+- GIVEN a BillableInvoiceLine with `description`, `billableUnits` and `costAmount`
+- WHEN the PDF is generated
+- THEN the row is the same as before this change
+- @e2e exclude document generation; covered by the existing `InvoicePdfGeneratorTest` cases
+
+### Requirement: REQ-EINV-010: The NLCIUS document SHALL carry the customer's reference as the buyer reference (BT-10)
+
+`ArInvoiceUblMapper::toNlciusXml()` SHALL write the ARInvoice's `customerReference`
+as `cbc:BuyerReference`, escaped, directly after `cbc:DocumentCurrencyCode` (the
+UBL 2.1 element order). A blank reference SHALL write no element.
+
+#### Scenario: The reference is the buyer reference
+
+- GIVEN an issued invoice with customer reference `PO-4711 & co`
+- WHEN it is rendered
+- THEN the document holds `<cbc:BuyerReference>PO-4711 &amp; co</cbc:BuyerReference>` after the document currency
+- @e2e exclude XML mapper; covered by `ArInvoiceUblMapperTest::testCustomerReferenceIsTheBuyerReference`
+
+#### Scenario: No reference, no element
+
+- GIVEN an issued invoice whose customer reference is blank
+- WHEN it is rendered
+- THEN the document holds no `BuyerReference`
+- @e2e exclude XML mapper; covered by `ArInvoiceUblMapperTest::testNoCustomerReferenceWritesNoBuyerReference`
+
 ## Notes
 
 - Cross-app coupling to openconnector's Peppol access point is event-only
@@ -289,3 +336,120 @@ rather than being handed a UBL payload under a Factur-X-branded filename.
 - Related canonical specs: `bookkeeping-accounts-receivable-core` (owns
   `ARInvoice` + the `deliveryStatus` sub-lifecycle), `semantic-invoice-consume`,
   and openconnector's cloud-events / participant-lookup specs.
+
+### Requirement: Sending hands the invoice to integriq on its CloudEvent register (REQ-SEIX-001)
+
+When a user sends an issued `ARInvoice` as an e-invoice, shillinq SHALL save one
+object in integriq's register, schema `event`, of type
+`nl.conduction.peppol.outbound.requested`, whose `data` carries `sourceApp`,
+`objectUri`, `recipientPeppolId`, `documentType` and `payloadFileUri`. The
+invoice MUST go to `deliveryStatus` `queued` only after that object was saved,
+and the invoice path MUST NOT call the log-only local transmission port.
+
+#### Scenario: A bookkeeper sends an e-invoice to a municipality
+
+- GIVEN a bookkeeper on the AR invoice page of issued invoice 2026-0420 for Gemeente Voorbeeld, which has a valid Peppol participant id
+- WHEN they choose Send e-invoice
+- THEN integriq's event register holds one outbound request naming invoice 2026-0420 and its UBL file
+- AND the page shows delivery status queued
+
+#### Scenario: Without integriq nothing pretends to be queued
+
+- GIVEN an instance without integriq installed
+- WHEN the bookkeeper chooses Send e-invoice on issued invoice 2026-0420
+- THEN the page says Peppol sending is not available on this instance and offers Send by email
+- AND the invoice stays at delivery status not-sent
+
+### Requirement: The payload named in the hand-off is a stored file (REQ-SEIX-002)
+
+Before the hand-off, shillinq SHALL store the invoice's UBL XML and hybrid PDF
+in the administration's Nextcloud Files, and `payloadFileUri` MUST reference
+the stored XML. A placeholder reference that resolves to nothing MUST NOT be
+written.
+
+#### Scenario: The e-invoice file can be opened afterwards
+
+- GIVEN invoice 2026-0420 sent as an e-invoice
+- WHEN a bookkeeper opens the payload file link on its AR invoice page
+- THEN the UBL XML of invoice 2026-0420 opens from the administration's e-invoices folder
+
+### Requirement: Delivery status from integriq updates the invoice (REQ-SEIX-003)
+
+Shillinq SHALL take every `nl.conduction.peppol.delivery.status` CloudEvent
+integriq saves in its event register and apply it to the `ARInvoice` its
+`objectUri` names, following the existing allowed transitions (`queued` to
+`sent`, `failed` or `rejected`; `sent` to `delivered` or `rejected`), and SHALL
+write `transmissionId` and `deliveryDetail` from it. A status for an unknown
+invoice or an illegal transition MUST be logged and ignored.
+
+#### Scenario: The access point confirms delivery
+
+- GIVEN invoice 2026-0420 at delivery status queued
+- WHEN integriq reports sent and then delivered for it
+- THEN its AR invoice page shows delivered and the transmission id integriq assigned
+
+### Requirement: A rejected e-invoice reaches the bookkeeper (REQ-SEIX-004)
+
+When an e-invoice is reported `rejected`, shillinq SHALL notify every member
+of the invoice's administration whose AdministrationMembership role owns its
+receivables (`debiteurenadmin`, `boekhouder`, `controller` or `eigenaar`;
+the membership schema has no `ar-controller` role, #1754) through a
+notification that Nextcloud can render and that links to the invoice, and the
+notification MUST carry the rejection reason. `AccountsReceivable` SHALL offer
+a filter that lists rejected e-invoices.
+
+#### Scenario: A municipality rejects an invoice for a missing order number
+
+- GIVEN invoice 2026-0420 sent to Gemeente Voorbeeld
+- WHEN integriq reports it rejected with the reason "Ordernummer ontbreekt"
+- THEN each member of the administration with one of those roles sees a notification naming invoice 2026-0420 and the reason, which opens its AR invoice page
+- AND the Rejected e-invoices filter on the Accounts Receivable page lists invoice 2026-0420
+
+### Requirement: A customer's self-billing agreement is recorded (REQ-SEIX-005)
+
+`CustomerMaster` SHALL carry a `selfBillingAgreement` with the date agreed, the
+end date and an optional document reference, editable on `CustomerDetail`, and
+`ARInvoice` SHALL declare `selfBilled` and `selfBillingMention`.
+
+#### Scenario: A farm records the agreement with its buyer
+
+- GIVEN the customer page of Aardappelverwerking De Kuil B.V.
+- WHEN the bookkeeper records a self-billing agreement from 2026-01-05 to 2026-12-31
+- THEN the customer page shows the agreement and its end date
+
+### Requirement: A received self-billed invoice becomes a sales invoice to review (REQ-SEIX-006)
+
+When integriq reports an inbound document whose UBL is a self-billed invoice,
+shillinq SHALL match the seller party to an administration and the buyer party
+to a `CustomerMaster` with a current self-billing agreement, and SHALL write an
+`ARInvoice` in `draft` with `selfBilled` true, the mention "Factuur uitgereikt
+door afnemer", the lines and VAT from the document and the customer's own
+invoice number, once per sender and number. Without a match or a current
+agreement it MUST NOT write an invoice and SHALL record a refusal with the
+reason. Any other inbound invoice SHALL go to the supplier invoice intake.
+
+#### Scenario: A potato processor self-bills a delivery
+
+- GIVEN Akkerbouwbedrijf Jansen with a current agreement for Aardappelverwerking De Kuil B.V.
+- WHEN De Kuil sends self-billed invoice SB-2026-00042 over Peppol for 30,000 kg at EUR 6,000 plus 9 percent VAT
+- THEN the Accounts Receivable page lists a draft invoice of EUR 6,540 for De Kuil marked as issued by the customer, with number SB-2026-00042
+
+#### Scenario: A self-billed invoice without an agreement is refused
+
+- GIVEN a customer without a self-billing agreement
+- WHEN a self-billed invoice from that customer arrives
+- THEN no invoice is written
+- AND a refusal naming the sender and the reason no agreement is recorded is listed for the bookkeeper
+
+### Requirement: A self-billed invoice is booked only after review (REQ-SEIX-007)
+
+A draft `ARInvoice` with `selfBilled` true SHALL be issued only by a user on
+`ARInvoiceDetail`, and the `issue` transition MUST refuse it when the
+customer's agreement is absent or expired on the invoice date. The user MAY
+reject it with a reason instead, which SHALL leave it unbooked.
+
+#### Scenario: The bookkeeper accepts the self-billed invoice
+
+- GIVEN draft self-billed invoice SB-2026-00042 that matches the delivery
+- WHEN the bookkeeper issues it on its AR invoice page
+- THEN it shows state issued and a posted general ledger transaction for EUR 6,540

@@ -74,6 +74,22 @@ export function paymentTermDays(terms) {
 }
 
 /**
+ * The payment terms of a customer as a terms string: its `paymentTermDays`
+ * (0 to 365) when set, else 30 days (sales-invoice-sending REQ-SIS-005).
+ *
+ * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+ * @param {object|null|undefined} customer The CustomerMaster record.
+ * @return {string} The terms, e.g. `net14`.
+ */
+export function customerTerms(customer) {
+	const days = Number(customer?.paymentTermDays)
+	if (customer?.paymentTermDays === null || customer?.paymentTermDays === undefined || customer?.paymentTermDays === '') {
+		return 'net30'
+	}
+	return Number.isInteger(days) && days >= 0 && days <= 365 ? `net${days}` : 'net30'
+}
+
+/**
  * Compute a due date string (YYYY-MM-DD) from an invoice date plus the
  * customer's payment terms.
  *
@@ -95,86 +111,39 @@ export function dueDateFromTerms(invoiceDate, terms) {
 }
 
 /**
- * Derive the fiscal-period id (`YYYY-MM`) an invoice date falls in. The
- * ARInvoice schema requires a periodId; it is stored as a free-text
- * period key (no FiscalPeriod FK is enforced), so the year-month bucket
- * of the invoice date is a safe, deterministic default.
+ * Build the quick-draft request for the server. The server checks the
+ * customer, totals the lines, numbers the draft and stamps its
+ * administration and lifecycle state, so none of those are sent.
  *
- * @param {string} invoiceDate ISO date (YYYY-MM-DD).
- * @return {string} The period id, or '' when invoiceDate is invalid.
- */
-export function periodIdFromDate(invoiceDate) {
-	const m = String(invoiceDate || '').match(/^(\d{4})-(\d{2})/)
-	return m ? `${m[1]}-${m[2]}` : ''
-}
-
-/**
- * Provisional invoice number for a quick draft. The backend does not
- * auto-assign one and the schema requires it, so a draft gets a unique,
- * clearly-provisional number (`DRAFT-<invoiceDate>-<HHmmss>`). The final
- * sequential number is assigned when the draft is posted.
- *
- * @param {string} invoiceDate ISO date (YYYY-MM-DD).
- * @param {Date} [now] Injected clock (testability).
- * @return {string} A unique provisional invoice number.
- */
-export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
-	const datePart =
-		String(invoiceDate || '')
-			.slice(0, 10)
-			.replace(/-/g, '') || 'DRAFT'
-	const hh = String(now.getHours()).padStart(2, '0')
-	const mm = String(now.getMinutes()).padStart(2, '0')
-	const ss = String(now.getSeconds()).padStart(2, '0')
-	return `DRAFT-${datePart}-${hh}${mm}${ss}`
-}
-
-/**
- * Build the ARInvoice payload posted to the OpenRegister object API.
- * The invoice is always created in lifecycleState `draft` (REQ-IQD-003).
- *
- * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  * @param {object} input The collected form values.
  * @param {string} input.customerId Selected customer id.
  * @param {string} input.invoiceDate Invoice date.
  * @param {string} input.dueDate Due date.
  * @param {string} input.reference Optional reference / PO number.
  * @param {string} input.glAccount Default GL account for the lines.
- * @param {string} input.administrationId Owning administration id (required by schema).
- * @param {string} [input.invoiceNumber] Explicit invoice number; a provisional one is generated when absent.
- * @param {string} [input.periodId] Explicit fiscal period; derived from invoiceDate when absent.
  * @param {Array<object>} input.lines Draft lines.
- * @return {object} The ARInvoice payload.
+ * @return {object} The request body.
  */
-export function buildInvoicePayload(input) {
-	const totals = computeTotals(input.lines)
+export function buildQuickDraftRequest(input) {
 	const lines = (input.lines || [])
 		.filter(
 			(l) =>
 				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
 		)
-		.map((l, idx) => ({
-			lineNumber: idx + 1,
+		.map((l) => ({
 			description: (l.description || '').trim(),
 			quantity: Number(l.quantity) || 0,
 			unitPrice: Number(l.unitPrice) || 0,
 			vatRate: Number(l.vatRate) || 0,
-			glAccount: input.glAccount || '',
+			...(l.glAccount ? { glAccount: String(l.glAccount) } : {}),
 		}))
 	return {
-		invoiceNumber:
-			input.invoiceNumber || provisionalInvoiceNumber(input.invoiceDate),
-		administrationId: String(input.administrationId || ''),
-		periodId: input.periodId || periodIdFromDate(input.invoiceDate),
 		customerId: String(input.customerId),
 		invoiceDate: input.invoiceDate,
-		dueDate: input.dueDate,
-		currency: 'EUR',
-		netAmount: totals.net,
-		vatAmount: totals.vat,
-		grossAmount: totals.gross,
-		lifecycleState: 'draft',
-		customerReference: input.reference || '',
+		dueDate: input.dueDate || '',
+		reference: input.reference || '',
+		glAccount: input.glAccount || '',
 		lines,
 	}
 }
@@ -200,18 +169,38 @@ function prefsKey(customerId) {
 export function loadQuickDraftPrefs(customerId) {
 	if (!customerId) return null
 	try {
-		const raw = globalThis.localStorage?.getItem(prefsKey(customerId))
-		if (!raw) return null
-		const parsed = JSON.parse(raw)
-		if (!parsed || typeof parsed !== 'object') return null
-		if (parsed.savedAt && Date.now() - parsed.savedAt > PREFS_TTL_MS) {
+		const prefs = readStoredPrefs(customerId)
+		if (prefs && isExpired(prefs)) {
 			globalThis.localStorage?.removeItem(prefsKey(customerId))
 			return null
 		}
-		return parsed
+		return prefs
 	} catch (e) {
 		return null
 	}
+}
+
+/**
+ * The stored preferences object of a customer, or null when absent or not an object.
+ *
+ * @param {string} customerId Customer id.
+ * @return {object|null}
+ */
+function readStoredPrefs(customerId) {
+	const raw = globalThis.localStorage?.getItem(prefsKey(customerId))
+	if (!raw) return null
+	const parsed = JSON.parse(raw)
+	return parsed && typeof parsed === 'object' ? parsed : null
+}
+
+/**
+ * Whether stored preferences are older than their time to live.
+ *
+ * @param {object} prefs The stored preferences.
+ * @return {boolean}
+ */
+function isExpired(prefs) {
+	return Boolean(prefs.savedAt) && Date.now() - prefs.savedAt > PREFS_TTL_MS
 }
 
 /**
@@ -232,4 +221,68 @@ export function saveQuickDraftPrefs(customerId, prefs) {
 	} catch (e) {
 		// Non-fatal: preferences are a convenience, not a requirement.
 	}
+}
+
+/**
+ * Apply a customer's stored preferences to a draft form: the GL account,
+ * then the first line's blank description and price and its VAT rate.
+ *
+ * @param {object} form The draft form; changed in place.
+ * @param {object|null} prefs The stored preferences, or null.
+ */
+export function applyQuickDraftPrefs(form, prefs) {
+	if (!prefs) return
+	if (prefs.glAccount) form.glAccount = String(prefs.glAccount)
+	const line = form.lines[0]
+	if (line) applyLinePrefs(line, prefs)
+}
+
+/**
+ * Fill a line's blank description and price from the preferences, then set
+ * its VAT rate when one is stored.
+ *
+ * @param {object} line The draft line; changed in place.
+ * @param {object} prefs The stored preferences.
+ */
+function applyLinePrefs(line, prefs) {
+	fillBlankLineFields(line, prefs)
+	if (prefs.vatCode !== undefined && prefs.vatCode !== null) line.vatRate = prefs.vatCode
+}
+
+/**
+ * Fill a line's blank description and price from the preferences.
+ *
+ * @param {object} line The draft line; changed in place.
+ * @param {object} prefs The stored preferences.
+ */
+function fillBlankLineFields(line, prefs) {
+	for (const field of ['description', 'unitPrice']) {
+		if (prefs[field] && !line[field]) line[field] = prefs[field]
+	}
+}
+
+/**
+ * The customer option a quick draft starts with: the one whose customer is
+ * the record `ref` names, by its object id, its `@self` id or its customer
+ * number. Null when `ref` is empty or names no listed customer, so the
+ * dialog then starts without a customer as it does elsewhere.
+ *
+ * @param {Array<{value: string, customer: object}>} options The customer options of the dialog.
+ * @param {string} ref The starting customer: an object id or a customer number.
+ * @return {object|null} The matching option, or null.
+ *
+ * @spec openspec/changes/archive/2026-11-25-sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft/spec.md#requirement-the-quick-draft-opens-from-every-page-of-the-app-req-iqd-009
+ */
+export function startingCustomerOption(options, ref) {
+	const wanted = String(ref ?? '').trim()
+	if (wanted === '' || !Array.isArray(options)) {
+		return null
+	}
+	return (
+		options.find((option) => {
+			const customer = option?.customer || {}
+			return [customer.id, customer['@self']?.id, customer.uuid, option?.value]
+				.some((candidate) => candidate !== undefined && candidate !== null && String(candidate) === wanted)
+		}) || null
+	)
 }

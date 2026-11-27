@@ -21,7 +21,7 @@
  * ⚠️ KNOWN BLOCKER, recorded rather than silently worked around
  * (task-brief-required disclosure): `budget-grid-view`'s `BudgetGrid` page
  * (`/begroting/grid`) has NOT landed in this worktree/branch —
- * `openspec/changes/budget-charts/tasks.md` task 0's own pre-flight check
+ * `openspec/changes/archive/2026-11-24-budget-charts/tasks.md` task 0's own pre-flight check
  * names it a hard dependency ("cannot start before they exist"), and this
  * implementation batch's worktree was deliberately based on
  * `feat/budget-projection-engine` only (verified: no `BudgetGrid.vue`
@@ -45,16 +45,42 @@
  * @e2e budget-charts::account-detail-chart-renders
  * @e2e budget-charts::cumulative-toggle-changes-rendering
  * @e2e budget-charts::unprojectable-renders-as-text-not-zero
+ *
+ * The axe pass of tasks.md (design.md §9) runs over both consuming pages with
+ * the chart open: the account detail's Trend tab and, once BudgetGrid ships,
+ * its inline row chart. Written 24 Nov 2026, runs in the nightly; not run in
+ * the build sandbox (no live instance).
  */
 
 import type { Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
+import path from 'node:path'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
 const CHART_OF_ACCOUNTS_ROUTE = '/chart-of-accounts'
 const BUDGET_GRID_ROUTE = '/begroting/grid'
+
+/** axe-core from the app's own dev dependencies. */
+const AXE = path.resolve(process.cwd(), 'node_modules', 'axe-core', 'axe.min.js')
+
+/**
+ * Run axe (WCAG 2.x A and AA) over the open chart and return its violations.
+ *
+ * @param page The page with a chart open.
+ * @return One `id (node count)` entry per violated rule.
+ */
+async function axeOnChart(page: Page): Promise<string[]> {
+	await page.addScriptTag({ path: AXE })
+	return page.evaluate(async () => {
+		// @ts-expect-error axe is injected above
+		const result = await window.axe.run(document.querySelector('[data-testid="budget-trend-chart"]') ?? document, {
+			runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] },
+		})
+		return result.violations.map((v: { id: string, nodes: unknown[] }) => `${v.id} (${v.nodes.length})`)
+	})
+}
 
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
@@ -265,5 +291,19 @@ test.describe('budget-charts — actual/projected/begroot trend+cumulative chart
 		await secondToggle.click()
 		// At most one chart open at a time, grid-wide (design.md §1a).
 		await expect(page.getByTestId('budget-trend-chart')).toHaveCount(1)
+	})
+
+	test('the open chart passes axe on the account detail Trend tab and on BudgetGrid', async ({ page }) => {
+		const shown = await openTrendTableOnAccountDetail(page)
+		test.skip(!shown, 'chart did not render for this account')
+		expect(await axeOnChart(page), 'axe on ChartOfAccountsDetail, Trend tab').toEqual([])
+
+		const resolved = await gotoRouteOrSkip(page, BUDGET_GRID_ROUTE)
+		test.skip(!resolved, 'budget-grid-view has not landed — BudgetGrid page does not exist yet')
+		const toggle = page.getByTestId('budget-grid-view-trend-toggle').first()
+		test.skip(!(await becomesVisible(toggle)), 'no LedgerGroup/Account rows rendered on BudgetGrid')
+		await toggle.click()
+		await expect(page.getByTestId('budget-trend-chart').first()).toBeVisible({ timeout: 10_000 })
+		expect(await axeOnChart(page), 'axe on BudgetGrid, inline chart').toEqual([])
 	})
 })

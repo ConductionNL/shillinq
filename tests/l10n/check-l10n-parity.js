@@ -2,6 +2,9 @@
 /**
  * l10n translation-PARITY gate.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Guards that every REQUIRED locale carries a real translation for every
  * English source key. Without this, a new English string ships and the other
  * languages silently fall back to English with a green pipeline — the app
@@ -30,9 +33,6 @@
  * Exit codes:
  *   0  every required locale is at full parity for every existing source set
  *   1  one or more locales are missing keys, missing files, or empty values
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  */
 
 'use strict'
@@ -113,6 +113,24 @@ const sets = [
 	},
 ]
 
+/**
+ * The source keys a set must cover. The browser en.js leaves out every entry
+ * that equals its key (scripts/build-l10n-js.js, SOURCE_LOCALE), so the
+ * frontend set takes its keys from en.json, completed by en.js.
+ *
+ * @spec PERF-HANDOFF.md (all apps: drop identity entries from the English catalogue at build time)
+ */
+function sourceKeys (set) {
+	const keys = new Set(Object.keys(set.load(set.enFile)))
+	const enJson = path.join(L10N_DIR, 'en.json')
+	if (set.load === loadJs && fs.existsSync(enJson)) {
+		for (const key of Object.keys(loadJsonSet(enJson))) {
+			keys.add(key)
+		}
+	}
+	return [...keys]
+}
+
 const failures = []
 let checkedSets = 0
 
@@ -121,7 +139,7 @@ for (const set of sets) {
 		continue // this app does not ship this translation set
 	}
 	checkedSets++
-	const enKeys = Object.keys(set.load(set.enFile))
+	const enKeys = sourceKeys(set)
 	for (const loc of REQUIRED) {
 		const locFile = set.file(loc)
 		if (!fs.existsSync(locFile)) {

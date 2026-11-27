@@ -3,6 +3,9 @@
 /**
  * ICS (iCalendar, RFC 5545) generator for the appointment confirmation flow.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Composes a single-event iCalendar payload from an Appointment array (the
  * shape OpenRegister hands back from ObjectService::find) and a customer
  * profile so it can be attached to the confirmation email per REQ-BCF-003 and
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -112,94 +112,189 @@ final class IcsService {
 	 *                                      (string).
 	 *
 	 * @return string The complete ICS payload, CRLF-terminated.
+	 *
+	 * @spec openspec/specs/bookings-confirm-flow/spec.md#req-bcf-003
 	 */
-	public function generateIcs(
-		array $appointment,
-		array $customer,
-		string $confirmUrl,
-		array $context = [],
-	): string {
-		if (isset($customer['userId']) === true) {
-			$userId = (string)$customer['userId'];
-		} else {
-			$userId = null;
-		}
-
-		if (isset($appointment['timezone']) === true) {
-			$appointmentTz = (string)$appointment['timezone'];
-		} else {
-			$appointmentTz = null;
-		}
-
+	public function generateIcs(array $appointment, array $customer, string $confirmUrl, array $context = []): string {
 		$tzId = $this->timezoneResolver->resolve(
-			$userId,
-			$appointmentTz,
+			$this->optionalString(values: $customer, key: 'userId'),
+			$this->optionalString(values: $appointment, key: 'timezone'),
 		);
 
-		$start = $this->parseUtc(iso: (string)($appointment['startTime'] ?? ''));
-		$end = $this->parseUtc(iso: (string)($appointment['endTime'] ?? ''));
-		if ($start === null || $end === null) {
-			$this->logger->warning(
-				'IcsService: appointment '
-				. (string)($appointment['appointmentId'] ?? '?')
-				. ' has unparseable startTime/endTime — emitting empty ICS.'
-			);
+		$window = $this->appointmentWindow(appointment: $appointment);
+		if ($window === null) {
 			return '';
 		}
 
-		$tz = new DateTimeZone($tzId);
-		$startLoc = $start->setTimezone($tz);
-		$endLoc = $end->setTimezone($tz);
-		$uid = $this->buildUid(appointmentId: (string)($appointment['appointmentId'] ?? 'unknown'));
-		$summary = (string)($context['serviceName'] ?? 'Appointment');
-		$location = (string)($context['location'] ?? ($appointment['location'] ?? ''));
-		$notes = (string)($appointment['notes'] ?? '');
-
-		$vTimeZone = $this->buildVTimezone(tzId: $tzId, start: $start, end: $end);
-
-		$lines = [];
-		$lines[] = 'BEGIN:VCALENDAR';
-		$lines[] = 'VERSION:2.0';
-		$lines[] = 'PRODID:' . self::PRODID;
-		$lines[] = 'METHOD:REQUEST';
-		$lines[] = 'CALSCALE:GREGORIAN';
-		$lines[] = $vTimeZone;
-		$lines[] = 'BEGIN:VEVENT';
-		$lines[] = 'UID:' . $this->escape(value: $uid);
-		$lines[] = 'DTSTAMP:' . gmdate('Ymd\THis\Z');
-		$lines[] = 'DTSTART;TZID=' . $tzId . ':' . $startLoc->format('Ymd\THis');
-		$lines[] = 'DTEND;TZID=' . $tzId . ':' . $endLoc->format('Ymd\THis');
-		$lines[] = 'SUMMARY:' . $this->escape(value: $summary);
-		if ($location !== '') {
-			$lines[] = 'LOCATION:' . $this->escape(value: $location);
-		}
-
-		if ($notes !== '') {
-			$lines[] = 'DESCRIPTION:' . $this->escape(value: $notes);
-		}
-
-		if (isset($customer['email']) === true && (string)$customer['email'] !== '') {
-			$lines[] = 'ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN='
-				. $this->escape(value: (string)($customer['name'] ?? ''))
-				. ':mailto:' . (string)$customer['email'];
-		}
-
-		if (isset($context['organizerEmail']) === true && (string)$context['organizerEmail'] !== '') {
-			$lines[] = 'ORGANIZER:mailto:' . (string)$context['organizerEmail'];
-		}
-
-		if ($confirmUrl !== '') {
-			$lines[] = 'ATTACH;FMTTYPE=text/calendar:' . $this->escape(value: $confirmUrl);
-			$lines[] = 'URL:' . $this->escape(value: $confirmUrl);
-		}
-
-		$lines[] = 'STATUS:TENTATIVE';
-		$lines[] = 'TRANSP:OPAQUE';
-		$lines[] = 'END:VEVENT';
-		$lines[] = 'END:VCALENDAR';
+		$ics   = $window + ['appointment' => $appointment, 'customer' => $customer, 'confirmUrl' => $confirmUrl, 'context' => $context, 'tzId' => $tzId];
+		$lines = array_merge($this->calendarHeaderLines(ics: $ics), $this->eventLines(ics: $ics), ['END:VCALENDAR']);
 
 		return implode(self::CRLF, $lines) . self::CRLF;
 	}//end generateIcs()
+
+	/**
+	 * A value as a string, null when it is not set.
+	 *
+	 * @param array<string, mixed> $values The values.
+	 * @param string $key The key.
+	 *
+	 * @return string|null
+	 */
+	private function optionalString(array $values, string $key): ?string {
+		if (isset($values[$key]) === false) {
+			return null;
+		}
+
+		return (string)$values[$key];
+	}//end optionalString()
+
+	/**
+	 * The appointment's start and end in UTC; null, with a warning, when
+	 * either cannot be parsed.
+	 *
+	 * @param array<string, mixed> $appointment The appointment descriptor.
+	 *
+	 * @return array{start: DateTimeImmutable, end: DateTimeImmutable}|null
+	 */
+	private function appointmentWindow(array $appointment): ?array {
+		$start = $this->parseUtc(iso: (string)($appointment['startTime'] ?? ''));
+		$end   = $this->parseUtc(iso: (string)($appointment['endTime'] ?? ''));
+		if ($start !== null && $end !== null) {
+			return ['start' => $start, 'end' => $end];
+		}
+
+		$this->logger->warning(
+			'IcsService: appointment '
+			. (string)($appointment['appointmentId'] ?? '?')
+			. ' has unparseable startTime/endTime — emitting empty ICS.'
+		);
+		return null;
+	}//end appointmentWindow()
+
+	/**
+	 * The VCALENDAR opening lines, including the VTIMEZONE block.
+	 *
+	 * @param array<string, mixed> $ics The invitation inputs.
+	 *
+	 * @return array<int, string>
+	 */
+	private function calendarHeaderLines(array $ics): array {
+		return [
+			'BEGIN:VCALENDAR',
+			'VERSION:2.0',
+			'PRODID:' . self::PRODID,
+			'METHOD:REQUEST',
+			'CALSCALE:GREGORIAN',
+			$this->buildVTimezone(tzId: $ics['tzId'], start: $ics['start'], end: $ics['end']),
+		];
+	}//end calendarHeaderLines()
+
+	/**
+	 * The VEVENT block.
+	 *
+	 * @param array<string, mixed> $ics The invitation inputs.
+	 *
+	 * @return array<int, string>
+	 */
+	private function eventLines(array $ics): array {
+		return array_merge(
+			$this->eventTimingLines(ics: $ics),
+			$this->propertyLine(name: 'LOCATION', value: (string)($ics['context']['location'] ?? ($ics['appointment']['location'] ?? ''))),
+			$this->propertyLine(name: 'DESCRIPTION', value: (string)($ics['appointment']['notes'] ?? '')),
+			$this->attendeeLines(customer: $ics['customer']),
+			$this->organizerLines(context: $ics['context']),
+			$this->confirmLines(confirmUrl: $ics['confirmUrl']),
+			['STATUS:TENTATIVE', 'TRANSP:OPAQUE', 'END:VEVENT'],
+		);
+	}//end eventLines()
+
+	/**
+	 * The VEVENT opening: uid, stamp, local start and end, summary.
+	 *
+	 * @param array<string, mixed> $ics The invitation inputs.
+	 *
+	 * @return array<int, string>
+	 */
+	private function eventTimingLines(array $ics): array {
+		$tz = new DateTimeZone($ics['tzId']);
+
+		return [
+			'BEGIN:VEVENT',
+			'UID:' . $this->escape(value: $this->buildUid(appointmentId: (string)($ics['appointment']['appointmentId'] ?? 'unknown'))),
+			'DTSTAMP:' . gmdate('Ymd\THis\Z'),
+			'DTSTART;TZID=' . $ics['tzId'] . ':' . $ics['start']->setTimezone($tz)->format('Ymd\THis'),
+			'DTEND;TZID=' . $ics['tzId'] . ':' . $ics['end']->setTimezone($tz)->format('Ymd\THis'),
+			'SUMMARY:' . $this->escape(value: (string)($ics['context']['serviceName'] ?? 'Appointment')),
+		];
+	}//end eventTimingLines()
+
+	/**
+	 * One escaped property line, none when the value is empty.
+	 *
+	 * @param string $name The property name.
+	 * @param string $value The property value.
+	 *
+	 * @return array<int, string>
+	 */
+	private function propertyLine(string $name, string $value): array {
+		if ($value === '') {
+			return [];
+		}
+
+		return [$name . ':' . $this->escape(value: $value)];
+	}//end propertyLine()
+
+	/**
+	 * The ATTENDEE line, when the customer has an email address.
+	 *
+	 * @param array<string, mixed> $customer The customer descriptor.
+	 *
+	 * @return array<int, string>
+	 */
+	private function attendeeLines(array $customer): array {
+		if (isset($customer['email']) === false || (string)$customer['email'] === '') {
+			return [];
+		}
+
+		return [
+			'ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN='
+			. $this->escape(value: (string)($customer['name'] ?? ''))
+			. ':mailto:' . (string)$customer['email'],
+		];
+	}//end attendeeLines()
+
+	/**
+	 * The ORGANIZER line, when the context names an organizer email.
+	 *
+	 * @param array<string, mixed> $context The invitation context.
+	 *
+	 * @return array<int, string>
+	 */
+	private function organizerLines(array $context): array {
+		if (isset($context['organizerEmail']) === false || (string)$context['organizerEmail'] === '') {
+			return [];
+		}
+
+		return ['ORGANIZER:mailto:' . (string)$context['organizerEmail']];
+	}//end organizerLines()
+
+	/**
+	 * The ATTACH and URL lines for the confirmation portal, when there is one.
+	 *
+	 * @param string $confirmUrl The confirmation URL.
+	 *
+	 * @return array<int, string>
+	 */
+	private function confirmLines(string $confirmUrl): array {
+		if ($confirmUrl === '') {
+			return [];
+		}
+
+		return [
+			'ATTACH;FMTTYPE=text/calendar:' . $this->escape(value: $confirmUrl),
+			'URL:' . $this->escape(value: $confirmUrl),
+		];
+	}//end confirmLines()
 
 	/**
 	 * Parse an ISO 8601 timestamp into UTC, returning NULL on failure.
@@ -263,14 +358,7 @@ final class IcsService {
 
 		try {
 			$tz = new DateTimeZone($tzId);
-			// Pull transitions covering the whole appointment year so the client
-			// sees both STANDARD and DAYLIGHT rules for the date in question.
-			$yearStart = (int)(new DateTimeImmutable($start->format('Y') . '-01-01T00:00:00Z'))->getTimestamp();
-			$yearEnd = (int)(new DateTimeImmutable(((int)$start->format('Y') + 1) . '-01-01T00:00:00Z'))->getTimestamp();
-			$transitions = $tz->getTransitions($yearStart, $yearEnd);
-			if ($transitions === false) {
-				$transitions = [];
-			}
+			$transitions = $this->yearTransitions(tz: $tz, start: $start);
 
 			$emitted = 0;
 			foreach ($transitions as $transition) {
@@ -278,33 +366,12 @@ final class IcsService {
 					break;
 				}
 
-				if ($transition['isdst'] === true) {
-					$component = 'DAYLIGHT';
-				} else {
-					$component = 'STANDARD';
-				}
-
-				$when = (new DateTimeImmutable('@' . $transition['ts']))->setTimezone(new DateTimeZone('UTC'));
-				$offsetTo = $this->formatOffset(seconds: (int)$transition['offset']);
-				$offsetFrom = $offsetTo;
-				$lines[] = 'BEGIN:' . $component;
-				$lines[] = 'TZNAME:' . (string)$transition['abbr'];
-				$lines[] = 'DTSTART:' . $when->format('Ymd\THis');
-				$lines[] = 'TZOFFSETFROM:' . $offsetFrom;
-				$lines[] = 'TZOFFSETTO:' . $offsetTo;
-				$lines[] = 'END:' . $component;
+				array_push($lines, ...$this->transitionLines(transition: $transition));
 				$emitted++;
-			}//end foreach
+			}
 
 			if ($emitted === 0) {
-				// Fixed-offset zone (e.g. UTC) — emit one STANDARD block.
-				$offset = $this->formatOffset(seconds: (new DateTimeImmutable('now', $tz))->getOffset());
-				$lines[] = 'BEGIN:STANDARD';
-				$lines[] = 'TZNAME:' . $tzId;
-				$lines[] = 'DTSTART:19700101T000000';
-				$lines[] = 'TZOFFSETFROM:' . $offset;
-				$lines[] = 'TZOFFSETTO:' . $offset;
-				$lines[] = 'END:STANDARD';
+				array_push($lines, ...$this->fixedOffsetLines(tz: $tz, tzId: $tzId));
 			}
 		} catch (Throwable $e) {
 			$this->logger->warning('IcsService: VTIMEZONE build failed for ' . $tzId . ': ' . $e->getMessage());
@@ -325,6 +392,77 @@ final class IcsService {
 
 		return implode(self::CRLF, $lines);
 	}//end buildVTimezone()
+
+	/**
+	 * The timezone's transitions within the appointment's year.
+	 *
+	 * @param DateTimeZone      $tz    The appointment timezone.
+	 * @param DateTimeImmutable $start Appointment start (UTC).
+	 *
+	 * @return array<int,array<string,mixed>> The transitions (empty when none can be read).
+	 */
+	private function yearTransitions(DateTimeZone $tz, DateTimeImmutable $start): array {
+		// Pull transitions covering the whole appointment year so the client
+		// sees both STANDARD and DAYLIGHT rules for the date in question.
+		$yearStart = (int)(new DateTimeImmutable($start->format('Y') . '-01-01T00:00:00Z'))->getTimestamp();
+		$yearEnd = (int)(new DateTimeImmutable(((int)$start->format('Y') + 1) . '-01-01T00:00:00Z'))->getTimestamp();
+		$transitions = $tz->getTransitions($yearStart, $yearEnd);
+		if ($transitions === false) {
+			$transitions = [];
+		}
+
+		return $transitions;
+	}//end yearTransitions()
+
+	/**
+	 * The STANDARD or DAYLIGHT block for one timezone transition.
+	 *
+	 * @param array<string,mixed> $transition One DateTimeZone::getTransitions() entry.
+	 *
+	 * @return list<string> The block's lines.
+	 */
+	private function transitionLines(array $transition): array {
+		if ($transition['isdst'] === true) {
+			$component = 'DAYLIGHT';
+		} else {
+			$component = 'STANDARD';
+		}
+
+		$when = (new DateTimeImmutable('@' . $transition['ts']))->setTimezone(new DateTimeZone('UTC'));
+		$offsetTo = $this->formatOffset(seconds: (int)$transition['offset']);
+		$offsetFrom = $offsetTo;
+
+		return [
+			'BEGIN:' . $component,
+			'TZNAME:' . (string)$transition['abbr'],
+			'DTSTART:' . $when->format('Ymd\THis'),
+			'TZOFFSETFROM:' . $offsetFrom,
+			'TZOFFSETTO:' . $offsetTo,
+			'END:' . $component,
+		];
+	}//end transitionLines()
+
+	/**
+	 * The single STANDARD block of a fixed-offset zone (e.g. UTC).
+	 *
+	 * @param DateTimeZone $tz   The appointment timezone.
+	 * @param string       $tzId IANA timezone identifier.
+	 *
+	 * @return list<string> The block's lines.
+	 */
+	private function fixedOffsetLines(DateTimeZone $tz, string $tzId): array {
+		// Fixed-offset zone (e.g. UTC) — emit one STANDARD block.
+		$offset = $this->formatOffset(seconds: (new DateTimeImmutable('now', $tz))->getOffset());
+
+		return [
+			'BEGIN:STANDARD',
+			'TZNAME:' . $tzId,
+			'DTSTART:19700101T000000',
+			'TZOFFSETFROM:' . $offset,
+			'TZOFFSETTO:' . $offset,
+			'END:STANDARD',
+		];
+	}//end fixedOffsetLines()
 
 	/**
 	 * Format a numeric UTC offset (in seconds) as RFC 5545 ±HHMM.

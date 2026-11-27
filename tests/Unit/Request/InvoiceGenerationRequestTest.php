@@ -34,13 +34,14 @@ use PHPUnit\Framework\TestCase;
 final class InvoiceGenerationRequestTest extends TestCase {
 
 	/**
-	 * t_and_m without a rateCardId is rejected.
+	 * t_and_m needs no rateCardId: each hour carries its own rate (REQ-BRPH-005).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
-	public function testTAndMRequiresRateCard(): void {
-		$this->expectException(InvalidArgumentException::class);
-		new InvoiceGenerationRequest(
+	public function testTAndMNeedsNoRateCard(): void {
+		$request = new InvoiceGenerationRequest(
 			administrationId: 'a1',
 			billingModel: 't_and_m',
 			customerId: 'c1',
@@ -48,7 +49,10 @@ final class InvoiceGenerationRequestTest extends TestCase {
 			toDate: '2026-05-31',
 		);
 
-	}//end testTAndMRequiresRateCard()
+		self::assertSame('t_and_m', $request->billingModel);
+		self::assertNull($request->rateCardId);
+
+	}//end testTAndMNeedsNoRateCard()
 
 	/**
 	 * retainer model requires retainerScheduleId.
@@ -127,5 +131,61 @@ final class InvoiceGenerationRequestTest extends TestCase {
 		);
 
 	}//end testDateOrderEnforced()
+
+	/**
+	 * Ticked pass-through items are read with their schema, id and
+	 * disbursement flag; only a literal true marks a disbursement.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-3.1
+	 */
+	public function testExpenseItemRefsAreRead(): void {
+		$req = InvoiceGenerationRequest::fromArray(
+			'a1',
+			[
+				'billingModel' => 'fixed_fee',
+				'fixedFeeCents' => 100,
+				'customerId' => 'c1',
+				'fromDate' => '2026-10-01',
+				'toDate' => '2026-10-31',
+				'expenseItemRefs' => [
+					['schema' => 'Receipt', 'id' => ' r-1 '],
+					['schema' => 'MileageEntry', 'id' => 'm-1', 'disbursement' => true],
+					['schema' => 'PerDiem', 'id' => 'p-1', 'disbursement' => 'yes'],
+				],
+			]
+		);
+
+		self::assertSame(
+			[
+				['schema' => 'Receipt', 'id' => 'r-1', 'disbursement' => false],
+				['schema' => 'MileageEntry', 'id' => 'm-1', 'disbursement' => true],
+				['schema' => 'PerDiem', 'id' => 'p-1', 'disbursement' => false],
+			],
+			$req->expenseItemRefs
+		);
+
+	}//end testExpenseItemRefsAreRead()
+
+	/**
+	 * An item reference to another schema, or without an id, is refused.
+	 *
+	 * @return void
+	 */
+	public function testAnItemRefOutsideThePassThroughSchemasIsRefused(): void {
+		foreach ([['schema' => 'UrenRegistratie', 'id' => 'u-1'], ['schema' => 'Receipt', 'id' => ''], 'r-1'] as $ref) {
+			try {
+				InvoiceGenerationRequest::fromArray(
+					'a1',
+					['billingModel' => 'fixed_fee', 'fixedFeeCents' => 100, 'customerId' => 'c1', 'fromDate' => '2026-10-01', 'toDate' => '2026-10-31', 'expenseItemRefs' => [$ref]]
+				);
+				self::fail('Accepted '.json_encode($ref));
+			} catch (InvalidArgumentException $e) {
+				self::assertStringContainsString('expenseItemRefs', $e->getMessage());
+			}
+		}
+
+	}//end testAnItemRefOutsideThePassThroughSchemasIsRefused()
 
 }//end class

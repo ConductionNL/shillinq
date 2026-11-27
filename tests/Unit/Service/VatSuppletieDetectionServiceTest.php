@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\Vat\VatFiscalYearCorrectionService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCA\Shillinq\Service\VatSuppletieDetectionService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -266,51 +267,98 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 	}//end fakeObjectService()
 
 	/**
-	 * Shared fixture: an Account chart with a 21% revenue account and a
-	 * 9% revenue account.
+	 * Posted ledger rows in the shape the posting mapper writes them: one
+	 * GLTransaction per entry and its GLLine rows, stamped with tariff, box
+	 * and amount kind.
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * Per transaction id: its posting date and its lines as
+	 * [account, side, amount, tariff, box, kind].
+	 *
+	 * @param array<string,array{0:string,1:list<array{0:string,1:string,2:float,3:string,4:string,5:string}>}> $entries The entries.
+	 *
+	 * @return array{GLTransaction:list<array<string,mixed>>,GLLine:list<array<string,mixed>>}
 	 */
-	private function accounts(): array {
-		return [
-			[
-				'accountNumber' => '4000',
-				'name' => 'Omzet hoog tarief',
-				'accountType' => 'revenue',
-				'vatApplicable' => true,
-				'vatRate' => 21.0,
+	private function ledger(array $entries): array {
+		$rows = ['GLTransaction' => [], 'GLLine' => []];
+		foreach ($entries as $transactionId => [$postingDate, $lines]) {
+			$rows['GLTransaction'][] = [
+				'id' => $transactionId, 'transactionNumber' => strtoupper($transactionId), 'postingDate' => $postingDate,
+				'periodId' => substr($postingDate, 0, 7), 'currency' => 'EUR', 'description' => 'Verkoop', 'state' => 'posted',
 				'administrationId' => 'adm-1',
-			],
-			[
-				'accountNumber' => '4010',
-				'name' => 'Omzet laag tarief',
-				'accountType' => 'revenue',
-				'vatApplicable' => true,
-				'vatRate' => 9.0,
-				'administrationId' => 'adm-1',
-			],
-		];
-	}//end accounts()
+			];
+			foreach ($lines as $index => [$account, $side, $amount, $tariff, $box, $kind]) {
+				$rows['GLLine'][] = [
+					'id' => $transactionId . '-' . ($index + 1), 'transactionId' => $transactionId, 'lineNumber' => ($index + 1),
+					'accountNumber' => $account, 'side' => $side, 'amount' => $amount, 'currency' => 'EUR', 'periodId' => substr($postingDate, 0, 7),
+					'administrationId' => 'adm-1', 'vatTariffCode' => $tariff, 'vatReturnBox' => $box, 'vatAmountKind' => $kind,
+				];
+			}
+		}
+
+		return $rows;
+	}//end ledger()
 
 	/**
-	 * Verifies computeCurrentDeclarations() recomputes the GL grouping
-	 * without persisting anything (Task 2, REQ-VBTW-013).
+	 * The Q1 sale every drift test starts from: EUR 15,000 at the high tariff with EUR 3,150 VAT.
 	 *
-	 * @return void
+	 * @return array<string,array{0:string,1:list<array{0:string,1:string,2:float,3:string,4:string,5:string}>}>
 	 */
-	public function testComputeCurrentDeclarationsDoesNotPersist(): void {
-		$transactions = [
-			[
-				'id' => 'gl-1',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-01-15',
-				'lines' => [
-					['accountNumber' => '4000', 'taxableAmount' => 15000.0, 'taxRate' => 21.0],
+	private function q1Sale(): array {
+		return [
+			'gl-1' => [
+				'2026-01-15',
+				[
+					['8000', 'credit', 15000.0, 'high', '1a', 'base'],
+					['2110', 'credit', 3150.0, 'high', '1a', 'vat'],
 				],
 			],
 		];
+	}//end q1Sale()
 
-		$stub = $this->fakeObjectService(['Account' => $this->accounts(), 'GLTransaction' => $transactions]);
+	/**
+	 * The as-filed Q1 return of q1Sale(), as VATReturnService wrote it.
+	 *
+	 * @return array<string,list<array<string,mixed>>>
+	 */
+	private function filedQ1(): array {
+		return [
+			'BtwAangifte' => [
+				[
+					'id' => 'vat-1', 'returnNumber' => 'NL-2026-Q1', 'period' => 'quarter', 'periodYear' => 2026, 'periodNumber' => 1,
+					'startDate' => '2026-01-01', 'endDate' => '2026-03-31', 'regime' => 'standard', 'administrationId' => 'adm-1',
+					'statusCode' => 'submitted', 'totalVATCollected' => 3150.0, 'totalVATPaid' => 0.0, 'vatBalance' => -3150.0,
+					'totalTaxableAmount' => 15000.0,
+				],
+			],
+			'VATDeclaration' => [
+				[
+					'id' => 'decl-1', 'returnId' => 'vat-1', 'returnBox' => '1a', 'type' => 'collected', 'taxRate' => 21.0,
+					'totalVATAmount' => 3150.0, 'totalTaxableAmount' => 15000.0, 'lineCount' => 2,
+				],
+			],
+			'VATLine' => [
+				[
+					'id' => 'line-1', 'returnId' => 'vat-1', 'returnBox' => '1a', 'type' => 'collected', 'taxRate' => 21.0,
+					'glAccountNumber' => '8000', 'taxableAmount' => 15000.0, 'vatAmount' => 0.0,
+				],
+				[
+					'id' => 'line-2', 'returnId' => 'vat-1', 'returnBox' => '1a', 'type' => 'collected', 'taxRate' => 21.0,
+					'glAccountNumber' => '2110', 'taxableAmount' => 0.0, 'vatAmount' => 3150.0,
+				],
+			],
+		];
+	}//end filedQ1()
+
+	/**
+	 * Verifies computeCurrentDeclarations() groups the booked lines per box
+	 * without persisting anything (REQ-VBTW-013 on REQ-VBTW-004's derivation).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
+	 */
+	public function testComputeCurrentDeclarationsDoesNotPersist(): void {
+		$stub = $this->fakeObjectService($this->ledger($this->q1Sale()));
 		[$vatReturnService] = $this->buildServices($stub);
 
 		$result = $vatReturnService->computeCurrentDeclarations(
@@ -320,8 +368,8 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		);
 
 		self::assertCount(1, $result);
+		self::assertSame('1a', $result[0]['returnBox']);
 		self::assertSame('collected', $result[0]['type']);
-		self::assertSame(21.0, $result[0]['taxRate']);
 		self::assertSame(3150.0, $result[0]['totalVATAmount']);
 		self::assertSame(15000.0, $result[0]['totalTaxableAmount']);
 
@@ -333,81 +381,20 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 	}//end testComputeCurrentDeclarationsDoesNotPersist()
 
 	/**
-	 * Verifies detect() creates a draft VatCorrection with filed + current
-	 * snapshots when a late-posted GL transaction drifts the return (Task 3,
-	 * REQ-VBTW-013).
+	 * REQ-VBTW-004 scenario "A correction return references the prior
+	 * period": a EUR 500 sale at the high tariff posted into Q1 after filing
+	 * shows a delta of EUR 500 base and EUR 105 VAT in box 1a, the correction
+	 * raises what is owed by EUR 105, and its posting books the VAT delta on
+	 * the box's VAT account.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
-	public function testDetectCreatesCorrectionOnDrift(): void {
-		$vatReturn = [
-			'id' => 'vat-1',
-			'returnNumber' => 'NL-2026-Q1',
-			'period' => 'quarter',
-			'periodYear' => 2026,
-			'periodNumber' => 1,
-			'startDate' => '2026-01-01',
-			'endDate' => '2026-03-31',
-			'regime' => 'standard',
-			'administrationId' => 'adm-1',
-			'statusCode' => 'submitted',
-			'totalVATCollected' => 3150.0,
-			'totalVATPaid' => 0.0,
-			'vatBalance' => -3150.0,
-			'totalTaxableAmount' => 15000.0,
-		];
-
-		$declarations = [
-			[
-				'id' => 'decl-1',
-				'returnId' => 'vat-1',
-				'type' => 'collected',
-				'taxRate' => 21.0,
-				'totalVATAmount' => 3150.0,
-				'totalTaxableAmount' => 15000.0,
-				'lineCount' => 1,
-			],
-		];
-
-		$lines = [
-			[
-				'id' => 'line-1',
-				'returnId' => 'vat-1',
-				'type' => 'collected',
-				'taxRate' => 21.0,
-				'glAccountNumber' => '4000',
-			],
-		];
-
-		// Ledger has drifted: an extra €5.000 taxable @ 21% posted after filing.
-		$transactions = [
-			[
-				'id' => 'gl-1',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-01-15',
-				'lines' => [
-					['accountNumber' => '4000', 'taxableAmount' => 15000.0, 'taxRate' => 21.0],
-				],
-			],
-			[
-				'id' => 'gl-2',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-03-01',
-				'lines' => [
-					['accountNumber' => '4000', 'taxableAmount' => 5000.0, 'taxRate' => 21.0],
-				],
-			],
-		];
-
-		$stub = $this->fakeObjectService(
-			[
-				'Account' => $this->accounts(),
-				'GLTransaction' => $transactions,
-				'BtwAangifte' => [$vatReturn],
-				'VATDeclaration' => $declarations,
-				'VATLine' => $lines,
-			]
-		);
+	public function testALateSaleShowsItsDeltaInItsBox(): void {
+		$entries = $this->q1Sale();
+		$entries['gl-2'] = ['2026-03-01', [['8000', 'credit', 500.0, 'high', '1a', 'base'], ['2110', 'credit', 105.0, 'high', '1a', 'vat']]];
+		$stub = $this->fakeObjectService($this->ledger($entries) + $this->filedQ1());
 		[, $detectionService] = $this->buildServices($stub);
 
 		$correction = $detectionService->detect(vatReturnId: 'vat-1');
@@ -415,60 +402,69 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		self::assertIsArray($correction);
 		self::assertSame('draft', $correction['state']);
 		self::assertSame('vat-1', $correction['originalVatReturnId']);
-		self::assertSame('vat-1', $correction['originalReturnId']);
-		self::assertNull($correction['preparedAt']);
 		self::assertSame(3150.0, $correction['filedSnapshot'][0]['totalVATAmount']);
-		self::assertSame(4200.0, $correction['currentSnapshot'][0]['totalVATAmount']);
+		self::assertSame(3255.0, $correction['currentSnapshot'][0]['totalVATAmount']);
 
-	}//end testDetectCreatesCorrectionOnDrift()
+		$prepared = $detectionService->prepare(vatCorrectionId: (string)$correction['id']);
+
+		self::assertSame(
+			[
+				[
+					'type' => 'collected', 'taxRate' => 21.0, 'returnBox' => '1a', 'deltaVATAmount' => 105.0,
+					'deltaTaxableAmount' => 500.0, 'glAccountNumber' => '2110',
+				],
+			],
+			$prepared['categoryDeltas']
+		);
+		self::assertSame(105.0, $prepared['correctionAmount']);
+		self::assertFalse($prepared['thresholdExceeded']);
+		$correctionId = $prepared['glCorrectionTransactionId'];
+		$vatAccountLine = array_values(
+			array_filter(
+				$stub->dump('GLLine'),
+				static fn (array $l): bool => ($l['transactionId'] ?? '') === $correctionId && $l['accountNumber'] === '2110'
+			)
+		);
+		self::assertSame('credit', $vatAccountLine[0]['side']);
+		self::assertEquals(105.0, $vatAccountLine[0]['amount']);
+
+	}//end testALateSaleShowsItsDeltaInItsBox()
+
+	/**
+	 * More input VAT in box 5b after filing lowers what is owed: the
+	 * correction amount is negative, as it was for paid VAT before boxes.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
+	 */
+	public function testLateInputVatLowersTheCorrection(): void {
+		$entries = $this->q1Sale();
+		$entries['gl-3'] = ['2026-02-01', [['7000', 'debit', 1000.0, 'high', '', 'base'], ['1230', 'debit', 210.0, 'high', '5b', 'vat']]];
+		$stub = $this->fakeObjectService($this->ledger($entries) + $this->filedQ1());
+		[, $detectionService] = $this->buildServices($stub);
+
+		$correction = $detectionService->detect(vatReturnId: 'vat-1');
+		self::assertIsArray($correction);
+		$prepared = $detectionService->prepare(vatCorrectionId: (string)$correction['id']);
+
+		self::assertSame(-210.0, $prepared['correctionAmount']);
+		self::assertSame('5b', $prepared['categoryDeltas'][0]['returnBox']);
+		// The filed return had no 5b line, so the posting falls back to the clearing account, as before boxes.
+		self::assertSame('', $prepared['categoryDeltas'][0]['glAccountNumber']);
+
+	}//end testLateInputVatLowersTheCorrection()
 
 	/**
 	 * Verifies detect() returns null and creates nothing when the ledger
 	 * has not changed since filing.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
 	public function testDetectReturnsNullWhenNoDrift(): void {
-		$vatReturn = [
-			'id' => 'vat-1',
-			'period' => 'quarter',
-			'periodYear' => 2026,
-			'periodNumber' => 1,
-			'startDate' => '2026-01-01',
-			'endDate' => '2026-03-31',
-			'administrationId' => 'adm-1',
-			'statusCode' => 'submitted',
-		];
-		$declarations = [
-			[
-				'id' => 'decl-1',
-				'returnId' => 'vat-1',
-				'type' => 'collected',
-				'taxRate' => 21.0,
-				'totalVATAmount' => 3150.0,
-				'totalTaxableAmount' => 15000.0,
-				'lineCount' => 1,
-			],
-		];
-		$transactions = [
-			[
-				'id' => 'gl-1',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-01-15',
-				'lines' => [
-					['accountNumber' => '4000', 'taxableAmount' => 15000.0, 'taxRate' => 21.0],
-				],
-			],
-		];
-
-		$stub = $this->fakeObjectService(
-			[
-				'Account' => $this->accounts(),
-				'GLTransaction' => $transactions,
-				'BtwAangifte' => [$vatReturn],
-				'VATDeclaration' => $declarations,
-			]
-		);
+		$stub = $this->fakeObjectService($this->ledger($this->q1Sale()) + $this->filedQ1());
 		[, $detectionService] = $this->buildServices($stub);
 
 		$correction = $detectionService->detect(vatReturnId: 'vat-1');
@@ -561,6 +557,12 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 
 		self::assertEqualsWithDelta($debitTotal, $creditTotal, 0.001, 'GL correction posting must balance');
 
+		// REQ-GLS-001: the delta lines and the clearing line carry the parent's administration.
+		self::assertNotEmpty($glLines);
+		foreach ($glLines as $line) {
+			self::assertSame('adm-1', $line['administrationId'] ?? null);
+		}
+
 	}//end testPrepareFlagsAboveGrensWithDeadlineAndPosting()
 
 	/**
@@ -633,4 +635,222 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		$detectionService->prepare(vatCorrectionId: 'corr-3');
 
 	}//end testPrepareRefusesAlreadyPreparedCorrection()
+
+	/**
+	 * Golden: the detected correction record of a late sale, field by field.
+	 *
+	 * @return void
+	 */
+	public function testDetectedCorrectionRecordGolden(): void {
+		$entries = $this->q1Sale();
+		$entries['gl-2'] = ['2026-03-01', [['8000', 'credit', 500.0, 'high', '1a', 'base'], ['2110', 'credit', 105.0, 'high', '1a', 'vat']]];
+		$stub = $this->fakeObjectService($this->ledger($entries) + $this->filedQ1());
+		[, $detectionService] = $this->buildServices($stub);
+
+		$correction = $detectionService->detect(vatReturnId: 'vat-1');
+
+		self::assertIsString($correction['detectedAt']);
+		unset($correction['detectedAt'], $correction['id'], $correction['filedSnapshot'], $correction['currentSnapshot']);
+		self::assertSame(
+			[
+				'administrationId' => 'adm-1',
+				'originalVatReturnId' => 'vat-1',
+				'originalReturnId' => 'vat-1',
+				'periodType' => 'quarter',
+				'periodYear' => 2026,
+				'correctionAmount' => 0.0,
+				'adjustmentAmount' => 0.0,
+				'reason' => 'Automatisch gedetecteerde afwijking tussen de ingediende aangifte en het grootboek.',
+				'correctionReason' => 'late-discovery',
+				'currency' => 'EUR',
+				'state' => 'draft',
+				'categoryDeltas' => [],
+				'preparedAt' => null,
+				'thresholdExceeded' => null,
+				'filingDeadline' => null,
+				'glCorrectionTransactionId' => null,
+				'periodQuarter' => 1,
+			],
+			$correction
+		);
+
+	}//end testDetectedCorrectionRecordGolden()
+
+	/**
+	 * Golden: a mixed correction posts one line per non-zero delta (its own
+	 * account, else the clearing account) and a balancing clearing line.
+	 *
+	 * @return void
+	 */
+	public function testCorrectionPostingLinesGolden(): void {
+		$correction = [
+			'id' => 'corr-golden-0001',
+			'administrationId' => 'adm-7',
+			'originalVatReturnId' => 'vat-7',
+			'state' => 'draft',
+			'preparedAt' => null,
+			'filedSnapshot' => [
+				['type' => 'collected', 'taxRate' => 21.0, 'returnBox' => '1a', 'totalVATAmount' => 210.0, 'totalTaxableAmount' => 1000.0],
+				['type' => 'paid', 'taxRate' => 21.0, 'returnBox' => '5b', 'totalVATAmount' => 100.0, 'totalTaxableAmount' => 0.0],
+				['type' => 'collected', 'taxRate' => 9.0, 'returnBox' => '1b', 'totalVATAmount' => 90.0, 'totalTaxableAmount' => 1000.0],
+			],
+			'currentSnapshot' => [
+				['type' => 'collected', 'taxRate' => 21.0, 'returnBox' => '1a', 'totalVATAmount' => 252.0, 'totalTaxableAmount' => 1200.0],
+				['type' => 'paid', 'taxRate' => 21.0, 'returnBox' => '5b', 'totalVATAmount' => 130.0, 'totalTaxableAmount' => 0.0],
+				['type' => 'collected', 'taxRate' => 9.0, 'returnBox' => '1b', 'totalVATAmount' => 81.0, 'totalTaxableAmount' => 900.0],
+			],
+		];
+		$lines = [
+			['id' => 'l-1', 'returnId' => 'vat-7', 'returnBox' => '1a', 'vatAmount' => 210.0, 'glAccountNumber' => '1500'],
+			['id' => 'l-2', 'returnId' => 'vat-7', 'returnBox' => '1b', 'vatAmount' => 0.0, 'glAccountNumber' => '1510'],
+		];
+		$stub = $this->fakeObjectService(['VatCorrection' => [$correction], 'VATLine' => $lines]);
+		[, $detectionService] = $this->buildServices($stub);
+		$this->logger->expects(self::exactly(2))->method('warning');
+
+		$prepared = $detectionService->prepare(vatCorrectionId: 'corr-golden-0001');
+
+		self::assertSame(3.0, $prepared['correctionAmount']);
+		self::assertSame(['1500', '', ''], array_column($prepared['categoryDeltas'], 'glAccountNumber'));
+		$transactions = $stub->dump('GLTransaction');
+		self::assertCount(1, $transactions);
+		self::assertSame('GLCORR-corr-golden-', $transactions[0]['transactionNumber']);
+		self::assertSame('BTW-suppletie correctie voor VatCorrection corr-golden-0001', $transactions[0]['description']);
+		self::assertSame(['corr-golden-0001', 'draft', 'adm-7', 'EUR'], [$transactions[0]['sourceReference'], $transactions[0]['state'], $transactions[0]['administrationId'], $transactions[0]['currency']]);
+		self::assertSame($transactions[0]['postingDate'], $transactions[0]['periodId']);
+		$txId = $prepared['glCorrectionTransactionId'];
+		$posted = array_map(
+			static function (array $line): array {
+				unset($line['id']);
+				return $line;
+			},
+			$stub->dump('GLLine')
+		);
+		self::assertEquals(
+			[
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 1, 'accountNumber' => '1500', 'side' => 'credit', 'amount' => 42.0, 'currency' => 'EUR', 'description' => 'Suppletie rubriek 1a delta'],
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 2, 'accountNumber' => 'shillinq', 'side' => 'debit', 'amount' => 30.0, 'currency' => 'EUR', 'description' => 'Suppletie rubriek 5b delta'],
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 3, 'accountNumber' => 'shillinq', 'side' => 'debit', 'amount' => 9.0, 'currency' => 'EUR', 'description' => 'Suppletie rubriek 1b delta'],
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 4, 'accountNumber' => 'shillinq', 'side' => 'debit', 'amount' => 3.0, 'currency' => 'EUR', 'description' => 'Suppletie clearing balans'],
+			],
+			$posted
+		);
+
+	}//end testCorrectionPostingLinesGolden()
+	/**
+	 * REQ-TVRB-002: when the correction was found by checking a broken
+	 * fiscal year, the EUR 1,000 grens applies to the year's total, not to
+	 * this one correction; correctionTotal() reads the same net amount
+	 * without preparing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testInABrokenFiscalYearTheGrensAppliesToTheYearsTotal(): void {
+		$correction = [
+			'id' => 'corr-fy', 'administrationId' => 'adm-1', 'originalVatReturnId' => 'vat-2', 'originalReturnId' => 'vat-2',
+			'state' => 'draft', 'preparedAt' => null, 'fiscalYearCorrectionTotal' => 1250.0,
+			'filedSnapshot' => [['type' => 'collected', 'taxRate' => 9.0, 'totalVATAmount' => 180.0, 'totalTaxableAmount' => 2000.0]],
+			'currentSnapshot' => [['type' => 'collected', 'taxRate' => 9.0, 'totalVATAmount' => 450.0, 'totalTaxableAmount' => 5000.0]],
+		];
+		$stub = $this->fakeObjectService(
+			[
+				'VatCorrection' => [$correction],
+				'VATLine' => [['id' => 'line-2', 'returnId' => 'vat-2', 'type' => 'collected', 'taxRate' => 9.0, 'glAccountNumber' => '4010']],
+			]
+		);
+		[, $detectionService] = $this->buildServices($stub);
+
+		self::assertSame(270.0, $detectionService->correctionTotal(correction: $correction));
+
+		$prepared = $detectionService->prepare(vatCorrectionId: 'corr-fy');
+
+		self::assertSame(270.0, $prepared['correctionAmount']);
+		self::assertTrue($prepared['thresholdExceeded']);
+		self::assertNotNull($prepared['filingDeadline']);
+	}//end testInABrokenFiscalYearTheGrensAppliesToTheYearsTotal()
+
+	/**
+	 * Stichting Voorbeeld's fiscal year 2025/2026: the check reads only the
+	 * accepted returns whose period lies in the year, writes a correction for
+	 * the one that drifted, and stamps it with the year and the total.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testCheckingABrokenFiscalYearTotalsTheCorrectionsOfItsReturns(): void {
+		$entries = $this->q1Sale();
+		$entries['gl-2'] = ['2026-03-01', [['8000', 'credit', 500.0, 'high', '1a', 'base'], ['2110', 'credit', 105.0, 'high', '1a', 'vat']]];
+		$rows = $this->ledger($entries) + $this->filedQ1();
+		$quarter = static fn (string $id, string $number, string $start, string $end, string $status): array => [
+			'id' => $id, 'returnNumber' => $number, 'period' => 'quarter', 'startDate' => $start, 'endDate' => $end,
+			'regime' => 'standard', 'administrationId' => 'adm-1', 'statusCode' => $status,
+		];
+		$rows['BtwAangifte'][] = $quarter('vat-q3-25', 'NL-2025-Q3', '2025-07-01', '2025-09-30', 'filed');
+		$rows['BtwAangifte'][] = $quarter('vat-q2-26', 'NL-2026-Q2', '2026-04-01', '2026-06-30', 'draft');
+		$rows['BtwAangifte'][] = $quarter('vat-q3-26', 'NL-2026-Q3', '2026-07-01', '2026-09-30', 'filed');
+		$rows['Administration'] = [['id' => 'adm-1', 'name' => 'Stichting Voorbeeld', 'nonCalendarFiscalYear' => true]];
+		$rows['VatCorrection'] = [];
+		$fiscalYear = ['id' => 'fy-1', 'administrationId' => 'adm-1', 'startDate' => '2025-07-01', 'endDate' => '2026-06-30'];
+		$stub = $this->fakeObjectService($rows);
+		[, $detectionService] = $this->buildServices($stub);
+		$service = new VatFiscalYearCorrectionService(
+			objectService: new DuckObjectServiceAdapter($stub),
+			appConfig: $this->appConfig,
+			suppletie: $detectionService,
+		);
+
+		$result = $service->check(fiscalYear: $fiscalYear);
+
+		self::assertSame('2025/2026', $result['fiscalYear']);
+		self::assertSame(['vat-q3-25', 'vat-1'], array_column($result['returns'], 'returnId'));
+		self::assertSame([false, true], array_column($result['returns'], 'drift'));
+		self::assertSame([0.0, 105.0], array_column($result['returns'], 'correctionTotal'));
+		self::assertSame(105.0, $result['total']);
+		self::assertFalse($result['thresholdExceeded']);
+
+		$corrections = $stub->dump('VatCorrection');
+		self::assertCount(1, $corrections);
+		self::assertSame('vat-1', $corrections[0]['originalVatReturnId']);
+		self::assertSame('fy-1', $corrections[0]['fiscalYearId']);
+		self::assertSame('2025/2026', $corrections[0]['fiscalYearLabel']);
+		self::assertSame(105.0, $corrections[0]['fiscalYearCorrectionTotal']);
+		self::assertSame($corrections[0]['id'], $result['returns'][1]['correctionId']);
+		self::assertNull($result['returns'][0]['correctionId']);
+	}//end testCheckingABrokenFiscalYearTotalsTheCorrectionsOfItsReturns()
+
+	/**
+	 * A fiscal year that is the calendar year is not checked as a whole.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testACalendarFiscalYearIsRefused(): void {
+		$stub = $this->fakeObjectService(['Administration' => [['id' => 'adm-1', 'nonCalendarFiscalYear' => false]]]);
+		[, $detectionService] = $this->buildServices($stub);
+		$service = new VatFiscalYearCorrectionService(
+			objectService: new DuckObjectServiceAdapter($stub),
+			appConfig: $this->appConfig,
+			suppletie: $detectionService,
+		);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('calendar year');
+		$service->check(fiscalYear: ['id' => 'fy-26', 'administrationId' => 'adm-1', 'startDate' => '2026-01-01', 'endDate' => '2026-12-31']);
+	}//end testACalendarFiscalYearIsRefused()
+
+	/**
+	 * A fiscal year's name spans its calendar years.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function testTheNameOfAFiscalYear(): void {
+		self::assertSame('2025/2026', VatFiscalYearCorrectionService::label(start: '2025-07-01', end: '2026-06-30'));
+		self::assertSame('2026', VatFiscalYearCorrectionService::label(start: '2026-01-01', end: '2026-12-31'));
+	}//end testTheNameOfAFiscalYear()
 }//end class

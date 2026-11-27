@@ -18,7 +18,7 @@ This specification defines the requirements for bookkeeping iv3 reporting in the
 @e2e exclude unbuilt UI: IV3 reporting pages not yet implemented
 
 
-### REQ-IV3-001: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations
+### Requirement: REQ-IV3-001: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations
 
 The system SHALL satisfy this requirement: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations.
 
@@ -50,7 +50,7 @@ IV3-bestand specificaties (current revision).
 - **WHEN** the IV3 workflow's visibility predicate evaluates
 - **THEN** the workflow MUST be skipped for that administration.
 
-### REQ-IV3-002: The `Iv3Export` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-IV3-002: The `Iv3Export` schema SHALL declare a fixed minimum field set
 
 The system SHALL satisfy this requirement: The `Iv3Export` schema SHALL declare a fixed minimum field set.
 
@@ -79,7 +79,7 @@ payload and `xmlAttachmentUri` as the serialised distribution).
   "2026.1"`, `buckets: {...}`, `state: "generated"` is created
 - **THEN** validation MUST pass.
 
-### REQ-IV3-003: The `buckets` field SHALL be derived from aggregations over GL postings filtered by BBV `iv3Bucket`
+### Requirement: REQ-IV3-003: The `buckets` field SHALL be derived from aggregations over GL postings filtered by BBV `iv3Bucket`
 
 The `buckets` object MUST be populated via `x-openregister-aggregations`
 over `GLLine` (T1) joined with `BbvAccountMapping` (T3
@@ -103,7 +103,7 @@ SUM of `debit - credit`. Per ADR-031, no `Iv3AggregationService`.
 - **THEN** Q2 postings MUST NOT appear in the result — the
   aggregation filter MUST use only closed-period IDs.
 
-### REQ-IV3-004: The IV3 XML SHALL be generated via OR's mapping/transformation engine, not a PHP renderer
+### Requirement: REQ-IV3-004: The IV3 XML SHALL be generated via OR's mapping/transformation engine, not a PHP renderer
 
 The IV3 XML payload MUST be generated via OR's mapping/transformation
 engine (per ADR-022 mappings abstraction) configured with the CBS
@@ -133,7 +133,7 @@ shortfall.
   it MUST carry an ADR-031 exception annotation linking back to
   design.md.
 
-### REQ-IV3-005: The `Iv3Export` lifecycle SHALL be declarative per ADR-031
+### Requirement: REQ-IV3-005: The `Iv3Export` lifecycle SHALL be declarative per ADR-031
 
 The system SHALL satisfy this requirement: The `Iv3Export` lifecycle SHALL be declarative per ADR-031.
 
@@ -156,7 +156,7 @@ Per ADR-031 anti-pattern list, shillinq MUST NOT author an
 - **WHEN** the operator tries to skip `validated` and trigger `submit`
 - **THEN** the transition MUST fail.
 
-### REQ-IV3-006: Submission to CBS SHALL be an OR `ScheduledWorkflow` consuming the `cbs-iv3` OpenConnector source
+### Requirement: REQ-IV3-006: Submission to CBS SHALL be an OR `ScheduledWorkflow` consuming the `cbs-iv3` OpenConnector source
 
 The submission MUST be expressed as an OR `ScheduledWorkflow` (per
 ADR-031 §"Background jobs that orchestrate external systems")
@@ -179,7 +179,7 @@ October), operator-configurable. shillinq MUST NOT author a
   URLs in `lib/`
 - **THEN** no matches SHALL exist.
 
-### REQ-IV3-007: IV3 exports SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-IV3-007: IV3 exports SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry `Overheid >
 IV3-rapportages` with a `type: index` page binding to `Iv3Export`
@@ -195,7 +195,7 @@ state, and lifecycle history. Visibility MUST be predicated on
   `state`, the bucket table, AND a link to the docudesk XML
   attachment.
 
-### REQ-IV3-008: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call
+### Requirement: REQ-IV3-008: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call
 
 The system SHALL satisfy this requirement: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call.
 
@@ -215,7 +215,7 @@ PHP class — documented as an ADR-031 exception.
 - **THEN** the transition MUST fail with a "schema validation
   failed" error naming the missing bucket.
 
-### REQ-IV3-009: Audit trail and retention SHALL be consumed from OR's abstractions
+### Requirement: REQ-IV3-009: Audit trail and retention SHALL be consumed from OR's abstractions
 
 Every `Iv3Export` operation MUST be audited via OR's
 audit-trail-immutable (ADR-022). Retention MUST be declared via
@@ -229,3 +229,73 @@ Gemeenten 2020).
 - **GIVEN** an IV3 export submitted in 2017
 - **WHEN** queried in 2026 (within the 10-year retention)
 - **THEN** the record MUST be returned with audit trail intact.
+
+### Requirement: The Iv3 report shows case costs per taakveld from the case type classification (REQ-IV3-010)
+
+For a quarter the Iv3 report SHALL show, per taakveld, the cost of the hours booked on objects of each configured cost source, where the taakveld is read from the object's type. Each object SHALL be costed through `SubjectCostService`. A refinement code SHALL be counted under its `aggregatesUnder` parent. An object whose cost is incomplete SHALL be counted in hours and listed as incomplete, never added to the cost. Objects whose type has no taakveld SHALL form one row "Geen taakveld" naming those types. These costs SHALL be a section and CSV of their own and SHALL NOT be added to the lasten derived from GL lines.
+
+#### Scenario: Old and new codes land in one row
+
+- GIVEN in Q3 a dossiq case whose type carries `6.71` with hours costing EUR 1,000.00 and one whose type carries `6.71a` with hours costing EUR 500.00
+- WHEN the controller opens the Iv3 report for Q3
+- THEN the case cost section shows one row 6.71 with 2 cases and EUR 1,500.00
+- AND the CSV holds the same row
+- @e2e exclude report arithmetic, asserted by PHPUnit; the page is covered by the live task
+
+#### Scenario: An unpriced hour withholds the cost, not the case
+
+- GIVEN a case on `8.3` with hours by a person who has no cost rate
+- WHEN the Iv3 report for the quarter is generated
+- THEN the case is listed as incomplete with its hours and adds nothing to the 8.3 cost
+- @e2e exclude aggregation policy, asserted by PHPUnit
+
+#### Scenario: Case costs do not change the ledger totals
+
+- GIVEN a quarter with GL lines and case costs
+- WHEN the report is generated with and without the dossiq source
+- THEN the GL lasten and baten per taakveld are identical
+- @e2e exclude report arithmetic, asserted by PHPUnit
+
+### Requirement: A cost source is configuration and an absent app is shown, not zero (REQ-IV3-011)
+
+A cost source SHALL be declared as configuration: the app, register and schema of the objects, the property pointing at their type and the property on the type that holds the taakveld. Shillinq SHALL ship one source, dossiq's case (`caseType`, `iv3TaskField`). When the source's app, or humaniq for the hours, is not installed, the case cost section SHALL say which app is missing and SHALL show no figure.
+
+#### Scenario: Dossiq is not installed
+
+- GIVEN Shillinq without dossiq
+- WHEN the controller opens the Iv3 report
+- THEN the case cost section says "Zaakkosten per taakveld komen uit Dossiq. Dossiq is niet geïnstalleerd." and shows no amount
+- @e2e exclude degraded state, asserted by PHPUnit and the live task
+
+### Requirement: The same case cost source is grouped per case type per period (REQ-IV3-012)
+
+Shillinq SHALL offer a report "Zaakkosten per zaaktype" that groups the cost of the hours booked on objects of each configured cost source by the object's type, for a period the controller picks (a month, a quarter or a year). It SHALL read the same source rows as the case cost section of REQ-IV3-010, so the cost and hours over all types for a period SHALL equal the cost and hours over all taakvelden for that period. Each row SHALL name the type by its title and show the number of objects, the hours and the cost. A type SHALL be grouped whether or not it carries a taakveld. An object whose cost is incomplete SHALL be counted in hours and listed under its type as incomplete, never added to the cost. When the source's app, or humaniq for the hours, is not installed, the report SHALL say which app is missing and SHALL show no figure. The report SHALL export to CSV with the same rows. Its costs SHALL NOT be added to the lasten derived from GL lines.
+
+#### Scenario: Cases are grouped by their case type
+
+- GIVEN in Q3 two dossiq cases of type "Omgevingsvergunning" with hours costing EUR 1,000.00 and EUR 250.00, and one case of type "Bezwaar" with hours costing EUR 400.00
+- WHEN the controller opens "Zaakkosten per zaaktype" for Q3
+- THEN the report shows a row "Omgevingsvergunning" with 2 cases and EUR 1,250.00 and a row "Bezwaar" with 1 case and EUR 400.00
+- AND the total of EUR 1,650.00 equals the total of the case cost section of the Iv3 report for Q3
+- @e2e exclude report arithmetic, asserted by PHPUnit; the page is covered by the live task
+
+#### Scenario: A case with an incomplete cost is listed, not summed
+
+- GIVEN in Q3 a case of type "Bezwaar" with hours by a person who has no cost rate, next to a case of the same type costing EUR 400.00
+- WHEN the report for Q3 is generated
+- THEN the row "Bezwaar" shows EUR 400.00, counts the hours of both cases and lists the first case as incomplete
+- @e2e exclude aggregation policy, asserted by PHPUnit
+
+#### Scenario: A missing app is named, not shown as zero
+
+- GIVEN Shillinq without dossiq, or without humaniq
+- WHEN the controller opens "Zaakkosten per zaaktype"
+- THEN the report says "Zaakkosten per zaaktype komen uit Dossiq. Dossiq is niet geïnstalleerd." or "Uren komen uit Humaniq. Humaniq is niet geïnstalleerd." and shows no amount, not EUR 0.00
+- @e2e exclude degraded state, asserted by PHPUnit and the live task
+
+#### Scenario: The grouping exports to CSV
+
+- GIVEN the report for Q3 with the rows "Omgevingsvergunning" and "Bezwaar" and one incomplete case
+- WHEN the controller exports it to CSV
+- THEN the CSV holds one line per case type with period, type, number of cases, hours, cost and number of incomplete cases, and the same totals as the page
+- @e2e exclude export format, asserted by PHPUnit

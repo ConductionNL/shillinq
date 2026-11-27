@@ -387,3 +387,24 @@ When IKP is calculated, the system SHALL:
 - **GIVEN** Gemeente Den Haag's Atrium vergaderzalen: IKP=€165/dagdeel (compliant), gehanteerdTarief=€180/dagdeel, MarketBenchmarks: LocHal Tilburg €245, Hotel Mercure €240, gemiddelde €242.50
 - **WHEN** the system calculates IKP and compares tarief to benchmarks: €180 < €242.50 × 0.85 (€206.13) — spreads to €180
 - **THEN** a bevoordeling-risk alert is logged: "Tariff €180 is 26% below market median €242.50. Rationale required (different service level, no catering, smaller capacity, etc.); if not justified, recommend tariff increase." The Den Haag controller can mark the alert "reviewed and justified: smaller capacity, no catering, lower service level" and log rationale to audit trail.
+
+### Requirement: A cost price is calculated from the books (REQ-WMO-013)
+
+The app SHALL calculate the integral cost price of a commercial activity for a period from its posted direct costs, its share of overhead, the cost of capital and the profit markup, and SHALL store the result with its components.
+
+#### Scenario: A controller calculates the cost price of the sports hall rental
+
+- GIVEN a commercial activity with posted direct costs and an overhead key
+- WHEN the controller chooses calculate for 2026 on the activity page
+- THEN an integral cost price for 2026 is stored with direct costs, overhead, cost of capital and markup
+- AND it says whether the applied rate covers the cost price
+
+### Requirement: Cross subsidy signals are logged (REQ-WMO-014)
+
+The app SHALL check every active commercial activity daily for the cross subsidy signals and SHALL write one alert per signal, without repeating an alert that is still open.
+
+#### Scenario: An activity has run at a loss for a year
+
+- GIVEN an activity whose cost prices show a loss for twelve months in a row
+- WHEN the daily check runs twice
+- THEN one open loss financing alert exists for that activity

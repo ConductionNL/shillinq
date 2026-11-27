@@ -25,6 +25,19 @@ async function generate(request) {
 }
 
 /**
+ * The customer's unbilled hours (of one project, in a period, priced on a
+ * rate card) and unbilled pass-through expenses.
+ *
+ * @param {object} query - { customerId, projectId, from, to, rateCardId }.
+ * @return {Promise<object>} { hours: { available, reason, entries }, expenses }.
+ * @spec openspec/changes/archive/2026-11-25-sales-time-and-expense-billing/tasks.md#task-4.1
+ */
+async function billableWork(query) {
+	const { data } = await axios.get(base('/billable-work'), { params: query })
+	return data
+}
+
+/**
  * Fetch an invoice + its line items by id.
  *
  * @param {string} invoiceId - BillableInvoice id.
@@ -74,4 +87,4 @@ async function list(filters = {}) {
 	return Array.isArray(data) ? data : data?.invoices || []
 }
 
-export default { generate, get, post, exportPdf, list }
+export default { generate, get, post, exportPdf, list, billableWork }

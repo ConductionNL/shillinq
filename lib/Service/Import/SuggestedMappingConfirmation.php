@@ -1,0 +1,123 @@
+<?php
+
+/**
+ * Suggested Mapping Confirmation
+ *
+ * Confirms, in one server call, every mapping row of an import batch that
+ * already has a target account.
+ *
+ * @category Service
+ * @package  OCA\Shillinq\Service\Import
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Service\Import;
+
+use DomainException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\Shillinq\Kernel\Contracts\SuggestedMappingConfirmationInterface;
+use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Util\ObjectIdentifier;
+
+/**
+ * Confirms the suggested mappings of a batch the caller may work on.
+ *
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
+ */
+class SuggestedMappingConfirmation implements SuggestedMappingConfirmationInterface {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param SettingsService $settings Supplies the register slug.
+	 * @param AdministrationContextService $administrationContext Membership of the batch's administration.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly ObjectServiceInterface $objectService,
+		private readonly SettingsService $settings,
+		private readonly AdministrationContextService $administrationContext,
+	) {
+	}//end __construct()
+
+	/**
+	 * Confirm every unconfirmed mapping row with a target account.
+	 *
+	 * @param string $batchId The import batch id.
+	 *
+	 * @return int How many rows were confirmed.
+	 *
+	 * @throws ImportBatchNotFoundException When the batch does not exist or the caller is no member of its administration.
+	 * @throws DomainException When the batch is not in the mapping state.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	public function confirm(string $batchId): int {
+		$register = $this->settings->getRegisterSlug();
+		$entity = null;
+		try {
+			$entity = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($register)->setSchema('ImportBatch'),
+				id: $batchId
+			);
+		} catch (\Throwable $e) {
+			$entity = null;
+		}
+
+		$batch = ObjectIdentifier::recordWithId(candidate: $entity);
+		if ($batch === null
+			|| $this->administrationContext->canAccess(administrationId: (string)($batch['administrationId'] ?? '')) === false
+		) {
+			throw new ImportBatchNotFoundException('Import batch not found.');
+		}
+
+		if (($batch['status'] ?? '') !== 'mapping') {
+			throw new DomainException('Suggestions can only be confirmed while the batch is being mapped.');
+		}
+
+		$rows = $this->objectService->setRegister($register)->setSchema('ImportMapping')
+			->findAll(['filters' => ['batchReference' => $batchId]]);
+
+		$confirmed = 0;
+		foreach ($rows as $row) {
+			$mapping = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($mapping === null
+				|| empty($mapping['targetAccount']) === true
+				|| ($mapping['confirmed'] ?? false) === true
+			) {
+				continue;
+			}
+
+			$id = (string)($mapping['id'] ?? '');
+			unset($mapping['@self'], $mapping['id']);
+			$mapping['confirmed'] = true;
+			// OpenRegister main's saveObject() takes the target in ObjectSaveOptions; the
+			// interface stub phpstan scans still declares the older named arguments.
+			$this->objectService->saveObject(
+				object: $mapping,
+				// @phpstan-ignore argument.unknown (the scanned stub predates the options form.)
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'ImportMapping'), uuid: $id)
+			);
+			$confirmed++;
+		}
+
+		return $confirmed;
+	}//end confirm()
+}//end class

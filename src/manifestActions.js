@@ -1,0 +1,206 @@
+// SPDX-License-Identifier: EUPL-1.2
+// Copyright (C) 2026 Conduction B.V.
+//
+// The functions a manifest action names with `"type": "handler"`.
+//
+// The library looks a handler up in two places, and a page only sees one:
+//   - an INDEX page (CnIndexPage) resolves it against the `customComponents`
+//     map App.vue hands to CnAppRoot;
+//   - a DETAIL or DASHBOARD page's header actions dispatch through
+//     CnPageRenderer's `cnDispatchAction`, which reads `manifest.actions`.
+// A handler registered in only the first map does nothing on a detail page:
+// "Continue in the wizard" on an import batch logged
+// `Handler "openImportWizard" not found in context.handlers` (live pass S4).
+// So every handler is registered in both, from this one list.
+
+import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
+import { openRepeatAppointment } from './utils/appointmentSeriesActions.js'
+import { openMissedDepreciation } from './utils/assetActions.js'
+import { openAuditSampleDraw } from './utils/auditSampleApi.js'
+import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
+import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
+import { openProposeDirectDebit } from './utils/directDebitActions.js'
+import { downloadDirectDebitFile } from './utils/directDebitApi.js'
+import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
+import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
+import { downloadEnsiaStatement, downloadEnsiaXml } from './utils/ensiaApi.js'
+import {
+	downloadIcpStatementXml,
+	fileIcpStatement,
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+} from './utils/icpStatementActions.js'
+import { openImportWizard } from './utils/importWizard.js'
+import {
+	approvePayable,
+	markPayablePaid,
+	rejectPayable,
+} from './utils/inboundPayableActions.js'
+import {
+	openIntegriqConnections,
+	openIntegriqStore,
+} from './utils/integriqConnections.js'
+import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
+import { openInvoiceBatchCreate, sendSelectedInvoices } from './utils/invoiceBatchActions.js'
+import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
+import { openRegenerateKnownCosts } from './utils/knownCostActions.js'
+import { openLedgerSealCheck } from './utils/ledgerSealApi.js'
+import {
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+} from './utils/openItemClearingActions.js'
+import { openProposePaymentRun } from './utils/paymentRunActions.js'
+import { approveRefund, openRefundPaid } from './utils/refundActions.js'
+import {
+	confirmRelationSuggestion,
+	dismissRelationSuggestion,
+	openPayeeRelation,
+	openRelationsExport,
+} from './utils/relationActions.js'
+import { createSalesOrderFromQuote, invoiceSalesOrder } from './utils/salesOrderActions.js'
+import {
+	openMeterReadingImport,
+	rateMeterReadings,
+} from './utils/usageBillingActions.js'
+import {
+	checkCustomerVatNumber,
+	checkSupplierVatNumber,
+} from './utils/vatNumberCheck.js'
+import { openPrepareVatReturn } from './utils/vatReturnActions.js'
+import {
+	checkVatFiscalYearCorrections,
+	checkVatReturnForCorrections,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
+	prepareSupplementaryReturn,
+} from './utils/vatSuppletieActions.js'
+
+export const manifestActions = Object.freeze({
+	// The External Connections page's Add integration action leaves for
+	// integriq (adopt-connection-registry).
+	openIntegriqConnections,
+	// The Integrations page's Open in Integriq row action
+	// (platform-integration-catalogue).
+	openIntegriqStore,
+	// banking-manual-match: the "Match by hand" row action and the
+	// unmatched items bulk classification.
+	openBankLineMatch,
+	classifyUnmatched,
+	// sales-down-payments: the "New down-payment invoice" header action on
+	// Accounts Receivable.
+	openDownPaymentInvoice,
+	// Generate invoices on Sales invoices (board ShFactuurGenereren).
+	openInvoiceGenerateWizard,
+	// sales-invoice-sending 3.2: Send selected on Accounts Receivable.
+	sendSelectedInvoices,
+	// sales-invoice-sending 3.3: New invoice batch on Sales invoices and Invoice batches.
+	openInvoiceBatchCreate,
+	// banking-payment-run: the "Propose payment run" header action on
+	// Payment runs.
+	openProposePaymentRun,
+	// receivables-sepa-direct-debit: Propose direct debit on Direct debit
+	// batches and Download pain.008 on a generated batch.
+	openProposeDirectDebit,
+	downloadDirectDebitFile,
+	// public-sector-council-and-auditor-statements: Draw sample on an audit
+	// protocol, and the XML and statement downloads on an ENSIA cycle.
+	openAuditSampleDraw,
+	downloadEnsiaXml,
+	downloadEnsiaStatement,
+	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
+	approvePayable,
+	markPayablePaid,
+	rejectPayable,
+	// planning-commitment-year-end: the "Carry open commitments to next year"
+	// header action on Commitments.
+	openCarryOverCommitments,
+	// ledger-sealed-entries: Check ledger seal on the general ledger page.
+	openLedgerSealCheck,
+	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
+	openMissedDepreciation,
+	// tax-vat-number-check: Check VAT number on the customer and supplier pages.
+	checkCustomerVatNumber,
+	checkSupplierVatNumber,
+	// sales-usage-billing: Import readings and Rate on Meter readings.
+	openMeterReadingImport,
+	rateMeterReadings,
+	// reporting-relation-both-sides: the suggestions' row actions, the report's
+	// export and the supplier page's way to the linked customer.
+	confirmRelationSuggestion,
+	dismissRelationSuggestion,
+	openRelationsExport,
+	openPayeeRelation,
+	// platform-administration-import: the batch page's way back into the
+	// wizard (live pass S3, S4).
+	openImportWizard,
+	// receivables-object-request-refund-and-credit: Approve and Mark paid on
+	// the Refunds to pay page.
+	approveRefund,
+	openRefundPaid,
+	// receivables-automatic-dunning 4.1: Next run on Dunning runs, and
+	// Switch on reminders on an administration.
+	openDunningNextRun,
+	openDunningSwitchOn,
+	// ledger-multi-administration 3.2: Save as template on an administration.
+	openSaveAdministrationTemplate,
+	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
+	openPrepareVatReturn,
+	// sales-quote-and-order-to-invoice 2.1: Create sales order on a quote,
+	// Invoice order on a sales order.
+	createSalesOrderFromQuote,
+	invoiceSalesOrder,
+	// ledger-open-item-clearing 3.1: Clear on a suggested pair, Clear
+	// selected on Lines to clear, Undo clearing on a group.
+	clearOpenItemSuggestion,
+	clearSelectedOpenItems,
+	undoOpenItemClearing,
+	// tax-icp-and-reverse-charge: Prepare statement on the ICP page, and
+	// Reconcile, Download XML and File on a statement.
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+	downloadIcpStatementXml,
+	fileIcpStatement,
+	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
+	// Prepare / Download / File on a correction, and the position's lines.
+	checkVatReturnForCorrections,
+	// tax-vat-return-from-books 4.1: Check fiscal year on a broken fiscal year.
+	checkVatFiscalYearCorrections,
+	prepareSupplementaryReturn,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
+	// bookings-messages-and-embedding 1.4: New repeating appointment on
+	// Appointments.
+	openRepeatAppointment,
+	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
+	openRecalculateInvestmentDeductions,
+	// budget-known-costs design.md §12: "Regenerate known costs" on
+	// Budget Line Derivations.
+	openRegenerateKnownCosts,
+})
+
+/**
+ * Put the handlers on `manifest.actions`, where CnPageRenderer's dispatch
+ * looks them up for a detail or dashboard page's header actions.
+ *
+ * Non-enumerable on purpose: the manifest is also serialised (the in-app
+ * editor's snapshot and saved delta), and the manifest schema allows no
+ * top-level `actions` key. A function map has no business in that JSON, and
+ * hidden from enumeration it never reaches it, while a plain read still
+ * finds it.
+ *
+ * @param {object} manifest The merged manifest, mutated in place.
+ * @return {object} The same manifest.
+ * @spec openspec/changes/archive/2026-11-24-platform-administration-import/specs/administration-import-migration/spec.md
+ */
+export function attachManifestActions(manifest) {
+	Object.defineProperty(manifest, 'actions', {
+		value: manifestActions,
+		enumerable: false,
+		configurable: true,
+		writable: false,
+	})
+	return manifest
+}

@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * IV3 (Informatie voor derden) data-report generator
  *
  * Renders the CBS IV3 report natively, in XML or CSV, aggregating the general-ledger
@@ -48,7 +53,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
+use OCA\Shillinq\Reporting\CostSource\SubjectCostReport;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -70,10 +76,12 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger.
+	 * @param SubjectCostReport|null $subjectCosts The case cost section; absent leaves the report GL-only.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly ?SubjectCostReport $subjectCosts = null,
 	) {
 
 	}//end __construct()
@@ -135,26 +143,76 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 				continue;
 			}
 
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			$taskField = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
-			if ($taskField === '') {
-				$taskField = '0.0';
-			}
-
-			if (isset($totals[$taskField]) === false) {
-				$totals[$taskField] = ['expenses' => 0.0, 'revenue' => 0.0];
-			}
-
-			$amount = $this->toFloat($line['amount'] ?? 0);
-			if ((string)($line['side'] ?? '') === 'debit') {
-				$totals[$taskField]['expenses'] += $amount;
-			} else {
-				$totals[$taskField]['revenue'] += $amount;
-			}
-		}//end foreach
+			$totals = $this->addToTaskField($totals, $this->lineTaskField($line, $accounts), $line);
+		}
 
 		return $totals;
 	}//end aggregateByTaakveld()
+
+	/**
+	 * The case costs per taakveld for the report's period, beside the GL totals.
+	 *
+	 * Refinement codes are counted under their parent; an incomplete cost is
+	 * listed, not summed; a missing source app gives its message and no figure.
+	 *
+	 * @param array<string, mixed> $context The report context (period, administrationId).
+	 *
+	 * @return array<int, array<string, mixed>> The sections, empty without a cost source.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 */
+	public function subjectCostsPerTaskField(array $context): array {
+		if ($this->subjectCosts === null) {
+			return [];
+		}
+
+		return $this->subjectCosts->perTaskField(
+			period: $this->contextString($context, 'period'),
+			administrationId: $this->contextString($context, 'administrationId')
+		);
+	}//end subjectCostsPerTaskField()
+
+	/**
+	 * The line's taakveld, inherited from its Account when the line carries none; '0.0' when neither does.
+	 *
+	 * @param array<string,mixed> $line The GLLine.
+	 * @param array<string,array<string,mixed>> $accounts Accounts by number.
+	 *
+	 * @return string The taakveld.
+	 */
+	private function lineTaskField(array $line, array $accounts): string {
+		$accountNumber = (string)($line['accountNumber'] ?? '');
+		$taskField = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
+		if ($taskField === '') {
+			$taskField = '0.0';
+		}
+
+		return $taskField;
+	}//end lineTaskField()
+
+	/**
+	 * Add a line's amount to its taakveld's lasten (debit) or baten (credit).
+	 *
+	 * @param array<string,array{expenses:float,revenue:float}> $totals The totals so far.
+	 * @param string $taskField The line's taakveld.
+	 * @param array<string,mixed> $line The GLLine.
+	 *
+	 * @return array<string,array{expenses:float,revenue:float}>
+	 */
+	private function addToTaskField(array $totals, string $taskField, array $line): array {
+		if (isset($totals[$taskField]) === false) {
+			$totals[$taskField] = ['expenses' => 0.0, 'revenue' => 0.0];
+		}
+
+		$amount = $this->toFloat($line['amount'] ?? 0);
+		if ((string)($line['side'] ?? '') === 'debit') {
+			$totals[$taskField]['expenses'] += $amount;
+		} else {
+			$totals[$taskField]['revenue'] += $amount;
+		}
+
+		return $totals;
+	}//end addToTaskField()
 
 	/**
 	 * Render the taakveld totals as CSV.
@@ -177,6 +235,15 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 					$this->money(($row['revenue'] - $row['expenses'])),
 				]
 			);
+		}
+
+		if ($this->subjectCosts !== null) {
+			// A section of its own after the GL totals, never added to them:
+			// the wages behind these hours are already booked as lasten.
+			fputcsv($handle, []);
+			foreach ($this->subjectCosts->taskFieldCsvLines(sections: $this->subjectCostsPerTaskField(context: $context)) as $line) {
+				fputcsv($handle, $line);
+			}
 		}
 
 		rewind($handle);

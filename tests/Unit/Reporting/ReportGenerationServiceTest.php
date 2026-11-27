@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
 use OCA\Shillinq\Reporting\DocudeskUnavailableException;
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCP\Files\IRootFolder;
@@ -47,6 +47,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use ReflectionClass;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A fake OpenRegister ObjectService capturing every saveObject() call.
@@ -65,7 +66,9 @@ final class FakeRgsObjectService {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 		return array_merge($object, ['id' => 'saved-' . count($this->saved)]);
 	}//end saveObject()
@@ -132,6 +135,24 @@ final class ThrowingGenerator implements ReportGeneratorInterface {
 
 	public function generate(array $context, string $format): GeneratedFile {
 		throw $this->exception;
+	}//end generate()
+}//end class
+
+/**
+ * A generator stub that refuses with the context it was given, as JSON.
+ */
+final class ContextEchoGenerator implements ReportGeneratorInterface {
+
+	public static function reportType(): string {
+		return 'balance-sheet';
+	}//end reportType()
+
+	public static function supportedFormats(): array {
+		return ['odt', 'pdf'];
+	}//end supportedFormats()
+
+	public function generate(array $context, string $format): GeneratedFile {
+		throw new \RuntimeException((string)json_encode($context));
 	}//end generate()
 }//end class
 
@@ -206,4 +227,41 @@ final class ReportGenerationServiceTest extends TestCase {
 		$this->assertSame('generation-failed', $result['error']);
 		$this->assertCount(0, $objectService->saved, 'A generic generation failure must not write a GeneratedReport record.');
 	}//end testOtherExceptionKeepsGenericBehaviourAndWritesNoRecord()
+
+	/**
+	 * The record a report is made from reaches the generator, and never overrides the fixed keys.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-4.1
+	 */
+	public function testTheSubjectReachesTheGenerator(): void {
+		$service = $this->service(new ContextEchoGenerator(), new FakeRgsObjectService());
+
+		$subject = ['returnId' => 'cbc-2026', 'period' => '1999', 'administrationId' => 'other'];
+		$result  = $service->generateForRecord('balance-sheet', '2026', 'admin-1', $subject);
+
+		$this->assertSame('generation-failed', $result['error']);
+		$this->assertSame(
+			['reportType' => 'balance-sheet', 'period' => '2026', 'administrationId' => 'admin-1', 'returnId' => 'cbc-2026'],
+			json_decode($result['message'], true)
+		);
+		$this->assertSame(
+			['reportType' => 'balance-sheet', 'period' => '2026', 'administrationId' => 'admin-1'],
+			json_decode($service->generate('balance-sheet', '2026', 'admin-1', 'pdf')['message'], true),
+			'without a subject the context is as before'
+		);
+	}//end testTheSubjectReachesTheGenerator()
+
+	/**
+	 * Without an administration nothing is generated and nothing is read.
+	 */
+	public function testEmptyAdministrationIsRefusedBeforeAnyRead(): void {
+		$objectService = new FakeRgsObjectService();
+		$generator = new ThrowingGenerator(new \RuntimeException('the generator must not run'));
+		$service = $this->service($generator, $objectService);
+
+		$result = $service->generate('balance-sheet', '2026', '  ', 'pdf');
+
+		$this->assertSame('missing-administration', $result['error']);
+		$this->assertCount(0, $objectService->saved);
+	}//end testEmptyAdministrationIsRefusedBeforeAnyRead()
 }//end class

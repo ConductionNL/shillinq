@@ -262,3 +262,32 @@ The following seed data MUST be loaded for all BBV-tenants (gemeente, provincie,
 4. **beleidsindicatoren-bbv-YYYY.json** — 39 fixed indicators per Regeling Beleidsindicatoren YYYY.
 
 All seed files carry SPDX header and `_meta.iv3Version` tag.
+
+### Requirement: Realisation is shown per task field (REQ-BBV-012)
+
+The app SHALL show, for a municipal administration and a year, the expenses and income per BBV task field from posted GL lines through the account mapping, and SHALL list every account that carries postings but no mapping.
+
+#### Scenario: A controller reads the year per task field
+
+- GIVEN posted lines of EUR 40,000 on an account mapped to task field 0.1 and EUR 5,000 on an unmapped account
+- WHEN the controller opens the BBV dashboard for 2026
+- THEN task field 0.1 shows EUR 40,000 in expenses
+- AND the unmapped account is listed with EUR 5,000 and a link to the BBV mapping page
+
+### Requirement: The taakveld catalogue holds the 2023 refinement codes and their parent (REQ-BBV-013)
+
+The `BbvTaakveld` catalogue for municipalities SHALL hold the 18 official 2023 Wmo/Jeugd refinement codes (`6.71a` to `6.71d`, `6.72a` to `6.72d`, `6.73a` to `6.73c`, `6.74a` to `6.74c`, `6.81a`, `6.81b`, `6.82a`, `6.82b`), each with `aggregatesUnder` set to its pre-2023 parent (`6.71`, `6.72`, `6.81` or `6.82`), and SHALL mark those 4 parents `deprecated`. Every code SHALL carry its statutory Dutch name and an authored English label. A code that rolls up SHALL resolve to exactly one parent in the same catalogue.
+
+#### Scenario: A refinement code names its parent
+
+- GIVEN the municipal catalogue
+- WHEN code `6.73b` is read
+- THEN its `aggregatesUnder` is `6.72` and it is not deprecated
+- @e2e exclude seed data, asserted by PHPUnit
+
+#### Scenario: A deprecated parent stays usable
+
+- GIVEN the municipal catalogue
+- WHEN code `6.72` is read
+- THEN it exists, is marked deprecated and has no `aggregatesUnder`
+- @e2e exclude seed data, asserted by PHPUnit

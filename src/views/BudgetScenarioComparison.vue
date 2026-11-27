@@ -22,7 +22,7 @@
  convention: when none is default, no scenario is pre-selected and the
  operator chooses one explicitly).
 
- @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+ @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 -->
 <template>
 	<NcAppContent>
@@ -184,8 +184,38 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
+import { administrationOptions, fetchAdministrationContext } from '../utils/administrationContext.js'
 
 const REGISTER_SLUG = 'shillinq'
+
+/**
+ * The rows of a list response: its results, its objects or the body itself;
+ * empty when that is not an array.
+ *
+ * @param {object|Array|null|undefined} data The response body.
+ * @return {Array<object>}
+ */
+function listRows(data) {
+	const rows = data?.results ?? data?.objects ?? data ?? []
+	return Array.isArray(rows) ? rows : []
+}
+
+/**
+ * Ledger-group display names by id; a row without an id is skipped.
+ *
+ * @param {Array<object>} rows The ledger-group rows.
+ * @return {{[id: string]: string}}
+ */
+function ledgerGroupNames(rows) {
+	const names = {}
+	for (const row of rows) {
+		const id = row.id || row['@self']?.id
+		if (id) {
+			names[id] = row.name || row.code || id
+		}
+	}
+	return names
+}
 
 export default {
 	name: 'BudgetScenarioComparison',
@@ -216,7 +246,7 @@ export default {
 		 *
 		 * @return {Array<string>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		monthLabels() {
 			return [
@@ -242,7 +272,7 @@ export default {
 		 *
 		 * @return {Array<object>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		groupedRows() {
 			const byGroup = new Map()
@@ -284,21 +314,15 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		async loadAdministrationContext() {
 			this.loading = true
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				const admins = response.data?.administrations || []
-				this.administrationOptions = admins.map((a) => ({
-					value: a.administrationId,
-					label: a.name || a.administrationCode || a.administrationId,
-				}))
+				const context = await fetchAdministrationContext()
+				this.administrationOptions = administrationOptions(context)
 				this.administrationId =
-					response.data?.activeAdministrationId
+					context?.activeAdministrationId
 					|| this.administrationOptions[0]?.value
 					|| ''
 			} catch {
@@ -323,7 +347,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		async onAdministrationChange() {
 			this.scenarioId = ''
@@ -338,7 +362,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		onFiscalYearChange() {
 			if (this.scenarioId) {
@@ -353,7 +377,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 		 */
 		async loadScenarios() {
 			try {
@@ -393,7 +417,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-009
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-009
 		 */
 		async loadLedgerGroupNames() {
 			try {
@@ -408,19 +432,7 @@ export default {
 						},
 					},
 				)
-				const rows =
-					response.data?.results
-					?? response.data?.objects
-					?? response.data
-					?? []
-				const names = {}
-				for (const row of Array.isArray(rows) ? rows : []) {
-					const id = row.id || row['@self']?.id
-					if (id) {
-						names[id] = row.name || row.code || id
-					}
-				}
-				this.ledgerGroupNames = names
+				this.ledgerGroupNames = ledgerGroupNames(listRows(response.data))
 			} catch {
 				this.ledgerGroupNames = {}
 			}
@@ -433,7 +445,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
 		 */
 		async loadComparison() {
 			if (!this.scenarioId) {
@@ -472,7 +484,7 @@ export default {
 		 * @param {object} scenario - The BudgetScenario row.
 		 * @return {string}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 		 */
 		scenarioLabel(scenario) {
 			if (scenario.isDefault) {
@@ -489,7 +501,7 @@ export default {
 		 * @param {string} rowKind - One of 'base' | 'scenario' | 'delta'.
 		 * @return {string}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		rowLabel(rowKind) {
 			if (rowKind === 'base') {
@@ -507,7 +519,7 @@ export default {
 		 * @param {number} cents - The signed amount in EUR cents.
 		 * @return {string}
 		 *
-		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
+		 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		formatCents(cents) {
 			return ((Number(cents) || 0) / 100).toLocaleString(undefined, {

@@ -1,0 +1,22 @@
+# Tasks: platform-required-fields
+
+<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 6. -->
+
+## 1. Data and check
+
+- [x] 1.1 Add `FieldRequirement` in a `register.d` fragment, refusing unknown fields (REQ-PRF-001). Verify: `npm run check:registers`, `npm run check:seeds`.
+- [x] 1.2 `FieldRequirementListener` on both pre-save events with the system-write skip, registered in `Application.php` (REQ-PRF-002). Verify: PHPUnit for missing, present, other administration and system write.
+
+## 2. Page and form
+
+- [x] 2.1 `RequiredFields` settings page with the form-field list per schema (REQ-PRF-001). Verify: `npm run check:manifest`, nav reachability.
+- [x] 2.2 Raise the runtime required-fields input on nextcloud-vue and show the server's field errors in forms meanwhile (REQ-PRF-002). Verify: issue link in the PR; vitest for the error display.
+  - Filed: ConductionNL/nextcloud-vue#2311; the server field errors already show under their fields (vitest above).
+  - Meanwhile half done: `FieldRequirementListener` refuses with errors keyed by field, OpenRegister answers that veto as 422 `{error, errors}`, and the installed library reads it as a validation error and keeps the index page's form open with each message under its field (`tests/vitest/requiredFieldServerErrors.spec.js` through `parseResponseError` and the self-mode `handleFormSave`). Left: the issue on ConductionNL/nextcloud-vue for the runtime required-fields input, outside this repository.
+
+## 3. End to end and strings
+
+- [x] 3.1 Playwright `tests/e2e/platform-required-fields.spec.ts`. Verify: passes locally. **Written, runs in nightly (24 Nov 2026): the spec is in the CI Playwright testDir and matches no testIgnore; not verified here, no live instance in the build sandbox. Scenarios marked `test.fixme` in the spec stay owed.**
+- [x] 3.2 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
+
+Quality reminders (not tracked as tasks): `composer check:strict` once before push.

@@ -77,33 +77,27 @@
             "title": "Is Active"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create/update/delete of an EliminationRule is logged to OR's immutable audit trail."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "IntercompanyTransaction": {
@@ -283,33 +277,31 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create/update/delete and lifecycle transition (eliminate / exclude / restore / reinstate) of an IntercompanyTransaction is logged to OR's immutable audit trail."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_group_treasurer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_group_treasurer",
+            "shillinq_cfo"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_group_treasurer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }
@@ -374,7 +366,20 @@
       "reference": "INV-2026-001",
       "description": "Waste-collection service provided by Gemeente Amsterdam to Gemeente Utrecht.",
       "isManualOverride": false,
-      "eliminationStatus": "pending"
+      "eliminationStatus": "pending",
+      "administrationId": "adm-gemeente-amsterdam",
+      "sourceAdministrationId": "adm-gemeente-amsterdam",
+      "fromAdministrationId": "adm-gemeente-amsterdam",
+      "toAdministrationId": "adm-gemeente-utrecht",
+      "sourceJournalEntryId": "INV-2026-001",
+      "sourceLineNumber": 1,
+      "bookingDate": "2026-05-10",
+      "postingDate": "2026-05-10",
+      "glAccount": "4000",
+      "detectionMethod": "explicitly-marked",
+      "detectionConfidence": "high",
+      "movementType": "settlement",
+      "state": "posted"
     }
   ]
 }

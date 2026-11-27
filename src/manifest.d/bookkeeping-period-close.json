@@ -14,6 +14,14 @@
 					"order": 65
 				}
 			]
+		},
+		{
+			"id": "CloseChecklistTemplates",
+			"label": "Close checklist templates",
+			"icon": "FormatListChecks",
+			"route": "CloseChecklistTemplates",
+			"section": "settings",
+			"order": 94
 		}
 	],
 	"pages": [
@@ -23,6 +31,7 @@
 			"type": "index",
 			"title": "Period Close",
 			"config": {
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/user/period-close",
 				"register": "shillinq",
 				"schema": "FiscalPeriod",
 				"columns": [
@@ -81,6 +90,7 @@
 			"_note": "Period-close cockpit, not a record view. Beyond the FiscalPeriod fields it drives a four-step close workflow through /api/period-close/:id/{start-close,close,reopen,lock-audit} with per-transition role gates (period-closer, auditor) and a reopen reason prompt, and renders the close checklist and assistant flags. `type: detail` renders declared fields plus lifecycle transitions on the OBJECT; it cannot host the endpoint-driven checklist and audit-lock cockpit this page is. Its config is retained so the field/lifecycle/link declarations stay manifest-owned.",
 			"title": "Period Close",
 			"config": {
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/user/period-close",
 				"register": "shillinq",
 				"schema": "FiscalPeriod",
 				"fields": [
@@ -227,6 +237,80 @@
 					}
 				],
 				"indexRoute": "PeriodClose"
+			}
+		},
+		{
+			"id": "CloseChecklistTemplates",
+			"route": "/settings/close-checklist-templates",
+			"type": "index",
+			"title": "Close checklist templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "CloseChecklistTemplate",
+				"columns": [
+					{
+						"key": "templateName",
+						"label": "Template",
+						"sortable": true
+					},
+					{
+						"key": "administrationTypeId",
+						"label": "Legal form",
+						"sortable": true
+					}
+				],
+				"defaultSort": "templateName",
+				"detailRoute": "CloseChecklistTemplateDetail"
+			}
+		},
+		{
+			"id": "CloseChecklistTemplateDetail",
+			"route": "/settings/close-checklist-templates/:id",
+			"type": "detail",
+			"title": "Close checklist template",
+			"config": {
+				"register": "shillinq",
+				"schema": "CloseChecklistTemplate",
+				"_note": "CONFIG: the tasks a closing period copies (REQ-LPE-003).",
+				"fields": [
+					{
+						"key": "templateName",
+						"label": "Template",
+						"type": "string"
+					},
+					{
+						"key": "administrationTypeId",
+						"label": "Legal form",
+						"type": "string"
+					},
+					{
+						"key": "tasks",
+						"label": "Tasks",
+						"type": "array"
+					}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"indexRoute": "CloseChecklistTemplates"
 			}
 		}
 	]

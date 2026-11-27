@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 use OCP\Util;
 
 $appId = OCA\Shillinq\AppInfo\Application::APP_ID;
@@ -22,6 +27,8 @@ $appId = OCA\Shillinq\AppInfo\Application::APP_ID;
 // Build stayed green throughout — emitting a chunk nobody requests is not a
 // build error. pipelinq/templates/index.php carries the same three lines for
 // the same reason.
+// The library stylesheet, linked so the browser keeps it parsed between loads.
+Util::addStyle($appId, 'nextcloud-vue');
 Util::addScript($appId, $appId . '-shared-vendor');
 Util::addScript($appId, $appId . '-shared-nc-vue');
 Util::addScript($appId, $appId . '-main');

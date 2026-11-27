@@ -15,7 +15,6 @@ This specification defines the requirements for bookkeeping credit control dunni
 
 @e2e exclude unbuilt UI: dunning/credit control pages not yet implemented
 
-
 ### REQ-CCD-001: DunningLadder configuration SHALL be declared as `DunningLadder` + `KlantLadderOverride` registers
 
 Dunning ladders MUST be expressed as two new registers in `lib/Settings/shillinq_register.json` per ADR-024:
@@ -421,6 +420,137 @@ the system MUST:
 
 ---
 
+### Requirement: A payment plan is agreed for a customer's overdue invoices (REQ-RPPL-001)
+
+A user SHALL be able to agree a `PaymentPlan` for one or more overdue invoices of
+one customer from `CustomerDetail` or from `ARInvoiceDetail`, choosing the number
+of instalments or the instalment amount, the frequency, the first due date and
+the grace period. The instalments MUST add up to the plan total to the cent, and
+on activation the customer SHALL receive a mail with the covered invoices, the
+schedule, the IBAN and the plan's payment reference.
+
+#### Scenario: A café agrees six monthly instalments
+
+- GIVEN customer Café De Zwaan with overdue invoices 2026-0231 of EUR 1,815.00 and 2026-0266 of EUR 605.00
+- WHEN the bookkeeper chooses Agree a payment plan on the customer page, selects both invoices and six monthly instalments from 2026-11-01
+- THEN plan RGL-2026-0007 shows five instalments of EUR 403.33 and a last of EUR 403.35
+- AND on activation Café De Zwaan receives the schedule with the reference RGL-2026-0007
+
+### Requirement: An active plan pauses dunning of its invoices (REQ-RPPL-002)
+
+Activating a plan SHALL pause dunning of every covered invoice with reason
+`PAYMENT_PLAN` until the plan is completed, broken or cancelled, and only those
+transitions SHALL lift the plan's pauses.
+
+#### Scenario: No reminder while the plan is kept
+
+- GIVEN plan RGL-2026-0007 active and invoice 2026-0231 due for its third dunning stage
+- WHEN the daily dunning run takes place
+- THEN no reminder is sent for invoice 2026-0231
+
+### Requirement: Instalment payments are recognised and allocated (REQ-RPPL-003)
+
+A payment for a plan SHALL be recognised from a bank line naming the plan's
+payment reference, from the capture of an instalment's payment request, or from a
+settle action, and SHALL be allocated to the covered invoices oldest first. An
+invoice whose amount due reaches zero SHALL move to paid, and an amount above the
+instalment SHALL pay the following instalments in order.
+
+#### Scenario: The first instalment arrives by bank
+
+- GIVEN plan RGL-2026-0007 with its first instalment of EUR 403.33 due on 2026-11-01
+- WHEN a bank line of EUR 403.33 with remittance RGL-2026-0007 termijn 1 is reconciled
+- THEN the instalment shows paid on 2026-11-01
+- AND invoice 2026-0231 shows EUR 403.33 paid and EUR 1,411.67 due
+
+### Requirement: A missed instalment breaks the plan and resumes dunning (REQ-RPPL-004)
+
+When an instalment is unpaid at the end of the grace period after its due date,
+the instalment SHALL be marked missed and the plan broken, the plan's dunning
+pauses SHALL be resumed, the customer SHALL be mailed that the arrangement has
+ended, and the `ar-controller` members SHALL be notified.
+
+#### Scenario: The third instalment is not paid
+
+- GIVEN plan RGL-2026-0004 with its third instalment due on 2026-09-01 and a grace period of 14 days
+- WHEN the monitor runs on 2026-09-16 and the instalment is still unpaid
+- THEN the plan shows broken and its invoices are again in the dunning ladder
+- AND the customer and the ar-controllers are told the arrangement ended
+
+### Requirement: A fully paid plan completes (REQ-RPPL-005)
+
+When every instalment of a plan is paid, the plan SHALL move to completed, its
+covered invoices SHALL be paid, and its pauses SHALL be closed.
+
+#### Scenario: The last instalment clears the debt
+
+- GIVEN plan RGL-2026-0007 with five instalments paid
+- WHEN the sixth instalment of EUR 403.35 is paid
+- THEN the plan shows completed and both invoices show paid
+
+### Requirement: Plans are followed on one page (REQ-RPPL-006)
+
+A Payment plans page SHALL list the administration's plans with customer, total,
+paid, arrears, next due instalment and state, and the customer and invoice pages
+SHALL show the plans that cover them.
+
+#### Scenario: The credit controller reviews this month's instalments
+
+- GIVEN twelve active plans
+- WHEN the credit controller opens the Payment plans page and filters on instalments due this month
+- THEN each plan with an instalment due this month is listed with its amount and whether it has been paid
+
+### Requirement: REQ-CCD-016: A run SHALL fall back to the stage's default template
+
+When neither the caller, the ladder stage nor the voluntary reminder letter names a
+template, `DunningRunService::executeStage()` SHALL record the template id
+`DunningTemplateRegistry::templateIdForStage()` gives for the stage, honouring the
+`dunning.template.stage_N` app config override. A named template SHALL win.
+
+#### Scenario: A stage without a template gets the registry default
+
+- GIVEN a stage 2 run with no template id anywhere
+- WHEN the stage is executed
+- THEN the run records `tpl-stage2-herinnering-nl`
+- @e2e exclude service; covered by `DunningRunServiceTest::testAStageWithoutATemplateGetsTheRegistryDefault`
+
+#### Scenario: A named template wins
+
+- GIVEN a run whose caller names template `tpl-custom`
+- WHEN the stage is executed
+- THEN the run records `tpl-custom`
+- @e2e exclude service; covered by `DunningRunServiceTest::testANamedTemplateWinsOverTheRegistry`
+
+### Requirement: REQ-CCD-017: The letter and record composition SHALL live in its own class
+
+`DunningLetterComposer` SHALL prepare a run's letter (a declined contribution
+refused, a voluntary one once, without costs, in its own letter) and compose the
+DunningRun record with the template fallback of REQ-CCD-016.
+`DunningRunService::executeStage()` SHALL delegate to it and keep the pause guard,
+the channel dispatch and the save. The run count SHALL only be read for a
+voluntary or declined contribution. Behaviour SHALL be unchanged.
+
+#### Scenario: An ordinary invoice passes through without counting runs
+
+- GIVEN an ordinary invoice
+- WHEN its run is prepared
+- THEN the params are unchanged and the run count is never read
+- @e2e exclude service; covered by `DunningLetterComposerTest::testAnOrdinaryInvoicePassesThroughWithoutCountingRuns`
+
+#### Scenario: A voluntary contribution gets its own letter once
+
+- GIVEN a voluntary contribution with no earlier run
+- WHEN its run is prepared
+- THEN the costs are cleared and the letter's template and body are set, and a second run is refused
+- @e2e exclude service; covered by `DunningLetterComposerTest::testAVoluntaryContributionGetsItsOwnLetterWithoutCosts`
+
+#### Scenario: The record falls back to the registry template
+
+- GIVEN runs with a named template, with none at stage 2, and with an empty one at stage 3 under an app config override
+- WHEN their records are composed
+- THEN they carry `tpl-custom`, `tpl-stage2-herinnering-nl` and the override
+- @e2e exclude service; covered by `DunningLetterComposerTest::testTheRecordFallsBackToTheRegistryTemplate` and `DunningRunServiceTest`
+
 ## Standards & Sources
 
 - Burgerlijk Wetboek (BW) art. 6:96 lid 6 (14-dagen-brief), art. 6:119 (wettelijke rente B2C),
@@ -436,3 +566,108 @@ the system MUST:
 - Besluit BIK maximum incassokosten: €6.775 (reached at €1.000.000 vordering); art. 2 lid 2 BTW-verhoging
 - Atradius Payment Practices Barometer 2024
 - RJ Guidance (Richtlijnen voor de Jaarrekening) — dunning-brief formatting
+
+### Requirement: A daily job marks overdue invoices and chases them (REQ-RAD-001)
+
+For every administration with dunning enabled, a background job SHALL run once a
+day, move each issued invoice past its due date to `overdue`, and send each
+overdue invoice the next ladder stage that is due. The job MUST NOT stop when one
+invoice fails, and SHALL report per run how many reminders were sent, failed,
+handed over for manual action or skipped.
+
+#### Scenario: The first reminder goes out without anyone acting
+
+- GIVEN dunning enabled for Adviesbureau Kade B.V. with ladder Standaard, and invoice 2026-0412 of Bakkerij De Korenaar B.V. due on 2026-10-15 and unpaid
+- WHEN the daily job runs on 2026-10-22
+- THEN the invoice shows state overdue
+- AND the Dunning runs page lists stage 1 for invoice 2026-0412 sent by email on 2026-10-22
+
+### Requirement: Stages escalate one at a time (REQ-RAD-002)
+
+The job SHALL send the lowest-numbered stage that has not been sent for the
+invoice and whose threshold is reached, and SHALL send a later stage only when at
+least the difference between the two thresholds has passed since the previous
+stage was sent. A stage MUST NOT be sent twice for the same invoice.
+
+#### Scenario: A long-overdue invoice starts at the friendly reminder
+
+- GIVEN an invoice 120 days overdue that never received a reminder, when dunning is first enabled
+- WHEN the job runs
+- THEN stage 1, the friendly reminder, is sent, not the collection-agency stage
+
+### Requirement: A reminder mail carries the stage's wording and the invoice (REQ-RAD-003)
+
+An email stage SHALL be sent to the customer's invoice address with the stage's
+subject and body in the customer's language, merge fields filled, and the
+invoice PDF attached. The run SHALL be recorded as delivered only when the mail
+server accepted the message, and as failed with the reason otherwise; a failed
+stage SHALL be tried again on the next daily run.
+
+#### Scenario: The third stage announces collection costs
+
+- GIVEN invoice 2026-0412 at stage 3 of ladder Standaard
+- WHEN the job sends it
+- THEN Bakkerij De Korenaar B.V. receives the mail "Aanmaning: betaal binnen 14 dagen om incassokosten te voorkomen" naming invoice 2026-0412 and the outstanding amount, with the invoice attached
+- AND the run shows delivered
+
+### Requirement: Each customer is chased on its own ladder (REQ-RAD-004)
+
+The job SHALL use the ladder the customer's `dunningPolicyRef` names, else the
+administration's default ladder, and SHALL apply the customer's active
+`KlantLadderOverride` on top of it. An invoice without any ladder SHALL be
+skipped and counted in the job report.
+
+#### Scenario: A municipality gets a gentler schedule
+
+- GIVEN an active override for Gemeente Voorbeeld with email stages at day 14 and day 30 only
+- WHEN its invoice 2026-0420 is 14 days overdue and the job runs
+- THEN the first reminder of the override is sent and no stage of the Standaard ladder is
+
+### Requirement: Paid, disputed and paused invoices are not chased (REQ-RAD-005)
+
+The job MUST NOT send a stage for an invoice that is paid, written off, disputed,
+or has an active dunning pause, and SHALL read that state when it sends, not when
+it listed the invoice.
+
+#### Scenario: A payment arrives in the morning
+
+- GIVEN invoice 2026-0412 due for stage 2 today
+- WHEN its payment is matched at 08:00 and the job runs at 09:00
+- THEN no stage 2 is sent
+
+### Requirement: Postal and collection-agency stages are handed to a person (REQ-RAD-006)
+
+A stage on a channel without a working adapter SHALL be recorded with delivery
+status `MANUAL` and SHALL notify every `ar-controller` of the administration to
+act on it. Such a stage MUST NOT be recorded as delivered.
+
+#### Scenario: The notice of default must be posted
+
+- GIVEN invoice 2026-0412 due for stage 4 on registered post
+- WHEN the job runs
+- THEN the Dunning runs page shows stage 4 as manual
+- AND each ar-controller receives a notification to send the notice of default for invoice 2026-0412
+
+### Requirement: A consumer is charged collection costs only after the 14-day letter period (REQ-RAD-007)
+
+For a consumer debtor, a stage carrying collection costs SHALL add them only when
+a stage with statutory effect `14_DAYS_BRIEF_BIK` was delivered at least 15 days
+before; otherwise the stage SHALL be sent without the costs.
+
+#### Scenario: Costs are held back until the period has passed
+
+- GIVEN a consumer invoice whose 14-day letter was delivered 10 days ago
+- WHEN a later stage with collection costs becomes due
+- THEN the stage is sent without collection costs
+
+### Requirement: The next run can be previewed (REQ-RAD-008)
+
+The `DunningRuns` page SHALL show, per invoice, the stage and channel the next
+run would send, computed by the same selection as the job without writing
+anything. Enabling dunning for an administration SHALL show this list first.
+
+#### Scenario: A bookkeeper checks before switching dunning on
+
+- GIVEN dunning still disabled for Adviesbureau Kade B.V. and twelve overdue invoices
+- WHEN the bookkeeper opens the Next run panel on the Dunning runs page
+- THEN twelve rows show the stage and channel each invoice would get, and no run has been written

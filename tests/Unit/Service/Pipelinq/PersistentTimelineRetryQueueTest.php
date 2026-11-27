@@ -37,13 +37,14 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Verifies the queue persists + schedules + degrades gracefully.
@@ -142,14 +143,18 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 			 * @param array<string, mixed> $object Payload.
 			 * @param string|null $register Register slug (named).
 			 * @param string|null $schema Schema name (named).
+			 * @param bool $_rbac Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saved[] = [
 					'register' => ($register ?? $this->register),
 					'schema' => ($schema ?? $this->schema),
 					'object' => $object,
+					'rbac' => $_rbac,
 				];
 
 				return array_merge(['id' => $this->idToReturn], $object);
@@ -187,10 +192,13 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 			 * @param array<string, mixed> $object Payload.
 			 * @param string|null $register Register (named).
 			 * @param string|null $schema Schema (named).
+			 * @param bool $_rbac Ignored.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				throw new \RuntimeException('OR write failed');
 			}//end saveObject()
 		};
@@ -252,15 +260,15 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 	}//end timeAt()
 
 	/**
-	 * Build the SettingsService mock with the supplied availability + slug.
+	 * Build the RegisterLocation mock with the supplied availability + slug.
 	 *
 	 * @param bool $available isOpenRegisterAvailable() result.
 	 * @param string $slug getRegisterSlug() result.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(bool $available, string $slug = 'shillinq'): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(bool $available, string $slug = 'shillinq'): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn($available);
 		$settings->method('getRegisterSlug')->willReturn($slug);
 
@@ -309,6 +317,7 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 
 		self::assertCount(1, $saved);
 		self::assertSame('TimelinePublishRetryEntry', $saved[0]['schema']);
+		self::assertFalse(condition: $saved[0]['rbac'], message: 'The retry queue is server-written; the caller holds no create grant on it.');
 
 		$payload = $saved[0]['object'];
 		self::assertSame('booking.created', $payload['type']);

@@ -21,7 +21,6 @@ This specification defines the requirements for bookkeeping vat btw filing in th
 
 @e2e exclude unbuilt UI: BTW filing index page not yet implemented
 
-
 ### Requirement: REQ-VBTW-001 — The system SHALL store BTW returns as an OpenRegister-managed `VatReturn` register
 
 BTW (omzetbelasting) periodic returns MUST be declared as a register
@@ -126,34 +125,32 @@ doesn't include (e.g. new EU-imposed rates).
 
 ### Requirement: REQ-VBTW-004 — The BTW journal SHALL be derived from period-filtered GL aggregations
 
-The `rubrieken` field of `VatReturn` MUST be populated via
-`x-openregister-aggregations` over `GLLine` (T1) joined with
-`Account` (T1) and tagged BTW-rate, filtered by the return's
-`periodStart`/`periodEnd`. shillinq MUST NOT author a
-`VatJournalService` walking the GL — per ADR-031, this is the
-exact aggregation anti-pattern.
+The VAT return SHALL be prepared from the posted `GLLine` records dated
+within the return's period, summed per VAT return box and per amount kind
+(base or VAT) exactly as they were booked, for output tax and input tax
+alike. Each posted line with a VAT tariff SHALL carry the return box of its
+tariff and its amount kind, set when it was posted. Preparing a return SHALL
+store the result on the return as one declaration per box and one line per
+contributing ledger line, and that stored snapshot SHALL be the only source
+the return page, the return file and the correction check read. No path
+MUST derive a return from sales or purchase invoices, and VAT MUST NOT be
+recalculated from a rate when preparing a return.
 
-The mapping from GL account → rubriek is declared in
-`btw-tariffs-2026.json`'s `defaultAccounts` field per tariff;
-operator-edited tariff records override.
+The mapping from tariff to box is the tariff's `section` in the
+`VatTariff` register; an operator-added tariff carries its own.
 
 #### Scenario: A quarterly return aggregates the period's postings
 
-- **GIVEN** a `VatReturn` for `2026-Q1` is created
-- **WHEN** the aggregation runs
-- **THEN** rubriek 1a (`Hoog tarief 21%`) MUST equal
-  SUM(`GLLine.amount` WHERE `side='credit'` AND `Account` tagged
-  `21pct` AND `periodId` in Q1).
+- GIVEN Bakkerij De Korenbloem posted in Q3 2026 sales of EUR 10,000 at the low tariff with EUR 900 VAT, and purchases of EUR 4,000 at the high tariff with EUR 840 input VAT and EUR 2,000 at the low tariff with EUR 180 input VAT
+- WHEN the bookkeeper presses Prepare return for Q3 2026 on the VAT returns page
+- THEN box 1b shows EUR 10,000 and EUR 900, box 5b shows EUR 1,020, and the amount payable is EUR -120
+- AND the generated return file shows the same figures
 
 #### Scenario: A correction return references the prior period
 
-- **GIVEN** a Q1 return was submitted with an error
-- **WHEN** the operator creates a `corrected` return with
-  `correctionOf` pointing at the original
-- **THEN** the new return's aggregations MUST re-read the GL as it
-  stands now (including any post-submission corrections); the
-  `teBetalenOfTeruggave` delta MUST equal the new total minus the
-  submitted total.
+- GIVEN a Q1 return was filed and a EUR 500 sale at the high tariff was posted into Q1 afterwards
+- WHEN the controller creates a correction that points at the filed Q1 return
+- THEN the correction reads the ledger as it stands now and shows a delta of EUR 500 base and EUR 105 VAT in box 1a against the stored snapshot
 
 ### Requirement: REQ-VBTW-005 — The `VatReturn` lifecycle SHALL be declarative per ADR-031
 
@@ -496,6 +493,107 @@ whether and when to file, per REQ-VBTW-009's existing non-auto-decide rule.
 
 @e2e exclude pure backend/data: threshold decision + GL posting compilation is not browser-testable
 
+### Requirement: Checks run on the VAT return and block filing when they fail (REQ-TVRB-001)
+
+A VAT return SHALL have a checks tab that runs, and shows as passed or
+failed with a message, at least these checks: every VAT line has a box;
+posted VAT equals base times rate per line within one cent; the period
+movement of the VAT accounts equals the return totals; no draft or
+unposted document is dated in the period; the previous period's return is
+filed; reverse-charge VAT appears both owed and deductible. Submitting the
+return MUST be refused while a check marked blocking fails, and the
+refusal SHALL name the failing check.
+
+#### Scenario: A controller sees why the return cannot be filed yet
+
+- GIVEN a Q3 2026 return and a posted purchase line with input VAT but no tariff
+- WHEN the controller opens the checks tab
+- THEN the check every VAT line has a box shows failed and names the transaction
+- AND pressing Submit is refused with that check's name
+
+#### Scenario: A clean return passes
+
+- GIVEN a Q3 2026 return with all checks passed
+- WHEN the controller presses Submit
+- THEN the return shows state submitted
+
+### Requirement: Corrections are grouped by a broken fiscal year (REQ-TVRB-002)
+
+For an administration whose fiscal year is not the calendar year, the VAT
+corrections page SHALL group returns and corrections by fiscal year, and a
+"Check fiscal year" action SHALL run the correction check for every
+accepted return in that fiscal year and total the deltas. The threshold
+for correcting in a regular return instead of a separate correction SHALL
+apply to that fiscal-year total.
+
+#### Scenario: A foundation checks its 2025/2026 fiscal year
+
+- GIVEN Stichting Voorbeeld with a fiscal year from 1 July 2025 to 30 June 2026 and accepted returns for Q3 2025 to Q2 2026
+- WHEN the controller runs Check fiscal year 2025/2026 on the corrections page
+- THEN the page shows one group for 2025/2026 with the deltas of its four returns and their total
+- AND whether the total is above the threshold
+
+### Requirement: A VAT fiscal unity files one return (REQ-TVRB-003)
+
+Shillinq SHALL keep a VAT fiscal unity of a representative administration,
+member administrations, the unity's VAT number and its dates. Preparing a
+return for the representative administration in a period the unity covers
+SHALL include the posted lines of every member and show a subtotal per
+member, and the return file SHALL carry the unity's VAT number. Preparing a
+return for a member administration in such a period MUST be refused and
+name the unity.
+
+#### Scenario: A holding files for two subsidiaries
+
+- GIVEN a VAT fiscal unity of Holding Voorbeeld B.V. with Voorbeeld Bouw B.V. and Voorbeeld Installatie B.V. from 2026-01-01
+- WHEN the bookkeeper of the holding prepares the Q3 2026 return
+- THEN the return shows subtotals for the holding and both members and one total
+- AND preparing a Q3 2026 return in Voorbeeld Bouw B.V. is refused naming the unity
+
+### Requirement: The VAT position of the open period is shown per box (REQ-VPS-001)
+
+The VAT reports page SHALL show, for the open period, the base and VAT per
+return box from the posted lines so far and the amount payable or
+refundable, SHALL list the lines behind a box, and SHALL give for a closed
+period the same figures as its prepared return.
+
+#### Scenario: A bookkeeper checks the position mid-quarter
+
+- GIVEN posted sales in Q4 2026 so far of EUR 20,000 at 21% and purchases with EUR 1,500 input VAT
+- WHEN the bookkeeper opens the VAT reports page for 2026-Q4
+- THEN box 1a shows base EUR 20,000 and VAT EUR 4,200
+- AND box 5b shows EUR 1,500 and the payable amount shows EUR 2,700
+
+#### Scenario: The lines behind a box
+
+- GIVEN the same position
+- WHEN the bookkeeper clicks box 1a
+- THEN the posted lines that make up EUR 4,200 are listed with their entries
+
+### Requirement: A filed period is corrected with a supplementary return (REQ-VPS-002)
+
+The app SHALL let a user check a filed return for drift against the books,
+SHALL let a user prepare a supplementary return from a detected correction
+with the per-box differences, and SHALL file it or offer it for download.
+
+#### Scenario: A late purchase invoice for a filed quarter
+
+- GIVEN the Q2 2026 return was filed and a purchase invoice dated June with EUR 1,800 input VAT was posted afterwards
+- WHEN the bookkeeper chooses "Check for corrections" on the Q2 return
+- THEN a correction shows on the corrections page with box 5b EUR 1,800
+- AND "Prepare supplementary return" shows it above the EUR 1,000 threshold with the correction posting staged
+
+### Requirement: Drift is looked for after a period close (REQ-VPS-003)
+
+The app SHALL check the filed returns of the fiscal year for drift when a
+period of that year is closed.
+
+#### Scenario: Closing September finds a Q2 drift
+
+- GIVEN the late June invoice above
+- WHEN the bookkeeper closes September 2026
+- THEN the corrections page lists the Q2 correction without anyone running a check
+
 ## Notes
 
 - **€1.000 threshold, verified 2026-07-13 via WebSearch against
@@ -515,3 +613,46 @@ whether and when to file, per REQ-VBTW-009's existing non-auto-decide rule.
 - Status lifecycle `detected → prepared → filed` is layered on the
   already-landed `draft/submitted/accepted/rejected` states via
   `preparedAt` rather than new states — see `design.md` Decision 3.
+
+### Requirement: The VAT tariffs are seeded and can be extended (REQ-TVRD-001)
+
+On setup and on every repair run, shillinq SHALL load the statutory Dutch
+VAT tariffs into the `VatTariff` register from the seed file in the
+repository, without duplicating existing records. A tariffs page under
+Belastingen SHALL list every tariff with its rate, category, return box and
+dates, SHALL let an administrator add a tariff with its own code and dates,
+and MUST NOT allow a statutory tariff to be changed or deleted.
+
+#### Scenario: A new install has the five tariffs
+
+- GIVEN a fresh install after the setup wizard
+- WHEN an administrator opens the VAT tariffs page
+- THEN it lists high 21 percent, low 9 percent, zero 0 percent, exempt and reverse charge, each marked statutory
+
+#### Scenario: An administrator adds a future rate
+
+- GIVEN the VAT tariffs page
+- WHEN an administrator adds tariff mid-12 at 12 percent effective from 2027-01-01
+- THEN the page lists it beside the statutory tariffs
+- AND a repair run leaves it in place
+
+### Requirement: VAT is calculated per line from the tariff valid on the document date (REQ-TVRD-002)
+
+Every VAT calculation SHALL take a tariff code per line and use the rate of
+the `VatTariff` with that code whose dates contain the document date. A
+line with an unknown or expired tariff code MUST be refused with the code
+and the date named; shillinq MUST NOT fall back to a default rate. The
+legacy line codes BTW21, BTW9, BTW0 and VERLEGD SHALL resolve to the seeded
+high, low, zero and reverse-charge tariffs.
+
+#### Scenario: A time and expense invoice mixes two rates
+
+- GIVEN approved hours of EUR 1,000.00 at tariff high and a book of EUR 50.00 at tariff low, invoiced on 2026-10-05
+- WHEN the bookkeeper generates the invoice
+- THEN the invoice shows VAT EUR 210.00 on the hours and EUR 4.50 on the book
+
+#### Scenario: A retired rate is refused
+
+- GIVEN a line with a tariff whose effective period ended on 2018-12-31
+- WHEN an invoice dated 2026-10-05 is generated with it
+- THEN generation is refused with a message naming the tariff and the date

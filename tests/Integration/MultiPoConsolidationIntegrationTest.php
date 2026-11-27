@@ -5,6 +5,9 @@
  * integration test for slice 07 of the bookkeeping-purchase-order-3way
  * chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires {@see MultiPoConsolidationService} on top of an in-memory
  * OpenRegister ObjectService stub seeded with a single SupplierInvoice
  * whose lines span several POs/GRNs of the same supplier. The test then:
@@ -30,10 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md#tests
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
  */
 
 declare(strict_types=1);
@@ -43,6 +43,7 @@ namespace OCA\Shillinq\Tests\Integration;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -332,6 +333,7 @@ final class MultiPoConsolidationIntegrationTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 
 		$service = new MultiPoConsolidationService(

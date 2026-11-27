@@ -34,7 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -119,6 +119,86 @@ class FrameworkAgreementDrawdownGuard {
 	}//end assertWithinCeiling()
 
 	/**
+	 * The agreement a purchase order of $supplierId calls off, or throw
+	 * (REQ-PG-005).
+	 *
+	 * Fail-closed like {@see assertWithinCeiling()}: throws when the agreement
+	 * is missing in the administration, not `active`, outside its validity
+	 * window, or with another supplier than the order's. The ceiling is not
+	 * checked here: the order total is only known once the agreed prices are
+	 * applied to its lines.
+	 *
+	 * @param string $administrationId     Administration (tenant) scope.
+	 * @param string $frameworkAgreementId FrameworkAgreement identifier (agreementNumber or object id).
+	 * @param string $supplierId           The order's supplier.
+	 *
+	 * @return array<string,mixed> The resolved FrameworkAgreement.
+	 *
+	 * @throws RuntimeException When the agreement cannot be called off by this order.
+	 *
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function agreementForCallOff(string $administrationId, string $frameworkAgreementId, string $supplierId): array {
+		try {
+			$agreement = $this->resolveAgreement(
+				administrationId: $administrationId,
+				frameworkAgreementId: $frameworkAgreementId
+			);
+
+			if ($agreement === null) {
+				throw new RuntimeException('Framework agreement not found.');
+			}
+
+			$this->assertUsable(agreement: $agreement);
+
+			if (trim((string)($agreement['supplierId'] ?? '')) !== $supplierId) {
+				throw new RuntimeException('Framework agreement is with another supplier.');
+			}
+
+			return $agreement;
+		} catch (RuntimeException $e) {
+			throw $e;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'FrameworkAgreementDrawdownGuard: agreement lookup failed — denying (fail-closed)',
+				['frameworkAgreementId' => $frameworkAgreementId, 'exception' => $e->getMessage()]
+			);
+			throw new RuntimeException('Framework agreement drawdown check failed.');
+		}//end try
+
+	}//end agreementForCallOff()
+
+	/**
+	 * The agreed unit price per product code of an agreement, in integer euro
+	 * cents (REQ-PG-005). Entries without a product code or with a negative or
+	 * non-numeric amount are left out.
+	 *
+	 * @param array<string,mixed> $agreement The resolved FrameworkAgreement.
+	 *
+	 * @return array<string,int> Product code => agreed unit amount in cents.
+	 *
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function agreedUnitAmounts(array $agreement): array {
+		$amounts = [];
+		foreach ((array)($agreement['agreedPrices'] ?? []) as $price) {
+			if (is_array($price) === false) {
+				continue;
+			}
+
+			$productCode = trim((string)($price['productCode'] ?? ''));
+			$unitAmount  = ($price['unitAmount'] ?? null);
+			if ($productCode === '' || is_numeric($unitAmount) === false || (int)$unitAmount < 0) {
+				continue;
+			}
+
+			$amounts[$productCode] = (int)$unitAmount;
+		}
+
+		return $amounts;
+	}//end agreedUnitAmounts()
+
+	/**
 	 * Assert the agreement is active and within its validity window, or throw.
 	 *
 	 * @param array<string,mixed> $agreement The resolved FrameworkAgreement.
@@ -174,10 +254,16 @@ class FrameworkAgreementDrawdownGuard {
 	/**
 	 * Fetch one record via the real ObjectService API (findAll then first).
 	 *
+	 * OpenRegister's findAll() answers ObjectEntity rows, not arrays; a row is
+	 * read through its own jsonSerialize(). Taking only array rows made every
+	 * call-off fail with "Framework agreement not found" on a live instance.
+	 *
 	 * @param string $schema OR schema slug.
 	 * @param array<string,mixed> $filters Equality filters.
 	 *
 	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function findOne(string $schema, array $filters): ?array {
 		$rows = $this->objectService
@@ -186,7 +272,11 @@ class FrameworkAgreementDrawdownGuard {
 			->findAll(['filters' => $filters]);
 
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
+			if ($row instanceof \JsonSerializable) {
+				$row = $row->jsonSerialize();
+			}
+
+			if (is_array($row) === true && $row !== []) {
 				return $row;
 			}
 		}
@@ -200,11 +290,6 @@ class FrameworkAgreementDrawdownGuard {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 }//end class

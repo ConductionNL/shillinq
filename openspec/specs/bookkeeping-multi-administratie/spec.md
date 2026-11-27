@@ -12,6 +12,7 @@ status: done
 ## Purpose
 
 This specification defines the requirements for bookkeeping multi administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
 ## Requirements
 
 @e2e exclude pure backend/schema: multi-administration setup — not browser-testable
@@ -394,6 +395,123 @@ the XAF document plus the administration's attached NC-Files documents.
 - **WHEN** the streaming administration-export route for that scope is called
 - **THEN** it responds with the generated XAF 3.2 file (and, for a full export, a ZIP bundling the XAF plus the administration's attached documents) rather than only the descriptor
 - @e2e exclude REST export contract, covered by PHPUnit controller test — not browser-observable
+
+### Requirement: An administration has a jurisdiction (REQ-LFL-001)
+
+`Administration` SHALL carry `jurisdiction` (ISO 3166 alpha-2, default NL).
+It MUST NOT change once the administration has a posted transaction.
+
+#### Scenario: An accountant creates a Belgian administration
+
+- GIVEN an accountant in the setup wizard for a new administration
+- WHEN they choose jurisdiction BE
+- THEN the wizard offers the Belgian legislation pack as the chart and rate template
+
+#### Scenario: The jurisdiction is fixed after posting
+
+- GIVEN a Belgian administration with a posted transaction
+- WHEN an administrator tries to change its jurisdiction to NL on the administration detail page
+- THEN the change is refused with the reason that postings exist
+
+### Requirement: Rule checks follow the administration's jurisdiction (REQ-LFL-002)
+
+The posting and invoice rule checks SHALL evaluate the rules of the
+administration's jurisdiction plus EU and global rules, and SHALL NOT apply
+Dutch-only rules to a non-Dutch administration.
+
+#### Scenario: A Belgian invoice is checked against Belgian rules
+
+- GIVEN an invoice in Van Dijk Services BV/SRL
+- WHEN it is issued
+- THEN the rule check runs the BE, EU and global rules and no NL-only rule
+
+### Requirement: A legislation pack seeds the chart and VAT rates (REQ-LFL-003)
+
+Shillinq SHALL ship a Belgian pack with the Belgian minimum chart of accounts
+and the VAT rates 0, 6, 12 and 21 percent, and SHALL seed a new
+administration of that jurisdiction from it.
+
+#### Scenario: The Belgian chart and rates are present
+
+- GIVEN a new administration seeded from the BE pack
+- WHEN the bookkeeper opens its chart of accounts page
+- THEN accounts 400000 Handelsdebiteuren and 451000 Te betalen btw are listed
+- AND a sales line offers VAT rates 0, 6, 12 and 21 percent
+
+### Requirement: Dutch-only outputs refuse other jurisdictions (REQ-LFL-004)
+
+The Dutch VAT return, SBR and ICP outputs MUST refuse an administration whose
+jurisdiction is not NL, with a message naming the jurisdiction.
+
+#### Scenario: A Dutch VAT return is not produced for a Belgian company
+
+- GIVEN Van Dijk Services BV/SRL with jurisdiction BE
+- WHEN a user asks for a Dutch VAT return for it from the report dialog
+- THEN the dialog refuses with a message that the administration is Belgian
+
+### Requirement: The chosen administration sticks (REQ-LMA-001)
+
+Switching administration SHALL store the choice per user, and the context
+endpoint SHALL return it as `activeAdministrationId` for as long as the user
+is a member of it. When the user is no longer a member, it SHALL return the
+first membership.
+
+#### Scenario: A bookkeeper switches and reloads
+
+- GIVEN a bookkeeper who is a member of Bakkerij Jansen and Kapsalon Mooi
+- WHEN they choose Kapsalon Mooi in the administration switcher and the page reloads
+- THEN the switcher shows Kapsalon Mooi as active
+- AND the next login still shows Kapsalon Mooi
+
+### Requirement: Lists show the active administration only (REQ-LMA-002)
+
+Index pages over schemas that carry `administrationId` SHALL show only the
+records of the active administration.
+
+#### Scenario: The general ledger list follows the switch
+
+- GIVEN posted transactions in both administrations
+- WHEN the bookkeeper opens the general ledger page with Kapsalon Mooi active
+- THEN only Kapsalon Mooi's transactions are listed
+
+### Requirement: An office saves an administration as a template (REQ-LMA-003)
+
+The administration detail page SHALL offer Save as template, which writes an
+`AdministrationTemplate` with the administration's accounts and analytical
+dimensions and no postings, relations or balances.
+
+#### Scenario: The office saves its bakery chart
+
+- GIVEN an accountant on the administration detail page of Bakkerij Jansen
+- WHEN they choose Save as template and name it Kantoor De Boer MKB
+- THEN the template lists Bakkerij Jansen's accounts and cost centres at version 1
+
+### Requirement: A new administration starts from an office template (REQ-LMA-004)
+
+The setup wizard's template step SHALL list office templates beside the
+shipped RGS templates and SHALL seed the new administration from the one
+chosen.
+
+#### Scenario: A new client starts from the office template
+
+- GIVEN the template Kantoor De Boer MKB
+- WHEN an accountant creates Lunchroom Het Plein and picks that template in the setup wizard
+- THEN Lunchroom Het Plein has account 8050 Omzet catering and the cost centres Winkel and Bakkerij
+
+### Requirement: Followers receive template changes (REQ-LMA-005)
+
+An administration that follows a template SHALL receive every account and
+dimension the template adds and every name, type or description it changes,
+when the template's version rises. An account the follower changed itself
+MUST NOT be overwritten, and the run SHALL record what it added, updated and
+skipped.
+
+#### Scenario: Version 2 adds an account to both clients
+
+- GIVEN Bakkerij Jansen and Kapsalon Mooi follow Kantoor De Boer MKB and Kapsalon Mooi renamed 8050
+- WHEN the office saves version 2 with 4160 Scholingskosten
+- THEN both administrations have 4160
+- AND Kapsalon Mooi keeps its own name for 8050 and the run lists it as skipped
 
 ## Excluded from T1 (Deferred)
 

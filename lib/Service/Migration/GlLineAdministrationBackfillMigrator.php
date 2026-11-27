@@ -3,6 +3,9 @@
 /**
  * GLLine administration backfill migrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The unit-tested migration core for `glline-administration-scope` — the
  * schema + data half of closing a real cross-administration read.
  *
@@ -71,68 +74,26 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Migration;
 
+use OCA\Shillinq\Kernel\Contracts\GlLineAdministrationBackfillMigratorInterface;
 use RuntimeException;
 
 /**
  * Pure, unit-testable migration core for the `GLLine.administrationId` backfill.
  */
-final class GlLineAdministrationBackfillMigrator {
-
-	/**
-	 * The schema whose rows are backfilled.
-	 */
-	public const SCHEMA_GL_LINE = 'GLLine';
-
-	/**
-	 * The parent schema that owns the administration (source of truth).
-	 */
-	public const SCHEMA_GL_TRANSACTION = 'GLTransaction';
+final class GlLineAdministrationBackfillMigrator implements GlLineAdministrationBackfillMigratorInterface {
 
 	/**
 	 * The denormalised scope property added by
 	 * `register.d/glline-administration-scope.json`.
 	 */
 	public const SCOPE_PROPERTY = 'administrationId';
-
-	/**
-	 * App-config key holding the backfill-completeness gate.
-	 *
-	 * Written ONLY by {@see \OCA\Shillinq\Repair\BackfillGlLineAdministration}
-	 * after it has RE-READ every `GLLine` row from the store and counted zero
-	 * without a scope; read by {@see \OCA\Shillinq\Service\SpendAnalyticsService}
-	 * before it will filter a GL-backed aggregation on `administrationId`.
-	 */
-	public const GATE_CONFIG_KEY = 'glline_administration_backfill_complete';
-
-	/**
-	 * The value the gate must hold to count as green.
-	 *
-	 * A VERSION, not a boolean, on purpose. The gate's real claim is "every
-	 * GLLine row carries a scope, AND every code path that writes one stamps
-	 * it". The first half is measured at repair time; the second half is a
-	 * property of the CODE, which a stored boolean cannot notice changing. So
-	 * whenever a new `GLLine` writer is added (or an existing one is reworked),
-	 * bump this constant: every deployment's stored value instantly stops
-	 * matching, `SpendAnalyticsService` fails closed again, and the repair step
-	 * must re-prove completeness against the new writer set before the views
-	 * come back. A boolean would have kept answering "yes" on evidence gathered
-	 * before that writer existed.
-	 *
-	 * Contract v1 covers the writers stamped by `glline-administration-scope`:
-	 * CogsPosterService, InventoryGlAdjustmentPoster, RuleTestDataSeeder and
-	 * VatSuppletieDetectionService.
-	 */
-	public const GATE_CONTRACT_VERSION = 'v1';
 
 	/**
 	 * Classification: the row already carries a scope; leave it untouched.
@@ -166,7 +127,7 @@ final class GlLineAdministrationBackfillMigrator {
 	 *
 	 * @return array<string, string> Identity → administrationId.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function indexAdministrationsByTransaction(array $glTransactions): array {
 		$index = [];
@@ -195,7 +156,7 @@ final class GlLineAdministrationBackfillMigrator {
 	 *
 	 * @return string|null The parent's administrationId, or null when unresolvable.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function resolveAdministrationId(array $glLine, array $index): ?string {
 		$transactionId = trim((string)($glLine['transactionId'] ?? ''));
@@ -219,7 +180,7 @@ final class GlLineAdministrationBackfillMigrator {
 	 *
 	 * @return string One of the `CLASS_*` constants.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function classify(array $glLine, array $index): string {
 		if (trim((string)($glLine[self::SCOPE_PROPERTY] ?? '')) !== '') {
@@ -249,7 +210,7 @@ final class GlLineAdministrationBackfillMigrator {
 	 *
 	 * @return array<string, mixed> The stamped (or unchanged) line.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function stampAdministrationId(array $glLine, string $administrationId): array {
 		if (trim((string)($glLine[self::SCOPE_PROPERTY] ?? '')) !== '') {
@@ -287,60 +248,58 @@ final class GlLineAdministrationBackfillMigrator {
 	 *
 	 * @throws RuntimeException When any row is unclassifiable (count guard).
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function backfillBatch(array $glLines, array $glTransactions): array {
 		$index = $this->indexAdministrationsByTransaction(glTransactions: $glTransactions);
 
 		$changed = [];
-		$backfilled = 0;
-		$unchanged = 0;
-		$unclassifiable = 0;
-		$conflicting = 0;
+		$counts  = ['backfilled' => 0, 'unchanged' => 0, 'unclassifiable' => 0, 'conflicting' => 0];
 
 		foreach ($glLines as $offset => $glLine) {
 			$classification = $this->classify(glLine: $glLine, index: $index);
 
 			if ($classification === self::CLASS_ALREADY_SCOPED) {
-				$unchanged++;
-				$parentScope = $this->resolveAdministrationId(glLine: $glLine, index: $index);
-				if ($parentScope !== null && $parentScope !== trim((string)$glLine[self::SCOPE_PROPERTY])) {
-					// Reported, never rewritten — see stampAdministrationId().
-					$conflicting++;
-				}
-
+				$counts = $this->countScoped(counts: $counts, glLine: $glLine, index: $index);
 				continue;
 			}
 
 			if ($classification === self::CLASS_RESOLVED) {
 				$administrationId = (string)$this->resolveAdministrationId(glLine: $glLine, index: $index);
-				$changed[$offset] = $this->stampAdministrationId(
-					glLine: $glLine,
-					administrationId: $administrationId
-				);
-				$backfilled++;
+				$changed[$offset] = $this->stampAdministrationId(glLine: $glLine, administrationId: $administrationId);
+				$counts['backfilled']++;
 				continue;
 			}
 
 			// Unclassifiable — deliberately NOT counted as classified, so the
 			// guard below sees the shortfall and aborts the whole batch.
-			$unclassifiable++;
+			$counts['unclassifiable']++;
 		}//end foreach
 
-		$this->assertCountsMatch(
-			sourceCount: count($glLines),
-			classifiedCount: ($backfilled + $unchanged)
-		);
+		$this->assertCountsMatch(sourceCount: count($glLines), classifiedCount: ($counts['backfilled'] + $counts['unchanged']));
 
-		return [
-			'lines' => $changed,
-			'total' => count($glLines),
-			'backfilled' => $backfilled,
-			'unchanged' => $unchanged,
-			'unclassifiable' => $unclassifiable,
-			'conflicting' => $conflicting,
-		];
+		return ['lines' => $changed, 'total' => count($glLines)] + $counts;
 	}//end backfillBatch()
+
+	/**
+	 * Count an already-scoped line as unchanged, and as conflicting when its parent names another administration.
+	 *
+	 * @param array<string, int>    $counts The batch counts so far.
+	 * @param array<string, mixed>  $glLine The GL line.
+	 * @param array<string, string> $index  The administrations by transaction.
+	 *
+	 * @return array<string, int>
+	 */
+	private function countScoped(array $counts, array $glLine, array $index): array {
+		$counts['unchanged']++;
+		$parentScope = $this->resolveAdministrationId(glLine: $glLine, index: $index);
+		if ($parentScope !== null && $parentScope !== trim((string)$glLine[self::SCOPE_PROPERTY])) {
+			// Reported, never rewritten — see stampAdministrationId().
+			$counts['conflicting']++;
+		}
+
+		return $counts;
+	}//end countScoped()
 
 	/**
 	 * Count `GLLine` rows that still carry no administration.
@@ -355,7 +314,7 @@ final class GlLineAdministrationBackfillMigrator {
 	 *
 	 * @return int How many rows lack a non-empty `administrationId`.
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function countMissingAdministrationId(array $glLines): int {
 		$missing = 0;
@@ -384,7 +343,7 @@ final class GlLineAdministrationBackfillMigrator {
 	 *
 	 * @throws RuntimeException When the counts differ (no-row-loss guard).
 	 *
-	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function assertCountsMatch(int $sourceCount, int $classifiedCount): void {
 		if ($sourceCount !== $classifiedCount) {

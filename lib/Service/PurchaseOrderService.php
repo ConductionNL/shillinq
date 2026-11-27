@@ -3,6 +3,9 @@
 /**
  * Purchase Order Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative create / approval-chain routing / send-block guard for the
  * 3-way-match Purchase Order sub-ledger (REQ-PO3W-001). Implements member 02 of
  * the bookkeeping-purchase-order-3way chain: the schemas + registers were declared
@@ -13,11 +16,11 @@
  * AdministrationContextService (ADR-005, ADR-031 IDOR-safe).
  *
  * Monetary arithmetic is integer-cent only (multipleOf 0.01 on the schema fields
- * declared by slice 01); see toCents/fromCents helpers. Approval-chain routing is
- * threshold-based: below €10,000 a single Teamleider approves; €10,000–€49,999.99
- * adds Facility Manager; €50,000 or above adds Procurement Manager. The PO cannot
- * transition to lifecycle state "sent" until every assigned ApprovalTask is signed
- * with a timestamp.
+ * declared by slice 01); see toCents/fromCents helpers. Approval runs on
+ * OpenRegister's `purchase-order-approval` chain declared on the PurchaseOrder
+ * schema: a Teamleider for any amount, a Facility Manager from €10,000 and a
+ * Procurement Manager from €50,000 (REQ-PAD-001). The PO cannot transition to
+ * lifecycle state "sent" until that chain has approved it.
  *
  * Approver notifications are dispatched via NC's standard notification manager
  * (OCP\Notification\IManager); the manager's app id is "shillinq" and the object
@@ -33,11 +36,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
  */
 
 declare(strict_types=1);
@@ -45,61 +46,50 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\PurchaseOrder\LogPurchaseOrderMailer;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
+use OCA\Shillinq\Support\RegisterSlug;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 02 of bookkeeping-purchase-order-3way: PO creation + approval routing.
  *
  * Public methods:
  * - createPurchaseOrder(): validates requester + cost-center budget, generates a
- *   CBS-conform po_number server-side, materialises the approval chain and the
- *   ApprovalTask records, dispatches notifications, persists the PurchaseOrder
- *   with lifecycle "draft" (or "pending_approval" once tasks exist).
- * - determineApprovalChain(): pure-logic threshold evaluation; returns an ordered
- *   list of approver-role descriptors. Used by createPurchaseOrder and by the
- *   service-layer guards. Independent of storage so it is trivially unit-tested.
- * - blockSendUntilApproved(): refuses the transition to "sent" unless every
- *   required approver in the chain has approved with a timestamp; on success it
- *   persists the lifecycle change and returns the updated record.
+ *   CBS-conform po_number server-side, notifies the roles the amount needs,
+ *   and persists the PurchaseOrder
+ *   with statusCode "draft". The approval itself runs on OpenRegister's declared
+ *   `purchase-order-approval` chain (REQ-PAD-001), which gates the `approve`
+ *   transition; shillinq writes no approval chain of its own.
+ * - markSent(): refuses the transition to "sent" unless the order's statusCode
+ *   is approved; on success it persists the lifecycle change and returns the
+ *   updated record.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.LongVariable)
  * Pre-existing debt (issue #506): broad domain surface area; variable
  * renames deferred pending a dedicated pass.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) The order lifecycle lives in one service; splitting it is its own change.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The order lifecycle reaches the register, the engine and the approval chain.
  */
-class PurchaseOrderService {
+class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	/**
-	 * Approval-chain threshold for the single-approver tier (Teamleider only).
-	 * A PO with a total strictly below this amount needs ONE approver.
-	 *
-	 * @var int Cents.
-	 */
-	private const THRESHOLD_DOUBLE_APPROVER_CENTS = 1000000;
-
-	/**
-	 * Approval-chain threshold for the procurement-manager tier.
-	 * A PO with a total at or above this amount also needs the procurement manager.
-	 *
-	 * @var int Cents.
-	 */
-	private const THRESHOLD_PROCUREMENT_MANAGER_CENTS = 5000000;
-
-	/**
-	 * Notification "object type" for ApprovalTask deep links.
+	 * Notification "object type" for purchase order deep links.
 	 *
 	 * @var string
 	 */
@@ -111,6 +101,41 @@ class PurchaseOrderService {
 	 * @var string
 	 */
 	private const NOTIFICATION_SUBJECT_APPROVAL_REQUESTED = 'po_approval_requested';
+
+	/**
+	 * Dispatch channel: Peppol through integriq (REQ-PODR-001).
+	 *
+	 * @var string
+	 */
+	public const CHANNEL_PEPPOL = 'peppol';
+
+	/**
+	 * Dispatch channel: PDF and email through the mail channel (REQ-PODR-002).
+	 *
+	 * @var string
+	 */
+	public const CHANNEL_EMAIL = 'email';
+
+	/**
+	 * Dispatch status: handed off, waiting for the delivery status.
+	 *
+	 * @var string
+	 */
+	public const DISPATCH_PENDING = 'pending';
+
+	/**
+	 * Dispatch status: the supplier's channel took the order.
+	 *
+	 * @var string
+	 */
+	public const DISPATCH_SENT = 'sent';
+
+	/**
+	 * Dispatch status: it did not reach the supplier; dispatchError says why.
+	 *
+	 * @var string
+	 */
+	public const DISPATCH_FAILED = 'failed';
 
 	/**
 	 * Peppol transmission adapter (port). Resolved at construction; defaults to the
@@ -180,6 +205,8 @@ class PurchaseOrderService {
 	 *                                                      REQ-RAP-006 `approval_requested`
 	 *                                                      event; nullable so unit tests need
 	 *                                                      not wire IActivityManager.
+	 * @param PurchaseOrderApprovalTiers   $approvalTiers   The approver tiers the PurchaseOrder schema declares.
+	 * @param ObjectTransitionRunner|null $transitionRunner Runs the declared `send` transition (REQ-PODR-003).
 	 *
 	 * @return void
 	 */
@@ -195,6 +222,8 @@ class PurchaseOrderService {
 		?SupplierQualificationGuard $supplierQualificationGuard = null,
 		?FrameworkAgreementDrawdownGuard $frameworkAgreementDrawdownGuard = null,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
+		private readonly PurchaseOrderApprovalTiers $approvalTiers = new PurchaseOrderApprovalTiers(),
+		private readonly ?ObjectTransitionRunner $transitionRunner = null,
 	) {
 		// ADR-084: these three collaborators used to be handed the DI container so
 		// they could resolve OpenRegister's ObjectService lazily. They now take the
@@ -226,7 +255,7 @@ class PurchaseOrderService {
 	}//end __construct()
 
 	/**
-	 * Create a purchase order with a materialised approval chain (REQ-PO3W-001).
+	 * Create a purchase order in draft, routed to its approvers (REQ-PO3W-001).
 	 *
 	 * Server-authoritative:
 	 *  - the requesterId is derived from the validated administration membership;
@@ -234,10 +263,12 @@ class PurchaseOrderService {
 	 *  - the po_number is generated server-side using a CBS-conform sequence
 	 *    (PO-{year}-{administrationCode}-{6-digit-sequence});
 	 *  - cost-center budget is checked against the CostCenter record;
-	 *  - the approval chain is computed from determineApprovalChain() and an
-	 *    ApprovalTask record is created for each required approver;
-	 *  - every approver is notified via the notification manager;
-	 *  - lifecycle starts at "pending_approval" (when an approval chain exists)
+	 *  - the roles the amount needs are read from the PurchaseOrder schema's
+	 *    declared approval chain (PurchaseOrderApprovalTiers); the approval steps
+	 *    themselves are OpenRegister's, so shillinq writes no task record of its
+	 *    own (REQ-PAD-001);
+	 *  - every holder of those roles is notified via the notification manager;
+	 *  - statusCode starts at "draft", the schema's initial state, also while the approval chain is pending
 	 *    or "draft" (no chain — defensive fallback that should not occur for
 	 *    positive totals).
 	 *
@@ -253,9 +284,98 @@ class PurchaseOrderService {
 	 * @throws \RuntimeException When the requester lacks access, the cost-center
 	 *                           budget is exceeded, or a required field is missing.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function createPurchaseOrder(string $administrationId, array $payload): array {
+		$order              = $this->checkedOrder(administrationId: $administrationId, payload: $payload);
+		$frameworkAgreement = $this->assertCreationPolicies(order: $order);
+		$persisted          = $this->persistNewPurchaseOrder(order: $order);
+
+		// Record the framework-agreement call-off drawdown now the PO is persisted
+		// (REQ-PG-004). The guard already verified this fits the remaining ceiling.
+		if ($frameworkAgreement !== null) {
+			$frameworkAgreement['drawnAmount'] = ((int)($frameworkAgreement['drawnAmount'] ?? 0) + $order['totalCents']);
+			$this->saveObject(schema: 'FrameworkAgreement', object: $frameworkAgreement);
+		}
+
+		return $persisted;
+	}//end createPurchaseOrder()
+
+	/**
+	 * The checked parties, lines and total of a new order, refused in that
+	 * order when one is missing or invalid.
+	 *
+	 * A call-off of a framework agreement takes the agreement's agreed unit
+	 * price on every line of a product the agreement lists, whatever price the
+	 * caller sent, so the total counted against the ceiling is the agreed one
+	 * (REQ-PG-005).
+	 *
+	 * @param string              $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $payload          Caller payload.
+	 *
+	 * @return array{administrationId:string,requesterId:string,supplierId:string,costCenter:string,lines:array<int,array<string,mixed>>,totalCents:int,payload:array<string,mixed>}
+	 *
+	 * @throws \RuntimeException When the requester lacks access, a field is missing or invalid,
+	 *                           or the framework agreement cannot be called off.
+	 *
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	private function checkedOrder(string $administrationId, array $payload): array {
+		$order = $this->orderParties(administrationId: $administrationId, payload: $payload);
+
+		$agreedUnitCents = [];
+		$frameworkAgreementId = trim((string)($payload['frameworkAgreementId'] ?? ''));
+		if ($frameworkAgreementId !== '') {
+			$agreement = $this->frameworkAgreementDrawdownGuard->agreementForCallOff(
+				administrationId: $administrationId,
+				frameworkAgreementId: $frameworkAgreementId,
+				supplierId: $order['supplierId']
+			);
+			$agreedUnitCents = $this->frameworkAgreementDrawdownGuard->agreedUnitAmounts(agreement: $agreement);
+		}
+
+		$order['lines']      = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []), agreedUnitCents: $agreedUnitCents);
+		$order['totalCents'] = $this->totalCents(lines: $order['lines']);
+		if ($order['totalCents'] <= 0) {
+			throw new RuntimeException('Purchase order total must be positive');
+		}
+
+		$order['payload'] = $payload;
+		return $order;
+	}//end checkedOrder()
+
+	/**
+	 * The administration, the authenticated requester, the supplier and the
+	 * cost center of a new order.
+	 *
+	 * @param string              $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $payload          Caller payload.
+	 *
+	 * @return array{administrationId:string,requesterId:string,supplierId:string,costCenter:string}
+	 *
+	 * @throws \RuntimeException When the requester lacks access or a party is missing.
+	 */
+	private function orderParties(string $administrationId, array $payload): array {
+		return [
+			'administrationId' => $administrationId,
+			'requesterId' => $this->authorisedRequester(administrationId: $administrationId),
+			'supplierId' => $this->requiredText(payload: $payload, field: 'supplierId'),
+			'costCenter' => $this->requiredText(payload: $payload, field: 'costCenter'),
+		];
+	}//end orderParties()
+
+	/**
+	 * The authenticated requester in an accessible administration; the
+	 * requester is never trusted from the request body (ADR-005).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the administration is missing or inaccessible, or nobody is signed in.
+	 */
+	private function authorisedRequester(string $administrationId): string {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -270,215 +390,194 @@ class PurchaseOrderService {
 			throw new RuntimeException('Authenticated requester is required');
 		}
 
-		$supplierId = trim((string)($payload['supplierId'] ?? ''));
-		if ($supplierId === '') {
-			throw new RuntimeException('supplierId is required');
+		return $requesterId;
+	}//end authorisedRequester()
+
+	/**
+	 * A trimmed required payload field.
+	 *
+	 * @param array<string,mixed> $payload Caller payload.
+	 * @param string              $field   The field, also the refusal's label.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the field is empty.
+	 */
+	private function requiredText(array $payload, string $field): string {
+		$value = trim((string)($payload[$field] ?? ''));
+		if ($value === '') {
+			throw new RuntimeException($field . ' is required');
 		}
 
-		$costCenter = trim((string)($payload['costCenter'] ?? ''));
-		$projectCode = trim((string)($payload['projectCode'] ?? ''));
-		if ($costCenter === '') {
-			throw new RuntimeException('costCenter is required');
+		return $value;
+	}//end requiredText()
+
+	/**
+	 * Refuse an order over its cost-center budget, without a required
+	 * requisition, to an unqualified supplier (REQ-PG-002), or over the
+	 * remaining ceiling of the framework agreement it calls off (REQ-PG-004).
+	 *
+	 * @param array<string,mixed> $order The checked order.
+	 *
+	 * @return array<string,mixed>|null The framework agreement called off, or null.
+	 *
+	 * @throws \RuntimeException When a policy refuses the order.
+	 */
+	private function assertCreationPolicies(array $order): ?array {
+		$administrationId = $order['administrationId'];
+		$this->assertCostCenterBudget(administrationId: $administrationId, costCenter: $order['costCenter'], addCents: $order['totalCents']);
+		$this->assertRequisitionPolicy(administrationId: $administrationId, requisitionId: trim((string)($order['payload']['requisitionId'] ?? '')));
+		$this->assertSupplierQualificationPolicy(administrationId: $administrationId, supplierId: $order['supplierId']);
+
+		$frameworkAgreementId = trim((string)($order['payload']['frameworkAgreementId'] ?? ''));
+		if ($frameworkAgreementId === '') {
+			return null;
 		}
 
-		$lines = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []));
-		$totalCent = $this->totalCents(lines: $lines);
-		if ($totalCent <= 0) {
-			throw new RuntimeException('Purchase order total must be positive');
-		}
-
-		$totalAmount = $this->fromCents(cents: $totalCent);
-		$this->assertCostCenterBudget(
+		return $this->frameworkAgreementDrawdownGuard->assertWithinCeiling(
 			administrationId: $administrationId,
-			costCenter: $costCenter,
-			addCents: $totalCent
+			frameworkAgreementId: $frameworkAgreementId,
+			addCents: $order['totalCents']
+		);
+	}//end assertCreationPolicies()
+
+	/**
+	 * Save the new order and notify the holders of each role its approval chain
+	 * needs.
+	 *
+	 * @param array<string,mixed> $order The checked, policy-cleared order.
+	 *
+	 * @return array<string,mixed> The persisted PurchaseOrder payload.
+	 */
+	private function persistNewPurchaseOrder(array $order): array {
+		$order['approverRoles'] = $this->approvalTiers->rolesFor(cents: $order['totalCents']);
+		$order['poNumber']      = $this->generatePoNumber(administrationId: $order['administrationId']);
+
+		$persisted = $this->saveObject(schema: 'PurchaseOrder', object: $this->purchaseOrderRecord(order: $order));
+		$this->notifyApprovalChain(
+			administrationId: $order['administrationId'],
+			purchaseOrderId: (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $order['poNumber'])),
+			poNumber: $order['poNumber'],
+			chain: $order['approverRoles']
 		);
 
-		$requisitionId = trim((string)($payload['requisitionId'] ?? ''));
-		$this->assertRequisitionPolicy(administrationId: $administrationId, requisitionId: $requisitionId);
+		return $persisted;
+	}//end persistNewPurchaseOrder()
 
-		// Procurement-governance gate (REQ-PG-002): block a PO to an unqualified
-		// supplier when the require_supplier_qualification_for_po policy is on.
-		$this->assertSupplierQualificationPolicy(administrationId: $administrationId, supplierId: $supplierId);
+	/**
+	 * The new PurchaseOrder record.
+	 *
+	 * @param array<string,mixed> $order The order with its number and approver roles.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function purchaseOrderRecord(array $order): array {
+		$payload = $order['payload'];
 
-		// Procurement-governance gate (REQ-PG-004): when the PO is a call-off
-		// against a framework agreement, block it if it exceeds the remaining
-		// ceiling. The resolved agreement is drawn down after the PO persists.
-		$frameworkAgreement = null;
-		$frameworkAgreementId = trim((string)($payload['frameworkAgreementId'] ?? ''));
-		if ($frameworkAgreementId !== '') {
-			$frameworkAgreement = $this->frameworkAgreementDrawdownGuard->assertWithinCeiling(
-				administrationId: $administrationId,
-				frameworkAgreementId: $frameworkAgreementId,
-				addCents: $totalCent
-			);
-		}
-
-		$approvalChain = $this->determineApprovalChain(amount: $totalAmount);
-		$poNumber = $this->generatePoNumber(administrationId: $administrationId);
-
-		$lifecycleState = 'draft';
-		if ($approvalChain !== []) {
-			$lifecycleState = 'pending_approval';
-		}
-
-		$purchaseOrder = [
-			'poNumber' => $poNumber,
-			'administrationId' => $administrationId,
-			'supplierId' => $supplierId,
-			'requesterId' => $requesterId,
-			'costCenter' => $costCenter,
-			'projectCode' => $projectCode,
-			'requisitionId' => $requisitionId,
-			'frameworkAgreementId' => $frameworkAgreementId,
-			'lines' => $lines,
-			'totalAmount' => $totalAmount,
+		return [
+			'poNumber' => $order['poNumber'],
+			'administrationId' => $order['administrationId'],
+			'supplierId' => $order['supplierId'],
+			'requesterId' => $order['requesterId'],
+			// The schema's own requester field, which the `submitted` and
+			// `approved` notifications address.
+			'requester' => $order['requesterId'],
+			'costCenter' => $order['costCenter'],
+			'projectCode' => trim((string)($payload['projectCode'] ?? '')),
+			'requisitionId' => trim((string)($payload['requisitionId'] ?? '')),
+			'frameworkAgreementId' => trim((string)($payload['frameworkAgreementId'] ?? '')),
+			'lines' => $order['lines'],
+			'totalAmount' => $this->fromCents(cents: $order['totalCents']),
 			'currency' => (string)($payload['currency'] ?? 'EUR'),
-			'approvalChain' => $this->initialiseApprovalChainEntries(chain: $approvalChain),
-			'lifecycleState' => $lifecycleState,
+			// The amount OpenRegister's approval chain routes on (integer cents).
+			'totalExclVat' => $order['totalCents'],
+			// The schema's lifecycle field (#1753). A PO starts in `draft`; its
+			// approval steps are OpenRegister's (REQ-PAD-001), not an in-object chain.
+			'statusCode' => 'draft',
 			'createdAt' => $this->nowIso(),
 			'notes' => trim((string)($payload['notes'] ?? '')),
 		];
-
-		$persisted = $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder);
-		$poId = (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $poNumber));
-
-		$this->assignApprovalTasks(
-			administrationId: $administrationId,
-			purchaseOrderId: $poId,
-			poNumber: $poNumber,
-			chain: $approvalChain
-		);
-
-		// Record the framework-agreement call-off drawdown now the PO is persisted
-		// (REQ-PG-004). The guard already verified this fits the remaining ceiling.
-		if ($frameworkAgreement !== null) {
-			$frameworkAgreement['drawnAmount'] = ((int)($frameworkAgreement['drawnAmount'] ?? 0) + $totalCent);
-			$this->saveObject(schema: 'FrameworkAgreement', object: $frameworkAgreement);
-		}
-
-		return $persisted;
-	}//end createPurchaseOrder()
+	}//end purchaseOrderRecord()
 
 	/**
-	 * Determine the ordered list of required approvers for a PO total.
+	 * Refuse to advance a PO to lifecycle "sent" until it is approved.
 	 *
-	 * Threshold table (REQ-PO3W-001):
-	 *  - amount < €10,000          → [Teamleider]
-	 *  - €10,000 ≤ amount < €50,000 → [Teamleider, Facility Manager]
-	 *  - amount ≥ €50,000           → [Teamleider, Facility Manager, Procurement Manager]
-	 *
-	 * Comparison is done in integer cents to avoid float drift.
-	 *
-	 * @param float $amount The PO total in euro (multipleOf 0.01).
-	 *
-	 * @return array<int,array{role:string,order:int}> Ordered approver descriptors.
-	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
-	 */
-	public function determineApprovalChain(float $amount): array {
-		$cents = $this->toCents(amount: $amount);
-		if ($cents <= 0) {
-			return [];
-		}
-
-		$chain = [['role' => 'teamleider', 'order' => 1]];
-
-		if ($cents >= self::THRESHOLD_DOUBLE_APPROVER_CENTS) {
-			$chain[] = ['role' => 'facility_manager', 'order' => 2];
-		}
-
-		if ($cents >= self::THRESHOLD_PROCUREMENT_MANAGER_CENTS) {
-			$chain[] = ['role' => 'procurement_manager', 'order' => 3];
-		}
-
-		return $chain;
-	}//end determineApprovalChain()
-
-	/**
-	 * Refuse to advance a PO to lifecycle "sent" until the chain is fully signed.
-	 *
-	 * Server-authoritative: the Vue layer never grants the transition. The method
-	 * inspects the persisted PurchaseOrder, asserts every approval_chain entry has
-	 * status=approved + a non-empty signedAt timestamp, and on success persists
-	 * lifecycleState="sent" with a sentAt stamp. On failure the PO is left in its
-	 * current state and a RuntimeException is raised so the controller maps it to
-	 * a 409 Conflict (ADR-005, REQ-PO3W-001 send-block).
+	 * Server-authoritative: the Vue layer never grants the transition. The order
+	 * must carry statusCode approved, which only OpenRegister's approval chain
+	 * sets once every step is decided (REQ-PAD-001). On success it stamps
+	 * sentAt and moves the order to "sent" through the declared `send`
+	 * transition (REQ-PODR-003); otherwise the PO is left as it was
+	 * and a RuntimeException is raised so the controller maps it to a 409.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $purchaseOrderId PO id (id of the persisted record).
 	 *
 	 * @return array<string,mixed> The PurchaseOrder after transition to "sent".
 	 *
-	 * @throws \RuntimeException When the PO is missing, not approved, or the chain
-	 *                           is incomplete.
+	 * @throws \RuntimeException When the PO is missing or not approved.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
-	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array {
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Purchase order not found');
-		}
+	public function markSent(string $administrationId, string $purchaseOrderId): array {
+		$po = $this->loadPurchaseOrderForTransmission(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId);
 
-		$po = $this->findOne(
-			schema: 'PurchaseOrder',
-			filters: [
-				'id' => $purchaseOrderId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($po === null) {
-			throw new RuntimeException('Purchase order not found');
-		}
-
-		$chain = (array)($po['approvalChain'] ?? []);
-		if ($chain === []) {
-			throw new RuntimeException('Purchase order has no approval chain');
-		}
-
-		foreach ($chain as $entry) {
-			$status = (string)($entry['status'] ?? '');
-			$signedAt = trim((string)($entry['signedAt'] ?? ''));
-			if ($status !== 'approved' || $signedAt === '') {
-				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
-			}
-		}
-
-		$po['lifecycleState'] = 'sent';
+		// The state moves only through the declared `send` transition
+		// (REQ-PODR-003); the service stamps when, the lifecycle says what.
 		$po['sentAt'] = $this->nowIso();
 
-		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
-	}//end blockSendUntilApproved()
+		return $this->transitionToSent(purchaseOrder: $this->saveObject(schema: 'PurchaseOrder', object: $po));
+	}//end markSent()
 
 	/**
-	 * Transmit an approved PO to the supplier via Peppol BIS Ordering 3.0.
+	 * Which dispatch channels can take an order, and why one cannot (REQ-PODR-001, REQ-PODR-002).
 	 *
-	 * Slice 03 surface. The method enforces the slice-02 approval-complete
-	 * precondition (re-using the same chain check as blockSendUntilApproved so
-	 * the guard stays single-sourced), resolves the supplier's Peppol participant
-	 * id via the adapter port, transforms the PO into a UBL 2.1 Order document
-	 * via PeppolBisOrderMapper, submits the document to the Peppol Access Point,
-	 * and persists `peppolMessageId` + `peppolSentAt` + `lifecycleState=sent`
-	 * on the PurchaseOrder record (REQ-PO3W-002).
+	 * Peppol is there when an adapter other than the logging stand-in is bound
+	 * (integriq is installed); email when the mailer says a channel takes mail.
+	 * A channel that is not there is shown disabled with its reason, so the
+	 * page never offers a send that would only be logged.
 	 *
-	 * Graceful fallback (REQ-PO3W-002 D2): when the supplier is not a Peppol
-	 * participant the method automatically delegates to {@see sendToPDFEmail}
-	 * with a `supplier_not_peppol_participant` reason — the PO is never silently
-	 * un-transmitted. When the Peppol Access Point itself fails the fallback
-	 * also fires with reason `peppol_send_failed`.
+	 * @return array{peppol: array{available: bool, reason: string|null}, email: array{available: bool, reason: string|null}}
 	 *
-	 * Server-authoritative: the controller cannot forge `peppolMessageId` or
-	 * bypass the approval-state precondition (ADR-005).
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 */
+	public function dispatchChannels(): array {
+		$channels = [
+			'peppol' => ['available' => true, 'reason' => null],
+			'email' => ['available' => true, 'reason' => null],
+		];
+		if ($this->peppolAdapter instanceof LogPeppolTransmissionAdapter) {
+			$channels['peppol'] = ['available' => false, 'reason' => 'Peppol sending is not configured'];
+		}
+
+		if ($this->purchaseOrderMailer->isAvailable() === false) {
+			$channels['email'] = ['available' => false, 'reason' => 'Email sending is not configured'];
+		}
+
+		return $channels;
+	}//end dispatchChannels()
+
+	/**
+	 * Hand an approved PO to integriq for Peppol delivery (REQ-PODR-001).
+	 *
+	 * The approval-complete precondition of the slice-02 send block still runs
+	 * first. The supplier is looked up through the adapter; a supplier that is
+	 * not a Peppol participant, an adapter that is not configured and a refused
+	 * hand-off are recorded on the order as a failed Peppol dispatch with the
+	 * reason, the order stays approved and the page offers email instead. On a
+	 * hand-off the order shows the dispatch pending; it moves to sent only when
+	 * integriq reports the delivery ({@see applyPeppolDeliveryStatus}).
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $purchaseOrderId PO id (id of the persisted record).
 	 *
-	 * @return array<string,mixed> The PurchaseOrder after transition to "sent".
+	 * @return array<string,mixed> The PurchaseOrder with its dispatch recorded.
 	 *
-	 * @throws \RuntimeException When the PO is missing or the approval chain is
-	 *                           incomplete (mapped to 404 / 409 by the controller).
+	 * @throws \RuntimeException When the PO is missing, not approved or a
+	 *                           dispatch is already pending
+	 *                           (mapped to 404 / 409 by the controller).
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
 	 */
 	public function sendToPeppol(string $administrationId, string $purchaseOrderId): array {
 		$po = $this->loadPurchaseOrderForTransmission(
@@ -486,19 +585,31 @@ class PurchaseOrderService {
 			purchaseOrderId: $purchaseOrderId
 		);
 		$supplierId = (string)($po['supplierId'] ?? '');
-		// The generalised port (REQ-EINV-004) names the parameter partyId —
-		// it resolves suppliers (PO) and debtors (AR) through the same lookup.
-		$participant = $this->peppolAdapter->lookupParticipant(
-			administrationId: $administrationId,
-			partyId: $supplierId
-		);
 
-		// No Peppol participant id = graceful PDF + email fallback (REQ-PO3W-002 D2).
-		if ($participant === null || trim($participant) === '') {
-			return $this->sendToPDFEmail(
+		try {
+			// The generalised port (REQ-EINV-004) names the parameter partyId.
+			$participant = $this->peppolAdapter->lookupParticipant(
 				administrationId: $administrationId,
-				purchaseOrderId: $purchaseOrderId,
-				fallbackReason: 'supplier_not_peppol_participant'
+				partyId: $supplierId
+			);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'PurchaseOrderService: Peppol participant lookup failed',
+				['purchaseOrderId' => $purchaseOrderId, 'exception' => $e->getMessage()]
+			);
+			return $this->recordDispatchFailure(
+				purchaseOrder: $po,
+				channel: self::CHANNEL_PEPPOL,
+				error: 'Peppol sending is not available: ' . $e->getMessage()
+			);
+		}
+
+		if ($participant === null || trim($participant) === '') {
+			$po['peppolFallbackReason'] = 'supplier_not_peppol_participant';
+			return $this->recordDispatchFailure(
+				purchaseOrder: $po,
+				channel: self::CHANNEL_PEPPOL,
+				error: 'The supplier is not a Peppol participant.'
 			);
 		}
 
@@ -512,55 +623,67 @@ class PurchaseOrderService {
 		try {
 			$messageId = $this->peppolAdapter->submitOrder(
 				participantId: $participant,
-				ublOrderXml: $ubl
+				ublOrderXml: $ubl,
+				purchaseOrder: $po
 			);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
-				'PurchaseOrderService: Peppol submission failed, falling back to PDF+email',
-				[
-					'purchaseOrderId' => $purchaseOrderId,
-					'exception' => $e->getMessage(),
-				]
+				'PurchaseOrderService: Peppol hand-off failed',
+				['purchaseOrderId' => $purchaseOrderId, 'exception' => $e->getMessage()]
 			);
-			return $this->sendToPDFEmail(
-				administrationId: $administrationId,
-				purchaseOrderId: $purchaseOrderId,
-				fallbackReason: 'peppol_send_failed'
+			$po['peppolFallbackReason'] = 'peppol_send_failed';
+			return $this->recordDispatchFailure(
+				purchaseOrder: $po,
+				channel: self::CHANNEL_PEPPOL,
+				error: 'The order could not be handed to the Peppol access point.'
 			);
 		}
 
-		$po['peppolMessageId'] = $messageId;
-		$po['peppolSentAt'] = $this->nowIso();
-		$po['peppolFallbackReason'] = null;
-		$po['lifecycleState'] = 'sent';
-		$po['sentAt'] = $this->nowIso();
-
-		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
+		return $this->recordPeppolDispatch(purchaseOrder: $po, messageId: $messageId);
 	}//end sendToPeppol()
 
 	/**
-	 * Transmit an approved PO via the PDF + email fallback path.
+	 * Record an accepted Peppol hand-off on the order: the dispatch is pending
+	 * until the access point reports delivery.
 	 *
-	 * Slice 03 surface. Used directly when the operator selects "PDF + email" on
-	 * the PO form, and used indirectly by {@see sendToPeppol} when the supplier
-	 * is not Peppol-registered or the Access Point fails. The method enforces
-	 * the slice-02 approval-complete precondition, delegates the actual
-	 * dispatch to the mailer port, persists `peppolFallbackReason` (the audit
-	 * trail of why Peppol was not used) and transitions the PO to `sent`
-	 * (REQ-PO3W-002 D2 — graceful fallback, never silent).
+	 * @param array<string,mixed> $purchaseOrder The PurchaseOrder handed off.
+	 * @param string              $messageId     The access point's message id.
+	 *
+	 * @return array<string,mixed> The saved PurchaseOrder.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 */
+	private function recordPeppolDispatch(array $purchaseOrder, string $messageId): array {
+		$purchaseOrder['peppolMessageId'] = $messageId;
+		$purchaseOrder['peppolFallbackReason'] = null;
+		$purchaseOrder['dispatchChannel'] = self::CHANNEL_PEPPOL;
+		$purchaseOrder['dispatchStatus'] = self::DISPATCH_PENDING;
+		$purchaseOrder['dispatchError'] = null;
+
+		return $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder);
+	}//end recordPeppolDispatch()
+
+	/**
+	 * Send an approved PO by PDF and email through the mail channel (REQ-PODR-002).
+	 *
+	 * Refused outright when no mail channel is there, so nothing is claimed.
+	 * The order moves to sent through the declared `send` transition only when
+	 * the channel accepted the message; a refusal is recorded on the order as
+	 * a failed email dispatch and the order stays approved.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $purchaseOrderId PO id.
-	 * @param string $fallbackReason The reason the fallback was used (audit
+	 * @param string $fallbackReason The reason Peppol was not used (audit
 	 *                               trail); empty string defaults to
 	 *                               `manual_pdf_email_fallback`.
 	 *
-	 * @return array<string,mixed> The PurchaseOrder after transition to "sent".
+	 * @return array<string,mixed> The PurchaseOrder after the attempt.
 	 *
 	 * @throws \RuntimeException When the PO is missing, the approval chain is
-	 *                           incomplete, or the mailer cannot dispatch.
+	 *                           incomplete, a Peppol dispatch is pending or no
+	 *                           mail channel is configured.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function sendToPDFEmail(
 		string $administrationId,
@@ -571,22 +694,147 @@ class PurchaseOrderService {
 			administrationId: $administrationId,
 			purchaseOrderId: $purchaseOrderId
 		);
+		if ($this->purchaseOrderMailer->isAvailable() === false) {
+			throw new RuntimeException('Email sending is not configured');
+		}
+
 		$reason = trim($fallbackReason);
 		if ($reason === '') {
 			$reason = 'manual_pdf_email_fallback';
 		}
 
-		$this->purchaseOrderMailer->sendPurchaseOrderEmail(
+		$accepted = $this->purchaseOrderMailer->sendPurchaseOrderEmail(
 			administrationId: $administrationId,
 			purchaseOrder: $po
 		);
+		if ($accepted === false) {
+			return $this->recordDispatchFailure(
+				purchaseOrder: $po,
+				channel: self::CHANNEL_EMAIL,
+				error: 'The email channel did not accept the message.'
+			);
+		}
 
 		$po['peppolFallbackReason'] = $reason;
-		$po['lifecycleState'] = 'sent';
+		$po['dispatchChannel'] = self::CHANNEL_EMAIL;
+		$po['dispatchStatus'] = self::DISPATCH_SENT;
+		$po['dispatchError'] = null;
 		$po['sentAt'] = $this->nowIso();
 
-		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
+		return $this->transitionToSent(purchaseOrder: $this->saveObject(schema: 'PurchaseOrder', object: $po));
 	}//end sendToPDFEmail()
+
+	/**
+	 * Apply integriq's delivery status to the order it names (REQ-PODR-001).
+	 *
+	 * Called by the delivery-status listener as the system: the buyer was
+	 * authorised when the dispatch was handed off. Only an order with a Peppol
+	 * dispatch is touched. `sent` or `delivered` moves it to sent through the
+	 * declared transition; `failed` or `rejected` records the reason and keeps
+	 * it approved so the page offers email. A repeated status is harmless.
+	 *
+	 * @param string $purchaseOrderId The order's id.
+	 * @param string $status          integriq's delivery status.
+	 * @param string $detail          integriq's reason, for a failure.
+	 *
+	 * @return bool True when the order changed.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.3
+	 */
+	public function applyPeppolDeliveryStatus(string $purchaseOrderId, string $status, string $detail): bool {
+		$po = $this->findOne(schema: 'PurchaseOrder', filters: ['id' => $purchaseOrderId]);
+		if ($po === null || ($po['dispatchChannel'] ?? null) !== self::CHANNEL_PEPPOL
+			|| ($po['statusCode'] ?? null) !== 'approved'
+		) {
+			return false;
+		}
+
+		if (in_array($status, ['sent', 'delivered'], true) === true) {
+			$this->recordPeppolDelivered(purchaseOrder: $po);
+			return true;
+		}
+
+		if (in_array($status, ['failed', 'rejected'], true) === true) {
+			$reason = trim($detail);
+			if ($reason === '') {
+				$reason = 'The Peppol delivery failed.';
+			}
+
+			$this->recordDispatchFailure(purchaseOrder: $po, channel: self::CHANNEL_PEPPOL, error: $reason);
+			return true;
+		}
+
+		return false;
+	}//end applyPeppolDeliveryStatus()
+
+	/**
+	 * Record a Peppol delivery the access point confirmed and move the order to sent.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The order, still approved.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-purchasing-order-dispatch-and-receipt/tasks.md#task-2.2
+	 */
+	private function recordPeppolDelivered(array $purchaseOrder): void {
+		$now = $this->nowIso();
+		$purchaseOrder['dispatchStatus'] = self::DISPATCH_SENT;
+		$purchaseOrder['dispatchError'] = null;
+		$purchaseOrder['peppolSentAt'] = $now;
+		$purchaseOrder['sentAt'] = $now;
+		$this->transitionToSent(purchaseOrder: $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder), asSystem: true);
+	}//end recordPeppolDelivered()
+
+	/**
+	 * Record a dispatch that did not reach the supplier; the order keeps its state.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The order.
+	 * @param string              $channel       peppol or email.
+	 * @param string              $error         Why it did not go.
+	 *
+	 * @return array<string,mixed> The saved order.
+	 */
+	private function recordDispatchFailure(array $purchaseOrder, string $channel, string $error): array {
+		$purchaseOrder['dispatchChannel'] = $channel;
+		$purchaseOrder['dispatchStatus'] = self::DISPATCH_FAILED;
+		$purchaseOrder['dispatchError'] = $error;
+
+		return $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder);
+	}//end recordDispatchFailure()
+
+	/**
+	 * Move a saved order to sent through its declared `send` transition (REQ-PODR-003).
+	 *
+	 * @param array<string,mixed> $purchaseOrder The saved order, still approved.
+	 * @param bool                $asSystem      Run as the system, for the delivery-status listener.
+	 *
+	 * @return array<string,mixed> The order as it reads after the transition.
+	 *
+	 * @throws RuntimeException When no transition engine is wired or the engine refuses.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) A scheduled send runs as the system, a user's send as that user; one flag picks the runner.
+	 */
+	private function transitionToSent(array $purchaseOrder, bool $asSystem = false): array {
+		if ($this->transitionRunner === null) {
+			throw new RuntimeException('Purchase order cannot be sent: no lifecycle engine');
+		}
+
+		$id = (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
+		if ($asSystem === true) {
+			$this->transitionRunner->runAsSystem(objectId: $id, action: 'send');
+		}
+
+		if ($asSystem === false) {
+			$this->transitionRunner->run(objectId: $id, action: 'send');
+		}
+
+		$sent = $this->findOne(schema: 'PurchaseOrder', filters: ['id' => $id]);
+		if ($sent === null) {
+			$sent = array_merge($purchaseOrder, ['statusCode' => 'sent']);
+		}
+
+		return $sent;
+	}//end transitionToSent()
 
 	/**
 	 * Load a PurchaseOrder for transmission and enforce the approval-complete
@@ -622,21 +870,30 @@ class PurchaseOrderService {
 			throw new RuntimeException('Purchase order not found');
 		}
 
-		$chain = (array)($po['approvalChain'] ?? []);
-		if ($chain === []) {
-			throw new RuntimeException('Purchase order has no approval chain');
-		}
-
-		foreach ($chain as $entry) {
-			$status = (string)($entry['status'] ?? '');
-			$signedAt = trim((string)($entry['signedAt'] ?? ''));
-			if ($status !== 'approved' || $signedAt === '') {
-				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
-			}
+		$this->assertFullyApproved(purchaseOrder: $po);
+		if (($po['dispatchStatus'] ?? null) === self::DISPATCH_PENDING) {
+			throw new RuntimeException('Purchase order cannot be sent: a dispatch is already pending');
 		}
 
 		return $po;
 	}//end loadPurchaseOrderForTransmission()
+
+	/**
+	 * Refuse an order that OpenRegister's approval chain has not approved.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The persisted PurchaseOrder record.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the order's statusCode is not approved.
+	 *
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
+	 */
+	private function assertFullyApproved(array $purchaseOrder): void {
+		if ((string)($purchaseOrder['statusCode'] ?? '') !== 'approved') {
+			throw new RuntimeException('Purchase order cannot be sent: it is not approved');
+		}
+	}//end assertFullyApproved()
 
 	/**
 	 * Resolve the buyer's Peppol participant id from the administration record.
@@ -666,12 +923,13 @@ class PurchaseOrderService {
 	}//end buyerParticipantId()
 
 	/**
-	 * Assign an ApprovalTask record to each required approver and notify them.
+	 * Notify the holders of each role in the order's approval chain.
 	 *
-	 * Each task is persisted with its purchaseOrderId, role, order, status=pending,
-	 * the administration scope, and a createdAt stamp. Approver notifications are
-	 * dispatched via the NC notification manager so the Vue layer can deep-link
-	 * straight to the PO detail.
+	 * The steps themselves are OpenRegister's (`purchase-order-approval`,
+	 * REQ-PAD-001): shillinq writes no task record of its own, which also kept
+	 * every live order from saving, as no register declares such a schema.
+	 * Notifications go through the NC notification manager so the Vue layer can
+	 * deep-link straight to the PO detail.
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param string $purchaseOrderId PO id.
@@ -682,55 +940,40 @@ class PurchaseOrderService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
 	 */
-	private function assignApprovalTasks(
+	private function notifyApprovalChain(
 		string $administrationId,
 		string $purchaseOrderId,
 		string $poNumber,
 		array $chain,
 	): void {
-		$tasksAssigned = false;
+		$stepsNotified = false;
 
 		foreach ($chain as $entry) {
-			$role = $entry['role'];
-			$order = $entry['order'];
-			if ($role === '' || $order === 0) {
-				continue;
-			}
-
-			$task = [
-				'purchaseOrderId' => $purchaseOrderId,
-				'administrationId' => $administrationId,
-				'role' => $role,
-				'order' => $order,
-				'status' => 'pending',
-				'createdAt' => $this->nowIso(),
-			];
-
-			$this->saveObject(schema: 'ApprovalTask', object: $task);
-
-			$this->notifyApprovers(
+			if ($this->notifyApprovalStep(
 				administrationId: $administrationId,
 				purchaseOrderId: $purchaseOrderId,
 				poNumber: $poNumber,
-				role: $role
-			);
+				entry: $entry
+			) === true
+			) {
+				$stepsNotified = true;
+			}
+		}
 
-			$tasksAssigned = true;
-		}//end foreach
-
-		// REQ-RAP-006 row 1 (`approval_requested`): the ApprovalTask records
-		// that put this PO in front of an approver have just been created, so
-		// this is the "ApprovalRequest created" trigger the event table names.
+		// REQ-RAP-006 row 1 (`approval_requested`): the approvers this PO is in
+		// front of have just been notified, so this is the "ApprovalRequest
+		// created" trigger the event table names.
 		// Emitted ONCE per purchase order (not once per role) so the Activity
 		// feed carries a single entry per approval round, matching the
 		// already-live `approval_approved` / `approval_rejected` rows in
-		// PurchaseOrderApprovalService::recordApprovalDecision(). The emitter
+		// OpenRegister's approval chain. The emitter
 		// is nullable for the same reason it is there: unit tests need not
 		// wire IActivityManager, and publishing is best-effort (the OR audit
 		// trail remains the authoritative record).
-		if ($tasksAssigned === true && $this->activityEmitter !== null) {
+		if ($stepsNotified === true && $this->activityEmitter !== null) {
 			$this->activityEmitter->emitApprovalRequested(
 				objectType:  'PurchaseOrder',
 				objectId:    $purchaseOrderId,
@@ -738,7 +981,37 @@ class PurchaseOrderService {
 			);
 		}
 
-	}//end assignApprovalTasks()
+	}//end notifyApprovalChain()
+
+	/**
+	 * Notify the holders of one role of the chain; an entry without a role or
+	 * order is skipped.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $purchaseOrderId PO id.
+	 * @param string $poNumber PO number for the notification subject params.
+	 * @param array{role:string,order:int} $entry The chain entry.
+	 *
+	 * @return bool True when the step's role was notified.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
+	 */
+	private function notifyApprovalStep(string $administrationId, string $purchaseOrderId, string $poNumber, array $entry): bool {
+		$role = $entry['role'];
+		if ($role === '' || $entry['order'] === 0) {
+			return false;
+		}
+
+		$this->notifyApprovers(
+			administrationId: $administrationId,
+			purchaseOrderId: $purchaseOrderId,
+			poNumber: $poNumber,
+			role: $role
+		);
+
+		return true;
+	}//end notifyApprovalStep()
 
 	/**
 	 * Dispatch a notification to every user in the administration who carries the
@@ -767,7 +1040,7 @@ class PurchaseOrderService {
 			try {
 				$notification = $this->notificationManager->createNotification();
 				$notification
-					->setApp(Application::APP_ID)
+					->setApp(AppIdentity::APP_ID)
 					->setUser($approverId)
 					->setDateTime(new DateTime())
 					->setObject(self::NOTIFICATION_OBJECT_TYPE, $purchaseOrderId)
@@ -826,32 +1099,6 @@ class PurchaseOrderService {
 	}//end findApproverIds()
 
 	/**
-	 * Project the approval-chain descriptor into the persisted PurchaseOrder shape.
-	 *
-	 * Each entry adds a status=pending stub and an empty signedAt; the controller
-	 * (or the matcher service in later slices) will set status=approved + signedAt
-	 * once the approver acts.
-	 *
-	 * @param array<int,array{role:string,order:int}> $chain Chain returned by determineApprovalChain.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function initialiseApprovalChainEntries(array $chain): array {
-		$entries = [];
-		foreach ($chain as $entry) {
-			$entries[] = [
-				'role' => $entry['role'],
-				'order' => $entry['order'],
-				'status' => 'pending',
-				'signedAt' => '',
-				'signedBy' => '',
-			];
-		}
-
-		return $entries;
-	}//end initialiseApprovalChainEntries()
-
-	/**
 	 * Normalise + validate the line items in the request payload.
 	 *
 	 * Each line carries productCode, quantity, unitPrice, vatRate (as a fraction,
@@ -859,69 +1106,106 @@ class PurchaseOrderService {
 	 * not supply one. Monetary fields (unitPrice, lineTotal, vatAmount) are
 	 * computed in integer cents and presented back as floats with multipleOf 0.01.
 	 *
-	 * @param array<int,mixed> $rawLines Raw line entries from the caller.
+	 * A line whose product code has an agreed unit price ($agreedUnitCents)
+	 * takes that price and is marked `agreedPrice: true` (REQ-PG-005).
+	 *
+	 * @param array<int,mixed> $rawLines        Raw line entries from the caller.
+	 * @param array<string,int> $agreedUnitCents Product code => agreed unit price in cents.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @throws \RuntimeException When a line is malformed.
+	 *
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
-	private function normaliseLines(array $rawLines): array {
+	private function normaliseLines(array $rawLines, array $agreedUnitCents=[]): array {
 		if ($rawLines === []) {
 			throw new RuntimeException('Purchase order must have at least one line');
 		}
 
 		$lines = [];
-		$lineNumber = 0;
-		foreach ($rawLines as $raw) {
+		foreach (array_values($rawLines) as $index => $raw) {
 			if (is_array($raw) === false) {
 				throw new RuntimeException('Line item must be an object');
 			}
 
-			$lineNumber++;
-			$productCode = trim((string)($raw['productCode'] ?? ''));
-			$glAccount = trim((string)($raw['glAccount'] ?? ''));
-			$quantity = (float)($raw['quantity'] ?? 0);
-			$unitPrice = (float)($raw['unitPrice'] ?? 0);
-			$vatRate = (float)($raw['vatRate'] ?? 0);
-
-			if ($productCode === '') {
-				throw new RuntimeException('Line ' . $lineNumber . ' is missing productCode');
+			$line   = $this->checkedLine(raw: $raw, lineNumber: ($index + 1));
+			$agreed = array_key_exists($line['productCode'], $agreedUnitCents);
+			if ($agreed === true) {
+				$line['unitPrice'] = $this->fromCents(cents: $agreedUnitCents[$line['productCode']]);
 			}
 
-			if ($glAccount === '') {
-				throw new RuntimeException('Line ' . $lineNumber . ' is missing glAccount');
+			$priced = $this->pricedLine(line: $line);
+			if ($agreed === true) {
+				$priced['agreedPrice'] = true;
 			}
 
-			if ($quantity <= 0.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' must have positive quantity');
-			}
-
-			if ($unitPrice < 0.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' must have non-negative unitPrice');
-			}
-
-			if ($vatRate < 0.0 || $vatRate > 1.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' vatRate must be a fraction between 0 and 1');
-			}
-
-			$unitCents = $this->toCents(amount: $unitPrice);
-			$lineCents = (int)round(($unitCents * $quantity), 0, PHP_ROUND_HALF_UP);
-			$vatCents = (int)round(($lineCents * $vatRate), 0, PHP_ROUND_HALF_UP);
-
-			$lines[] = [
-				'lineNumber' => ((int)($raw['lineNumber'] ?? $lineNumber)),
-				'productCode' => $productCode,
-				'quantity' => $quantity,
-				'unitPrice' => $this->fromCents(cents: $unitCents),
-				'lineTotal' => $this->fromCents(cents: $lineCents),
-				'vatRate' => $vatRate,
-				'vatAmount' => $this->fromCents(cents: $vatCents),
-				'glAccount' => $glAccount,
-			];
-		}//end foreach
+			$lines[] = $priced;
+		}
 
 		return $lines;
 	}//end normaliseLines()
+
+	/**
+	 * One raw line's fields, refused when the product code or GL account is
+	 * missing, the quantity is not positive, the price is negative or the VAT
+	 * rate is not a fraction.
+	 *
+	 * @param array<string,mixed> $raw        The raw line.
+	 * @param int                 $lineNumber The line's position.
+	 *
+	 * @return array{lineNumber:int,productCode:string,glAccount:string,quantity:float,unitPrice:float,vatRate:float}
+	 *
+	 * @throws \RuntimeException When the line is malformed.
+	 */
+	private function checkedLine(array $raw, int $lineNumber): array {
+		$line = [
+			'lineNumber' => ((int)($raw['lineNumber'] ?? $lineNumber)),
+			'productCode' => trim((string)($raw['productCode'] ?? '')),
+			'glAccount' => trim((string)($raw['glAccount'] ?? '')),
+			'quantity' => (float)($raw['quantity'] ?? 0),
+			'unitPrice' => (float)($raw['unitPrice'] ?? 0),
+			'vatRate' => (float)($raw['vatRate'] ?? 0),
+		];
+
+		$refusal = match (true) {
+			$line['productCode'] === '' => 'is missing productCode',
+			$line['glAccount'] === '' => 'is missing glAccount',
+			$line['quantity'] <= 0.0 => 'must have positive quantity',
+			$line['unitPrice'] < 0.0 => 'must have non-negative unitPrice',
+			($line['vatRate'] < 0.0 || $line['vatRate'] > 1.0) => 'vatRate must be a fraction between 0 and 1',
+			default => '',
+		};
+		if ($refusal !== '') {
+			throw new RuntimeException('Line ' . $lineNumber . ' ' . $refusal);
+		}
+
+		return $line;
+	}//end checkedLine()
+
+	/**
+	 * A checked line with its unit price, total and VAT rounded in cents.
+	 *
+	 * @param array{lineNumber:int,productCode:string,glAccount:string,quantity:float,unitPrice:float,vatRate:float} $line The checked line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function pricedLine(array $line): array {
+		$unitCents = $this->toCents(amount: $line['unitPrice']);
+		$lineCents = (int)round(($unitCents * $line['quantity']), 0, PHP_ROUND_HALF_UP);
+		$vatCents  = (int)round(($lineCents * $line['vatRate']), 0, PHP_ROUND_HALF_UP);
+
+		return [
+			'lineNumber' => $line['lineNumber'],
+			'productCode' => $line['productCode'],
+			'quantity' => $line['quantity'],
+			'unitPrice' => $this->fromCents(cents: $unitCents),
+			'lineTotal' => $this->fromCents(cents: $lineCents),
+			'vatRate' => $line['vatRate'],
+			'vatAmount' => $this->fromCents(cents: $vatCents),
+			'glAccount' => $line['glAccount'],
+		];
+	}//end pricedLine()
 
 	/**
 	 * Sum the lineTotal of every line as integer cents.
@@ -999,7 +1283,7 @@ class PurchaseOrderService {
 	 */
 	private function assertRequisitionPolicy(string $administrationId, string $requisitionId): void {
 		$required = $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'require_approved_requisition_for_po',
 			'false'
 		);
@@ -1047,7 +1331,7 @@ class PurchaseOrderService {
 	 */
 	private function assertSupplierQualificationPolicy(string $administrationId, string $supplierId): void {
 		$required = $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'require_supplier_qualification_for_po',
 			'false'
 		);
@@ -1071,11 +1355,16 @@ class PurchaseOrderService {
 	 * requests are tolerated at this layer (the PO id remains unique via the OR
 	 * record id); the displayable po_number is best-effort sequential.
 	 *
+	 * Also numbers the draft orders ReorderProposalService proposes, so every
+	 * order of an administration shares one sequence (REQ-IRA-011).
+	 *
 	 * @param string $administrationId Administration scope.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
 	 */
-	private function generatePoNumber(string $administrationId): string {
+	public function generatePoNumber(string $administrationId): string {
 		$year = (int)date('Y');
 
 		$existing = $this->findAll(
@@ -1183,12 +1472,7 @@ class PurchaseOrderService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
+		return RegisterSlug::of(config: $this->appConfig);
 	}//end register()
 
 	/**

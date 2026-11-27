@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -31,6 +33,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for SettingsService.
@@ -103,7 +106,7 @@ class SettingsServiceTest extends TestCase {
 
 		$this->service = new SettingsService(
 			appConfig: $this->appConfig,
-			appManager: $this->appManager,
+			registerLocation: new RegisterLocation(appConfig: $this->appConfig, appManager: $this->appManager),
 			container: $this->container,
 			groupManager: $this->groupManager,
 			userSession: $this->userSession,
@@ -111,6 +114,58 @@ class SettingsServiceTest extends TestCase {
 		);
 
 	}//end setUp()
+
+	/**
+	 * The checkout's return address is an operator setting: an absolute https
+	 * address or empty is stored and read back; plain http, a script URL and a
+	 * relative path are refused and nothing is written (REQ-SPPI-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
+	 */
+	public function testThePortalReturnAddressIsStoredOnlyWhenHttps(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$stored = [];
+		$this->appConfig->method('setValueString')->willReturnCallback(
+			static function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return ($stored[$key] ?? $default);
+			}
+		);
+
+		$settings = $this->service->updateSettings(['portal_payment_redirect_url' => 'https://portaal.gemeente.example/betalen']);
+		self::assertSame('https://portaal.gemeente.example/betalen', $stored['portal_payment_redirect_url']);
+		self::assertSame('https://portaal.gemeente.example/betalen', $settings['portal_payment_redirect_url']);
+
+		$this->service->updateSettings(['portal_payment_redirect_url' => '']);
+		self::assertSame('', $stored['portal_payment_redirect_url']);
+
+		foreach (['http://portaal.example', 'javascript:alert(1)', '/betalen', 'https://', 'portaal.example'] as $unsafe) {
+			try {
+				$this->service->updateSettings(['portal_payment_redirect_url' => $unsafe, 'register' => 'other']);
+				self::fail('stored an unsafe return address: ' . $unsafe);
+			} catch (\InvalidArgumentException $e) {
+				self::assertStringContainsString('https', $e->getMessage());
+			}
+		}
+
+		self::assertSame('', $stored['portal_payment_redirect_url']);
+		self::assertArrayNotHasKey('register', $stored, 'a refused save must write nothing at all');
+
+		// The key the settings store writes is the key the pay flow reads, or
+		// the operator's address would be saved and never used.
+		self::assertSame(
+			(new \ReflectionClassConstant(\OCA\Shillinq\Service\Payment\PortalPaymentSessionService::class, 'CONFIG_REDIRECT_URL'))->getValue(),
+			SettingsService::PORTAL_REDIRECT_KEY
+		);
+	}//end testThePortalReturnAddressIsStoredOnlyWhenHttps()
 
 	/**
 	 * Test that seedRgsTemplate returns failure when OpenRegister is not available.
@@ -195,6 +250,33 @@ class SettingsServiceTest extends TestCase {
 		self::assertTrue($result);
 
 	}//end testIsOpenRegisterAvailableDelegatesToAppManager()
+
+	/**
+	 * getRegisterSlug returns the configured slug, read with the 'shillinq' default.
+	 *
+	 * @return void
+	 */
+	public function testGetRegisterSlugReturnsConfiguredSlug(): void {
+		$this->appConfig->expects($this->once())
+			->method('getValueString')
+			->with('shillinq', 'register', 'shillinq')
+			->willReturn('finance-register');
+
+		self::assertSame('finance-register', $this->service->getRegisterSlug());
+
+	}//end testGetRegisterSlugReturnsConfiguredSlug()
+
+	/**
+	 * getRegisterSlug falls back to 'shillinq' when the stored slug is empty.
+	 *
+	 * @return void
+	 */
+	public function testGetRegisterSlugFallsBackWhenEmpty(): void {
+		$this->appConfig->method('getValueString')->willReturn('');
+
+		self::assertSame('shillinq', $this->service->getRegisterSlug());
+
+	}//end testGetRegisterSlugFallsBackWhenEmpty()
 
 	/**
 	 * seedRetentionPolicies fails when OpenRegister is unavailable.
@@ -417,7 +499,9 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saveCalls++;
 			}
 		};
@@ -466,7 +550,9 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saveCalls++;
 			}
 		};
@@ -562,7 +648,9 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saveCalls++;
 			}
 
@@ -623,7 +711,9 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saveCalls++;
 			}
 		};
@@ -672,7 +762,9 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saveCalls++;
 			}
 
@@ -733,7 +825,9 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saveCalls++;
 			}
 		};
@@ -817,4 +911,145 @@ class SettingsServiceTest extends TestCase {
 		}//end foreach
 
 	}//end testBbvTaakveldSeedFileHasSchemaRequiredProperties()
+
+	/**
+	 * An `office:<id>` variant seeds from that office template, not from an RGS file.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAnOfficeVariantSeedsFromThatTemplate(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->expects($this->once())
+			->method('seedFromTemplate')
+			->with('tpl-1', 'adm-plein')
+			->willReturn(['added' => ['8050', '4150', 'WINKEL'], 'updated' => [], 'skipped' => ['1000']]);
+		$this->container->method('get')->with(ChartTemplateService::class)->willReturn($templates);
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:tpl-1', administrationId: 'adm-plein');
+
+		self::assertSame(
+			['success' => true, 'seeded' => 3, 'skipped' => 1, 'message' => 'Office template seeded successfully.'],
+			$result
+		);
+	}//end testAnOfficeVariantSeedsFromThatTemplate()
+
+	/**
+	 * An office template that does not exist is a failure with the service's words.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAMissingOfficeTemplateFails(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('seedFromTemplate')->willThrowException(new \InvalidArgumentException('Template not found.'));
+		$this->container->method('get')->willReturn($templates);
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:gone', administrationId: 'adm-plein');
+
+		self::assertSame(['success' => false, 'message' => 'Template not found.'], $result);
+	}//end testAMissingOfficeTemplateFails()
+
+	/**
+	 * A failure while writing is logged and reported without the exception's text.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAFailingOfficeSeedIsLoggedAndReported(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('seedFromTemplate')->willThrowException(new \RuntimeException('db down'));
+		$this->container->method('get')->willReturn($templates);
+		$this->logger->expects($this->once())->method('error')->with('Shillinq: office template seeding failed');
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:tpl-1', administrationId: 'adm-plein');
+
+		self::assertSame(['success' => false, 'message' => 'Office template seeding failed.'], $result);
+	}//end testAFailingOfficeSeedIsLoggedAndReported()
+
+	/**
+	 * An office variant without an administration is refused before any template is read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAnOfficeVariantWithoutAdministrationIsRefused(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$this->container->expects($this->never())->method('get');
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:tpl-1', administrationId: '');
+
+		self::assertFalse($result['success']);
+	}//end testAnOfficeVariantWithoutAdministrationIsRefused()
+
+	/**
+	 * The template step lists the shipped variants, then each active office template.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testTheTemplateStepListsShippedThenOfficeTemplates(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('activeTemplates')->willReturn(
+			[
+				['id' => 'tpl-1', 'name' => 'Kantoor De Boer MKB', 'version' => 2, 'accounts' => 40, 'dimensions' => 2],
+				['id' => '', 'name' => 'No id', 'version' => 1, 'accounts' => 0, 'dimensions' => 0],
+			]
+		);
+		$this->container->method('get')->with(ChartTemplateService::class)->willReturn($templates);
+
+		$choices = $this->service->chartTemplateChoices();
+
+		self::assertSame(['mkb', 'zzp', 'bbv', 'legislation-be', 'office:tpl-1'], array_column($choices, 'value'));
+		self::assertSame(
+			['value' => 'office:tpl-1', 'label' => 'Kantoor De Boer MKB', 'office' => true, 'version' => 2, 'accounts' => 40, 'dimensions' => 2],
+			$choices[4]
+		);
+	}//end testTheTemplateStepListsShippedThenOfficeTemplates()
+
+	/**
+	 * Office templates that cannot be read leave the shipped variants.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testUnreadableOfficeTemplatesLeaveTheShippedVariants(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('activeTemplates')->willThrowException(new \RuntimeException('no schema'));
+		$this->container->method('get')->willReturn($templates);
+		$this->logger->expects($this->once())->method('warning');
+
+		self::assertSame(['mkb', 'zzp', 'bbv', 'legislation-be'], array_column($this->service->chartTemplateChoices(), 'value'));
+	}//end testUnreadableOfficeTemplatesLeaveTheShippedVariants()
+
+	/**
+	 * Without OpenRegister only the shipped variants are offered and no template is read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testWithoutOpenRegisterOnlyShippedVariantsAreOffered(): void {
+		$this->appManager->method('isInstalled')->willReturn(false);
+		$this->container->expects($this->never())->method('get');
+
+		self::assertSame(['mkb', 'zzp', 'bbv', 'legislation-be'], array_column($this->service->chartTemplateChoices(), 'value'));
+	}//end testWithoutOpenRegisterOnlyShippedVariantsAreOffered()
 }//end class

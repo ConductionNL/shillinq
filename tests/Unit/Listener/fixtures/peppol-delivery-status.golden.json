@@ -1,0 +1,211 @@
+{
+    "delivered": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "delivered",
+                "transmissionId": "t-9",
+                "deliveryDetail": "ok"
+            }
+        ],
+        "notifications": [],
+        "logs": []
+    },
+    "noUri": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "sent",
+                "transmissionId": "urn:uuid:old"
+            }
+        ],
+        "notifications": [],
+        "logs": []
+    },
+    "noStatus": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "sent",
+                "transmissionId": "urn:uuid:old"
+            }
+        ],
+        "notifications": [],
+        "logs": []
+    },
+    "unknownInvoice": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "sent",
+                "transmissionId": "urn:uuid:old"
+            }
+        ],
+        "notifications": [],
+        "logs": [
+            [
+                "info",
+                "PeppolDeliveryStatusListener: no matching ARInvoice for objectUri — skipping",
+                {
+                    "objectUri": "openregister:\/\/shillinq\/ARInvoice\/nope"
+                }
+            ]
+        ]
+    },
+    "illegal": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "delivered",
+                "transmissionId": "urn:uuid:old"
+            }
+        ],
+        "notifications": [],
+        "logs": [
+            [
+                "info",
+                "PeppolDeliveryStatusListener: illegal delivery-status transition — skipping",
+                {
+                    "from": "delivered",
+                    "to": "sent",
+                    "objectUri": "openregister:\/\/shillinq\/ARInvoice\/a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            ]
+        ]
+    },
+    "fromNotSent": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "",
+                "transmissionId": "urn:uuid:old"
+            },
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051"
+            }
+        ],
+        "notifications": [],
+        "logs": [
+            [
+                "info",
+                "PeppolDeliveryStatusListener: illegal delivery-status transition — skipping",
+                {
+                    "from": "",
+                    "to": "sent",
+                    "objectUri": "openregister:\/\/shillinq\/ARInvoice\/a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            ]
+        ]
+    },
+    "rejected": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "rejected",
+                "transmissionId": "urn:uuid:old",
+                "deliveryDetail": "Unknown participant"
+            }
+        ],
+        "notifications": [
+            {
+                "user": "u-1",
+                "subject": "einvoice_delivery_rejected",
+                "parameters": {
+                    "invoiceNumber": "2026-0051",
+                    "detail": "Unknown participant",
+                    "invoiceId": "a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            },
+            {
+                "user": "u-3",
+                "subject": "einvoice_delivery_rejected",
+                "parameters": {
+                    "invoiceNumber": "2026-0051",
+                    "detail": "Unknown participant",
+                    "invoiceId": "a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            },
+            {
+                "user": "u-5",
+                "subject": "einvoice_delivery_rejected",
+                "parameters": {
+                    "invoiceNumber": "2026-0051",
+                    "detail": "Unknown participant",
+                    "invoiceId": "a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            }
+        ],
+        "logs": []
+    },
+    "rejectedAgain": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "rejected",
+                "transmissionId": "urn:uuid:old",
+                "deliveryDetail": ""
+            }
+        ],
+        "notifications": [
+            {
+                "user": "u-1",
+                "subject": "einvoice_delivery_rejected",
+                "parameters": {
+                    "invoiceNumber": "2026-0051",
+                    "detail": "",
+                    "invoiceId": "a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            },
+            {
+                "user": "u-3",
+                "subject": "einvoice_delivery_rejected",
+                "parameters": {
+                    "invoiceNumber": "2026-0051",
+                    "detail": "",
+                    "invoiceId": "a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            },
+            {
+                "user": "u-5",
+                "subject": "einvoice_delivery_rejected",
+                "parameters": {
+                    "invoiceNumber": "2026-0051",
+                    "detail": "",
+                    "invoiceId": "a1b2c3d4-0000-4000-8000-000000000051"
+                }
+            }
+        ],
+        "logs": []
+    },
+    "byNumber": {
+        "invoices": [
+            {
+                "id": "a1b2c3d4-0000-4000-8000-000000000051",
+                "invoiceNumber": "2026-0051",
+                "administrationId": "adm-1",
+                "deliveryStatus": "delivered",
+                "transmissionId": "urn:uuid:old",
+                "deliveryDetail": ""
+            }
+        ],
+        "notifications": [],
+        "logs": []
+    }
+}

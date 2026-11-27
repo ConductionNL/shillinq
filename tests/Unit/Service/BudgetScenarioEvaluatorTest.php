@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
+ * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -432,7 +432,7 @@ final class BudgetScenarioEvaluatorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+	 * @spec openspec/changes/archive/2026-11-24-budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
 	 */
 	public function testRecurringEndAgainstTheRealExpanderMovesTheNumber(): void {
 		$evaluator = new BudgetScenarioEvaluator(new KnownCostScheduleExpander(), new NullLogger());
@@ -463,7 +463,7 @@ final class BudgetScenarioEvaluatorTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
+	 * @spec openspec/changes/archive/2026-11-24-budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
 	 */
 	public function testNeedsOperatorInputSkipsTheModifierRatherThanZeroingTheBaseline(): void {
 		$evaluator = new BudgetScenarioEvaluator(new FakeKnownCostScheduleExpander(), new NullLogger());

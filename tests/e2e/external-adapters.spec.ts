@@ -1,323 +1,245 @@
-import type { ConsoleMessage, Page } from '@playwright/test'
-
 /*
- * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * e2e for the integration-config-to-openconnector "External Connections"
- * roster (openspec/changes/integration-config-to-openconnector).
+ * Playwright e2e: the one External Connections page that replaced the fifteen
+ * per-adapter admin pages (integration-config-to-openconnector task 6,
+ * REQ-ICO-002, REQ-ICO-003, REQ-ICO-007).
  *
- * Replaces the former W8 index + 15-per-adapter-detail-page coverage
- * (REQ-ICO-007 — this file, tests/e2e/visual/external-adapters.visual.spec.ts
- * and tests/e2e/workflows/external-adapters-admin.spec.ts together replace
- * the three specs that exercised the now-removed per-adapter surfaces): all
- * 15 families now render as rows on ONE page
- * (src/views/external-adapters/ExternalAdaptersStatus.vue), sourced from
- * GET /api/admin/external-adapters (ExternalAdaptersAdminController#index).
- * Integration configuration (credentials, endpoints, protocol mapping)
- * belongs to openconnector per ADR-067/ADR-091/ADR-022 — this app only ever
- * shows the declared source-slug reference, the dormant/live verdict, and
- * the live openconnector-provisioning verdict (REQ-ICO-003, covered in the
- * workflows spec with mocked responses for its three provisioning states).
+ *   1. the roster lists the fifteen declared families: the page at
+ *      /external-adapters renders one row per family (REQ-ICO-002);
+ *   2. no per-adapter detail route: the fragment declares exactly one page
+ *      and no page carries `config.adapterId` (REQ-ICO-002);
+ *   3. a provisioned source, an undeclared source and OpenRegister being
+ *      unavailable: the `provisioning` status per row (REQ-ICO-003);
+ *   4. well-formed deep links per row and no test file naming a removed
+ *      per-adapter route (REQ-ICO-007).
  *
- * This file asserts:
- *   1. The roster lists all 15 declared families (REQ-ICO-002).
- *   2. No per-adapter detail route exists any more — the old
- *      `/external-adapters/<family-id>` deep links no longer resolve to a
- *      detail panel (REQ-ICO-002 / REQ-ICO-004).
- *   3. Every row's "provision in OpenConnector" deep link is a well-formed
- *      URL (REQ-ICO-007).
- *   4. No test file under tests/e2e/** still references a removed
- *      per-adapter route literal (REQ-ICO-007) — a static check over the
- *      test tree itself, not a page assertion.
- *   5. No shillinq-origin console error / 5xx fires while loading the
- *      roster.
+ * WHAT CHANGED SINCE THE CHANGE WAS WRITTEN. adopt-connection-registry moved
+ * the page onto integriq's `app_connection` rows (declared in
+ * lib/Settings/connections.json) and removed `GET /api/admin/external-adapters`
+ * together with its `provisioning` field and the "provision in OpenConnector"
+ * deep link (appinfo/routes.php says so where the route was). The row count,
+ * the single-page manifest and the route scan still hold and are asserted;
+ * the provisioning and deep-link scenarios have no surface left to drive and
+ * are test.fixme.
  *
- * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
+ * The listing test asserts whichever state the instance is in: without
+ * integriq the page renders the missing-dependency screen and the test is
+ * skipped. The caller is the suite's administrator (globalSetup's storage
+ * state). The spec writes nothing.
+ *
+ * Written, not run: it needs a live instance.
+ *
+ * @spec openspec/changes/archive/2026-11-24-integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
+ * @spec openspec/changes/archive/2026-11-24-integration-config-to-openconnector/tasks.md#task-6
+ *
+ * @e2e integration-config-to-openconnector::the-roster-page-lists-all-15-declared-families
+ * @e2e integration-config-to-openconnector::no-per-adapter-detail-route-exists-any-more
+ * @e2e integration-config-to-openconnector::a-provisioned-source-shows-its-slug-status
+ * @e2e integration-config-to-openconnector::an-undeclared-source-falls-back-to-the-deep-link-prompt
+ * @e2e integration-config-to-openconnector::openregister-unavailable-degrades-every-row-not-the-whole-page
+ * @e2e integration-config-to-openconnector::every-row-s-deep-link-is-a-well-formed-url
+ * @e2e integration-config-to-openconnector::no-test-file-references-a-removed-per-adapter-route
  */
+
+import type { Page } from '@playwright/test'
+
 import { expect, test } from '@playwright/test'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const APP = '/apps/shillinq'
+const HEADERS = { 'OCS-APIRequest': 'true' }
+const ROOT = join(__dirname, '..', '..')
 
-/** All 15 adapter-family slugs ExternalAdaptersAdminController::ADAPTERS declares. */
-const ALL_FAMILY_SLUGS = [
-	'digipoort-sbr',
-	'salarisbureau',
-	'rvo',
-	'ib47',
-	'cbs-bestanden',
-	'cbs-iv3',
-	'bzk-sisa',
-	'mollie',
-	'bunq',
-	'kvk',
-	'uwv',
-	'treasury-rates',
-	'ccm-rule-engine',
-	'csrd-esrs-xbrl',
-	'deposit-payment',
-]
+/** Integriq's objects endpoint for shillinq's connection rows. */
+const CONNECTIONS_API = '/index.php/apps/openregister/api/objects/integriq/app_connection?app=shillinq&_limit=200'
 
-/** Dismiss the first-run wizard / support dialog if it intercepts the route. */
+/** One declared family in lib/Settings/connections.json. */
+interface DeclaredConnection {
+	key: string
+	title: string
+}
+
+/** One row of integriq's app_connection listing. */
+interface ConnectionRow {
+	key: string
+	app: string
+	title: string
+}
+
+/** A manifest page, as far as this spec reads it. */
+interface ManifestPage {
+	id: string
+	route?: string
+	config?: { adapterId?: string }
+}
+
+/** A manifest menu node. */
+interface ManifestMenu {
+	id: string
+	route?: string
+	children?: ManifestMenu[]
+}
+
+/** A manifest fragment. */
+interface ManifestFragment {
+	menu?: ManifestMenu[]
+	pages?: ManifestPage[]
+}
+
+/** The declaration integriq syncs, read from the repository. */
+const declaration = JSON.parse(readFileSync(join(ROOT, 'lib', 'Settings', 'connections.json'), 'utf8')) as {
+	app: string
+	connections: DeclaredConnection[]
+}
+
+const FAMILY_KEYS = declaration.connections.map((connection) => String(connection.key))
+
+/**
+ * Read a manifest file from the repository.
+ *
+ * @param path The path from the repository root.
+ * @return The parsed fragment.
+ */
+function manifest(path: string): ManifestFragment {
+	return JSON.parse(readFileSync(join(ROOT, path), 'utf8')) as ManifestFragment
+}
+
+/**
+ * Every file under a directory, recursively.
+ *
+ * @param dir The directory.
+ * @return The file paths.
+ */
+function filesUnder(dir: string): string[] {
+	const files: string[] = []
+	for (const name of readdirSync(dir)) {
+		if (name === 'node_modules' || name.startsWith('.')) {
+			continue
+		}
+		const path = join(dir, name)
+		if (statSync(path).isDirectory()) {
+			files.push(...filesUnder(path))
+		} else {
+			files.push(path)
+		}
+	}
+	return files
+}
+
+/**
+ * Escape a string for use in a regular expression.
+ *
+ * @param value The literal.
+ * @return The escaped literal.
+ */
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => {})
 		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
-	const support = page
-		.locator('[data-testid-modal="cn-support-dialog"], .cn-support-dialog')
-		.first()
+	const support = page.locator('[data-testid-modal="cn-support-dialog"], .cn-support-dialog').first()
 	if (await support.isVisible().catch(() => false)) {
-		await support
-			.getByRole('button', { name: /close|sluiten|dismiss/i })
-			.first()
-			.click()
-			.catch(() => {})
+		await support.getByRole('button', { name: /close|sluiten|dismiss/i }).first().click().catch(() => {})
 		await support.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
 }
 
 /**
- * Reach the roster. Shillinq's manifest SPA uses HISTORY-mode routing, so
- * the page route is directly addressable at /apps/shillinq/external-adapters
- * (verified live) — no hash, no SPA reset.
+ * Open the page the way the menu entry does, and say which state it is in.
+ *
+ * @param page The page.
+ * @return 'listed' when integriq serves the rows, 'missing' when it is not installed.
  */
-async function openRoster(page: Page): Promise<'list' | 'absent'> {
-	await page.goto(`${APP}/external-adapters`)
+async function openRoster(page: Page): Promise<'listed' | 'missing'> {
+	await page.goto(`${APP}/external-adapters?app=shillinq`)
 	await page.waitForLoadState('domcontentloaded')
 	await dismissOverlays(page)
-	await expect(page).toHaveURL(/external-adapters/, { timeout: 10_000 })
 
-	// SAY WHY THERE IS NO LIST. `ExternalAdaptersStatus.vue` renders exactly
-	// one of three branches: loading, an error, or the body that holds
-	// `.external-adapters__list`. Waiting on the list alone reports
-	// "element(s) not found" after 15s and names none of the other two, so a
-	// served, deliberate error reads identically to a page that never loaded.
-	//
-	// The error branch is the likely one and it is not a defect in this page:
-	// `ExternalAdaptersAdminController::index()` answers
-	// `ERROR_REGISTER_ABSENT` with a full sentence when the connector register
-	// is not on the instance under any slug it has answered to, and the
-	// component surfaces that sentence verbatim. On CI that is a provisioning
-	// fact about the instance, not a broken roster.
-	const errorBranch = page.locator('.external-adapters__error')
-	const list = page.locator('.external-adapters__list').first()
+	const missing = page.locator('[data-testid="cn-page-dependency-missing"]')
+	const list = page.locator('.cn-index-page')
+	await expect.poll(async () => {
+		if (await missing.isVisible().catch(() => false)) return 'missing'
+		if (await list.isVisible().catch(() => false)) return 'listed'
+		return 'loading'
+	}, { timeout: 30_000 }).not.toBe('loading')
 
-	await expect
-		.poll(
-			async () => {
-				if (await list.isVisible().catch(() => false)) return 'list'
-				if (await errorBranch.isVisible().catch(() => false)) return 'error'
-				return 'loading'
-			},
-			{ timeout: 15_000 },
-		)
-		.not.toBe('loading')
-
-	if (await errorBranch.isVisible().catch(() => false)) {
-		// THE ABSENT-REGISTER ANSWER IS A DOCUMENTED STATE, NOT A FAILURE, and
-		// on CI it is the ONLY reachable one: `additional-apps` installs
-		// openregister and nothing else, so the connector app is never on the
-		// instance and its register cannot exist. Asserting fifteen families
-		// here was asserting something the environment cannot produce.
-		//
-		// It still has to be the RIGHT absent answer, so assert the sentence
-		// the controller documents rather than accepting any error at all.
-		const served = (await errorBranch.innerText().catch(() => '')).trim()
-		expect(
-			served,
-			`the roster errored, but not with the documented absent-register answer: ${served}`,
-		).toMatch(/not on this instance under any of the slugs/i)
-
-		return 'absent'
-	}
-
-	await expect(list).toBeVisible({ timeout: 15_000 })
-	return 'list'
+	return (await missing.isVisible().catch(() => false)) ? 'missing' : 'listed'
 }
 
-/** Collect shillinq-origin console errors + 5xx, filtering NC-core / env noise. */
-function trackShillinqErrors(page: Page): () => string[] {
-	const errors: string[] = []
-	const noise =
-		/Failed to load resource|favicon|net::ERR|\b404\b|user status|status\.php|Download the (React|Vue) DevTools/i
-	page.on('console', (m: ConsoleMessage) => {
-		if (m.type() !== 'error') return
-		const t = m.text()
-		if (noise.test(t)) return
-		errors.push(t)
-	})
-	page.on('response', (r) => {
-		if (r.status() >= 500 && r.url().includes('/apps/shillinq/')) {
-			errors.push(`HTTP ${r.status()} ${r.url()}`)
-		}
-	})
-	return () => [...new Set(errors)]
-}
-
-test.describe('Shillinq — External Connections roster', () => {
-	/**
-	 * @e2e integration-config-to-openconnector::the-roster-page-lists-all-15-declared-families
-	 */
-	test('the roster page lists all 15 declared families', async ({ page }) => {
-		const errors = trackShillinqErrors(page)
+test.describe('integration-config-to-openconnector: the External Connections roster', () => {
+	test('the roster page lists one row per declared family, fifteen in all @spec REQ-ICO-002', async ({ page, request }) => {
+		expect(FAMILY_KEYS, 'the declaration holds the fifteen families').toHaveLength(15)
 
 		const state = await openRoster(page)
+		test.skip(state === 'missing', 'integriq is not installed on this instance, so the page shows the missing-dependency screen')
 
-		if (state === 'absent') {
-			// The register is not here, so there is nothing to enumerate. What
-			// MUST hold is that the page says so and invents nothing: no row
-			// may be drawn for a family it cannot know the state of.
-			await expect(
-				page.locator('.external-adapters__item[data-adapter-id]'),
-			).toHaveCount(0)
-			expect(
-				errors(),
-				`shillinq-origin errors:\n${errors().join('\n')}`,
-			).toEqual([])
-			return
+		const res = await request.get(CONNECTIONS_API, { headers: HEADERS })
+		expect(res.status(), await res.text()).toBe(200)
+		const rows = ((await res.json()).results ?? []) as ConnectionRow[]
+		for (const row of rows) {
+			expect(String(row.app), 'a connection row of another app').toBe('shillinq')
 		}
+		expect(rows.map((row) => String(row.key)).sort()).toEqual([...FAMILY_KEYS].sort())
 
-		await expect(page.locator('.external-adapters__title')).toContainText(
-			/External Connections/i,
-			{ timeout: 15_000 },
-		)
-		await expect(page.locator('.external-adapters__summary')).toBeVisible({
-			timeout: 10_000,
-		})
-		await expect(page.locator('.external-adapters__pill--total')).toContainText(
-			/15\s+families/i,
-		)
-
-		// Every family row is keyed by its data-adapter-id, so the count is the
-		// real backend count (ExternalAdaptersAdminController::ADAPTERS), not a
-		// fixture.
-		const items = page.locator('.external-adapters__item[data-adapter-id]')
-		await expect(items).toHaveCount(15)
-		for (const slug of ALL_FAMILY_SLUGS) {
-			await expect(
-				page.locator(`.external-adapters__item[data-adapter-id="${slug}"]`),
-			).toBeVisible()
+		for (const connection of declaration.connections) {
+			await expect(page.getByRole('row', { name: new RegExp(escapeRegExp(String(connection.title)), 'i') }).first(), connection.key)
+				.toBeVisible({ timeout: 20_000 })
 		}
-
-		expect(errors(), `shillinq-origin errors:\n${errors().join('\n')}`).toEqual(
-			[],
-		)
 	})
 
-	/**
-	 * @e2e integration-config-to-openconnector::no-per-adapter-detail-route-exists-any-more
-	 *
-	 * The 15 `ExternalAdapterDetail` pages + their manifest routes were
-	 * removed in the same edit as their menu leaves (REQ-ICO-004); the
-	 * former `.adapter-detail` panel component (src/views/external-adapters/
-	 * ExternalAdapterDetail.vue) no longer exists in the bundle. Deep-linking
-	 * the old per-family path must therefore NOT render a detail panel —
-	 * the SPA's catch-all resolves it to something else (dashboard/roster),
-	 * never `.adapter-detail`.
-	 */
-	test('no per-adapter detail route exists any more', async ({ page }) => {
-		await page.goto(`${APP}/external-adapters/mollie`, {
-			waitUntil: 'domcontentloaded',
-		})
+	test('the fragment declares one page and no per-adapter detail page @spec REQ-ICO-002', async ({ page }) => {
+		const fragment = manifest('src/manifest.d/external-adapters-w8.json')
+		const pages = fragment.pages ?? []
+		expect(pages.map((entry) => entry.id)).toEqual(['ExternalAdaptersStatus'])
+		expect(pages[0].route).toBe('/external-adapters')
+		expect(pages.some((entry) => entry.config?.adapterId !== undefined), 'a page with config.adapterId').toBe(false)
+
+		const menu = (fragment.menu ?? []).find((node) => node.id === 'ExternalConnections')
+		expect(menu?.route, 'the menu entry is a single leaf').toBe('ExternalAdaptersStatus')
+		expect(menu?.children ?? []).toHaveLength(0)
+
+		const fragments = ['src/manifest.json', ...readdirSync(join(ROOT, 'src', 'manifest.d'))
+			.filter((name) => name.endsWith('.json'))
+			.map((name) => `src/manifest.d/${name}`)]
+		for (const path of fragments) {
+			for (const entry of manifest(path).pages ?? []) {
+				expect(String(entry.route ?? ''), `${path}: ${entry.id}`).not.toMatch(/^\/external-adapters\/./)
+			}
+		}
+
+		// A family's old detail path is not a page of its own any more.
+		await page.goto(`${APP}/external-adapters/${FAMILY_KEYS[0]}`)
+		await page.waitForLoadState('domcontentloaded')
 		await dismissOverlays(page)
-		// Give the SPA router a moment to settle on whatever it resolves to.
-		await page.waitForTimeout(1_500)
-
-		await expect(page.locator('.adapter-detail')).toHaveCount(0)
+		await expect(page.locator('[data-testid="cn-detail-page"], .cn-detail-page')).toHaveCount(0)
 	})
 
-	/**
-	 * @e2e integration-config-to-openconnector::every-rows-deep-link-is-a-well-formed-url
-	 */
-	test("every row's deep link is a well-formed URL", async ({ page }) => {
-		const state = await openRoster(page)
+	// Missing: the `provisioning` field of `GET /api/admin/external-adapters`, removed with that route by adopt-connection-registry.
+	test.fixme('a provisioned source shows its slug status @spec REQ-ICO-003', async () => {})
 
-		if (state === 'absent') {
-			// No register, no rows, so no deep links to check. The absent answer
-			// carries its own link instead, and it must be the one an operator
-			// would follow to fix this.
-			const deepLink = page
-				.locator('.external-adapters__error a[href]')
-				.first()
-			if (await deepLink.isVisible().catch(() => false)) {
-				const href = await deepLink.getAttribute('href')
-				expect(
-					/^https?:\/\//.test(href as string)
-						|| /\/apps\/openconnector\//.test(href as string),
-					`the absent-register answer links to "${href}", which is not an openconnector deep link`,
-				).toBeTruthy()
-			}
-			return
-		}
+	// Missing: the "declared, provision in OpenConnector" row state, which went with the `provisioning` field.
+	test.fixme('an undeclared source falls back to the deep-link prompt @spec REQ-ICO-003', async () => {})
 
-		const links = page.locator(
-			'.external-adapters__item-actions a, .external-adapters__item-actions [href]',
-		)
-		const count = await links.count()
-		expect(count).toBeGreaterThan(0)
+	// Missing: `GET /api/admin/external-adapters`; integriq now works out each row's status.
+	test.fixme('OpenRegister being unavailable degrades every row, not the whole page @spec REQ-ICO-003', async () => {})
 
-		for (let i = 0; i < count; i++) {
-			const href = await links.nth(i).getAttribute('href')
-			expect(href, `row action ${i} has a href`).toBeTruthy()
-			// Well-formed: an absolute URL, or an app-relative path pointing at
-			// openconnector's Source admin surface (design.md §3 — no per-slug
-			// deep link exists yet, so every row's fallback link is the generic
-			// Sources admin page).
-			expect(
-				/^https?:\/\//.test(href as string)
-					|| /\/apps\/openconnector\/sources/.test(href as string),
-				`href "${href}" is not a well-formed openconnector deep link`,
-			).toBeTruthy()
-		}
-	})
+	// Missing: the per-row "provision in OpenConnector" link; the page's only link column is integriq's settingsUrl.
+	test.fixme('every row\'s deep link is a well-formed URL @spec REQ-ICO-007', async () => {})
 
-	/**
-	 * @e2e integration-config-to-openconnector::no-test-file-references-a-removed-per-adapter-route
-	 *
-	 * Static check over the test tree itself (not a browser assertion): no
-	 * spec file may still assert against a `/external-adapters/<family-id>`
-	 * route this change deletes.
-	 */
-	test('no test file references a removed per-adapter route', () => {
-		const e2eRoot = join(__dirname, '..', 'e2e')
-		const offenders: string[] = []
-		const familyPathRe = new RegExp(
-			`/external-adapters/(${ALL_FAMILY_SLUGS.join('|')})(?![a-z0-9-])`,
-		)
-
-		function walk(dir: string): void {
-			for (const entry of readdirSync(dir)) {
-				const full = join(dir, entry)
-				const stat = statSync(full)
-				if (stat.isDirectory()) {
-					walk(full)
-					continue
-				}
-				if (!/\.(spec|test)\.ts$/.test(entry)) {
-					continue
-				}
-				// This file itself intentionally documents the OLD route shape
-				// in its own "no detail route" test and in this comment block —
-				// skip self-reference.
-				if (full === __filename) {
-					continue
-				}
-				const content = readFileSync(full, 'utf8')
-				if (familyPathRe.test(content)) {
-					offenders.push(full)
-				}
-			}
-		}
-
-		walk(e2eRoot)
-
-		expect(
-			offenders,
-			`removed per-adapter route literal(s) still referenced:\n${offenders.join('\n')}`,
-		).toEqual([])
+	test('no test file references a removed per-adapter route @spec REQ-ICO-007', async () => {
+		// Built from the declared keys so this file holds no such literal itself.
+		const removed = new RegExp(`/external-adapters/(${FAMILY_KEYS.map(escapeRegExp).join('|')})\\b`)
+		const offenders = filesUnder(join(ROOT, 'tests', 'e2e'))
+			.filter((path) => /\.(ts|js|mjs)$/.test(path))
+			.filter((path) => removed.test(readFileSync(path, 'utf8')))
+		expect(offenders, 'test files naming a removed per-adapter route').toEqual([])
 	})
 })

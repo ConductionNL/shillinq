@@ -82,8 +82,7 @@
  *     `afterAll`, so two workers seeding `Account` objects concurrently cannot
  *     see each other's rows.
  *   - The only absolute-count assertions are on FIXED data, not on rows a
- *     sibling worker could add: `workflows/external-adapters-admin.spec.ts`
- *     counts the compiled-in adapter families, and `invoice-quick-draft` /
+ *     sibling worker could add: `invoice-quick-draft` /
  *     `recurring-invoicing` count draft lines inside a modal they opened
  *     themselves. `list-views-cndatatable.spec.ts` compares a row count to its
  *     OWN before-count within one test, on one worker.
@@ -189,7 +188,7 @@ const CI_TEST_IGNORE = [
  * the SHARED `ConductionNL/.github/.github/workflows/quality.yml`
  * `playwright` job, which affects all 18 fleet apps on this reusable
  * workflow and belongs in its own PR against `.github`. Concrete proposal:
- * `openspec/changes/setup-wizard-english/notes-github-playwright-split.md`.
+ * `openspec/changes/archive/2026-11-25-setup-wizard-english/notes-github-playwright-split.md`.
  * Once that lands, delete this env-gate and the `dependencies` discussion
  * above becomes moot — the projects run as two independently-reported CI
  * steps instead.

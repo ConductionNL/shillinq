@@ -26,6 +26,7 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\InvoiceApiController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\BillableLinesService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCP\AppFramework\Http;
@@ -107,6 +108,20 @@ final class InvoiceApiControllerTest extends TestCase {
 	private ?IUser $user = null;
 
 	/**
+	 * Mock billable lines service.
+	 *
+	 * @var BillableLinesService&MockObject
+	 */
+	private BillableLinesService&MockObject $billableLines;
+
+	/**
+	 * The caller's active administration, or null for none.
+	 *
+	 * @var string|null
+	 */
+	private ?string $activeAdministrationId = 'adm-1';
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var InvoiceApiController
@@ -127,6 +142,7 @@ final class InvoiceApiControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->objectService = $this->createMock(ObjectServiceInterface::class);
+		$this->billableLines = $this->createMock(BillableLinesService::class);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -137,7 +153,9 @@ final class InvoiceApiControllerTest extends TestCase {
 				return $this->user;
 			}
 		);
-		$this->administrationContext->method('buildContext')->willReturn(['activeAdministrationId' => 'adm-1']);
+		$this->administrationContext->method('buildContext')->willReturnCallback(
+			fn (): array => ['activeAdministrationId' => $this->activeAdministrationId]
+		);
 
 		$this->objectService->method('setRegister')->willReturnSelf();
 		$this->objectService->method('setSchema')->willReturnSelf();
@@ -150,6 +168,7 @@ final class InvoiceApiControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			logger: $this->logger,
 			objectService: $this->objectService,
+			billableLines: $this->billableLines,
 		);
 
 	}//end setUp()
@@ -250,14 +269,15 @@ final class InvoiceApiControllerTest extends TestCase {
 
 		$seenInvoice = null;
 		$seenLines = null;
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(true);
 		$this->pdfGenerator->method('generatePdf')->willReturnCallback(
 			static function (array $invoiceArg, array $linesArg) use (&$seenInvoice, &$seenLines): array {
 				$seenInvoice = $invoiceArg;
 				$seenLines = $linesArg;
 				return [
 					'filename' => 'invoice-F-2026-0007.pdf',
-					'html' => '<html><body>F-2026-0007</body></html>',
-					'mimeType' => 'text/html',
+					'pdf' => "%PDF-1.7\nF-2026-0007",
+					'mimeType' => 'application/pdf',
 				];
 			}
 		);
@@ -271,7 +291,8 @@ final class InvoiceApiControllerTest extends TestCase {
 		self::assertSame($lines, $seenLines);
 
 		$headers = $response->getHeaders();
-		self::assertSame('text/html; charset=utf-8', $headers['Content-Type']);
+		self::assertSame('application/pdf', $headers['Content-Type']);
+		self::assertStringStartsWith('%PDF', (string)$response->render());
 		// NOTE: DataDisplayResponse::__construct() re-adds its own
 		// `Content-Disposition: inline; filename=""` AFTER the constructor
 		// headers are applied, so the controller's filename never survives to
@@ -293,11 +314,12 @@ final class InvoiceApiControllerTest extends TestCase {
 			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
 		);
 		$this->objectService->method('findAll')->willReturn([]);
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(true);
 		$this->pdfGenerator->method('generatePdf')->willReturn(
 			[
 				'filename' => "../../etc/pass\"wd\r\nX-Injected: 1",
-				'html' => '<html></html>',
-				'mimeType' => 'text/html',
+				'pdf' => '%PDF-1.7',
+				'mimeType' => 'application/pdf',
 			]
 		);
 
@@ -315,6 +337,33 @@ final class InvoiceApiControllerTest extends TestCase {
 	}//end testPdfHostileFilenameCannotInjectAHeader()
 
 	/**
+	 * Without docudesk the endpoint says it is needed instead of serving a
+	 * file (sales-invoice-document REQ-SID-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-sales-invoice-document/tasks.md#task-2.2
+	 */
+	public function testPdfWithoutDocudeskSaysItIsNeeded(): void {
+		$this->objectService->method('find')->willReturn(
+			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
+		);
+		$this->objectService->method('findAll')->willReturn([]);
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(false);
+		$this->pdfGenerator->expects(self::never())->method('generatePdf');
+
+		$response = $this->controller->pdf('inv-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		self::assertSame(
+			['error' => 'docudesk-unavailable', 'message' => 'Docudesk is needed to produce invoice documents.'],
+			$response->getData()
+		);
+
+	}//end testPdfWithoutDocudeskSaysItIsNeeded()
+
+	/**
 	 * A renderer failure yields HTTP 500 and leaks no stack trace (ADR-005).
 	 *
 	 * @return void
@@ -324,6 +373,7 @@ final class InvoiceApiControllerTest extends TestCase {
 			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
 		);
 		$this->objectService->method('findAll')->willReturn([]);
+		$this->pdfGenerator->method('documentsAvailable')->willReturn(true);
 		$this->pdfGenerator->method('generatePdf')->willThrowException(new \RuntimeException('renderer exploded'));
 		$this->logger->expects($this->once())->method('error');
 
@@ -560,5 +610,106 @@ final class InvoiceApiControllerTest extends TestCase {
 
 	}//end testGenerateInvalidRequestReturnsSlugWithoutLeakingMessage()
 
+	/**
+	 * Hours or claims that are not the customer's are refused before anything
+	 * is drafted, so they cannot land on this customer's invoice.
+	 *
+	 * @return void
+	 */
+	public function testGenerateRefusesLinesOfAnotherCustomer(): void {
+		$this->request->method('getParams')->willReturn(
+			[
+				'billingModel' => 't_and_m',
+				'customerId' => 'cust-1',
+				'fromDate' => '2026-09-01',
+				'toDate' => '2026-09-30',
+				'rateCardId' => 'rc-1',
+				'timeEntryIds' => ['t-own', 't-of-cust-2'],
+				'expenseIds' => ['c-own'],
+			]
+		);
+		$this->billableLines->expects($this->once())
+			->method('foreignLineIds')
+			->with('adm-1', 'cust-1', ['t-own', 't-of-cust-2'], ['c-own'])
+			->willReturn(['t-of-cust-2']);
+		$this->service->expects($this->never())->method('draftInvoice');
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		self::assertSame('invoice-generate-foreign-lines', $response->getData()['error']);
+
+	}//end testGenerateRefusesLinesOfAnotherCustomer()
+
+	/**
+	 * The lines step reads the customer's billable lines from the server,
+	 * scoped to the caller's administration, never one from the request.
+	 *
+	 * @return void
+	 */
+	public function testBillableAnswersTheCustomersLinesInTheCallersAdministration(): void {
+		$this->request->method('getParam')->willReturnMap(
+			[
+				['customerId', '', 'cust-1'],
+				['projectId', '', ''],
+				['fromDate', '', '2026-09-01'],
+				['toDate', '', '2026-09-30'],
+				['administrationId', '', 'adm-attacker'],
+			]
+		);
+		$lines = ['timeEntries' => [['id' => 't-1']], 'expenses' => []];
+		$this->billableLines->expects($this->once())
+			->method('forCustomer')
+			->with('adm-1', 'cust-1', '', '2026-09-01', '2026-09-30')
+			->willReturn($lines);
+
+		$response = $this->controller->billable();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($lines, $response->getData());
+
+	}//end testBillableAnswersTheCustomersLinesInTheCallersAdministration()
+
+	/**
+	 * An anonymous caller reads no billable lines.
+	 *
+	 * @return void
+	 */
+	public function testBillableAnonymousReturns401(): void {
+		$this->user = null;
+		$this->billableLines->expects($this->never())->method('forCustomer');
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->billable()->getStatus());
+
+	}//end testBillableAnonymousReturns401()
+
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * A caller without an administration reads, posts, renders and drafts
+	 * nothing: there is no `default` administration to fall back on.
+	 *
+	 * @return void
+	 */
+	public function testACallerWithoutAnAdministrationIsRefusedEverywhere(): void {
+		$this->activeAdministrationId = null;
+		$orphan = $this->entity(['id' => 'inv-default', 'administrationId' => 'default']);
+		$this->objectService->method('find')->willReturn($orphan);
+		$this->objectService->expects(self::never())->method('findAll');
+		$this->service->expects(self::never())->method('draftInvoice');
+		$this->service->expects(self::never())->method('postInvoice');
+		$this->pdfGenerator->expects(self::never())->method('generatePdf');
+		$this->billableLines->expects(self::never())->method('forCustomer');
+
+		$responses = [
+			'index' => $this->controller->index(),
+			'show' => $this->controller->show('inv-default'),
+			'post' => $this->controller->post('inv-default'),
+			'pdf' => $this->controller->pdf('inv-default'),
+			'generate' => $this->controller->generate(),
+			'billable' => $this->controller->billable(),
+		];
+		foreach ($responses as $endpoint => $response) {
+			self::assertSame(403, $response->getStatus(), $endpoint . ' refuses a caller without an administration.');
+		}
+	}//end testACallerWithoutAnAdministrationIsRefusedEverywhere()
 }//end class
