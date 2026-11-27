@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
+const { LibraryStylesheetCopy, withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
 const path = require('path')
 const fs = require('fs')
 const webpack = require('webpack')
@@ -310,4 +311,12 @@ webpackConfig.optimization = {
 	},
 }
 
-module.exports = webpackConfig
+// nextcloud-vue's stylesheet goes to css/nextcloud-vue.css, which the app's
+// pages link (templates/index.php, templates/settings/admin.php) instead of a
+// bundle inserting ~1.1 MB of CSS text on every load.
+webpackConfig.plugins.push(new LibraryStylesheetCopy())
+
+// css-loader writes no source maps into the JavaScript, @nextcloud/vue's index
+// is side-effect free (one Nc* import no longer bundles every component), and
+// the chunks function also requires an initial chunk.
+module.exports = withLeanBundles(webpackConfig)

@@ -134,3 +134,5 @@ task-audit.json
 # commands in .claude/commands/ are committed.
 /.claude/*
 !/.claude/commands/
+# nextcloud-vue stylesheet, copied by webpack.config.js (LibraryStylesheetCopy)
+/css/nextcloud-vue.css
