@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 const path = require('path')
+const { LibraryStylesheetCopy, withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
 const fs = require('fs')
 const webpack = require('webpack')
 const TerserPlugin = require('terser-webpack-plugin')
@@ -310,4 +311,12 @@ webpackConfig.optimization = {
 	},
 }
 
-module.exports = webpackConfig
+// nextcloud-vue's stylesheet goes to css/nextcloud-vue.css, which the app's
+// pages link (templates/index.php, templates/settings/admin.php) instead of a
+// bundle inserting ~1.1 MB of CSS text on every load.
+webpackConfig.plugins.push(new LibraryStylesheetCopy())
+
+// css-loader writes no source maps into the JavaScript, @nextcloud/vue's index
+// is side-effect free (one Nc* import no longer bundles every component), and
+// the chunks function also requires an initial chunk.
+module.exports = withLeanBundles(webpackConfig)

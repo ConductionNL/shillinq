@@ -42,7 +42,8 @@ import {
 // other module evaluates — see src/setPublicPath.js.
 import './setPublicPath.js'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
-import '@conduction/nextcloud-vue/css/index.css'
+// The library stylesheet is linked by templates/index.php (css/nextcloud-vue.css,
+// copied by LibraryStylesheetCopy), not inserted from this bundle as text.
 // gridstack v12 is a required peerDependency of @conduction/nextcloud-vue and
 // backs every `type: "dashboard"` page (12 of them here). Its CSS sizes items
 // with `width: var(--gs-column-width)`; without the stylesheet every widget

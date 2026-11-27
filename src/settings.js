@@ -17,7 +17,8 @@ import './setPublicPath.js'
 // Library CSS. The admin page is its own webpack entry, so the import in
 // main.js does not reach it: without this line CnAdminSettingsShell and the
 // settings widgets render with their scoped styles only.
-import '@conduction/nextcloud-vue/css/index.css'
+// The library stylesheet is linked by templates/settings/admin.php
+// (css/nextcloud-vue.css, copied by LibraryStylesheetCopy).
 
 // Mount OUTSIDE the loadTranslations callback.
 //
