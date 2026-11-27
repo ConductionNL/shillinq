@@ -76,8 +76,9 @@ Work is specified before it is built, with [OpenSpec](openspec/config.yaml):
 
 ## Architecture decisions
 
-`openspec/architecture/` holds this repo's numbered architecture record
-(`adr-000-data-model.md`). `docs/architecture/integration-points.md` lists the
+`openspec/architecture/` holds this repo's numbered architecture records
+(`adr-000` to `adr-002`: data model, bookkeeping tier roadmap, information
+architecture). `docs/architecture/integration-points.md` lists the
 backend integration points that are shaped but not implemented yet.
 
 ## Conventions
