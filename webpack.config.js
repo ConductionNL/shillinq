@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
-const path = require('path')
 const { LibraryStylesheetCopy, withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
+const path = require('path')
 const fs = require('fs')
 const webpack = require('webpack')
 const TerserPlugin = require('terser-webpack-plugin')
