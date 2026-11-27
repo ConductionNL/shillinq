@@ -417,4 +417,106 @@ final class FeeScheduleServiceTest extends TestCase {
 
 		self::assertSame('fs-1', $resolved['id']);
 	}//end testARefundRuleSitsBesideTheCharge()
+
+	/**
+	 * Live, OpenRegister answers ObjectEntity rows and reads a `register` filter
+	 * as its own register metadata, so it matches no schedule. The fee still
+	 * resolves for the object: rows are read through jsonSerialize() and the
+	 * register is compared on the row, not filtered on (leges-at-intake 4.2).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
+	 */
+	public function testAFeeResolvesFromEntityRowsWithoutARegisterFilter(): void {
+		$double = new class([$this->schedule(), $this->schedule(overrides: ['id' => 'fs-other', 'register' => 'other', 'amount' => 1.0])]) {
+			/**
+			 * The filters of every findAll().
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $filters = [];
+
+			/**
+			 * @param array<int, array<string, mixed>> $rows The stored schedules.
+			 */
+			public function __construct(private array $rows) {
+			}
+
+			/**
+			 * Select the register (ignored: one register).
+			 *
+			 * @param string $register The register.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			/**
+			 * Select the schema (ignored: the schedules only).
+			 *
+			 * @param string $schema The schema.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * Rows as OpenRegister answers them; a `register` filter matches nothing.
+			 *
+			 * @param array<string, mixed> $params Query params.
+			 *
+			 * @return array<int, \JsonSerializable>
+			 */
+			public function findAll(array $params = []): array {
+				$this->filters[] = ($params['filters'] ?? []);
+				if (array_key_exists('register', ($params['filters'] ?? [])) === true) {
+					return [];
+				}
+
+				return array_map(
+					static fn (array $row): \JsonSerializable => new class($row) implements \JsonSerializable {
+						/**
+						 * @param array<string, mixed> $row The object.
+						 */
+						public function __construct(private array $row) {
+						}
+
+						/**
+						 * @return array<string, mixed>
+						 */
+						public function jsonSerialize(): array {
+							return $this->row;
+						}
+					},
+					$this->rows
+				);
+			}
+		};
+
+		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$service = new FeeScheduleService(
+			objectService: new DuckObjectServiceAdapter(inner: $double),
+			appConfig: $appConfig,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+		);
+
+		$resolved = $service->resolveForObject(
+			register: 'dossiq',
+			schema: 'Zaak',
+			object: ['caseType' => 'bouwvergunning'],
+			intakeChannel: 'desk',
+			onDate: '2026-06-01'
+		);
+
+		self::assertSame(expected: 'fs-1', actual: ($resolved['id'] ?? null));
+		self::assertSame(expected: 245.0, actual: ($resolved['amount'] ?? null));
+		$registerFilters = array_filter($double->filters, static fn (array $f): bool => array_key_exists('register', $f));
+		self::assertSame(expected: [], actual: array_values($registerFilters));
+	}//end testAFeeResolvesFromEntityRowsWithoutARegisterFilter()
 }//end class

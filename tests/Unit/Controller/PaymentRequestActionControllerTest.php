@@ -145,6 +145,11 @@ final class PaymentRequestActionControllerTest extends TestCase {
 
 			public function setRegister(string $register): static {
 				$this->registersSeen[] = $register;
+				if ($register === 'no-such-register') {
+					// As OpenRegister's RegisterMapper answers a register it does not have.
+					throw new \OCP\AppFramework\Db\DoesNotExistException('Did expect one result but found none');
+				}
+
 				return $this;
 			}
 
@@ -593,6 +598,25 @@ final class PaymentRequestActionControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 	}//end testRaisingLegesNeedsAnObject()
+
+	/**
+	 * A register this instance does not have is "No such object" (404), not the
+	 * 500 OpenRegister's DoesNotExistException made of it (leges-at-intake 4.2,
+	 * found live on an instance without dossiq).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
+	 */
+	public function testRaisingLegesOnAnAbsentRegisterIsNoSuchObject(): void {
+		$controller = $this->makeController(stored: ['FeeSchedule' => [$this->feeSchedule()]], mayAdminister: true);
+
+		$response = $controller->raiseLeges(register: 'no-such-register', schema: 'Zaak', objectId: 'zaak-7');
+
+		self::assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
+		self::assertSame(expected: ['error' => 'No such object.'], actual: $response->getData());
+		self::assertSame(expected: [], actual: $this->saved);
+	}//end testRaisingLegesOnAnAbsentRegisterIsNoSuchObject()
 
 	/**
 	 * Settling without naming an amount means "the whole of what this request

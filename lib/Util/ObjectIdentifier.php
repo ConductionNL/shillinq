@@ -183,6 +183,30 @@ final class ObjectIdentifier {
 	}//end accessor()
 
 	/**
+	 * The object service scoped to a register and schema, or null when this
+	 * instance has no such register or schema.
+	 *
+	 * OpenRegister's setRegister()/setSchema() throw DoesNotExistException for a
+	 * slug the instance does not carry (an app that is not installed, such as a
+	 * case app's register), which a route turned into a 500.
+	 *
+	 * @param object $objectService The object service.
+	 * @param string $register      The register slug.
+	 * @param string $schema        The schema slug.
+	 *
+	 * @return object|null The scoped service, or null.
+	 *
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
+	 */
+	public static function scopedTo(object $objectService, string $register, string $schema): ?object {
+		try {
+			return $objectService->setRegister($register)->setSchema($schema);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end scopedTo()
+
+	/**
 	 * Look one object up by identifier, the way that actually works.
 	 *
 	 * ⚠️ DO NOT reach for `findAll(['filters' => ['id' => $id]])` instead.
