@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use OCP\EventDispatcher\Event;
 /**
  * A billable period of an account closed; answered with a draft invoice or a refusal.
  *
- * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  */
 final class BillablePeriodClosedEvent extends Event {
 
@@ -87,7 +87,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return string The app id.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getSourceApp(): string {
 		return $this->sourceApp;
@@ -98,7 +98,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return string The reference.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getExternalReference(): string {
 		return $this->externalReference;
@@ -109,7 +109,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return string `YYYY-MM`.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getPeriod(): string {
 		return $this->period;
@@ -120,7 +120,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return array<int, array<string, mixed>> The lines.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getLines(): array {
 		return $this->lines;
@@ -131,7 +131,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return string The correlation id.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getCorrelationId(): string {
 		return $this->correlationId;
@@ -145,7 +145,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function accept(string $invoiceId, string $invoiceNumber): void {
 		$this->error  = null;
@@ -166,7 +166,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function acceptDuplicate(string $invoiceId, string $invoiceNumber): void {
 		$this->accept(invoiceId: $invoiceId, invoiceNumber: $invoiceNumber);
@@ -180,7 +180,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function refuse(string $error): void {
 		$this->result = null;
@@ -192,7 +192,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return bool True when accepted.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function isHandled(): bool {
 		return $this->result !== null;
@@ -203,7 +203,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return array<string, mixed>|null The answer, or null when not accepted.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getResult(): ?array {
 		return $this->result;
@@ -214,7 +214,7 @@ final class BillablePeriodClosedEvent extends Event {
 	 *
 	 * @return string|null The reason, or null when not refused.
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getError(): ?string {
 		return $this->error;

@@ -46,7 +46,7 @@ interface BillablePeriodInvoiceServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/archive/2026-11-26-billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function invoicePeriod(BillablePeriodClosedEvent $event): void;
 }//end interface

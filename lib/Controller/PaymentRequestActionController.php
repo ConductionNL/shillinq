@@ -522,16 +522,20 @@ class PaymentRequestActionController extends Controller {
 	 * @param string $schema The schema slug.
 	 * @param string $objectId The object id.
 	 *
-	 * Read by uuid through the schema-scoped find(), as in loadRequest().
+	 * Read by uuid through the schema-scoped find(), as in loadRequest(). A
+	 * register or schema this instance does not have is no such object either
+	 * (OpenRegister throws DoesNotExistException for it, which answered 500).
 	 *
 	 * @return array<string, mixed>|null The object, or null.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
+	 * @spec openspec/changes/leges-at-intake/tasks.md#task-4.2
 	 */
 	private function loadObject(string $register, string $schema, string $objectId): ?array {
-		$scoped = $this->objectService
-			->setRegister($register)
-			->setSchema($schema);
+		$scoped = ObjectIdentifier::scopedTo(objectService: $this->objectService, register: $register, schema: $schema);
+		if ($scoped === null) {
+			return null;
+		}
 
 		return ObjectIdentifier::findOne(scoped: $scoped, id: $objectId);
 	}//end loadObject()
