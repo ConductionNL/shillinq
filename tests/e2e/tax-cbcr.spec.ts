@@ -16,14 +16,18 @@
  *      EUR 40M sold to the customer standing for Voorbeeld GmbH as related
  *      revenue and the EUR 300M to third parties as unrelated (REQ-CBC-002);
  *   3. filing the CbC report: the 2026 report page shows its jurisdictions
- *      and its checks; generating and downloading the 2026 file and marking
- *      it submitted with CBC-2027-0001 wait for the CbC XML generator
- *      (REQ-CBC-008, REQ-CBC-011);
+ *      and its checks; Generate XML stores a file valid against the bundled
+ *      CbC XSD, which is downloaded and the report marked submitted with
+ *      CBC-2027-0001 (REQ-CBC-008, REQ-CBC-011);
  *   4. the safe harbour tests: Run safe harbour tests on a 2026 minimum tax
  *      return writes a pass or fail per test and jurisdiction, drafts a
  *      computation for every jurisdiction that passes none, and the Safe
- *      harbour list shows the passes; Generate XML waits for the GIR
- *      generator (REQ-CBC-009, REQ-CBC-011).
+ *      harbour list shows the passes; Generate XML stores no GIR file while
+ *      a computed jurisdiction misses per-entity elements, and stores one
+ *      claiming the safe harbour for NL and DE (REQ-CBC-009, REQ-CBC-011).
+ *
+ * Generate XML refuses every file until task 2.1 bundles the OECD schema
+ * sets; the tests that need a stored file skip with that reason until then.
  *
  * The Voorbeeld group (Voorbeeld Groep Holding B.V., Voorbeeld GmbH,
  * Voorbeeld Productie B.V.) is the test data design.md names; it is not a
@@ -163,6 +167,51 @@ async function runFiscalYearAction(page: Page, entityId: string, action: RegExp)
 	await expect(dialog.getByTestId('fiscal-year-action-done')).toBeVisible({ timeout: 30_000 })
 }
 
+/** The answer of a Generate XML call: the stored report and the return it is linked on, or the refusal. */
+interface GenerateAnswer {
+	status: number
+	body: { report?: RegisterObject, return?: RegisterObject, error?: string }
+}
+
+/** Press Generate XML through its endpoint: `returns/{id}/xml` or `minimum-tax-returns/{id}/xml`. */
+async function generateXml(request: APIRequestContext, path: string): Promise<GenerateAnswer> {
+	const res = await request.post(`${API}/${path}/xml`, { headers: HEADERS })
+	const text = await res.text()
+	let body: GenerateAnswer['body']
+	try {
+		body = JSON.parse(text) as GenerateAnswer['body']
+	} catch {
+		body = { error: text }
+	}
+	return { status: res.status(), body }
+}
+
+/** Skip while the OECD schema set of task 2.1 is not bundled: every file is refused until then. */
+function skipWithoutSchemaSet(answer: GenerateAnswer): void {
+	const error = String(answer.body.error ?? '')
+	test.skip(answer.status === 422 && /schema set is not in/i.test(error), `the OECD schema set is not bundled (task 2.1): ${error}`)
+}
+
+/** Download a stored report file through the reporting endpoint and answer its text. */
+async function download(request: APIRequestContext, reportId: string): Promise<string> {
+	const res = await request.get(`/index.php/apps/shillinq/api/reporting/download/${reportId}`, { headers: HEADERS })
+	expect(res.status(), `download ${reportId}`).toBe(200)
+	return res.text()
+}
+
+/** Run a lifecycle transition through OpenRegister with its inputs. */
+async function transition(request: APIRequestContext, id: string, action: string, data: Record<string, string> = {}): Promise<{ ok: boolean, status: number, text: string }> {
+	const res = await request.post(`${OBJECTS}/CbcrReturn/${encodeURIComponent(id)}/transition`, { headers: HEADERS, data: { action, data } })
+	return { ok: res.ok(), status: res.status(), text: await res.text() }
+}
+
+/** The 2026 CbC reports, the Voorbeeld group's first. */
+async function cbcReports(request: APIRequestContext): Promise<RegisterObject[]> {
+	const upe = await entityNamed(request, UPE_NAME)
+	const reports = (await list(request, 'CbcrReturn')).filter((report) => String(report.period ?? '').includes(String(YEAR)))
+	return reports.sort((a, b) => Number(upe !== undefined && b.reportingEntity === idOf(upe)) - Number(upe !== undefined && a.reportingEntity === idOf(upe)))
+}
+
 /** Whether a year's revenue reached the threshold. */
 function reached(assessment: ScopeAssessment, year: number): boolean {
 	const row = assessment.revenueByYear.find((candidate) => candidate.year === year)
@@ -241,11 +290,63 @@ test.describe('tax-cbcr-and-pillar2-returns: country-by-country report and minim
 		await expect(page.getByText(/^(Jurisdictions|Jurisdicties)$/i).first()).toBeVisible({ timeout: 20_000 })
 	})
 
-	// Missing: Generate XML (tasks 4.1, lib/Reporting/Generator/CbcXmlGenerator.php) is not built, so no 2026 file can be stored, downloaded from the Files tab or filed.
-	test.fixme('the tax director downloads the 2026 file and marks the report submitted with CBC-2027-0001 @spec REQ-CBC-011', async () => {})
+	test('the tax director downloads the 2026 file and marks the report submitted with CBC-2027-0001 @spec REQ-CBC-011', async ({ page, request }) => {
+		const report = (await cbcReports(request)).find((candidate) => candidate.state === 'reconciled')
+		test.skip(report === undefined, `no reconciled ${YEAR} country-by-country report on this instance`)
+		const reportId = idOf(report!)
 
-	// Missing: Generate XML (tasks 4.1, CbcXmlGenerator with the bundled OECD CbC XSD of task 2.1) is not built.
-	test.fixme('Generate XML renders the 2026 CbC file valid against CbcXML_v2.0.xsd @spec REQ-CBC-008', async () => {})
+		const generated = await generateXml(request, `returns/${reportId}`)
+		skipWithoutSchemaSet(generated)
+		expect(generated.status, JSON.stringify(generated.body)).toBe(201)
+		const fileId = String(generated.body.report?.id ?? '')
+		expect(fileId, 'the stored file').not.toBe('')
+		expect(generated.body.return?.cbcrXmlSubmission, 'the file is linked on the report').toBe(fileId)
+
+		const xml = await download(request, fileId)
+		expect(xml).toContain('CBC_OECD')
+		expect(xml).toContain('MessageSpec')
+
+		// Marking it submitted asks for the Belastingdienst reference; without one it is refused.
+		const bare = await transition(request, reportId, 'submit')
+		expect(bare.ok, `submit without a reference is refused: ${bare.text}`).toBe(false)
+		const submitted = await transition(request, reportId, 'submit', { taxAuthorityReference: 'CBC-2027-0001' })
+		expect(submitted.ok, submitted.text).toBe(true)
+
+		const stored = (await list(request, 'CbcrReturn')).find((candidate) => idOf(candidate) === reportId)
+		expect(stored?.state).toBe('submitted')
+		expect(stored?.taxAuthorityReference).toBe('CBC-2027-0001')
+
+		await page.goto(`${APP}/taxes/cbc-reports/${reportId}`)
+		await dismissOverlays(page)
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 20_000 })
+		await expect(page.getByText('CBC-2027-0001').first()).toBeVisible({ timeout: 20_000 })
+	})
+
+	test('Generate XML renders the 2026 CbC file valid against CbcXML_v2.0.xsd @spec REQ-CBC-008', async ({ request }) => {
+		const reports = (await cbcReports(request)).filter((candidate) => ['draft', 'reconciled'].includes(String(candidate.state ?? '')))
+		test.skip(reports.length === 0, `no draft or reconciled ${YEAR} country-by-country report on this instance`)
+		const reportId = idOf(reports[0])
+
+		const generated = await generateXml(request, `returns/${reportId}`)
+		skipWithoutSchemaSet(generated)
+		test.skip(generated.status === 422 && /check/i.test(String(generated.body.error ?? '')), `a blocking check refuses the file: ${generated.body.error}`)
+		expect(generated.status, JSON.stringify(generated.body)).toBe(201)
+
+		const stored = (await list(request, 'CbcrReturn')).find((candidate) => idOf(candidate) === reportId)
+		const validation = (stored?.lastValidation ?? {}) as Record<string, unknown>
+		expect(validation.valid, 'the stored file validated against the bundled XSD').toBe(true)
+		expect(String(validation.schemaVersion ?? ''), 'the schema version is recorded').not.toBe('')
+		expect(String(validation.xsdChecksum ?? ''), 'the XSD set checksum is recorded').not.toBe('')
+
+		const xml = await download(request, String(generated.body.report?.id ?? ''))
+		const summaries = (Array.isArray(stored?.jurisdictionSummaries) ? stored!.jurisdictionSummaries : []) as unknown[]
+		const reportsInFile = (xml.match(/<(?:\w+:)?CbcReports[\s>]/g) ?? []).length
+		expect(reportsInFile, 'at least one CbcReports').toBeGreaterThan(0)
+		if (summaries.length > 0) {
+			expect(reportsInFile, 'one CbcReports per jurisdiction summary').toBe(summaries.length)
+		}
+		expect(xml).toMatch(/<(?:\w+:)?DocSpec[\s>]/)
+	})
 
 	test('Run safe harbour tests for 2026 shows pass or fail per jurisdiction and drafts the rest @spec REQ-CBC-009', async ({ page, request }) => {
 		const returns = (await list(request, 'GlobeInformationReturn')).filter((candidate) => String(candidate.period ?? '').includes(String(YEAR)))
@@ -293,9 +394,71 @@ test.describe('tax-cbcr-and-pillar2-returns: country-by-country report and minim
 		}
 	})
 
-	// Missing: Generate XML on the minimum tax return (tasks 4.3, lib/Reporting/Generator/GirXmlGenerator.php) is not built, so the missing-element list and the GIR file cannot be checked.
-	test.fixme('Generate XML stores no GIR file while jurisdictions miss per-entity elements @spec REQ-CBC-009', async () => {})
+	test('Generate XML stores no GIR file while jurisdictions miss per-entity elements @spec REQ-CBC-009', async ({ request }) => {
+		const returns = (await list(request, 'GlobeInformationReturn')).filter((candidate) => String(candidate.period ?? '').includes(String(YEAR)) && candidate.state === 'draft')
+		test.skip(returns.length === 0, `no draft ${YEAR} minimum tax return on this instance`)
 
-	// Missing: Generate XML on the minimum tax return (tasks 4.3, GirXmlGenerator with the bundled GIR XSD of task 2.1) is not built.
-	test.fixme('Generate XML stores a GIR file claiming the safe harbour for NL and DE @spec REQ-CBC-009', async () => {})
+		// A return whose group has a computed jurisdiction: one that passes no safe harbour test.
+		let chosen: RegisterObject | undefined
+		for (const candidate of returns) {
+			const computations = await list(request, 'Pillar2JurisdictionComputation', { ultimateParentEntity: String(candidate.ultimateParent ?? ''), period: `FY${YEAR}` })
+			if (computations.length > 0) {
+				chosen = candidate
+				break
+			}
+		}
+		test.skip(chosen === undefined, `no ${YEAR} minimum tax return with a computed jurisdiction`)
+		const returnId = idOf(chosen!)
+
+		const generated = await generateXml(request, `minimum-tax-returns/${returnId}`)
+		test.skip(generated.status === 201, 'every computed jurisdiction holds its per-entity elements, so a file was stored')
+		expect(generated.status, JSON.stringify(generated.body)).toBe(422)
+
+		const stored = (await list(request, 'GlobeInformationReturn')).find((candidate) => idOf(candidate) === returnId)
+		expect(String(stored?.globeXmlSubmission ?? ''), 'no file is linked').toBe('')
+		const missing = (stored?.missingElements ?? []) as Array<Record<string, unknown>>
+		test.skip(missing.length === 0, `refused for another reason: ${generated.body.error}`)
+		for (const element of missing) {
+			expect(String(element.jurisdiction ?? ''), 'each missing element names its jurisdiction').not.toBe('')
+			expect(String(element.element ?? ''), 'and the element').not.toBe('')
+		}
+
+		const checks = await request.get(`${API}/minimum-tax-returns/${returnId}/checks`, { headers: HEADERS })
+		expect(checks.status(), await checks.text()).toBe(200)
+	})
+
+	test('Generate XML stores a GIR file claiming the safe harbour for NL and DE @spec REQ-CBC-009', async ({ request }) => {
+		const returns = (await list(request, 'GlobeInformationReturn')).filter((candidate) => String(candidate.period ?? '').includes(String(YEAR)) && candidate.state === 'draft')
+		test.skip(returns.length === 0, `no draft ${YEAR} minimum tax return on this instance`)
+
+		// A return whose group puts NL and DE under a safe harbour and computes nothing.
+		let chosen: RegisterObject | undefined
+		for (const candidate of returns) {
+			const upe = String(candidate.ultimateParent ?? '')
+			const passes = (await list(request, 'Pillar2SafeHarbour', { ultimateParentEntity: upe, period: `FY${YEAR}` })).filter((record) => record.testResult === 'pass')
+			const computations = await list(request, 'Pillar2JurisdictionComputation', { ultimateParentEntity: upe, period: `FY${YEAR}` })
+			const covered = new Set(passes.map((record) => String(record.jurisdiction)))
+			if (covered.has('NL') && covered.has('DE') && computations.length === 0) {
+				chosen = candidate
+				break
+			}
+		}
+		test.skip(chosen === undefined, `no ${YEAR} minimum tax return with NL and DE both under a safe harbour and nothing computed`)
+		const returnId = idOf(chosen!)
+
+		const generated = await generateXml(request, `minimum-tax-returns/${returnId}`)
+		skipWithoutSchemaSet(generated)
+		expect(generated.status, JSON.stringify(generated.body)).toBe(201)
+		const fileId = String(generated.body.report?.id ?? '')
+		expect(generated.body.return?.globeXmlSubmission, 'the file is linked on the return').toBe(fileId)
+
+		const stored = (await list(request, 'GlobeInformationReturn')).find((candidate) => idOf(candidate) === returnId)
+		expect(((stored?.lastValidation ?? {}) as Record<string, unknown>).valid, 'the file validated against the bundled GIR XSD').toBe(true)
+
+		const xml = await download(request, fileId)
+		for (const jurisdiction of ['NL', 'DE']) {
+			expect(xml, `${jurisdiction} has its own jurisdiction section`).toContain(jurisdiction)
+		}
+		expect(xml, 'the summary claims a safe harbour').toMatch(/SafeHarbour/i)
+	})
 })
