@@ -232,6 +232,10 @@
         {
             "appVersion": "0.5.20-unstable.20261125205954",
             "versionsSha256": "fa456a9612b63ec7c31217e77499c9049a126de77725acfc1c2320f75227b398"
+        },
+        {
+            "appVersion": "0.5.20-unstable.20261126004504",
+            "versionsSha256": "9f60d4ae55695f8692ae173bd9e25c83a4163b35845766e38a5c21148bf3ac35"
         }
     ],
     "versions": {
@@ -621,7 +625,7 @@
         "schema:ProvisionDisclosureTabel": "0.1.0",
         "schema:ProvisionMovement": "0.1.0",
         "schema:PublicSectorStatement": "0.1.0",
-        "schema:PurchaseOrder": "0.1.0",
+        "schema:PurchaseOrder": "0.2.0",
         "schema:PurchaseOrderLine": "0.1.0",
         "schema:QdmttReturn": "0.2.0",
         "schema:QualifyingAsset": "0.1.0",

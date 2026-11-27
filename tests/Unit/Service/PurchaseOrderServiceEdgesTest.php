@@ -396,12 +396,68 @@ final class PurchaseOrderServiceEdgesTest extends TestCase {
 		self::assertStringEndsWith('-adm-1-000003', $po['poNumber']);
 		self::assertSame('draft', $po['statusCode']);
 		self::assertSame('requester-1', $po['requesterId']);
-		$tasks = array_values(array_filter($os->saved, static fn (array $s): bool => $s['schema'] === 'ApprovalTask'));
-		self::assertCount(1, $tasks);
-		self::assertSame('teamleider', $tasks[0]['object']['role']);
-		self::assertSame($po['id'], $tasks[0]['object']['purchaseOrderId']);
+		self::assertSame(
+			expected: ['PurchaseOrder'],
+			actual: array_column($os->saved, 'schema'),
+			message: 'no task record of its own: the approval steps are OpenRegister\'s'
+		);
 
 	}//end testCreateEmitsActivityAndSurvivesNotificationFailure()
+
+	/**
+	 * Every field a new order is saved with is declared on the PurchaseOrder
+	 * schema the register fragments merge into: OpenRegister discards an
+	 * undeclared property on save, which lost every live order its lines and a
+	 * call-off its agreement (purchasing-call-offs-and-reorder-proposals 1.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
+	 */
+	public function testEveryFieldANewOrderIsSavedWithIsDeclared(): void {
+		$os = new InMemoryObjectServiceStub(
+			data: [
+				'PurchaseOrder' => [],
+				'AdministrationMembership' => [['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'tl-1']],
+			]
+		);
+		$this->logger = $this->createStub(originalClassName: LoggerInterface::class);
+		$this->buildService(objectService: $os)->createPurchaseOrder(
+			administrationId: 'adm-1',
+			payload: $this->payload(extra: ['frameworkAgreementId' => '', 'notes' => 'Back entrance'])
+		);
+
+		$declared = [];
+		foreach (glob(__DIR__ . '/../../../lib/Settings/register.d/*.json') as $file) {
+			$fragment = json_decode((string) file_get_contents($file), true);
+			$properties = ($fragment['components']['schemas']['PurchaseOrder']['properties'] ?? []);
+			$declared   = array_merge($declared, array_keys($properties));
+		}
+
+		$order = $os->saved[0]['object'];
+		self::assertSame(expected: 'PurchaseOrder', actual: $os->saved[0]['schema']);
+		// The object id is OpenRegister's own metadata, which the in-memory stub stamps.
+		self::assertSame(
+			expected: [],
+			actual: array_values(array_diff(array_keys($order), $declared, ['id', '@self'])),
+			message: 'undeclared PurchaseOrder fields are dropped on save'
+		);
+		self::assertSame(expected: 'requester-1', actual: $order['requester']);
+		self::assertNotEmpty(actual: $order['lines']);
+		$lineDeclared = [];
+		foreach (glob(__DIR__ . '/../../../lib/Settings/register.d/*.json') as $file) {
+			$fragment     = json_decode((string) file_get_contents($file), true);
+			$lines        = ($fragment['components']['schemas']['PurchaseOrder']['properties']['lines'] ?? []);
+			$lineDeclared = array_merge($lineDeclared, array_keys($lines['items']['properties'] ?? []));
+		}
+
+		self::assertSame(
+			expected: [],
+			actual: array_values(array_diff(array_keys($order['lines'][0]), $lineDeclared)),
+			message: 'undeclared line fields'
+		);
+
+	}//end testEveryFieldANewOrderIsSavedWithIsDeclared()
 
 	/**
 	 * A failing save is logged and re-raised as "Failed to persist <schema>";

@@ -7,7 +7,7 @@
  * picked agreement shows the agreed price, the form shows what is left under
  * the ceiling, refuses an order past it, and sends frameworkAgreementId.
  *
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
  */
 
 import axios from '@nextcloud/axios'

@@ -22,15 +22,16 @@
  * The task names a seed agreement and seed stock; this spec writes its own,
  * with the run's unique prefix, in an administration of its own with an
  * AdministrationMembership for the suite's administrator, so the nightly
- * changes no seed data. Every object written here, the order and its
- * approval tasks included, is removed afterwards.
+ * changes no seed data. Every object written here, the order included, is
+ * removed afterwards. The order raises no task record of its own: its
+ * approval steps are OpenRegister's (REQ-PAD-001).
  *
- * Written 24 Nov 2026, runs in the nightly; not run in the build sandbox (no
- * live instance).
+ * Written 24 Nov 2026, runs in the nightly. Live 26 Nov 2026 on a sandbox
+ * Nextcloud 34 + PostgreSQL + OpenRegister main: the call-off passes.
  *
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/tasks.md
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md
  *
  * @e2e procurement-governance::a-call-off-takes-the-agreed-price
  * @e2e inventory-reorder-automation::low-stock-proposes-an-order
@@ -43,7 +44,6 @@ import { randomUUID } from 'node:crypto'
 import { money, OrFixtures, UNIQUE_PREFIX } from './workflows/_fixtures.ts'
 
 const APP_API = '/index.php/apps/shillinq/api'
-const OBJECTS = '/index.php/apps/openregister/api/objects/shillinq'
 const PAPER = 'PAPER-A4-BOX'
 
 /** A priced line of a created purchase order (PurchaseOrderService::pricedLine). */
@@ -83,21 +83,6 @@ test.describe('purchasing-call-offs-and-reorder-proposals: call-offs and reorder
 	function idOf(object: Record<string, unknown>): string {
 		const self = object['@self'] as Record<string, unknown> | undefined
 		return String(self?.id ?? object.id ?? '')
-	}
-
-	/**
-	 * The approval tasks the order raised, to remove afterwards.
-	 *
-	 * @param purchaseOrderId The order.
-	 * @return Its approval tasks.
-	 */
-	async function approvalTasks(purchaseOrderId: string): Promise<Array<Record<string, unknown>>> {
-		const list = await api.get(`${OBJECTS}/ApprovalTask`, { headers: { 'OCS-APIRequest': 'true' }, params: { purchaseOrderId, _limit: '50' } })
-		if (!list.ok()) {
-			return []
-		}
-		const rows = ((await list.json()).results ?? []) as Array<Record<string, unknown>>
-		return rows.filter((row) => row.purchaseOrderId === purchaseOrderId)
 	}
 
 	test.beforeAll(async ({ baseURL }) => {
@@ -159,9 +144,6 @@ test.describe('purchasing-call-offs-and-reorder-proposals: call-offs and reorder
 		const order = JSON.parse(body) as Record<string, unknown>
 		const orderId = idOf(order)
 		expect(orderId).not.toBe('')
-		for (const task of await approvalTasks(orderId)) {
-			written.push({ schema: 'ApprovalTask', id: idOf(task) })
-		}
 		written.push({ schema: 'PurchaseOrder', id: orderId })
 
 		// The line takes the agreed price, whatever the buyer typed.

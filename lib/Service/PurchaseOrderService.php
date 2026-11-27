@@ -38,7 +38,7 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
  */
 
 declare(strict_types=1);
@@ -68,8 +68,8 @@ use RuntimeException;
  *
  * Public methods:
  * - createPurchaseOrder(): validates requester + cost-center budget, generates a
- *   CBS-conform po_number server-side, raises the ApprovalTask records and
- *   notifications for the roles the amount needs, and persists the PurchaseOrder
+ *   CBS-conform po_number server-side, notifies the roles the amount needs,
+ *   and persists the PurchaseOrder
  *   with statusCode "draft". The approval itself runs on OpenRegister's declared
  *   `purchase-order-approval` chain (REQ-PAD-001), which gates the `approve`
  *   transition; shillinq writes no approval chain of its own.
@@ -89,7 +89,7 @@ use RuntimeException;
  */
 class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	/**
-	 * Notification "object type" for ApprovalTask deep links.
+	 * Notification "object type" for purchase order deep links.
 	 *
 	 * @var string
 	 */
@@ -264,10 +264,10 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *    (PO-{year}-{administrationCode}-{6-digit-sequence});
 	 *  - cost-center budget is checked against the CostCenter record;
 	 *  - the roles the amount needs are read from the PurchaseOrder schema's
-	 *    declared approval chain (PurchaseOrderApprovalTiers) and an
-	 *    ApprovalTask record is created for each of them; the approval steps
-	 *    themselves are OpenRegister's;
-	 *  - every approver is notified via the notification manager;
+	 *    declared approval chain (PurchaseOrderApprovalTiers); the approval steps
+	 *    themselves are OpenRegister's, so shillinq writes no task record of its
+	 *    own (REQ-PAD-001);
+	 *  - every holder of those roles is notified via the notification manager;
 	 *  - statusCode starts at "draft", the schema's initial state, also while the approval chain is pending
 	 *    or "draft" (no chain — defensive fallback that should not occur for
 	 *    positive totals).
@@ -285,7 +285,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *                           budget is exceeded, or a required field is missing.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function createPurchaseOrder(string $administrationId, array $payload): array {
 		$order              = $this->checkedOrder(administrationId: $administrationId, payload: $payload);
@@ -319,7 +319,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @throws \RuntimeException When the requester lacks access, a field is missing or invalid,
 	 *                           or the framework agreement cannot be called off.
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function checkedOrder(string $administrationId, array $payload): array {
 		$order = $this->orderParties(administrationId: $administrationId, payload: $payload);
@@ -442,8 +442,8 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	}//end assertCreationPolicies()
 
 	/**
-	 * Save the new order and raise an ApprovalTask
-	 * per required approver.
+	 * Save the new order and notify the holders of each role its approval chain
+	 * needs.
 	 *
 	 * @param array<string,mixed> $order The checked, policy-cleared order.
 	 *
@@ -454,7 +454,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		$order['poNumber']      = $this->generatePoNumber(administrationId: $order['administrationId']);
 
 		$persisted = $this->saveObject(schema: 'PurchaseOrder', object: $this->purchaseOrderRecord(order: $order));
-		$this->assignApprovalTasks(
+		$this->notifyApprovalChain(
 			administrationId: $order['administrationId'],
 			purchaseOrderId: (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $order['poNumber'])),
 			poNumber: $order['poNumber'],
@@ -479,6 +479,9 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			'administrationId' => $order['administrationId'],
 			'supplierId' => $order['supplierId'],
 			'requesterId' => $order['requesterId'],
+			// The schema's own requester field, which the `submitted` and
+			// `approved` notifications address.
+			'requester' => $order['requesterId'],
 			'costCenter' => $order['costCenter'],
 			'projectCode' => trim((string)($payload['projectCode'] ?? '')),
 			'requisitionId' => trim((string)($payload['requisitionId'] ?? '')),
@@ -920,12 +923,13 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	}//end buyerParticipantId()
 
 	/**
-	 * Assign an ApprovalTask record to each required approver and notify them.
+	 * Notify the holders of each role in the order's approval chain.
 	 *
-	 * Each task is persisted with its purchaseOrderId, role, order, status=pending,
-	 * the administration scope, and a createdAt stamp. Approver notifications are
-	 * dispatched via the NC notification manager so the Vue layer can deep-link
-	 * straight to the PO detail.
+	 * The steps themselves are OpenRegister's (`purchase-order-approval`,
+	 * REQ-PAD-001): shillinq writes no task record of its own, which also kept
+	 * every live order from saving, as no register declares such a schema.
+	 * Notifications go through the NC notification manager so the Vue layer can
+	 * deep-link straight to the PO detail.
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param string $purchaseOrderId PO id.
@@ -937,30 +941,31 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @return void
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
 	 */
-	private function assignApprovalTasks(
+	private function notifyApprovalChain(
 		string $administrationId,
 		string $purchaseOrderId,
 		string $poNumber,
 		array $chain,
 	): void {
-		$tasksAssigned = false;
+		$stepsNotified = false;
 
 		foreach ($chain as $entry) {
-			if ($this->assignApprovalTask(
+			if ($this->notifyApprovalStep(
 				administrationId: $administrationId,
 				purchaseOrderId: $purchaseOrderId,
 				poNumber: $poNumber,
 				entry: $entry
 			) === true
 			) {
-				$tasksAssigned = true;
+				$stepsNotified = true;
 			}
 		}
 
-		// REQ-RAP-006 row 1 (`approval_requested`): the ApprovalTask records
-		// that put this PO in front of an approver have just been created, so
-		// this is the "ApprovalRequest created" trigger the event table names.
+		// REQ-RAP-006 row 1 (`approval_requested`): the approvers this PO is in
+		// front of have just been notified, so this is the "ApprovalRequest
+		// created" trigger the event table names.
 		// Emitted ONCE per purchase order (not once per role) so the Activity
 		// feed carries a single entry per approval round, matching the
 		// already-live `approval_approved` / `approval_rejected` rows in
@@ -968,7 +973,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		// is nullable for the same reason it is there: unit tests need not
 		// wire IActivityManager, and publishing is best-effort (the OR audit
 		// trail remains the authoritative record).
-		if ($tasksAssigned === true && $this->activityEmitter !== null) {
+		if ($stepsNotified === true && $this->activityEmitter !== null) {
 			$this->activityEmitter->emitApprovalRequested(
 				objectType:  'PurchaseOrder',
 				objectId:    $purchaseOrderId,
@@ -976,38 +981,27 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			);
 		}
 
-	}//end assignApprovalTasks()
+	}//end notifyApprovalChain()
 
 	/**
-	 * Persist and notify one approval task of the chain; an entry without a
-	 * role or order is skipped.
+	 * Notify the holders of one role of the chain; an entry without a role or
+	 * order is skipped.
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param string $purchaseOrderId PO id.
 	 * @param string $poNumber PO number for the notification subject params.
 	 * @param array{role:string,order:int} $entry The chain entry.
 	 *
-	 * @return bool True when a task was assigned.
+	 * @return bool True when the step's role was notified.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/tasks.md#task-1.3
 	 */
-	private function assignApprovalTask(string $administrationId, string $purchaseOrderId, string $poNumber, array $entry): bool {
+	private function notifyApprovalStep(string $administrationId, string $purchaseOrderId, string $poNumber, array $entry): bool {
 		$role = $entry['role'];
-		$order = $entry['order'];
-		if ($role === '' || $order === 0) {
+		if ($role === '' || $entry['order'] === 0) {
 			return false;
 		}
-
-		$task = [
-			'purchaseOrderId' => $purchaseOrderId,
-			'administrationId' => $administrationId,
-			'role' => $role,
-			'order' => $order,
-			'status' => 'pending',
-			'createdAt' => $this->nowIso(),
-		];
-
-		$this->saveObject(schema: 'ApprovalTask', object: $task);
 
 		$this->notifyApprovers(
 			administrationId: $administrationId,
@@ -1017,7 +1011,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		);
 
 		return true;
-	}//end assignApprovalTask()
+	}//end notifyApprovalStep()
 
 	/**
 	 * Dispatch a notification to every user in the administration who carries the
@@ -1122,7 +1116,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @throws \RuntimeException When a line is malformed.
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function normaliseLines(array $rawLines, array $agreedUnitCents=[]): array {
 		if ($rawLines === []) {
@@ -1368,7 +1362,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
 	 */
 	public function generatePoNumber(string $administrationId): string {
 		$year = (int)date('Y');

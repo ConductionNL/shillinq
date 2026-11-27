@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Throwable;
 /**
  * Compares reorder rules with their stock and proposes purchases.
  *
- * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
+ * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
  */
 class ReorderProposalService {
 	/**
@@ -87,7 +87,7 @@ class ReorderProposalService {
 	 *
 	 * @return array{rules:int,proposed:int,resolved:int,unchanged:int,skipped:int,failed:int} What the pass did.
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
 	 */
 	public function proposeAll(DateTimeImmutable $now): array {
 		return $this->objectService->runAsSystem(

@@ -39,8 +39,8 @@ use Psr\Log\LoggerInterface;
  *
  * Covers REQ-PO3W-001 across the three core service surfaces:
  *  - determineApprovalChain at €5k / €10k / €50k thresholds (pure logic);
- *  - createPurchaseOrder end-to-end (chain materialised, ApprovalTask records
- *    written, notifications dispatched);
+ *  - createPurchaseOrder end-to-end (chain roles read, no task record of
+ *    its own written, notifications dispatched);
  *  - blockSendUntilApproved (rejected while pending, allowed once every approver
  *    has signed with a timestamp).
  *
@@ -357,8 +357,8 @@ final class PurchaseOrderServiceTest extends TestCase {
 
 	/**
 	 * Exercises createPurchaseOrder: writes no in-object chain, stores the
-	 * amount OpenRegister's approval chain routes on, persists a task and a
-	 * notification per role the declared tiers ask for.
+	 * amount OpenRegister's approval chain routes on, and sends a
+	 * notification per role the declared tiers ask for, writing no task record.
 	 *
 	 * @return void
 	 */
@@ -372,7 +372,6 @@ final class PurchaseOrderServiceTest extends TestCase {
 				['administrationId' => 'adm-1', 'role' => 'procurement_manager', 'userId' => 'procurement-1'],
 			],
 			'PurchaseOrder' => [],
-			'ApprovalTask' => [],
 		];
 
 		$service = $this->buildService(
@@ -409,11 +408,12 @@ final class PurchaseOrderServiceTest extends TestCase {
 		self::assertSame('inkoper-1', $po['requesterId']);
 		self::assertNotEmpty($po['poNumber']);
 
-		// Two ApprovalTask + 1 PurchaseOrder = three saves; two notifications
-		// (one per approver).
-		$tasks = array_values(array_filter($saved, static fn (array $row): bool => $row['schema'] === 'ApprovalTask'));
-		self::assertCount(2, $tasks);
-		self::assertSame(['teamleider', 'facility_manager'], array_map(static fn (array $row): string => $row['object']['role'] ?? ($row['role'] ?? ''), $tasks));
+		// One save: the PurchaseOrder. The approval steps are OpenRegister's
+		// (REQ-PAD-001), so no task record is written; no register declares one,
+		// and writing it failed every live order. Two notifications, one per
+		// approver the two tiers name.
+		self::assertSame(['PurchaseOrder'], array_column($saved, 'schema'));
+		self::assertSame('inkoper-1', $po['requester'], 'the schema\'s requester field, which the notifications address');
 
 		self::assertCount(2, $notifications);
 		$users = array_map(static fn (array $n): string => $n['user'], $notifications);
@@ -638,8 +638,8 @@ final class PurchaseOrderServiceTest extends TestCase {
 			['adm-1', 'sup-1', 'inkoper-1', 'FAC', 'P', 'req-1', 'FA-1', 8.03, 'EUR', 'draft', 'rush'],
 			[$po['administrationId'], $po['supplierId'], $po['requesterId'], $po['costCenter'], $po['projectCode'], $po['requisitionId'], $po['frameworkAgreementId'], $po['totalAmount'], $po['currency'], $po['statusCode'], $po['notes']]
 		);
-		self::assertSame(['PurchaseOrder', 'ApprovalTask', 'FrameworkAgreement'], array_column($saved, 'schema'));
-		self::assertSame(1303, $saved[2]['object']['drawnAmount']);
+		self::assertSame(['PurchaseOrder', 'FrameworkAgreement'], array_column($saved, 'schema'));
+		self::assertSame(1303, $saved[1]['object']['drawnAmount']);
 
 	}//end testCreateStoresLinesAndDrawsDown()
 
@@ -676,7 +676,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function testACallOffTakesTheAgreedPriceAndDrawsTheCeilingDown(): void {
 		$saved         = [];
@@ -703,9 +703,9 @@ final class PurchaseOrderServiceTest extends TestCase {
 		);
 		self::assertSame(840.0, $po['totalAmount']);
 		self::assertSame('FA-PAPER', $po['frameworkAgreementId']);
-		self::assertSame(['PurchaseOrder', 'ApprovalTask', 'FrameworkAgreement'], array_column($saved, 'schema'));
-		self::assertSame(84000, $saved[2]['object']['drawnAmount']);
-		self::assertSame(916000, ($saved[2]['object']['ceilingAmount'] - $saved[2]['object']['drawnAmount']));
+		self::assertSame(['PurchaseOrder', 'FrameworkAgreement'], array_column($saved, 'schema'));
+		self::assertSame(84000, $saved[1]['object']['drawnAmount']);
+		self::assertSame(916000, ($saved[1]['object']['ceilingAmount'] - $saved[1]['object']['drawnAmount']));
 
 		$saved = [];
 		$mixed = $this->buildService(data: $data, saved: $saved, userId: 'inkoper-1', accessibleAdministrations: ['adm-1'], notifications: $notifications);
@@ -725,7 +725,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		self::assertArrayNotHasKey('agreedPrice', $order['lines'][0]);
 		self::assertSame([12.5, 42.0], array_column($order['lines'], 'unitPrice'));
 		self::assertSame(96.5, $order['totalAmount']);
-		self::assertSame(9650, $saved[2]['object']['drawnAmount']);
+		self::assertSame(9650, $saved[1]['object']['drawnAmount']);
 	}//end testACallOffTakesTheAgreedPriceAndDrawsTheCeilingDown()
 
 	/**
@@ -735,7 +735,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 * @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function testACallOffIsRefusedForAnotherSupplierOrOverTheCeilingAtAgreedPrices(): void {
 		$cases = [

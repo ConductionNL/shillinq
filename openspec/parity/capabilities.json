@@ -2842,7 +2842,7 @@
 				"change": "2026-07-15-procurement-governance",
 				"requirement": [
 					"openspec/specs/procurement-governance :: REQ-PG-004: A framework-agreement call-off exceeding the ceiling MUST be blocked",
-					"openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance :: A purchase order is drawn against a framework agreement at its agreed prices (REQ-PG-005)"
+					"openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance :: A purchase order is drawn against a framework agreement at its agreed prices (REQ-PG-005)"
 				],
 				"plan": "purchasing-call-offs-and-reorder-proposals"
 			},
@@ -9101,7 +9101,7 @@
 				"requirement": [
 					"openspec/specs/inventory-reorder-automation :: REQ-IRA-003: Low-stock alert SHALL fire when inventory falls below or equals minimum level",
 					"openspec/specs/inventory-reorder-automation :: REQ-IRA-006: Optional auto-purchase-order generation materialises balanced purchase orders",
-					"openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation :: Stock at or below its reorder point proposes a purchase (REQ-IRA-011)"
+					"openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation :: Stock at or below its reorder point proposes a purchase (REQ-IRA-011)"
 				],
 				"plan": "purchasing-call-offs-and-reorder-proposals"
 			},

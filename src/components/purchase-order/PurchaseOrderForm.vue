@@ -24,7 +24,7 @@
 
  @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
- @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+ @spec openspec/changes/archive/2026-11-26-purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 -->
 <template>
 	<div class="po-form">
